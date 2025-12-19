@@ -20,7 +20,7 @@ namespace retro::platform {
 
     using WindowPtr = std::unique_ptr<SDL_Window, WindowDeleter>;
 
-    export class RETRO_PLATFORM_API Window {
+    export class RETRO_API Window {
     public:
         Window(Platform&, const int width, const int height, const std::string_view title) {
             window = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};

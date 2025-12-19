@@ -3,4 +3,12 @@
 //
 #pragma once
 
-#define RETRO_PLATFORM_API __declspec(dllexport)
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define RETRO_API __declspec(dllexport)
+#else
+    #if __GNUC__ >= 4
+        #define RETRO_API __attribute__((visibility("default")))
+    #else
+        #define RETRO_API
+    #endif
+#endif
