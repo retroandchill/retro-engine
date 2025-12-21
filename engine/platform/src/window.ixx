@@ -27,9 +27,9 @@ namespace retro::platform {
     export class RETRO_API Window {
     public:
         Window(Platform&, const int32 width, const int32 height, const CStringView title) {
-            window = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
+            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
 
-            if (window == nullptr) {
+            if (window_ == nullptr) {
                 throw std::runtime_error{std::string{"SDL_CreateWindow failed: "} + SDL_GetError()};
             }
         }
@@ -39,11 +39,11 @@ namespace retro::platform {
             while (SDL_PollEvent(&event)) {
                 switch (event.type) {
                     case SDL_EVENT_QUIT:
-                        close_requested = true;
+                        should_close_ = true;
                         break;
                     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                        if (window != nullptr && event.window.windowID == SDL_GetWindowID(window.get())) {
-                            close_requested = true;
+                        if (window_ != nullptr && event.window.windowID == SDL_GetWindowID(window_.get())) {
+                            should_close_ = true;
                         }
                         break;
                     default:
@@ -53,16 +53,16 @@ namespace retro::platform {
         }
 
         [[nodiscard]] bool should_close() const {
-            return close_requested;
+            return should_close_;
         }
 
         [[nodiscard]] SDL_Window* get_native_handle() const {
-            return window.get();
+            return window_.get();
         }
 
 
     private:
-        WindowPtr window;
-        bool close_requested{false};
+        WindowPtr window_;
+        bool should_close_{false};
     };
 }

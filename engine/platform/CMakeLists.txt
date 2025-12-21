@@ -1,5 +1,4 @@
-add_library(retro_platform
-        ../core/include/retro/core/exports.h)
+add_library(retro_platform)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_platform PUBLIC RETRO_STATIC)
