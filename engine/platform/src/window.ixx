@@ -9,9 +9,13 @@ module;
 export module retro.platform.window;
 
 import std;
+import retro.core;
+import retro.core.strings;
 import retro.platform;
 
 namespace retro::platform {
+    using namespace core;
+
     struct WindowDeleter {
         inline void operator()(SDL_Window* window) const noexcept {
             SDL_DestroyWindow(window);
@@ -22,7 +26,7 @@ namespace retro::platform {
 
     export class RETRO_API Window {
     public:
-        Window(Platform&, const int width, const int height, const std::string_view title) {
+        Window(Platform&, const int32 width, const int32 height, const CStringView title) {
             window = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
 
             if (window == nullptr) {
