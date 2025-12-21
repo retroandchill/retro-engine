@@ -34,8 +34,13 @@ namespace retro::platform {
             }
         }
 
-        [[nodiscard]] SDL_Window* get_native_handle() const {
+        [[nodiscard]] SDL_Window* native_handle() const {
             return window_.get();
+        }
+
+        // NOLINTNEXTLINE
+        void set_title(const CStringView title) {
+            SDL_SetWindowTitle(window_.get(), title.data());
         }
 
 
