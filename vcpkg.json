@@ -1,0 +1,8 @@
+{
+  "name": "retro-engine",
+  "version": "0.1.0",
+  "description": "A retro game engine",
+  "dependencies": [
+    "sdl3"
+  ]
+}
