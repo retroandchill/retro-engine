@@ -4,7 +4,7 @@
 module;
 #include <SDL3/SDL.h>
 
-#include "exports.h"
+#include "retro/core/exports.h"
 
 export module retro.platform.window;
 

@@ -1,5 +1,5 @@
 add_library(retro_platform
-        src/exports.h)
+        ../core/include/retro/core/exports.h)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_platform PUBLIC RETRO_STATIC)
@@ -11,4 +11,6 @@ target_sources(retro_platform PUBLIC
         src/platform.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
-target_link_libraries(retro_platform PUBLIC SDL3::SDL3)
+target_link_libraries(retro_platform PUBLIC
+        retro_core
+        SDL3::SDL3)
