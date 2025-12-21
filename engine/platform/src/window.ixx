@@ -34,28 +34,6 @@ namespace retro::platform {
             }
         }
 
-        void poll_events() {
-            SDL_Event event;
-            while (SDL_PollEvent(&event)) {
-                switch (event.type) {
-                    case SDL_EVENT_QUIT:
-                        should_close_ = true;
-                        break;
-                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                        if (window_ != nullptr && event.window.windowID == SDL_GetWindowID(window_.get())) {
-                            should_close_ = true;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        [[nodiscard]] bool should_close() const {
-            return should_close_;
-        }
-
         [[nodiscard]] SDL_Window* get_native_handle() const {
             return window_.get();
         }
@@ -63,6 +41,5 @@ namespace retro::platform {
 
     private:
         WindowPtr window_;
-        bool should_close_{false};
     };
 }
