@@ -86,7 +86,7 @@ namespace retro::platform {
                 throw std::runtime_error{"Failed to load function: " + function_name.to_string()};
             }
 
-            return static_cast<Fn>(proc);
+            return std::bit_cast<Fn>(proc);
         }
 
     private:

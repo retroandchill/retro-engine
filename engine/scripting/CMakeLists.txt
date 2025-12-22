@@ -8,6 +8,10 @@ target_sources(retro_scripting PUBLIC
         FILE_SET CXX_MODULES FILES
         src/dotnet.ixx)
 
+find_package(SDL3 CONFIG REQUIRED)
+find_package(unofficial-nethost CONFIG REQUIRED)
 target_link_libraries(retro_scripting PUBLIC
         retro_core
-        dotnet_host)
+        retro_platform
+        unofficial::nethost::nethost
+        SDL3::SDL3)

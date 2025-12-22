@@ -1,0 +1,32 @@
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 88d62c55c1051d89674c92aa4ea57b6425eb7e18b704235a83ffd14296fa0067
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 8784797b650c735df77d132c7b3e0efb62db6f35ef634ebc5748164a78e1528e
+Status: install ok installed
+
+Package: nethost
+Version: 8.0.3
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 048e417833f1b186b3cbfaa05e0cffe0e1d2bab97d713b017ed9f43e55855a6e
+Description: Provides a set of APIs that can be used to host .NET Core (dotnet)
+Status: install ok installed
+
+Package: sdl3
+Version: 3.2.28
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 0f2f45281ee8ed3ffca391aa4f9f14106ad6a344c2589684c5f0ad1e7f22f2fb
+Description: Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+Status: install ok installed
+

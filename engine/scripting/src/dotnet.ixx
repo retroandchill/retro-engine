@@ -3,10 +3,7 @@
 //
 module;
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-#include <retro/core/exports.h>
+#include "retro/core/exports.h"
 #include <nethost.h>
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
@@ -14,14 +11,18 @@ module;
 export module retro.scripting.dotnet;
 
 import std;
+import retro.core;
 import retro.platform.loading;
 
 namespace retro::scripting {
+    using namespace core;
     using namespace platform;
 
-    class Hostfxr {
+    export class RETRO_API DotnetHost {
+        constexpr static usize MAX_PATH = 260;
+
     public:
-        Hostfxr()
+        DotnetHost()
         {
             // 1. Locate hostfxr.dll via nethost
             std::array<char_t, MAX_PATH> path;
@@ -50,37 +51,18 @@ namespace retro::scripting {
             }
         }
 
-        Hostfxr(const Hostfxr&) = delete;
-        Hostfxr(Hostfxr&& other) noexcept : lib_(std::move(other.lib_)), init_fptr_(other.init_fptr_), get_delegate_fptr_(other.get_delegate_fptr_), close_fptr_(other.close_fptr_) {
-            other.init_fptr_ = nullptr;
-            other.get_delegate_fptr_ = nullptr;
-            other.close_fptr_ = nullptr;
-        }
-
-
-        ~Hostfxr() {
-            if (lib_.is_loaded() && close_fptr_ != nullptr) {
-                close_fptr_(lib_.handle());
-            }
-        }
-
-        Hostfxr& operator=(const Hostfxr&) = delete;
-
-        Hostfxr& operator=(Hostfxr&& other) noexcept {
-            lib_ = std::move(other.lib_);
-            init_fptr_ = other.init_fptr_;
-            get_delegate_fptr_ = other.get_delegate_fptr_;
-            close_fptr_ = other.close_fptr_;
-            other.init_fptr_ = nullptr;
-            other.get_delegate_fptr_ = nullptr;
-            other.close_fptr_ = nullptr;
-            return *this;
-        }
+        DotnetHost(const DotnetHost&) = delete;
+        DotnetHost(DotnetHost&& other) noexcept = delete;
+        ~DotnetHost() = default;
+        DotnetHost& operator=(const DotnetHost&) = delete;
+        DotnetHost& operator=(DotnetHost&& other) noexcept = delete;
 
     private:
         SharedLibrary lib_;
         hostfxr_initialize_for_runtime_config_fn init_fptr_{nullptr};
         hostfxr_get_runtime_delegate_fn get_delegate_fptr_{nullptr};
         hostfxr_close_fn close_fptr_{nullptr};
+
+        hostfxr_handle handle_{nullptr};
     };
 }

@@ -11,4 +11,5 @@ target_sources(retro_runtime PUBLIC
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(retro_runtime PUBLIC
         retro_core
-        retro_platform)
+        retro_platform
+        retro_scripting)

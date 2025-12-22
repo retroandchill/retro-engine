@@ -28,10 +28,10 @@ namespace retro::platform {
         }
 
         Platform(const Platform&) = delete;
-        Platform(Platform&&) noexcept = default;
+        Platform(Platform&&) noexcept = delete;
 
         Platform& operator=(const Platform&) = delete;
-        Platform& operator=(Platform&&) noexcept = default;
+        Platform& operator=(Platform&&) noexcept = delete;
 
         // NOLINTNEXTLINE
         bool poll_events() {

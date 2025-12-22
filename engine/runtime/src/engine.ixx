@@ -13,10 +13,12 @@ import retro.core;
 import retro.core.strings;
 import retro.platform;
 import retro.platform.window;
+import retro.scripting.dotnet;
 
 namespace retro::runtime {
     using namespace core;
     using namespace platform;
+    using namespace scripting;
 
     export class RETRO_API Engine {
 
@@ -64,5 +66,6 @@ namespace retro::runtime {
 
         Platform platform_;
         Window window_;
+        DotnetHost hostfxr_;
     };
 }
