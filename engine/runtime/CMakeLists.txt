@@ -1,4 +1,5 @@
-add_library(retro_runtime)
+add_library(retro_runtime
+        src/engine.cpp)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_runtime PUBLIC RETRO_STATIC)

@@ -3,8 +3,8 @@
 //
 module;
 
-#include <chrono>
-#include <retro/core/exports.h>
+#include "retro/core/exports.h"
+#include <cassert>
 
 export module retro.runtime.engine;
 
@@ -21,51 +21,51 @@ namespace retro::runtime {
     using namespace scripting;
 
     export class RETRO_API Engine {
+        struct InitializeTag {};
+        constexpr static InitializeTag initialize_tag{};
 
     public:
-        Engine(const CStringView name, const int32 width, const int32 height) : window_{platform_, width, height, name} {}
+        inline Engine(InitializeTag, const CStringView name, const int32 width, const int32 height) : window_{platform_, width, height, name} {}
 
-        void run() {
-            using clock = std::chrono::steady_clock;
-            constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
-
-            auto last_time = clock::now();
-
-            while (true) {
-                auto now = clock::now();
-                std::chrono::duration<float> frame_delta = now - last_time;
-                last_time = now;
-
-                const float delta_time = frame_delta.count();
-
-                if (platform_.poll_events()) {
-                    break;
-                }
-
-                tick(delta_time);
-                render();
-
-                if (delta_time < target_frame_time) {
-                    auto sleep_time = std::chrono::duration<float>(target_frame_time - delta_time);
-
-                    std::this_thread::sleep_for(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time)
-                    );
-                }
-            }
+        static inline Engine& instance() {
+            assert(instance_ != nullptr);
+            return *instance_;
         }
+
+        inline static void initialize(const CStringView name, const int32 width, const int32 height) {
+            assert(instance_ == nullptr);
+            instance_ = std::make_unique<Engine>(initialize_tag, name, width, height);
+        }
+
+        inline static void shutdown() {
+            instance_.reset();
+        }
+
+        void run();
 
     private:
-        void tick(float delta_time) {
-            // TODO: Add tick logic
-        }
+        void tick(float delta_time);
 
-        void render() {
-            // TODO: Add render logic
-        }
+        void render();
+
+        static std::unique_ptr<Engine> instance_;
 
         Platform platform_;
         Window window_;
-        DotnetHost hostfxr_;
+    };
+
+    export struct EngineLifecycle {
+        inline EngineLifecycle(const CStringView name, const int32 width, const int32 height) {
+            Engine::initialize(name, width, height);
+        }
+
+        inline ~EngineLifecycle() {
+            Engine::shutdown();
+        }
+
+        EngineLifecycle(const EngineLifecycle&) = delete;
+        EngineLifecycle(EngineLifecycle&&) noexcept = delete;
+        EngineLifecycle& operator=(const EngineLifecycle&) = delete;
+        EngineLifecycle& operator=(EngineLifecycle&&) noexcept = delete;
     };
 }

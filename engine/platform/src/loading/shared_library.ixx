@@ -14,63 +14,21 @@ import retro.core.strings;
 namespace retro::platform {
     using namespace core;
 
-    export class RETRO_API SharedLibrary {
+    export enum class LibraryUnloadPolicy {
+        UnloadOnDestruction,
+        KeepLoaded
+    };
 
+    class RETRO_API SharedLibraryBase {
     public:
-        SharedLibrary() = default;
+        SharedLibraryBase() = default;
+        inline explicit SharedLibraryBase(SDL_SharedObject* handle) : handle_{handle} {}
 
-        explicit SharedLibrary(const std::filesystem::path& path)
-        {
-            load(path);
-        }
-
-        ~SharedLibrary() noexcept
-        {
-            unload();
-        }
-
-        SharedLibrary(const SharedLibrary&) = delete;
-        SharedLibrary& operator=(const SharedLibrary&) = delete;
-
-        SharedLibrary(SharedLibrary&& other) noexcept
-            : handle_{other.handle_}
-        {
-            other.handle_ = nullptr;
-        }
-
-        SharedLibrary& operator=(SharedLibrary&& other) noexcept
-        {
-            if (this != &other) {
-                unload();
-                handle_ = other.handle_;
-                other.handle_ = nullptr;
-            }
-            return *this;
-        }
-
-        void load(const std::filesystem::path& path)
-        {
-            unload();
-
-            handle_ = SDL_LoadObject(path.string().c_str());
-            if (!handle_) {
-                throw std::runtime_error{"Failed to LoadLibraryW: " + path.string()};
-            }
-        }
-
-        // NOLINTNEXTLINE
-        void unload() noexcept {
-            if (handle_ != nullptr) {
-                SDL_UnloadObject(handle_);
-                handle_ = nullptr;
-            }
-        }
-
-        [[nodiscard]] bool is_loaded() const noexcept {
+        [[nodiscard]] inline bool is_loaded() const noexcept {
             return handle_ != nullptr;
         }
 
-        [[nodiscard]] SDL_SharedObject* handle() const noexcept {
+        [[nodiscard]] inline SDL_SharedObject* handle() const noexcept {
             return handle_;
         }
 
@@ -81,7 +39,7 @@ namespace retro::platform {
                 throw std::runtime_error{"SharedLibrary is not loaded"};
             }
 
-            auto proc = SDL_LoadFunction(handle_, function_name.data());
+            const auto proc = SDL_LoadFunction(handle_, function_name.data());
             if (proc == nullptr) {
                 throw std::runtime_error{"Failed to load function: " + function_name.to_string()};
             }
@@ -89,7 +47,72 @@ namespace retro::platform {
             return std::bit_cast<Fn>(proc);
         }
 
-    private:
+        void load(const std::filesystem::path& path);
+        void unload() noexcept;
+
         SDL_SharedObject* handle_{nullptr};
+    };
+
+    export template <LibraryUnloadPolicy Policy = LibraryUnloadPolicy::UnloadOnDestruction>
+    class SharedLibrary;
+
+    export template <>
+    class RETRO_API SharedLibrary<LibraryUnloadPolicy::UnloadOnDestruction> : private SharedLibraryBase {
+
+    public:
+        SharedLibrary() = default;
+
+        inline explicit SharedLibrary(const std::filesystem::path& path)
+        {
+            load(path);
+        }
+
+        inline ~SharedLibrary() noexcept
+        {
+            unload();
+        }
+
+        SharedLibrary(const SharedLibrary&)  = delete;
+        SharedLibrary& operator=(const SharedLibrary&)  = delete;
+
+        inline SharedLibrary(SharedLibrary&& other) noexcept
+            : SharedLibraryBase{other.handle_}
+        {
+            other.handle_ = nullptr;
+        }
+
+        inline SharedLibrary& operator=(SharedLibrary&& other) noexcept
+        {
+            if (this != &other) {
+                unload();
+                handle_ = other.handle_;
+                other.handle_ = nullptr;
+            }
+            return *this;
+        }
+
+        using SharedLibraryBase::load;
+        using SharedLibraryBase::unload;
+        using SharedLibraryBase::is_loaded;
+        using SharedLibraryBase::handle;
+        using SharedLibraryBase::get_function;
+    };
+
+    export template <>
+    class RETRO_API SharedLibrary<LibraryUnloadPolicy::KeepLoaded> : private SharedLibraryBase {
+
+    public:
+        SharedLibrary() = default;
+
+        explicit SharedLibrary(const std::filesystem::path& path)
+        {
+            load(path);
+        }
+
+        using SharedLibraryBase::load;
+        using SharedLibraryBase::unload;
+        using SharedLibraryBase::is_loaded;
+        using SharedLibraryBase::handle;
+        using SharedLibraryBase::get_function;
     };
 }

@@ -14,7 +14,7 @@ namespace retro::platform {
 
     export class RETRO_API  Platform {
     public:
-        Platform()
+        inline Platform()
         {
             if (!SDL_Init(SDL_INIT_VIDEO)) {
                 throw std::runtime_error{
@@ -23,7 +23,7 @@ namespace retro::platform {
             }
         }
 
-        ~Platform() noexcept {
+        inline ~Platform() noexcept {
             SDL_Quit();
         }
 
@@ -34,24 +34,7 @@ namespace retro::platform {
         Platform& operator=(Platform&&) noexcept = delete;
 
         // NOLINTNEXTLINE
-        bool poll_events() {
-            SDL_Event event;
-            bool should_quit = false;
-
-            while (SDL_PollEvent(&event)) {
-                switch (event.type) {
-                    case SDL_EVENT_QUIT:
-                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                        // For now, we only have one window, so any close means quit.
-                        should_quit = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return should_quit;
-        }
+        bool poll_events();
     };
 
 }

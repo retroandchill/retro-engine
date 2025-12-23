@@ -24,9 +24,9 @@ namespace retro::platform {
 
     using WindowPtr = std::unique_ptr<SDL_Window, WindowDeleter>;
 
-    export class RETRO_API Window {
+    export class Window {
     public:
-        Window(Platform&, const int32 width, const int32 height, const CStringView title) {
+        inline Window(Platform&, const int32 width, const int32 height, const CStringView title) {
             window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
 
             if (window_ == nullptr) {
@@ -34,12 +34,12 @@ namespace retro::platform {
             }
         }
 
-        [[nodiscard]] SDL_Window* native_handle() const {
+        [[nodiscard]] inline SDL_Window* native_handle() const {
             return window_.get();
         }
 
         // NOLINTNEXTLINE
-        void set_title(const CStringView title) {
+        inline void set_title(const CStringView title) {
             SDL_SetWindowTitle(window_.get(), title.data());
         }
 

@@ -1,4 +1,6 @@
-add_library(retro_platform)
+add_library(retro_platform
+        src/loading/shared_library.cpp
+        src/platform.cpp)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_platform PUBLIC RETRO_STATIC)

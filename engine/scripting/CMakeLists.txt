@@ -1,4 +1,6 @@
-add_library(retro_scripting)
+add_library(retro_scripting
+        src/dotnet/dotnet_loader.cpp
+        src/dotnet/dotnet_host.cpp)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_scripting PUBLIC RETRO_STATIC)
@@ -6,7 +8,9 @@ endif()
 
 target_sources(retro_scripting PUBLIC
         FILE_SET CXX_MODULES FILES
-        src/dotnet.ixx)
+        src/dotnet/dotnet_loader.ixx
+        src/dotnet/dotnet.ixx
+        src/dotnet/dotnet_host.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(unofficial-nethost CONFIG REQUIRED)
