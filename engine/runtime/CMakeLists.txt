@@ -14,3 +14,8 @@ target_link_libraries(retro_runtime PUBLIC
         retro_core
         retro_platform
         retro_scripting)
+
+set_target_properties(retro_runtime PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
+        ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")

@@ -24,5 +24,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_MODULE_STD ON)
 
+set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
+
+set(RETRO_BIN_DIR "${RETRO_OUTPUT_ROOT}/bin")
+set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib")
+
+set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output directory")
+set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")
+
 add_subdirectory(engine)
 add_subdirectory(game)

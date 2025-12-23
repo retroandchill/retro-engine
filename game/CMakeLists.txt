@@ -9,11 +9,7 @@ target_link_libraries(retro_game
             retro_runtime
             SDL3::SDL3)
 
-if(RETRO_BUILD_SHARED)
-    add_custom_command(TARGET retro_game POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:retro_platform>
-            $<TARGET_FILE_DIR:retro_game>
-            COMMENT "Copying engine DLLs to game output directory"
-    )
-endif()
+set_target_properties(retro_game PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
+        ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
