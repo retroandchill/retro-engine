@@ -32,5 +32,27 @@ set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib")
 set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output directory")
 set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")
 
+set(RETRO_MANAGED_SOLUTION "${CMAKE_SOURCE_DIR}/RetroEngine.Managed.sln")
+
+if(CMAKE_CONFIGURATION_TYPES)  # multi-config generators (Visual Studio, etc.)
+    # Map any non-Debug config to Release for dotnet
+    set(DOTNET_CONFIGURATION "$<IF:$<CONFIG:Debug>,Debug,Release>")
+else()  # single-config generators (Ninja, Makefiles, typical CLion setup)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(DOTNET_CONFIGURATION "Debug")
+    else()
+        set(DOTNET_CONFIGURATION "Release")
+    endif()
+endif()
+
+add_custom_target(retro_managed ALL
+        COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
+            -c "${DOTNET_CONFIGURATION}"
+            -p:Platform="Any CPU"
+            -p:RetroBinRoot="${RETRO_BIN_DIR}/"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        USES_TERMINAL
+        COMMENT "Building .NET managed assemblies")
+
 add_subdirectory(engine)
 add_subdirectory(game)

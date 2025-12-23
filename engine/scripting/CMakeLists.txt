@@ -20,6 +20,8 @@ target_link_libraries(retro_scripting PUBLIC
         unofficial::nethost::nethost
         SDL3::SDL3)
 
+add_dependencies(retro_scripting retro_managed)
+
 set_target_properties(retro_scripting PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
