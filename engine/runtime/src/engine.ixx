@@ -52,6 +52,7 @@ namespace retro::runtime {
 
         Platform platform_;
         Window window_;
+        DotnetLifecycle dotnet_loader_;
     };
 
     export struct EngineLifecycle {

@@ -5,11 +5,9 @@
 #include <SDL3/SDL_main.h>
 
 import retro.runtime.engine;
-import retro.scripting.dotnet;
 import std;
 
 using namespace retro::runtime;
-using namespace retro::scripting;
 
 int main() {
 
@@ -17,8 +15,6 @@ int main() {
 
     try {
         EngineLifecycle engine_lifecycle{"Retro Engine - SDL3 RAII Window", 1280, 720};
-
-        DotnetLifecycle dotnet_lifecycle;
 
         auto &engine = Engine::instance();
         engine.run();
