@@ -1,2 +1,33 @@
+# CLion/Rider
 .idea
+
+# CMake
 cmake-build-*/
+
+# Rider / ReSharper
+*.DotSettings.user
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET build outputs
+**/bin/
+**/obj/
+**/TestResults/
+**/TestResult*/
+*.nupkg
+*.snupkg
+
+# ASP.NET / tooling caches (harmless for console libs, but safe to ignore)
+.nuget/
+*.log
+
+# Optional editor stuff (if you use it)
+.vscode/
+
+# OS / misc
+[Tt]humbs.db
+[Dd]esktop.ini
+*.DS_Store
