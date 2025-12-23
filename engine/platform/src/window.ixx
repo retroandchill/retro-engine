@@ -4,8 +4,6 @@
 module;
 #include <SDL3/SDL.h>
 
-#include "retro/core/exports.h"
-
 export module retro.platform.window;
 
 import std;

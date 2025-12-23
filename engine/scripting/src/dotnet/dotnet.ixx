@@ -5,4 +5,4 @@
 export module retro.scripting.dotnet;
 
 export import :loader;
-export import :host;
+export import :manager;

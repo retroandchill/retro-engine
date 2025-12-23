@@ -12,7 +12,7 @@ import std;
 
 namespace retro::platform {
 
-    export class RETRO_API  Platform {
+    export class RETRO_API Platform {
     public:
         inline Platform()
         {

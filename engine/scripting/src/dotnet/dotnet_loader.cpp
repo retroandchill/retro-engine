@@ -9,18 +9,16 @@ module retro.scripting.dotnet;
 
 using namespace retro::scripting;
 
-DotnetHost DotnetLoader::initialize_for_runtime_config(const std::filesystem::path &path) const {
+DotnetInitializationHandle DotnetLoader::initialize_for_runtime_config(const std::filesystem::path &path) const {
     hostfxr_handle handle;
     if (init_fptr_(path.c_str(), nullptr, &handle) != 0) {
         throw std::runtime_error{"hostfxr_initialize_for_runtime_config failed"};
     }
 
-    return DotnetHost{handle};
+    return DotnetInitializationHandle{handle, close_fptr_};
 }
 
-std::unique_ptr<DotnetLoader> DotnetLoader::instance_{};
-
-DotnetLoader::DotnetLoader(InitializeTag) {
+DotnetLoader::DotnetLoader() {
     using enum LibraryUnloadPolicy;
 
     std::array<char_t, MAX_PATH> path;

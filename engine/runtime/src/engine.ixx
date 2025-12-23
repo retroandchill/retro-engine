@@ -41,6 +41,8 @@ namespace retro::runtime {
             instance_.reset();
         }
 
+        inline Platform& platform() { return platform_; }
+
         void run();
 
     private:
@@ -52,7 +54,7 @@ namespace retro::runtime {
 
         Platform platform_;
         Window window_;
-        DotnetLifecycle dotnet_loader_;
+        DotnetManager dotnet_manager_;
     };
 
     export struct EngineLifecycle {
