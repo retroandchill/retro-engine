@@ -7,7 +7,8 @@ target_sources(retro_core PUBLIC
         src/core.ixx
         src/strings/concepts.ixx
         src/strings/strings.ixx
-        src/strings/cstring_view.ixx)
+        src/strings/cstring_view.ixx
+        src/strings/literals.ixx)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

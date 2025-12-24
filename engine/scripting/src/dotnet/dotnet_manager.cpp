@@ -3,8 +3,12 @@
 //
 module;
 
+#include <coreclr_delegates.h>
+
 module retro.scripting.dotnet;
 
+import retro.core;
+import retro.core.strings;
 import retro.platform;
 import retro.platform.filesystem;
 
@@ -14,7 +18,26 @@ using namespace retro::platform::filesystem;
 import std;
 
 DotnetManager::DotnetManager() {
+    using InitializeRuntimeHostFn = bool(*)(const char16_t*, int32);
+
     auto native_host_fptr = initialize_native_host();
+
+    constexpr auto ENTRY_POINT_CLASS_NAME = "RetroEngine.Host.Main, RetroEngine.Host"_nc;
+    constexpr auto ENTRY_POINT_METHOD_NAME = "InitializeScriptEngine"_nc;
+
+    const auto exe_path = get_executable_path();
+    auto assembly_path = exe_path / "RetroEngine.Host.dll";
+
+    InitializeRuntimeHostFn initialize_runtime_host{nullptr};
+
+    if (const auto error_code = native_host_fptr(assembly_path.c_str(), ENTRY_POINT_CLASS_NAME.data(), ENTRY_POINT_METHOD_NAME.data(), UNMANAGEDCALLERSONLY_METHOD, nullptr, std::bit_cast<void**>(&initialize_runtime_host)); error_code != 0) {
+        throw std::runtime_error(std::format("Failed to initialize runtime host! Error code: {}", error_code));
+    }
+
+    const auto exe_path_u16 = exe_path.u16string();
+    if (!initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()))) {
+        throw std::runtime_error("Failed to initialize script engine!");
+    }
 }
 
 load_assembly_and_get_function_pointer_fn DotnetManager::initialize_native_host() const {
@@ -24,7 +47,7 @@ load_assembly_and_get_function_pointer_fn DotnetManager::initialize_native_host(
     auto load_result = loader_.get_runtime_delegate<load_assembly_and_get_function_pointer_fn>(init_context.handle(), hdt_load_assembly_and_get_function_pointer);
 
     if (!load_result.has_value()) {
-        throw new std::runtime_error(std::format("Failed to load assembly and get function pointer! Error code: {}", load_result.error()));
+        throw std::runtime_error(std::format("Failed to load assembly and get function pointer! Error code: {}", load_result.error()));
     }
 
     return load_result.value();

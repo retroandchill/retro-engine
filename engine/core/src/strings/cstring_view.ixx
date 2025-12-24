@@ -44,6 +44,11 @@ namespace retro::core {
             assert(str[N - 1] == '\0');
         }
 
+        template<size_type N>
+        constexpr explicit(false) BasicCStringView(const std::array<T, N> &arr) noexcept : view_{arr.data(), N - 1} {
+            assert(arr.back() == '\0');
+        }
+
         explicit(false) BasicCStringView(const std::basic_string<T> &str) noexcept : view_{str} {
         }
 
@@ -290,6 +295,7 @@ namespace retro::core {
     export using U8CStringView = BasicCStringView<char8_t>;
     export using U16CStringView = BasicCStringView<char16_t>;
     export using U32CStringView = BasicCStringView<char32_t>;
+    export using NCStringView = BasicCStringView<nchar>;
 }
 
 export template<>

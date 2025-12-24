@@ -8,6 +8,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotnet", "dotnet", "{5D20CF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine", "engine\scripting\dotnet\RetroEngine\RetroEngine.csproj", "{4BA23A45-3E04-43C2-A143-7DA1E9D70777}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine.Host", "engine\scripting\dotnet\RetroEngine.Host\RetroEngine.Host.csproj", "{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine.Core", "engine\scripting\dotnet\RetroEngine.Core\RetroEngine.Core.csproj", "{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,11 +21,21 @@ Global
 		{91FCADF3-D27E-4162-9B32-7F4F9E9BBAFE} = {010C7EA8-9ADB-44E9-881F-3B4C0A80A9BC}
 		{5D20CFDB-76EB-40E3-936B-CE8DCB464E8A} = {91FCADF3-D27E-4162-9B32-7F4F9E9BBAFE}
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777} = {5D20CFDB-76EB-40E3-936B-CE8DCB464E8A}
+		{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741} = {5D20CFDB-76EB-40E3-936B-CE8DCB464E8A}
+		{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6} = {5D20CFDB-76EB-40E3-936B-CE8DCB464E8A}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCB7EBA4-90D5-4ACA-A5D8-4AB5970A5741}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A017BAA2-7448-4CE2-AF3C-BB445BD54FD6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

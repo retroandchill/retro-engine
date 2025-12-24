@@ -24,6 +24,12 @@ export using byte = std::byte;
 export using usize = std::size_t;
 export using isize = std::ptrdiff_t;
 
+#ifdef _WIN32
+export using nchar = wchar_t;
+#else
+export using nchar = char;
+#endif
+
 namespace retro::core {
     RETRO_API void delete_me() {
         // TODO: I exist to simply give the library linkage please remove me
