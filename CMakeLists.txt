@@ -49,7 +49,7 @@ add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
             -c "${DOTNET_CONFIGURATION}"
             -p:Platform="Any CPU"
-            -p:RetroBinRoot="${RETRO_BIN_DIR}/"
+            -p:OutputPath="${RETRO_BIN_DIR}/"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         USES_TERMINAL
         COMMENT "Building .NET managed assemblies")
