@@ -8,4 +8,11 @@
         <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(RetroEngineBackend)' == 'Native' 
+                            and '$(RetroEngineNativeOutputDirectory)' != ''">
+        <!-- Only redirect Native builds driven by CMake -->
+        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    </PropertyGroup>
+
 </Project>

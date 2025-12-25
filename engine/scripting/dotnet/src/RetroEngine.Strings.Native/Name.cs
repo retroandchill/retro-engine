@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using DefaultNamespace;
 using MessagePack;
+using RetroEngine.Core;
+using RetroEngine.Strings.Interop;
 using RetroEngine.Strings.Serialization.Json;
 
 namespace RetroEngine.Strings;
@@ -35,6 +37,7 @@ public enum FindName : byte
 /// <threadsafety>
 /// This type is thread-safe due to its immutable nature.
 /// </threadsafety>
+[StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name
@@ -77,7 +80,13 @@ public readonly struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
-        (ComparisonIndex, DisplayStringIndex, Number) = LookupName(name, findType);
+        unsafe
+        {
+            fixed (char* namePtr = name)
+            {
+                this = NameExporter.Lookup(namePtr, name.Length, findType);
+            }
+        }
     }
 
     /// <summary>
@@ -126,7 +135,7 @@ public readonly struct Name
     /// <threadsafety>
     /// This property is thread-safe due to the immutable nature of the <see cref="Name"/> struct.
     /// </threadsafety>
-    public bool IsValid => NameTable.Instance.IsValid(ComparisonIndex, DisplayStringIndex);
+    public bool IsValid => NameExporter.IsValid(this).ToManagedBool();
 
     /// <summary>
     /// Indicates whether the current <see cref="Name"/> instance represents a "none" or null-like state.
@@ -201,7 +210,13 @@ public readonly struct Name
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
         var (number, newLength) = ParseNumber(rhs);
-        return NameTable.Instance.EqualsComparison(lhs.ComparisonIndex, rhs[..newLength]) && number == lhs.Number;
+        unsafe
+        {
+            fixed (char* rhsPtr = rhs)
+            {
+                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool() && number == lhs.Number;
+            }
+        }
     }
 
     /// <summary>
@@ -262,30 +277,23 @@ public readonly struct Name
     /// <inheritdoc />
     public override string ToString()
     {
-        var baseString = NameTable.Instance.GetDisplayString(DisplayStringIndex);
-        return Number != NoNumber ? $"{baseString}_{Number - 1}" : baseString;
+        Span<char> buffer = stackalloc char[1024];
+        int newLength;
+        unsafe
+        {
+            fixed (char* ch = buffer)
+            {
+                newLength = NameExporter.ToString(this, ch, buffer.Length);
+            }
+        }
+        
+        return buffer[..newLength].ToString();
     }
 
     /// <inheritdoc />
     public override int GetHashCode()
     {
         return HashCode.Combine(ComparisonIndex, Number);
-    }
-    
-    private static (uint ComparisonIndex, uint DisplayIndex, int Number) LookupName(
-        ReadOnlySpan<char> value,
-        FindName findType
-    )
-    {
-        if (value.Length == 0)
-            return (0, 0, Name.NoNumber);
-
-        var (internalNumber, newLength) = ParseNumber(value);
-        var newSlice = value[..newLength];
-        var indices = NameTable.Instance.GetOrAddEntry(newSlice, findType);
-        return !indices.IsNone
-            ? (indices.ComparisonIndex, indices.DisplayStringIndex, internalNumber)
-            : (0, 0, Name.NoNumber);
     }
     
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)

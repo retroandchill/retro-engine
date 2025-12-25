@@ -5,6 +5,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RetroEngineVersion>0.1.0</RetroEngineVersion>
+
+        <IsPackable>true</IsPackable>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Include="RetroEngine.Strings.targets" Pack="true" PackagePath="buildTransitive\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Serialization\**\*.cs" />
+    </ItemGroup>
 </Project>

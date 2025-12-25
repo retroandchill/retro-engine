@@ -29,7 +29,7 @@ DotnetManager::DotnetManager() {
     constexpr auto ENTRY_POINT_METHOD_NAME = "InitializeScriptEngine"_nc;
 
     const auto exe_path = get_executable_path();
-    auto assembly_path = exe_path / "RetroEngine.Host.dll";
+    const auto assembly_path = exe_path / "RetroEngine.Host.dll";
 
     InitializeRuntimeHostFn initialize_runtime_host{nullptr};
 

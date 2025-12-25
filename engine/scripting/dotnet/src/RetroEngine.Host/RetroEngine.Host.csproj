@@ -13,4 +13,11 @@
       <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
     </ItemGroup>
 
+    <PropertyGroup Condition="'$(RetroEngineBackend)' == 'Native' 
+                            and '$(RetroEngineNativeOutputDirectory)' != ''">
+        <!-- Only redirect Native builds driven by CMake -->
+        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    </PropertyGroup>
+
 </Project>

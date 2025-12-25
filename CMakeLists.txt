@@ -54,7 +54,7 @@ add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
             -c "${DOTNET_CONFIGURATION}"
             -p:Platform="Any CPU"
-            -p:OutputPath="${RETRO_BIN_DIR}/"
+            -p:RetroEngineNativeOutputDirectory="${RETRO_BIN_DIR}/"
             -p:RetroEngineBackend="Native"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         USES_TERMINAL

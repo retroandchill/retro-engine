@@ -5,6 +5,20 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>RetroEngine.Strings</RootNamespace>
+        <AssemblyName>RetroEngine.Strings</AssemblyName>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\RetroEngine.Strings\Serialization\Json\*.cs">
+            <Link>Serialization\Json\NameJsonConverter.cs</Link>
+        </Compile>
+        <Compile Include="..\RetroEngine.Strings\Serialization\MessagePack\*.cs">
+            <Link>Serialization\MessagePack\NameMessagePackFormatter.cs</Link>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MessagePack" />
+    </ItemGroup>
 
 </Project>
