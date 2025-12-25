@@ -71,6 +71,9 @@ namespace retro::core {
     Name::Name(const std::u16string_view value, const FindType find_type) : Name(lookup_name(value, find_type)) {
     }
 
+    Name::Name(const std::u16string &value, const FindType find_type) : Name(lookup_name(value, find_type)) {
+    }
+
     // NOLINTNEXTLINE
     Name::LookupOutput Name::lookup_name(const std::u16string_view value, const FindType find_type) {
         if (value.empty())

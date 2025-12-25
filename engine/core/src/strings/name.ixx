@@ -162,6 +162,8 @@ namespace retro::core {
 
         explicit(false) Name(std::u16string_view value, FindType find_type = FindType::Add);
 
+        explicit(false) Name(const std::u16string& value, FindType find_type = FindType::Add);
+
     private:
         inline explicit(false) Name(const LookupOutput indices) : comparison_index_(indices.comparison_index), number_(indices.number), display_index_(indices.display_index) {}
 
@@ -182,6 +184,35 @@ namespace retro::core {
             number_ = number;
         }
 
+        constexpr static Name none() {
+            return {};
+        }
+
+        [[nodiscard]] inline bool is_valid() const {
+            return NameTable::instance().is_valid(comparison_index_, display_index_);
+        }
+
+        [[nodiscard]] constexpr bool is_none() const {
+            return comparison_index_ == 0;
+        }
+
+        [[nodiscard]] inline std::u16string to_string() const {
+            return std::u16string{NameTable::instance().get_display_string(display_index_)};
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(const Name& lhs, const Name& rhs) {
+            return lhs.comparison_index_ == rhs.comparison_index_ && lhs.number_ == rhs.number_;
+        }
+
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const Name& lhs, const Name& rhs) {
+            if (const auto cmp = lhs.comparison_index_ <=> rhs.comparison_index_; cmp != std::strong_ordering::equal) return cmp;
+            return lhs.number_ <=> rhs.number_;
+        }
+
+        [[nodiscard]] friend inline bool operator==(const Name& lhs, const std::u16string_view rhs) {
+            return NameTable::instance().equals_comparison(lhs.comparison_index_, rhs);
+        }
+
     private:
         static LookupOutput lookup_name(std::u16string_view value, FindType find_type);
         static std::pair<int32, usize> parse_number(std::u16string_view name);
@@ -191,3 +222,12 @@ namespace retro::core {
         uint32 display_index_ = 0;
     };
 }
+
+export template <>
+struct std::hash<retro::core::Name> {
+    hash() = default;
+
+    constexpr size_t operator()(const retro::core::Name& name) const noexcept {
+        return retro::core::hash_combine(name.comparison_index(), name.number());
+    }
+};
