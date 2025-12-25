@@ -308,14 +308,14 @@ public readonly struct Name
         if (
             digits <= 0
             || digits >= name.Length
-            || name[firstDigit] != '_'
+            || name[firstDigit - 1] != '_'
             || digits > maxDigits
             || digits != 1 && name[firstDigit] == '0'
         )
             return (Name.NoNumber, name.Length);
 
         return int.TryParse(name.Slice(firstDigit, digits), out var number)
-            ? (number, name.Length - (digits + 1))
-            : (Name.NoNumber, name.Length);
+            ? (number + 1, name.Length - (digits + 1))
+            : (NoNumber, name.Length);
     }
 }

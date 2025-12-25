@@ -38,7 +38,7 @@ internal class NameTable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ComputeHashIgnoreCase(ReadOnlySpan<char> span)
+    private static int ComputeHashIgnoreCase(ReadOnlySpan<char> span)
     {
         var hash = 0;
 
@@ -51,7 +51,7 @@ internal class NameTable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ComputeHashCaseSensitive(ReadOnlySpan<char> span)
+    private static int ComputeHashCaseSensitive(ReadOnlySpan<char> span)
     {
         var hash = 0;
 
