@@ -13,6 +13,7 @@
         <!-- Only redirect Native builds driven by CMake -->
         <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
 </Project>
