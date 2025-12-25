@@ -1,0 +1,17 @@
+<Project>
+    <PropertyGroup>
+        <RetroEngineBackend Condition="'$(RetroEngineBackend)' == ''">Managed</RetroEngineBackend>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
+        <PackageReference Include="RetroEngine.Strings.Managed"  Version="$(RetroEngineVersion)" />
+    </ItemGroup>
+
+    <!--
+    Custom: user is responsible for referencing their own backend package
+    or project that implements the same public API.
+    We intentionally do *nothing* here so they’re free to wire it up.
+  -->
+    <PropertyGroup Condition="'$(RetroEngineBackend)' == 'Custom'">
+        <_RetroEngineUsingCustomBackend>true</_RetroEngineUsingCustomBackend>
+    </PropertyGroup>
+</Project>
