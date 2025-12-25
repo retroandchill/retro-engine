@@ -13,7 +13,15 @@ target_sources(retro_core PUBLIC
         src/strings/name.ixx
         src/strings/comparison.ixx)
 
+
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(retro_core PUBLIC fmt::fmt)
+
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
+
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif()

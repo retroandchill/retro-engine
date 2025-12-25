@@ -17,13 +17,21 @@ namespace retro::core {
         Add
     };
 
+    constexpr int32 name_internal_to_external(const int32 x) {
+        return x - 1;
+    }
+
+    constexpr int32 name_external_to_internal(const int32 x) {
+        return x + 1;
+    }
+
     struct NameHashEntry {
         uint32 id = 0;
-        int32 hash = 0;
+        usize hash = 0;
 
         constexpr NameHashEntry() = default;
 
-        constexpr NameHashEntry(const uint32 id, const int32 hash) : id(id), hash(hash) {}
+        constexpr NameHashEntry(const uint32 id, const usize hash) : id(id), hash(hash) {}
 
         [[nodiscard]] constexpr friend bool operator==(const NameHashEntry& a, const NameHashEntry& b) = default;
     };
@@ -59,12 +67,12 @@ namespace retro::core {
         }
     };
 
+    export RETRO_API constexpr std::u16string_view NONE_STRING = u"None";
+
     class RETRO_API NameTable {
         NameTable() = default;
 
     public:
-        static constexpr std::u16string_view NONE = u"None";
-
         static NameTable& instance();
 
         [[nodiscard]] NameIndices get_or_add_entry(std::u16string_view value, FindType find_type);
@@ -79,7 +87,7 @@ namespace retro::core {
         // NOLINTNEXTLINE
         [[nodiscard]] inline std::u16string_view get_display_string(const uint32 display_index) const {
             const auto existing = display_strings_.find(display_index);
-            return existing != display_strings_.end() ? existing->second : NONE;
+            return existing != display_strings_.end() ? existing->second : NONE_STRING;
         }
 
         // NOLINTNEXTLINE
@@ -188,6 +196,7 @@ namespace retro::core {
             return {};
         }
 
+        // NOLINTNEXTLINE
         [[nodiscard]] inline bool is_valid() const {
             return NameTable::instance().is_valid(comparison_index_, display_index_);
         }
@@ -196,9 +205,7 @@ namespace retro::core {
             return comparison_index_ == 0;
         }
 
-        [[nodiscard]] inline std::u16string to_string() const {
-            return std::u16string{NameTable::instance().get_display_string(display_index_)};
-        }
+        [[nodiscard]] std::u16string to_string() const;
 
         [[nodiscard]] friend constexpr bool operator==(const Name& lhs, const Name& rhs) {
             return lhs.comparison_index_ == rhs.comparison_index_ && lhs.number_ == rhs.number_;
@@ -209,9 +216,7 @@ namespace retro::core {
             return lhs.number_ <=> rhs.number_;
         }
 
-        [[nodiscard]] friend inline bool operator==(const Name& lhs, const std::u16string_view rhs) {
-            return NameTable::instance().equals_comparison(lhs.comparison_index_, rhs);
-        }
+        [[nodiscard]] friend bool operator==(const Name& lhs, std::u16string_view rhs);
 
     private:
         static LookupOutput lookup_name(std::u16string_view value, FindType find_type);

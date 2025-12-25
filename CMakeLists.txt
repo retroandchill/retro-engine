@@ -4,6 +4,8 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 
 option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 
+option(BUILD_TESTS "Should the test cases be built as well" ON)
+
 if(NOT RETRO_BUILD_SHARED)
     set(BUILD_SHARED_LIBS OFF)
 
@@ -23,6 +25,9 @@ project(retro_engine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_MODULE_STD ON)
+if (MSVC)
+    add_compile_definitions(_UTF8)
+endif()
 
 set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
 
@@ -53,6 +58,11 @@ add_custom_target(retro_managed ALL
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         USES_TERMINAL
         COMMENT "Building .NET managed assemblies")
+
+if (BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+endif()
 
 add_subdirectory(engine)
 add_subdirectory(game)

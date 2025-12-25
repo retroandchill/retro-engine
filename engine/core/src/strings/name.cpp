@@ -1,6 +1,10 @@
 //
 // Created by fcors on 12/24/2025.
 //
+module;
+
+#include <fmt/xchar.h>
+
 module retro.core.strings;
 
 namespace retro::core {
@@ -75,6 +79,21 @@ namespace retro::core {
     }
 
     // NOLINTNEXTLINE
+    std::u16string Name::to_string() const {
+        const auto baseString = NameTable::instance().get_display_string(display_index_);
+        if (number_ == NAME_NO_NUMBER) {
+            return std::u16string{baseString};
+        }
+
+        return fmt::format(u"{}_{}", baseString, name_internal_to_external(number_));
+    }
+
+    bool operator==(const Name &lhs, const std::u16string_view rhs) {
+        const auto [number, new_length] = Name::parse_number(rhs);
+        return NameTable::instance().equals_comparison(lhs.comparison_index_, rhs.substr(0, new_length)) && number == lhs.number_;
+    }
+
+    // NOLINTNEXTLINE
     Name::LookupOutput Name::lookup_name(const std::u16string_view value, const FindType find_type) {
         if (value.empty())
             return {0, 0, NAME_NO_NUMBER};
@@ -102,9 +121,10 @@ namespace retro::core {
             return {NAME_NO_NUMBER, name.size()};
 
         if (constexpr int MAX_DIGITS = 10;
-            digits <= 0
+            digits <= 0 ||
+            first_digit == 0
             || digits >= name.size()
-            || name[first_digit] != '_'
+            || name[first_digit - 1] != '_'
             || digits > MAX_DIGITS
             || digits != 1 && name[first_digit] == '0'
         )
@@ -123,7 +143,7 @@ namespace retro::core {
         }
 
         return number_is_valid
-            ? std::make_pair(number, name.size() - (digits + 1))
+            ? std::make_pair(name_external_to_internal(number), name.size() - (digits + 1))
             : std::make_pair(NAME_NO_NUMBER, name.size());
     }
 }
