@@ -1,16 +1,13 @@
 {
-  "name": "retro-engine",
-  "version": "0.1.0",
-  "description": "A retro game engine",
-  "dependencies": [
-    {
-      "name": "sdl3",
-      "version>=": "3.2.28"
-    },
-    {
-      "name": "nethost",
-      "version>=": "8.0.3"
-    }
-  ],
-  "builtin-baseline": "de46587b4beaa638743916fe5674825cecfb48b3"
+  "name" : "retro-engine",
+  "version" : "0.1.0",
+  "description" : "A retro game engine",
+  "dependencies" : [ {
+    "name" : "sdl3",
+    "version>=" : "3.2.28"
+  }, {
+    "name" : "nethost",
+    "version>=" : "8.0.3"
+  } ],
+  "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
 }

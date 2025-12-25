@@ -7,3 +7,4 @@ export module retro.core.strings;
 export import :cstring_view;
 export import :concepts;
 export import :literals;
+export import :name;
