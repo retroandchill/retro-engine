@@ -11,14 +11,17 @@ import retro.core;
 import retro.core.strings;
 import retro.platform;
 import retro.platform.filesystem;
+import retro.scripting.binds;
+
+import std;
 
 using namespace retro::scripting;
 using namespace retro::platform::filesystem;
 
-import std;
 
 DotnetManager::DotnetManager() {
-    using InitializeRuntimeHostFn = bool(*)(const char16_t*, int32);
+    using GetFoundFunctionFn = decltype(&BindsManager::get_bound_function);
+    using InitializeRuntimeHostFn = bool(*)(const char16_t*, int32, GetFoundFunctionFn);
 
     auto native_host_fptr = initialize_native_host();
 
@@ -35,7 +38,7 @@ DotnetManager::DotnetManager() {
     }
 
     const auto exe_path_u16 = exe_path.u16string();
-    if (!initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()))) {
+    if (!initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()), &BindsManager::get_bound_function)) {
         throw std::runtime_error("Failed to initialize script engine!");
     }
 }

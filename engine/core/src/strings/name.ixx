@@ -216,7 +216,7 @@ namespace retro::core {
             return lhs.number_ <=> rhs.number_;
         }
 
-        [[nodiscard]] friend bool operator==(const Name& lhs, std::u16string_view rhs);
+        [[nodiscard]] friend RETRO_API bool operator==(const Name& lhs, std::u16string_view rhs);
 
     private:
         static LookupOutput lookup_name(std::u16string_view value, FindType find_type);
