@@ -78,8 +78,13 @@ namespace retro::core {
     Name::Name(const std::u16string &value, const FindType find_type) : Name(lookup_name(value, find_type)) {
     }
 
+    Name::Name(const char16_t *value, const FindType find_type) : Name(lookup_name(std::u16string_view{value}, find_type)) {
+    }
+
     // NOLINTNEXTLINE
     std::u16string Name::to_string() const {
+        // ReSharper disable once CppDFAUnreadVariable
+        // ReSharper disable once CppDFAUnusedValue
         const auto baseString = NameTable::instance().get_display_string(display_index_);
         if (number_ == NAME_NO_NUMBER) {
             return std::u16string{baseString};
@@ -94,7 +99,12 @@ namespace retro::core {
     }
 
     // NOLINTNEXTLINE
-    Name::LookupOutput Name::lookup_name(const std::u16string_view value, const FindType find_type) {
+    Name::LookupOutput Name::lookup_name(std::u16string_view value, const FindType find_type) {
+        // If the name is too long, just truncate it
+        if (value.size() > MAX_NAME_LENGTH) {
+            value = value.substr(0, MAX_NAME_LENGTH);
+        }
+
         if (value.empty())
             return {0, 0, NAME_NO_NUMBER};
 

@@ -10,9 +10,9 @@ namespace retro::scripting {
     }
 
     // NOLINTNEXTLINE
-    void BindsManager::register_exported_function(const Name module_name, const ExportedFunction &ExportedFunction) {
+    void BindsManager::register_exported_function(const Name module_name, const ExportedFunction &exported_function) {
         auto &instance = BindsManager::instance();
-        instance.exported_functions_[module_name].push_back(ExportedFunction);
+        instance.exported_functions_[module_name].push_back(exported_function);
     }
 
     // NOLINTNEXTLINE

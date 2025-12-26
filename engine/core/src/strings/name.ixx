@@ -68,6 +68,7 @@ namespace retro::core {
     };
 
     export RETRO_API constexpr std::u16string_view NONE_STRING = u"None";
+    export RETRO_API constexpr usize MAX_NAME_LENGTH = 1024;
 
     class RETRO_API NameTable {
         NameTable() = default;
@@ -171,6 +172,8 @@ namespace retro::core {
         explicit(false) Name(std::u16string_view value, FindType find_type = FindType::Add);
 
         explicit(false) Name(const std::u16string& value, FindType find_type = FindType::Add);
+
+        explicit(false) Name(const char16_t* value, FindType find_type = FindType::Add);
 
     private:
         inline explicit(false) Name(const LookupOutput indices) : comparison_index_(indices.comparison_index), number_(indices.number), display_index_(indices.display_index) {}

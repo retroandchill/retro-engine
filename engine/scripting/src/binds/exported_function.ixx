@@ -45,15 +45,17 @@ namespace retro::scripting {
         {FunctionSizeData<T>::value} -> std::convertible_to<usize>;
     };
 
+    template <SizedFunction F>
+    constexpr usize FunctionSize = FunctionSizeData<F>::value;
+
     export struct ExportedFunction {
         Name name;
         void* function_ptr = nullptr;
         usize function_size = 0;
 
         template <SizedFunction F>
-        explicit ExportedFunction(const Name module_name, const Name function_name, F function_ptr): ExportedFunction(module_name, function_name, function_ptr, FunctionSizeData<F>::value) {}
+        explicit ExportedFunction(const Name function_name, F function_ptr)  : name(function_name), function_ptr(function_ptr), function_size(FunctionSize<F>) {
 
-    private:
-        RETRO_API ExportedFunction(Name module_name, Name function_name, void* function_ptr, usize function_size);
+        }
     };
 }

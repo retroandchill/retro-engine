@@ -12,6 +12,7 @@ import retro.core.strings;
 import retro.platform;
 import retro.platform.filesystem;
 import retro.scripting.binds;
+import retro.scripting.interop;
 
 import std;
 
@@ -23,7 +24,9 @@ DotnetManager::DotnetManager() {
     using GetFoundFunctionFn = decltype(&BindsManager::get_bound_function);
     using InitializeRuntimeHostFn = bool(*)(const char16_t*, int32, GetFoundFunctionFn);
 
-    auto native_host_fptr = initialize_native_host();
+    register_all_exports();
+
+    const auto native_host_fptr = initialize_native_host();
 
     constexpr auto ENTRY_POINT_CLASS_NAME = "RetroEngine.Host.Main, RetroEngine.Host"_nc;
     constexpr auto ENTRY_POINT_METHOD_NAME = "InitializeScriptEngine"_nc;
