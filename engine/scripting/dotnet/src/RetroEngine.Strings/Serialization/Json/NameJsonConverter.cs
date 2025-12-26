@@ -6,7 +6,11 @@ namespace RetroEngine.Strings.Serialization.Json;
 public sealed class NameJsonConverter : JsonConverter<Name>
 {
     /// <inheritdoc />
-    public override Name Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Name Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options
+    )
     {
         try
         {
@@ -22,7 +26,11 @@ public sealed class NameJsonConverter : JsonConverter<Name>
     }
 
     /// <inheritdoc />
-    public override Name ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Name ReadAsPropertyName(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options
+    )
     {
         return Read(ref reader, typeToConvert, options);
     }
@@ -33,7 +41,11 @@ public sealed class NameJsonConverter : JsonConverter<Name>
         writer.WriteStringValue(value.ToString());
     }
 
-    public override void WriteAsPropertyName(Utf8JsonWriter writer, Name value, JsonSerializerOptions options)
+    public override void WriteAsPropertyName(
+        Utf8JsonWriter writer,
+        Name value,
+        JsonSerializerOptions options
+    )
     {
         writer.WritePropertyName(value.ToString());
     }

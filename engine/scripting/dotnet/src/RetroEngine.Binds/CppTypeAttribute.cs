@@ -4,8 +4,8 @@
 public class CppTypeAttribute : Attribute
 {
     public string? TypeName { get; init; }
-    
+
     public bool UseReference { get; init; } = false;
-    
+
     public bool IsConst { get; init; } = false;
 }

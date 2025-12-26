@@ -38,8 +38,7 @@ public enum FindName : byte
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name
-    : 
-        IEquatable<Name>,
+    : IEquatable<Name>,
         IEquatable<string>,
         IEquatable<ReadOnlySpan<char>>,
         IComparable<Name>,
@@ -201,7 +200,8 @@ public readonly struct Name
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
         var (number, newLength) = ParseNumber(rhs);
-        return NameTable.Instance.EqualsComparison(lhs.ComparisonIndex, rhs[..newLength]) && number == lhs.Number;
+        return NameTable.Instance.EqualsComparison(lhs.ComparisonIndex, rhs[..newLength])
+            && number == lhs.Number;
     }
 
     /// <summary>
@@ -271,7 +271,7 @@ public readonly struct Name
     {
         return HashCode.Combine(ComparisonIndex, Number);
     }
-    
+
     private static (uint ComparisonIndex, uint DisplayIndex, int Number) LookupName(
         ReadOnlySpan<char> value,
         FindName findType
@@ -287,7 +287,7 @@ public readonly struct Name
             ? (indices.ComparisonIndex, indices.DisplayStringIndex, internalNumber)
             : (0, 0, Name.NoNumber);
     }
-    
+
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
     {
         var digits = 0;

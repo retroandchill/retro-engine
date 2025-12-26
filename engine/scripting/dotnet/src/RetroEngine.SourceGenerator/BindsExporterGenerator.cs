@@ -21,38 +21,46 @@ public class BindsExporterGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true
     );
-    
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var exportProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+        var exportProvider = context
+            .SyntaxProvider.ForAttributeWithMetadataName(
                 typeof(BindExportAttribute).FullName!,
                 (n, _) => n is ClassDeclarationSyntax,
                 (ctx, _) =>
                 {
                     var type = (TypeDeclarationSyntax)ctx.TargetNode;
                     return ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol;
-                })
+                }
+            )
             .Where(type => type != null);
-        
+
         context.RegisterSourceOutput(exportProvider, ProcessType!);
     }
 
     private static void ProcessType(SourceProductionContext context, INamedTypeSymbol type)
     {
         var cppNamespace = type.GetBindExportInfo().CppNamespace;
-        
+
         var isValid = true;
         if (!type.IsStatic)
         {
-            context.ReportDiagnostic(Diagnostic.Create(ExporterMustBeStatic, type.Locations[0], type.Name));
+            context.ReportDiagnostic(
+                Diagnostic.Create(ExporterMustBeStatic, type.Locations[0], type.Name)
+            );
             isValid = false;
         }
 
-        if (!isValid) return;
-        
+        if (!isValid)
+            return;
+
         var bindMethodBuilder = ImmutableArray.CreateBuilder<BindMethodInfo>();
-        foreach (var method in type.GetMembers().OfType<IMethodSymbol>()
-                     .Where(m => m.DeclaredAccessibility == Accessibility.Public))
+        foreach (
+            var method in type.GetMembers()
+                .OfType<IMethodSymbol>()
+                .Where(m => m.DeclaredAccessibility == Accessibility.Public)
+        )
         {
             bindMethodBuilder.Add(CreateBindMethodInfo(method));
         }
@@ -64,75 +72,87 @@ public class BindsExporterGenerator : IIncrementalGenerator
             ManagedNamespace = type.ContainingNamespace.ToDisplayString(),
             CppNamespace = cppNamespace,
             Name = type.Name,
-            Methods = bindMethods
+            Methods = bindMethods,
         };
 
         var handlebars = Handlebars.Create();
         handlebars.Configuration.TextEncoder = null;
-        handlebars.RegisterHelper("DelegateSize", (writer, ctx, _) =>
-        {
-            if (ctx.Value is not BindMethodInfo bindMethodInfo)
+        handlebars.RegisterHelper(
+            "DelegateSize",
+            (writer, ctx, _) =>
             {
-                return;
-            }
-            
-            var parameters = new List<string>(bindMethodInfo.Parameters.Length + 1);
-            if (!bindMethodInfo.ReturnsVoid)
-            {
-                parameters.Add(bindMethodInfo.ManagedReturnType);
-            }
+                if (ctx.Value is not BindMethodInfo bindMethodInfo)
+                {
+                    return;
+                }
 
-            parameters.AddRange(bindMethodInfo.Parameters.Select(parameter => parameter.ManagedType));
-            
-            var fullString = string.Join(" + ", parameters.Select(p => $"sizeof({p})"));
-            writer.Write(fullString);
-        });
-        
-        handlebars.RegisterHelper("MethodParameters", (writer, ctx, _) =>
-        {
-            if (ctx.Value is not BindMethodInfo bindMethodInfo)
-            {
-                return;
+                var parameters = new List<string>(bindMethodInfo.Parameters.Length + 1);
+                if (!bindMethodInfo.ReturnsVoid)
+                {
+                    parameters.Add(bindMethodInfo.ManagedReturnType);
+                }
+
+                parameters.AddRange(
+                    bindMethodInfo.Parameters.Select(parameter => parameter.ManagedType)
+                );
+
+                var fullString = string.Join(" + ", parameters.Select(p => $"sizeof({p})"));
+                writer.Write(fullString);
             }
-            
-            var parameters = string.Join(", ", bindMethodInfo.Parameters.Select(parameter => $"{parameter.ManagedType} {parameter.Name}"));
-            writer.Write(parameters);
-        });
-        
-        handlebars.RegisterHelper("ParameterNames", (writer, ctx, _) =>
-        {
-            if (ctx.Value is not BindMethodInfo bindMethodInfo)
+        );
+
+        handlebars.RegisterHelper(
+            "MethodParameters",
+            (writer, ctx, _) =>
             {
-                return;
+                if (ctx.Value is not BindMethodInfo bindMethodInfo)
+                {
+                    return;
+                }
+
+                var parameters = string.Join(
+                    ", ",
+                    bindMethodInfo.Parameters.Select(parameter =>
+                        $"{parameter.ManagedType} {parameter.Name}"
+                    )
+                );
+                writer.Write(parameters);
             }
-            
-            var parameters = string.Join(", ", bindMethodInfo.Parameters.Select(parameter => $"{parameter.Name}"));
-            writer.Write(parameters);
-        });
-        
+        );
+
+        handlebars.RegisterHelper(
+            "ParameterNames",
+            (writer, ctx, _) =>
+            {
+                if (ctx.Value is not BindMethodInfo bindMethodInfo)
+                {
+                    return;
+                }
+
+                var parameters = string.Join(
+                    ", ",
+                    bindMethodInfo.Parameters.Select(parameter => $"{parameter.Name}")
+                );
+                writer.Write(parameters);
+            }
+        );
+
         var template = handlebars.Compile(SourceTemplates.BindsExporterTemplate);
         context.AddSource($"{type.Name}.generated.h", template(exporterClassInfo));
-        
+
         var json = JsonSerializer.Serialize(
             exporterClassInfo,
-            new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-        
-        var escapedJson = json
-            .Replace("\\", "\\\\")
+            new JsonSerializerOptions { WriteIndented = true }
+        );
+
+        var escapedJson = json.Replace("\\", "\\\\")
             .Replace("\"", "\\\"")
             .Replace("\r", "\\r")
             .Replace("\n", "\\n");
-        
+
         var metadataTemplate = handlebars.Compile(SourceTemplates.BindsMetadataTemplate);
-        var metadataParameters = new
-        {
-            type.Name,
-            EscapedJson = escapedJson
-        };
-        
+        var metadataParameters = new { type.Name, EscapedJson = escapedJson };
+
         context.AddSource($"{type.Name}.binds.metadata.g.cs", metadataTemplate(metadataParameters));
     }
 
@@ -144,7 +164,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
             ManagedReturnType = method.ReturnType.ToDisplayString(),
             CppReturnType = GetCppReturnType(method),
             ReturnsVoid = method.ReturnsVoid,
-            Parameters = [..method.Parameters.Select(GetBindMethodParameter)]
+            Parameters = [.. method.Parameters.Select(GetBindMethodParameter)],
         };
     }
 
@@ -157,7 +177,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         var hasAttr = method.TryGetCppTypeInfoOnReturnValue(out var info);
         var isByRef = method.ReturnsByRef || method.ReturnsByRefReadonly;
         var isReadOnlyByRef = method.ReturnsByRefReadonly;
-        
+
         return InferCppType(
             method.ReturnType,
             isByRef,
@@ -174,7 +194,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         {
             Name = parameter.Name,
             ManagedType = GetManagedParameterType(parameter),
-            CppType = GetCppParameterType(parameter)
+            CppType = GetCppParameterType(parameter),
         };
     }
 
@@ -184,13 +204,13 @@ public class BindsExporterGenerator : IIncrementalGenerator
         return parameter.RefKind switch
         {
             RefKind.RefReadOnlyParameter => $"ref readonly {baseType}",
-            RefKind.Ref         => $"ref {baseType}",
-            RefKind.Out         => $"out {baseType}",
-            RefKind.In         => $"in {baseType}",
-            _                   => baseType
+            RefKind.Ref => $"ref {baseType}",
+            RefKind.Out => $"out {baseType}",
+            RefKind.In => $"in {baseType}",
+            _ => baseType,
         };
     }
-    
+
     private static string GetCppParameterType(IParameterSymbol parameter)
     {
         var hasAttr = false;
@@ -198,7 +218,8 @@ public class BindsExporterGenerator : IIncrementalGenerator
         // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
         foreach (var attributeData in parameter.GetAttributes())
         {
-            if (!attributeData.TryGetCppTypeInfo(out info)) continue;
+            if (!attributeData.TryGetCppTypeInfo(out info))
+                continue;
             hasAttr = true;
             break;
         }
@@ -223,7 +244,8 @@ public class BindsExporterGenerator : IIncrementalGenerator
         bool isReadOnlyByRef,
         string? explicitName,
         bool isConstFromAttr,
-        bool useReferenceFromAttr)
+        bool useReferenceFromAttr
+    )
     {
         var hasExplicitName = !string.IsNullOrWhiteSpace(explicitName);
 
@@ -235,11 +257,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
                 ? explicitName!
                 : InferCppBaseType(pointerTypeSymbol.PointedAtType);
 
-            return BuildPointerLikeType(
-                baseTypeName,
-                isConstFromAttr,
-                useReferenceFromAttr
-            );
+            return BuildPointerLikeType(baseTypeName, isConstFromAttr, useReferenceFromAttr);
         }
 
         if (typeSymbol.SpecialType == SpecialType.System_IntPtr)
@@ -248,17 +266,11 @@ public class BindsExporterGenerator : IIncrementalGenerator
             // but TypeName + UseReference override that.
             var baseTypeName = hasExplicitName ? explicitName! : "void";
 
-            return BuildPointerLikeType(
-                baseTypeName,
-                isConstFromAttr,
-                useReferenceFromAttr
-            );
+            return BuildPointerLikeType(baseTypeName, isConstFromAttr, useReferenceFromAttr);
         }
 
         // Non-pointer types: apply ref / const-ref rules
-        var valueTypeName = hasExplicitName
-            ? explicitName!
-            : InferCppBaseType(typeSymbol);
+        var valueTypeName = hasExplicitName ? explicitName! : InferCppBaseType(typeSymbol);
 
         if (!isByRef)
         {
@@ -277,7 +289,8 @@ public class BindsExporterGenerator : IIncrementalGenerator
     private static string BuildPointerLikeType(
         string baseTypeName,
         bool isConstFromAttr,
-        bool useReferenceFromAttr)
+        bool useReferenceFromAttr
+    )
     {
         // If UseReference is true for a pointer-like type,
         // we turn it into a reference instead of a pointer.
@@ -294,19 +307,19 @@ public class BindsExporterGenerator : IIncrementalGenerator
     {
         return typeSymbol.SpecialType switch
         {
-            SpecialType.System_Char   => "char16_t",
-            SpecialType.System_SByte  => "int8",
-            SpecialType.System_Int16  => "int16",
-            SpecialType.System_Int32  => "int32",
-            SpecialType.System_Int64  => "int64",
-            SpecialType.System_Byte   => "uint8",
+            SpecialType.System_Char => "char16_t",
+            SpecialType.System_SByte => "int8",
+            SpecialType.System_Int16 => "int16",
+            SpecialType.System_Int32 => "int32",
+            SpecialType.System_Int64 => "int64",
+            SpecialType.System_Byte => "uint8",
             SpecialType.System_UInt16 => "uint16",
             SpecialType.System_UInt32 => "uint32",
             SpecialType.System_UInt64 => "uint64",
             SpecialType.System_Single => "float",
             SpecialType.System_Double => "double",
             // IntPtr is handled in InferCppType as pointer-like.
-            _                         => GetCppTypeNameForNonSpecialType(typeSymbol)
+            _ => GetCppTypeNameForNonSpecialType(typeSymbol),
         };
     }
 
@@ -318,7 +331,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
             "RetroEngine.Core.NativeBool" => "bool",
             "RetroEngine.Strings.Name" => "retro::Name",
             "RetroEngine.Strings.FindName" => "retro::FindType",
-            _ => throw new InvalidOperationException($"Cannot infer cpp type for {fullName}")
+            _ => throw new InvalidOperationException($"Cannot infer cpp type for {fullName}"),
         };
     }
 }

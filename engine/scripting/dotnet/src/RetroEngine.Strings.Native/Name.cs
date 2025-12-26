@@ -41,8 +41,7 @@ public enum FindName : byte
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name
-    : 
-        IEquatable<Name>,
+    : IEquatable<Name>,
         IEquatable<string>,
         IEquatable<ReadOnlySpan<char>>,
         IComparable<Name>,
@@ -214,7 +213,8 @@ public readonly struct Name
         {
             fixed (char* rhsPtr = rhs)
             {
-                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool() && number == lhs.Number;
+                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool()
+                    && number == lhs.Number;
             }
         }
     }
@@ -286,7 +286,7 @@ public readonly struct Name
                 newLength = NameExporter.ToString(this, ch, buffer.Length);
             }
         }
-        
+
         return buffer[..newLength].ToString();
     }
 
@@ -295,7 +295,7 @@ public readonly struct Name
     {
         return HashCode.Combine(ComparisonIndex, Number);
     }
-    
+
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
     {
         var digits = 0;

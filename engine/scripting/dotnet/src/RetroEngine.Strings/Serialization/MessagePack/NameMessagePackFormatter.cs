@@ -6,7 +6,11 @@ namespace DefaultNamespace;
 
 public class NameMessagePackFormatter : IMessagePackFormatter<Name>
 {
-    public void Serialize(ref MessagePackWriter writer, Name value, MessagePackSerializerOptions options)
+    public void Serialize(
+        ref MessagePackWriter writer,
+        Name value,
+        MessagePackSerializerOptions options
+    )
     {
         writer.Write(value.ToString());
     }

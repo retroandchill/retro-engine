@@ -7,12 +7,18 @@ namespace RetroEngine.Host;
 public static class Main
 {
     [UnmanagedCallersOnly]
-    public static unsafe NativeBool InitializeScriptEngine(char* workingDirectoryPath, int workingDirectoryPathLength, IntPtr bindsCallbacks)
+    public static unsafe NativeBool InitializeScriptEngine(
+        char* workingDirectoryPath,
+        int workingDirectoryPathLength,
+        IntPtr bindsCallbacks
+    )
     {
         try
         {
-            AppDomain.CurrentDomain.SetData("APP_CONTEXT_BASE_DIRECTORY",
-                new ReadOnlySpan<char>(workingDirectoryPath, workingDirectoryPathLength).ToString());
+            AppDomain.CurrentDomain.SetData(
+                "APP_CONTEXT_BASE_DIRECTORY",
+                new ReadOnlySpan<char>(workingDirectoryPath, workingDirectoryPathLength).ToString()
+            );
 
             Console.WriteLine("Script engine initialized successfully.");
             BindsManager.Initialize(bindsCallbacks);

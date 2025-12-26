@@ -1,24 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>14</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
-      <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
-    </ItemGroup>
-
-    <PropertyGroup Condition="'$(RetroEngineBackend)' == 'Native' 
-                            and '$(RetroEngineNativeOutputDirectory)' != ''">
-        <!-- Only redirect Native builds driven by CMake -->
-        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    </PropertyGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
+    <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+  </ItemGroup>
+  <PropertyGroup
+    Condition="'$(RetroEngineBackend)' == 'Native' 
+                            and '$(RetroEngineNativeOutputDirectory)' != ''"
+  >
+    <!-- Only redirect Native builds driven by CMake -->
+    <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
 </Project>

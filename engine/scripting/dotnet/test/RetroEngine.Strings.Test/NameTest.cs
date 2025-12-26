@@ -57,7 +57,6 @@ public class NameTest
             Assert.That(n.Number, Is.EqualTo(43));
         }
 
-
         using (Assert.EnterMultipleScope())
         {
             // Stored base name should be with the _42 suffix

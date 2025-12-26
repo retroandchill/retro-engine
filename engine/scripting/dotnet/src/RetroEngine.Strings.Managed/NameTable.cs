@@ -17,15 +17,17 @@ internal class NameTable
     private const int BucketCount = 1024;
     private const int BucketMask = BucketCount - 1;
 
-    private readonly ConcurrentBag<NameHashEntry>[] _comparisonBuckets = new ConcurrentBag<NameHashEntry>[BucketCount];
+    private readonly ConcurrentBag<NameHashEntry>[] _comparisonBuckets =
+        new ConcurrentBag<NameHashEntry>[BucketCount];
     private readonly ConcurrentDictionary<uint, string> _comparisonStrings = new();
 
-    private readonly ConcurrentBag<NameHashEntry>[] _displayBuckets = new ConcurrentBag<NameHashEntry>[BucketCount];
+    private readonly ConcurrentBag<NameHashEntry>[] _displayBuckets =
+        new ConcurrentBag<NameHashEntry>[BucketCount];
     private readonly ConcurrentDictionary<uint, string> _displayStrings = new();
 
     private uint _nextComparisonId = 1;
     private uint _nextDisplayId = 1;
-    
+
     public static readonly NameTable Instance = new();
 
     private NameTable()
@@ -63,7 +65,11 @@ internal class NameTable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool SpanEqualsString(ReadOnlySpan<char> span, string str, bool caseSensitive = false)
+    private static bool SpanEqualsString(
+        ReadOnlySpan<char> span,
+        string str,
+        bool caseSensitive = false
+    )
     {
         if (span.Length != str.Length)
             return false;
@@ -173,14 +179,16 @@ internal class NameTable
             return false;
         }
 
-        return _comparisonStrings.ContainsKey(comparisonId) && _displayStrings.ContainsKey(displayId);
+        return _comparisonStrings.ContainsKey(comparisonId)
+            && _displayStrings.ContainsKey(displayId);
     }
 
     /// <summary>
     /// Get display string for a display id (case-preserving).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string GetDisplayString(uint displayId) => _displayStrings.GetValueOrDefault(displayId, "None");
+    public string GetDisplayString(uint displayId) =>
+        _displayStrings.GetValueOrDefault(displayId, "None");
 
     /// <summary>
     /// Compare comparison id against a span, case-insensitive.
