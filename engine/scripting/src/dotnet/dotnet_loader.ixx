@@ -7,11 +7,11 @@ module;
 
 #include <hostfxr.h>
 
-export module retro.scripting.dotnet:loader;
+export module retro.scripting:dotnet.loader;
 
 import std;
 import retro.core;
-import retro.platform.loading;
+import retro.platform;
 
 namespace retro {
     export class DotnetLoader;

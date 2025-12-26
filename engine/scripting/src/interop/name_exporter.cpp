@@ -1,13 +1,7 @@
 //
 // Created by fcors on 12/25/2025.
 //
-module;
-
-#include "retro/core/exports.h"
-
-module retro.scripting.interop;
-
-import retro.scripting.binds;
+module retro.scripting;
 
 using retro::Name;
 using retro::FindType;

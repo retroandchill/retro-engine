@@ -9,11 +9,13 @@ endif()
 
 target_sources(retro_platform PUBLIC
         FILE_SET CXX_MODULES FILES
+        src/index.ixx
         src/window.ixx
         src/platform.ixx
-        src/loading/loading.ixx
+        src/loading/index.ixx
         src/loading/shared_library.ixx
-        src/filesystem/filesystem.ixx)
+        src/filesystem/filesystem.ixx
+        src/filesystem/index.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(retro_platform PUBLIC

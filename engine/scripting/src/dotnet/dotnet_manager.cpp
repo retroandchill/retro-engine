@@ -5,13 +5,11 @@ module;
 
 #include <coreclr_delegates.h>
 
-module retro.scripting.dotnet;
+module retro.scripting;
 
 import retro.core;
 import retro.platform;
-import retro.platform.filesystem;
-import retro.scripting.binds;
-import retro.scripting.interop;
+import retro.scripting;
 
 import std;
 

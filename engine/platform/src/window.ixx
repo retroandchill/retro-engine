@@ -4,11 +4,11 @@
 module;
 #include <SDL3/SDL.h>
 
-export module retro.platform.window;
+export module retro.platform:window;
 
 import std;
 import retro.core;
-import retro.platform;
+import :platform;
 
 namespace retro {
     struct WindowDeleter {

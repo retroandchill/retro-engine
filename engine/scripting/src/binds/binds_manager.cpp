@@ -1,7 +1,7 @@
 //
 // Created by fcors on 12/25/2025.
 //
-module retro.scripting.binds;
+module retro.scripting;
 
 namespace retro {
     BindsManager &BindsManager::instance() {

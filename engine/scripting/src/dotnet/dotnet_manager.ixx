@@ -6,9 +6,9 @@ module;
 #include "retro/core/exports.h"
 #include <coreclr_delegates.h>
 
-export module retro.scripting.dotnet:manager;
+export module retro.scripting:dotnet.manager;
 
-import :loader;
+import :dotnet.loader;
 
 namespace retro {
     export class RETRO_API DotnetManager {

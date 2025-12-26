@@ -6,7 +6,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.platform;
+export module retro.platform:platform;
 
 import std;
 

@@ -4,7 +4,7 @@
 module;
 #include "retro/core/exports.h"
 
-export module retro.platform.filesystem;
+export module retro.platform:filesystem.utils;
 
 import std;
 

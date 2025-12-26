@@ -6,13 +6,12 @@ module;
 #include "retro/core/exports.h"
 #include <cassert>
 
-export module retro.runtime.engine;
+export module retro.runtime:engine;
 
 import std;
 import retro.core;
 import retro.platform;
-import retro.platform.window;
-import retro.scripting.dotnet;
+import retro.scripting;
 
 namespace retro {
     export class RETRO_API Engine {

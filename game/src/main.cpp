@@ -4,7 +4,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL_main.h>
 
-import retro.runtime.engine;
+import retro.runtime;
 import std;
 
 using namespace retro;

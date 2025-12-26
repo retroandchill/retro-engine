@@ -5,7 +5,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.scripting.binds:binds_manager;
+export module retro.scripting:binds_manager;
 
 import std;
 import retro.core;

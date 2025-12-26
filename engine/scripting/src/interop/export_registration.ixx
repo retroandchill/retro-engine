@@ -5,7 +5,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.scripting.interop;
+export module retro.scripting:interop;
 
 export import :name_exporter;
 

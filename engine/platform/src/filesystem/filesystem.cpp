@@ -5,7 +5,7 @@ module;
 
 #include <SDL3/SDL_filesystem.h>
 
-module retro.platform.filesystem;
+module retro.platform;
 
 namespace retro::filesystem {
     std::filesystem::path get_executable_path() {

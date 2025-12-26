@@ -5,7 +5,7 @@ module;
 
 #include <nethost.h>
 
-module retro.scripting.dotnet;
+module retro.scripting;
 
 using namespace retro;
 

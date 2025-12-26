@@ -5,7 +5,9 @@ module;
 
 #include <SDL3/SDL.h>
 
-module retro.platform.loading;
+module retro.platform;
+
+import std;
 
 
 using namespace retro;

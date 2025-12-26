@@ -7,7 +7,8 @@ endif()
 
 target_sources(retro_runtime PUBLIC
         FILE_SET CXX_MODULES FILES
-        src/engine.ixx)
+        src/engine.ixx
+        src/index.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(retro_runtime PUBLIC
