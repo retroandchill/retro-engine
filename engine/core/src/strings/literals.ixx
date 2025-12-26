@@ -2,12 +2,12 @@
 // Created by fcors on 12/23/2025.
 //
 
-export module retro.core:literals;
+export module retro.core:strings.literals;
 
 import std;
 import :defines;
-import :concepts;
-import :cstring_view;
+import :strings.concepts;
+import :strings.cstring_view;
 
 namespace retro {
     template<std::size_t N>

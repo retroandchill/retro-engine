@@ -6,7 +6,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.platform:shared_library;
+export module retro.platform:loading.shared_library;
 
 import std;
 import retro.core;

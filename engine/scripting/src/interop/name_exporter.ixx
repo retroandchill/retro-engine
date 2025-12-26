@@ -1,7 +1,7 @@
 //
 // Created by fcors on 12/25/2025.
 //
-export module retro.scripting:name_exporter;
+export module retro.scripting:interop.name_exporter;
 
 import std;
 import retro.core;

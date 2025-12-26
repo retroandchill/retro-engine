@@ -5,12 +5,12 @@ module;
 
 #include <cassert>
 
-export module retro.core:cstring_view;
+export module retro.core:strings.cstring_view;
 
 import std;
 import :defines;
 
-import :concepts;
+import :strings.concepts;
 
 namespace retro {
     /**

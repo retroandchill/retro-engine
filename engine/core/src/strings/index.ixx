@@ -4,7 +4,7 @@
 
 export module retro.core:strings;
 
-export import :cstring_view;
-export import :concepts;
-export import :literals;
-export import :name;
+export import :strings.cstring_view;
+export import :strings.concepts;
+export import :strings.literals;
+export import :strings.name;

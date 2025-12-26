@@ -4,5 +4,5 @@
 
 export module retro.scripting:binds;
 
-export import :binds_manager;
-export import :exported_function;
+export import :binds.binds_manager;
+export import :binds.exported_function;

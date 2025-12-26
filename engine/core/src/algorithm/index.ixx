@@ -4,4 +4,4 @@
 
 export module retro.core:algorithm;
 
-export import :hashing;
+export import :algorithm.hashing;

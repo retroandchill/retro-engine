@@ -2,7 +2,7 @@
 // Created by fcors on 12/24/2025.
 //
 
-export module retro.core:comparison;
+export module retro.core:strings.comparison;
 
 import :defines;
 

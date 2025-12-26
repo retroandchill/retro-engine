@@ -2,7 +2,7 @@
 // Created by fcors on 12/25/2025.
 //
 
-export module retro.core:ref_counted_ptr;
+export module retro.core:memory.ref_counted_ptr;
 
 import :strings;
 import :defines;

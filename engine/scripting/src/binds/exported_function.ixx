@@ -1,7 +1,7 @@
 //
 // Created by fcors on 12/25/2025.
 //
-export module retro.scripting:exported_function;
+export module retro.scripting:binds.exported_function;
 
 import std;
 import retro.core;

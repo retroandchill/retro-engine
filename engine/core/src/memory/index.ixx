@@ -4,4 +4,4 @@
 
 export module retro.core:memory;
 
-export import :ref_counted_ptr;
+export import :memory.ref_counted_ptr;

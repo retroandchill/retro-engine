@@ -4,4 +4,4 @@
 
 export module retro.platform:loading;
 
-export import :shared_library;
+export import :loading.shared_library;

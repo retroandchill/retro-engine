@@ -5,12 +5,12 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core:name;
+export module retro.core:strings.name;
 
 import :defines;
 import :algorithm;
-import :comparison;
-import :concepts;
+import :strings.comparison;
+import :strings.concepts;
 
 namespace retro {
     export enum class FindType : uint8 {

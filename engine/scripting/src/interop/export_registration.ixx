@@ -7,7 +7,7 @@ module;
 
 export module retro.scripting:interop;
 
-export import :name_exporter;
+export import :interop.name_exporter;
 
 namespace retro {
     export RETRO_API void register_all_exports();
