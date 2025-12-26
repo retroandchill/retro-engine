@@ -1,5 +1,6 @@
 add_library(retro_core SHARED
-        src/strings/name.cpp)
+        src/strings/name.cpp
+)
 
 target_include_directories(retro_core PUBLIC include)
 
@@ -11,7 +12,9 @@ target_sources(retro_core PUBLIC
         src/strings/cstring_view.ixx
         src/strings/literals.ixx
         src/strings/name.ixx
-        src/strings/comparison.ixx)
+        src/strings/comparison.ixx
+        src/memory/memory.ixx
+        src/memory/ref_counted_ptr.ixx)
 
 
 find_package(fmt CONFIG REQUIRED)
