@@ -7,7 +7,7 @@ module;
 
 module retro.platform.filesystem;
 
-namespace retro::platform::filesystem {
+namespace retro::filesystem {
     std::filesystem::path get_executable_path() {
         auto *basePath = SDL_GetBasePath();
         return std::filesystem::path{basePath};

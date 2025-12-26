@@ -12,7 +12,7 @@ import retro.core;
 
 import :concepts;
 
-namespace retro::core {
+namespace retro {
     /**
      * @brief Encapsulates a view of a C-style string or a standard library string
      * while ensuring it is null-terminated.
@@ -299,46 +299,46 @@ namespace retro::core {
 }
 
 export template<>
-struct std::hash<retro::core::CStringView> {
+struct std::hash<retro::CStringView> {
     hash() = default;
 
-    [[nodiscard]] inline size_t operator()(const retro::core::CStringView &view) const noexcept {
+    [[nodiscard]] inline size_t operator()(const retro::CStringView &view) const noexcept {
         return hash<string_view>{}(view.view_);
     }
 };
 
 export template<>
-struct std::hash<retro::core::WCStringView> {
+struct std::hash<retro::WCStringView> {
     hash() = default;
 
-    [[nodiscard]] inline size_t operator()(const retro::core::WCStringView &view) const noexcept {
+    [[nodiscard]] inline size_t operator()(const retro::WCStringView &view) const noexcept {
         return hash<wstring_view>{}(view.view_);
     }
 };
 
 export template<>
-struct std::hash<retro::core::U8CStringView> {
+struct std::hash<retro::U8CStringView> {
     hash() = default;
 
-    [[nodiscard]] inline size_t operator()(const retro::core::U8CStringView &view) const noexcept {
+    [[nodiscard]] inline size_t operator()(const retro::U8CStringView &view) const noexcept {
         return hash<u8string_view>{}(view.view_);
     }
 };
 
 export template<>
-struct std::hash<retro::core::U16CStringView> {
+struct std::hash<retro::U16CStringView> {
     hash() = default;
 
-    [[nodiscard]] inline size_t operator()(const retro::core::U16CStringView &view) const noexcept {
+    [[nodiscard]] inline size_t operator()(const retro::U16CStringView &view) const noexcept {
         return hash<u16string_view>{}(view.view_);
     }
 };
 
 export template<>
-struct std::hash<retro::core::U32CStringView> {
+struct std::hash<retro::U32CStringView> {
     hash() = default;
 
-    [[nodiscard]] inline size_t operator()(const retro::core::U32CStringView &view) const noexcept {
+    [[nodiscard]] inline size_t operator()(const retro::U32CStringView &view) const noexcept {
         return hash<u32string_view>{}(view.view_);
     }
 };

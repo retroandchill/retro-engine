@@ -7,7 +7,7 @@
 import retro.runtime.engine;
 import std;
 
-using namespace retro::runtime;
+using namespace retro;
 
 int main() {
 

@@ -7,7 +7,7 @@ module;
 
 module retro.scripting.dotnet;
 
-using namespace retro::scripting;
+using namespace retro;
 
 DotnetInitializationHandle DotnetLoader::initialize_for_runtime_config(const std::filesystem::path &path) const {
     hostfxr_handle handle;

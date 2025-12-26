@@ -8,6 +8,6 @@ export module retro.platform.filesystem;
 
 import std;
 
-namespace retro::platform::filesystem {
+namespace retro::filesystem {
     export [[nodiscard]] RETRO_API std::filesystem::path get_executable_path();
 }

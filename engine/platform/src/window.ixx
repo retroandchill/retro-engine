@@ -11,9 +11,7 @@ import retro.core;
 import retro.core.strings;
 import retro.platform;
 
-namespace retro::platform {
-    using namespace core;
-
+namespace retro {
     struct WindowDeleter {
         inline void operator()(SDL_Window* window) const noexcept {
             SDL_DestroyWindow(window);

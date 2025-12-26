@@ -8,7 +8,7 @@ import retro.core.strings;
 import retro.core;
 import std;
 
-namespace retro::core {
+namespace retro {
     export class RefCounted {
     public:
         virtual ~RefCounted() = default;
@@ -207,11 +207,11 @@ namespace retro::core {
     }
 }
 
-template <std::derived_from<retro::core::RefCounted> T>
-struct std::hash<retro::core::RefCountPtr<T>> {
+template <std::derived_from<retro::RefCounted> T>
+struct std::hash<retro::RefCountPtr<T>> {
     hash() = default;
 
-    size_t operator()(const retro::core::RefCountPtr<T>& ptr) const noexcept {
+    size_t operator()(const retro::RefCountPtr<T>& ptr) const noexcept {
         return std::hash<T*>{}(ptr.get());
     }
 };

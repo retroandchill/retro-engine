@@ -6,7 +6,7 @@ export module retro.core.strings:comparison;
 
 import retro.core;
 
-namespace retro::core {
+namespace retro {
     export enum class StringComparison : uint8 {
         CaseSensitive,
         CaseInsensitive

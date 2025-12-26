@@ -12,9 +12,7 @@ import retro.core;
 import retro.core.strings;
 import :exported_function;
 
-namespace retro::scripting {
-    using namespace core;
-
+namespace retro {
     export class BindsManager {
         BindsManager() = default;
         ~BindsManager() = default;

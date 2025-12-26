@@ -15,11 +15,7 @@ import retro.platform;
 import retro.platform.window;
 import retro.scripting.dotnet;
 
-namespace retro::runtime {
-    using namespace core;
-    using namespace platform;
-    using namespace scripting;
-
+namespace retro {
     export class RETRO_API Engine {
         struct InitializeTag {};
         constexpr static InitializeTag initialize_tag{};

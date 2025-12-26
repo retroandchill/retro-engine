@@ -3,7 +3,7 @@
 //
 module retro.scripting.binds;
 
-namespace retro::scripting {
+namespace retro {
     BindsManager &BindsManager::instance() {
         static BindsManager instance;
         return instance;

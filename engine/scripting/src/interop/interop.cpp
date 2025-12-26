@@ -3,7 +3,7 @@
 //
 module retro.scripting.interop;
 
-namespace retro::scripting {
+namespace retro {
     void register_all_exports()
     {
         name_exporter::register_exported_functions();

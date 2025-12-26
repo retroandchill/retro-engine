@@ -6,7 +6,7 @@ export module retro.core.strings:concepts;
 
 import std;
 
-namespace retro::core {
+namespace retro {
     /**
      * Concept to ensure that the underlying type is a character.
      */

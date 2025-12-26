@@ -8,7 +8,7 @@ module;
 module retro.platform.loading;
 
 
-using namespace retro::platform;
+using namespace retro;
 
 void SharedLibraryBase::load(const std::filesystem::path &path) {
     unload();

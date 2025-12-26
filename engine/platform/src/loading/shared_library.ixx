@@ -11,9 +11,7 @@ export module retro.platform.loading:shared_library;
 import std;
 import retro.core.strings;
 
-namespace retro::platform {
-    using namespace core;
-
+namespace retro {
     export enum class LibraryUnloadPolicy {
         UnloadOnDestruction,
         KeepLoaded

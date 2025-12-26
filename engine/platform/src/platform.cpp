@@ -6,7 +6,7 @@ module;
 
 module retro.platform;
 
-using namespace retro::platform;
+using namespace retro;
 
 // NOLINTNEXTLINE
 bool Platform::poll_events() {

@@ -14,10 +14,7 @@ import retro.core;
 import retro.core.strings;
 import retro.platform.loading;
 
-namespace retro::scripting {
-    using namespace core;
-    using namespace platform;
-
+namespace retro {
     export class DotnetLoader;
 
     export class DotnetInitializationHandle {

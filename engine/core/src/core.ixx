@@ -30,7 +30,7 @@ export using nchar = wchar_t;
 export using nchar = char;
 #endif
 
-namespace retro::core {
+namespace retro {
     export template <typename... T>
     constexpr usize hash_combine(const T&... values) {
         usize seed = 0;

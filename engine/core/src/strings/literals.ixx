@@ -9,7 +9,7 @@ import retro.core;
 import :concepts;
 import :cstring_view;
 
-namespace retro::core {
+namespace retro {
     template<std::size_t N>
     struct FixedString {
         std::array<nchar, N> data;

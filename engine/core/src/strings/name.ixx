@@ -11,7 +11,7 @@ import retro.core;
 import :comparison;
 import :concepts;
 
-namespace retro::core {
+namespace retro {
     export enum class FindType : uint8 {
         Find,
         Add
@@ -38,15 +38,15 @@ namespace retro::core {
 }
 
 template <>
-struct std::hash<retro::core::NameHashEntry> {
+struct std::hash<retro::NameHashEntry> {
     hash() = default;
 
-    [[nodiscard]] constexpr size_t operator()(const retro::core::NameHashEntry& name) const noexcept {
-        return retro::core::hash_combine(name.id, name.hash);
+    [[nodiscard]] constexpr size_t operator()(const retro::NameHashEntry& name) const noexcept {
+        return retro::hash_combine(name.id, name.hash);
     }
 };
 
-namespace retro::core {
+namespace retro {
 
     struct NameIndices {
         uint32 comparison_index = 0;
@@ -232,10 +232,10 @@ namespace retro::core {
 }
 
 export template <>
-struct std::hash<retro::core::Name> {
+struct std::hash<retro::Name> {
     hash() = default;
 
-    constexpr size_t operator()(const retro::core::Name& name) const noexcept {
-        return retro::core::hash_combine(name.comparison_index(), name.number());
+    constexpr size_t operator()(const retro::Name& name) const noexcept {
+        return retro::hash_combine(name.comparison_index(), name.number());
     }
 };

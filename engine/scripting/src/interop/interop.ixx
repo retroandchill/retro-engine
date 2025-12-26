@@ -9,6 +9,6 @@ export module retro.scripting.interop;
 
 export import :name_exporter;
 
-namespace retro::scripting {
+namespace retro {
     export RETRO_API void register_all_exports();
 }

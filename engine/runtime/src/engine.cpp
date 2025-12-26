@@ -3,7 +3,7 @@
 //
 module retro.runtime.engine;
 
-using namespace retro::runtime;
+using namespace retro;
 
 std::unique_ptr<Engine> Engine::instance_{};
 

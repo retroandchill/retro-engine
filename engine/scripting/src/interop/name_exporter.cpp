@@ -9,10 +9,10 @@ module retro.scripting.interop;
 
 import retro.scripting.binds;
 
-using retro::core::Name;
-using retro::core::FindType;
+using retro::Name;
+using retro::FindType;
 
-namespace retro::scripting::name_exporter {
+namespace retro::name_exporter {
     void register_exported_functions() {
         const Name module_name = u"NameExporter";
         BindsManager::register_exported_function(module_name, ExportedFunction{u"Lookup", &lookup});

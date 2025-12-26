@@ -7,10 +7,10 @@ import std;
 import retro.core;
 import retro.core.strings;
 
-using retro::core::Name;
-using retro::core::FindType;
+using retro::Name;
+using retro::FindType;
 
-namespace retro::scripting::name_exporter {
+namespace retro::name_exporter {
     void register_exported_functions();
 
     Name lookup(const char16_t* name, int32 length, FindType find_type);

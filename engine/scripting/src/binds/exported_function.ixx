@@ -11,9 +11,7 @@ import std;
 import retro.core;
 import retro.core.strings;
 
-namespace retro::scripting {
-    using namespace core;
-
+namespace retro {
     template <typename T>
     struct ArgSizeData {
         static constexpr usize value = sizeof(T);

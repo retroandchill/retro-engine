@@ -8,9 +8,9 @@
 import retro.core;
 import retro.core.strings;
 
-using retro::core::Name;
-using retro::core::FindType;
-using retro::core::NAME_NO_NUMBER;
+using retro::Name;
+using retro::FindType;
+using retro::NAME_NO_NUMBER;
 
 TEST_CASE("Name default construction yields none and invalid", "[name]") {
     constexpr Name n;

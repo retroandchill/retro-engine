@@ -7,7 +7,7 @@ module;
 
 module retro.core.strings;
 
-namespace retro::core {
+namespace retro {
     NameTable & NameTable::instance() {
         static NameTable table{};
         return table;

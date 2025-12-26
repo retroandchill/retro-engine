@@ -7,7 +7,7 @@
 
 import retro.core.strings;
 
-using retro::core::Name;
+using retro::Name;
 
 template<>
 struct Catch::StringMaker<std::u16string_view> {

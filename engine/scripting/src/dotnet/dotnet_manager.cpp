@@ -16,8 +16,8 @@ import retro.scripting.interop;
 
 import std;
 
-using namespace retro::scripting;
-using namespace retro::platform::filesystem;
+using namespace retro;
+using namespace retro::filesystem;
 
 
 DotnetManager::DotnetManager() {

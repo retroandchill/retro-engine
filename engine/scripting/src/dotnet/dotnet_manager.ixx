@@ -10,7 +10,7 @@ export module retro.scripting.dotnet:manager;
 
 import :loader;
 
-namespace retro::scripting {
+namespace retro {
     export class RETRO_API DotnetManager {
 
     public:

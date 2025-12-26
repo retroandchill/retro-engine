@@ -10,7 +10,7 @@ export module retro.platform;
 
 import std;
 
-namespace retro::platform {
+namespace retro {
 
     export class RETRO_API Platform {
     public:
