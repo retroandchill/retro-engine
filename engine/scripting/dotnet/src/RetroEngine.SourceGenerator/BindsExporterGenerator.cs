@@ -45,9 +45,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         var isValid = true;
         if (!type.IsStatic)
         {
-            context.ReportDiagnostic(
-                Diagnostic.Create(ExporterMustBeStatic, type.Locations[0], type.Name)
-            );
+            context.ReportDiagnostic(Diagnostic.Create(ExporterMustBeStatic, type.Locations[0], type.Name));
             isValid = false;
         }
 
@@ -93,9 +91,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
                     parameters.Add(bindMethodInfo.ManagedReturnType);
                 }
 
-                parameters.AddRange(
-                    bindMethodInfo.Parameters.Select(parameter => parameter.ManagedType)
-                );
+                parameters.AddRange(bindMethodInfo.Parameters.Select(parameter => parameter.ManagedType));
 
                 var fullString = string.Join(" + ", parameters.Select(p => $"sizeof({p})"));
                 writer.Write(fullString);
@@ -113,9 +109,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
 
                 var parameters = string.Join(
                     ", ",
-                    bindMethodInfo.Parameters.Select(parameter =>
-                        $"{parameter.ManagedType} {parameter.Name}"
-                    )
+                    bindMethodInfo.Parameters.Select(parameter => $"{parameter.ManagedType} {parameter.Name}")
                 );
                 writer.Write(parameters);
             }
@@ -130,10 +124,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
                     return;
                 }
 
-                var parameters = string.Join(
-                    ", ",
-                    bindMethodInfo.Parameters.Select(parameter => $"{parameter.Name}")
-                );
+                var parameters = string.Join(", ", bindMethodInfo.Parameters.Select(parameter => $"{parameter.Name}"));
                 writer.Write(parameters);
             }
         );
@@ -141,15 +132,9 @@ public class BindsExporterGenerator : IIncrementalGenerator
         var template = handlebars.Compile(SourceTemplates.BindsExporterTemplate);
         context.AddSource($"{type.Name}.generated.h", template(exporterClassInfo));
 
-        var json = JsonSerializer.Serialize(
-            exporterClassInfo,
-            new JsonSerializerOptions { WriteIndented = true }
-        );
+        var json = JsonSerializer.Serialize(exporterClassInfo, new JsonSerializerOptions { WriteIndented = true });
 
-        var escapedJson = json.Replace("\\", "\\\\")
-            .Replace("\"", "\\\"")
-            .Replace("\r", "\\r")
-            .Replace("\n", "\\n");
+        var escapedJson = json.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n");
 
         var metadataTemplate = handlebars.Compile(SourceTemplates.BindsMetadataTemplate);
         var metadataParameters = new { type.Name, EscapedJson = escapedJson };
@@ -157,10 +142,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         context.AddSource($"{type.Name}.binds.metadata.g.cs", metadataTemplate(metadataParameters));
     }
 
-    private static BindMethodInfo CreateBindMethodInfo(
-        IMethodSymbol method,
-        HashSet<string> imports
-    )
+    private static BindMethodInfo CreateBindMethodInfo(IMethodSymbol method, HashSet<string> imports)
     {
         return new BindMethodInfo
         {
@@ -193,10 +175,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         );
     }
 
-    private static BindMethodParameter GetBindMethodParameter(
-        IParameterSymbol parameter,
-        HashSet<string> imports
-    )
+    private static BindMethodParameter GetBindMethodParameter(IParameterSymbol parameter, HashSet<string> imports)
     {
         return new BindMethodParameter
         {
@@ -233,8 +212,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         }
 
         var refKind = parameter.RefKind;
-        var isByRef =
-            refKind is RefKind.Ref or RefKind.Out or RefKind.In or RefKind.RefReadOnlyParameter;
+        var isByRef = refKind is RefKind.Ref or RefKind.Out or RefKind.In or RefKind.RefReadOnlyParameter;
         var isReadOnlyByRef = refKind is RefKind.In or RefKind.RefReadOnlyParameter;
 
         return InferCppType(
@@ -297,11 +275,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         return $"{constQualifier}{valueTypeName}&";
     }
 
-    private static string BuildPointerLikeType(
-        string baseTypeName,
-        bool isConstFromAttr,
-        bool useReferenceFromAttr
-    )
+    private static string BuildPointerLikeType(string baseTypeName, bool isConstFromAttr, bool useReferenceFromAttr)
     {
         // If UseReference is true for a pointer-like type,
         // we turn it into a reference instead of a pointer.
@@ -334,10 +308,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         };
     }
 
-    private static string GetCppTypeNameForNonSpecialType(
-        ITypeSymbol typeSymbol,
-        HashSet<string> imports
-    )
+    private static string GetCppTypeNameForNonSpecialType(ITypeSymbol typeSymbol, HashSet<string> imports)
     {
         var fullName = typeSymbol.ToDisplayString();
         switch (fullName)

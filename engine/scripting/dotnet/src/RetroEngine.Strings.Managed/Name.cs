@@ -200,8 +200,7 @@ public readonly struct Name
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
         var (number, newLength) = ParseNumber(rhs);
-        return NameTable.Instance.EqualsComparison(lhs.ComparisonIndex, rhs[..newLength])
-            && number == lhs.Number;
+        return NameTable.Instance.EqualsComparison(lhs.ComparisonIndex, rhs[..newLength]) && number == lhs.Number;
     }
 
     /// <summary>

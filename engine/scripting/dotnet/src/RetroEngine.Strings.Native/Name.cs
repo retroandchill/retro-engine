@@ -213,8 +213,7 @@ public readonly struct Name
         {
             fixed (char* rhsPtr = rhs)
             {
-                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool()
-                    && number == lhs.Number;
+                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool() && number == lhs.Number;
             }
         }
     }

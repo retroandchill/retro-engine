@@ -9,19 +9,22 @@ import std;
 
 using namespace retro;
 
-int main() {
+int main()
+{
 
     SDL_SetMainReady();
 
-    try {
+    try
+    {
         EngineLifecycle engine_lifecycle{"Retro Engine - SDL3 RAII Window", 1280, 720};
 
         auto &engine = Engine::instance();
         engine.run();
         return 0;
-    } catch (const std::exception& ex) {
+    }
+    catch (const std::exception &ex)
+    {
         std::cerr << "Fatal error: " << ex.what() << '\n';
         return -1;
     }
-
 }

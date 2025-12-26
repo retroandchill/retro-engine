@@ -7,14 +7,17 @@ module;
 
 module retro.core;
 
-namespace retro {
-    NameTable & NameTable::instance() {
+namespace retro
+{
+    NameTable &NameTable::instance()
+    {
         static NameTable table{};
         return table;
     }
 
     // NOLINTNEXTLINE
-    NameIndices NameTable::get_or_add_entry(const std::u16string_view value, const FindType find_type) {
+    NameIndices NameTable::get_or_add_entry(const std::u16string_view value, const FindType find_type)
+    {
         if (value.empty())
             return NameIndices::none();
 
@@ -31,38 +34,48 @@ namespace retro {
         uint32 comparison_id = 0;
         uint32 display_id = 0;
 
-        for (auto &entry : comparison_bucket) {
-            if (entry.hash != hash_ignore) continue;
+        for (auto &entry : comparison_bucket)
+        {
+            if (entry.hash != hash_ignore)
+                continue;
 
-            if (!span_equals_string<false>(value, comparison_strings_.at(entry.id))) continue;
+            if (!span_equals_string<false>(value, comparison_strings_.at(entry.id)))
+                continue;
 
             comparison_id = entry.id;
             break;
         }
 
-        for (auto &entry : display_bucket) {
-            if (entry.hash != hash_case) continue;
+        for (auto &entry : display_bucket)
+        {
+            if (entry.hash != hash_case)
+                continue;
 
-            if (!span_equals_string<true>(value, display_strings_.at(entry.id))) continue;
+            if (!span_equals_string<true>(value, display_strings_.at(entry.id)))
+                continue;
 
             display_id = entry.id;
             break;
         }
 
-        if (comparison_id != 0 && display_id != 0) return NameIndices{comparison_id, display_id};
+        if (comparison_id != 0 && display_id != 0)
+            return NameIndices{comparison_id, display_id};
 
-        if (find_type == FindType::Find) {
+        if (find_type == FindType::Find)
+        {
             return NameIndices::none();
         }
 
-        if (comparison_id == 0) {
+        if (comparison_id == 0)
+        {
             comparison_id = next_comparison_id_;
             next_comparison_id_++;
             comparison_bucket.emplace(comparison_id, hash_ignore);
             comparison_strings_.emplace(comparison_id, value);
         }
 
-        if (display_id == 0) {
+        if (display_id == 0)
+        {
             display_id = next_display_id_;
             next_display_id_++;
             display_bucket.emplace(display_id, hash_case);
@@ -72,36 +85,46 @@ namespace retro {
         return NameIndices{comparison_id, display_id};
     }
 
-    Name::Name(const std::u16string_view value, const FindType find_type) : Name(lookup_name(value, find_type)) {
+    Name::Name(const std::u16string_view value, const FindType find_type) : Name(lookup_name(value, find_type))
+    {
     }
 
-    Name::Name(const std::u16string &value, const FindType find_type) : Name(lookup_name(value, find_type)) {
+    Name::Name(const std::u16string &value, const FindType find_type) : Name(lookup_name(value, find_type))
+    {
     }
 
-    Name::Name(const char16_t *value, const FindType find_type) : Name(lookup_name(std::u16string_view{value}, find_type)) {
+    Name::Name(const char16_t *value, const FindType find_type)
+        : Name(lookup_name(std::u16string_view{value}, find_type))
+    {
     }
 
     // NOLINTNEXTLINE
-    std::u16string Name::to_string() const {
+    std::u16string Name::to_string() const
+    {
         // ReSharper disable once CppDFAUnreadVariable
         // ReSharper disable once CppDFAUnusedValue
         const auto baseString = NameTable::instance().get_display_string(display_index_);
-        if (number_ == NAME_NO_NUMBER) {
+        if (number_ == NAME_NO_NUMBER)
+        {
             return std::u16string{baseString};
         }
 
         return fmt::format(u"{}_{}", baseString, name_internal_to_external(number_));
     }
 
-    bool operator==(const Name &lhs, const std::u16string_view rhs) {
+    bool operator==(const Name &lhs, const std::u16string_view rhs)
+    {
         const auto [number, new_length] = Name::parse_number(rhs);
-        return NameTable::instance().equals_comparison(lhs.comparison_index_, rhs.substr(0, new_length)) && number == lhs.number_;
+        return NameTable::instance().equals_comparison(lhs.comparison_index_, rhs.substr(0, new_length)) &&
+               number == lhs.number_;
     }
 
     // NOLINTNEXTLINE
-    Name::LookupOutput Name::lookup_name(std::u16string_view value, const FindType find_type) {
+    Name::LookupOutput Name::lookup_name(std::u16string_view value, const FindType find_type)
+    {
         // If the name is too long, just truncate it
-        if (value.size() > MAX_NAME_LENGTH) {
+        if (value.size() > MAX_NAME_LENGTH)
+        {
             value = value.substr(0, MAX_NAME_LENGTH);
         }
 
@@ -112,11 +135,13 @@ namespace retro {
         const auto new_slice = value.substr(0, new_length);
 
         const auto indices = NameTable::instance().get_or_add_entry(new_slice, find_type);
-        return !indices.is_none() ? LookupOutput{indices.comparison_index, indices.display_index, internal_number} : LookupOutput{0, 0, NAME_NO_NUMBER};
+        return !indices.is_none() ? LookupOutput{indices.comparison_index, indices.display_index, internal_number}
+                                  : LookupOutput{0, 0, NAME_NO_NUMBER};
     }
 
     // NOLINTNEXTLINE
-    std::pair<int32, usize> Name::parse_number(const std::u16string_view name) {
+    std::pair<int32, usize> Name::parse_number(const std::u16string_view name)
+    {
         usize digits = 0;
         for (isize i = name.size() - 1; i >= 0; i--)
         {
@@ -130,21 +155,18 @@ namespace retro {
         if (first_digit == 0)
             return {NAME_NO_NUMBER, name.size()};
 
-        if (constexpr int MAX_DIGITS = 10;
-            digits <= 0 ||
-            first_digit == 0
-            || digits >= name.size()
-            || name[first_digit - 1] != '_'
-            || digits > MAX_DIGITS
-            || digits != 1 && name[first_digit] == '0'
-        )
+        if (constexpr int MAX_DIGITS = 10; digits <= 0 || first_digit == 0 || digits >= name.size() ||
+                                           name[first_digit - 1] != '_' || digits > MAX_DIGITS ||
+                                           digits != 1 && name[first_digit] == '0')
             return {NAME_NO_NUMBER, name.size()};
 
         const auto slice = name.substr(first_digit, digits);
         int32 number = 0;
         bool number_is_valid = true;
-        for (const auto c : slice) {
-            if (c < '0' || c > '9') {
+        for (const auto c : slice)
+        {
+            if (c < '0' || c > '9')
+            {
                 number_is_valid = false;
                 break;
             }
@@ -152,8 +174,7 @@ namespace retro {
             number = number * 10 + (c - '0');
         }
 
-        return number_is_valid
-            ? std::make_pair(name_external_to_internal(number), name.size() - (digits + 1))
-            : std::make_pair(NAME_NO_NUMBER, name.size());
+        return number_is_valid ? std::make_pair(name_external_to_internal(number), name.size() - (digits + 1))
+                               : std::make_pair(NAME_NO_NUMBER, name.size());
     }
-}
+} // namespace retro

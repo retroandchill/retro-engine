@@ -3,15 +3,17 @@
 //
 
 #include "test_helpers.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 import retro.core;
 
-using retro::Name;
 using retro::FindType;
+using retro::Name;
 using retro::NAME_NO_NUMBER;
 
-TEST_CASE("Name default construction yields none and invalid", "[name]") {
+TEST_CASE("Name default construction yields none and invalid", "[name]")
+{
     constexpr Name n;
 
     REQUIRE(n.is_none());
@@ -21,7 +23,8 @@ TEST_CASE("Name default construction yields none and invalid", "[name]") {
     REQUIRE(n.number() == NAME_NO_NUMBER);
 }
 
-TEST_CASE("Name created from same logical value shares comparison index", "[name]") {
+TEST_CASE("Name created from same logical value shares comparison index", "[name]")
+{
     // Case-insensitive comparison index, but equality uses comparison_index + number.
     Name upper{std::u16string{u"Player"}};
     Name lower{std::u16string{u"player"}};
@@ -41,7 +44,8 @@ TEST_CASE("Name created from same logical value shares comparison index", "[name
     REQUIRE(upper == lower);
 }
 
-TEST_CASE("Name with numeric suffix parses number and strips it from base", "[name]") {
+TEST_CASE("Name with numeric suffix parses number and strips it from base", "[name]")
+{
     Name n{std::u16string{u"Enemy_42"}};
 
     REQUIRE(n.is_valid());
@@ -58,7 +62,8 @@ TEST_CASE("Name with numeric suffix parses number and strips it from base", "[na
     REQUIRE(n == std::u16string_view{u"Enemy_42"});
 }
 
-TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]") {
+TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]")
+{
     // Leading zero after underscore should be rejected as a number
     Name with_leading_zero{std::u16string{u"Foo_01"}};
 
@@ -73,7 +78,8 @@ TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]") {
     REQUIRE(no_underscore.to_string() == std::u16string{u"Bar99"});
 }
 
-TEST_CASE("FindType::Find does not create new entries", "[name]") {
+TEST_CASE("FindType::Find does not create new entries", "[name]")
+{
     // First ensure there is one known entry
     Name existing{std::u16string{u"Knight"}};
     REQUIRE(existing.is_valid());
@@ -99,7 +105,8 @@ TEST_CASE("FindType::Find does not create new entries", "[name]") {
     REQUIRE(not_created.display_index() == 0u);
 }
 
-TEST_CASE("Name equals comparison uses case-insensitive semantic", "[name]") {
+TEST_CASE("Name equals comparison uses case-insensitive semantic", "[name]")
+{
     Name n{std::u16string{u"Boss"}};
 
     REQUIRE(n.is_valid());
@@ -110,7 +117,8 @@ TEST_CASE("Name equals comparison uses case-insensitive semantic", "[name]") {
     REQUIRE_FALSE(n == std::u16string_view{u"miniboss"});
 }
 
-TEST_CASE("Name none() creates a none name", "[name]") {
+TEST_CASE("Name none() creates a none name", "[name]")
+{
     const Name none = Name::none();
 
     REQUIRE(none.is_none());

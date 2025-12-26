@@ -50,10 +50,7 @@ public class RootCommand
 
         foreach (var t in metadataType)
         {
-            var jsonField = t.GetField(
-                "Json",
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
-            );
+            var jsonField = t.GetField("Json", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             if (jsonField?.GetValue(null) is not string json)
                 continue;
 
@@ -64,15 +61,9 @@ public class RootCommand
             var imports = info.Imports;
             if (ModuleName != "retro.scripting")
             {
-                imports =
-                [
-                    .. imports
-                        .Add(new CppImport("retro.scripting"))
-                        .Distinct()
-                        .OrderBy(x => x.Name),
-                ];
+                imports = [.. imports.Add(new CppImport("retro.scripting")).Distinct().OrderBy(x => x.Name)];
             }
-            
+
             var cppName = info.Name.ToSnakeCase();
             var moduleParameters = new CppModuleInterface
             {
@@ -98,14 +89,11 @@ public class RootCommand
                     }),
                 ],
             };
-            
+
             exporters.Add(moduleParameters);
 
             var interfaceSource = exporterTemplate(moduleParameters);
-            await File.WriteAllTextAsync(
-                $"{OutputDirectory}/{moduleParameters.CppName}.ixx",
-                interfaceSource
-            );
+            await File.WriteAllTextAsync($"{OutputDirectory}/{moduleParameters.CppName}.ixx", interfaceSource);
         }
 
         var registrationParameters = new
@@ -115,23 +103,14 @@ public class RootCommand
             CppNamespace = GeneratedNamespace,
             Exporters = exporters.DrainToImmutable(),
         };
-        
-        var registrationInterface = registrationInterfaceTemplate(registrationParameters);
-        await File.WriteAllTextAsync(
-            $"{OutputDirectory}/registration.ixx",
-            registrationInterface
-        );
-        
-        var registrationImplementation = registrationImplementationTemplate(registrationParameters);
-        await File.WriteAllTextAsync(
-            $"{OutputDirectory}/registration.cpp",
-            registrationImplementation
-        );
 
-        var index = registrationParameters with
-        {
-            FragmentName = FragmentPrefix ?? "index"
-        };
+        var registrationInterface = registrationInterfaceTemplate(registrationParameters);
+        await File.WriteAllTextAsync($"{OutputDirectory}/registration.ixx", registrationInterface);
+
+        var registrationImplementation = registrationImplementationTemplate(registrationParameters);
+        await File.WriteAllTextAsync($"{OutputDirectory}/registration.cpp", registrationImplementation);
+
+        var index = registrationParameters with { FragmentName = FragmentPrefix ?? "index" };
         await File.WriteAllTextAsync($"{OutputDirectory}/index.ixx", indexTemplate(index));
     }
 }
