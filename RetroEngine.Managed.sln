@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine.Binds", "engine
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine.Strings.Native", "engine\scripting\dotnet\src\RetroEngine.Strings.Native\RetroEngine.Strings.Native.csproj", "{C15CB286-0383-4136-9B4F-3E592A9057B8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RetroEngine.SourceGenerator", "engine\scripting\dotnet\src\RetroEngine.SourceGenerator\RetroEngine.SourceGenerator.csproj", "{F7E13DE5-C844-4409-B868-D04EDC9DF53D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,7 @@ Global
 		{3AECBA68-D9ED-40A7-831E-5D696E3CAD09} = {92D2E8D0-3B09-4DB0-AAA6-10C9F1C8B27E}
 		{E915943E-8122-4219-9ECA-08435CC3EF81} = {92D2E8D0-3B09-4DB0-AAA6-10C9F1C8B27E}
 		{C15CB286-0383-4136-9B4F-3E592A9057B8} = {92D2E8D0-3B09-4DB0-AAA6-10C9F1C8B27E}
+		{F7E13DE5-C844-4409-B868-D04EDC9DF53D} = {92D2E8D0-3B09-4DB0-AAA6-10C9F1C8B27E}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4BA23A45-3E04-43C2-A143-7DA1E9D70777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -78,5 +81,9 @@ Global
 		{C15CB286-0383-4136-9B4F-3E592A9057B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C15CB286-0383-4136-9B4F-3E592A9057B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C15CB286-0383-4136-9B4F-3E592A9057B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7E13DE5-C844-4409-B868-D04EDC9DF53D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7E13DE5-C844-4409-B868-D04EDC9DF53D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7E13DE5-C844-4409-B868-D04EDC9DF53D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7E13DE5-C844-4409-B868-D04EDC9DF53D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
