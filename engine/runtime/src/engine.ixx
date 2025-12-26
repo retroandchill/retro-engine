@@ -4,6 +4,7 @@
 module;
 
 #include "retro/core/exports.h"
+
 #include <cassert>
 
 export module retro.runtime:engine;
@@ -13,33 +14,46 @@ import retro.core;
 import retro.platform;
 import retro.scripting;
 
-namespace retro {
-    export class RETRO_API Engine {
-        struct InitializeTag {};
+namespace retro
+{
+    export class RETRO_API Engine
+    {
+        struct InitializeTag
+        {
+        };
         constexpr static InitializeTag initialize_tag{};
 
-    public:
-        inline Engine(InitializeTag, const CStringView name, const int32 width, const int32 height) : window_{platform_, width, height, name} {}
+      public:
+        inline Engine(InitializeTag, const CStringView name, const int32 width, const int32 height)
+            : window_{platform_, width, height, name}
+        {
+        }
 
-        static inline Engine& instance() {
+        static inline Engine &instance()
+        {
             assert(instance_ != nullptr);
             return *instance_;
         }
 
-        inline static void initialize(const CStringView name, const int32 width, const int32 height) {
+        inline static void initialize(const CStringView name, const int32 width, const int32 height)
+        {
             assert(instance_ == nullptr);
             instance_ = std::make_unique<Engine>(initialize_tag, name, width, height);
         }
 
-        inline static void shutdown() {
+        inline static void shutdown()
+        {
             instance_.reset();
         }
 
-        inline Platform& platform() { return platform_; }
+        inline Platform &platform()
+        {
+            return platform_;
+        }
 
         void run();
 
-    private:
+      private:
         void tick(float delta_time);
 
         void render();
@@ -51,18 +65,21 @@ namespace retro {
         DotnetManager dotnet_manager_;
     };
 
-    export struct EngineLifecycle {
-        inline EngineLifecycle(const CStringView name, const int32 width, const int32 height) {
+    export struct EngineLifecycle
+    {
+        inline EngineLifecycle(const CStringView name, const int32 width, const int32 height)
+        {
             Engine::initialize(name, width, height);
         }
 
-        inline ~EngineLifecycle() {
+        inline ~EngineLifecycle()
+        {
             Engine::shutdown();
         }
 
-        EngineLifecycle(const EngineLifecycle&) = delete;
-        EngineLifecycle(EngineLifecycle&&) noexcept = delete;
-        EngineLifecycle& operator=(const EngineLifecycle&) = delete;
-        EngineLifecycle& operator=(EngineLifecycle&&) noexcept = delete;
+        EngineLifecycle(const EngineLifecycle &) = delete;
+        EngineLifecycle(EngineLifecycle &&) noexcept = delete;
+        EngineLifecycle &operator=(const EngineLifecycle &) = delete;
+        EngineLifecycle &operator=(EngineLifecycle &&) noexcept = delete;
     };
-}
+} // namespace retro

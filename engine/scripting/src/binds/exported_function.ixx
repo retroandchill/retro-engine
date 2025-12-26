@@ -6,14 +6,17 @@ export module retro.scripting:binds.exported_function;
 import std;
 import retro.core;
 
-namespace retro {
+namespace retro
+{
     template <typename T>
-    struct ArgSizeData {
+    struct ArgSizeData
+    {
         static constexpr usize value = sizeof(T);
     };
 
     template <typename T>
-    struct ArgSizeData<T&> {
+    struct ArgSizeData<T &>
+    {
         static constexpr usize value = sizeof(T);
     };
 
@@ -24,31 +27,35 @@ namespace retro {
     struct FunctionSizeData;
 
     template <typename ReturnType, typename... Args>
-    struct FunctionSizeData<ReturnType(*)(Args...)> {
+    struct FunctionSizeData<ReturnType (*)(Args...)>
+    {
         constexpr static usize value = ArgSize<ReturnType> + (ArgSize<Args> + ... + 0);
     };
 
     template <typename... Args>
-    struct FunctionSizeData<void(*)(Args...)> {
+    struct FunctionSizeData<void (*)(Args...)>
+    {
         constexpr static usize value = (ArgSize<Args> + ... + 0);
     };
 
     template <typename T>
     concept SizedFunction = requires(T fn) {
-        {FunctionSizeData<T>::value} -> std::convertible_to<usize>;
+        { FunctionSizeData<T>::value } -> std::convertible_to<usize>;
     };
 
     template <SizedFunction F>
     constexpr usize FunctionSize = FunctionSizeData<F>::value;
 
-    export struct ExportedFunction {
+    export struct ExportedFunction
+    {
         Name name;
-        void* function_ptr = nullptr;
+        void *function_ptr = nullptr;
         usize function_size = 0;
 
         template <SizedFunction F>
-        explicit ExportedFunction(const Name function_name, F function_ptr)  : name(function_name), function_ptr(function_ptr), function_size(FunctionSize<F>) {
-
+        explicit ExportedFunction(const Name function_name, F function_ptr)
+            : name(function_name), function_ptr(function_ptr), function_size(FunctionSize<F>)
+        {
         }
     };
-}
+} // namespace retro

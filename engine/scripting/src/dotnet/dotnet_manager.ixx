@@ -4,21 +4,24 @@
 module;
 
 #include "retro/core/exports.h"
+
 #include <coreclr_delegates.h>
 
 export module retro.scripting:dotnet.manager;
 
 import :dotnet.loader;
 
-namespace retro {
-    export class RETRO_API DotnetManager {
+namespace retro
+{
+    export class RETRO_API DotnetManager
+    {
 
-    public:
+      public:
         DotnetManager();
 
-    private:
+      private:
         [[nodiscard]] load_assembly_and_get_function_pointer_fn initialize_native_host() const;
 
         DotnetLoader loader_;
     };
-}
+} // namespace retro

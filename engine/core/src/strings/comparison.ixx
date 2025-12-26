@@ -6,9 +6,11 @@ export module retro.core:strings.comparison;
 
 import :defines;
 
-namespace retro {
-    export enum class StringComparison : uint8 {
+namespace retro
+{
+    export enum class StringComparison : uint8
+    {
         CaseSensitive,
         CaseInsensitive
     };
-}
+} // namespace retro

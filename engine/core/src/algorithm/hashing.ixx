@@ -6,12 +6,15 @@ export module retro.core:algorithm.hashing;
 
 import :defines;
 
-namespace retro {
+namespace retro
+{
     export template <typename... T>
-    constexpr usize hash_combine(const T&... values) {
+    constexpr usize hash_combine(const T &...values)
+    {
         usize seed = 0;
 
-        auto combine_one = [&seed]<typename U>(const U& v) constexpr {
+        auto combine_one = [&seed]<typename U>(const U &v) constexpr
+        {
             // Get hash of this value
             const usize h = std::hash<std::decay_t<U>>{}(v);
 
@@ -23,4 +26,4 @@ namespace retro {
 
         return seed;
     }
-}
+} // namespace retro

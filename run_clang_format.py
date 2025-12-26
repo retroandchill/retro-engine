@@ -49,7 +49,7 @@ def find_files(spec: pathspec.PathSpec, check_only: bool) -> list[FormatArgs]:
     """
     Returns list of tuples (dirpath, filename) for files that need formatting
     """
-    LINE_ENDINGS = {'.h', '.cpp', '.hpp', '.c', '.hxx', '.cxx'}
+    LINE_ENDINGS = {'.h', '.cpp', '.hpp', '.c', '.hxx', '.cxx', '.ixx'}
     files_to_format: list[FormatArgs] = []
 
     for dirpath, dirnames, filenames in os.walk('.'):

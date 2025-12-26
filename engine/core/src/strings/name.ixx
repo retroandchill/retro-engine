@@ -12,58 +12,74 @@ import :algorithm;
 import :strings.comparison;
 import :strings.concepts;
 
-namespace retro {
-    export enum class FindType : uint8 {
+namespace retro
+{
+    export enum class FindType : uint8
+    {
         Find,
         Add
     };
 
-    constexpr int32 name_internal_to_external(const int32 x) {
+    constexpr int32 name_internal_to_external(const int32 x)
+    {
         return x - 1;
     }
 
-    constexpr int32 name_external_to_internal(const int32 x) {
+    constexpr int32 name_external_to_internal(const int32 x)
+    {
         return x + 1;
     }
 
-    struct NameHashEntry {
+    struct NameHashEntry
+    {
         uint32 id = 0;
         usize hash = 0;
 
         constexpr NameHashEntry() = default;
 
-        constexpr NameHashEntry(const uint32 id, const usize hash) : id(id), hash(hash) {}
+        constexpr NameHashEntry(const uint32 id, const usize hash) : id(id), hash(hash)
+        {
+        }
 
-        [[nodiscard]] constexpr friend bool operator==(const NameHashEntry& a, const NameHashEntry& b) = default;
+        [[nodiscard]] constexpr friend bool operator==(const NameHashEntry &a, const NameHashEntry &b) = default;
     };
-}
+} // namespace retro
 
 template <>
-struct std::hash<retro::NameHashEntry> {
+struct std::hash<retro::NameHashEntry>
+{
     hash() = default;
 
-    [[nodiscard]] constexpr size_t operator()(const retro::NameHashEntry& name) const noexcept {
+    [[nodiscard]] constexpr size_t operator()(const retro::NameHashEntry &name) const noexcept
+    {
         return retro::hash_combine(name.id, name.hash);
     }
 };
 
-namespace retro {
+namespace retro
+{
 
-    struct NameIndices {
+    struct NameIndices
+    {
         uint32 comparison_index = 0;
         uint32 display_index = 0;
 
         constexpr NameIndices() = default;
 
-        constexpr NameIndices(const uint32 comparison_index, const uint32 display_index) : comparison_index(comparison_index), display_index(display_index) {}
+        constexpr NameIndices(const uint32 comparison_index, const uint32 display_index)
+            : comparison_index(comparison_index), display_index(display_index)
+        {
+        }
 
-        [[nodiscard]] constexpr friend bool operator==(const NameIndices& a, const NameIndices& b) = default;
+        [[nodiscard]] constexpr friend bool operator==(const NameIndices &a, const NameIndices &b) = default;
 
-        [[nodiscard]] constexpr bool is_none() const {
+        [[nodiscard]] constexpr bool is_none() const
+        {
             return comparison_index == 0;
         }
 
-        static constexpr NameIndices none() {
+        static constexpr NameIndices none()
+        {
             return {};
         }
     };
@@ -71,45 +87,55 @@ namespace retro {
     export RETRO_API constexpr std::u16string_view NONE_STRING = u"None";
     export RETRO_API constexpr usize MAX_NAME_LENGTH = 1024;
 
-    class RETRO_API NameTable {
+    class RETRO_API NameTable
+    {
         NameTable() = default;
 
-    public:
-        static NameTable& instance();
+      public:
+        static NameTable &instance();
 
         [[nodiscard]] NameIndices get_or_add_entry(std::u16string_view value, FindType find_type);
 
         // NOLINTNEXTLINE
-        [[nodiscard]] inline bool is_valid(const uint32 comparison_index, const uint32 display_index) const {
-            if (comparison_index == 0 || display_index == 0) return false;
+        [[nodiscard]] inline bool is_valid(const uint32 comparison_index, const uint32 display_index) const
+        {
+            if (comparison_index == 0 || display_index == 0)
+                return false;
 
             return comparison_strings_.contains(comparison_index) && display_strings_.contains(display_index);
         }
 
         // NOLINTNEXTLINE
-        [[nodiscard]] inline std::u16string_view get_display_string(const uint32 display_index) const {
+        [[nodiscard]] inline std::u16string_view get_display_string(const uint32 display_index) const
+        {
             const auto existing = display_strings_.find(display_index);
             return existing != display_strings_.end() ? existing->second : NONE_STRING;
         }
 
         // NOLINTNEXTLINE
-        [[nodiscard]] constexpr bool equals_comparison(const uint32 comparison_index, std::u16string_view span) const {
-            if (comparison_index == 0) return is_none_span(span);
+        [[nodiscard]] constexpr bool equals_comparison(const uint32 comparison_index, std::u16string_view span) const
+        {
+            if (comparison_index == 0)
+                return is_none_span(span);
 
             const auto value = comparison_strings_.find(comparison_index);
             return value != comparison_strings_.end() && span_equals_string<false>(span, value->second);
         }
 
-    private:
+      private:
         template <bool CaseSensitive = false>
-        static constexpr usize compute_hash(const std::u16string_view span) {
+        static constexpr usize compute_hash(const std::u16string_view span)
+        {
             usize hash = 0;
 
             for (auto t : span)
             {
-                if constexpr (CaseSensitive) {
+                if constexpr (CaseSensitive)
+                {
                     hash = (hash << 5) + hash ^ t;
-                }else {
+                }
+                else
+                {
                     const char16_t c = std::tolower(t);
                     hash = (hash << 5) + hash ^ c;
                 }
@@ -118,14 +144,22 @@ namespace retro {
         }
 
         template <bool CaseSensitive = false>
-        static constexpr bool span_equals_string(const std::u16string_view span, const std::u16string_view value) {
-            if (span.size() != value.size()) return false;
+        static constexpr bool span_equals_string(const std::u16string_view span, const std::u16string_view value)
+        {
+            if (span.size() != value.size())
+                return false;
 
-            for (usize i = 0; i < span.size(); i++) {
-                if constexpr (CaseSensitive) {
-                    if (span[i] != value[i]) return false;
-                } else {
-                    if (std::tolower(span[i]) != std::tolower(value[i])) {
+            for (usize i = 0; i < span.size(); i++)
+            {
+                if constexpr (CaseSensitive)
+                {
+                    if (span[i] != value[i])
+                        return false;
+                }
+                else
+                {
+                    if (std::tolower(span[i]) != std::tolower(value[i]))
+                    {
                         return false;
                     }
                 }
@@ -134,13 +168,11 @@ namespace retro {
             return true;
         }
 
-        static constexpr bool is_none_span(const std::u16string_view span) {
-            return span.empty() || (
-                span.size() == 4 && (span[0] == 'N' || span[0] == 'n')
-                  && (span[1] == 'o' || span[1] == 'O')
-                  && (span[2] == 'n' || span[2] == 'N')
-                  && (span[3] == 'e' || span[3] == 'E')
-                );
+        static constexpr bool is_none_span(const std::u16string_view span)
+        {
+            return span.empty() ||
+                   (span.size() == 4 && (span[0] == 'N' || span[0] == 'n') && (span[1] == 'o' || span[1] == 'O') &&
+                    (span[2] == 'n' || span[2] == 'N') && (span[3] == 'e' || span[3] == 'E'));
         }
 
         static constexpr usize BUCKET_COUNT = 1024;
@@ -160,69 +192,85 @@ namespace retro {
 
     export constexpr int32 NAME_NO_NUMBER = 0;
 
-    export class RETRO_API Name {
-        struct LookupOutput {
+    export class RETRO_API Name
+    {
+        struct LookupOutput
+        {
             uint32 comparison_index = 0;
             uint32 display_index = 0;
             int32 number = 0;
         };
 
-    public:
+      public:
         constexpr Name() = default;
 
         explicit(false) Name(std::u16string_view value, FindType find_type = FindType::Add);
 
-        explicit(false) Name(const std::u16string& value, FindType find_type = FindType::Add);
+        explicit(false) Name(const std::u16string &value, FindType find_type = FindType::Add);
 
-        explicit(false) Name(const char16_t* value, FindType find_type = FindType::Add);
+        explicit(false) Name(const char16_t *value, FindType find_type = FindType::Add);
 
-    private:
-        inline explicit(false) Name(const LookupOutput indices) : comparison_index_(indices.comparison_index), number_(indices.number), display_index_(indices.display_index) {}
+      private:
+        inline explicit(false) Name(const LookupOutput indices)
+            : comparison_index_(indices.comparison_index), number_(indices.number),
+              display_index_(indices.display_index)
+        {
+        }
 
-    public:
-        [[nodiscard]] constexpr uint32 comparison_index() const {
+      public:
+        [[nodiscard]] constexpr uint32 comparison_index() const
+        {
             return comparison_index_;
         }
 
-        [[nodiscard]] constexpr uint32 display_index() const {
+        [[nodiscard]] constexpr uint32 display_index() const
+        {
             return display_index_;
         }
 
-        [[nodiscard]] constexpr int32 number() const {
+        [[nodiscard]] constexpr int32 number() const
+        {
             return number_;
         }
 
-        constexpr void set_number(const int32 number) {
+        constexpr void set_number(const int32 number)
+        {
             number_ = number;
         }
 
-        constexpr static Name none() {
+        constexpr static Name none()
+        {
             return {};
         }
 
         // NOLINTNEXTLINE
-        [[nodiscard]] inline bool is_valid() const {
+        [[nodiscard]] inline bool is_valid() const
+        {
             return NameTable::instance().is_valid(comparison_index_, display_index_);
         }
 
-        [[nodiscard]] constexpr bool is_none() const {
+        [[nodiscard]] constexpr bool is_none() const
+        {
             return comparison_index_ == 0;
         }
 
         [[nodiscard]] std::u16string to_string() const;
 
-        [[nodiscard]] friend constexpr bool operator==(const Name& lhs, const Name& rhs) {
+        [[nodiscard]] friend constexpr bool operator==(const Name &lhs, const Name &rhs)
+        {
             return lhs.comparison_index_ == rhs.comparison_index_ && lhs.number_ == rhs.number_;
         }
 
-        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const Name& lhs, const Name& rhs) {
-            if (const auto cmp = lhs.comparison_index_ <=> rhs.comparison_index_; cmp != std::strong_ordering::equal) return cmp;
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const Name &lhs, const Name &rhs)
+        {
+            if (const auto cmp = lhs.comparison_index_ <=> rhs.comparison_index_; cmp != std::strong_ordering::equal)
+                return cmp;
             return lhs.number_ <=> rhs.number_;
         }
 
-        [[nodiscard]] friend RETRO_API bool operator==(const Name& lhs, std::u16string_view rhs);
+        [[nodiscard]] friend RETRO_API bool operator==(const Name &lhs, std::u16string_view rhs);
 
-    private:
+      private:
         static LookupOutput lookup_name(std::u16string_view value, FindType find_type);
         static std::pair<int32, usize> parse_number(std::u16string_view name);
 
@@ -230,13 +278,15 @@ namespace retro {
         int32 number_ = 0;
         uint32 display_index_ = 0;
     };
-}
+} // namespace retro
 
 export template <>
-struct std::hash<retro::Name> {
+struct std::hash<retro::Name>
+{
     hash() = default;
 
-    constexpr size_t operator()(const retro::Name& name) const noexcept {
+    constexpr size_t operator()(const retro::Name &name) const noexcept
+    {
         return retro::hash_combine(name.comparison_index(), name.number());
     }
 };
