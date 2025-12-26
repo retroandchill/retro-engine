@@ -3,7 +3,7 @@ using RetroEngine.Core;
 
 namespace RetroEngine.Strings.Interop;
 
-[BindExport("NameExporter")]
+[BindExport("retro")]
 internal static unsafe partial class NameExporter
 {
     public static partial Name Lookup(char* name, int length, FindName findType);

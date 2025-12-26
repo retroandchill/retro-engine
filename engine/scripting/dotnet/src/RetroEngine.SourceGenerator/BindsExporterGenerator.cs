@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text.Json;
 using HandlebarsDotNet;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -111,6 +112,28 @@ public class BindsExporterGenerator : IIncrementalGenerator
         
         var template = handlebars.Compile(SourceTemplates.BindsExporterTemplate);
         context.AddSource($"{type.Name}.generated.h", template(exporterClassInfo));
+        
+        var json = JsonSerializer.Serialize(
+            exporterClassInfo,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        
+        var escapedJson = json
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n");
+        
+        var metadataTemplate = handlebars.Compile(SourceTemplates.BindsMetadataTemplate);
+        var metadataParameters = new
+        {
+            type.Name,
+            EscapedJson = escapedJson
+        };
+        
+        context.AddSource($"{type.Name}.binds.metadata.g.cs", metadataTemplate(metadataParameters));
     }
 
     private static BindMethodInfo CreateBindMethodInfo(IMethodSymbol method)

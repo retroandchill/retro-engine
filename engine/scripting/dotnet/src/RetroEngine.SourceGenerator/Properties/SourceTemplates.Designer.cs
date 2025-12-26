@@ -60,11 +60,12 @@ namespace RetroEngine.SourceGenerator.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using RetroEngine.Binds;
+        ///   Looks up a localized string similar to // &lt;auto-generated/&gt;
+        ///using RetroEngine.Binds;
         ///
         ///namespace {{ManagedNamespace}};
         ///
-        ///unsafe class {{Name}}
+        ///unsafe partial class {{Name}}
         ///{
         ///    {{#Methods}}
         ///    private static readonly delegate *unmanaged&lt;{{#Parameters}}{{ManagedType}}, {{/Parameters}}{{ManagedReturnType}}&gt; {{Name}}_Delegate;
@@ -73,12 +74,32 @@ namespace RetroEngine.SourceGenerator.Properties {
         ///    static {{Name}}()
         ///    {
         ///        {{#Methods}}
-        ///        var {{Name}}_Delegate_Size = {{DelegateSize}}
-        ///        LookupDelegate = (delegate *unmanaged&lt;{{#Parameters}}{{ManagedType}}, {{/Parameters}}{{ManagedReturnType}}&gt;) BindsManager.GetBoundFu [rest of string was truncated]&quot;;.
+        ///        var {{Name}}_Delegate_Size = {{DelegateSize}};
+        ///        {{Name}}_Delegate = (delegate *unmanaged&lt;{{#Parameters}}{{ManagedType}}, {{/Parameters}}{{ManagedRetu [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string BindsExporterTemplate {
             get {
                 return ResourceManager.GetString("BindsExporterTemplate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // &lt;auto-generated/&gt;
+        ///
+        ///namespace RetroEngine.Binds.Generated;
+        ///
+        /// /// &lt;summary&gt;
+        /// /// JSON metadata describing bind exports for {type.ToDisplayString()}.
+        /// /// This is intended to be consumed by external tooling to generate C++ modules.
+        /// /// &lt;/summary&gt;
+        ///internal static class {{Name}}BindMetadata
+        ///{
+        ///    public const string Json = &quot;{{EscapedJson}}&quot;;
+        ///}.
+        /// </summary>
+        internal static string BindsMetadataTemplate {
+            get {
+                return ResourceManager.GetString("BindsMetadataTemplate", resourceCulture);
             }
         }
     }
