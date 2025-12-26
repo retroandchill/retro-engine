@@ -25,6 +25,9 @@ public class RootCommand
     [CliOption(Description = "The prefix for the module fragment", Required = false)]
     public string? FragmentPrefix { get; set; }
 
+    [CliOption(Description = "The namespace for the created code", Required = false)]
+    public string GeneratedNamespace { get; set; } = "retro";
+
     public async Task RunAsync()
     {
         var assemblies = SourceAssemblies.Select(Assembly.LoadFrom).ToList();
@@ -39,7 +42,11 @@ public class RootCommand
         var handlebars = Handlebars.Create();
         handlebars.Configuration.TextEncoder = null;
 
-        var template = handlebars.Compile(SourceTemplates.CppInterface);
+        var exporterTemplate = handlebars.Compile(SourceTemplates.CppInterface);
+        var registrationInterfaceTemplate = handlebars.Compile(SourceTemplates.RegistrationMethodInterface);
+        var registrationImplementationTemplate = handlebars.Compile(SourceTemplates.RegistrationMethodImplementation);
+        var indexTemplate = handlebars.Compile(SourceTemplates.Index);
+        var exporters = ImmutableArray.CreateBuilder<CppModuleInterface>();
 
         foreach (var t in metadataType)
         {
@@ -65,13 +72,12 @@ public class RootCommand
                         .OrderBy(x => x.Name),
                 ];
             }
-
-            var cppNamespace = info.CppNamespace ?? "retro";
+            
             var cppName = info.Name.ToSnakeCase();
             var moduleParameters = new CppModuleInterface
             {
                 ModuleName = ModuleName,
-                CppNamespace = cppNamespace,
+                CppNamespace = GeneratedNamespace,
                 FragmentName = FragmentPrefix is not null ? $"{FragmentPrefix}.{cppName}" : cppName,
                 ManagedName = info.Name,
                 CppName = cppName,
@@ -82,22 +88,50 @@ public class RootCommand
                     {
                         ManagedName = m.Name,
                         CppName = m.Name.ToSnakeCase(),
-                        CppReturnType = m.CppReturnType.TrimStart($"{cppNamespace}::").ToString(),
+                        CppReturnType = m.CppReturnType.TrimStart($"{GeneratedNamespace}::").ToString(),
                         CppParameters = string.Join(
                             ", ",
                             m.Parameters.Select(p =>
-                                $"{p.CppType.TrimStart($"{cppNamespace}::").ToString()} {p.Name}"
+                                $"{p.CppType.TrimStart($"{GeneratedNamespace}::").ToString()} {p.Name}"
                             )
                         ),
                     }),
                 ],
             };
+            
+            exporters.Add(moduleParameters);
 
-            var interfaceSource = template(moduleParameters);
+            var interfaceSource = exporterTemplate(moduleParameters);
             await File.WriteAllTextAsync(
                 $"{OutputDirectory}/{moduleParameters.CppName}.ixx",
                 interfaceSource
             );
         }
+
+        var registrationParameters = new
+        {
+            ModuleName,
+            FragmentName = FragmentPrefix is not null ? $"{FragmentPrefix}.registration" : "registration",
+            CppNamespace = GeneratedNamespace,
+            Exporters = exporters.DrainToImmutable(),
+        };
+        
+        var registrationInterface = registrationInterfaceTemplate(registrationParameters);
+        await File.WriteAllTextAsync(
+            $"{OutputDirectory}/registration.ixx",
+            registrationInterface
+        );
+        
+        var registrationImplementation = registrationImplementationTemplate(registrationParameters);
+        await File.WriteAllTextAsync(
+            $"{OutputDirectory}/registration.cpp",
+            registrationImplementation
+        );
+
+        var index = registrationParameters with
+        {
+            FragmentName = FragmentPrefix ?? "index"
+        };
+        await File.WriteAllTextAsync($"{OutputDirectory}/index.ixx", indexTemplate(index));
     }
 }

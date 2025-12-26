@@ -68,13 +68,67 @@ namespace RetroEngine.NativeBindsGenerator.Properties {
         ///
         ///namespace {{CppNamespace}}::{{CppName}} {
         ///    {{#Methods}}
-        ///    export {{CppReturnType}} {{CppName}}({{CppParameters}});
+        ///    {{CppReturnType}} {{CppName}}({{CppParameters}});
         ///    {{/Methods}}
         ///}.
         /// </summary>
         internal static string CppInterface {
             get {
                 return ResourceManager.GetString("CppInterface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to export module {{ModuleName}}:{{FragmentName}};
+        ///
+        ///export import :registration;
+        ///{{#Exporters}}
+        ///export import :{{CppName}}    
+        ///{{/Exporters}}.
+        /// </summary>
+        internal static string Index {
+            get {
+                return ResourceManager.GetString("Index", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to module {{ModuleName}};
+        ///
+        ///{{^IsScriptModule}}
+        ///import retro.scripting;
+        ///
+        ///{{/IsScriptModule}}
+        ///namespace {{CppNamespace}} {
+        ///    void register_script_binds() 
+        ///    {
+        ///        using retro::Name;
+        ///        {{#Exporters}}
+        ///            
+        ///        const Name {{CppName}}_name = u&quot;{{ManagedName}}&quot;;
+        ///        {{#Methods}}
+        ///        BindsManager::register_exported_function({{../CppName}}_name, ExportedFunction{u&quot;{{ManagedName}}&quot;, &amp;{{../CppName}}::{{CppName}});    
+        ///        {{/Methods}}
+        ///        {{/Exporters}}
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string RegistrationMethodImplementation {
+            get {
+                return ResourceManager.GetString("RegistrationMethodImplementation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to export module {{ModuleName}}:{{FragmentName}};
+        ///
+        ///namespace {{CppNamespace}} {
+        ///    export{{DllExport}} void register_script_binds();
+        ///}.
+        /// </summary>
+        internal static string RegistrationMethodInterface {
+            get {
+                return ResourceManager.GetString("RegistrationMethodInterface", resourceCulture);
             }
         }
     }

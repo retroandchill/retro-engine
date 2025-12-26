@@ -1,0 +1,19 @@
+module {{ModuleName}};
+
+{{^IsScriptModule}}
+import retro.scripting;
+
+{{/IsScriptModule}}
+namespace {{CppNamespace}} {
+    void register_script_binds() 
+    {
+        using retro::Name;
+        {{#Exporters}}
+            
+        const Name {{CppName}}_name = u"{{ManagedName}}";
+        {{#Methods}}
+        BindsManager::register_exported_function({{../CppName}}_name, ExportedFunction(u"{{ManagedName}}", &{{../CppName}}::{{CppName}}));    
+        {{/Methods}}
+        {{/Exporters}}
+    }
+}

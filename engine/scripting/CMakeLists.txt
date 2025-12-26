@@ -16,7 +16,7 @@ add_library(retro_scripting
         src/dotnet/dotnet_manager.cpp
         src/binds/binds_manager.cpp
         src/interop/name_exporter.cpp
-        src/interop/export_registration.cpp
+        src/interop/registration.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -32,8 +32,9 @@ target_sources(retro_scripting PUBLIC
         src/binds/binds_manager.ixx
         src/binds/index.ixx
         src/binds/exported_function.ixx
-        src/interop/export_registration.ixx
-        src/interop/name_exporter.ixx)
+        src/interop/registration.ixx
+        src/interop/name_exporter.ixx
+        src/interop/index.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(unofficial-nethost CONFIG REQUIRED)

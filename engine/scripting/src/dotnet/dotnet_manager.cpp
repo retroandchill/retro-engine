@@ -21,7 +21,7 @@ DotnetManager::DotnetManager() {
     using GetFoundFunctionFn = decltype(&BindsManager::get_bound_function);
     using InitializeRuntimeHostFn = bool(*)(const char16_t*, int32, GetFoundFunctionFn);
 
-    register_all_exports();
+    register_script_binds();
 
     const auto native_host_fptr = initialize_native_host();
 
