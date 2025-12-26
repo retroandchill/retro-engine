@@ -5,6 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <PropertyGroup
+    Condition="'$(RetroEngineBackend)' == 'Native' 
+                            and '$(RetroEngineNativeOutputDirectory)' != ''"
+  >
+    <!-- Only redirect Native builds driven by CMake -->
+    <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CaseConverter" />
     <PackageReference Include="DotMake.CommandLine" />

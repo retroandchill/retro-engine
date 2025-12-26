@@ -60,7 +60,7 @@ namespace RetroEngine.NativeBindsGenerator.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to export module {{ModuleName}}:{{CppName}};
+        ///   Looks up a localized string similar to export module {{ModuleName}}:{{FragmentName}};
         ///
         ///{{#Imports}}
         ///import {{Name}};    

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using System.Text.Json;
 using CaseConverter;
 using DotMake.CommandLine;
@@ -18,8 +19,11 @@ public class RootCommand
     [CliOption(Description = "The path to generate the module interfaces to", Required = true)]
     public string OutputDirectory { get; set; } = "";
 
-    [CliOption(Description = "The name for the C++ module interface")]
+    [CliOption(Description = "The name for the C++ module interface", Required = false)]
     public string ModuleName { get; set; } = "retro.scripting";
+
+    [CliOption(Description = "The prefix for the module fragment", Required = false)]
+    public string? FragmentPrefix { get; set; }
 
     public async Task RunAsync()
     {
@@ -50,23 +54,40 @@ public class RootCommand
             if (info is null)
                 continue;
 
+            var imports = info.Imports;
+            if (ModuleName != "retro.scripting")
+            {
+                imports =
+                [
+                    .. imports
+                        .Add(new CppImport("retro.scripting"))
+                        .Distinct()
+                        .OrderBy(x => x.Name),
+                ];
+            }
+
+            var cppNamespace = info.CppNamespace ?? "retro";
+            var cppName = info.Name.ToSnakeCase();
             var moduleParameters = new CppModuleInterface
             {
                 ModuleName = ModuleName,
-                CppNamespace = info.CppNamespace ?? "retro",
+                CppNamespace = cppNamespace,
+                FragmentName = FragmentPrefix is not null ? $"{FragmentPrefix}.{cppName}" : cppName,
                 ManagedName = info.Name,
-                CppName = info.Name.ToSnakeCase(),
-                Imports = info.Imports,
+                CppName = cppName,
+                Imports = imports,
                 Methods =
                 [
                     .. info.Methods.Select(m => new CppBindsMethod
                     {
                         ManagedName = m.Name,
                         CppName = m.Name.ToSnakeCase(),
-                        CppReturnType = m.CppReturnType,
+                        CppReturnType = m.CppReturnType.TrimStart($"{cppNamespace}::").ToString(),
                         CppParameters = string.Join(
                             ", ",
-                            m.Parameters.Select(p => $"{p.CppType} {p.Name}")
+                            m.Parameters.Select(p =>
+                                $"{p.CppType.TrimStart($"{cppNamespace}::").ToString()} {p.Name}"
+                            )
                         ),
                     }),
                 ],
@@ -74,7 +95,7 @@ public class RootCommand
 
             var interfaceSource = template(moduleParameters);
             await File.WriteAllTextAsync(
-                $"{OutputDirectory}/{moduleParameters.CppName}.generated.ixx",
+                $"{OutputDirectory}/{moduleParameters.CppName}.ixx",
                 interfaceSource
             );
         }

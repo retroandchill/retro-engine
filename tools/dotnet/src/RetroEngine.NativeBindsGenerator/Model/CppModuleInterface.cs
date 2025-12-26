@@ -19,6 +19,8 @@ public record CppModuleInterface
 
     public required string ManagedName { get; init; }
 
+    public required string FragmentName { get; init; }
+
     public required string CppName { get; init; }
 
     public required ImmutableArray<CppImport> Imports { get; init; }
