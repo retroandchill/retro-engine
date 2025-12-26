@@ -1,5 +1,4 @@
 import subprocess
-import sys
 from argparse import ArgumentParser
 
 from run_clang_format import main as run_clang_format

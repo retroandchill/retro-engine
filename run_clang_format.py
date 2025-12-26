@@ -65,8 +65,7 @@ def find_files(spec: pathspec.PathSpec, check_only: bool) -> list[FormatArgs]:
             if not any(filename.endswith(ext) for ext in LINE_ENDINGS):
                 continue
 
-            full_path = os.path.join(
-                rel_path, filename)  # type: ignore[type-arg]
+            full_path = os.path.join(rel_path, filename)  # type: ignore[type-arg]
             if not spec.match_file(full_path):  # type: ignore[type-arg]
                 files_to_format.append(
                     FormatArgs(
@@ -108,7 +107,7 @@ def format_file(args: FormatArgs) -> FormatResult:
     else:
         result = subprocess.run(['clang-format', '-i', filepath], capture_output=True)
         if result.returncode != 0:
-            return FormatResult(success=False, filepath=filepath, message=result.stderr)
+            return FormatResult(success=False, filepath=filepath, message=result.stderr)  # type: ignore[type-arg]
 
         return FormatResult(
             success=True,
