@@ -8,15 +8,6 @@ using retro::Name;
 
 namespace retro::name_exporter
 {
-    void register_exported_functions()
-    {
-        const Name module_name = u"NameExporter";
-        BindsManager::register_exported_function(module_name, ExportedFunction{u"Lookup", &lookup});
-        BindsManager::register_exported_function(module_name, ExportedFunction{u"IsValid", &is_valid});
-        BindsManager::register_exported_function(module_name, ExportedFunction{u"Equals", &equals});
-        BindsManager::register_exported_function(module_name, ExportedFunction{u"ToString", &to_string});
-    }
-
     Name lookup(const char16_t *name, const int32 length, const FindType find_type)
     {
         return Name{std::u16string_view{name, static_cast<usize>(length)}, find_type};
@@ -39,7 +30,4 @@ namespace retro::name_exporter
         std::memcpy(buffer, as_string.data(), string_length);
         return string_length;
     }
-
-    static const Name MODULE_NAME = u"NameExporter";
-
 } // namespace retro::name_exporter
