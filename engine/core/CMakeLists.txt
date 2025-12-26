@@ -6,15 +6,18 @@ target_include_directories(retro_core PUBLIC include)
 
 target_sources(retro_core PUBLIC
     FILE_SET CXX_MODULES FILES
-        src/core.ixx
+        src/index.ixx
         src/strings/concepts.ixx
-        src/strings/strings.ixx
+        src/strings/index.ixx
         src/strings/cstring_view.ixx
         src/strings/literals.ixx
         src/strings/name.ixx
         src/strings/comparison.ixx
-        src/memory/memory.ixx
-        src/memory/ref_counted_ptr.ixx)
+        src/memory/index.ixx
+        src/memory/ref_counted_ptr.ixx
+        src/defines.ixx
+        src/algorithm/index.ixx
+        src/algorithm/hashing.ixx)
 
 
 find_package(fmt CONFIG REQUIRED)

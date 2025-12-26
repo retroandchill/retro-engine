@@ -11,7 +11,6 @@ export module retro.scripting.dotnet:loader;
 
 import std;
 import retro.core;
-import retro.core.strings;
 import retro.platform.loading;
 
 namespace retro {

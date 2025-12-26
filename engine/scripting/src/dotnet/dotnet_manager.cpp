@@ -8,7 +8,6 @@ module;
 module retro.scripting.dotnet;
 
 import retro.core;
-import retro.core.strings;
 import retro.platform;
 import retro.platform.filesystem;
 import retro.scripting.binds;

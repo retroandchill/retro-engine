@@ -5,7 +5,7 @@ module;
 
 #include <fmt/xchar.h>
 
-module retro.core.strings;
+module retro.core;
 
 namespace retro {
     NameTable & NameTable::instance() {

@@ -5,7 +5,6 @@ export module retro.scripting.interop:name_exporter;
 
 import std;
 import retro.core;
-import retro.core.strings;
 
 using retro::Name;
 using retro::FindType;

@@ -8,7 +8,6 @@ export module retro.platform.window;
 
 import std;
 import retro.core;
-import retro.core.strings;
 import retro.platform;
 
 namespace retro {

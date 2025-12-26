@@ -5,9 +5,10 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.strings:name;
+export module retro.core:name;
 
-import retro.core;
+import :defines;
+import :algorithm;
 import :comparison;
 import :concepts;
 

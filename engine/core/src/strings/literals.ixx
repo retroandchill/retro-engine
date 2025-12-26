@@ -2,10 +2,10 @@
 // Created by fcors on 12/23/2025.
 //
 
-export module retro.core.strings:literals;
+export module retro.core:literals;
 
 import std;
-import retro.core;
+import :defines;
 import :concepts;
 import :cstring_view;
 

@@ -2,7 +2,7 @@
 // Created by fcors on 12/20/2025.
 //
 
-export module retro.core.strings:concepts;
+export module retro.core:concepts;
 
 import std;
 

@@ -9,7 +9,6 @@ export module retro.scripting.binds:binds_manager;
 
 import std;
 import retro.core;
-import retro.core.strings;
 import :exported_function;
 
 namespace retro {

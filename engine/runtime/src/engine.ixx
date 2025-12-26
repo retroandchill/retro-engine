@@ -10,7 +10,6 @@ export module retro.runtime.engine;
 
 import std;
 import retro.core;
-import retro.core.strings;
 import retro.platform;
 import retro.platform.window;
 import retro.scripting.dotnet;

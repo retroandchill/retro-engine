@@ -6,7 +6,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 import retro.core;
-import retro.core.strings;
 
 using retro::Name;
 using retro::FindType;

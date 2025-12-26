@@ -9,7 +9,7 @@ module;
 export module retro.platform.loading:shared_library;
 
 import std;
-import retro.core.strings;
+import retro.core;
 
 namespace retro {
     export enum class LibraryUnloadPolicy {

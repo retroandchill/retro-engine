@@ -5,7 +5,7 @@
 
 #include <catch2/catch_tostring.hpp>
 
-import retro.core.strings;
+import retro.core;
 
 using retro::Name;
 

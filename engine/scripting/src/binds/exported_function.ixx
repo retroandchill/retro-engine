@@ -9,7 +9,6 @@ export module retro.scripting.binds:exported_function;
 
 import std;
 import retro.core;
-import retro.core.strings;
 
 namespace retro {
     template <typename T>
