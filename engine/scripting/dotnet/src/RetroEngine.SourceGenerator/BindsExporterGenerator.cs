@@ -3,7 +3,6 @@ using System.Text.Json;
 using HandlebarsDotNet;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Retro.SourceGeneratorUtilities.Utilities.Types;
 using RetroEngine.Binds;
 using RetroEngine.SourceGenerator.Model;
 using RetroEngine.SourceGenerator.Properties;
@@ -55,6 +54,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         if (!isValid)
             return;
 
+        var imports = new HashSet<string>();
         var bindMethodBuilder = ImmutableArray.CreateBuilder<BindMethodInfo>();
         foreach (
             var method in type.GetMembers()
@@ -62,7 +62,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
                 .Where(m => m.DeclaredAccessibility == Accessibility.Public)
         )
         {
-            bindMethodBuilder.Add(CreateBindMethodInfo(method));
+            bindMethodBuilder.Add(CreateBindMethodInfo(method, imports));
         }
 
         var bindMethods = bindMethodBuilder.DrainToImmutable();
@@ -73,6 +73,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
             CppNamespace = cppNamespace,
             Name = type.Name,
             Methods = bindMethods,
+            Imports = [.. imports.OrderBy(x => x).Select(x => new CppImport(x))],
         };
 
         var handlebars = Handlebars.Create();
@@ -156,19 +157,22 @@ public class BindsExporterGenerator : IIncrementalGenerator
         context.AddSource($"{type.Name}.binds.metadata.g.cs", metadataTemplate(metadataParameters));
     }
 
-    private static BindMethodInfo CreateBindMethodInfo(IMethodSymbol method)
+    private static BindMethodInfo CreateBindMethodInfo(
+        IMethodSymbol method,
+        HashSet<string> imports
+    )
     {
         return new BindMethodInfo
         {
             Name = method.Name,
             ManagedReturnType = method.ReturnType.ToDisplayString(),
-            CppReturnType = GetCppReturnType(method),
+            CppReturnType = GetCppReturnType(method, imports),
             ReturnsVoid = method.ReturnsVoid,
-            Parameters = [.. method.Parameters.Select(GetBindMethodParameter)],
+            Parameters = [.. method.Parameters.Select(x => GetBindMethodParameter(x, imports))],
         };
     }
 
-    private static string GetCppReturnType(IMethodSymbol method)
+    private static string GetCppReturnType(IMethodSymbol method, HashSet<string> imports)
     {
         if (method.ReturnsVoid)
         {
@@ -184,17 +188,21 @@ public class BindsExporterGenerator : IIncrementalGenerator
             isReadOnlyByRef,
             hasAttr ? info.TypeName : null,
             hasAttr && info.IsConst,
-            hasAttr && info.UseReference
+            hasAttr && info.UseReference,
+            imports
         );
     }
 
-    private static BindMethodParameter GetBindMethodParameter(IParameterSymbol parameter)
+    private static BindMethodParameter GetBindMethodParameter(
+        IParameterSymbol parameter,
+        HashSet<string> imports
+    )
     {
         return new BindMethodParameter
         {
             Name = parameter.Name,
             ManagedType = GetManagedParameterType(parameter),
-            CppType = GetCppParameterType(parameter),
+            CppType = GetCppParameterType(parameter, imports),
         };
     }
 
@@ -211,7 +219,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         };
     }
 
-    private static string GetCppParameterType(IParameterSymbol parameter)
+    private static string GetCppParameterType(IParameterSymbol parameter, HashSet<string> imports)
     {
         var hasAttr = false;
         CppTypeInfo info = default;
@@ -225,8 +233,9 @@ public class BindsExporterGenerator : IIncrementalGenerator
         }
 
         var refKind = parameter.RefKind;
-        var isByRef = refKind is RefKind.Ref or RefKind.Out or RefKind.In or RefKind.RefReadOnly;
-        var isReadOnlyByRef = refKind is RefKind.In or RefKind.RefReadOnly;
+        var isByRef =
+            refKind is RefKind.Ref or RefKind.Out or RefKind.In or RefKind.RefReadOnlyParameter;
+        var isReadOnlyByRef = refKind is RefKind.In or RefKind.RefReadOnlyParameter;
 
         return InferCppType(
             parameter.Type,
@@ -234,7 +243,8 @@ public class BindsExporterGenerator : IIncrementalGenerator
             isReadOnlyByRef,
             hasAttr ? info.TypeName : null,
             hasAttr && info.IsConst,
-            hasAttr && info.UseReference
+            hasAttr && info.UseReference,
+            imports
         );
     }
 
@@ -244,7 +254,8 @@ public class BindsExporterGenerator : IIncrementalGenerator
         bool isReadOnlyByRef,
         string? explicitName,
         bool isConstFromAttr,
-        bool useReferenceFromAttr
+        bool useReferenceFromAttr,
+        HashSet<string> imports
     )
     {
         var hasExplicitName = !string.IsNullOrWhiteSpace(explicitName);
@@ -255,7 +266,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
             // Base type name (no *, no &)
             var baseTypeName = hasExplicitName
                 ? explicitName!
-                : InferCppBaseType(pointerTypeSymbol.PointedAtType);
+                : InferCppBaseType(pointerTypeSymbol.PointedAtType, imports);
 
             return BuildPointerLikeType(baseTypeName, isConstFromAttr, useReferenceFromAttr);
         }
@@ -270,7 +281,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
         }
 
         // Non-pointer types: apply ref / const-ref rules
-        var valueTypeName = hasExplicitName ? explicitName! : InferCppBaseType(typeSymbol);
+        var valueTypeName = hasExplicitName ? explicitName! : InferCppBaseType(typeSymbol, imports);
 
         if (!isByRef)
         {
@@ -303,7 +314,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
     }
 
     // Base type name, without any ref / pointer decoration
-    private static string InferCppBaseType(ITypeSymbol typeSymbol)
+    private static string InferCppBaseType(ITypeSymbol typeSymbol, HashSet<string> imports)
     {
         return typeSymbol.SpecialType switch
         {
@@ -319,19 +330,28 @@ public class BindsExporterGenerator : IIncrementalGenerator
             SpecialType.System_Single => "float",
             SpecialType.System_Double => "double",
             // IntPtr is handled in InferCppType as pointer-like.
-            _ => GetCppTypeNameForNonSpecialType(typeSymbol),
+            _ => GetCppTypeNameForNonSpecialType(typeSymbol, imports),
         };
     }
 
-    private static string GetCppTypeNameForNonSpecialType(ITypeSymbol typeSymbol)
+    private static string GetCppTypeNameForNonSpecialType(
+        ITypeSymbol typeSymbol,
+        HashSet<string> imports
+    )
     {
         var fullName = typeSymbol.ToDisplayString();
-        return fullName switch
+        switch (fullName)
         {
-            "RetroEngine.Core.NativeBool" => "bool",
-            "RetroEngine.Strings.Name" => "retro::Name",
-            "RetroEngine.Strings.FindName" => "retro::FindType",
-            _ => throw new InvalidOperationException($"Cannot infer cpp type for {fullName}"),
-        };
+            case "RetroEngine.Core.NativeBool":
+                return "bool";
+            case "RetroEngine.Strings.Name":
+                imports.Add("retro.core");
+                return "retro::Name";
+            case "RetroEngine.Strings.FindName":
+                imports.Add("retro.core");
+                return "retro::FindType";
+            default:
+                throw new InvalidOperationException($"Cannot infer cpp type for {fullName}");
+        }
     }
 }

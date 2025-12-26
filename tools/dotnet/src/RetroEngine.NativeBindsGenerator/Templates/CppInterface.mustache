@@ -1,0 +1,11 @@
+export module {{ModuleName}}:{{CppName}};
+
+{{#Imports}}
+import {{Name}};    
+{{/Imports}}
+
+namespace {{CppNamespace}}::{{CppName}} {
+    {{#Methods}}
+    export {{CppReturnType}} {{CppName}}({{CppParameters}});
+    {{/Methods}}
+}

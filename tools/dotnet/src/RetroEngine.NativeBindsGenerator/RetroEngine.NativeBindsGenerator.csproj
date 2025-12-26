@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CaseConverter" />
+    <PackageReference Include="DotMake.CommandLine" />
+    <PackageReference Include="Handlebars.Net" />
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\..\engine\scripting\dotnet\src\RetroEngine.SourceGenerator\Model\BindMethodInfo.cs">
+      <Link>Model\BindMethodInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\engine\scripting\dotnet\src\RetroEngine.SourceGenerator\Model\ExporterClassInfo.cs">
+      <Link>Model\ExporterClassInfo.cs</Link>
+    </Compile>
+    <Compile Update="Properties\SourceTemplates.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SourceTemplates.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\SourceTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SourceTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
