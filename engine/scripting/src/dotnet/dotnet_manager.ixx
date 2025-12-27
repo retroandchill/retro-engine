@@ -9,11 +9,12 @@ module;
 
 export module retro.scripting:dotnet.manager;
 
+import retro.runtime;
 import :dotnet.loader;
 
 namespace retro
 {
-    export class RETRO_API DotnetManager
+    export class RETRO_API DotnetManager final : public ScriptRuntime
     {
 
       public:

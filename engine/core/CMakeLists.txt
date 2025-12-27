@@ -1,6 +1,4 @@
-add_library(retro_core SHARED
-        src/strings/name.cpp
-)
+add_library(retro_core SHARED src/strings/name.cpp)
 
 target_include_directories(retro_core PUBLIC include)
 
@@ -17,7 +15,8 @@ target_sources(retro_core PUBLIC
         src/memory/ref_counted_ptr.ixx
         src/defines.ixx
         src/algorithm/index.ixx
-        src/algorithm/hashing.ixx)
+        src/algorithm/hashing.ixx
+        src/basic_types.ixx)
 
 
 find_package(fmt CONFIG REQUIRED)

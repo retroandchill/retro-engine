@@ -8,7 +8,7 @@ module;
 module retro.scripting;
 
 import retro.core;
-import retro.platform;
+import retro.runtime;
 import retro.scripting;
 
 import std;

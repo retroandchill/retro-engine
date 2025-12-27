@@ -4,7 +4,4 @@
 
 export module retro.platform;
 
-export import :platform;
 export import :window;
-export import :loading;
-export import :filesystem;

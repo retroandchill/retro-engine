@@ -1,7 +1,4 @@
-add_library(retro_platform
-        src/loading/shared_library.cpp
-        src/platform.cpp
-        src/filesystem/utils.cpp)
+add_library(retro_platform)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_platform PUBLIC RETRO_STATIC)
@@ -10,16 +7,12 @@ endif()
 target_sources(retro_platform PUBLIC
         FILE_SET CXX_MODULES FILES
         src/index.ixx
-        src/window.ixx
-        src/platform.ixx
-        src/loading/index.ixx
-        src/loading/shared_library.ixx
-        src/filesystem/utils.ixx
-        src/filesystem/index.ixx)
+        src/window.ixx)
 
 find_package(SDL3 CONFIG REQUIRED)
 target_link_libraries(retro_platform PUBLIC
         retro_core
+        retro_runtime
         SDL3::SDL3)
 
 set_target_properties(retro_platform PROPERTIES

@@ -8,7 +8,6 @@ export module retro.platform:window;
 
 import std;
 import retro.core;
-import :platform;
 
 namespace retro
 {
@@ -25,7 +24,7 @@ namespace retro
     export class Window
     {
       public:
-        inline Window(Platform &, const int32 width, const int32 height, const CStringView title)
+        inline Window(const int32 width, const int32 height, const CStringView title)
         {
             window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
 

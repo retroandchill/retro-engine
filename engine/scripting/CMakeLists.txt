@@ -39,8 +39,7 @@ target_sources(retro_scripting PUBLIC
 find_package(SDL3 CONFIG REQUIRED)
 find_package(unofficial-nethost CONFIG REQUIRED)
 target_link_libraries(retro_scripting PUBLIC
-        retro_core
-        retro_platform
+        retro_core retro_runtime
         unofficial::nethost::nethost
         SDL3::SDL3)
 

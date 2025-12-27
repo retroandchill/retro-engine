@@ -5,18 +5,27 @@
 #include <SDL3/SDL_main.h>
 
 import retro.runtime;
+import retro.platform;
+import retro.scripting;
+import retro.renderer;
 import std;
 
 using namespace retro;
 
 int main()
 {
-
     SDL_SetMainReady();
+    SdlRuntime sdl_runtime;
 
     try
     {
-        EngineLifecycle engine_lifecycle{"Retro Engine - SDL3 RAII Window", 1280, 720};
+        const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
+                                  .renderer_factory =
+                                      []
+                                  {
+                                      return std::make_unique<VulkanRenderer2D>();
+                                  }};
+        EngineLifecycle engine_lifecycle{config};
 
         auto &engine = Engine::instance();
         engine.run();

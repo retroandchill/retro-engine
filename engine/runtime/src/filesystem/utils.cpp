@@ -5,7 +5,7 @@ module;
 
 #include <SDL3/SDL_filesystem.h>
 
-module retro.platform;
+module retro.runtime;
 
 namespace retro::filesystem
 {

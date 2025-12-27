@@ -5,7 +5,7 @@ module;
 
 #include <SDL3/SDL.h>
 
-module retro.platform;
+module retro.runtime;
 
 import std;
 

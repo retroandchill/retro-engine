@@ -6,7 +6,7 @@ module;
 
 #include <SDL3/SDL.h>
 
-export module retro.platform:loading.shared_library;
+export module retro.runtime:loading.shared_library;
 
 import std;
 import retro.core;

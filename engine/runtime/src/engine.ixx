@@ -11,23 +11,49 @@ export module retro.runtime:engine;
 
 import std;
 import retro.core;
-import retro.platform;
-import retro.scripting;
+import :interfaces;
 
 namespace retro
 {
-    export class RETRO_API Engine
+    export template <typename T>
+    struct EngineDependencyFactory
     {
-        struct InitializeTag
-        {
-        };
-        constexpr static InitializeTag initialize_tag{};
-
-      public:
-        inline Engine(InitializeTag, const CStringView name, const int32 width, const int32 height)
-            : window_{platform_, width, height, name}
+        template <std::invocable<> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor>, std::unique_ptr<T>>
+        explicit(false) EngineDependencyFactory(Functor &&factory)
+            : factory_([factory = std::forward<Functor>(factory)] -> std::unique_ptr<T> { return factory(); })
         {
         }
+
+        std::unique_ptr<T> operator()() const
+        {
+            return factory_();
+        }
+
+      private:
+        std::function<std::unique_ptr<T>()> factory_{};
+    };
+
+    export struct EngineConfig
+    {
+        EngineDependencyFactory<ScriptRuntime> script_runtime_factory;
+        EngineDependencyFactory<Renderer2D> renderer_factory;
+    };
+
+    export class RETRO_API Engine
+    {
+      public:
+        explicit inline Engine(const EngineConfig &config)
+            : script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
+        {
+        }
+
+        ~Engine() = default;
+
+        Engine(const Engine &) = delete;
+        Engine(Engine &&) noexcept = delete;
+        Engine &operator=(const Engine &) = delete;
+        Engine &operator=(Engine &&) noexcept = delete;
 
         static inline Engine &instance()
         {
@@ -35,10 +61,10 @@ namespace retro
             return *instance_;
         }
 
-        inline static void initialize(const CStringView name, const int32 width, const int32 height)
+        inline static void initialize(const EngineConfig &config)
         {
             assert(instance_ == nullptr);
-            instance_ = std::make_unique<Engine>(initialize_tag, name, width, height);
+            instance_ = std::make_unique<Engine>(config);
         }
 
         inline static void shutdown()
@@ -46,30 +72,24 @@ namespace retro
             instance_.reset();
         }
 
-        inline Platform &platform()
-        {
-            return platform_;
-        }
-
         void run();
 
       private:
+        static bool poll_events();
         void tick(float delta_time);
-
         void render();
 
         static std::unique_ptr<Engine> instance_;
 
-        Platform platform_;
-        Window window_;
-        DotnetManager dotnet_manager_;
+        std::unique_ptr<ScriptRuntime> script_runtime{};
+        std::unique_ptr<Renderer2D> renderer_{};
     };
 
     export struct EngineLifecycle
     {
-        inline EngineLifecycle(const CStringView name, const int32 width, const int32 height)
+        explicit inline EngineLifecycle(const EngineConfig &config)
         {
-            Engine::initialize(name, width, height);
+            Engine::initialize(config);
         }
 
         inline ~EngineLifecycle()
