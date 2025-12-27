@@ -148,6 +148,8 @@ namespace retro
 
         return vk::InstanceCreateInfo{{},
                                                &app_info,
+                                0,
+                            nullptr,
                                                static_cast<uint32>(extensions.size()),
                                                extensions.data()};
     }
@@ -173,7 +175,7 @@ namespace retro
             throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
         }
 
-        return vk::UniqueSurfaceKHR{surface};
+        return vk::UniqueSurfaceKHR{surface, instance};
     }
 
     vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device, vk::Format color_format, vk::SampleCountFlagBits samples)
@@ -261,7 +263,7 @@ namespace retro
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
     }
 
-    void VulkanRenderer2D::record_command_buffer(VkCommandBuffer cmd, uint32 image_index)
+    void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const uint32 image_index)
     {
         VkCommandBufferBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -271,27 +273,27 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to begin command buffer"};
         }
 
-        VkClearValue clear{};
-        clear.color = {{0.1f, 0.1f, 0.2f, 1.0f}};
+        vk::ClearValue clear{
+                {0.1f, 0.1f, 0.2f, 1.0f}
+        };
 
-        VkRenderPassBeginInfo rp_info{};
-        rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        rp_info.renderPass = render_pass_.get();
-        rp_info.framebuffer = framebuffers_.at(image_index).get();
-        rp_info.renderArea.offset = {0, 0};
-        rp_info.renderArea.extent = swapchain_.extent();
-        rp_info.clearValueCount = 1;
-        rp_info.pClearValues = &clear;
+        vk::RenderPassBeginInfo rp_info{
+            render_pass_.get(),
+            framebuffers_.at(image_index).get(),
+            vk::Rect2D{
+                vk::Offset2D{0, 0},
+                swapchain_.extent()
+            },
+            1,
+            &clear
+        };
 
-        vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
+        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
 
         // TODO: issue pipeline & draw commands here for your quad
 
-        vkCmdEndRenderPass(cmd);
+        cmd.endRenderPass();
 
-        if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to record command buffer"};
-        }
+        cmd.end();
     }
 } // namespace retro

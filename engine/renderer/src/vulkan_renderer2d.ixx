@@ -41,7 +41,7 @@ namespace retro
         static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device, vk::RenderPass render_pass, const VulkanSwapchain& swapchain);
 
         void recreate_swapchain();
-        void record_command_buffer(VkCommandBuffer cmd, uint32 image_index);
+        void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
 
         Window window_;
 
