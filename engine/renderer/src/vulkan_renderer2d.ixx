@@ -4,6 +4,7 @@
 module;
 
 #include "retro/core/exports.h"
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:vulkan_renderer2d;
 
@@ -33,20 +34,23 @@ namespace retro
         void draw_quad(Vector2 position, Vector2 size, Color color) override;
 
       private:
-        static VulkanInstance get_instance_create_info();
+        static vk::InstanceCreateInfo get_instance_create_info();
         static std::span<const char *const> get_required_instance_extensions();
+        static vk::UniqueSurfaceKHR create_surface(vk::Instance instance, const Window& window);
+        static vk::UniqueRenderPass create_render_pass(vk::Device device, vk::Format color_format, vk::SampleCountFlagBits samples);
+        static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device, vk::RenderPass render_pass, const VulkanSwapchain& swapchain);
 
         void recreate_swapchain();
         void record_command_buffer(VkCommandBuffer cmd, uint32 image_index);
 
         Window window_;
 
-        VulkanInstance instance_;
-        VulkanSurface surface_;
+        vk::UniqueInstance instance_;
+        vk::UniqueSurfaceKHR surface_;
         VulkanDevice device_;
         VulkanSwapchain swapchain_;
-        VulkanRenderPass render_pass_;
-        VulkanFramebuffers framebuffers_;
+        vk::UniqueRenderPass render_pass_;
+        std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool command_pool_;
         VulkanSyncObjects sync_;
 

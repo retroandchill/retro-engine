@@ -5,12 +5,11 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:components.vulkan_device;
 
 import retro.core;
-import :components.vulkan_instance;
 import std;
 
 namespace retro
@@ -18,27 +17,21 @@ namespace retro
     export class RETRO_API VulkanDevice
     {
       public:
-        VulkanDevice(const VulkanInstance &instance, const VkSurfaceKHR surface);
-        ~VulkanDevice() noexcept;
+        VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface);
 
-        VulkanDevice(const VulkanDevice &) = delete;
-        VulkanDevice &operator=(const VulkanDevice &) = delete;
-        VulkanDevice(VulkanDevice &&) = delete;
-        VulkanDevice &operator=(VulkanDevice &&) = delete;
-
-        [[nodiscard]] inline VkPhysicalDevice physical_device() const noexcept
+        [[nodiscard]] inline vk::PhysicalDevice physical_device() const noexcept
         {
             return physical_device_;
         }
-        [[nodiscard]] inline VkDevice device() const noexcept
+        [[nodiscard]] inline vk::Device device() const noexcept
         {
-            return device_;
+            return device_.get();
         }
-        [[nodiscard]] inline VkQueue graphics_queue() const noexcept
+        [[nodiscard]] inline vk::Queue graphics_queue() const noexcept
         {
             return graphics_queue_;
         }
-        [[nodiscard]] inline VkQueue present_queue() const noexcept
+        [[nodiscard]] inline vk::Queue present_queue() const noexcept
         {
             return present_queue_;
         }
@@ -51,22 +44,24 @@ namespace retro
             return present_family_index_;
         }
 
-      private:
-        VkPhysicalDevice physical_device_{VK_NULL_HANDLE};
-        VkDevice device_{VK_NULL_HANDLE};
-        VkQueue graphics_queue_{VK_NULL_HANDLE};
-        VkQueue present_queue_{VK_NULL_HANDLE};
-        uint32 graphics_family_index_{UINT32_MAX};
-        uint32 present_family_index_{UINT32_MAX};
+    private:
+        uint32 graphics_family_index_{std::numeric_limits<uint32>::max()};
+        uint32 present_family_index_{std::numeric_limits<uint32>::max()};
+        vk::PhysicalDevice physical_device_{};
+        vk::UniqueDevice device_{};
+        vk::Queue graphics_queue_{};
+        vk::Queue present_queue_{};
 
-        static VkPhysicalDevice pick_physical_device(VkInstance instance,
-                                                     VkSurfaceKHR surface,
+        static vk::PhysicalDevice pick_physical_device(vk::Instance instance,
+                                                     vk::SurfaceKHR surface,
                                                      uint32 &out_graphics_family,
                                                      uint32 &out_present_family);
 
-        static bool is_device_suitable(VkPhysicalDevice device,
-                                       VkSurfaceKHR surface,
+        static bool is_device_suitable(vk::PhysicalDevice device,
+                                       vk::SurfaceKHR surface,
                                        uint32 &out_graphics_family,
                                        uint32 &out_present_family);
+
+        static vk::UniqueDevice create_device(vk::PhysicalDevice physical_device, uint32 graphics_family, uint32 present_family);
     };
 } // namespace retro

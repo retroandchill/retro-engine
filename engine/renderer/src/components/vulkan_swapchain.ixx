@@ -5,23 +5,22 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:components.vulkan_swapchain;
 
 import retro.core;
 import :components.vulkan_device;
-import :components.vulkan_surface;
 
 namespace retro
 {
     export struct SwapchainConfig
     {
-        VkPhysicalDevice physical_device = VK_NULL_HANDLE;
-        VkDevice device = VK_NULL_HANDLE;
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-        uint32 graphics_family = VK_QUEUE_FAMILY_IGNORED;
-        uint32 present_family = VK_QUEUE_FAMILY_IGNORED;
+        vk::PhysicalDevice physical_device = nullptr;
+        vk::Device device = nullptr;
+        vk::SurfaceKHR surface = nullptr;
+        uint32 graphics_family = vk::QueueFamilyIgnored;
+        uint32 present_family = vk::QueueFamilyIgnored;
         uint32 width = 0;
         uint32 height = 0;
     };
@@ -29,52 +28,32 @@ namespace retro
     export class RETRO_API VulkanSwapchain
     {
       public:
-        explicit inline VulkanSwapchain(const SwapchainConfig &config)
+        explicit VulkanSwapchain(const SwapchainConfig &config);
+
+        [[nodiscard]] inline vk::SwapchainKHR handle() const noexcept
         {
-            create(config);
+            return swapchain_.get();
         }
-
-        inline ~VulkanSwapchain() noexcept
-        {
-            reset();
-        }
-
-        VulkanSwapchain(const VulkanSwapchain &) = delete;
-        VulkanSwapchain &operator=(const VulkanSwapchain &) = delete;
-        VulkanSwapchain(VulkanSwapchain &&) = delete;
-        VulkanSwapchain &operator=(VulkanSwapchain &&) = delete;
-
-        void recreate(const SwapchainConfig &cfg);
-
-        void reset() noexcept;
-
-        [[nodiscard]] inline VkSwapchainKHR handle() const noexcept
-        {
-            return swapchain_;
-        }
-        [[nodiscard]] inline VkFormat format() const noexcept
+        [[nodiscard]] inline vk::Format format() const noexcept
         {
             return format_;
         }
-        [[nodiscard]] inline VkExtent2D extent() const noexcept
+        [[nodiscard]] inline vk::Extent2D extent() const noexcept
         {
             return extent_;
         }
-        [[nodiscard]] inline const std::vector<VkImageView> &image_views() const noexcept
+        [[nodiscard]] inline const std::vector<vk::UniqueImageView> &image_views() const noexcept
         {
             return image_views_;
         }
 
       private:
-        void create(const SwapchainConfig &cfg);
+        void create_image_views(vk::Device device);
 
-        void create_image_views();
-
-        VkDevice device_{VK_NULL_HANDLE};
-        VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
-        std::vector<VkImage> images_;
-        std::vector<VkImageView> image_views_;
-        VkFormat format_{VK_FORMAT_UNDEFINED};
-        VkExtent2D extent_{};
+        vk::UniqueSwapchainKHR swapchain_{};
+        std::vector<vk::Image> images_;
+        std::vector<vk::UniqueImageView> image_views_;
+        vk::Format format_{vk::Format::eUndefined};
+        vk::Extent2D extent_{};
     };
 } // namespace retro

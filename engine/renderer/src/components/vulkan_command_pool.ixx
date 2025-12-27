@@ -5,7 +5,7 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:components.vulkan_command_pool;
 
@@ -16,51 +16,34 @@ namespace retro
 {
     export struct CommandPoolConfig
     {
-        VkDevice device = VK_NULL_HANDLE;
-        uint32 queue_family_idx = VK_QUEUE_FAMILY_IGNORED;
+        vk::Device device = nullptr;
+        uint32 queue_family_idx = vk::QueueFamilyIgnored;
         uint32 buffer_count = 0; // typically MAX_FRAMES_IN_FLIGHT
     };
 
     export class RETRO_API VulkanCommandPool
     {
       public:
-        explicit inline VulkanCommandPool(const CommandPoolConfig &cfg)
+        explicit VulkanCommandPool(const CommandPoolConfig &cfg);
+
+        [[nodiscard]] inline vk::CommandPool pool() const noexcept
         {
-            create(cfg);
+            return pool_.get();
         }
-
-        inline ~VulkanCommandPool() noexcept
-        {
-            reset();
-        }
-
-        VulkanCommandPool(const VulkanCommandPool &) = delete;
-        VulkanCommandPool &operator=(const VulkanCommandPool &) = delete;
-        VulkanCommandPool(VulkanCommandPool &&) = delete;
-        VulkanCommandPool &operator=(VulkanCommandPool &&) = delete;
-
-        void recreate(const CommandPoolConfig &cfg);
-
-        void reset() noexcept;
-
-        [[nodiscard]] inline VkCommandPool pool() const noexcept
-        {
-            return pool_;
-        }
-        [[nodiscard]] inline const std::vector<VkCommandBuffer> &buffers() const noexcept
+        [[nodiscard]] inline const std::vector<vk::UniqueCommandBuffer> &buffers() const noexcept
         {
             return buffers_;
         }
-        [[nodiscard]] inline VkCommandBuffer buffer_at(size_t index) const noexcept
+        [[nodiscard]] inline vk::CommandBuffer buffer_at(const size_t index) const noexcept
         {
-            return buffers_[index];
+            return buffers_[index].get();
         }
 
       private:
-        void create(const CommandPoolConfig &cfg);
 
-        VkDevice device_{VK_NULL_HANDLE};
-        VkCommandPool pool_{VK_NULL_HANDLE};
-        std::vector<VkCommandBuffer> buffers_;
+        vk::UniqueCommandPool pool_{nullptr};
+        std::vector<vk::UniqueCommandBuffer> buffers_;
     };
+
+
 } // namespace retro

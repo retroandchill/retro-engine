@@ -6,33 +6,31 @@ module;
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 module retro.renderer;
 
 namespace retro
 {
     VulkanRenderer2D::VulkanRenderer2D(Window window)
-        : window_{std::move(window)}, instance_{get_instance_create_info()}, surface_{instance_, window_},
-          device_{instance_, surface_.surface()}, swapchain_(SwapchainConfig{
+        : window_{std::move(window)},
+          instance_{vk::createInstanceUnique(get_instance_create_info())},
+          surface_{create_surface(instance_.get(), window_)},
+          device_{instance_.get(), surface_.get()}, swapchain_(SwapchainConfig{
                                                       .physical_device = device_.physical_device(),
                                                       .device = device_.device(),
-                                                      .surface = surface_.surface(),
+                                                      .surface = surface_.get(),
                                                       .graphics_family = device_.graphics_family_index(),
                                                       .present_family = device_.present_family_index(),
                                                       .width = static_cast<uint32_t>(window_.width()),
                                                       .height = static_cast<uint32_t>(window_.height()),
                                                   }),
-          render_pass_(RenderPassConfig{
-              .device = device_.device(),
-              .color_format = swapchain_.format(),
-          }),
-          framebuffers_(FramebufferConfig{
-              .device = device_.device(),
-              .render_pass = render_pass_.handle(),
-              .extent = swapchain_.extent(),
-              .image_views = &swapchain_.image_views(),
-          }),
+          render_pass_(create_render_pass(
+              device_.device(),
+              swapchain_.format(),
+              vk::SampleCountFlagBits::e1)
+          ),
+          framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
           command_pool_(CommandPoolConfig{
               .device = device_.device(),
               .queue_family_idx = device_.graphics_family_index(),
@@ -138,23 +136,20 @@ namespace retro
         (void)color;
     }
 
-    VulkanInstance VulkanRenderer2D::get_instance_create_info()
+    vk::InstanceCreateInfo VulkanRenderer2D::get_instance_create_info()
     {
-        VkApplicationInfo app_info{.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-                                   .pApplicationName = "Retro Engine",
-                                   .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                                   .pEngineName = "Retro Engine",
-                                   .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-                                   .apiVersion = VK_API_VERSION_1_2};
+        vk::ApplicationInfo app_info{"Retro Engine",
+            VK_MAKE_VERSION(1, 0, 0),
+            "Retro Engine",
+            VK_MAKE_VERSION(1, 0, 0),
+            VK_API_VERSION_1_2};
 
         const auto extensions = get_required_instance_extensions();
 
-        const VkInstanceCreateInfo create_info{.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                                               .pApplicationInfo = &app_info,
-                                               .enabledExtensionCount = static_cast<uint32>(extensions.size()),
-                                               .ppEnabledExtensionNames = extensions.data()};
-
-        return VulkanInstance{create_info};
+        return vk::InstanceCreateInfo{{},
+                                               &app_info,
+                                               static_cast<uint32>(extensions.size()),
+                                               extensions.data()};
     }
 
     std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions()
@@ -170,6 +165,77 @@ namespace retro
         return std::span{names, count};
     }
 
+    vk::UniqueSurfaceKHR VulkanRenderer2D::create_surface(vk::Instance instance, const Window &window)
+    {
+        VkSurfaceKHR surface;
+        if (!SDL_Vulkan_CreateSurface(window.native_handle(), instance, nullptr, &surface))
+        {
+            throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
+        }
+
+        return vk::UniqueSurfaceKHR{surface};
+    }
+
+    vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device, vk::Format color_format, vk::SampleCountFlagBits samples)
+    {
+        vk::AttachmentDescription color_attachment{
+            {},
+            color_format,
+            samples,
+            vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp::eStore,
+            vk::AttachmentLoadOp::eDontCare,
+            vk::AttachmentStoreOp::eDontCare,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::ePresentSrcKHR
+        };
+
+        vk::AttachmentReference color_ref{
+            0,
+            vk::ImageLayout::eColorAttachmentOptimal
+        };
+
+        vk::SubpassDescription subpass{
+            {},
+            vk::PipelineBindPoint::eGraphics,
+            1,
+            &color_ref
+        };
+
+        vk::RenderPassCreateInfo rp_info{
+            {},
+            1,
+            &color_attachment,
+            1,
+            &subpass
+        };
+
+        return device.createRenderPassUnique(rp_info);
+    }
+
+    std::vector<vk::UniqueFramebuffer> VulkanRenderer2D::create_framebuffers(vk::Device device,
+        vk::RenderPass render_pass, const VulkanSwapchain &swapchain)
+    {
+        return swapchain.image_views() |
+            std::views::transform([device, render_pass, &swapchain](const vk::UniqueImageView &image)
+            {
+                std::array attachments = {image.get()};
+
+                vk::FramebufferCreateInfo fb_info{
+                    {},
+                    render_pass,
+                    attachments.size(),
+                    attachments.data(),
+                    swapchain.extent().width,
+                    swapchain.extent().height,
+                    1
+                };
+
+                return device.createFramebufferUnique(fb_info);
+            }) |
+            std::ranges::to<std::vector>();
+    }
+
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
@@ -180,27 +246,19 @@ namespace retro
 
         vkDeviceWaitIdle(device_.device());
 
-        swapchain_.recreate(SwapchainConfig{
-            .physical_device = device_.physical_device(),
-            .device = device_.device(),
-            .surface = surface_.surface(),
-            .graphics_family = device_.graphics_family_index(),
-            .present_family = device_.present_family_index(),
-            .width = w,
-            .height = h,
-        });
-
-        render_pass_.recreate(RenderPassConfig{
-            .device = device_.device(),
-            .color_format = swapchain_.format(),
-        });
-
-        framebuffers_.recreate(FramebufferConfig{
-            .device = device_.device(),
-            .render_pass = render_pass_.handle(),
-            .extent = swapchain_.extent(),
-            .image_views = &swapchain_.image_views(),
-        });
+        swapchain_ = VulkanSwapchain{SwapchainConfig{
+            SwapchainConfig{
+                .physical_device = device_.physical_device(),
+                .device = device_.device(),
+                .surface = surface_.get(),
+                .graphics_family = device_.graphics_family_index(),
+                .present_family = device_.present_family_index(),
+                .width = w,
+                .height = h,
+            }
+        }};
+        render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
+        framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
     }
 
     void VulkanRenderer2D::record_command_buffer(VkCommandBuffer cmd, uint32 image_index)
@@ -218,8 +276,8 @@ namespace retro
 
         VkRenderPassBeginInfo rp_info{};
         rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        rp_info.renderPass = render_pass_.handle();
-        rp_info.framebuffer = framebuffers_.framebuffer_at(image_index);
+        rp_info.renderPass = render_pass_.get();
+        rp_info.framebuffer = framebuffers_.at(image_index).get();
         rp_info.renderArea.offset = {0, 0};
         rp_info.renderArea.extent = swapchain_.extent();
         rp_info.clearValueCount = 1;

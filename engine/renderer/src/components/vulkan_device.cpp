@@ -4,66 +4,22 @@
 module;
 
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 module retro.renderer;
 
 namespace retro
 {
-    VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VkSurfaceKHR surface)
+    VulkanDevice::VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface) :
+        physical_device_{pick_physical_device(instance, surface, graphics_family_index_, present_family_index_)},
+        device_{create_device(physical_device_, graphics_family_index_, present_family_index_)},
+        graphics_queue_{device_->getQueue(graphics_family_index_, 0)},
+        present_queue_{device_->getQueue(present_family_index_, 0)}
     {
-        if (instance.instance() == VK_NULL_HANDLE || surface == VK_NULL_HANDLE)
-        {
-            throw std::runtime_error{"VulkanDevice: instance or surface is null"};
-        }
-
-        physical_device_ =
-            pick_physical_device(instance.instance(), surface, graphics_family_index_, present_family_index_);
-
-        // Required device extensions
-        constexpr const char *DEVICE_EXTENSIONS[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-        std::set unique_families{graphics_family_index_, present_family_index_};
-
-        float queue_priority = 1.0f;
-        std::vector<VkDeviceQueueCreateInfo> queue_infos;
-        queue_infos.reserve(unique_families.size());
-
-        for (uint32 family : unique_families)
-        {
-            VkDeviceQueueCreateInfo qi{};
-            qi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            qi.queueFamilyIndex = family;
-            qi.queueCount = 1;
-            qi.pQueuePriorities = &queue_priority;
-            queue_infos.push_back(qi);
-        }
-
-        VkPhysicalDeviceFeatures device_features{}; // enable specific features as needed
-
-        VkDeviceCreateInfo create_info{};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        create_info.queueCreateInfoCount = static_cast<uint32>(queue_infos.size());
-        create_info.pQueueCreateInfos = queue_infos.data();
-        create_info.pEnabledFeatures = &device_features;
-        create_info.enabledExtensionCount = static_cast<uint32>(std::size(DEVICE_EXTENSIONS));
-        create_info.ppEnabledExtensionNames = DEVICE_EXTENSIONS;
-
-        if (vkCreateDevice(physical_device_, &create_info, nullptr, &device_) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"VulkanDevice: failed to create logical device"};
-        }
-
-        vkGetDeviceQueue(device_, graphics_family_index_, 0, &graphics_queue_);
-        vkGetDeviceQueue(device_, present_family_index_, 0, &present_queue_);
     }
 
-    VulkanDevice::~VulkanDevice() noexcept
-    {
-        vkDestroyDevice(device_, nullptr);
-    }
-
-    VkPhysicalDevice VulkanDevice::pick_physical_device(const VkInstance instance,
-                                                        const VkSurfaceKHR surface,
+    vk::PhysicalDevice VulkanDevice::pick_physical_device(vk::Instance instance,
+                                                        vk::SurfaceKHR surface,
                                                         uint32 &out_graphics_family,
                                                         uint32 &out_present_family)
     {
@@ -93,8 +49,8 @@ namespace retro
         throw std::runtime_error{"VulkanDevice: failed to find a suitable GPU"};
     }
 
-    bool VulkanDevice::is_device_suitable(const VkPhysicalDevice device,
-                                          const VkSurfaceKHR surface,
+    bool VulkanDevice::is_device_suitable(const vk::PhysicalDevice device,
+                                          const vk::SurfaceKHR surface,
                                           uint32 &out_graphics_family,
                                           uint32 &out_present_family)
     {
@@ -151,5 +107,40 @@ namespace retro
         }
 
         return true;
+    }
+
+    vk::UniqueDevice VulkanDevice::create_device(const vk::PhysicalDevice physical_device, const uint32 graphics_family, const uint32 present_family)
+    {
+        // Required device extensions
+        constexpr std::array DEVICE_EXTENSIONS = {vk::KHRSwapchainExtensionName};
+
+        std::set unique_families{graphics_family, present_family};
+
+        float queue_priority = 1.0f;
+        std::vector<vk::DeviceQueueCreateInfo> queue_infos;
+        queue_infos.reserve(unique_families.size());
+
+        for (uint32 family : unique_families)
+        {
+            queue_infos.emplace_back(vk::DeviceQueueCreateFlags{},
+                family,
+                1,
+                &queue_priority);
+        }
+
+        vk::PhysicalDeviceFeatures device_features{}; // enable specific features as needed
+
+        vk::DeviceCreateInfo create_info{
+                {},
+                static_cast<uint32>(queue_infos.size()),
+                queue_infos.data(),
+                0,
+                nullptr,
+                DEVICE_EXTENSIONS.size(),
+                DEVICE_EXTENSIONS.data(),
+                &device_features
+            };
+
+        return physical_device.createDeviceUnique(create_info, nullptr);
     }
 } // namespace retro
