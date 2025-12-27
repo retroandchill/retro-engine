@@ -1,5 +1,6 @@
 add_library(retro_renderer
-        src/vulkan_renderer2d.cpp)
+        src/vulkan_renderer2d.cpp
+        src/components/vulkan_instance.ixx)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_renderer PUBLIC RETRO_STATIC)
@@ -9,6 +10,9 @@ target_sources(retro_renderer PUBLIC
         FILE_SET CXX_MODULES FILES
         src/index.ixx
         src/vulkan_renderer2d.ixx
+        src/window.ixx
+        src/components/vulkan_instance.ixx
+        src/components/index.ixx
         )
 
 find_package(Vulkan REQUIRED)

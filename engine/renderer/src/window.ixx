@@ -2,9 +2,10 @@
 // Created by fcors on 12/19/2025.
 //
 module;
-#include <SDL3/SDL.h>
 
-export module retro.platform:window;
+#include <SDL3/SDL_vulkan.h>
+
+export module retro.renderer:window;
 
 import std;
 import retro.core;
@@ -26,7 +27,7 @@ namespace retro
       public:
         inline Window(const int32 width, const int32 height, const CStringView title)
         {
-            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE)};
+            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN)};
 
             if (window_ == nullptr)
             {

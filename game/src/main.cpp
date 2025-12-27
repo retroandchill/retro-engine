@@ -5,7 +5,6 @@
 #include <SDL3/SDL_main.h>
 
 import retro.runtime;
-import retro.platform;
 import retro.scripting;
 import retro.renderer;
 import std;
@@ -23,7 +22,7 @@ int main()
                                   .renderer_factory =
                                       []
                                   {
-                                      return std::make_unique<VulkanRenderer2D>();
+                                      return std::make_unique<VulkanRenderer2D>(Window{1280, 720, "Retro Engine"});
                                   }};
         EngineLifecycle engine_lifecycle{config};
 

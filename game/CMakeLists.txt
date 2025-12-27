@@ -6,7 +6,6 @@ find_package(SDL3 CONFIG REQUIRED)
 
 target_link_libraries(retro_game
         PRIVATE
-            retro_platform
             retro_scripting
             retro_renderer
             SDL3::SDL3)

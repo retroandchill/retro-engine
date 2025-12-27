@@ -4,6 +4,8 @@
   "description" : "A retro game engine",
   "dependencies" : [ {
     "name" : "sdl3",
+    "default-features": false,
+    "features": [ "vulkan" ],
     "version>=" : "3.2.28"
   }, {
     "name" : "nethost",
