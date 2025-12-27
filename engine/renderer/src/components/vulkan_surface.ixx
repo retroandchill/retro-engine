@@ -16,8 +16,8 @@ namespace retro
 {
     export class VulkanSurface
     {
-    public:
-        inline VulkanSurface(const VulkanInstance& instance, const Window& window) : instance_{instance.instance()}
+      public:
+        inline VulkanSurface(const VulkanInstance &instance, const Window &window) : instance_{instance.instance()}
         {
             if (window == nullptr)
             {
@@ -35,10 +35,10 @@ namespace retro
             vkDestroySurfaceKHR(instance_, surface_, nullptr);
         }
 
-        VulkanSurface(const VulkanSurface&) = delete;
-        VulkanSurface& operator=(const VulkanSurface&) = delete;
-        VulkanSurface(VulkanSurface&& other) noexcept = delete;
-        VulkanSurface& operator=(VulkanSurface&& other) noexcept = delete;
+        VulkanSurface(const VulkanSurface &) = delete;
+        VulkanSurface &operator=(const VulkanSurface &) = delete;
+        VulkanSurface(VulkanSurface &&other) noexcept = delete;
+        VulkanSurface &operator=(VulkanSurface &&other) noexcept = delete;
 
         [[nodiscard]] inline VkSurfaceKHR surface() const noexcept
         {
@@ -50,8 +50,8 @@ namespace retro
             return instance_;
         }
 
-    private:
-        VkInstance   instance_{VK_NULL_HANDLE};
+      private:
+        VkInstance instance_{VK_NULL_HANDLE};
         VkSurfaceKHR surface_{VK_NULL_HANDLE};
     };
-}
+} // namespace retro

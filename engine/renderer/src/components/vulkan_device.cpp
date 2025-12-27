@@ -9,26 +9,20 @@ module retro.renderer;
 
 namespace retro
 {
-    VulkanDevice::VulkanDevice(const VulkanInstance& instance, const VkSurfaceKHR surface)
+    VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VkSurfaceKHR surface)
     {
         if (instance.instance() == VK_NULL_HANDLE || surface == VK_NULL_HANDLE)
         {
             throw std::runtime_error{"VulkanDevice: instance or surface is null"};
         }
 
-        physical_device_ = pick_physical_device(instance.instance(), surface,
-                                                graphics_family_index_,
-                                                present_family_index_);
+        physical_device_ =
+            pick_physical_device(instance.instance(), surface, graphics_family_index_, present_family_index_);
 
         // Required device extensions
-        constexpr const char* DEVICE_EXTENSIONS[] = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
+        constexpr const char *DEVICE_EXTENSIONS[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-        std::set unique_families{
-            graphics_family_index_,
-            present_family_index_
-        };
+        std::set unique_families{graphics_family_index_, present_family_index_};
 
         float queue_priority = 1.0f;
         std::vector<VkDeviceQueueCreateInfo> queue_infos;
@@ -68,9 +62,10 @@ namespace retro
         vkDestroyDevice(device_, nullptr);
     }
 
-    VkPhysicalDevice VulkanDevice::pick_physical_device(const VkInstance instance, const VkSurfaceKHR surface,
-                                                        uint32& out_graphics_family,
-                                                        uint32& out_present_family)
+    VkPhysicalDevice VulkanDevice::pick_physical_device(const VkInstance instance,
+                                                        const VkSurfaceKHR surface,
+                                                        uint32 &out_graphics_family,
+                                                        uint32 &out_present_family)
     {
         uint32 device_count = 0;
         vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
@@ -85,12 +80,12 @@ namespace retro
         for (VkPhysicalDevice dev : devices)
         {
             uint32 graphics_family = UINT32_MAX;
-            uint32 present_family  = UINT32_MAX;
+            uint32 present_family = UINT32_MAX;
 
             if (is_device_suitable(dev, surface, graphics_family, present_family))
             {
                 out_graphics_family = graphics_family;
-                out_present_family  = present_family;
+                out_present_family = present_family;
                 return dev;
             }
         }
@@ -98,9 +93,10 @@ namespace retro
         throw std::runtime_error{"VulkanDevice: failed to find a suitable GPU"};
     }
 
-    bool VulkanDevice::is_device_suitable(const VkPhysicalDevice device, const VkSurfaceKHR surface,
-                                          uint32& out_graphics_family,
-                                          uint32& out_present_family)
+    bool VulkanDevice::is_device_suitable(const VkPhysicalDevice device,
+                                          const VkSurfaceKHR surface,
+                                          uint32 &out_graphics_family,
+                                          uint32 &out_present_family)
     {
         // Find queue families
         uint32 queue_family_count = 0;
@@ -110,7 +106,7 @@ namespace retro
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, families.data());
 
         out_graphics_family = std::numeric_limits<uint32>::max();
-        out_present_family  = std::numeric_limits<uint32>::max();
+        out_present_family = std::numeric_limits<uint32>::max();
 
         for (uint32 i = 0; i < queue_family_count; ++i)
         {
@@ -126,13 +122,15 @@ namespace retro
                 out_present_family = i;
             }
 
-            if (out_graphics_family != std::numeric_limits<uint32>::max() && out_present_family != std::numeric_limits<uint32>::max())
+            if (out_graphics_family != std::numeric_limits<uint32>::max() &&
+                out_present_family != std::numeric_limits<uint32>::max())
             {
                 break;
             }
         }
 
-        if (out_graphics_family == std::numeric_limits<uint32>::max() || out_present_family == std::numeric_limits<uint32>::max())
+        if (out_graphics_family == std::numeric_limits<uint32>::max() ||
+            out_present_family == std::numeric_limits<uint32>::max())
         {
             return false;
         }
@@ -154,4 +152,4 @@ namespace retro
 
         return true;
     }
-}
+} // namespace retro

@@ -25,9 +25,10 @@ namespace retro
     export class Window
     {
       public:
-        inline Window(const int32 width, const int32 height, const CStringView title)
+        inline Window(const int32 width, const int32 height, const CStringView title) : width_{width}, height_{height}
         {
-            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN)};
+            window_ =
+                WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN)};
 
             if (window_ == nullptr)
             {
@@ -46,17 +47,29 @@ namespace retro
             SDL_SetWindowTitle(window_.get(), title.data());
         }
 
-        [[nodiscard]] inline friend bool operator==(const Window& a, const Window& b) noexcept
+        [[nodiscard]] inline int32 width() const
+        {
+            return width_;
+        }
+
+        [[nodiscard]] inline int32 height() const
+        {
+            return height_;
+        }
+
+        [[nodiscard]] inline friend bool operator==(const Window &a, const Window &b) noexcept
         {
             return a.native_handle() == b.native_handle();
         }
 
-        [[nodiscard]] inline friend bool operator==(const Window& a, std::nullptr_t) noexcept
+        [[nodiscard]] inline friend bool operator==(const Window &a, std::nullptr_t) noexcept
         {
             return a.native_handle() == nullptr;
         }
 
       private:
         WindowPtr window_;
+        int32 width_;
+        int32 height_;
     };
 } // namespace retro
