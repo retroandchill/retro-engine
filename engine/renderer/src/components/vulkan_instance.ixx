@@ -2,10 +2,12 @@
 // Created by fcors on 12/26/2025.
 //
 module;
-#include <stdexcept>
+
 #include <vulkan/vulkan.h>
 
 export module retro.renderer:components.vulkan_instance;
+
+import std;
 
 namespace retro
 {

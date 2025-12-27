@@ -4,6 +4,6 @@
 
 export module retro.renderer;
 
+export import :components;
 export import :vulkan_renderer2d;
 export import :window;
-export import :components;

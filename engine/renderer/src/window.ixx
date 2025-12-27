@@ -46,6 +46,16 @@ namespace retro
             SDL_SetWindowTitle(window_.get(), title.data());
         }
 
+        [[nodiscard]] inline friend bool operator==(const Window& a, const Window& b) noexcept
+        {
+            return a.native_handle() == b.native_handle();
+        }
+
+        [[nodiscard]] inline friend bool operator==(const Window& a, std::nullptr_t) noexcept
+        {
+            return a.native_handle() == nullptr;
+        }
+
       private:
         WindowPtr window_;
     };

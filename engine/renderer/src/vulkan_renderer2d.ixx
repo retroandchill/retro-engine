@@ -31,5 +31,7 @@ namespace retro
         Window window_;
 
         VulkanInstance instance_;
+        VulkanSurface surface_;
+        VulkanDevice device_;
     };
 } // namespace retro

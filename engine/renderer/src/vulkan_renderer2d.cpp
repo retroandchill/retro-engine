@@ -10,7 +10,7 @@ module retro.renderer;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(Window window) : window_{std::move(window)}, instance_{get_instance_create_info()}
+    VulkanRenderer2D::VulkanRenderer2D(Window window) : window_{std::move(window)}, instance_{get_instance_create_info()}, surface_{instance_, window_}, device_{instance_, surface_.surface()}
     {
     }
 
@@ -42,7 +42,7 @@ namespace retro
         const VkInstanceCreateInfo create_info{
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
             .pApplicationInfo = &app_info,
-            .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+            .enabledExtensionCount = static_cast<uint32>(extensions.size()),
             .ppEnabledExtensionNames = extensions.data()
         };
 
@@ -52,7 +52,7 @@ namespace retro
     std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions()
     {
         // Ask SDL what Vulkan instance extensions are required for this window
-        uint32_t count = 0;
+        uint32 count = 0;
         auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
         if (names == nullptr)
         {
