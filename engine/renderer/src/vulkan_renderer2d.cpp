@@ -3,6 +3,8 @@
 //
 module;
 
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan.h>
 

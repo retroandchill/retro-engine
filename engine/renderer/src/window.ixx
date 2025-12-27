@@ -25,7 +25,7 @@ namespace retro
     export class Window
     {
       public:
-        inline Window(const int32 width, const int32 height, const CStringView title) : width_{width}, height_{height}
+        inline Window(const int32 width, const int32 height, const CStringView title)
         {
             window_ =
                 WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN)};
@@ -49,12 +49,16 @@ namespace retro
 
         [[nodiscard]] inline int32 width() const
         {
-            return width_;
+            int w = 0, h = 0;
+            SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
+            return w;
         }
 
         [[nodiscard]] inline int32 height() const
         {
-            return height_;
+            int w = 0, h = 0;
+            SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
+            return h;
         }
 
         [[nodiscard]] inline friend bool operator==(const Window &a, const Window &b) noexcept
@@ -69,7 +73,5 @@ namespace retro
 
       private:
         WindowPtr window_;
-        int32 width_;
-        int32 height_;
     };
 } // namespace retro

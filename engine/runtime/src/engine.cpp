@@ -11,6 +11,20 @@ using namespace retro;
 
 std::unique_ptr<Engine> Engine::instance_{};
 
+Engine::Engine(const EngineConfig &config): script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
+{
+    SDL_SetEventFilter([](void* self, SDL_Event* event)
+        {
+            if (event->type == SDL_EVENT_WINDOW_RESIZED) {
+                //IMPORTANT: Might be called from a different thread, see SDL_SetEventFilter docs
+                static_cast<Engine *>(self)->render();
+                return false;
+            }
+
+            return true;
+        }, this);
+}
+
 void Engine::run()
 {
     using clock = std::chrono::steady_clock;

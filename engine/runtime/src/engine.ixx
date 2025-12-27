@@ -43,10 +43,7 @@ namespace retro
     export class RETRO_API Engine
     {
       public:
-        explicit inline Engine(const EngineConfig &config)
-            : script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
-        {
-        }
+        explicit Engine(const EngineConfig &config);
 
         ~Engine() = default;
 
