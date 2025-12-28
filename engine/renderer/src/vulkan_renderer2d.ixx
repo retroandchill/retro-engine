@@ -4,6 +4,7 @@
 module;
 
 #include "retro/core/exports.h"
+
 #include <vulkan/vulkan.hpp>
 
 export module retro.renderer:vulkan_renderer2d;
@@ -36,9 +37,13 @@ namespace retro
       private:
         static vk::InstanceCreateInfo get_instance_create_info();
         static std::span<const char *const> get_required_instance_extensions();
-        static vk::UniqueSurfaceKHR create_surface(vk::Instance instance, const Window& window);
-        static vk::UniqueRenderPass create_render_pass(vk::Device device, vk::Format color_format, vk::SampleCountFlagBits samples);
-        static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device, vk::RenderPass render_pass, const VulkanSwapchain& swapchain);
+        static vk::UniqueSurfaceKHR create_surface(vk::Instance instance, const Window &window);
+        static vk::UniqueRenderPass create_render_pass(vk::Device device,
+                                                       vk::Format color_format,
+                                                       vk::SampleCountFlagBits samples);
+        static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
+                                                                      vk::RenderPass render_pass,
+                                                                      const VulkanSwapchain &swapchain);
 
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);

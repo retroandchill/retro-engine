@@ -11,9 +11,9 @@ using namespace retro;
 
 std::unique_ptr<Engine> Engine::instance_{};
 
-Engine::Engine(const EngineConfig &config): script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
+Engine::Engine(const EngineConfig &config)
+    : script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
 {
-
 }
 
 void Engine::run()
@@ -54,10 +54,7 @@ void Engine::run()
         {
             const float remaining = target_frame_time - work_seconds;
             std::this_thread::sleep_for(
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::duration<float>(remaining)
-                )
-            );
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float>(remaining)));
         }
 
         // FPS accumulation (based on actual frame length)

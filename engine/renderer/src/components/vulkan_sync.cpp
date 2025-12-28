@@ -25,21 +25,13 @@ namespace retro
 
         constexpr vk::SemaphoreCreateInfo sem_info{};
 
-        constexpr vk::FenceCreateInfo fence_info{
-            vk::FenceCreateFlagBits::eSignaled
-        };
+        constexpr vk::FenceCreateInfo fence_info{vk::FenceCreateFlagBits::eSignaled};
 
         for (size_t i = 0; i < cfg.frames_in_flight; ++i)
         {
-            image_available_.emplace_back(
-                cfg.device.createSemaphoreUnique(sem_info)
-            );
-            render_finished_.emplace_back(
-                cfg.device.createSemaphoreUnique(sem_info)
-            );
-            in_flight_.emplace_back(
-                cfg.device.createFenceUnique(fence_info)
-            );
+            image_available_.emplace_back(cfg.device.createSemaphoreUnique(sem_info));
+            render_finished_.emplace_back(cfg.device.createSemaphoreUnique(sem_info));
+            in_flight_.emplace_back(cfg.device.createFenceUnique(fence_info));
         }
     }
 } // namespace retro

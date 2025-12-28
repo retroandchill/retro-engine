@@ -40,10 +40,8 @@ namespace retro
         }
 
       private:
-
         vk::UniqueCommandPool pool_{nullptr};
         std::vector<vk::UniqueCommandBuffer> buffers_;
     };
-
 
 } // namespace retro

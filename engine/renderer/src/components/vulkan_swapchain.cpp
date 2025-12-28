@@ -16,18 +16,17 @@ namespace retro
 
         vk::Extent2D desired_extent{config.width, config.height};
 
-        vk::Extent2D actual_extent{
-            std::clamp<uint32>(desired_extent.width,
-                                                 capabilities.minImageExtent.width,
-                                                 capabilities.maxImageExtent.width),
-            std::clamp<uint32>(desired_extent.height,
-                                                  capabilities.minImageExtent.height,
-                                                  capabilities.maxImageExtent.height)
-        };
+        vk::Extent2D actual_extent{std::clamp<uint32>(desired_extent.width,
+                                                      capabilities.minImageExtent.width,
+                                                      capabilities.maxImageExtent.width),
+                                   std::clamp<uint32>(desired_extent.height,
+                                                      capabilities.minImageExtent.height,
+                                                      capabilities.maxImageExtent.height)};
 
         // 2) Choose surface format
         uint32 format_count = 0;
-        auto formats = config.physical_device.getSurfaceFormatsKHR(config.surface);;
+        auto formats = config.physical_device.getSurfaceFormatsKHR(config.surface);
+        ;
         if (formats.size() == 0)
         {
             throw std::runtime_error{"VulkanSwapchain: no surface formats"};
@@ -49,7 +48,6 @@ namespace retro
         {
             throw std::runtime_error{"VulkanSwapchain: no present modes"};
         }
-
 
         auto chosen_present_mode = vk::PresentModeKHR::eFifo; // always available
 
@@ -106,28 +104,21 @@ namespace retro
     void VulkanSwapchain::create_image_views(const vk::Device device)
     {
         image_views_ = images_ |
-            std::views::transform([device, this](const vk::Image image)
-            {
-                return device.createImageViewUnique(vk::ImageViewCreateInfo{
-                    {},
-                    image,
-                    vk::ImageViewType::e2D,
-                    format_,
-                    vk::ComponentMapping{
-                        vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity,
-                        vk::ComponentSwizzle::eIdentity
-                    },
-                    vk::ImageSubresourceRange{
-                        vk::ImageAspectFlagBits::eColor,
-                        0,
-                        1,
-                        0,
-                        1
-                    },
-                });
-            }) |
-            std::ranges::to<std::vector>();
+                       std::views::transform(
+                           [device, this](const vk::Image image)
+                           {
+                               return device.createImageViewUnique(vk::ImageViewCreateInfo{
+                                   {},
+                                   image,
+                                   vk::ImageViewType::e2D,
+                                   format_,
+                                   vk::ComponentMapping{vk::ComponentSwizzle::eIdentity,
+                                                        vk::ComponentSwizzle::eIdentity,
+                                                        vk::ComponentSwizzle::eIdentity,
+                                                        vk::ComponentSwizzle::eIdentity},
+                                   vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
+                               });
+                           }) |
+                       std::ranges::to<std::vector>();
     }
 } // namespace retro

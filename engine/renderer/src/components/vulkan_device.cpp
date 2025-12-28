@@ -10,18 +10,18 @@ module retro.renderer;
 
 namespace retro
 {
-    VulkanDevice::VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface) :
-        physical_device_{pick_physical_device(instance, surface, graphics_family_index_, present_family_index_)},
-        device_{create_device(physical_device_, graphics_family_index_, present_family_index_)},
-        graphics_queue_{device_->getQueue(graphics_family_index_, 0)},
-        present_queue_{device_->getQueue(present_family_index_, 0)}
+    VulkanDevice::VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface)
+        : physical_device_{pick_physical_device(instance, surface, graphics_family_index_, present_family_index_)},
+          device_{create_device(physical_device_, graphics_family_index_, present_family_index_)},
+          graphics_queue_{device_->getQueue(graphics_family_index_, 0)},
+          present_queue_{device_->getQueue(present_family_index_, 0)}
     {
     }
 
     vk::PhysicalDevice VulkanDevice::pick_physical_device(vk::Instance instance,
-                                                        vk::SurfaceKHR surface,
-                                                        uint32 &out_graphics_family,
-                                                        uint32 &out_present_family)
+                                                          vk::SurfaceKHR surface,
+                                                          uint32 &out_graphics_family,
+                                                          uint32 &out_present_family)
     {
         auto devices = instance.enumeratePhysicalDevices();
 
@@ -46,7 +46,7 @@ namespace retro
                                           uint32 &out_graphics_family,
                                           uint32 &out_present_family)
     {
-        auto families =  device.getQueueFamilyProperties();
+        auto families = device.getQueueFamilyProperties();
 
         out_graphics_family = std::numeric_limits<uint32>::max();
         out_present_family = std::numeric_limits<uint32>::max();
@@ -96,7 +96,9 @@ namespace retro
         return true;
     }
 
-    vk::UniqueDevice VulkanDevice::create_device(const vk::PhysicalDevice physical_device, const uint32 graphics_family, const uint32 present_family)
+    vk::UniqueDevice VulkanDevice::create_device(const vk::PhysicalDevice physical_device,
+                                                 const uint32 graphics_family,
+                                                 const uint32 present_family)
     {
         // Required device extensions
         constexpr std::array DEVICE_EXTENSIONS = {vk::KHRSwapchainExtensionName};
@@ -109,24 +111,19 @@ namespace retro
 
         for (uint32 family : unique_families)
         {
-            queue_infos.emplace_back(vk::DeviceQueueCreateFlags{},
-                family,
-                1,
-                &queue_priority);
+            queue_infos.emplace_back(vk::DeviceQueueCreateFlags{}, family, 1, &queue_priority);
         }
 
         vk::PhysicalDeviceFeatures device_features{}; // enable specific features as needed
 
-        vk::DeviceCreateInfo create_info{
-                {},
-                static_cast<uint32>(queue_infos.size()),
-                queue_infos.data(),
-                0,
-                nullptr,
-                DEVICE_EXTENSIONS.size(),
-                DEVICE_EXTENSIONS.data(),
-                &device_features
-            };
+        vk::DeviceCreateInfo create_info{{},
+                                         static_cast<uint32>(queue_infos.size()),
+                                         queue_infos.data(),
+                                         0,
+                                         nullptr,
+                                         DEVICE_EXTENSIONS.size(),
+                                         DEVICE_EXTENSIONS.data(),
+                                         &device_features};
 
         return physical_device.createDeviceUnique(create_info, nullptr);
     }

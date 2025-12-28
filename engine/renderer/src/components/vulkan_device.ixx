@@ -44,7 +44,7 @@ namespace retro
             return present_family_index_;
         }
 
-    private:
+      private:
         uint32 graphics_family_index_{std::numeric_limits<uint32>::max()};
         uint32 present_family_index_{std::numeric_limits<uint32>::max()};
         vk::PhysicalDevice physical_device_{};
@@ -53,15 +53,17 @@ namespace retro
         vk::Queue present_queue_{};
 
         static vk::PhysicalDevice pick_physical_device(vk::Instance instance,
-                                                     vk::SurfaceKHR surface,
-                                                     uint32 &out_graphics_family,
-                                                     uint32 &out_present_family);
+                                                       vk::SurfaceKHR surface,
+                                                       uint32 &out_graphics_family,
+                                                       uint32 &out_present_family);
 
         static bool is_device_suitable(vk::PhysicalDevice device,
                                        vk::SurfaceKHR surface,
                                        uint32 &out_graphics_family,
                                        uint32 &out_present_family);
 
-        static vk::UniqueDevice create_device(vk::PhysicalDevice physical_device, uint32 graphics_family, uint32 present_family);
+        static vk::UniqueDevice create_device(vk::PhysicalDevice physical_device,
+                                              uint32 graphics_family,
+                                              uint32 present_family);
     };
 } // namespace retro

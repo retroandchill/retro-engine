@@ -23,14 +23,9 @@ namespace retro
 
         pool_ = cfg.device.createCommandPoolUnique(pool_info);
 
-
         buffers_.resize(cfg.buffer_count);
 
-        vk::CommandBufferAllocateInfo alloc_info{
-            pool_.get(),
-            vk::CommandBufferLevel::ePrimary,
-            cfg.buffer_count
-        };
+        vk::CommandBufferAllocateInfo alloc_info{pool_.get(), vk::CommandBufferLevel::ePrimary, cfg.buffer_count};
 
         buffers_ = cfg.device.allocateCommandBuffersUnique(alloc_info);
     }

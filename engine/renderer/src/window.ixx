@@ -27,8 +27,8 @@ namespace retro
       public:
         inline Window(const int32 width, const int32 height, const CStringView title)
         {
-            window_ =
-                WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN), WindowDeleter{}};
+            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN),
+                                WindowDeleter{}};
 
             if (window_ == nullptr)
             {

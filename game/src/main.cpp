@@ -28,12 +28,12 @@ int main()
 
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{[&]
-        {
-            EngineLifecycle engine_lifecycle{config};
-            auto &engine = Engine::instance();
-            engine.run();
-            game_thread_exited.store(true);
-        }};
+                                       {
+                                           EngineLifecycle engine_lifecycle{config};
+                                           auto &engine = Engine::instance();
+                                           engine.run();
+                                           game_thread_exited.store(true);
+                                       }};
 
         while (!game_thread_exited.load())
         {
