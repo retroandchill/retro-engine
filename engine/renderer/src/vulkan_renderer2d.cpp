@@ -14,6 +14,7 @@ namespace retro
 {
     struct QuadData
     {
+        Color   color;
         Vector2 position;
         Vector2 size;
         Vector2 viewport_size;
@@ -309,7 +310,7 @@ namespace retro
                                                              &color_blend_attachment};
 
         vk::PushConstantRange range{
-            vk::ShaderStageFlagBits::eVertex,
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
             0,
             sizeof(QuadData)
         };
@@ -391,7 +392,7 @@ namespace retro
         constexpr vk::CommandBufferBeginInfo begin_info{};
 
         cmd.begin(begin_info);
-        vk::ClearValue clear{{0.1f, 0.1f, 0.2f, 1.0f}};
+        vk::ClearValue clear{{0.0f, 0.0f, 0.0f, 1.0f}};
 
         const vk::RenderPassBeginInfo rp_info{render_pass_.get(),
                                               framebuffers_.at(image_index).get(),
@@ -407,14 +408,15 @@ namespace retro
         for (const auto& quad : pending_quads_)
         {
             QuadData push{
-                .position     = {quad.position.x, quad.position.y},
-                .size = {quad.size.x, quad.size.y},
+                .color = quad.color,
+                .position     = quad.position,
+                .size = quad.size,
                 .viewport_size = {static_cast<float>(viewportW), static_cast<float>(viewportH)}
             };
 
             cmd.pushConstants(
                 pipeline_layout_.get(),
-                vk::ShaderStageFlagBits::eVertex,
+                vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                 0,
                 sizeof(QuadData),
                 &push);

@@ -3,8 +3,14 @@
 layout(location = 0) in vec2 vUV;
 layout(location = 0) out vec4 outColor;
 
-// Hardcoded color for now; later we can use push constants or a UBO.
+layout(push_constant) uniform QuadData {
+    vec4 color;
+    vec2 position;
+    vec2 size;
+    vec2 viewportSize;
+} uQuad;
+
 void main()
 {
-    outColor = vec4(vUV, 0.0, 1.0); // gradient to show things are working
+    outColor = uQuad.color;  // solid per-quad color
 }

@@ -1,6 +1,7 @@
 #version 450
 
 layout(push_constant) uniform QuadData {
+    vec4 color;         // RGBA
     vec2 position;      // in pixels, top-left
     vec2 size;          // in pixels
     vec2 viewportSize;  // window width/height in pixels
