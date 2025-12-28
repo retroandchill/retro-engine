@@ -211,8 +211,7 @@ namespace retro
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
-        const auto w = static_cast<uint32>(viewport_->width());
-        const auto h = static_cast<uint32>(viewport_->height());
+        const auto [w, h] = viewport_->size();
         if (w == 0 || h == 0)
             return;
 

@@ -21,6 +21,19 @@ namespace retro
         }
     };
 
+    export template <typename T>
+    struct Size2
+    {
+        T width;
+        T height;
+
+        constexpr Size2() = default;
+
+        constexpr Size2(T width, T height) : width(width), height(height)
+        {
+        }
+    };
+
     export struct Vector2
     {
         float x;

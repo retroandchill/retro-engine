@@ -18,8 +18,16 @@ namespace retro
 
         virtual vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const = 0;
 
-        virtual int32 width() const = 0;
+        [[nodiscard]] virtual Size2<uint32> size() const = 0;
 
-        virtual int32 height() const = 0;
+        [[nodiscard]] inline uint32 width() const
+        {
+            return size().width;
+        }
+
+        [[nodiscard]] inline uint32 height() const
+        {
+            return size().height;
+        }
     };
 } // namespace retro

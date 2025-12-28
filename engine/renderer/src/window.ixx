@@ -51,18 +51,13 @@ namespace retro
             SDL_SetWindowTitle(window_.get(), title.data());
         }
 
-        [[nodiscard]] inline int32 width() const override
-        {
-            int w = 0, h = 0;
-            SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
-            return w;
-        }
+        vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
 
-        [[nodiscard]] inline int32 height() const override
+        [[nodiscard]] inline Size2<uint32> size() const override
         {
             int w = 0, h = 0;
             SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
-            return h;
+            return {static_cast<uint32>(w), static_cast<uint32>(h)};
         }
 
         [[nodiscard]] inline friend bool operator==(const Window &a, const Window &b) noexcept
@@ -74,8 +69,6 @@ namespace retro
         {
             return a.native_handle() == nullptr;
         }
-
-        vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
 
       private:
         WindowPtr window_;
