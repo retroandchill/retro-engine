@@ -20,7 +20,7 @@ namespace retro
         }
     };
 
-    using WindowPtr = std::unique_ptr<SDL_Window, WindowDeleter>;
+    using WindowPtr = std::shared_ptr<SDL_Window>;
 
     export class Window
     {
@@ -28,7 +28,7 @@ namespace retro
         inline Window(const int32 width, const int32 height, const CStringView title)
         {
             window_ =
-                WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN)};
+                WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN), WindowDeleter{}};
 
             if (window_ == nullptr)
             {

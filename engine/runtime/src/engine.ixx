@@ -71,8 +71,9 @@ namespace retro
 
         void run();
 
+        void request_shutdown();
+
       private:
-        static bool poll_events();
         void tick(float delta_time);
         void render();
 
@@ -80,6 +81,8 @@ namespace retro
 
         std::unique_ptr<ScriptRuntime> script_runtime{};
         std::unique_ptr<Renderer2D> renderer_{};
+
+        std::atomic<bool> running_{false};
     };
 
     export struct EngineLifecycle

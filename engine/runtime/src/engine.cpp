@@ -13,16 +13,7 @@ std::unique_ptr<Engine> Engine::instance_{};
 
 Engine::Engine(const EngineConfig &config): script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
 {
-    SDL_SetEventFilter([](void* self, SDL_Event* event)
-        {
-            if (event->type == SDL_EVENT_WINDOW_RESIZED) {
-                //IMPORTANT: Might be called from a different thread, see SDL_SetEventFilter docs
-                static_cast<Engine *>(self)->render();
-                return false;
-            }
 
-            return true;
-        }, this);
 }
 
 void Engine::run()
@@ -30,17 +21,22 @@ void Engine::run()
     using clock = std::chrono::steady_clock;
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
-    auto last_time = clock::now();
+    running_.store(true);
+
+    // FPS tracking state
+    float fps_timer = 0.0f;
+    uint64 fps_frames = 0;
+
+    auto last_frame_start = clock::now();
 
     while (true)
     {
-        auto now = clock::now();
-        std::chrono::duration<float> frame_delta = now - last_time;
-        last_time = now;
-
+        const auto frame_start = clock::now();
+        const std::chrono::duration<float> frame_delta = frame_start - last_frame_start;
         const float delta_time = frame_delta.count();
+        last_frame_start = frame_start;
 
-        if (poll_events())
+        if (!running_.load())
         {
             break;
         }
@@ -48,35 +44,44 @@ void Engine::run()
         tick(delta_time);
         render();
 
-        if (delta_time < target_frame_time)
-        {
-            auto sleep_time = std::chrono::duration<float>(target_frame_time - delta_time);
+        // Measure how long the work actually took
+        const auto frame_end = clock::now();
+        const std::chrono::duration<float> work_time = frame_end - frame_start;
+        const float work_seconds = work_time.count();
 
-            std::this_thread::sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(sleep_time));
+        // Sleep to hit target frame duration (if work was faster than target)
+        if (work_seconds < target_frame_time)
+        {
+            const float remaining = target_frame_time - work_seconds;
+            std::this_thread::sleep_for(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::duration<float>(remaining)
+                )
+            );
+        }
+
+        // FPS accumulation (based on actual frame length)
+        const auto frame_finish = clock::now();
+        const std::chrono::duration<float> full_frame = frame_finish - frame_start;
+        const float full_frame_seconds = full_frame.count();
+
+        fps_timer += full_frame_seconds;
+        ++fps_frames;
+
+        if (fps_timer >= 1.0f)
+        {
+            const float fps = static_cast<float>(fps_frames) / fps_timer;
+            std::println("FPS: {:.2f}", fps);
+
+            fps_timer = 0.0f;
+            fps_frames = 0;
         }
     }
 }
 
-bool Engine::poll_events()
+void Engine::request_shutdown()
 {
-    SDL_Event event;
-    bool should_quit = false;
-
-    while (SDL_PollEvent(&event))
-    {
-        switch (event.type)
-        {
-            case SDL_EVENT_QUIT:
-            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                // For now, we only have one window, so any close means quit.
-                should_quit = true;
-                break;
-            default:
-                break;
-        }
-    }
-
-    return should_quit;
+    running_.store(false);
 }
 
 void Engine::tick(float delta_time)
