@@ -3,17 +3,17 @@
 //
 module;
 
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan.hpp>
 
 module retro.renderer;
 
+import retro.core;
+
 namespace retro
 {
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
-        : viewport_{std::move(viewport)}, instance_{vk::createInstanceUnique(get_instance_create_info())},
+        : viewport_{std::move(viewport)}, instance_{create_instance()},
           surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
           swapchain_(SwapchainConfig{
               .physical_device = device_.physical_device(),
@@ -21,8 +21,8 @@ namespace retro
               .surface = surface_.get(),
               .graphics_family = device_.graphics_family_index(),
               .present_family = device_.present_family_index(),
-              .width = static_cast<uint32_t>(viewport_->width()),
-              .height = static_cast<uint32_t>(viewport_->height()),
+              .width = viewport_->width(),
+              .height = viewport_->height(),
           }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
@@ -34,13 +34,15 @@ namespace retro
           sync_(SyncConfig{
               .device = device_.device(),
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
+              .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
           })
     {
+        create_pipeline();
     }
 
     VulkanRenderer2D::~VulkanRenderer2D()
     {
-        if (device_.device() != VK_NULL_HANDLE)
+        if (device_.device() != nullptr)
         {
             vkDeviceWaitIdle(device_.device());
         }
@@ -86,7 +88,10 @@ namespace retro
         std::array wait_semaphores = {sync_.image_available(current_frame_)};
         std::array wait_stages = {
             static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
-        std::array signal_semaphores = {sync_.render_finished(current_frame_)};
+
+        // Signal semaphore is now per-image
+        const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index);
+        std::array signal_semaphores = {render_finished_semaphore};
 
         const vk::SubmitInfo submit_info{wait_semaphores.size(),
                                          wait_semaphores.data(),
@@ -131,22 +136,42 @@ namespace retro
         (void)color;
     }
 
-    vk::InstanceCreateInfo VulkanRenderer2D::get_instance_create_info()
+    vk::UniqueInstance VulkanRenderer2D::create_instance()
     {
         vk::ApplicationInfo app_info{"Retro Engine",
-                                     VK_MAKE_VERSION(1, 0, 0),
+                                     vk::makeVersion(1, 0, 0),
                                      "Retro Engine",
-                                     VK_MAKE_VERSION(1, 0, 0),
-                                     VK_API_VERSION_1_2};
+                                     vk::makeVersion(1, 0, 0),
+                                     vk::makeApiVersion(0, 1, 2, 0)};
+
+        std::vector<const char *> enabled_layers;
+#ifndef NDEBUG
+        auto available_layers = vk::enumerateInstanceLayerProperties();
+        const bool has_validation =
+            std::ranges::any_of(available_layers,
+                                [](const vk::LayerProperties &lp)
+                                { return std::string_view{lp.layerName} == "VK_LAYER_KHRONOS_validation"; });
+
+        if (has_validation)
+        {
+            enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
+        }
+        else
+        {
+            std::cerr << "WARNING: Vulkan validation layers requested, but not available!\n";
+        }
+#endif
 
         const auto extensions = get_required_instance_extensions();
 
-        return vk::InstanceCreateInfo{{},
-                                      &app_info,
-                                      0,
-                                      nullptr,
-                                      static_cast<uint32>(extensions.size()),
-                                      extensions.data()};
+        vk::InstanceCreateInfo create_info{{},
+                                           &app_info,
+                                           static_cast<uint32>(enabled_layers.size()),
+                                           enabled_layers.data(),
+                                           static_cast<uint32>(extensions.size()),
+                                           extensions.data()};
+
+        return vk::createInstanceUnique(create_info);
     }
 
     std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions()
@@ -180,7 +205,15 @@ namespace retro
 
         vk::SubpassDescription subpass{{}, vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &color_ref};
 
-        vk::RenderPassCreateInfo rp_info{{}, 1, &color_attachment, 1, &subpass};
+        vk::SubpassDependency dependency{vk::SubpassExternal,
+                                         0,
+                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                         vk::AccessFlagBits::eNone,
+                                         vk::AccessFlagBits::eColorAttachmentWrite,
+                                         vk::DependencyFlagBits::eByRegion};
+
+        vk::RenderPassCreateInfo rp_info{{}, 1, &color_attachment, 1, &subpass, 1, &dependency};
 
         return device.createRenderPassUnique(rp_info);
     }
@@ -208,6 +241,111 @@ namespace retro
                std::ranges::to<std::vector>();
     }
 
+    void VulkanRenderer2D::create_pipeline()
+    {
+        auto device = device_.device();
+
+        // TODO: adjust shader paths as needed
+        auto vert_module = create_shader_module(device, "shaders/fullscreen_quad.vert.spv");
+        auto frag_module = create_shader_module(device, "shaders/solid_color.frag.spv");
+
+        vk::PipelineShaderStageCreateInfo vert_stage{{}, vk::ShaderStageFlagBits::eVertex, vert_module.get(), "main"};
+
+        vk::PipelineShaderStageCreateInfo frag_stage{{}, vk::ShaderStageFlagBits::eFragment, frag_module.get(), "main"};
+
+        std::array shader_stages = {vert_stage, frag_stage};
+
+        // No vertex buffers: all positions come from gl_VertexIndex
+        vk::PipelineVertexInputStateCreateInfo vertex_input{};
+
+        vk::PipelineInputAssemblyStateCreateInfo input_assembly{{}, vk::PrimitiveTopology::eTriangleList, vk::False};
+
+        vk::Viewport viewport{0.0f,
+                              0.0f,
+                              static_cast<float>(swapchain_.extent().width),
+                              static_cast<float>(swapchain_.extent().height),
+                              0.0f,
+                              1.0f};
+
+        vk::Rect2D scissor{{0, 0}, swapchain_.extent()};
+
+        vk::PipelineViewportStateCreateInfo viewport_state{{}, 1, &viewport, 1, &scissor};
+
+        vk::PipelineRasterizationStateCreateInfo rasterizer{{},
+                                                            vk::False,
+                                                            vk::False,
+                                                            vk::PolygonMode::eFill,
+                                                            vk::CullModeFlagBits::eBack,
+                                                            vk::FrontFace::eCounterClockwise,
+                                                            vk::False,
+                                                            0.0f,
+                                                            0.0f,
+                                                            0.0f,
+                                                            1.0f};
+
+        vk::PipelineMultisampleStateCreateInfo multisampling{{}, vk::SampleCountFlagBits::e1, vk::False};
+
+        vk::PipelineColorBlendAttachmentState color_blend_attachment{
+            vk::False,
+            vk::BlendFactor::eOne,
+            vk::BlendFactor::eZero,
+            vk::BlendOp::eAdd,
+            vk::BlendFactor::eOne,
+            vk::BlendFactor::eZero,
+            vk::BlendOp::eAdd,
+            vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
+                vk::ColorComponentFlagBits::eA};
+
+        vk::PipelineColorBlendStateCreateInfo color_blending{{},
+                                                             vk::False,
+                                                             vk::LogicOp::eCopy,
+                                                             1,
+                                                             &color_blend_attachment};
+
+        // No descriptor sets, no push constants yet
+        vk::PipelineLayoutCreateInfo pipeline_layout_info{};
+        pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
+
+        vk::GraphicsPipelineCreateInfo pipeline_info{{},
+                                                     static_cast<uint32_t>(shader_stages.size()),
+                                                     shader_stages.data(),
+                                                     &vertex_input,
+                                                     &input_assembly,
+                                                     nullptr,
+                                                     &viewport_state,
+                                                     &rasterizer,
+                                                     &multisampling,
+                                                     nullptr,
+                                                     &color_blending,
+                                                     nullptr,
+                                                     pipeline_layout_.get(),
+                                                     render_pass_.get(),
+                                                     0};
+
+        auto [result, pipeline] = device.createGraphicsPipelineUnique(nullptr, pipeline_info);
+        if (result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
+        }
+
+        graphics_pipeline_ = std::move(pipeline);
+    }
+
+    vk::UniqueShaderModule VulkanRenderer2D::create_shader_module(const vk::Device device,
+                                                                  const std::filesystem::path &path)
+    {
+        const auto bytes = read_binary_file(path);
+        const auto *code = std::bit_cast<const uint32_t *>(bytes.data());
+
+        if (bytes.size() % sizeof(uint32) != 0)
+        {
+            throw std::runtime_error{"SPIR-V file size is not a multiple of 4 bytes"};
+        }
+
+        const vk::ShaderModuleCreateInfo info{{}, bytes.size(), code};
+        return device.createShaderModuleUnique(info);
+    }
+
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
@@ -228,6 +366,7 @@ namespace retro
         }}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
+        create_pipeline();
     }
 
     void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const uint32 image_index)
@@ -244,11 +383,9 @@ namespace retro
                                               &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-
-        // TODO: issue pipeline & draw commands here for your quad
-
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline_.get());
+        cmd.draw(6, 1, 0, 0);
         cmd.endRenderPass();
-
         cmd.end();
     }
 } // namespace retro

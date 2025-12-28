@@ -10,3 +10,4 @@ export import :basic_types;
 export import :defines;
 export import :strings;
 export import :memory;
+export import :filesystem;

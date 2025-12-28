@@ -29,9 +29,16 @@ int main()
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{[&]
                                        {
-                                           EngineLifecycle engine_lifecycle{config};
-                                           auto &engine = Engine::instance();
-                                           engine.run();
+                                           try
+                                           {
+                                               EngineLifecycle engine_lifecycle{config};
+                                               auto &engine = Engine::instance();
+                                               engine.run();
+                                           }
+                                           catch (const std::exception &ex)
+                                           {
+                                               std::cerr << "Fatal error: " << ex.what() << '\n';
+                                           }
                                            game_thread_exited.store(true);
                                        }};
 

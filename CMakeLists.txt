@@ -20,6 +20,9 @@ if(NOT RETRO_BUILD_SHARED)
     endif()
 endif()
 
+set(VCPKG_DEPS_DIR ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
+set(VCPKG_BIN_DIR ${VCPKG_DEPS_DIR}/bin)
+
 project(retro_engine LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -49,6 +52,11 @@ else()  # single-config generators (Ninja, Makefiles, typical CLion setup)
         set(DOTNET_CONFIGURATION "Release")
     endif()
 endif()
+
+find_program(GLSLC_EXECUTABLE glslc HINTS "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/Bin32")
+if (NOT GLSLC_EXECUTABLE)
+    message(FATAL_ERROR "glslc not found. Install Vulkan SDK or add glslc to PATH.")
+endif ()
 
 add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"

@@ -35,7 +35,7 @@ namespace retro
         void draw_quad(Vector2 position, Vector2 size, Color color) override;
 
       private:
-        static vk::InstanceCreateInfo get_instance_create_info();
+        static vk::UniqueInstance create_instance();
         static std::span<const char *const> get_required_instance_extensions();
         static vk::UniqueRenderPass create_render_pass(vk::Device device,
                                                        vk::Format color_format,
@@ -43,6 +43,8 @@ namespace retro
         static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
                                                                       vk::RenderPass render_pass,
                                                                       const VulkanSwapchain &swapchain);
+        void create_pipeline();
+        static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
@@ -57,6 +59,8 @@ namespace retro
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool command_pool_;
         VulkanSyncObjects sync_;
+        vk::UniquePipelineLayout pipeline_layout_;
+        vk::UniquePipeline graphics_pipeline_;
 
         uint32 current_frame_ = 0;
 

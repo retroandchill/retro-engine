@@ -1,3 +1,40 @@
+set(RENDERER_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+set(RENDERER_SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+
+set(RENDERER_SHADERS
+        "${RENDERER_SHADER_DIR}/fullscreen_quad.vert"
+        "${RENDERER_SHADER_DIR}/solid_color.frag"
+)
+
+set(COMPILED_SHADERS "")
+
+foreach(SHADER ${RENDERER_SHADERS})
+    get_filename_component(SHADER_NAME "${SHADER}" NAME)
+    set(SPV "${RENDERER_SHADER_OUTPUT_DIR}/${SHADER_NAME}.spv")
+
+    add_custom_command(
+            OUTPUT "${SPV}"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${RENDERER_SHADER_OUTPUT_DIR}"
+            COMMAND "${GLSLC_EXECUTABLE}" -g --target-env=vulkan1.2 "${SHADER}" -o "${SPV}"
+            DEPENDS "${SHADER}"
+            COMMENT "Compiling GLSL shader ${SHADER_NAME} -> ${SPV}"
+            VERBATIM
+    )
+
+    list(APPEND COMPILED_SHADERS "${SPV}")
+endforeach()
+
+add_custom_target(renderer_shaders ALL
+        DEPENDS ${COMPILED_SHADERS}
+)
+
+set(RUNTIME_SHADER_DIR "${RETRO_BIN_DIR}/shaders")
+add_custom_command(TARGET renderer_shaders POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${RUNTIME_SHADER_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${RENDERER_SHADER_OUTPUT_DIR}" "${RUNTIME_SHADER_DIR}"
+        COMMENT "Copying compiled shaders to runtime directory"
+)
+
 add_library(retro_renderer
         src/vulkan_renderer2d.cpp
         src/components/vulkan_device.cpp
@@ -30,6 +67,8 @@ target_link_libraries(retro_renderer
             retro_runtime
         PRIVATE
             Vulkan::Vulkan)
+
+add_dependencies(retro_renderer renderer_shaders)
 
 set_target_properties(retro_renderer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

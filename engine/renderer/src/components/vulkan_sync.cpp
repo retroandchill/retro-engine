@@ -30,8 +30,12 @@ namespace retro
         for (size_t i = 0; i < cfg.frames_in_flight; ++i)
         {
             image_available_.emplace_back(cfg.device.createSemaphoreUnique(sem_info));
-            render_finished_.emplace_back(cfg.device.createSemaphoreUnique(sem_info));
             in_flight_.emplace_back(cfg.device.createFenceUnique(fence_info));
+        }
+
+        for (size_t i = 0; i < cfg.swapchain_image_count; ++i)
+        {
+            render_finished_.emplace_back(cfg.device.createSemaphoreUnique(sem_info));
         }
     }
 } // namespace retro

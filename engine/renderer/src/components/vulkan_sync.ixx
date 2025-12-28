@@ -18,6 +18,7 @@ namespace retro
     {
         vk::Device device = nullptr;
         uint32 frames_in_flight = 0;
+        uint32 swapchain_image_count = 0;
     };
 
     export class RETRO_API VulkanSyncObjects
