@@ -12,17 +12,17 @@ module retro.renderer;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(Window window)
-        : window_{std::move(window)}, instance_{vk::createInstanceUnique(get_instance_create_info())},
-          surface_{create_surface(instance_.get(), window_)}, device_{instance_.get(), surface_.get()},
+    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
+        : viewport_{std::move(viewport)}, instance_{vk::createInstanceUnique(get_instance_create_info())},
+          surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
           swapchain_(SwapchainConfig{
               .physical_device = device_.physical_device(),
               .device = device_.device(),
               .surface = surface_.get(),
               .graphics_family = device_.graphics_family_index(),
               .present_family = device_.present_family_index(),
-              .width = static_cast<uint32_t>(window_.width()),
-              .height = static_cast<uint32_t>(window_.height()),
+              .width = static_cast<uint32_t>(viewport_->width()),
+              .height = static_cast<uint32_t>(viewport_->height()),
           }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
@@ -162,17 +162,6 @@ namespace retro
         return std::span{names, count};
     }
 
-    vk::UniqueSurfaceKHR VulkanRenderer2D::create_surface(vk::Instance instance, const Window &window)
-    {
-        VkSurfaceKHR surface;
-        if (!SDL_Vulkan_CreateSurface(window.native_handle(), instance, nullptr, &surface))
-        {
-            throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
-        }
-
-        return vk::UniqueSurfaceKHR{surface, instance};
-    }
-
     vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device,
                                                               vk::Format color_format,
                                                               vk::SampleCountFlagBits samples)
@@ -222,8 +211,8 @@ namespace retro
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
-        const auto w = static_cast<uint32>(window_.width());
-        const auto h = static_cast<uint32>(window_.height());
+        const auto w = static_cast<uint32>(viewport_->width());
+        const auto h = static_cast<uint32>(viewport_->height());
         if (w == 0 || h == 0)
             return;
 

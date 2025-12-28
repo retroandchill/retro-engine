@@ -3,12 +3,15 @@
 //
 module;
 
+#include <retro/core/exports.h>
 #include <SDL3/SDL_vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:window;
 
 import std;
 import retro.core;
+import :vulkan_viewport;
 
 namespace retro
 {
@@ -20,15 +23,16 @@ namespace retro
         }
     };
 
-    using WindowPtr = std::shared_ptr<SDL_Window>;
+    using WindowPtr = std::unique_ptr<SDL_Window, WindowDeleter>;
 
-    export class Window
+    export class RETRO_API Window final : public VulkanViewport
     {
       public:
         inline Window(const int32 width, const int32 height, const CStringView title)
         {
-            window_ = WindowPtr{SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN),
-                                WindowDeleter{}};
+            window_ = WindowPtr{
+                SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN),
+            };
 
             if (window_ == nullptr)
             {
@@ -47,14 +51,14 @@ namespace retro
             SDL_SetWindowTitle(window_.get(), title.data());
         }
 
-        [[nodiscard]] inline int32 width() const
+        [[nodiscard]] inline int32 width() const override
         {
             int w = 0, h = 0;
             SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
             return w;
         }
 
-        [[nodiscard]] inline int32 height() const
+        [[nodiscard]] inline int32 height() const override
         {
             int w = 0, h = 0;
             SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
@@ -70,6 +74,8 @@ namespace retro
         {
             return a.native_handle() == nullptr;
         }
+
+        vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
 
       private:
         WindowPtr window_;
