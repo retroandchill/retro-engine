@@ -203,6 +203,8 @@ namespace retro
         vk::SubpassDescription subpass{
             {},
             vk::PipelineBindPoint::eGraphics,
+            0,
+            nullptr,
             1,
             &color_ref
         };
