@@ -12,6 +12,13 @@ import retro.core;
 
 namespace retro
 {
+    struct QuadData
+    {
+        Vector2 position;
+        Vector2 size;
+        Vector2 viewport_size;
+    };
+
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
         : viewport_{std::move(viewport)}, instance_{create_instance()},
           surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
@@ -126,14 +133,13 @@ namespace retro
         }
 
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
+
+        pending_quads_.clear();
     }
 
     void VulkanRenderer2D::draw_quad(Vector2 position, Vector2 size, Color color)
     {
-        // Placeholder: real drawing will come once the pipeline is set up.
-        (void)position;
-        (void)size;
-        (void)color;
+        pending_quads_.emplace_back(position, size, color);
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance()
@@ -302,8 +308,19 @@ namespace retro
                                                              1,
                                                              &color_blend_attachment};
 
-        // No descriptor sets, no push constants yet
-        vk::PipelineLayoutCreateInfo pipeline_layout_info{};
+        vk::PushConstantRange range{
+            vk::ShaderStageFlagBits::eVertex,
+            0,
+            sizeof(QuadData)
+        };
+
+        vk::PipelineLayoutCreateInfo pipeline_layout_info{
+            {},
+            0,
+            nullptr,
+            1,
+            &range
+        };
         pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
 
         vk::GraphicsPipelineCreateInfo pipeline_info{{},
@@ -384,8 +401,30 @@ namespace retro
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline_.get());
-        cmd.draw(6, 1, 0, 0);
+
+        const auto [viewportW, viewportH] = viewport_->size();
+
+        for (const auto& quad : pending_quads_)
+        {
+            QuadData push{
+                .position     = {quad.position.x, quad.position.y},
+                .size = {quad.size.x, quad.size.y},
+                .viewport_size = {static_cast<float>(viewportW), static_cast<float>(viewportH)}
+            };
+
+            cmd.pushConstants(
+                pipeline_layout_.get(),
+                vk::ShaderStageFlagBits::eVertex,
+                0,
+                sizeof(QuadData),
+                &push);
+
+            cmd.draw(6, 1, 0, 0);
+        }
+
         cmd.endRenderPass();
         cmd.end();
+
+        pending_quads_.clear();
     }
 } // namespace retro

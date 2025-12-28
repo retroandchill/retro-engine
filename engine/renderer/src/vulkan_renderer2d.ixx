@@ -35,6 +35,13 @@ namespace retro
         void draw_quad(Vector2 position, Vector2 size, Color color) override;
 
       private:
+        struct Quad
+        {
+            Vector2 position;
+            Vector2 size;
+            Color   color;
+        };
+
         static vk::UniqueInstance create_instance();
         static std::span<const char *const> get_required_instance_extensions();
         static vk::UniqueRenderPass create_render_pass(vk::Device device,
@@ -61,6 +68,7 @@ namespace retro
         VulkanSyncObjects sync_;
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniquePipeline graphics_pipeline_;
+        std::vector<Quad> pending_quads_;
 
         uint32 current_frame_ = 0;
 
