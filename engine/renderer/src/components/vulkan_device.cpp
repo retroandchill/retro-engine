@@ -93,15 +93,15 @@ namespace retro
 
         // Check swapchain support (at least one format & present mode)
         uint32 format_count = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, nullptr);
-        if (format_count == 0)
+        auto res = device.getSurfaceFormatsKHR(surface, &format_count, nullptr);
+        if (res != vk::Result::eSuccess || format_count == 0)
         {
             return false;
         }
 
         uint32 present_mode_count = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, nullptr);
-        if (present_mode_count == 0)
+        res = device.getSurfacePresentModesKHR(surface, &present_mode_count, nullptr);
+        if (res != vk::Result::eSuccess || present_mode_count == 0)
         {
             return false;
         }

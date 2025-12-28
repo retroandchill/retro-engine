@@ -57,70 +57,73 @@ namespace retro
 
     void VulkanRenderer2D::end_frame()
     {
-        VkDevice dev = device_.device();
+        auto dev = device_.device();
 
-        VkFence in_flight = sync_.in_flight(current_frame_);
-        vkWaitForFences(dev, 1, &in_flight, VK_TRUE, UINT64_MAX);
-        vkResetFences(dev, 1, &in_flight);
+        auto in_flight = sync_.in_flight(current_frame_);
+        if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<uint64>::max()) == vk::Result::eTimeout)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
+        }
+        dev.resetFences({in_flight});
 
         uint32 image_index = 0;
-        VkResult result = vkAcquireNextImageKHR(dev,
-                                                swapchain_.handle(),
-                                                UINT64_MAX,
+        auto result = dev.acquireNextImageKHR(swapchain_.handle(),
+                                                std::numeric_limits<uint64>::max(),
                                                 sync_.image_available(current_frame_),
-                                                VK_NULL_HANDLE,
+                                                nullptr,
                                                 &image_index);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        if (result == vk::Result::eErrorOutOfDateKHR)
         {
             recreate_swapchain();
             return;
         }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+
+        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
 
-        VkCommandBuffer cmd = command_pool_.buffer_at(current_frame_);
-        vkResetCommandBuffer(cmd, 0);
+        auto cmd = command_pool_.buffer_at(current_frame_);
+        cmd.reset();
         record_command_buffer(cmd, image_index);
 
-        VkSemaphore wait_semaphores[] = {sync_.image_available(current_frame_)};
-        VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        VkSemaphore signal_semaphores[] = {sync_.render_finished(current_frame_)};
+        std::array wait_semaphores = {sync_.image_available(current_frame_)};
+        std::array wait_stages = {static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
+        std::array signal_semaphores = {sync_.render_finished(current_frame_)};
 
-        VkSubmitInfo submit_info{};
-        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submit_info.waitSemaphoreCount = 1;
-        submit_info.pWaitSemaphores = wait_semaphores;
-        submit_info.pWaitDstStageMask = wait_stages;
-        submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &cmd;
-        submit_info.signalSemaphoreCount = 1;
-        submit_info.pSignalSemaphores = signal_semaphores;
+        const vk::SubmitInfo submit_info{
+            wait_semaphores.size(),
+            wait_semaphores.data(),
+            wait_stages.data(),
+            1,
+            &cmd,
+            signal_semaphores.size(),
+            signal_semaphores.data()
+        };
 
-        if (vkQueueSubmit(device_.graphics_queue(), 1, &submit_info, in_flight) != VK_SUCCESS)
+        if (device_.graphics_queue().submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
         }
 
-        VkSwapchainKHR swapchains[] = {swapchain_.handle()};
+        std::array swapchains = {swapchain_.handle()};
 
-        VkPresentInfoKHR present_info{};
-        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = signal_semaphores;
-        present_info.swapchainCount = 1;
-        present_info.pSwapchains = swapchains;
-        present_info.pImageIndices = &image_index;
+        vk::PresentInfoKHR present_info{
+            signal_semaphores.size(),
+            signal_semaphores.data(),
+            swapchains.size(),
+            swapchains.data(),
+            &image_index
+        };
 
-        result = vkQueuePresentKHR(device_.present_queue(), &present_info);
+        result = device_.present_queue().presentKHR(&present_info);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
         {
             recreate_swapchain();
         }
-        else if (result != VK_SUCCESS)
+        else if (result != vk::Result::eSuccess)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
         }
@@ -246,7 +249,7 @@ namespace retro
         if (w == 0 || h == 0)
             return;
 
-        vkDeviceWaitIdle(device_.device());
+        device_.device().waitIdle();
 
         swapchain_ = VulkanSwapchain{SwapchainConfig{
             SwapchainConfig{
@@ -265,19 +268,14 @@ namespace retro
 
     void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const uint32 image_index)
     {
-        VkCommandBufferBeginInfo begin_info{};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        constexpr vk::CommandBufferBeginInfo begin_info{};
 
-        if (vkBeginCommandBuffer(cmd, &begin_info) != VK_SUCCESS)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to begin command buffer"};
-        }
-
+        cmd.begin(begin_info);
         vk::ClearValue clear{
                 {0.1f, 0.1f, 0.2f, 1.0f}
         };
 
-        vk::RenderPassBeginInfo rp_info{
+        const vk::RenderPassBeginInfo rp_info{
             render_pass_.get(),
             framebuffers_.at(image_index).get(),
             vk::Rect2D{
