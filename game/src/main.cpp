@@ -38,7 +38,7 @@ int main()
         while (!game_thread_exited.load())
         {
             SDL_Event event;
-            while (SDL_PollEvent(&event))
+            while (SDL_WaitEventTimeout(&event, 10))
             {
                 switch (event.type)
                 {
