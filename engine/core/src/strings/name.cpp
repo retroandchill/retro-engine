@@ -1,11 +1,9 @@
 //
 // Created by fcors on 12/24/2025.
 //
-module;
-
-#include <fmt/xchar.h>
-
 module retro.core;
+
+import fmt;
 
 namespace retro
 {

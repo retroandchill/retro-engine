@@ -1,25 +1,24 @@
 //
 // Created by fcors on 12/26/2025.
 //
-module;
-
-#include <vulkan/vulkan.h>
 
 module retro.renderer;
+
+import vulkan_hpp;
 
 namespace retro
 {
     VulkanCommandPool::VulkanCommandPool(const CommandPoolConfig &cfg)
     {
-        if (!cfg.device || cfg.queue_family_idx == VK_QUEUE_FAMILY_IGNORED || cfg.buffer_count == 0)
+        if (!cfg.device || cfg.queue_family_idx == vk::QueueFamilyIgnored || cfg.buffer_count == 0)
         {
             throw std::runtime_error{"VulkanCommandPool: invalid config"};
         }
 
-        VkCommandPoolCreateInfo pool_info{};
-        pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        pool_info.queueFamilyIndex = cfg.queue_family_idx;
-        pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        vk::CommandPoolCreateInfo pool_info{
+            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+            cfg.queue_family_idx
+        };
 
         pool_ = cfg.device.createCommandPoolUnique(pool_info);
 

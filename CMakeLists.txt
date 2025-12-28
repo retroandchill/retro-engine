@@ -73,5 +73,6 @@ if (BUILD_TESTS)
     enable_testing()
 endif()
 
+add_subdirectory(external)
 add_subdirectory(engine)
 add_subdirectory(game)

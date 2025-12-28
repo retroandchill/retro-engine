@@ -5,10 +5,9 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.hpp>
-
 export module retro.renderer:components.vulkan_command_pool;
 
+import vulkan_hpp;
 import std;
 import retro.core;
 
@@ -41,7 +40,7 @@ namespace retro
 
       private:
         vk::UniqueCommandPool pool_{nullptr};
-        std::vector<vk::UniqueCommandBuffer> buffers_;
+        std::vector<vk::UniqueCommandBuffer> buffers_{};
     };
 
 } // namespace retro

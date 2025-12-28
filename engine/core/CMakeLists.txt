@@ -22,8 +22,7 @@ target_sources(retro_core PUBLIC
         src/filesystem/file_loader.ixx)
 
 
-find_package(fmt CONFIG REQUIRED)
-target_link_libraries(retro_core PUBLIC fmt::fmt)
+target_link_libraries(retro_core PUBLIC retro_fmt)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

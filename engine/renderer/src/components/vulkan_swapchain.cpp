@@ -1,11 +1,9 @@
 //
 // Created by fcors on 12/26/2025.
 //
-module;
-
-#include <vulkan/vulkan.hpp>
-
 module retro.renderer;
+
+import vulkan_hpp;
 
 namespace retro
 {

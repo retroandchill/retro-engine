@@ -4,11 +4,11 @@
 module;
 
 #include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan.hpp>
 
 module retro.renderer;
 
 import retro.core;
+import vulkan_hpp;
 
 namespace retro
 {
@@ -52,7 +52,7 @@ namespace retro
     {
         if (device_.device() != nullptr)
         {
-            vkDeviceWaitIdle(device_.device());
+            device_.device().waitIdle();
         }
     }
 

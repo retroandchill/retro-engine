@@ -5,10 +5,9 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.hpp>
-
 export module retro.renderer:vulkan_renderer2d;
 
+import vulkan_hpp;
 import retro.runtime;
 import :vulkan_viewport;
 import :render_data;

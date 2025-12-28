@@ -5,12 +5,11 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.hpp>
-
 export module retro.renderer:components.vulkan_sync;
 
 import retro.core;
 import std;
+import vulkan_hpp;
 
 namespace retro
 {

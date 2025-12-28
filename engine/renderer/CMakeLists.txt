@@ -62,12 +62,11 @@ target_sources(retro_renderer PUBLIC
         src/render_data.ixx
         )
 
-find_package(Vulkan REQUIRED)
 target_link_libraries(retro_renderer
         PUBLIC
             retro_runtime
         PRIVATE
-            Vulkan::Vulkan)
+            retro_vulkan)
 
 add_dependencies(retro_renderer renderer_shaders)
 

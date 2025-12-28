@@ -5,10 +5,9 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <vulkan/vulkan.hpp>
-
 export module retro.renderer:components.vulkan_swapchain;
 
+import vulkan_hpp;
 import retro.core;
 import :components.vulkan_device;
 
