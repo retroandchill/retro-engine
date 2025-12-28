@@ -15,9 +15,9 @@ namespace retro
     struct QuadData
     {
         Color   color;
-        Vector2 position;
-        Vector2 size;
-        Vector2 viewport_size;
+        Vector2f position;
+        Vector2f size;
+        Vector2f viewport_size;
     };
 
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
@@ -138,7 +138,7 @@ namespace retro
         pending_quads_.clear();
     }
 
-    void VulkanRenderer2D::draw_quad(Vector2 position, Vector2 size, Color color)
+    void VulkanRenderer2D::draw_quad(Vector2f position, Vector2f size, Color color)
     {
         pending_quads_.emplace_back(position, size, color);
     }

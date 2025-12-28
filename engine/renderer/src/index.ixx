@@ -4,6 +4,7 @@
 
 export module retro.renderer;
 
+export import :render_data;
 export import :components;
 export import :vulkan_renderer2d;
 export import :vulkan_viewport;

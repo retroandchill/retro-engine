@@ -59,6 +59,7 @@ target_sources(retro_renderer PUBLIC
         src/components/vulkan_swapchain.ixx
         src/components/vulkan_command_pool.ixx
         src/components/vulkan_sync.ixx
+        src/render_data.ixx
         )
 
 find_package(Vulkan REQUIRED)

@@ -11,6 +11,7 @@ export module retro.renderer:vulkan_renderer2d;
 
 import retro.runtime;
 import :vulkan_viewport;
+import :render_data;
 import :components;
 
 namespace retro
@@ -32,16 +33,9 @@ namespace retro
 
         void end_frame() override;
 
-        void draw_quad(Vector2 position, Vector2 size, Color color) override;
+        void draw_quad(Vector2f position, Vector2f size, Color color) override;
 
       private:
-        struct Quad
-        {
-            Vector2 position;
-            Vector2 size;
-            Color   color;
-        };
-
         static vk::UniqueInstance create_instance();
         static std::span<const char *const> get_required_instance_extensions();
         static vk::UniqueRenderPass create_render_pass(vk::Device device,

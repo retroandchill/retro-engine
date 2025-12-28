@@ -17,6 +17,6 @@ namespace retro
 
         virtual void end_frame() = 0;
 
-        virtual void draw_quad(Vector2 position, Vector2 size, Color color) = 0;
+        virtual void draw_quad(Vector2f position, Vector2f size, Color color) = 0;
     };
 } // namespace retro

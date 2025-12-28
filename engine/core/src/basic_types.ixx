@@ -4,8 +4,13 @@
 
 export module retro.core:basic_types;
 
+import std;
+
 namespace retro
 {
+    template <typename T>
+    concept Arithmetic = std::is_arithmetic_v<T>;
+
     export struct Color
     {
         float red;
@@ -21,7 +26,7 @@ namespace retro
         }
     };
 
-    export template <typename T>
+    export template <Arithmetic T>
     struct Size2
     {
         T width;
@@ -34,15 +39,22 @@ namespace retro
         }
     };
 
-    export struct Vector2
+    export template <Arithmetic T>
+    struct Vector2
     {
-        float x;
-        float y;
+        T x;
+        T y;
 
         constexpr Vector2() = default;
 
-        constexpr Vector2(float x, float y) : x(x), y(y)
+        constexpr Vector2(T x, T y) : x(x), y(y)
         {
         }
     };
+
+    export using Size2i = Size2<int>;
+    export using Size2f = Size2<float>;
+
+    export using Vector2i = Vector2<int>;
+    export using Vector2f = Vector2<float>;
 } // namespace retro
