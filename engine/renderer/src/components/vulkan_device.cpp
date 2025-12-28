@@ -23,20 +23,12 @@ namespace retro
                                                         uint32 &out_graphics_family,
                                                         uint32 &out_present_family)
     {
-        uint32 device_count = 0;
-        vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
-        if (device_count == 0)
-        {
-            throw std::runtime_error{"VulkanDevice: no GPUs with Vulkan support found"};
-        }
+        auto devices = instance.enumeratePhysicalDevices();
 
-        std::vector<VkPhysicalDevice> devices(device_count);
-        vkEnumeratePhysicalDevices(instance, &device_count, devices.data());
-
-        for (VkPhysicalDevice dev : devices)
+        for (auto dev : devices)
         {
-            uint32 graphics_family = UINT32_MAX;
-            uint32 present_family = UINT32_MAX;
+            uint32 graphics_family = std::numeric_limits<uint32>::max();
+            uint32 present_family = std::numeric_limits<uint32>::max();
 
             if (is_device_suitable(dev, surface, graphics_family, present_family))
             {
@@ -54,26 +46,21 @@ namespace retro
                                           uint32 &out_graphics_family,
                                           uint32 &out_present_family)
     {
-        // Find queue families
-        uint32 queue_family_count = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
-
-        std::vector<VkQueueFamilyProperties> families(queue_family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, families.data());
+        auto families =  device.getQueueFamilyProperties();
 
         out_graphics_family = std::numeric_limits<uint32>::max();
         out_present_family = std::numeric_limits<uint32>::max();
 
-        for (uint32 i = 0; i < queue_family_count; ++i)
+        for (uint32 i = 0; i < families.size(); ++i)
         {
-            if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if (families[i].queueFlags & vk::QueueFlagBits::eGraphics)
             {
                 out_graphics_family = i;
             }
 
-            VkBool32 present_support = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &present_support);
-            if (present_support == VK_TRUE)
+            vk::Bool32 present_support = vk::False;
+            auto res = device.getSurfaceSupportKHR(i, surface, &present_support);
+            if (res == vk::Result::eSuccess && present_support == vk::True)
             {
                 out_present_family = i;
             }
