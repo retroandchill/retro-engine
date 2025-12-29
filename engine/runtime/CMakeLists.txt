@@ -15,7 +15,6 @@ target_sources(retro_runtime PUBLIC
         src/interfaces/renderer_2d.ixx
         src/interfaces/index.ixx
         src/interfaces/script_runtime.ixx
-        src/sdl_runtime.ixx
         src/loading/index.ixx
         src/loading/shared_library.ixx
         src/filesystem/utils.ixx
