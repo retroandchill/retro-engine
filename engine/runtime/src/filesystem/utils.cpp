@@ -3,13 +3,12 @@
 //
 module retro.runtime;
 
-import sdl;
+import boost;
 
 namespace retro::filesystem
 {
     std::filesystem::path get_executable_path()
     {
-        auto *basePath = sdl::GetBasePath();
-        return std::filesystem::path{basePath};
+        return boost::dll::program_location();
     }
 } // namespace retro::filesystem
