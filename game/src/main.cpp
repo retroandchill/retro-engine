@@ -1,9 +1,6 @@
 //
 // Created by fcors on 12/19/2025.
 //
-#define SDL_MAIN_HANDLED
-#include <SDL3/SDL_main.h>
-
 import retro.runtime;
 import retro.scripting;
 import retro.renderer;
@@ -14,7 +11,7 @@ using namespace retro;
 
 int main()
 {
-    SDL_SetMainReady();
+    sdl::set_main_ready();
     sdl::InitGuard sdl_runtime{sdl::INIT_VIDEO};
 
     try
@@ -45,13 +42,13 @@ int main()
 
         while (!game_thread_exited.load())
         {
-            SDL_Event event;
-            while (SDL_WaitEventTimeout(&event, 10))
+            sdl::Event event;
+            while (sdl::wait_event_timeout(event, 10))
             {
-                switch (event.type)
+                switch (static_cast<sdl::EventType>(event.type))
                 {
-                    case SDL_EVENT_QUIT:
-                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                    case sdl::EventType::QUIT:
+                    case sdl::EventType::WINDOW_CLOSE_REQUESTED:
                         if (!game_thread_exited.load())
                         {
                             Engine::instance().request_shutdown();
