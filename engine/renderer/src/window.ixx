@@ -4,26 +4,25 @@
 module;
 
 #include <retro/core/exports.h>
-#include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:window;
 
 import std;
 import retro.core;
 import :vulkan_viewport;
+import sdl;
 
 namespace retro
 {
     struct WindowDeleter
     {
-        inline void operator()(SDL_Window *window) const noexcept
+        inline void operator()(sdl::SDL_Window *window) const noexcept
         {
-            SDL_DestroyWindow(window);
+            sdl::DestroyWindow(window);
         }
     };
 
-    using WindowPtr = std::unique_ptr<SDL_Window, WindowDeleter>;
+    using WindowPtr = std::unique_ptr<sdl::SDL_Window, WindowDeleter>;
 
     export class RETRO_API Window final : public VulkanViewport
     {
@@ -31,16 +30,16 @@ namespace retro
         inline Window(const int32 width, const int32 height, const CStringView title)
         {
             window_ = WindowPtr{
-                SDL_CreateWindow(title.data(), width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN),
+                sdl::CreateWindow(title.data(), width, height, sdl::WindowFlags::RESIZABLE | sdl::WindowFlags::VULKAN),
             };
 
             if (window_ == nullptr)
             {
-                throw std::runtime_error{std::string{"SDL_CreateWindow failed: "} + SDL_GetError()};
+                throw std::runtime_error{std::string{"SDL_CreateWindow failed: "} + sdl::GetError()};
             }
         }
 
-        [[nodiscard]] inline SDL_Window *native_handle() const
+        [[nodiscard]] inline sdl::SDL_Window *native_handle() const
         {
             return window_.get();
         }
@@ -48,7 +47,7 @@ namespace retro
         // NOLINTNEXTLINE
         inline void set_title(const CStringView title)
         {
-            SDL_SetWindowTitle(window_.get(), title.data());
+            sdl::SetWindowTitle(window_.get(), title.data());
         }
 
         vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
@@ -56,7 +55,7 @@ namespace retro
         [[nodiscard]] inline Size2<uint32> size() const override
         {
             int w = 0, h = 0;
-            SDL_GetWindowSizeInPixels(window_.get(), &w, &h);
+            sdl::GetWindowSizeInPixels(window_.get(), &w, &h);
             return {static_cast<uint32>(w), static_cast<uint32>(h)};
         }
 

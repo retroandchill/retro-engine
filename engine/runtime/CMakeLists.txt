@@ -21,8 +21,7 @@ target_sources(retro_runtime PUBLIC
         src/filesystem/utils.ixx
         src/filesystem/index.ixx)
 
-find_package(SDL3 CONFIG REQUIRED)
-target_link_libraries(retro_runtime PUBLIC retro_core SDL3::SDL3)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_sdl)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

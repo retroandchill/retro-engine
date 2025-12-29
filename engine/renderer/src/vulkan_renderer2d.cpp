@@ -1,10 +1,6 @@
 //
 // Created by fcors on 12/26/2025.
 //
-module;
-
-#include <SDL3/SDL_vulkan.h>
-
 module retro.renderer;
 
 import retro.core;
@@ -185,7 +181,7 @@ namespace retro
     {
         // Ask SDL what Vulkan instance extensions are required for this window
         uint32 count = 0;
-        auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
+        auto *names = sdl::vulkan::GetInstanceExtensions(&count);
         if (names == nullptr)
         {
             throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
@@ -325,7 +321,7 @@ namespace retro
         pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
 
         vk::GraphicsPipelineCreateInfo pipeline_info{{},
-                                                     static_cast<uint32_t>(shader_stages.size()),
+                                                     static_cast<uint32>(shader_stages.size()),
                                                      shader_stages.data(),
                                                      &vertex_input,
                                                      &input_assembly,
@@ -353,7 +349,7 @@ namespace retro
                                                                   const std::filesystem::path &path)
     {
         const auto bytes = read_binary_file(path);
-        const auto *code = std::bit_cast<const uint32_t *>(bytes.data());
+        const auto *code = std::bit_cast<const uint32 *>(bytes.data());
 
         if (bytes.size() % sizeof(uint32) != 0)
         {

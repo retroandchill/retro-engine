@@ -1,13 +1,10 @@
 //
 // Created by fcors on 12/26/2025.
 //
-module;
-
-#include <SDL3/SDL.h>
-
 export module retro.runtime:sdl_runtime;
 
 import std;
+import sdl;
 
 namespace retro
 {
@@ -16,9 +13,9 @@ namespace retro
       public:
         inline SdlRuntime()
         {
-            if (!SDL_Init(SDL_INIT_VIDEO))
+            if (!sdl::Init(sdl::InitFlags::VIDEO))
             {
-                throw std::runtime_error{std::string{"SDL_Init failed: "} + SDL_GetError()};
+                throw std::runtime_error{std::string{"SDL_Init failed: "} + sdl::GetError()};
             }
         }
 
@@ -27,7 +24,7 @@ namespace retro
 
         inline ~SdlRuntime() noexcept
         {
-            SDL_Quit();
+            sdl::Quit();
         }
 
         SdlRuntime &operator=(const SdlRuntime &) = delete;

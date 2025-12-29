@@ -2,14 +2,14 @@
 // Created by fcors on 12/21/2025.
 //
 module;
-#include "retro/core/exports.h"
 
-#include <SDL3/SDL.h>
+#include "retro/core/exports.h"
 
 export module retro.runtime:loading.shared_library;
 
 import std;
 import retro.core;
+import sdl;
 
 namespace retro
 {
@@ -23,7 +23,7 @@ namespace retro
     {
       public:
         SharedLibraryBase() = default;
-        inline explicit SharedLibraryBase(SDL_SharedObject *handle) : handle_{handle}
+        inline explicit SharedLibraryBase(sdl::SDL_SharedObject *handle) : handle_{handle}
         {
         }
 
@@ -32,7 +32,7 @@ namespace retro
             return handle_ != nullptr;
         }
 
-        [[nodiscard]] inline SDL_SharedObject *handle() const noexcept
+        [[nodiscard]] inline sdl::SDL_SharedObject *handle() const noexcept
         {
             return handle_;
         }
@@ -46,7 +46,7 @@ namespace retro
                 throw std::runtime_error{"SharedLibrary is not loaded"};
             }
 
-            const auto proc = SDL_LoadFunction(handle_, function_name.data());
+            const auto proc = sdl::LoadFunction(handle_, function_name.data());
             if (proc == nullptr)
             {
                 throw std::runtime_error{"Failed to load function: " + function_name.to_string()};
@@ -58,7 +58,7 @@ namespace retro
         void load(const std::filesystem::path &path);
         void unload() noexcept;
 
-        SDL_SharedObject *handle_{nullptr};
+        sdl::SDL_SharedObject *handle_{nullptr};
     };
 
     export template <LibraryUnloadPolicy Policy = LibraryUnloadPolicy::UnloadOnDestruction>

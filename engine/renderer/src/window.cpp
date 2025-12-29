@@ -3,17 +3,14 @@
 //
 module;
 
-#include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan.hpp>
-
 module retro.renderer;
 
 namespace retro
 {
     vk::UniqueSurfaceKHR Window::create_surface(vk::Instance instance) const
     {
-        VkSurfaceKHR surface;
-        if (!SDL_Vulkan_CreateSurface(window_.get(), instance, nullptr, &surface))
+        vk::SurfaceKHR::CType surface;
+        if (!sdl::vulkan::CreateSurface(window_.get(), instance, nullptr, &surface))
         {
             throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
         }

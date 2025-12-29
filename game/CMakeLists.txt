@@ -2,13 +2,12 @@ add_executable(retro_game
     src/main.cpp
 )
 
-find_package(SDL3 CONFIG REQUIRED)
 
 target_link_libraries(retro_game
         PRIVATE
             retro_scripting
             retro_renderer
-            SDL3::SDL3)
+            retro_sdl)
 
 set_target_properties(retro_game PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
