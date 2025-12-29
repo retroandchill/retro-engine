@@ -1,10 +1,6 @@
 //
 // Created by fcors on 12/23/2025.
 //
-module;
-
-#include <SDL3/SDL.h>
-
 module retro.runtime;
 
 using namespace retro;

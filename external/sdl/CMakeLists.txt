@@ -6,7 +6,11 @@ target_sources(retro_sdl PUBLIC
 
 
 find_package(SDL3 REQUIRED)
-target_link_libraries(retro_sdl PUBLIC SDL3::SDL3)
+target_link_libraries(retro_sdl
+        PUBLIC
+            SDL3::SDL3
+        PRIVATE
+            retro_vulkan)
 
 set_target_properties(retro_sdl PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

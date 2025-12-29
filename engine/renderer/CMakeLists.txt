@@ -41,7 +41,6 @@ add_library(retro_renderer
         src/components/vulkan_swapchain.cpp
         src/components/vulkan_command_pool.cpp
         src/components/vulkan_sync.cpp
-        src/window.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -53,7 +52,7 @@ target_sources(retro_renderer PUBLIC
         src/index.ixx
         src/vulkan_renderer2d.ixx
         src/vulkan_viewport.ixx
-        src/window.ixx
+        src/game_window.ixx
         src/components/index.ixx
         src/components/vulkan_device.ixx
         src/components/vulkan_swapchain.ixx
