@@ -19,7 +19,7 @@ int main()
 
     try
     {
-        auto window = std::make_shared<GameWindow>(1280, 720, "Retro Engine");
+        auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
         const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
                                   .renderer_factory =
                                       [&]

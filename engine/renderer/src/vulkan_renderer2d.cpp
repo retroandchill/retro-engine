@@ -1,6 +1,10 @@
 //
 // Created by fcors on 12/26/2025.
 //
+module;
+
+#include <SDL3/SDL_vulkan.h>
+
 module retro.renderer;
 
 import retro.core;
