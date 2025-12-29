@@ -8,7 +8,7 @@ target_link_libraries(retro_game
         PRIVATE
             retro_scripting
             retro_renderer
-            retro_sdl)
+            SDL3::SDL3)
 
 set_target_properties(retro_game PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

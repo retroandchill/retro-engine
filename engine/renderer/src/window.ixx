@@ -5,13 +5,13 @@ module;
 
 #include <retro/core/exports.h>
 #include <SDL3/SDL_vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 export module retro.renderer:window;
 
 import std;
 import retro.core;
 import :vulkan_viewport;
-import vulkan_hpp;
 
 namespace retro
 {

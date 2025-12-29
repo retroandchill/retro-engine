@@ -8,14 +8,13 @@ import retro.runtime;
 import retro.scripting;
 import retro.renderer;
 import std;
-import sdl;
 
 using namespace retro;
 
 int main()
 {
     SDL_SetMainReady();
-    sdl::InitGuard sdl_runtime{sdl::INIT_VIDEO};
+    SdlRuntime sdl_runtime;
 
     try
     {
