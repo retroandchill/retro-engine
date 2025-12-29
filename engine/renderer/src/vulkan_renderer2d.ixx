@@ -36,6 +36,7 @@ namespace retro
 
       private:
         static vk::UniqueInstance create_instance();
+        static std::span<const char *const> get_required_instance_extensions();
         static vk::UniqueRenderPass create_render_pass(vk::Device device,
                                                        vk::Format color_format,
                                                        vk::SampleCountFlagBits samples);

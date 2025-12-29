@@ -165,7 +165,7 @@ namespace retro
         }
 #endif
 
-        const auto extensions = sdl::vulkan::get_instance_extensions();
+        const auto extensions = get_required_instance_extensions();
 
         vk::InstanceCreateInfo create_info{{},
                                            &app_info,
@@ -175,6 +175,19 @@ namespace retro
                                            extensions.data()};
 
         return vk::createInstanceUnique(create_info);
+    }
+
+    std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions()
+    {
+        // Ask SDL what Vulkan instance extensions are required for this window
+        uint32 count = 0;
+        auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
+        if (names == nullptr)
+        {
+            throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
+        }
+
+        return std::span{names, count};
     }
 
     vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device,
@@ -308,7 +321,7 @@ namespace retro
         pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
 
         vk::GraphicsPipelineCreateInfo pipeline_info{{},
-                                                     static_cast<uint32>(shader_stages.size()),
+                                                     static_cast<uint32_t>(shader_stages.size()),
                                                      shader_stages.data(),
                                                      &vertex_input,
                                                      &input_assembly,
@@ -336,7 +349,7 @@ namespace retro
                                                                   const std::filesystem::path &path)
     {
         const auto bytes = read_binary_file(path);
-        const auto *code = std::bit_cast<const uint32 *>(bytes.data());
+        const auto *code = std::bit_cast<const uint32_t *>(bytes.data());
 
         if (bytes.size() % sizeof(uint32) != 0)
         {
