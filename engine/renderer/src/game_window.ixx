@@ -34,9 +34,9 @@ namespace retro
             window_->set_title(title.data());
         }
 
-        [[nodiscard]] inline vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override
+        [[nodiscard]] inline vk::UniqueSurfaceKHR create_surface(const vk::Instance instance) const override
         {
-            return window_->create_vulkan_surface(instance);
+            return sdl::vulkan::create_surface(window_.get(), instance);
         }
 
         [[nodiscard]] inline Size2<uint32> size() const override

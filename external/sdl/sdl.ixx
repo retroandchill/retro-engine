@@ -201,13 +201,6 @@ namespace sdl
 
         }
 
-        [[nodiscard]] inline vk::UniqueSurfaceKHR create_vulkan_surface(const vk::Instance instance) const
-        {
-            VkSurfaceKHR surface;
-            check_error(SDL_Vulkan_CreateSurface(window_, instance, nullptr, &surface));
-            return vk::UniqueSurfaceKHR{surface, instance};
-        }
-
         inline void set_title(const char *title) const noexcept
         {
             SDL_SetWindowTitle(window_, title);
@@ -268,8 +261,8 @@ namespace sdl
     }
     
     export using Event = SDL_Event;
-    
-    export enum class EventType
+
+    export enum class EventType : Uint32
     {
         FIRST = SDL_EVENT_FIRST,
 
@@ -473,6 +466,13 @@ namespace sdl
 
     namespace vulkan
     {
+        export inline vk::UniqueSurfaceKHR create_surface(const WindowView window, const vk::Instance instance)
+        {
+            VkSurfaceKHR surface;
+            check_error(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
+            return vk::UniqueSurfaceKHR{surface, instance};
+        }
+
         export inline std::span<const char* const> get_instance_extensions()
         {
             Uint32 count = 0;
