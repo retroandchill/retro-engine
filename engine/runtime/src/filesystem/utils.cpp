@@ -9,6 +9,6 @@ namespace retro::filesystem
 {
     std::filesystem::path get_executable_path()
     {
-        return boost::dll::program_location();
+        return boost::dll::program_location().parent_path();
     }
 } // namespace retro::filesystem

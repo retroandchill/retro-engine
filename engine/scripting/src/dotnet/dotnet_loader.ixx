@@ -12,9 +12,14 @@ export module retro.scripting:dotnet.loader;
 import std;
 import retro.core;
 import retro.runtime;
+import boost;
 
 namespace retro
 {
+    using InitFn = std::remove_pointer_t<hostfxr_initialize_for_runtime_config_fn>;
+    using GetDelegateFn = std::remove_pointer_t<hostfxr_get_runtime_delegate_fn>;
+    using CloseFn = std::remove_pointer_t<hostfxr_close_fn>;
+
     export class DotnetLoader;
 
     export class DotnetInitializationHandle
@@ -50,7 +55,6 @@ namespace retro
 
     class RETRO_API DotnetLoader
     {
-        using enum LibraryUnloadPolicy;
         constexpr static usize MAX_PATH = 260;
 
       public:
@@ -80,7 +84,7 @@ namespace retro
         }
 
       private:
-        SharedLibrary<KeepLoaded> lib_;
+        boost::dll::shared_library lib_;
         hostfxr_initialize_for_runtime_config_fn init_fptr_{nullptr};
         hostfxr_get_runtime_delegate_fn get_delegate_fptr_{nullptr};
         hostfxr_close_fn close_fptr_{nullptr};

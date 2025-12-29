@@ -1,6 +1,5 @@
 add_library(retro_runtime
         src/engine.cpp
-        src/loading/shared_library.cpp
         src/filesystem/utils.cpp
 )
 
@@ -16,8 +15,6 @@ target_sources(retro_runtime PUBLIC
         src/interfaces/index.ixx
         src/interfaces/script_runtime.ixx
         src/sdl_runtime.ixx
-        src/loading/index.ixx
-        src/loading/shared_library.ixx
         src/filesystem/utils.ixx
         src/filesystem/index.ixx)
 
