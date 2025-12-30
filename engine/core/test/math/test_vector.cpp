@@ -10,14 +10,16 @@ using retro::Vector2f;
 using retro::Vector2i;
 using retro::Vector3f;
 using retro::Vector3i;
+using retro::Vector4f;
+using retro::Vector4i;
 
 TEST_CASE("Vector2 basic construction and members")
 {
     SECTION("default construction")
     {
         Vector2i v{};
-        // default-initialized fundamental type members; just require code to compile
-        (void)v;
+        REQUIRE(v.x == 0);
+        REQUIRE(v.y == 0);
     }
 
     SECTION("component-wise construction")
@@ -29,7 +31,7 @@ TEST_CASE("Vector2 basic construction and members")
 
     SECTION("broadcast construction")
     {
-        Vector2i v{Vector2i::value_type{5}}; // If value_type is not defined, fall back to direct T.
+        Vector2i v{Vector2i::ValueType{5}};
         Vector2i w{5};
 
         REQUIRE(w.x == 5);
@@ -63,6 +65,36 @@ TEST_CASE("Vector3 basic construction and members")
         REQUIRE(v.x == 7);
         REQUIRE(v.y == 7);
         REQUIRE(v.z == 7);
+    }
+}
+
+TEST_CASE("Vector4 basic construction and members")
+{
+    SECTION("default construction")
+    {
+        Vector4i v{};
+        REQUIRE(v.x == 0);
+        REQUIRE(v.y == 0);
+        REQUIRE(v.z == 0);
+        REQUIRE(v.w == 0);
+    }
+
+    SECTION("component-wise construction")
+    {
+        Vector4i v{1, 2, 3, 4};
+        REQUIRE(v.x == 1);
+        REQUIRE(v.y == 2);
+        REQUIRE(v.z == 3);
+        REQUIRE(v.w == 4);
+    }
+
+    SECTION("broadcast construction")
+    {
+        Vector4i v{9};
+        REQUIRE(v.x == 9);
+        REQUIRE(v.y == 9);
+        REQUIRE(v.z == 9);
+        REQUIRE(v.w == 9);
     }
 }
 
@@ -233,6 +265,101 @@ TEST_CASE("Vector3 arithmetic operators")
     }
 }
 
+TEST_CASE("Vector4 arithmetic operators")
+{
+    Vector4i a{1, 2, 3, 4};
+    Vector4i b{5, 6, 7, 8};
+
+    SECTION("operator+")
+    {
+        auto c = a + b;
+        REQUIRE(c.x == 6);
+        REQUIRE(c.y == 8);
+        REQUIRE(c.z == 10);
+        REQUIRE(c.w == 12);
+    }
+
+    SECTION("operator-")
+    {
+        auto c = b - a;
+        REQUIRE(c.x == 4);
+        REQUIRE(c.y == 4);
+        REQUIRE(c.z == 4);
+        REQUIRE(c.w == 4);
+    }
+
+    SECTION("operator* (scalar)")
+    {
+        auto c = a * 2;
+        REQUIRE(c.x == 2);
+        REQUIRE(c.y == 4);
+        REQUIRE(c.z == 6);
+        REQUIRE(c.w == 8);
+    }
+
+    SECTION("operator/ (scalar)")
+    {
+        Vector4f x{8.0f, 10.0f, 12.0f, 14.0f};
+        auto c = x / 2.0f;
+        REQUIRE_THAT(c.x, Catch::Matchers::WithinAbs(4.0f, 0.001));
+        REQUIRE_THAT(c.y, Catch::Matchers::WithinAbs(5.0f, 0.001));
+        REQUIRE_THAT(c.z, Catch::Matchers::WithinAbs(6.0f, 0.001));
+        REQUIRE_THAT(c.w, Catch::Matchers::WithinAbs(7.0f, 0.001));
+    }
+
+    SECTION("operator+=")
+    {
+        Vector4i x{1, 2, 3, 4};
+        Vector4i y{5, 6, 7, 8};
+        x += y;
+        REQUIRE(x.x == 6);
+        REQUIRE(x.y == 8);
+        REQUIRE(x.z == 10);
+        REQUIRE(x.w == 12);
+    }
+
+    SECTION("operator-=")
+    {
+        Vector4i x{10, 11, 12, 13};
+        Vector4i y{1, 2, 3, 4};
+        x -= y;
+        REQUIRE(x.x == 9);
+        REQUIRE(x.y == 9);
+        REQUIRE(x.z == 9);
+        REQUIRE(x.w == 9);
+    }
+
+    SECTION("operator*=")
+    {
+        Vector4i x{1, 2, 3, 4};
+        x *= 3;
+        REQUIRE(x.x == 3);
+        REQUIRE(x.y == 6);
+        REQUIRE(x.z == 9);
+        REQUIRE(x.w == 12);
+    }
+
+    SECTION("operator/=")
+    {
+        Vector4f x{4.0f, 6.0f, 8.0f, 10.0f};
+        x /= 2.0f;
+        REQUIRE_THAT(x.x, Catch::Matchers::WithinAbs(2.0f, 0.001));
+        REQUIRE_THAT(x.y, Catch::Matchers::WithinAbs(3.0f, 0.001));
+        REQUIRE_THAT(x.z, Catch::Matchers::WithinAbs(4.0f, 0.001));
+        REQUIRE_THAT(x.w, Catch::Matchers::WithinAbs(5.0f, 0.001));
+    }
+
+    SECTION("operator==")
+    {
+        Vector4i x{1, 2, 3, 4};
+        Vector4i y{1, 2, 3, 4};
+        Vector4i z{0, 0, 0, 0};
+
+        REQUIRE(x == y);
+        REQUIRE_FALSE(x == z);
+    }
+}
+
 TEST_CASE("Vector constexpr usage")
 {
     SECTION("Vector2i constexpr arithmetic")
@@ -251,6 +378,16 @@ TEST_CASE("Vector constexpr usage")
         static_assert(b.x == 2.0f);
         static_assert(b.y == 4.0f);
         static_assert(b.z == 6.0f);
+    }
+
+    SECTION("Vector4i constexpr arithmetic")
+    {
+        constexpr retro::Vector4i a{1, 2, 3, 4};
+        constexpr auto b = a + retro::Vector4i{4, 3, 2, 1};
+        static_assert(b.x == 5);
+        static_assert(b.y == 5);
+        static_assert(b.z == 5);
+        static_assert(b.w == 5);
     }
 }
 
@@ -273,5 +410,16 @@ TEST_CASE("Vector structured bindings")
         REQUIRE_THAT(x, Catch::Matchers::WithinAbs(1.0f, 0.001));
         REQUIRE_THAT(y, Catch::Matchers::WithinAbs(2.5f, 0.001));
         REQUIRE_THAT(z, Catch::Matchers::WithinAbs(3.75f, 0.001));
+    }
+
+    SECTION("Vector4")
+    {
+        Vector4i v{1, 2, 3, 4};
+        auto [x, y, z, w] = v;
+
+        REQUIRE(x == 1);
+        REQUIRE(y == 2);
+        REQUIRE(z == 3);
+        REQUIRE(w == 4);
     }
 }

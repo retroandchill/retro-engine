@@ -17,7 +17,7 @@ namespace retro
 
         constexpr Color() = default;
 
-        constexpr Color(float red, float green, float blue, float alpha = 1.0f)
+        constexpr Color(const float red, const float green, const float blue, const float alpha = 1.0f)
             : red(red), green(green), blue(blue), alpha(alpha)
         {
         }

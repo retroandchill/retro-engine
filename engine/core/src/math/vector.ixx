@@ -16,7 +16,8 @@ namespace retro
     template <Numeric T>
     struct Vector<T, 2>
     {
-        using value_type = T;
+        using ValueType = T;
+        static constexpr usize SIZE = 2;
 
         T x{};
         T y{};
@@ -30,6 +31,13 @@ namespace retro
         explicit constexpr Vector(T value) : x(value), y(value)
         {
         }
+
+        static constexpr Vector zero() noexcept { return {0, 0}; }
+        static constexpr Vector one() noexcept { return {1, 1}; }
+        static constexpr Vector right() noexcept { return {1, 0}; }
+        static constexpr Vector left() noexcept { return {-1, 0}; }
+        static constexpr Vector up() noexcept { return {0, 1}; }
+        static constexpr Vector down() noexcept { return {0, -1}; }
 
         [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
     };
@@ -45,6 +53,9 @@ namespace retro
     template <Numeric T>
     struct Vector<T, 3>
     {
+        using ValueType = T;
+        static constexpr usize SIZE = 3;
+
         T x{};
         T y{};
         T z{};
@@ -63,6 +74,15 @@ namespace retro
         {
         }
 
+        static constexpr Vector zero() noexcept { return {0, 0, 0}; }
+        static constexpr Vector one() noexcept { return {1, 1, 1}; }
+        static constexpr Vector forward() noexcept { return {0, 0, 1}; }
+        static constexpr Vector back() noexcept { return {0, 0, -1}; }
+        static constexpr Vector up() noexcept { return {0, 1, 0}; }
+        static constexpr Vector down() noexcept { return {0, -1, 0}; }
+        static constexpr Vector right() noexcept { return {1, 0, 0}; }
+        static constexpr Vector left() noexcept { return {-1, 0, 0}; }
+
         [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
     };
 
@@ -73,6 +93,55 @@ namespace retro
     export using Vector3u = Vector3<uint32>;
     export using Vector3f = Vector3<float>;
     export using Vector3d = Vector3<double>;
+
+    export template <Numeric T>
+    struct Vector<T, 4>
+    {
+        using ValueType = T;
+        static constexpr usize SIZE = 4;
+
+        T x;
+        T y;
+        T z;
+        T w;
+
+        Vector() = default;
+
+        constexpr Vector(T x, T y, T z, T w) : x(x), y(y), z(z), w(w)
+        {
+        }
+
+        constexpr Vector(const Vector3<T> &other, T w) : x(other.x), y(other.y), z(other.z), w(w)
+        {
+        }
+
+        constexpr Vector(const Vector2<T> &other, T z, T w) : x(other.x), y(other.y), z(z), w(w)
+        {
+        }
+
+        explicit constexpr Vector(T value) : x(value), y(value), z(value), w(value)
+        {
+        }
+
+        static constexpr Vector zero() noexcept { return {0, 0, 0, 0}; }
+        static constexpr Vector one() noexcept { return {1, 1, 1, 1}; }
+        static constexpr Vector forward() noexcept { return {0, 0, 1, 0}; }
+        static constexpr Vector back() noexcept { return {0, 0, -1, 0}; }
+        static constexpr Vector up() noexcept { return {0, 1, 0, 0}; }
+        static constexpr Vector down() noexcept { return {0, -1, 0, 0}; }
+        static constexpr Vector right() noexcept { return {1, 0, 0, 0}; }
+        static constexpr Vector left() noexcept { return {-1, 0, 0, 0}; }
+
+        [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
+    };
+
+    export template <Numeric T>
+    using Vector4 = Vector<T, 4>;
+
+    export using Vector4i = Vector4<int32>;
+    export using Vector4u = Vector4<uint32>;
+    export using Vector4f = Vector4<float>;
+    export using Vector4d = Vector4<double>;
 
     export template <usize I, Numeric T>
         requires(I < 2)
@@ -139,6 +208,49 @@ namespace retro
         else
             return vec.z;
     }
+
+    export template <usize I, Numeric T>
+        requires(I < 4)
+    [[nodiscard]] constexpr T &get(Vector<T, 4> &vec) noexcept
+    {
+        if constexpr (I == 0)
+            return vec.x;
+        else if constexpr (I == 1)
+            return vec.y;
+        else if constexpr (I == 2)
+            return vec.z;
+        else
+            return vec.w;
+    }
+
+    export template <usize I, Numeric T>
+        requires(I < 4)
+    [[nodiscard]] constexpr const T &get(const Vector<T, 4> &vec) noexcept
+    {
+        if constexpr (I == 0)
+            return vec.x;
+        else if constexpr (I == 1)
+            return vec.y;
+        else if constexpr (I == 2)
+            return vec.z;
+        else
+            return vec.w;
+    }
+
+    export template <usize I, Numeric T>
+        requires(I < 4)
+    [[nodiscard]] constexpr T get(Vector<T, 4> &&vec) noexcept
+    {
+        if constexpr (I == 0)
+            return vec.x;
+        else if constexpr (I == 1)
+            return vec.y;
+        else if constexpr (I == 2)
+            return vec.z;
+        else
+            return vec.w;
+    }
+
 
     template <Numeric T, usize N, typename Op, usize... Is>
         requires std::is_invocable_r_v<T, Op, const T &, const T &>
