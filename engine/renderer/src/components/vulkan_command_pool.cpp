@@ -15,10 +15,7 @@ namespace retro
             throw std::runtime_error{"VulkanCommandPool: invalid config"};
         }
 
-        vk::CommandPoolCreateInfo pool_info{
-            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-            cfg.queue_family_idx
-        };
+        vk::CommandPoolCreateInfo pool_info{vk::CommandPoolCreateFlagBits::eResetCommandBuffer, cfg.queue_family_idx};
 
         pool_ = cfg.device.createCommandPoolUnique(pool_info);
 

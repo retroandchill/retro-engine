@@ -19,7 +19,10 @@ target_sources(retro_core PUBLIC
         src/algorithm/hashing.ixx
         src/basic_types.ixx
         src/filesystem/index.ixx
-        src/filesystem/file_loader.ixx)
+        src/filesystem/file_loader.ixx
+        src/math/index.ixx
+        src/math/concepts.ixx
+        src/math/vector.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_fmt)

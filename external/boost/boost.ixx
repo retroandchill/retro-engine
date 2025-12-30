@@ -20,4 +20,4 @@ namespace boost::dll
     export using dll::operator==;
     export using dll::operator!=;
     export using dll::swap;
-}
+} // namespace boost::dll

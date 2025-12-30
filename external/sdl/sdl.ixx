@@ -10,57 +10,66 @@ export module sdl;
 
 import std;
 
-#define REGULAR_ENUM(ty) \
-    constexpr bool operator ==(std::underlying_type_t<ty> a, ty b) noexcept \
-    { \
-        return a == static_cast<std::underlying_type_t<ty>>(b); \
-    } \
-    constexpr bool operator ==(ty a, std::underlying_type_t<ty> b) noexcept \
-    { \
-        return static_cast<std::underlying_type_t<ty>>(a) == b; \
+#define REGULAR_ENUM(ty)                                                                                               \
+    constexpr bool operator==(std::underlying_type_t<ty> a, ty b) noexcept                                             \
+    {                                                                                                                  \
+        return a == static_cast<std::underlying_type_t<ty>>(b);                                                        \
+    }                                                                                                                  \
+    constexpr bool operator==(ty a, std::underlying_type_t<ty> b) noexcept                                             \
+    {                                                                                                                  \
+        return static_cast<std::underlying_type_t<ty>>(a) == b;                                                        \
     }
 
-#define BITFLAG_ENUM(ty) \
-    constexpr ty operator|(ty a, ty b) noexcept \
-    { \
-        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) | static_cast<std::underlying_type_t<ty>>(b)); \
-    } \
-    constexpr ty operator&(ty a, ty b) noexcept \
-    { \
-        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) & static_cast<std::underlying_type_t<ty>>(b)); \
-    } \
-    constexpr ty operator^(ty a, ty b) noexcept \
-    { \
-        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) ^ static_cast<std::underlying_type_t<ty>>(b)); \
-    } \
-    constexpr ty operator~(ty a) noexcept \
-    { \
-        return static_cast<ty>(~static_cast<std::underlying_type_t<ty>>(a)); \
-    } \
-    constexpr ty& operator|=(ty& a, ty b) noexcept \
-    { \
-        return a = a | b; \
-    } \
-    constexpr ty& operator&=(ty& a, ty b) noexcept \
-    { \
-        return a = a & b; \
-    } \
-    constexpr ty& operator^=(ty& a, ty b) noexcept \
-    { \
-        return a = a ^ b; \
+#define BITFLAG_ENUM(ty)                                                                                               \
+    constexpr ty operator|(ty a, ty b) noexcept                                                                        \
+    {                                                                                                                  \
+        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) |                                            \
+                               static_cast<std::underlying_type_t<ty>>(b));                                            \
+    }                                                                                                                  \
+    constexpr ty operator&(ty a, ty b) noexcept                                                                        \
+    {                                                                                                                  \
+        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) &                                            \
+                               static_cast<std::underlying_type_t<ty>>(b));                                            \
+    }                                                                                                                  \
+    constexpr ty operator^(ty a, ty b) noexcept                                                                        \
+    {                                                                                                                  \
+        return static_cast<ty>(static_cast<std::underlying_type_t<ty>>(a) ^                                            \
+                               static_cast<std::underlying_type_t<ty>>(b));                                            \
+    }                                                                                                                  \
+    constexpr ty operator~(ty a) noexcept                                                                              \
+    {                                                                                                                  \
+        return static_cast<ty>(~static_cast<std::underlying_type_t<ty>>(a));                                           \
+    }                                                                                                                  \
+    constexpr ty &operator|=(ty &a, ty b) noexcept                                                                     \
+    {                                                                                                                  \
+        return a = a | b;                                                                                              \
+    }                                                                                                                  \
+    constexpr ty &operator&=(ty &a, ty b) noexcept                                                                     \
+    {                                                                                                                  \
+        return a = a & b;                                                                                              \
+    }                                                                                                                  \
+    constexpr ty &operator^=(ty &a, ty b) noexcept                                                                     \
+    {                                                                                                                  \
+        return a = a ^ b;                                                                                              \
     }
 
 export namespace sdl
 {
 
-    void bugbreak(void )
+    void bugbreak(void)
     {
         __debugbreak();
     }
 
-    constexpr auto FUNCTION() { return "???"; }
+    constexpr auto FUNCTION()
+    {
+        return "???";
+    }
 
-    constexpr auto NULL_WHILE_LOOP_CONDITION() { return (0,0); }
+    constexpr auto NULL_WHILE_LOOP_CONDITION()
+    {
+        return (0, 0);
+    }
 
     enum class AssertState
     {
@@ -74,32 +83,32 @@ export namespace sdl
 
     using AssertData = SDL_AssertData;
 
-    SDL_AssertState ReportAssertion(SDL_AssertData* data, const char* func, const char* file, int line)
+    SDL_AssertState ReportAssertion(SDL_AssertData *data, const char *func, const char *file, int line)
     {
         return SDL_ReportAssertion(data, func, file, line);
     }
 
-    void SetAssertionHandler(SDL_AssertionHandler handler, void* userdata)
+    void SetAssertionHandler(SDL_AssertionHandler handler, void *userdata)
     {
         SDL_SetAssertionHandler(handler, userdata);
     }
 
-    SDL_AssertionHandler GetDefaultAssertionHandler(void )
+    SDL_AssertionHandler GetDefaultAssertionHandler(void)
     {
         return SDL_GetDefaultAssertionHandler();
     }
 
-    SDL_AssertionHandler GetAssertionHandler(void** puserdata)
+    SDL_AssertionHandler GetAssertionHandler(void **puserdata)
     {
         return SDL_GetAssertionHandler(puserdata);
     }
 
-    const SDL_AssertData* GetAssertionReport(void )
+    const SDL_AssertData *GetAssertionReport(void)
     {
         return SDL_GetAssertionReport();
     }
 
-    void ResetAssertionReport(void )
+    void ResetAssertionReport(void)
     {
         SDL_ResetAssertionReport();
     }
@@ -126,175 +135,203 @@ export namespace sdl
 
     using SDL_AsyncIOQueue = SDL_AsyncIOQueue;
 
-    SDL_AsyncIO* AsyncIOFromFile(const char* file, const char* mode)
+    SDL_AsyncIO *AsyncIOFromFile(const char *file, const char *mode)
     {
         return SDL_AsyncIOFromFile(file, mode);
     }
 
-    Sint64 GetAsyncIOSize(SDL_AsyncIO* asyncio)
+    Sint64 GetAsyncIOSize(SDL_AsyncIO *asyncio)
     {
         return SDL_GetAsyncIOSize(asyncio);
     }
 
-    bool ReadAsyncIO(SDL_AsyncIO* asyncio, void* ptr, Uint64 offset, Uint64 size, SDL_AsyncIOQueue* queue, void* userdata)
+    bool ReadAsyncIO(SDL_AsyncIO *asyncio,
+                     void *ptr,
+                     Uint64 offset,
+                     Uint64 size,
+                     SDL_AsyncIOQueue *queue,
+                     void *userdata)
     {
         return SDL_ReadAsyncIO(asyncio, ptr, offset, size, queue, userdata);
     }
 
-    bool WriteAsyncIO(SDL_AsyncIO* asyncio, void* ptr, Uint64 offset, Uint64 size, SDL_AsyncIOQueue* queue, void* userdata)
+    bool WriteAsyncIO(SDL_AsyncIO *asyncio,
+                      void *ptr,
+                      Uint64 offset,
+                      Uint64 size,
+                      SDL_AsyncIOQueue *queue,
+                      void *userdata)
     {
         return SDL_WriteAsyncIO(asyncio, ptr, offset, size, queue, userdata);
     }
 
-    bool CloseAsyncIO(SDL_AsyncIO* asyncio, bool flush, SDL_AsyncIOQueue* queue, void* userdata)
+    bool CloseAsyncIO(SDL_AsyncIO *asyncio, bool flush, SDL_AsyncIOQueue *queue, void *userdata)
     {
         return SDL_CloseAsyncIO(asyncio, flush, queue, userdata);
     }
 
-    SDL_AsyncIOQueue* CreateAsyncIOQueue(void )
+    SDL_AsyncIOQueue *CreateAsyncIOQueue(void)
     {
         return SDL_CreateAsyncIOQueue();
     }
 
-    void DestroyAsyncIOQueue(SDL_AsyncIOQueue* queue)
+    void DestroyAsyncIOQueue(SDL_AsyncIOQueue *queue)
     {
         SDL_DestroyAsyncIOQueue(queue);
     }
 
-    bool GetAsyncIOResult(SDL_AsyncIOQueue* queue, SDL_AsyncIOOutcome* outcome)
+    bool GetAsyncIOResult(SDL_AsyncIOQueue *queue, SDL_AsyncIOOutcome *outcome)
     {
         return SDL_GetAsyncIOResult(queue, outcome);
     }
 
-    bool WaitAsyncIOResult(SDL_AsyncIOQueue* queue, SDL_AsyncIOOutcome* outcome, Sint32 timeoutMS)
+    bool WaitAsyncIOResult(SDL_AsyncIOQueue *queue, SDL_AsyncIOOutcome *outcome, Sint32 timeoutMS)
     {
         return SDL_WaitAsyncIOResult(queue, outcome, timeoutMS);
     }
 
-    void SignalAsyncIOQueue(SDL_AsyncIOQueue* queue)
+    void SignalAsyncIOQueue(SDL_AsyncIOQueue *queue)
     {
         SDL_SignalAsyncIOQueue(queue);
     }
 
-    bool LoadFileAsync(const char* file, SDL_AsyncIOQueue* queue, void* userdata)
+    bool LoadFileAsync(const char *file, SDL_AsyncIOQueue *queue, void *userdata)
     {
         return SDL_LoadFileAsync(file, queue, userdata);
     }
 
     using SpinLock = int;
 
-    bool TryLockSpinlock(SDL_SpinLock* lock)
+    bool TryLockSpinlock(SDL_SpinLock *lock)
     {
         return SDL_TryLockSpinlock(lock);
     }
 
-    void LockSpinlock(SDL_SpinLock* lock)
+    void LockSpinlock(SDL_SpinLock *lock)
     {
         SDL_LockSpinlock(lock);
     }
 
-    void UnlockSpinlock(SDL_SpinLock* lock)
+    void UnlockSpinlock(SDL_SpinLock *lock)
     {
         SDL_UnlockSpinlock(lock);
     }
 
-    void CompilerBarrier(void )
+    void CompilerBarrier(void)
     {
         SDL_CompilerBarrier();
     }
 
-    void MemoryBarrierReleaseFunction(void )
+    void MemoryBarrierReleaseFunction(void)
     {
         SDL_MemoryBarrierReleaseFunction();
     }
 
-    void MemoryBarrierAcquireFunction(void )
+    void MemoryBarrierAcquireFunction(void)
     {
         SDL_MemoryBarrierAcquireFunction();
     }
 
-    void CPUPauseInstruction(void )
+    void CPUPauseInstruction(void)
     {
         SDL_CPUPauseInstruction();
     }
 
     using AtomicInt = SDL_AtomicInt;
 
-    bool CompareAndSwapAtomicInt(SDL_AtomicInt* a, int oldval, int newval)
+    bool CompareAndSwapAtomicInt(SDL_AtomicInt *a, int oldval, int newval)
     {
         return SDL_CompareAndSwapAtomicInt(a, oldval, newval);
     }
 
-    int SetAtomicInt(SDL_AtomicInt* a, int v)
+    int SetAtomicInt(SDL_AtomicInt *a, int v)
     {
         return SDL_SetAtomicInt(a, v);
     }
 
-    int GetAtomicInt(SDL_AtomicInt* a)
+    int GetAtomicInt(SDL_AtomicInt *a)
     {
         return SDL_GetAtomicInt(a);
     }
 
-    int AddAtomicInt(SDL_AtomicInt* a, int v)
+    int AddAtomicInt(SDL_AtomicInt *a, int v)
     {
         return SDL_AddAtomicInt(a, v);
     }
 
     using AtomicU32 = SDL_AtomicU32;
 
-    bool CompareAndSwapAtomicU32(SDL_AtomicU32* a, Uint32 oldval, Uint32 newval)
+    bool CompareAndSwapAtomicU32(SDL_AtomicU32 *a, Uint32 oldval, Uint32 newval)
     {
         return SDL_CompareAndSwapAtomicU32(a, oldval, newval);
     }
 
-    Uint32 SetAtomicU32(SDL_AtomicU32* a, Uint32 v)
+    Uint32 SetAtomicU32(SDL_AtomicU32 *a, Uint32 v)
     {
         return SDL_SetAtomicU32(a, v);
     }
 
-    Uint32 GetAtomicU32(SDL_AtomicU32* a)
+    Uint32 GetAtomicU32(SDL_AtomicU32 *a)
     {
         return SDL_GetAtomicU32(a);
     }
 
-    bool CompareAndSwapAtomicPointer(void** a, void* oldval, void* newval)
+    bool CompareAndSwapAtomicPointer(void **a, void *oldval, void *newval)
     {
         return SDL_CompareAndSwapAtomicPointer(a, oldval, newval);
     }
 
-    void* SetAtomicPointer(void** a, void* v)
+    void *SetAtomicPointer(void **a, void *v)
     {
         return SDL_SetAtomicPointer(a, v);
     }
 
-    void* GetAtomicPointer(void** a)
+    void *GetAtomicPointer(void **a)
     {
         return SDL_GetAtomicPointer(a);
     }
 
-    constexpr auto LIL_ENDIAN() { return 1234; }
+    constexpr auto LIL_ENDIAN()
+    {
+        return 1234;
+    }
 
-    constexpr auto BIG_ENDIAN() { return 4321; }
+    constexpr auto BIG_ENDIAN()
+    {
+        return 4321;
+    }
 
-    constexpr auto BUILTIN_BSWAP16() { return 0; }
+    constexpr auto BUILTIN_BSWAP16()
+    {
+        return 0;
+    }
 
-    constexpr auto BUILTIN_BSWAP32() { return 0; }
+    constexpr auto BUILTIN_BSWAP32()
+    {
+        return 0;
+    }
 
-    constexpr auto BUILTIN_BSWAP64() { return 0; }
+    constexpr auto BUILTIN_BSWAP64()
+    {
+        return 0;
+    }
 
-    constexpr auto BROKEN_BSWAP() { return 0; }
+    constexpr auto BROKEN_BSWAP()
+    {
+        return 0;
+    }
 
-    bool OutOfMemory(void )
+    bool OutOfMemory(void)
     {
         return SDL_OutOfMemory();
     }
 
-    const char* GetError(void )
+    const char *GetError(void)
     {
         return SDL_GetError();
     }
 
-    bool ClearError(void )
+    bool ClearError(void)
     {
         return SDL_ClearError();
     }
@@ -312,12 +349,12 @@ export namespace sdl
     };
     REGULAR_ENUM(PropertyType);
 
-    SDL_PropertiesID GetGlobalProperties(void )
+    SDL_PropertiesID GetGlobalProperties(void)
     {
         return SDL_GetGlobalProperties();
     }
 
-    SDL_PropertiesID CreateProperties(void )
+    SDL_PropertiesID CreateProperties(void)
     {
         return SDL_CreateProperties();
     }
@@ -337,77 +374,81 @@ export namespace sdl
         SDL_UnlockProperties(props);
     }
 
-    bool SetPointerPropertyWithCleanup(SDL_PropertiesID props, const char* name, void* value, SDL_CleanupPropertyCallback cleanup, void* userdata)
+    bool SetPointerPropertyWithCleanup(SDL_PropertiesID props,
+                                       const char *name,
+                                       void *value,
+                                       SDL_CleanupPropertyCallback cleanup,
+                                       void *userdata)
     {
         return SDL_SetPointerPropertyWithCleanup(props, name, value, cleanup, userdata);
     }
 
-    bool SetPointerProperty(SDL_PropertiesID props, const char* name, void* value)
+    bool SetPointerProperty(SDL_PropertiesID props, const char *name, void *value)
     {
         return SDL_SetPointerProperty(props, name, value);
     }
 
-    bool SetStringProperty(SDL_PropertiesID props, const char* name, const char* value)
+    bool SetStringProperty(SDL_PropertiesID props, const char *name, const char *value)
     {
         return SDL_SetStringProperty(props, name, value);
     }
 
-    bool SetNumberProperty(SDL_PropertiesID props, const char* name, Sint64 value)
+    bool SetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 value)
     {
         return SDL_SetNumberProperty(props, name, value);
     }
 
-    bool SetFloatProperty(SDL_PropertiesID props, const char* name, float value)
+    bool SetFloatProperty(SDL_PropertiesID props, const char *name, float value)
     {
         return SDL_SetFloatProperty(props, name, value);
     }
 
-    bool SetBooleanProperty(SDL_PropertiesID props, const char* name, bool value)
+    bool SetBooleanProperty(SDL_PropertiesID props, const char *name, bool value)
     {
         return SDL_SetBooleanProperty(props, name, value);
     }
 
-    bool HasProperty(SDL_PropertiesID props, const char* name)
+    bool HasProperty(SDL_PropertiesID props, const char *name)
     {
         return SDL_HasProperty(props, name);
     }
 
-    SDL_PropertyType GetPropertyType(SDL_PropertiesID props, const char* name)
+    SDL_PropertyType GetPropertyType(SDL_PropertiesID props, const char *name)
     {
         return SDL_GetPropertyType(props, name);
     }
 
-    void* GetPointerProperty(SDL_PropertiesID props, const char* name, void* default_value)
+    void *GetPointerProperty(SDL_PropertiesID props, const char *name, void *default_value)
     {
         return SDL_GetPointerProperty(props, name, default_value);
     }
 
-    const char* GetStringProperty(SDL_PropertiesID props, const char* name, const char* default_value)
+    const char *GetStringProperty(SDL_PropertiesID props, const char *name, const char *default_value)
     {
         return SDL_GetStringProperty(props, name, default_value);
     }
 
-    Sint64 GetNumberProperty(SDL_PropertiesID props, const char* name, Sint64 default_value)
+    Sint64 GetNumberProperty(SDL_PropertiesID props, const char *name, Sint64 default_value)
     {
         return SDL_GetNumberProperty(props, name, default_value);
     }
 
-    float GetFloatProperty(SDL_PropertiesID props, const char* name, float default_value)
+    float GetFloatProperty(SDL_PropertiesID props, const char *name, float default_value)
     {
         return SDL_GetFloatProperty(props, name, default_value);
     }
 
-    bool GetBooleanProperty(SDL_PropertiesID props, const char* name, bool default_value)
+    bool GetBooleanProperty(SDL_PropertiesID props, const char *name, bool default_value)
     {
         return SDL_GetBooleanProperty(props, name, default_value);
     }
 
-    bool ClearProperty(SDL_PropertiesID props, const char* name)
+    bool ClearProperty(SDL_PropertiesID props, const char *name)
     {
         return SDL_ClearProperty(props, name);
     }
 
-    bool EnumerateProperties(SDL_PropertiesID props, SDL_EnumeratePropertiesCallback callback, void* userdata)
+    bool EnumerateProperties(SDL_PropertiesID props, SDL_EnumeratePropertiesCallback callback, void *userdata)
     {
         return SDL_EnumerateProperties(props, callback, userdata);
     }
@@ -441,35 +482,53 @@ export namespace sdl
     };
     REGULAR_ENUM(ThreadState);
 
-    SDL_Thread* CreateThreadRuntime(SDL_ThreadFunction fn, const char* name, void* data, SDL_FunctionPointer pfnBeginThread, SDL_FunctionPointer pfnEndThread)
+    SDL_Thread *CreateThreadRuntime(SDL_ThreadFunction fn,
+                                    const char *name,
+                                    void *data,
+                                    SDL_FunctionPointer pfnBeginThread,
+                                    SDL_FunctionPointer pfnEndThread)
     {
         return SDL_CreateThreadRuntime(fn, name, data, pfnBeginThread, pfnEndThread);
     }
 
-    SDL_Thread* CreateThreadWithPropertiesRuntime(SDL_PropertiesID props, SDL_FunctionPointer pfnBeginThread, SDL_FunctionPointer pfnEndThread)
+    SDL_Thread *CreateThreadWithPropertiesRuntime(SDL_PropertiesID props,
+                                                  SDL_FunctionPointer pfnBeginThread,
+                                                  SDL_FunctionPointer pfnEndThread)
     {
         return SDL_CreateThreadWithPropertiesRuntime(props, pfnBeginThread, pfnEndThread);
     }
 
-    constexpr auto PROP_THREAD_CREATE_ENTRY_FUNCTION_POINTER() { return "SDL.thread.create.entry_function"; }
+    constexpr auto PROP_THREAD_CREATE_ENTRY_FUNCTION_POINTER()
+    {
+        return "SDL.thread.create.entry_function";
+    }
 
-    constexpr auto PROP_THREAD_CREATE_NAME_STRING() { return "SDL.thread.create.name"; }
+    constexpr auto PROP_THREAD_CREATE_NAME_STRING()
+    {
+        return "SDL.thread.create.name";
+    }
 
-    constexpr auto PROP_THREAD_CREATE_USERDATA_POINTER() { return "SDL.thread.create.userdata"; }
+    constexpr auto PROP_THREAD_CREATE_USERDATA_POINTER()
+    {
+        return "SDL.thread.create.userdata";
+    }
 
-    constexpr auto PROP_THREAD_CREATE_STACKSIZE_NUMBER() { return "SDL.thread.create.stacksize"; }
+    constexpr auto PROP_THREAD_CREATE_STACKSIZE_NUMBER()
+    {
+        return "SDL.thread.create.stacksize";
+    }
 
-    const char* GetThreadName(SDL_Thread* thread)
+    const char *GetThreadName(SDL_Thread *thread)
     {
         return SDL_GetThreadName(thread);
     }
 
-    SDL_ThreadID GetCurrentThreadID(void )
+    SDL_ThreadID GetCurrentThreadID(void)
     {
         return SDL_GetCurrentThreadID();
     }
 
-    SDL_ThreadID GetThreadID(SDL_Thread* thread)
+    SDL_ThreadID GetThreadID(SDL_Thread *thread)
     {
         return SDL_GetThreadID(thread);
     }
@@ -479,125 +538,125 @@ export namespace sdl
         return SDL_SetCurrentThreadPriority((SDL_ThreadPriority)(priority));
     }
 
-    void WaitThread(SDL_Thread* thread, int* status)
+    void WaitThread(SDL_Thread *thread, int *status)
     {
         SDL_WaitThread(thread, status);
     }
 
-    SDL_ThreadState GetThreadState(SDL_Thread* thread)
+    SDL_ThreadState GetThreadState(SDL_Thread *thread)
     {
         return SDL_GetThreadState(thread);
     }
 
-    void DetachThread(SDL_Thread* thread)
+    void DetachThread(SDL_Thread *thread)
     {
         SDL_DetachThread(thread);
     }
 
-    void* GetTLS(SDL_TLSID* id)
+    void *GetTLS(SDL_TLSID *id)
     {
         return SDL_GetTLS(id);
     }
 
-    bool SetTLS(SDL_TLSID* id, const void* value, SDL_TLSDestructorCallback destructor)
+    bool SetTLS(SDL_TLSID *id, const void *value, SDL_TLSDestructorCallback destructor)
     {
         return SDL_SetTLS(id, value, destructor);
     }
 
-    void CleanupTLS(void )
+    void CleanupTLS(void)
     {
         SDL_CleanupTLS();
     }
 
     using SDL_Mutex = SDL_Mutex;
 
-    SDL_Mutex* CreateMutex(void )
+    SDL_Mutex *CreateMutex(void)
     {
         return SDL_CreateMutex();
     }
 
-    void DestroyMutex(SDL_Mutex* mutex)
+    void DestroyMutex(SDL_Mutex *mutex)
     {
         SDL_DestroyMutex(mutex);
     }
 
     using SDL_RWLock = SDL_RWLock;
 
-    SDL_RWLock* CreateRWLock(void )
+    SDL_RWLock *CreateRWLock(void)
     {
         return SDL_CreateRWLock();
     }
 
-    void DestroyRWLock(SDL_RWLock* rwlock)
+    void DestroyRWLock(SDL_RWLock *rwlock)
     {
         SDL_DestroyRWLock(rwlock);
     }
 
     using SDL_Semaphore = SDL_Semaphore;
 
-    SDL_Semaphore* CreateSemaphore(Uint32 initial_value)
+    SDL_Semaphore *CreateSemaphore(Uint32 initial_value)
     {
         return SDL_CreateSemaphore(initial_value);
     }
 
-    void DestroySemaphore(SDL_Semaphore* sem)
+    void DestroySemaphore(SDL_Semaphore *sem)
     {
         SDL_DestroySemaphore(sem);
     }
 
-    void WaitSemaphore(SDL_Semaphore* sem)
+    void WaitSemaphore(SDL_Semaphore *sem)
     {
         SDL_WaitSemaphore(sem);
     }
 
-    bool TryWaitSemaphore(SDL_Semaphore* sem)
+    bool TryWaitSemaphore(SDL_Semaphore *sem)
     {
         return SDL_TryWaitSemaphore(sem);
     }
 
-    bool WaitSemaphoreTimeout(SDL_Semaphore* sem, Sint32 timeoutMS)
+    bool WaitSemaphoreTimeout(SDL_Semaphore *sem, Sint32 timeoutMS)
     {
         return SDL_WaitSemaphoreTimeout(sem, timeoutMS);
     }
 
-    void SignalSemaphore(SDL_Semaphore* sem)
+    void SignalSemaphore(SDL_Semaphore *sem)
     {
         SDL_SignalSemaphore(sem);
     }
 
-    Uint32 GetSemaphoreValue(SDL_Semaphore* sem)
+    Uint32 GetSemaphoreValue(SDL_Semaphore *sem)
     {
         return SDL_GetSemaphoreValue(sem);
     }
 
     using SDL_Condition = SDL_Condition;
 
-    SDL_Condition* CreateCondition(void )
+    SDL_Condition *CreateCondition(void)
     {
         return SDL_CreateCondition();
     }
 
-    void DestroyCondition(SDL_Condition* cond)
+    void DestroyCondition(SDL_Condition *cond)
     {
         SDL_DestroyCondition(cond);
     }
 
-    void SignalCondition(SDL_Condition* cond)
+    void SignalCondition(SDL_Condition *cond)
     {
         SDL_SignalCondition(cond);
     }
 
-    void BroadcastCondition(SDL_Condition* cond)
+    void BroadcastCondition(SDL_Condition *cond)
     {
         SDL_BroadcastCondition(cond);
     }
 
-    void WaitCondition(SDL_Condition* cond, SDL_Mutex* mutex)
+    void WaitCondition(SDL_Condition *cond, SDL_Mutex *mutex)
     {
         SDL_WaitCondition(cond, mutex);
     }
 
-    bool WaitConditionTimeout(SDL_Condition* cond, SDL_Mutex* mutex, Sint32 timeoutMS)
+    bool WaitConditionTimeout(SDL_Condition *cond, SDL_Mutex *mutex, Sint32 timeoutMS)
     {
         return SDL_WaitConditionTimeout(cond, mutex, timeoutMS);
     }
@@ -613,17 +672,17 @@ export namespace sdl
 
     using InitState = SDL_InitState;
 
-    bool ShouldInit(SDL_InitState* state)
+    bool ShouldInit(SDL_InitState *state)
     {
         return SDL_ShouldInit(state);
     }
 
-    bool ShouldQuit(SDL_InitState* state)
+    bool ShouldQuit(SDL_InitState *state)
     {
         return SDL_ShouldQuit(state);
     }
 
-    void SetInitialized(SDL_InitState* state, bool initialized)
+    void SetInitialized(SDL_InitState *state, bool initialized)
     {
         SDL_SetInitialized(state, initialized);
     }
@@ -651,259 +710,295 @@ export namespace sdl
 
     using SDL_IOStream = SDL_IOStream;
 
-    SDL_IOStream* IOFromFile(const char* file, const char* mode)
+    SDL_IOStream *IOFromFile(const char *file, const char *mode)
     {
         return SDL_IOFromFile(file, mode);
     }
 
-    constexpr auto PROP_IOSTREAM_WINDOWS_HANDLE_POINTER() { return "SDL.iostream.windows.handle"; }
+    constexpr auto PROP_IOSTREAM_WINDOWS_HANDLE_POINTER()
+    {
+        return "SDL.iostream.windows.handle";
+    }
 
-    constexpr auto PROP_IOSTREAM_STDIO_FILE_POINTER() { return "SDL.iostream.stdio.file"; }
+    constexpr auto PROP_IOSTREAM_STDIO_FILE_POINTER()
+    {
+        return "SDL.iostream.stdio.file";
+    }
 
-    constexpr auto PROP_IOSTREAM_FILE_DESCRIPTOR_NUMBER() { return "SDL.iostream.file_descriptor"; }
+    constexpr auto PROP_IOSTREAM_FILE_DESCRIPTOR_NUMBER()
+    {
+        return "SDL.iostream.file_descriptor";
+    }
 
-    constexpr auto PROP_IOSTREAM_ANDROID_AASSET_POINTER() { return "SDL.iostream.android.aasset"; }
+    constexpr auto PROP_IOSTREAM_ANDROID_AASSET_POINTER()
+    {
+        return "SDL.iostream.android.aasset";
+    }
 
-    SDL_IOStream* IOFromMem(void* mem, size_t size)
+    SDL_IOStream *IOFromMem(void *mem, size_t size)
     {
         return SDL_IOFromMem(mem, size);
     }
 
-    constexpr auto PROP_IOSTREAM_MEMORY_POINTER() { return "SDL.iostream.memory.base"; }
+    constexpr auto PROP_IOSTREAM_MEMORY_POINTER()
+    {
+        return "SDL.iostream.memory.base";
+    }
 
-    constexpr auto PROP_IOSTREAM_MEMORY_SIZE_NUMBER() { return "SDL.iostream.memory.size"; }
+    constexpr auto PROP_IOSTREAM_MEMORY_SIZE_NUMBER()
+    {
+        return "SDL.iostream.memory.size";
+    }
 
-    SDL_IOStream* IOFromConstMem(const void* mem, size_t size)
+    SDL_IOStream *IOFromConstMem(const void *mem, size_t size)
     {
         return SDL_IOFromConstMem(mem, size);
     }
 
-    SDL_IOStream* IOFromDynamicMem(void )
+    SDL_IOStream *IOFromDynamicMem(void)
     {
         return SDL_IOFromDynamicMem();
     }
 
-    constexpr auto PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER() { return "SDL.iostream.dynamic.memory"; }
+    constexpr auto PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER()
+    {
+        return "SDL.iostream.dynamic.memory";
+    }
 
-    constexpr auto PROP_IOSTREAM_DYNAMIC_CHUNKSIZE_NUMBER() { return "SDL.iostream.dynamic.chunksize"; }
+    constexpr auto PROP_IOSTREAM_DYNAMIC_CHUNKSIZE_NUMBER()
+    {
+        return "SDL.iostream.dynamic.chunksize";
+    }
 
-    SDL_IOStream* OpenIO(const SDL_IOStreamInterface* iface, void* userdata)
+    SDL_IOStream *OpenIO(const SDL_IOStreamInterface *iface, void *userdata)
     {
         return SDL_OpenIO(iface, userdata);
     }
 
-    bool CloseIO(SDL_IOStream* context)
+    bool CloseIO(SDL_IOStream *context)
     {
         return SDL_CloseIO(context);
     }
 
-    SDL_PropertiesID GetIOProperties(SDL_IOStream* context)
+    SDL_PropertiesID GetIOProperties(SDL_IOStream *context)
     {
         return SDL_GetIOProperties(context);
     }
 
-    SDL_IOStatus GetIOStatus(SDL_IOStream* context)
+    SDL_IOStatus GetIOStatus(SDL_IOStream *context)
     {
         return SDL_GetIOStatus(context);
     }
 
-    Sint64 GetIOSize(SDL_IOStream* context)
+    Sint64 GetIOSize(SDL_IOStream *context)
     {
         return SDL_GetIOSize(context);
     }
 
-    Sint64 SeekIO(SDL_IOStream* context, Sint64 offset, IOWhence whence)
+    Sint64 SeekIO(SDL_IOStream *context, Sint64 offset, IOWhence whence)
     {
         return SDL_SeekIO(context, offset, (SDL_IOWhence)(whence));
     }
 
-    Sint64 TellIO(SDL_IOStream* context)
+    Sint64 TellIO(SDL_IOStream *context)
     {
         return SDL_TellIO(context);
     }
 
-    size_t ReadIO(SDL_IOStream* context, void* ptr, size_t size)
+    size_t ReadIO(SDL_IOStream *context, void *ptr, size_t size)
     {
         return SDL_ReadIO(context, ptr, size);
     }
 
-    size_t WriteIO(SDL_IOStream* context, const void* ptr, size_t size)
+    size_t WriteIO(SDL_IOStream *context, const void *ptr, size_t size)
     {
         return SDL_WriteIO(context, ptr, size);
     }
 
-    bool FlushIO(SDL_IOStream* context)
+    bool FlushIO(SDL_IOStream *context)
     {
         return SDL_FlushIO(context);
     }
 
-    void* LoadFile_IO(SDL_IOStream* src, size_t* datasize, bool closeio)
+    void *LoadFile_IO(SDL_IOStream *src, size_t *datasize, bool closeio)
     {
         return SDL_LoadFile_IO(src, datasize, closeio);
     }
 
-    void* LoadFile(const char* file, size_t* datasize)
+    void *LoadFile(const char *file, size_t *datasize)
     {
         return SDL_LoadFile(file, datasize);
     }
 
-    bool SaveFile_IO(SDL_IOStream* src, const void* data, size_t datasize, bool closeio)
+    bool SaveFile_IO(SDL_IOStream *src, const void *data, size_t datasize, bool closeio)
     {
         return SDL_SaveFile_IO(src, data, datasize, closeio);
     }
 
-    bool SaveFile(const char* file, const void* data, size_t datasize)
+    bool SaveFile(const char *file, const void *data, size_t datasize)
     {
         return SDL_SaveFile(file, data, datasize);
     }
 
-    bool ReadU8(SDL_IOStream* src, Uint8* value)
+    bool ReadU8(SDL_IOStream *src, Uint8 *value)
     {
         return SDL_ReadU8(src, value);
     }
 
-    bool ReadS8(SDL_IOStream* src, Sint8* value)
+    bool ReadS8(SDL_IOStream *src, Sint8 *value)
     {
         return SDL_ReadS8(src, value);
     }
 
-    bool ReadU16LE(SDL_IOStream* src, Uint16* value)
+    bool ReadU16LE(SDL_IOStream *src, Uint16 *value)
     {
         return SDL_ReadU16LE(src, value);
     }
 
-    bool ReadS16LE(SDL_IOStream* src, Sint16* value)
+    bool ReadS16LE(SDL_IOStream *src, Sint16 *value)
     {
         return SDL_ReadS16LE(src, value);
     }
 
-    bool ReadU16BE(SDL_IOStream* src, Uint16* value)
+    bool ReadU16BE(SDL_IOStream *src, Uint16 *value)
     {
         return SDL_ReadU16BE(src, value);
     }
 
-    bool ReadS16BE(SDL_IOStream* src, Sint16* value)
+    bool ReadS16BE(SDL_IOStream *src, Sint16 *value)
     {
         return SDL_ReadS16BE(src, value);
     }
 
-    bool ReadU32LE(SDL_IOStream* src, Uint32* value)
+    bool ReadU32LE(SDL_IOStream *src, Uint32 *value)
     {
         return SDL_ReadU32LE(src, value);
     }
 
-    bool ReadS32LE(SDL_IOStream* src, Sint32* value)
+    bool ReadS32LE(SDL_IOStream *src, Sint32 *value)
     {
         return SDL_ReadS32LE(src, value);
     }
 
-    bool ReadU32BE(SDL_IOStream* src, Uint32* value)
+    bool ReadU32BE(SDL_IOStream *src, Uint32 *value)
     {
         return SDL_ReadU32BE(src, value);
     }
 
-    bool ReadS32BE(SDL_IOStream* src, Sint32* value)
+    bool ReadS32BE(SDL_IOStream *src, Sint32 *value)
     {
         return SDL_ReadS32BE(src, value);
     }
 
-    bool ReadU64LE(SDL_IOStream* src, Uint64* value)
+    bool ReadU64LE(SDL_IOStream *src, Uint64 *value)
     {
         return SDL_ReadU64LE(src, value);
     }
 
-    bool ReadS64LE(SDL_IOStream* src, Sint64* value)
+    bool ReadS64LE(SDL_IOStream *src, Sint64 *value)
     {
         return SDL_ReadS64LE(src, value);
     }
 
-    bool ReadU64BE(SDL_IOStream* src, Uint64* value)
+    bool ReadU64BE(SDL_IOStream *src, Uint64 *value)
     {
         return SDL_ReadU64BE(src, value);
     }
 
-    bool ReadS64BE(SDL_IOStream* src, Sint64* value)
+    bool ReadS64BE(SDL_IOStream *src, Sint64 *value)
     {
         return SDL_ReadS64BE(src, value);
     }
 
-    bool WriteU8(SDL_IOStream* dst, Uint8 value)
+    bool WriteU8(SDL_IOStream *dst, Uint8 value)
     {
         return SDL_WriteU8(dst, value);
     }
 
-    bool WriteS8(SDL_IOStream* dst, Sint8 value)
+    bool WriteS8(SDL_IOStream *dst, Sint8 value)
     {
         return SDL_WriteS8(dst, value);
     }
 
-    bool WriteU16LE(SDL_IOStream* dst, Uint16 value)
+    bool WriteU16LE(SDL_IOStream *dst, Uint16 value)
     {
         return SDL_WriteU16LE(dst, value);
     }
 
-    bool WriteS16LE(SDL_IOStream* dst, Sint16 value)
+    bool WriteS16LE(SDL_IOStream *dst, Sint16 value)
     {
         return SDL_WriteS16LE(dst, value);
     }
 
-    bool WriteU16BE(SDL_IOStream* dst, Uint16 value)
+    bool WriteU16BE(SDL_IOStream *dst, Uint16 value)
     {
         return SDL_WriteU16BE(dst, value);
     }
 
-    bool WriteS16BE(SDL_IOStream* dst, Sint16 value)
+    bool WriteS16BE(SDL_IOStream *dst, Sint16 value)
     {
         return SDL_WriteS16BE(dst, value);
     }
 
-    bool WriteU32LE(SDL_IOStream* dst, Uint32 value)
+    bool WriteU32LE(SDL_IOStream *dst, Uint32 value)
     {
         return SDL_WriteU32LE(dst, value);
     }
 
-    bool WriteS32LE(SDL_IOStream* dst, Sint32 value)
+    bool WriteS32LE(SDL_IOStream *dst, Sint32 value)
     {
         return SDL_WriteS32LE(dst, value);
     }
 
-    bool WriteU32BE(SDL_IOStream* dst, Uint32 value)
+    bool WriteU32BE(SDL_IOStream *dst, Uint32 value)
     {
         return SDL_WriteU32BE(dst, value);
     }
 
-    bool WriteS32BE(SDL_IOStream* dst, Sint32 value)
+    bool WriteS32BE(SDL_IOStream *dst, Sint32 value)
     {
         return SDL_WriteS32BE(dst, value);
     }
 
-    bool WriteU64LE(SDL_IOStream* dst, Uint64 value)
+    bool WriteU64LE(SDL_IOStream *dst, Uint64 value)
     {
         return SDL_WriteU64LE(dst, value);
     }
 
-    bool WriteS64LE(SDL_IOStream* dst, Sint64 value)
+    bool WriteS64LE(SDL_IOStream *dst, Sint64 value)
     {
         return SDL_WriteS64LE(dst, value);
     }
 
-    bool WriteU64BE(SDL_IOStream* dst, Uint64 value)
+    bool WriteU64BE(SDL_IOStream *dst, Uint64 value)
     {
         return SDL_WriteU64BE(dst, value);
     }
 
-    bool WriteS64BE(SDL_IOStream* dst, Sint64 value)
+    bool WriteS64BE(SDL_IOStream *dst, Sint64 value)
     {
         return SDL_WriteS64BE(dst, value);
     }
 
-    constexpr auto AUDIO_MASK_BITSIZE() { return (0xFFu); }
+    constexpr auto AUDIO_MASK_BITSIZE()
+    {
+        return (0xFFu);
+    }
 
-    constexpr auto AUDIO_MASK_FLOAT() { return (1u<<8); }
+    constexpr auto AUDIO_MASK_FLOAT()
+    {
+        return (1u << 8);
+    }
 
-    constexpr auto AUDIO_MASK_BIG_ENDIAN() { return (1u<<12); }
+    constexpr auto AUDIO_MASK_BIG_ENDIAN()
+    {
+        return (1u << 12);
+    }
 
-    constexpr auto AUDIO_MASK_SIGNED() { return (1u<<15); }
+    constexpr auto AUDIO_MASK_SIGNED()
+    {
+        return (1u << 15);
+    }
 
     enum class AudioFormat
     {
@@ -924,55 +1019,61 @@ export namespace sdl
 
     using AudioDeviceID = Uint32;
 
-    constexpr auto AUDIO_DEVICE_DEFAULT_PLAYBACK() { return ((SDL_AudioDeviceID) 0xFFFFFFFFu); }
+    constexpr auto AUDIO_DEVICE_DEFAULT_PLAYBACK()
+    {
+        return ((SDL_AudioDeviceID)0xFFFFFFFFu);
+    }
 
-    constexpr auto AUDIO_DEVICE_DEFAULT_RECORDING() { return ((SDL_AudioDeviceID) 0xFFFFFFFEu); }
+    constexpr auto AUDIO_DEVICE_DEFAULT_RECORDING()
+    {
+        return ((SDL_AudioDeviceID)0xFFFFFFFEu);
+    }
 
     using AudioSpec = SDL_AudioSpec;
 
     using SDL_AudioStream = SDL_AudioStream;
 
-    int GetNumAudioDrivers(void )
+    int GetNumAudioDrivers(void)
     {
         return SDL_GetNumAudioDrivers();
     }
 
-    const char* GetAudioDriver(int index)
+    const char *GetAudioDriver(int index)
     {
         return SDL_GetAudioDriver(index);
     }
 
-    const char* GetCurrentAudioDriver(void )
+    const char *GetCurrentAudioDriver(void)
     {
         return SDL_GetCurrentAudioDriver();
     }
 
-    SDL_AudioDeviceID* GetAudioPlaybackDevices(int* count)
+    SDL_AudioDeviceID *GetAudioPlaybackDevices(int *count)
     {
         return SDL_GetAudioPlaybackDevices(count);
     }
 
-    SDL_AudioDeviceID* GetAudioRecordingDevices(int* count)
+    SDL_AudioDeviceID *GetAudioRecordingDevices(int *count)
     {
         return SDL_GetAudioRecordingDevices(count);
     }
 
-    const char* GetAudioDeviceName(SDL_AudioDeviceID devid)
+    const char *GetAudioDeviceName(SDL_AudioDeviceID devid)
     {
         return SDL_GetAudioDeviceName(devid);
     }
 
-    bool GetAudioDeviceFormat(SDL_AudioDeviceID devid, SDL_AudioSpec* spec, int* sample_frames)
+    bool GetAudioDeviceFormat(SDL_AudioDeviceID devid, SDL_AudioSpec *spec, int *sample_frames)
     {
         return SDL_GetAudioDeviceFormat(devid, spec, sample_frames);
     }
 
-    int* GetAudioDeviceChannelMap(SDL_AudioDeviceID devid, int* count)
+    int *GetAudioDeviceChannelMap(SDL_AudioDeviceID devid, int *count)
     {
         return SDL_GetAudioDeviceChannelMap(devid, count);
     }
 
-    SDL_AudioDeviceID OpenAudioDevice(SDL_AudioDeviceID devid, const SDL_AudioSpec* spec)
+    SDL_AudioDeviceID OpenAudioDevice(SDL_AudioDeviceID devid, const SDL_AudioSpec *spec)
     {
         return SDL_OpenAudioDevice(devid, spec);
     }
@@ -1017,192 +1118,200 @@ export namespace sdl
         SDL_CloseAudioDevice(devid);
     }
 
-    bool BindAudioStreams(SDL_AudioDeviceID devid, SDL_AudioStream** streams, int num_streams)
+    bool BindAudioStreams(SDL_AudioDeviceID devid, SDL_AudioStream **streams, int num_streams)
     {
         return SDL_BindAudioStreams(devid, streams, num_streams);
     }
 
-    bool BindAudioStream(SDL_AudioDeviceID devid, SDL_AudioStream* stream)
+    bool BindAudioStream(SDL_AudioDeviceID devid, SDL_AudioStream *stream)
     {
         return SDL_BindAudioStream(devid, stream);
     }
 
-    void UnbindAudioStreams(SDL_AudioStream** streams, int num_streams)
+    void UnbindAudioStreams(SDL_AudioStream **streams, int num_streams)
     {
         SDL_UnbindAudioStreams(streams, num_streams);
     }
 
-    void UnbindAudioStream(SDL_AudioStream* stream)
+    void UnbindAudioStream(SDL_AudioStream *stream)
     {
         SDL_UnbindAudioStream(stream);
     }
 
-    SDL_AudioDeviceID GetAudioStreamDevice(SDL_AudioStream* stream)
+    SDL_AudioDeviceID GetAudioStreamDevice(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamDevice(stream);
     }
 
-    SDL_AudioStream* CreateAudioStream(const SDL_AudioSpec* src_spec, const SDL_AudioSpec* dst_spec)
+    SDL_AudioStream *CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_AudioSpec *dst_spec)
     {
         return SDL_CreateAudioStream(src_spec, dst_spec);
     }
 
-    SDL_PropertiesID GetAudioStreamProperties(SDL_AudioStream* stream)
+    SDL_PropertiesID GetAudioStreamProperties(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamProperties(stream);
     }
 
-    bool GetAudioStreamFormat(SDL_AudioStream* stream, SDL_AudioSpec* src_spec, SDL_AudioSpec* dst_spec)
+    bool GetAudioStreamFormat(SDL_AudioStream *stream, SDL_AudioSpec *src_spec, SDL_AudioSpec *dst_spec)
     {
         return SDL_GetAudioStreamFormat(stream, src_spec, dst_spec);
     }
 
-    bool SetAudioStreamFormat(SDL_AudioStream* stream, const SDL_AudioSpec* src_spec, const SDL_AudioSpec* dst_spec)
+    bool SetAudioStreamFormat(SDL_AudioStream *stream, const SDL_AudioSpec *src_spec, const SDL_AudioSpec *dst_spec)
     {
         return SDL_SetAudioStreamFormat(stream, src_spec, dst_spec);
     }
 
-    float GetAudioStreamFrequencyRatio(SDL_AudioStream* stream)
+    float GetAudioStreamFrequencyRatio(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamFrequencyRatio(stream);
     }
 
-    bool SetAudioStreamFrequencyRatio(SDL_AudioStream* stream, float ratio)
+    bool SetAudioStreamFrequencyRatio(SDL_AudioStream *stream, float ratio)
     {
         return SDL_SetAudioStreamFrequencyRatio(stream, ratio);
     }
 
-    float GetAudioStreamGain(SDL_AudioStream* stream)
+    float GetAudioStreamGain(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamGain(stream);
     }
 
-    bool SetAudioStreamGain(SDL_AudioStream* stream, float gain)
+    bool SetAudioStreamGain(SDL_AudioStream *stream, float gain)
     {
         return SDL_SetAudioStreamGain(stream, gain);
     }
 
-    int* GetAudioStreamInputChannelMap(SDL_AudioStream* stream, int* count)
+    int *GetAudioStreamInputChannelMap(SDL_AudioStream *stream, int *count)
     {
         return SDL_GetAudioStreamInputChannelMap(stream, count);
     }
 
-    int* GetAudioStreamOutputChannelMap(SDL_AudioStream* stream, int* count)
+    int *GetAudioStreamOutputChannelMap(SDL_AudioStream *stream, int *count)
     {
         return SDL_GetAudioStreamOutputChannelMap(stream, count);
     }
 
-    bool SetAudioStreamInputChannelMap(SDL_AudioStream* stream, const int* chmap, int count)
+    bool SetAudioStreamInputChannelMap(SDL_AudioStream *stream, const int *chmap, int count)
     {
         return SDL_SetAudioStreamInputChannelMap(stream, chmap, count);
     }
 
-    bool SetAudioStreamOutputChannelMap(SDL_AudioStream* stream, const int* chmap, int count)
+    bool SetAudioStreamOutputChannelMap(SDL_AudioStream *stream, const int *chmap, int count)
     {
         return SDL_SetAudioStreamOutputChannelMap(stream, chmap, count);
     }
 
-    bool PutAudioStreamData(SDL_AudioStream* stream, const void* buf, int len)
+    bool PutAudioStreamData(SDL_AudioStream *stream, const void *buf, int len)
     {
         return SDL_PutAudioStreamData(stream, buf, len);
     }
 
-    int GetAudioStreamData(SDL_AudioStream* stream, void* buf, int len)
+    int GetAudioStreamData(SDL_AudioStream *stream, void *buf, int len)
     {
         return SDL_GetAudioStreamData(stream, buf, len);
     }
 
-    int GetAudioStreamAvailable(SDL_AudioStream* stream)
+    int GetAudioStreamAvailable(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamAvailable(stream);
     }
 
-    int GetAudioStreamQueued(SDL_AudioStream* stream)
+    int GetAudioStreamQueued(SDL_AudioStream *stream)
     {
         return SDL_GetAudioStreamQueued(stream);
     }
 
-    bool FlushAudioStream(SDL_AudioStream* stream)
+    bool FlushAudioStream(SDL_AudioStream *stream)
     {
         return SDL_FlushAudioStream(stream);
     }
 
-    bool ClearAudioStream(SDL_AudioStream* stream)
+    bool ClearAudioStream(SDL_AudioStream *stream)
     {
         return SDL_ClearAudioStream(stream);
     }
 
-    bool PauseAudioStreamDevice(SDL_AudioStream* stream)
+    bool PauseAudioStreamDevice(SDL_AudioStream *stream)
     {
         return SDL_PauseAudioStreamDevice(stream);
     }
 
-    bool ResumeAudioStreamDevice(SDL_AudioStream* stream)
+    bool ResumeAudioStreamDevice(SDL_AudioStream *stream)
     {
         return SDL_ResumeAudioStreamDevice(stream);
     }
 
-    bool AudioStreamDevicePaused(SDL_AudioStream* stream)
+    bool AudioStreamDevicePaused(SDL_AudioStream *stream)
     {
         return SDL_AudioStreamDevicePaused(stream);
     }
 
-    bool LockAudioStream(SDL_AudioStream* stream)
+    bool LockAudioStream(SDL_AudioStream *stream)
     {
         return SDL_LockAudioStream(stream);
     }
 
-    bool UnlockAudioStream(SDL_AudioStream* stream)
+    bool UnlockAudioStream(SDL_AudioStream *stream)
     {
         return SDL_UnlockAudioStream(stream);
     }
 
-    bool SetAudioStreamGetCallback(SDL_AudioStream* stream, SDL_AudioStreamCallback callback, void* userdata)
+    bool SetAudioStreamGetCallback(SDL_AudioStream *stream, SDL_AudioStreamCallback callback, void *userdata)
     {
         return SDL_SetAudioStreamGetCallback(stream, callback, userdata);
     }
 
-    bool SetAudioStreamPutCallback(SDL_AudioStream* stream, SDL_AudioStreamCallback callback, void* userdata)
+    bool SetAudioStreamPutCallback(SDL_AudioStream *stream, SDL_AudioStreamCallback callback, void *userdata)
     {
         return SDL_SetAudioStreamPutCallback(stream, callback, userdata);
     }
 
-    void DestroyAudioStream(SDL_AudioStream* stream)
+    void DestroyAudioStream(SDL_AudioStream *stream)
     {
         SDL_DestroyAudioStream(stream);
     }
 
-    SDL_AudioStream* OpenAudioDeviceStream(SDL_AudioDeviceID devid, const SDL_AudioSpec* spec, SDL_AudioStreamCallback callback, void* userdata)
+    SDL_AudioStream *OpenAudioDeviceStream(SDL_AudioDeviceID devid,
+                                           const SDL_AudioSpec *spec,
+                                           SDL_AudioStreamCallback callback,
+                                           void *userdata)
     {
         return SDL_OpenAudioDeviceStream(devid, spec, callback, userdata);
     }
 
-    bool SetAudioPostmixCallback(SDL_AudioDeviceID devid, SDL_AudioPostmixCallback callback, void* userdata)
+    bool SetAudioPostmixCallback(SDL_AudioDeviceID devid, SDL_AudioPostmixCallback callback, void *userdata)
     {
         return SDL_SetAudioPostmixCallback(devid, callback, userdata);
     }
 
-    bool LoadWAV_IO(SDL_IOStream* src, bool closeio, SDL_AudioSpec* spec, Uint8** audio_buf, Uint32* audio_len)
+    bool LoadWAV_IO(SDL_IOStream *src, bool closeio, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len)
     {
         return SDL_LoadWAV_IO(src, closeio, spec, audio_buf, audio_len);
     }
 
-    bool LoadWAV(const char* path, SDL_AudioSpec* spec, Uint8** audio_buf, Uint32* audio_len)
+    bool LoadWAV(const char *path, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len)
     {
         return SDL_LoadWAV(path, spec, audio_buf, audio_len);
     }
 
-    bool MixAudio(Uint8* dst, const Uint8* src, AudioFormat format, Uint32 len, float volume)
+    bool MixAudio(Uint8 *dst, const Uint8 *src, AudioFormat format, Uint32 len, float volume)
     {
         return SDL_MixAudio(dst, src, (SDL_AudioFormat)(format), len, volume);
     }
 
-    bool ConvertAudioSamples(const SDL_AudioSpec* src_spec, const Uint8* src_data, int src_len, const SDL_AudioSpec* dst_spec, Uint8** dst_data, int* dst_len)
+    bool ConvertAudioSamples(const SDL_AudioSpec *src_spec,
+                             const Uint8 *src_data,
+                             int src_len,
+                             const SDL_AudioSpec *dst_spec,
+                             Uint8 **dst_data,
+                             int *dst_len)
     {
         return SDL_ConvertAudioSamples(src_spec, src_data, src_len, dst_spec, dst_data, dst_len);
     }
 
-    const char* GetAudioFormatName(AudioFormat format)
+    const char *GetAudioFormatName(AudioFormat format)
     {
         return SDL_GetAudioFormatName((SDL_AudioFormat)(format));
     }
@@ -1250,18 +1359,40 @@ export namespace sdl
     };
     REGULAR_ENUM(BlendFactor);
 
-    SDL_BlendMode ComposeCustomBlendMode(BlendFactor srcColorFactor, BlendFactor dstColorFactor, BlendOperation colorOperation, BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor, BlendOperation alphaOperation)
+    SDL_BlendMode ComposeCustomBlendMode(BlendFactor srcColorFactor,
+                                         BlendFactor dstColorFactor,
+                                         BlendOperation colorOperation,
+                                         BlendFactor srcAlphaFactor,
+                                         BlendFactor dstAlphaFactor,
+                                         BlendOperation alphaOperation)
     {
-        return SDL_ComposeCustomBlendMode((SDL_BlendFactor)(srcColorFactor), (SDL_BlendFactor)(dstColorFactor), (SDL_BlendOperation)(colorOperation), (SDL_BlendFactor)(srcAlphaFactor), (SDL_BlendFactor)(dstAlphaFactor), (SDL_BlendOperation)(alphaOperation));
+        return SDL_ComposeCustomBlendMode((SDL_BlendFactor)(srcColorFactor),
+                                          (SDL_BlendFactor)(dstColorFactor),
+                                          (SDL_BlendOperation)(colorOperation),
+                                          (SDL_BlendFactor)(srcAlphaFactor),
+                                          (SDL_BlendFactor)(dstAlphaFactor),
+                                          (SDL_BlendOperation)(alphaOperation));
     }
 
-    constexpr auto ALPHA_OPAQUE() { return 255; }
+    constexpr auto ALPHA_OPAQUE()
+    {
+        return 255;
+    }
 
-    constexpr auto ALPHA_OPAQUE_FLOAT() { return 1.0f; }
+    constexpr auto ALPHA_OPAQUE_FLOAT()
+    {
+        return 1.0f;
+    }
 
-    constexpr auto ALPHA_TRANSPARENT() { return 0; }
+    constexpr auto ALPHA_TRANSPARENT()
+    {
+        return 0;
+    }
 
-    constexpr auto ALPHA_TRANSPARENT_FLOAT() { return 0.0f; }
+    constexpr auto ALPHA_TRANSPARENT_FLOAT()
+    {
+        return 0.0f;
+    }
 
     enum class PixelType
     {
@@ -1521,12 +1652,17 @@ export namespace sdl
 
     using PixelFormatDetails = SDL_PixelFormatDetails;
 
-    const char* GetPixelFormatName(PixelFormat format)
+    const char *GetPixelFormatName(PixelFormat format)
     {
         return SDL_GetPixelFormatName((SDL_PixelFormat)(format));
     }
 
-    bool GetMasksForPixelFormat(PixelFormat format, int* bpp, Uint32* Rmask, Uint32* Gmask, Uint32* Bmask, Uint32* Amask)
+    bool GetMasksForPixelFormat(PixelFormat format,
+                                int *bpp,
+                                Uint32 *Rmask,
+                                Uint32 *Gmask,
+                                Uint32 *Bmask,
+                                Uint32 *Amask)
     {
         return SDL_GetMasksForPixelFormat((SDL_PixelFormat)(format), bpp, Rmask, Gmask, Bmask, Amask);
     }
@@ -1536,42 +1672,53 @@ export namespace sdl
         return SDL_GetPixelFormatForMasks(bpp, Rmask, Gmask, Bmask, Amask);
     }
 
-    const SDL_PixelFormatDetails* GetPixelFormatDetails(PixelFormat format)
+    const SDL_PixelFormatDetails *GetPixelFormatDetails(PixelFormat format)
     {
         return SDL_GetPixelFormatDetails((SDL_PixelFormat)(format));
     }
 
-    SDL_Palette* CreatePalette(int ncolors)
+    SDL_Palette *CreatePalette(int ncolors)
     {
         return SDL_CreatePalette(ncolors);
     }
 
-    bool SetPaletteColors(SDL_Palette* palette, const SDL_Color* colors, int firstcolor, int ncolors)
+    bool SetPaletteColors(SDL_Palette *palette, const SDL_Color *colors, int firstcolor, int ncolors)
     {
         return SDL_SetPaletteColors(palette, colors, firstcolor, ncolors);
     }
 
-    void DestroyPalette(SDL_Palette* palette)
+    void DestroyPalette(SDL_Palette *palette)
     {
         SDL_DestroyPalette(palette);
     }
 
-    Uint32 MapRGB(const SDL_PixelFormatDetails* format, const SDL_Palette* palette, Uint8 r, Uint8 g, Uint8 b)
+    Uint32 MapRGB(const SDL_PixelFormatDetails *format, const SDL_Palette *palette, Uint8 r, Uint8 g, Uint8 b)
     {
         return SDL_MapRGB(format, palette, r, g, b);
     }
 
-    Uint32 MapRGBA(const SDL_PixelFormatDetails* format, const SDL_Palette* palette, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+    Uint32 MapRGBA(const SDL_PixelFormatDetails *format, const SDL_Palette *palette, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
         return SDL_MapRGBA(format, palette, r, g, b, a);
     }
 
-    void GetRGB(Uint32 pixel, const SDL_PixelFormatDetails* format, const SDL_Palette* palette, Uint8* r, Uint8* g, Uint8* b)
+    void GetRGB(Uint32 pixel,
+                const SDL_PixelFormatDetails *format,
+                const SDL_Palette *palette,
+                Uint8 *r,
+                Uint8 *g,
+                Uint8 *b)
     {
         SDL_GetRGB(pixel, format, palette, r, g, b);
     }
 
-    void GetRGBA(Uint32 pixel, const SDL_PixelFormatDetails* format, const SDL_Palette* palette, Uint8* r, Uint8* g, Uint8* b, Uint8* a)
+    void GetRGBA(Uint32 pixel,
+                 const SDL_PixelFormatDetails *format,
+                 const SDL_Palette *palette,
+                 Uint8 *r,
+                 Uint8 *g,
+                 Uint8 *b,
+                 Uint8 *a)
     {
         SDL_GetRGBA(pixel, format, palette, r, g, b, a);
     }
@@ -1584,52 +1731,52 @@ export namespace sdl
 
     using FRect = SDL_FRect;
 
-    bool HasRectIntersection(const SDL_Rect* A, const SDL_Rect* B)
+    bool HasRectIntersection(const SDL_Rect *A, const SDL_Rect *B)
     {
         return SDL_HasRectIntersection(A, B);
     }
 
-    bool GetRectIntersection(const SDL_Rect* A, const SDL_Rect* B, SDL_Rect* result)
+    bool GetRectIntersection(const SDL_Rect *A, const SDL_Rect *B, SDL_Rect *result)
     {
         return SDL_GetRectIntersection(A, B, result);
     }
 
-    bool GetRectUnion(const SDL_Rect* A, const SDL_Rect* B, SDL_Rect* result)
+    bool GetRectUnion(const SDL_Rect *A, const SDL_Rect *B, SDL_Rect *result)
     {
         return SDL_GetRectUnion(A, B, result);
     }
 
-    bool GetRectEnclosingPoints(const SDL_Point* points, int count, const SDL_Rect* clip, SDL_Rect* result)
+    bool GetRectEnclosingPoints(const SDL_Point *points, int count, const SDL_Rect *clip, SDL_Rect *result)
     {
         return SDL_GetRectEnclosingPoints(points, count, clip, result);
     }
 
-    bool GetRectAndLineIntersection(const SDL_Rect* rect, int* X1, int* Y1, int* X2, int* Y2)
+    bool GetRectAndLineIntersection(const SDL_Rect *rect, int *X1, int *Y1, int *X2, int *Y2)
     {
         return SDL_GetRectAndLineIntersection(rect, X1, Y1, X2, Y2);
     }
 
-    bool HasRectIntersectionFloat(const SDL_FRect* A, const SDL_FRect* B)
+    bool HasRectIntersectionFloat(const SDL_FRect *A, const SDL_FRect *B)
     {
         return SDL_HasRectIntersectionFloat(A, B);
     }
 
-    bool GetRectIntersectionFloat(const SDL_FRect* A, const SDL_FRect* B, SDL_FRect* result)
+    bool GetRectIntersectionFloat(const SDL_FRect *A, const SDL_FRect *B, SDL_FRect *result)
     {
         return SDL_GetRectIntersectionFloat(A, B, result);
     }
 
-    bool GetRectUnionFloat(const SDL_FRect* A, const SDL_FRect* B, SDL_FRect* result)
+    bool GetRectUnionFloat(const SDL_FRect *A, const SDL_FRect *B, SDL_FRect *result)
     {
         return SDL_GetRectUnionFloat(A, B, result);
     }
 
-    bool GetRectEnclosingPointsFloat(const SDL_FPoint* points, int count, const SDL_FRect* clip, SDL_FRect* result)
+    bool GetRectEnclosingPointsFloat(const SDL_FPoint *points, int count, const SDL_FRect *clip, SDL_FRect *result)
     {
         return SDL_GetRectEnclosingPointsFloat(points, count, clip, result);
     }
 
-    bool GetRectAndLineIntersectionFloat(const SDL_FRect* rect, float* X1, float* Y1, float* X2, float* Y2)
+    bool GetRectAndLineIntersectionFloat(const SDL_FRect *rect, float *X1, float *Y1, float *X2, float *Y2)
     {
         return SDL_GetRectAndLineIntersectionFloat(rect, X1, Y1, X2, Y2);
     }
@@ -1661,297 +1808,407 @@ export namespace sdl
 
     using SDL_Surface = SDL_Surface;
 
-    SDL_Surface* CreateSurface(int width, int height, PixelFormat format)
+    SDL_Surface *CreateSurface(int width, int height, PixelFormat format)
     {
         return SDL_CreateSurface(width, height, (SDL_PixelFormat)(format));
     }
 
-    SDL_Surface* CreateSurfaceFrom(int width, int height, PixelFormat format, void* pixels, int pitch)
+    SDL_Surface *CreateSurfaceFrom(int width, int height, PixelFormat format, void *pixels, int pitch)
     {
         return SDL_CreateSurfaceFrom(width, height, (SDL_PixelFormat)(format), pixels, pitch);
     }
 
-    void DestroySurface(SDL_Surface* surface)
+    void DestroySurface(SDL_Surface *surface)
     {
         SDL_DestroySurface(surface);
     }
 
-    SDL_PropertiesID GetSurfaceProperties(SDL_Surface* surface)
+    SDL_PropertiesID GetSurfaceProperties(SDL_Surface *surface)
     {
         return SDL_GetSurfaceProperties(surface);
     }
 
-    constexpr auto PROP_SURFACE_SDR_WHITE_POINT_FLOAT() { return "SDL.surface.SDR_white_point"; }
+    constexpr auto PROP_SURFACE_SDR_WHITE_POINT_FLOAT()
+    {
+        return "SDL.surface.SDR_white_point";
+    }
 
-    constexpr auto PROP_SURFACE_HDR_HEADROOM_FLOAT() { return "SDL.surface.HDR_headroom"; }
+    constexpr auto PROP_SURFACE_HDR_HEADROOM_FLOAT()
+    {
+        return "SDL.surface.HDR_headroom";
+    }
 
-    constexpr auto PROP_SURFACE_TONEMAP_OPERATOR_STRING() { return "SDL.surface.tonemap"; }
+    constexpr auto PROP_SURFACE_TONEMAP_OPERATOR_STRING()
+    {
+        return "SDL.surface.tonemap";
+    }
 
-    constexpr auto PROP_SURFACE_HOTSPOT_X_NUMBER() { return "SDL.surface.hotspot.x"; }
+    constexpr auto PROP_SURFACE_HOTSPOT_X_NUMBER()
+    {
+        return "SDL.surface.hotspot.x";
+    }
 
-    constexpr auto PROP_SURFACE_HOTSPOT_Y_NUMBER() { return "SDL.surface.hotspot.y"; }
+    constexpr auto PROP_SURFACE_HOTSPOT_Y_NUMBER()
+    {
+        return "SDL.surface.hotspot.y";
+    }
 
-    bool SetSurfaceColorspace(SDL_Surface* surface, Colorspace colorspace)
+    bool SetSurfaceColorspace(SDL_Surface *surface, Colorspace colorspace)
     {
         return SDL_SetSurfaceColorspace(surface, (SDL_Colorspace)(colorspace));
     }
 
-    SDL_Colorspace GetSurfaceColorspace(SDL_Surface* surface)
+    SDL_Colorspace GetSurfaceColorspace(SDL_Surface *surface)
     {
         return SDL_GetSurfaceColorspace(surface);
     }
 
-    SDL_Palette* CreateSurfacePalette(SDL_Surface* surface)
+    SDL_Palette *CreateSurfacePalette(SDL_Surface *surface)
     {
         return SDL_CreateSurfacePalette(surface);
     }
 
-    bool SetSurfacePalette(SDL_Surface* surface, SDL_Palette* palette)
+    bool SetSurfacePalette(SDL_Surface *surface, SDL_Palette *palette)
     {
         return SDL_SetSurfacePalette(surface, palette);
     }
 
-    SDL_Palette* GetSurfacePalette(SDL_Surface* surface)
+    SDL_Palette *GetSurfacePalette(SDL_Surface *surface)
     {
         return SDL_GetSurfacePalette(surface);
     }
 
-    bool AddSurfaceAlternateImage(SDL_Surface* surface, SDL_Surface* image)
+    bool AddSurfaceAlternateImage(SDL_Surface *surface, SDL_Surface *image)
     {
         return SDL_AddSurfaceAlternateImage(surface, image);
     }
 
-    bool SurfaceHasAlternateImages(SDL_Surface* surface)
+    bool SurfaceHasAlternateImages(SDL_Surface *surface)
     {
         return SDL_SurfaceHasAlternateImages(surface);
     }
 
-    void RemoveSurfaceAlternateImages(SDL_Surface* surface)
+    void RemoveSurfaceAlternateImages(SDL_Surface *surface)
     {
         SDL_RemoveSurfaceAlternateImages(surface);
     }
 
-    bool LockSurface(SDL_Surface* surface)
+    bool LockSurface(SDL_Surface *surface)
     {
         return SDL_LockSurface(surface);
     }
 
-    void UnlockSurface(SDL_Surface* surface)
+    void UnlockSurface(SDL_Surface *surface)
     {
         SDL_UnlockSurface(surface);
     }
 
-    SDL_Surface* LoadBMP_IO(SDL_IOStream* src, bool closeio)
+    SDL_Surface *LoadBMP_IO(SDL_IOStream *src, bool closeio)
     {
         return SDL_LoadBMP_IO(src, closeio);
     }
 
-    SDL_Surface* LoadBMP(const char* file)
+    SDL_Surface *LoadBMP(const char *file)
     {
         return SDL_LoadBMP(file);
     }
 
-    bool SaveBMP_IO(SDL_Surface* surface, SDL_IOStream* dst, bool closeio)
+    bool SaveBMP_IO(SDL_Surface *surface, SDL_IOStream *dst, bool closeio)
     {
         return SDL_SaveBMP_IO(surface, dst, closeio);
     }
 
-    bool SaveBMP(SDL_Surface* surface, const char* file)
+    bool SaveBMP(SDL_Surface *surface, const char *file)
     {
         return SDL_SaveBMP(surface, file);
     }
 
-    bool SetSurfaceRLE(SDL_Surface* surface, bool enabled)
+    bool SetSurfaceRLE(SDL_Surface *surface, bool enabled)
     {
         return SDL_SetSurfaceRLE(surface, enabled);
     }
 
-    bool SurfaceHasRLE(SDL_Surface* surface)
+    bool SurfaceHasRLE(SDL_Surface *surface)
     {
         return SDL_SurfaceHasRLE(surface);
     }
 
-    bool SetSurfaceColorKey(SDL_Surface* surface, bool enabled, Uint32 key)
+    bool SetSurfaceColorKey(SDL_Surface *surface, bool enabled, Uint32 key)
     {
         return SDL_SetSurfaceColorKey(surface, enabled, key);
     }
 
-    bool SurfaceHasColorKey(SDL_Surface* surface)
+    bool SurfaceHasColorKey(SDL_Surface *surface)
     {
         return SDL_SurfaceHasColorKey(surface);
     }
 
-    bool GetSurfaceColorKey(SDL_Surface* surface, Uint32* key)
+    bool GetSurfaceColorKey(SDL_Surface *surface, Uint32 *key)
     {
         return SDL_GetSurfaceColorKey(surface, key);
     }
 
-    bool SetSurfaceColorMod(SDL_Surface* surface, Uint8 r, Uint8 g, Uint8 b)
+    bool SetSurfaceColorMod(SDL_Surface *surface, Uint8 r, Uint8 g, Uint8 b)
     {
         return SDL_SetSurfaceColorMod(surface, r, g, b);
     }
 
-    bool GetSurfaceColorMod(SDL_Surface* surface, Uint8* r, Uint8* g, Uint8* b)
+    bool GetSurfaceColorMod(SDL_Surface *surface, Uint8 *r, Uint8 *g, Uint8 *b)
     {
         return SDL_GetSurfaceColorMod(surface, r, g, b);
     }
 
-    bool SetSurfaceAlphaMod(SDL_Surface* surface, Uint8 alpha)
+    bool SetSurfaceAlphaMod(SDL_Surface *surface, Uint8 alpha)
     {
         return SDL_SetSurfaceAlphaMod(surface, alpha);
     }
 
-    bool GetSurfaceAlphaMod(SDL_Surface* surface, Uint8* alpha)
+    bool GetSurfaceAlphaMod(SDL_Surface *surface, Uint8 *alpha)
     {
         return SDL_GetSurfaceAlphaMod(surface, alpha);
     }
 
-    bool SetSurfaceBlendMode(SDL_Surface* surface, BlendMode blendMode)
+    bool SetSurfaceBlendMode(SDL_Surface *surface, BlendMode blendMode)
     {
         return SDL_SetSurfaceBlendMode(surface, (SDL_BlendMode)(blendMode));
     }
 
-    bool GetSurfaceBlendMode(SDL_Surface* surface, BlendMode* blendMode)
+    bool GetSurfaceBlendMode(SDL_Surface *surface, BlendMode *blendMode)
     {
-        return SDL_GetSurfaceBlendMode(surface, (SDL_BlendMode*)(blendMode));
+        return SDL_GetSurfaceBlendMode(surface, (SDL_BlendMode *)(blendMode));
     }
 
-    bool SetSurfaceClipRect(SDL_Surface* surface, const SDL_Rect* rect)
+    bool SetSurfaceClipRect(SDL_Surface *surface, const SDL_Rect *rect)
     {
         return SDL_SetSurfaceClipRect(surface, rect);
     }
 
-    bool GetSurfaceClipRect(SDL_Surface* surface, SDL_Rect* rect)
+    bool GetSurfaceClipRect(SDL_Surface *surface, SDL_Rect *rect)
     {
         return SDL_GetSurfaceClipRect(surface, rect);
     }
 
-    bool FlipSurface(SDL_Surface* surface, FlipMode flip)
+    bool FlipSurface(SDL_Surface *surface, FlipMode flip)
     {
         return SDL_FlipSurface(surface, (SDL_FlipMode)(flip));
     }
 
-    SDL_Surface* DuplicateSurface(SDL_Surface* surface)
+    SDL_Surface *DuplicateSurface(SDL_Surface *surface)
     {
         return SDL_DuplicateSurface(surface);
     }
 
-    SDL_Surface* ScaleSurface(SDL_Surface* surface, int width, int height, ScaleMode scaleMode)
+    SDL_Surface *ScaleSurface(SDL_Surface *surface, int width, int height, ScaleMode scaleMode)
     {
         return SDL_ScaleSurface(surface, width, height, (SDL_ScaleMode)(scaleMode));
     }
 
-    SDL_Surface* ConvertSurface(SDL_Surface* surface, PixelFormat format)
+    SDL_Surface *ConvertSurface(SDL_Surface *surface, PixelFormat format)
     {
         return SDL_ConvertSurface(surface, (SDL_PixelFormat)(format));
     }
 
-    SDL_Surface* ConvertSurfaceAndColorspace(SDL_Surface* surface, PixelFormat format, SDL_Palette* palette, Colorspace colorspace, SDL_PropertiesID props)
+    SDL_Surface *ConvertSurfaceAndColorspace(SDL_Surface *surface,
+                                             PixelFormat format,
+                                             SDL_Palette *palette,
+                                             Colorspace colorspace,
+                                             SDL_PropertiesID props)
     {
-        return SDL_ConvertSurfaceAndColorspace(surface, (SDL_PixelFormat)(format), palette, (SDL_Colorspace)(colorspace), props);
+        return SDL_ConvertSurfaceAndColorspace(surface,
+                                               (SDL_PixelFormat)(format),
+                                               palette,
+                                               (SDL_Colorspace)(colorspace),
+                                               props);
     }
 
-    bool ConvertPixels(int width, int height, PixelFormat src_format, const void* src, int src_pitch, PixelFormat dst_format, void* dst, int dst_pitch)
+    bool ConvertPixels(int width,
+                       int height,
+                       PixelFormat src_format,
+                       const void *src,
+                       int src_pitch,
+                       PixelFormat dst_format,
+                       void *dst,
+                       int dst_pitch)
     {
-        return SDL_ConvertPixels(width, height, (SDL_PixelFormat)(src_format), src, src_pitch, (SDL_PixelFormat)(dst_format), dst, dst_pitch);
+        return SDL_ConvertPixels(width,
+                                 height,
+                                 (SDL_PixelFormat)(src_format),
+                                 src,
+                                 src_pitch,
+                                 (SDL_PixelFormat)(dst_format),
+                                 dst,
+                                 dst_pitch);
     }
 
-    bool ConvertPixelsAndColorspace(int width, int height, PixelFormat src_format, Colorspace src_colorspace, SDL_PropertiesID src_properties, const void* src, int src_pitch, PixelFormat dst_format, Colorspace dst_colorspace, SDL_PropertiesID dst_properties, void* dst, int dst_pitch)
+    bool ConvertPixelsAndColorspace(int width,
+                                    int height,
+                                    PixelFormat src_format,
+                                    Colorspace src_colorspace,
+                                    SDL_PropertiesID src_properties,
+                                    const void *src,
+                                    int src_pitch,
+                                    PixelFormat dst_format,
+                                    Colorspace dst_colorspace,
+                                    SDL_PropertiesID dst_properties,
+                                    void *dst,
+                                    int dst_pitch)
     {
-        return SDL_ConvertPixelsAndColorspace(width, height, (SDL_PixelFormat)(src_format), (SDL_Colorspace)(src_colorspace), src_properties, src, src_pitch, (SDL_PixelFormat)(dst_format), (SDL_Colorspace)(dst_colorspace), dst_properties, dst, dst_pitch);
+        return SDL_ConvertPixelsAndColorspace(width,
+                                              height,
+                                              (SDL_PixelFormat)(src_format),
+                                              (SDL_Colorspace)(src_colorspace),
+                                              src_properties,
+                                              src,
+                                              src_pitch,
+                                              (SDL_PixelFormat)(dst_format),
+                                              (SDL_Colorspace)(dst_colorspace),
+                                              dst_properties,
+                                              dst,
+                                              dst_pitch);
     }
 
-    bool PremultiplyAlpha(int width, int height, PixelFormat src_format, const void* src, int src_pitch, PixelFormat dst_format, void* dst, int dst_pitch, bool linear)
+    bool PremultiplyAlpha(int width,
+                          int height,
+                          PixelFormat src_format,
+                          const void *src,
+                          int src_pitch,
+                          PixelFormat dst_format,
+                          void *dst,
+                          int dst_pitch,
+                          bool linear)
     {
-        return SDL_PremultiplyAlpha(width, height, (SDL_PixelFormat)(src_format), src, src_pitch, (SDL_PixelFormat)(dst_format), dst, dst_pitch, linear);
+        return SDL_PremultiplyAlpha(width,
+                                    height,
+                                    (SDL_PixelFormat)(src_format),
+                                    src,
+                                    src_pitch,
+                                    (SDL_PixelFormat)(dst_format),
+                                    dst,
+                                    dst_pitch,
+                                    linear);
     }
 
-    bool PremultiplySurfaceAlpha(SDL_Surface* surface, bool linear)
+    bool PremultiplySurfaceAlpha(SDL_Surface *surface, bool linear)
     {
         return SDL_PremultiplySurfaceAlpha(surface, linear);
     }
 
-    bool ClearSurface(SDL_Surface* surface, float r, float g, float b, float a)
+    bool ClearSurface(SDL_Surface *surface, float r, float g, float b, float a)
     {
         return SDL_ClearSurface(surface, r, g, b, a);
     }
 
-    bool FillSurfaceRect(SDL_Surface* dst, const SDL_Rect* rect, Uint32 color)
+    bool FillSurfaceRect(SDL_Surface *dst, const SDL_Rect *rect, Uint32 color)
     {
         return SDL_FillSurfaceRect(dst, rect, color);
     }
 
-    bool FillSurfaceRects(SDL_Surface* dst, const SDL_Rect* rects, int count, Uint32 color)
+    bool FillSurfaceRects(SDL_Surface *dst, const SDL_Rect *rects, int count, Uint32 color)
     {
         return SDL_FillSurfaceRects(dst, rects, count, color);
     }
 
-    bool BlitSurface(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect)
+    bool BlitSurface(SDL_Surface *src, const SDL_Rect *srcrect, SDL_Surface *dst, const SDL_Rect *dstrect)
     {
         return SDL_BlitSurface(src, srcrect, dst, dstrect);
     }
 
-    bool BlitSurfaceUnchecked(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect)
+    bool BlitSurfaceUnchecked(SDL_Surface *src, const SDL_Rect *srcrect, SDL_Surface *dst, const SDL_Rect *dstrect)
     {
         return SDL_BlitSurfaceUnchecked(src, srcrect, dst, dstrect);
     }
 
-    bool BlitSurfaceScaled(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect, ScaleMode scaleMode)
+    bool BlitSurfaceScaled(SDL_Surface *src,
+                           const SDL_Rect *srcrect,
+                           SDL_Surface *dst,
+                           const SDL_Rect *dstrect,
+                           ScaleMode scaleMode)
     {
         return SDL_BlitSurfaceScaled(src, srcrect, dst, dstrect, (SDL_ScaleMode)(scaleMode));
     }
 
-    bool BlitSurfaceUncheckedScaled(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect, ScaleMode scaleMode)
+    bool BlitSurfaceUncheckedScaled(SDL_Surface *src,
+                                    const SDL_Rect *srcrect,
+                                    SDL_Surface *dst,
+                                    const SDL_Rect *dstrect,
+                                    ScaleMode scaleMode)
     {
         return SDL_BlitSurfaceUncheckedScaled(src, srcrect, dst, dstrect, (SDL_ScaleMode)(scaleMode));
     }
 
-    bool StretchSurface(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect, ScaleMode scaleMode)
+    bool StretchSurface(SDL_Surface *src,
+                        const SDL_Rect *srcrect,
+                        SDL_Surface *dst,
+                        const SDL_Rect *dstrect,
+                        ScaleMode scaleMode)
     {
         return SDL_StretchSurface(src, srcrect, dst, dstrect, (SDL_ScaleMode)(scaleMode));
     }
 
-    bool BlitSurfaceTiled(SDL_Surface* src, const SDL_Rect* srcrect, SDL_Surface* dst, const SDL_Rect* dstrect)
+    bool BlitSurfaceTiled(SDL_Surface *src, const SDL_Rect *srcrect, SDL_Surface *dst, const SDL_Rect *dstrect)
     {
         return SDL_BlitSurfaceTiled(src, srcrect, dst, dstrect);
     }
 
-    bool BlitSurfaceTiledWithScale(SDL_Surface* src, const SDL_Rect* srcrect, float scale, ScaleMode scaleMode, SDL_Surface* dst, const SDL_Rect* dstrect)
+    bool BlitSurfaceTiledWithScale(SDL_Surface *src,
+                                   const SDL_Rect *srcrect,
+                                   float scale,
+                                   ScaleMode scaleMode,
+                                   SDL_Surface *dst,
+                                   const SDL_Rect *dstrect)
     {
         return SDL_BlitSurfaceTiledWithScale(src, srcrect, scale, (SDL_ScaleMode)(scaleMode), dst, dstrect);
     }
 
-    bool BlitSurface9Grid(SDL_Surface* src, const SDL_Rect* srcrect, int left_width, int right_width, int top_height, int bottom_height, float scale, ScaleMode scaleMode, SDL_Surface* dst, const SDL_Rect* dstrect)
+    bool BlitSurface9Grid(SDL_Surface *src,
+                          const SDL_Rect *srcrect,
+                          int left_width,
+                          int right_width,
+                          int top_height,
+                          int bottom_height,
+                          float scale,
+                          ScaleMode scaleMode,
+                          SDL_Surface *dst,
+                          const SDL_Rect *dstrect)
     {
-        return SDL_BlitSurface9Grid(src, srcrect, left_width, right_width, top_height, bottom_height, scale, (SDL_ScaleMode)(scaleMode), dst, dstrect);
+        return SDL_BlitSurface9Grid(src,
+                                    srcrect,
+                                    left_width,
+                                    right_width,
+                                    top_height,
+                                    bottom_height,
+                                    scale,
+                                    (SDL_ScaleMode)(scaleMode),
+                                    dst,
+                                    dstrect);
     }
 
-    Uint32 MapSurfaceRGB(SDL_Surface* surface, Uint8 r, Uint8 g, Uint8 b)
+    Uint32 MapSurfaceRGB(SDL_Surface *surface, Uint8 r, Uint8 g, Uint8 b)
     {
         return SDL_MapSurfaceRGB(surface, r, g, b);
     }
 
-    Uint32 MapSurfaceRGBA(SDL_Surface* surface, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+    Uint32 MapSurfaceRGBA(SDL_Surface *surface, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
         return SDL_MapSurfaceRGBA(surface, r, g, b, a);
     }
 
-    bool ReadSurfacePixel(SDL_Surface* surface, int x, int y, Uint8* r, Uint8* g, Uint8* b, Uint8* a)
+    bool ReadSurfacePixel(SDL_Surface *surface, int x, int y, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a)
     {
         return SDL_ReadSurfacePixel(surface, x, y, r, g, b, a);
     }
 
-    bool ReadSurfacePixelFloat(SDL_Surface* surface, int x, int y, float* r, float* g, float* b, float* a)
+    bool ReadSurfacePixelFloat(SDL_Surface *surface, int x, int y, float *r, float *g, float *b, float *a)
     {
         return SDL_ReadSurfacePixelFloat(surface, x, y, r, g, b, a);
     }
 
-    bool WriteSurfacePixel(SDL_Surface* surface, int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+    bool WriteSurfacePixel(SDL_Surface *surface, int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
         return SDL_WriteSurfacePixel(surface, x, y, r, g, b, a);
     }
 
-    bool WriteSurfacePixelFloat(SDL_Surface* surface, int x, int y, float r, float g, float b, float a)
+    bool WriteSurfacePixelFloat(SDL_Surface *surface, int x, int y, float r, float g, float b, float a)
     {
         return SDL_WriteSurfacePixelFloat(surface, x, y, r, g, b, a);
     }
@@ -1970,27 +2227,27 @@ export namespace sdl
     };
     REGULAR_ENUM(CameraPosition);
 
-    int GetNumCameraDrivers(void )
+    int GetNumCameraDrivers(void)
     {
         return SDL_GetNumCameraDrivers();
     }
 
-    const char* GetCameraDriver(int index)
+    const char *GetCameraDriver(int index)
     {
         return SDL_GetCameraDriver(index);
     }
 
-    const char* GetCurrentCameraDriver(void )
+    const char *GetCurrentCameraDriver(void)
     {
         return SDL_GetCurrentCameraDriver();
     }
 
-    SDL_CameraID* GetCameras(int* count)
+    SDL_CameraID *GetCameras(int *count)
     {
         return SDL_GetCameras(count);
     }
 
-    const char* GetCameraName(SDL_CameraID instance_id)
+    const char *GetCameraName(SDL_CameraID instance_id)
     {
         return SDL_GetCameraName(instance_id);
     }
@@ -2000,184 +2257,191 @@ export namespace sdl
         return SDL_GetCameraPosition(instance_id);
     }
 
-    SDL_Camera* OpenCamera(SDL_CameraID instance_id, const SDL_CameraSpec* spec)
+    SDL_Camera *OpenCamera(SDL_CameraID instance_id, const SDL_CameraSpec *spec)
     {
         return SDL_OpenCamera(instance_id, spec);
     }
 
-    int GetCameraPermissionState(SDL_Camera* camera)
+    int GetCameraPermissionState(SDL_Camera *camera)
     {
         return SDL_GetCameraPermissionState(camera);
     }
 
-    SDL_CameraID GetCameraID(SDL_Camera* camera)
+    SDL_CameraID GetCameraID(SDL_Camera *camera)
     {
         return SDL_GetCameraID(camera);
     }
 
-    SDL_PropertiesID GetCameraProperties(SDL_Camera* camera)
+    SDL_PropertiesID GetCameraProperties(SDL_Camera *camera)
     {
         return SDL_GetCameraProperties(camera);
     }
 
-    bool GetCameraFormat(SDL_Camera* camera, SDL_CameraSpec* spec)
+    bool GetCameraFormat(SDL_Camera *camera, SDL_CameraSpec *spec)
     {
         return SDL_GetCameraFormat(camera, spec);
     }
 
-    SDL_Surface* AcquireCameraFrame(SDL_Camera* camera, Uint64* timestampNS)
+    SDL_Surface *AcquireCameraFrame(SDL_Camera *camera, Uint64 *timestampNS)
     {
         return SDL_AcquireCameraFrame(camera, timestampNS);
     }
 
-    void ReleaseCameraFrame(SDL_Camera* camera, SDL_Surface* frame)
+    void ReleaseCameraFrame(SDL_Camera *camera, SDL_Surface *frame)
     {
         SDL_ReleaseCameraFrame(camera, frame);
     }
 
-    void CloseCamera(SDL_Camera* camera)
+    void CloseCamera(SDL_Camera *camera)
     {
         SDL_CloseCamera(camera);
     }
 
-    bool SetClipboardText(const char* text)
+    bool SetClipboardText(const char *text)
     {
         return SDL_SetClipboardText(text);
     }
 
-    char* GetClipboardText(void )
+    char *GetClipboardText(void)
     {
         return SDL_GetClipboardText();
     }
 
-    bool HasClipboardText(void )
+    bool HasClipboardText(void)
     {
         return SDL_HasClipboardText();
     }
 
-    bool SetPrimarySelectionText(const char* text)
+    bool SetPrimarySelectionText(const char *text)
     {
         return SDL_SetPrimarySelectionText(text);
     }
 
-    char* GetPrimarySelectionText(void )
+    char *GetPrimarySelectionText(void)
     {
         return SDL_GetPrimarySelectionText();
     }
 
-    bool HasPrimarySelectionText(void )
+    bool HasPrimarySelectionText(void)
     {
         return SDL_HasPrimarySelectionText();
     }
 
-    bool SetClipboardData(SDL_ClipboardDataCallback callback, SDL_ClipboardCleanupCallback cleanup, void* userdata, const char** mime_types, size_t num_mime_types)
+    bool SetClipboardData(SDL_ClipboardDataCallback callback,
+                          SDL_ClipboardCleanupCallback cleanup,
+                          void *userdata,
+                          const char **mime_types,
+                          size_t num_mime_types)
     {
         return SDL_SetClipboardData(callback, cleanup, userdata, mime_types, num_mime_types);
     }
 
-    bool ClearClipboardData(void )
+    bool ClearClipboardData(void)
     {
         return SDL_ClearClipboardData();
     }
 
-    void* GetClipboardData(const char* mime_type, size_t* size)
+    void *GetClipboardData(const char *mime_type, size_t *size)
     {
         return SDL_GetClipboardData(mime_type, size);
     }
 
-    bool HasClipboardData(const char* mime_type)
+    bool HasClipboardData(const char *mime_type)
     {
         return SDL_HasClipboardData(mime_type);
     }
 
-    constexpr auto CACHELINE_SIZE() { return 128; }
+    constexpr auto CACHELINE_SIZE()
+    {
+        return 128;
+    }
 
-    int GetNumLogicalCPUCores(void )
+    int GetNumLogicalCPUCores(void)
     {
         return SDL_GetNumLogicalCPUCores();
     }
 
-    int GetCPUCacheLineSize(void )
+    int GetCPUCacheLineSize(void)
     {
         return SDL_GetCPUCacheLineSize();
     }
 
-    bool HasAltiVec(void )
+    bool HasAltiVec(void)
     {
         return SDL_HasAltiVec();
     }
 
-    bool HasMMX(void )
+    bool HasMMX(void)
     {
         return SDL_HasMMX();
     }
 
-    bool HasSSE(void )
+    bool HasSSE(void)
     {
         return SDL_HasSSE();
     }
 
-    bool HasSSE2(void )
+    bool HasSSE2(void)
     {
         return SDL_HasSSE2();
     }
 
-    bool HasSSE3(void )
+    bool HasSSE3(void)
     {
         return SDL_HasSSE3();
     }
 
-    bool HasSSE41(void )
+    bool HasSSE41(void)
     {
         return SDL_HasSSE41();
     }
 
-    bool HasSSE42(void )
+    bool HasSSE42(void)
     {
         return SDL_HasSSE42();
     }
 
-    bool HasAVX(void )
+    bool HasAVX(void)
     {
         return SDL_HasAVX();
     }
 
-    bool HasAVX2(void )
+    bool HasAVX2(void)
     {
         return SDL_HasAVX2();
     }
 
-    bool HasAVX512F(void )
+    bool HasAVX512F(void)
     {
         return SDL_HasAVX512F();
     }
 
-    bool HasARMSIMD(void )
+    bool HasARMSIMD(void)
     {
         return SDL_HasARMSIMD();
     }
 
-    bool HasNEON(void )
+    bool HasNEON(void)
     {
         return SDL_HasNEON();
     }
 
-    bool HasLSX(void )
+    bool HasLSX(void)
     {
         return SDL_HasLSX();
     }
 
-    bool HasLASX(void )
+    bool HasLASX(void)
     {
         return SDL_HasLASX();
     }
 
-    int GetSystemRAM(void )
+    int GetSystemRAM(void)
     {
         return SDL_GetSystemRAM();
     }
 
-    size_t GetSIMDAlignment(void )
+    size_t GetSIMDAlignment(void)
     {
         return SDL_GetSIMDAlignment();
     }
@@ -2186,7 +2450,10 @@ export namespace sdl
 
     using WindowID = Uint32;
 
-    constexpr auto PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER() { return "SDL.video.wayland.wl_display"; }
+    constexpr auto PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER()
+    {
+        return "SDL.video.wayland.wl_display";
+    }
 
     enum class SystemTheme
     {
@@ -2242,13 +2509,25 @@ export namespace sdl
     };
     BITFLAG_ENUM(WindowFlags);
 
-    constexpr auto WINDOWPOS_UNDEFINED_MASK() { return 0x1FFF0000u; }
+    constexpr auto WINDOWPOS_UNDEFINED_MASK()
+    {
+        return 0x1FFF0000u;
+    }
 
-    constexpr auto WINDOWPOS_UNDEFINED() { return SDL_WINDOWPOS_UNDEFINED_DISPLAY(0); }
+    constexpr auto WINDOWPOS_UNDEFINED()
+    {
+        return SDL_WINDOWPOS_UNDEFINED_DISPLAY(0);
+    }
 
-    constexpr auto WINDOWPOS_CENTERED_MASK() { return 0x2FFF0000u; }
+    constexpr auto WINDOWPOS_CENTERED_MASK()
+    {
+        return 0x2FFF0000u;
+    }
 
-    constexpr auto WINDOWPOS_CENTERED() { return SDL_WINDOWPOS_CENTERED_DISPLAY(0); }
+    constexpr auto WINDOWPOS_CENTERED()
+    {
+        return SDL_WINDOWPOS_CENTERED_DISPLAY(0);
+    }
 
     enum class FlashOperation
     {
@@ -2334,32 +2613,32 @@ export namespace sdl
     };
     BITFLAG_ENUM(GLContextResetNotification);
 
-    int GetNumVideoDrivers(void )
+    int GetNumVideoDrivers(void)
     {
         return SDL_GetNumVideoDrivers();
     }
 
-    const char* GetVideoDriver(int index)
+    const char *GetVideoDriver(int index)
     {
         return SDL_GetVideoDriver(index);
     }
 
-    const char* GetCurrentVideoDriver(void )
+    const char *GetCurrentVideoDriver(void)
     {
         return SDL_GetCurrentVideoDriver();
     }
 
-    SDL_SystemTheme GetSystemTheme(void )
+    SDL_SystemTheme GetSystemTheme(void)
     {
         return SDL_GetSystemTheme();
     }
 
-    SDL_DisplayID* GetDisplays(int* count)
+    SDL_DisplayID *GetDisplays(int *count)
     {
         return SDL_GetDisplays(count);
     }
 
-    SDL_DisplayID GetPrimaryDisplay(void )
+    SDL_DisplayID GetPrimaryDisplay(void)
     {
         return SDL_GetPrimaryDisplay();
     }
@@ -2369,21 +2648,27 @@ export namespace sdl
         return SDL_GetDisplayProperties(displayID);
     }
 
-    constexpr auto PROP_DISPLAY_HDR_ENABLED_BOOLEAN() { return "SDL.display.HDR_enabled"; }
+    constexpr auto PROP_DISPLAY_HDR_ENABLED_BOOLEAN()
+    {
+        return "SDL.display.HDR_enabled";
+    }
 
-    constexpr auto PROP_DISPLAY_KMSDRM_PANEL_ORIENTATION_NUMBER() { return "SDL.display.KMSDRM.panel_orientation"; }
+    constexpr auto PROP_DISPLAY_KMSDRM_PANEL_ORIENTATION_NUMBER()
+    {
+        return "SDL.display.KMSDRM.panel_orientation";
+    }
 
-    const char* GetDisplayName(SDL_DisplayID displayID)
+    const char *GetDisplayName(SDL_DisplayID displayID)
     {
         return SDL_GetDisplayName(displayID);
     }
 
-    bool GetDisplayBounds(SDL_DisplayID displayID, SDL_Rect* rect)
+    bool GetDisplayBounds(SDL_DisplayID displayID, SDL_Rect *rect)
     {
         return SDL_GetDisplayBounds(displayID, rect);
     }
 
-    bool GetDisplayUsableBounds(SDL_DisplayID displayID, SDL_Rect* rect)
+    bool GetDisplayUsableBounds(SDL_DisplayID displayID, SDL_Rect *rect)
     {
         return SDL_GetDisplayUsableBounds(displayID, rect);
     }
@@ -2403,481 +2688,702 @@ export namespace sdl
         return SDL_GetDisplayContentScale(displayID);
     }
 
-    bool GetClosestFullscreenDisplayMode(SDL_DisplayID displayID, int w, int h, float refresh_rate, bool include_high_density_modes, SDL_DisplayMode* closest)
+    bool GetClosestFullscreenDisplayMode(SDL_DisplayID displayID,
+                                         int w,
+                                         int h,
+                                         float refresh_rate,
+                                         bool include_high_density_modes,
+                                         SDL_DisplayMode *closest)
     {
         return SDL_GetClosestFullscreenDisplayMode(displayID, w, h, refresh_rate, include_high_density_modes, closest);
     }
 
-    const SDL_DisplayMode* GetDesktopDisplayMode(SDL_DisplayID displayID)
+    const SDL_DisplayMode *GetDesktopDisplayMode(SDL_DisplayID displayID)
     {
         return SDL_GetDesktopDisplayMode(displayID);
     }
 
-    const SDL_DisplayMode* GetCurrentDisplayMode(SDL_DisplayID displayID)
+    const SDL_DisplayMode *GetCurrentDisplayMode(SDL_DisplayID displayID)
     {
         return SDL_GetCurrentDisplayMode(displayID);
     }
 
-    SDL_DisplayID GetDisplayForPoint(const SDL_Point* point)
+    SDL_DisplayID GetDisplayForPoint(const SDL_Point *point)
     {
         return SDL_GetDisplayForPoint(point);
     }
 
-    SDL_DisplayID GetDisplayForRect(const SDL_Rect* rect)
+    SDL_DisplayID GetDisplayForRect(const SDL_Rect *rect)
     {
         return SDL_GetDisplayForRect(rect);
     }
 
-    SDL_DisplayID GetDisplayForWindow(SDL_Window* window)
+    SDL_DisplayID GetDisplayForWindow(SDL_Window *window)
     {
         return SDL_GetDisplayForWindow(window);
     }
 
-    float GetWindowPixelDensity(SDL_Window* window)
+    float GetWindowPixelDensity(SDL_Window *window)
     {
         return SDL_GetWindowPixelDensity(window);
     }
 
-    float GetWindowDisplayScale(SDL_Window* window)
+    float GetWindowDisplayScale(SDL_Window *window)
     {
         return SDL_GetWindowDisplayScale(window);
     }
 
-    bool SetWindowFullscreenMode(SDL_Window* window, const SDL_DisplayMode* mode)
+    bool SetWindowFullscreenMode(SDL_Window *window, const SDL_DisplayMode *mode)
     {
         return SDL_SetWindowFullscreenMode(window, mode);
     }
 
-    const SDL_DisplayMode* GetWindowFullscreenMode(SDL_Window* window)
+    const SDL_DisplayMode *GetWindowFullscreenMode(SDL_Window *window)
     {
         return SDL_GetWindowFullscreenMode(window);
     }
 
-    void* GetWindowICCProfile(SDL_Window* window, size_t* size)
+    void *GetWindowICCProfile(SDL_Window *window, size_t *size)
     {
         return SDL_GetWindowICCProfile(window, size);
     }
 
-    SDL_PixelFormat GetWindowPixelFormat(SDL_Window* window)
+    SDL_PixelFormat GetWindowPixelFormat(SDL_Window *window)
     {
         return SDL_GetWindowPixelFormat(window);
     }
 
-    SDL_Window* CreateWindow(const char* title, int w, int h, WindowFlags flags)
+    SDL_Window *CreateWindow(const char *title, int w, int h, WindowFlags flags)
     {
         return SDL_CreateWindow(title, w, h, (SDL_WindowFlags)(flags));
     }
 
-    SDL_Window* CreatePopupWindow(SDL_Window* parent, int offset_x, int offset_y, int w, int h, WindowFlags flags)
+    SDL_Window *CreatePopupWindow(SDL_Window *parent, int offset_x, int offset_y, int w, int h, WindowFlags flags)
     {
         return SDL_CreatePopupWindow(parent, offset_x, offset_y, w, h, (SDL_WindowFlags)(flags));
     }
 
-    SDL_Window* CreateWindowWithProperties(SDL_PropertiesID props)
+    SDL_Window *CreateWindowWithProperties(SDL_PropertiesID props)
     {
         return SDL_CreateWindowWithProperties(props);
     }
 
-    constexpr auto PROP_WINDOW_CREATE_ALWAYS_ON_TOP_BOOLEAN() { return "SDL.window.create.always_on_top"; }
+    constexpr auto PROP_WINDOW_CREATE_ALWAYS_ON_TOP_BOOLEAN()
+    {
+        return "SDL.window.create.always_on_top";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN() { return "SDL.window.create.borderless"; }
+    constexpr auto PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN()
+    {
+        return "SDL.window.create.borderless";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN() { return "SDL.window.create.constrain_popup"; }
+    constexpr auto PROP_WINDOW_CREATE_CONSTRAIN_POPUP_BOOLEAN()
+    {
+        return "SDL.window.create.constrain_popup";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN() { return "SDL.window.create.focusable"; }
+    constexpr auto PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN()
+    {
+        return "SDL.window.create.focusable";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN() { return "SDL.window.create.external_graphics_context"; }
+    constexpr auto PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN()
+    {
+        return "SDL.window.create.external_graphics_context";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_FLAGS_NUMBER() { return "SDL.window.create.flags"; }
+    constexpr auto PROP_WINDOW_CREATE_FLAGS_NUMBER()
+    {
+        return "SDL.window.create.flags";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN() { return "SDL.window.create.fullscreen"; }
+    constexpr auto PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN()
+    {
+        return "SDL.window.create.fullscreen";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_HEIGHT_NUMBER() { return "SDL.window.create.height"; }
+    constexpr auto PROP_WINDOW_CREATE_HEIGHT_NUMBER()
+    {
+        return "SDL.window.create.height";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_HIDDEN_BOOLEAN() { return "SDL.window.create.hidden"; }
+    constexpr auto PROP_WINDOW_CREATE_HIDDEN_BOOLEAN()
+    {
+        return "SDL.window.create.hidden";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN() { return "SDL.window.create.high_pixel_density"; }
+    constexpr auto PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN()
+    {
+        return "SDL.window.create.high_pixel_density";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_MAXIMIZED_BOOLEAN() { return "SDL.window.create.maximized"; }
+    constexpr auto PROP_WINDOW_CREATE_MAXIMIZED_BOOLEAN()
+    {
+        return "SDL.window.create.maximized";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_MENU_BOOLEAN() { return "SDL.window.create.menu"; }
+    constexpr auto PROP_WINDOW_CREATE_MENU_BOOLEAN()
+    {
+        return "SDL.window.create.menu";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_METAL_BOOLEAN() { return "SDL.window.create.metal"; }
+    constexpr auto PROP_WINDOW_CREATE_METAL_BOOLEAN()
+    {
+        return "SDL.window.create.metal";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_MINIMIZED_BOOLEAN() { return "SDL.window.create.minimized"; }
+    constexpr auto PROP_WINDOW_CREATE_MINIMIZED_BOOLEAN()
+    {
+        return "SDL.window.create.minimized";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_MODAL_BOOLEAN() { return "SDL.window.create.modal"; }
+    constexpr auto PROP_WINDOW_CREATE_MODAL_BOOLEAN()
+    {
+        return "SDL.window.create.modal";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_MOUSE_GRABBED_BOOLEAN() { return "SDL.window.create.mouse_grabbed"; }
+    constexpr auto PROP_WINDOW_CREATE_MOUSE_GRABBED_BOOLEAN()
+    {
+        return "SDL.window.create.mouse_grabbed";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_OPENGL_BOOLEAN() { return "SDL.window.create.opengl"; }
+    constexpr auto PROP_WINDOW_CREATE_OPENGL_BOOLEAN()
+    {
+        return "SDL.window.create.opengl";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_PARENT_POINTER() { return "SDL.window.create.parent"; }
+    constexpr auto PROP_WINDOW_CREATE_PARENT_POINTER()
+    {
+        return "SDL.window.create.parent";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN() { return "SDL.window.create.resizable"; }
+    constexpr auto PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN()
+    {
+        return "SDL.window.create.resizable";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_TITLE_STRING() { return "SDL.window.create.title"; }
+    constexpr auto PROP_WINDOW_CREATE_TITLE_STRING()
+    {
+        return "SDL.window.create.title";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN() { return "SDL.window.create.transparent"; }
+    constexpr auto PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN()
+    {
+        return "SDL.window.create.transparent";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_TOOLTIP_BOOLEAN() { return "SDL.window.create.tooltip"; }
+    constexpr auto PROP_WINDOW_CREATE_TOOLTIP_BOOLEAN()
+    {
+        return "SDL.window.create.tooltip";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_UTILITY_BOOLEAN() { return "SDL.window.create.utility"; }
+    constexpr auto PROP_WINDOW_CREATE_UTILITY_BOOLEAN()
+    {
+        return "SDL.window.create.utility";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_VULKAN_BOOLEAN() { return "SDL.window.create.vulkan"; }
+    constexpr auto PROP_WINDOW_CREATE_VULKAN_BOOLEAN()
+    {
+        return "SDL.window.create.vulkan";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WIDTH_NUMBER() { return "SDL.window.create.width"; }
+    constexpr auto PROP_WINDOW_CREATE_WIDTH_NUMBER()
+    {
+        return "SDL.window.create.width";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_X_NUMBER() { return "SDL.window.create.x"; }
+    constexpr auto PROP_WINDOW_CREATE_X_NUMBER()
+    {
+        return "SDL.window.create.x";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_Y_NUMBER() { return "SDL.window.create.y"; }
+    constexpr auto PROP_WINDOW_CREATE_Y_NUMBER()
+    {
+        return "SDL.window.create.y";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER() { return "SDL.window.create.cocoa.window"; }
+    constexpr auto PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER()
+    {
+        return "SDL.window.create.cocoa.window";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_COCOA_VIEW_POINTER() { return "SDL.window.create.cocoa.view"; }
+    constexpr auto PROP_WINDOW_CREATE_COCOA_VIEW_POINTER()
+    {
+        return "SDL.window.create.cocoa.view";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WAYLAND_SURFACE_ROLE_CUSTOM_BOOLEAN() { return "SDL.window.create.wayland.surface_role_custom"; }
+    constexpr auto PROP_WINDOW_CREATE_WAYLAND_SURFACE_ROLE_CUSTOM_BOOLEAN()
+    {
+        return "SDL.window.create.wayland.surface_role_custom";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WAYLAND_CREATE_EGL_WINDOW_BOOLEAN() { return "SDL.window.create.wayland.create_egl_window"; }
+    constexpr auto PROP_WINDOW_CREATE_WAYLAND_CREATE_EGL_WINDOW_BOOLEAN()
+    {
+        return "SDL.window.create.wayland.create_egl_window";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER() { return "SDL.window.create.wayland.wl_surface"; }
+    constexpr auto PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER()
+    {
+        return "SDL.window.create.wayland.wl_surface";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WIN32_HWND_POINTER() { return "SDL.window.create.win32.hwnd"; }
+    constexpr auto PROP_WINDOW_CREATE_WIN32_HWND_POINTER()
+    {
+        return "SDL.window.create.win32.hwnd";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER() { return "SDL.window.create.win32.pixel_format_hwnd"; }
+    constexpr auto PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER()
+    {
+        return "SDL.window.create.win32.pixel_format_hwnd";
+    }
 
-    constexpr auto PROP_WINDOW_CREATE_X11_WINDOW_NUMBER() { return "SDL.window.create.x11.window"; }
+    constexpr auto PROP_WINDOW_CREATE_X11_WINDOW_NUMBER()
+    {
+        return "SDL.window.create.x11.window";
+    }
 
-    SDL_WindowID GetWindowID(SDL_Window* window)
+    SDL_WindowID GetWindowID(SDL_Window *window)
     {
         return SDL_GetWindowID(window);
     }
 
-    SDL_Window* GetWindowFromID(SDL_WindowID id)
+    SDL_Window *GetWindowFromID(SDL_WindowID id)
     {
         return SDL_GetWindowFromID(id);
     }
 
-    SDL_Window* GetWindowParent(SDL_Window* window)
+    SDL_Window *GetWindowParent(SDL_Window *window)
     {
         return SDL_GetWindowParent(window);
     }
 
-    SDL_PropertiesID GetWindowProperties(SDL_Window* window)
+    SDL_PropertiesID GetWindowProperties(SDL_Window *window)
     {
         return SDL_GetWindowProperties(window);
     }
 
-    constexpr auto PROP_WINDOW_SHAPE_POINTER() { return "SDL.window.shape"; }
+    constexpr auto PROP_WINDOW_SHAPE_POINTER()
+    {
+        return "SDL.window.shape";
+    }
 
-    constexpr auto PROP_WINDOW_HDR_ENABLED_BOOLEAN() { return "SDL.window.HDR_enabled"; }
+    constexpr auto PROP_WINDOW_HDR_ENABLED_BOOLEAN()
+    {
+        return "SDL.window.HDR_enabled";
+    }
 
-    constexpr auto PROP_WINDOW_SDR_WHITE_LEVEL_FLOAT() { return "SDL.window.SDR_white_level"; }
+    constexpr auto PROP_WINDOW_SDR_WHITE_LEVEL_FLOAT()
+    {
+        return "SDL.window.SDR_white_level";
+    }
 
-    constexpr auto PROP_WINDOW_HDR_HEADROOM_FLOAT() { return "SDL.window.HDR_headroom"; }
+    constexpr auto PROP_WINDOW_HDR_HEADROOM_FLOAT()
+    {
+        return "SDL.window.HDR_headroom";
+    }
 
-    constexpr auto PROP_WINDOW_ANDROID_WINDOW_POINTER() { return "SDL.window.android.window"; }
+    constexpr auto PROP_WINDOW_ANDROID_WINDOW_POINTER()
+    {
+        return "SDL.window.android.window";
+    }
 
-    constexpr auto PROP_WINDOW_ANDROID_SURFACE_POINTER() { return "SDL.window.android.surface"; }
+    constexpr auto PROP_WINDOW_ANDROID_SURFACE_POINTER()
+    {
+        return "SDL.window.android.surface";
+    }
 
-    constexpr auto PROP_WINDOW_UIKIT_WINDOW_POINTER() { return "SDL.window.uikit.window"; }
+    constexpr auto PROP_WINDOW_UIKIT_WINDOW_POINTER()
+    {
+        return "SDL.window.uikit.window";
+    }
 
-    constexpr auto PROP_WINDOW_UIKIT_METAL_VIEW_TAG_NUMBER() { return "SDL.window.uikit.metal_view_tag"; }
+    constexpr auto PROP_WINDOW_UIKIT_METAL_VIEW_TAG_NUMBER()
+    {
+        return "SDL.window.uikit.metal_view_tag";
+    }
 
-    constexpr auto PROP_WINDOW_UIKIT_OPENGL_FRAMEBUFFER_NUMBER() { return "SDL.window.uikit.opengl.framebuffer"; }
+    constexpr auto PROP_WINDOW_UIKIT_OPENGL_FRAMEBUFFER_NUMBER()
+    {
+        return "SDL.window.uikit.opengl.framebuffer";
+    }
 
-    constexpr auto PROP_WINDOW_UIKIT_OPENGL_RENDERBUFFER_NUMBER() { return "SDL.window.uikit.opengl.renderbuffer"; }
+    constexpr auto PROP_WINDOW_UIKIT_OPENGL_RENDERBUFFER_NUMBER()
+    {
+        return "SDL.window.uikit.opengl.renderbuffer";
+    }
 
-    constexpr auto PROP_WINDOW_UIKIT_OPENGL_RESOLVE_FRAMEBUFFER_NUMBER() { return "SDL.window.uikit.opengl.resolve_framebuffer"; }
+    constexpr auto PROP_WINDOW_UIKIT_OPENGL_RESOLVE_FRAMEBUFFER_NUMBER()
+    {
+        return "SDL.window.uikit.opengl.resolve_framebuffer";
+    }
 
-    constexpr auto PROP_WINDOW_KMSDRM_DEVICE_INDEX_NUMBER() { return "SDL.window.kmsdrm.dev_index"; }
+    constexpr auto PROP_WINDOW_KMSDRM_DEVICE_INDEX_NUMBER()
+    {
+        return "SDL.window.kmsdrm.dev_index";
+    }
 
-    constexpr auto PROP_WINDOW_KMSDRM_DRM_FD_NUMBER() { return "SDL.window.kmsdrm.drm_fd"; }
+    constexpr auto PROP_WINDOW_KMSDRM_DRM_FD_NUMBER()
+    {
+        return "SDL.window.kmsdrm.drm_fd";
+    }
 
-    constexpr auto PROP_WINDOW_KMSDRM_GBM_DEVICE_POINTER() { return "SDL.window.kmsdrm.gbm_dev"; }
+    constexpr auto PROP_WINDOW_KMSDRM_GBM_DEVICE_POINTER()
+    {
+        return "SDL.window.kmsdrm.gbm_dev";
+    }
 
-    constexpr auto PROP_WINDOW_COCOA_WINDOW_POINTER() { return "SDL.window.cocoa.window"; }
+    constexpr auto PROP_WINDOW_COCOA_WINDOW_POINTER()
+    {
+        return "SDL.window.cocoa.window";
+    }
 
-    constexpr auto PROP_WINDOW_COCOA_METAL_VIEW_TAG_NUMBER() { return "SDL.window.cocoa.metal_view_tag"; }
+    constexpr auto PROP_WINDOW_COCOA_METAL_VIEW_TAG_NUMBER()
+    {
+        return "SDL.window.cocoa.metal_view_tag";
+    }
 
-    constexpr auto PROP_WINDOW_OPENVR_OVERLAY_ID() { return "SDL.window.openvr.overlay_id"; }
+    constexpr auto PROP_WINDOW_OPENVR_OVERLAY_ID()
+    {
+        return "SDL.window.openvr.overlay_id";
+    }
 
-    constexpr auto PROP_WINDOW_VIVANTE_DISPLAY_POINTER() { return "SDL.window.vivante.display"; }
+    constexpr auto PROP_WINDOW_VIVANTE_DISPLAY_POINTER()
+    {
+        return "SDL.window.vivante.display";
+    }
 
-    constexpr auto PROP_WINDOW_VIVANTE_WINDOW_POINTER() { return "SDL.window.vivante.window"; }
+    constexpr auto PROP_WINDOW_VIVANTE_WINDOW_POINTER()
+    {
+        return "SDL.window.vivante.window";
+    }
 
-    constexpr auto PROP_WINDOW_VIVANTE_SURFACE_POINTER() { return "SDL.window.vivante.surface"; }
+    constexpr auto PROP_WINDOW_VIVANTE_SURFACE_POINTER()
+    {
+        return "SDL.window.vivante.surface";
+    }
 
-    constexpr auto PROP_WINDOW_WIN32_HWND_POINTER() { return "SDL.window.win32.hwnd"; }
+    constexpr auto PROP_WINDOW_WIN32_HWND_POINTER()
+    {
+        return "SDL.window.win32.hwnd";
+    }
 
-    constexpr auto PROP_WINDOW_WIN32_HDC_POINTER() { return "SDL.window.win32.hdc"; }
+    constexpr auto PROP_WINDOW_WIN32_HDC_POINTER()
+    {
+        return "SDL.window.win32.hdc";
+    }
 
-    constexpr auto PROP_WINDOW_WIN32_INSTANCE_POINTER() { return "SDL.window.win32.instance"; }
+    constexpr auto PROP_WINDOW_WIN32_INSTANCE_POINTER()
+    {
+        return "SDL.window.win32.instance";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_DISPLAY_POINTER() { return "SDL.window.wayland.display"; }
+    constexpr auto PROP_WINDOW_WAYLAND_DISPLAY_POINTER()
+    {
+        return "SDL.window.wayland.display";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_SURFACE_POINTER() { return "SDL.window.wayland.surface"; }
+    constexpr auto PROP_WINDOW_WAYLAND_SURFACE_POINTER()
+    {
+        return "SDL.window.wayland.surface";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_VIEWPORT_POINTER() { return "SDL.window.wayland.viewport"; }
+    constexpr auto PROP_WINDOW_WAYLAND_VIEWPORT_POINTER()
+    {
+        return "SDL.window.wayland.viewport";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_EGL_WINDOW_POINTER() { return "SDL.window.wayland.egl_window"; }
+    constexpr auto PROP_WINDOW_WAYLAND_EGL_WINDOW_POINTER()
+    {
+        return "SDL.window.wayland.egl_window";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_XDG_SURFACE_POINTER() { return "SDL.window.wayland.xdg_surface"; }
+    constexpr auto PROP_WINDOW_WAYLAND_XDG_SURFACE_POINTER()
+    {
+        return "SDL.window.wayland.xdg_surface";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_POINTER() { return "SDL.window.wayland.xdg_toplevel"; }
+    constexpr auto PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_POINTER()
+    {
+        return "SDL.window.wayland.xdg_toplevel";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING() { return "SDL.window.wayland.xdg_toplevel_export_handle"; }
+    constexpr auto PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING()
+    {
+        return "SDL.window.wayland.xdg_toplevel_export_handle";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_XDG_POPUP_POINTER() { return "SDL.window.wayland.xdg_popup"; }
+    constexpr auto PROP_WINDOW_WAYLAND_XDG_POPUP_POINTER()
+    {
+        return "SDL.window.wayland.xdg_popup";
+    }
 
-    constexpr auto PROP_WINDOW_WAYLAND_XDG_POSITIONER_POINTER() { return "SDL.window.wayland.xdg_positioner"; }
+    constexpr auto PROP_WINDOW_WAYLAND_XDG_POSITIONER_POINTER()
+    {
+        return "SDL.window.wayland.xdg_positioner";
+    }
 
-    constexpr auto PROP_WINDOW_X11_DISPLAY_POINTER() { return "SDL.window.x11.display"; }
+    constexpr auto PROP_WINDOW_X11_DISPLAY_POINTER()
+    {
+        return "SDL.window.x11.display";
+    }
 
-    constexpr auto PROP_WINDOW_X11_SCREEN_NUMBER() { return "SDL.window.x11.screen"; }
+    constexpr auto PROP_WINDOW_X11_SCREEN_NUMBER()
+    {
+        return "SDL.window.x11.screen";
+    }
 
-    constexpr auto PROP_WINDOW_X11_WINDOW_NUMBER() { return "SDL.window.x11.window"; }
+    constexpr auto PROP_WINDOW_X11_WINDOW_NUMBER()
+    {
+        return "SDL.window.x11.window";
+    }
 
-    SDL_WindowFlags GetWindowFlags(SDL_Window* window)
+    SDL_WindowFlags GetWindowFlags(SDL_Window *window)
     {
         return SDL_GetWindowFlags(window);
     }
 
-    bool SetWindowTitle(SDL_Window* window, const char* title)
+    bool SetWindowTitle(SDL_Window *window, const char *title)
     {
         return SDL_SetWindowTitle(window, title);
     }
 
-    const char* GetWindowTitle(SDL_Window* window)
+    const char *GetWindowTitle(SDL_Window *window)
     {
         return SDL_GetWindowTitle(window);
     }
 
-    bool SetWindowIcon(SDL_Window* window, SDL_Surface* icon)
+    bool SetWindowIcon(SDL_Window *window, SDL_Surface *icon)
     {
         return SDL_SetWindowIcon(window, icon);
     }
 
-    bool SetWindowPosition(SDL_Window* window, int x, int y)
+    bool SetWindowPosition(SDL_Window *window, int x, int y)
     {
         return SDL_SetWindowPosition(window, x, y);
     }
 
-    bool GetWindowPosition(SDL_Window* window, int* x, int* y)
+    bool GetWindowPosition(SDL_Window *window, int *x, int *y)
     {
         return SDL_GetWindowPosition(window, x, y);
     }
 
-    bool SetWindowSize(SDL_Window* window, int w, int h)
+    bool SetWindowSize(SDL_Window *window, int w, int h)
     {
         return SDL_SetWindowSize(window, w, h);
     }
 
-    bool GetWindowSize(SDL_Window* window, int* w, int* h)
+    bool GetWindowSize(SDL_Window *window, int *w, int *h)
     {
         return SDL_GetWindowSize(window, w, h);
     }
 
-    bool GetWindowSafeArea(SDL_Window* window, SDL_Rect* rect)
+    bool GetWindowSafeArea(SDL_Window *window, SDL_Rect *rect)
     {
         return SDL_GetWindowSafeArea(window, rect);
     }
 
-    bool SetWindowAspectRatio(SDL_Window* window, float min_aspect, float max_aspect)
+    bool SetWindowAspectRatio(SDL_Window *window, float min_aspect, float max_aspect)
     {
         return SDL_SetWindowAspectRatio(window, min_aspect, max_aspect);
     }
 
-    bool GetWindowAspectRatio(SDL_Window* window, float* min_aspect, float* max_aspect)
+    bool GetWindowAspectRatio(SDL_Window *window, float *min_aspect, float *max_aspect)
     {
         return SDL_GetWindowAspectRatio(window, min_aspect, max_aspect);
     }
 
-    bool GetWindowBordersSize(SDL_Window* window, int* top, int* left, int* bottom, int* right)
+    bool GetWindowBordersSize(SDL_Window *window, int *top, int *left, int *bottom, int *right)
     {
         return SDL_GetWindowBordersSize(window, top, left, bottom, right);
     }
 
-    bool GetWindowSizeInPixels(SDL_Window* window, int* w, int* h)
+    bool GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
     {
         return SDL_GetWindowSizeInPixels(window, w, h);
     }
 
-    bool SetWindowMinimumSize(SDL_Window* window, int min_w, int min_h)
+    bool SetWindowMinimumSize(SDL_Window *window, int min_w, int min_h)
     {
         return SDL_SetWindowMinimumSize(window, min_w, min_h);
     }
 
-    bool GetWindowMinimumSize(SDL_Window* window, int* w, int* h)
+    bool GetWindowMinimumSize(SDL_Window *window, int *w, int *h)
     {
         return SDL_GetWindowMinimumSize(window, w, h);
     }
 
-    bool SetWindowMaximumSize(SDL_Window* window, int max_w, int max_h)
+    bool SetWindowMaximumSize(SDL_Window *window, int max_w, int max_h)
     {
         return SDL_SetWindowMaximumSize(window, max_w, max_h);
     }
 
-    bool GetWindowMaximumSize(SDL_Window* window, int* w, int* h)
+    bool GetWindowMaximumSize(SDL_Window *window, int *w, int *h)
     {
         return SDL_GetWindowMaximumSize(window, w, h);
     }
 
-    bool SetWindowBordered(SDL_Window* window, bool bordered)
+    bool SetWindowBordered(SDL_Window *window, bool bordered)
     {
         return SDL_SetWindowBordered(window, bordered);
     }
 
-    bool SetWindowResizable(SDL_Window* window, bool resizable)
+    bool SetWindowResizable(SDL_Window *window, bool resizable)
     {
         return SDL_SetWindowResizable(window, resizable);
     }
 
-    bool SetWindowAlwaysOnTop(SDL_Window* window, bool on_top)
+    bool SetWindowAlwaysOnTop(SDL_Window *window, bool on_top)
     {
         return SDL_SetWindowAlwaysOnTop(window, on_top);
     }
 
-    bool ShowWindow(SDL_Window* window)
+    bool ShowWindow(SDL_Window *window)
     {
         return SDL_ShowWindow(window);
     }
 
-    bool HideWindow(SDL_Window* window)
+    bool HideWindow(SDL_Window *window)
     {
         return SDL_HideWindow(window);
     }
 
-    bool RaiseWindow(SDL_Window* window)
+    bool RaiseWindow(SDL_Window *window)
     {
         return SDL_RaiseWindow(window);
     }
 
-    bool MaximizeWindow(SDL_Window* window)
+    bool MaximizeWindow(SDL_Window *window)
     {
         return SDL_MaximizeWindow(window);
     }
 
-    bool MinimizeWindow(SDL_Window* window)
+    bool MinimizeWindow(SDL_Window *window)
     {
         return SDL_MinimizeWindow(window);
     }
 
-    bool RestoreWindow(SDL_Window* window)
+    bool RestoreWindow(SDL_Window *window)
     {
         return SDL_RestoreWindow(window);
     }
 
-    bool SetWindowFullscreen(SDL_Window* window, bool fullscreen)
+    bool SetWindowFullscreen(SDL_Window *window, bool fullscreen)
     {
         return SDL_SetWindowFullscreen(window, fullscreen);
     }
 
-    bool SyncWindow(SDL_Window* window)
+    bool SyncWindow(SDL_Window *window)
     {
         return SDL_SyncWindow(window);
     }
 
-    bool WindowHasSurface(SDL_Window* window)
+    bool WindowHasSurface(SDL_Window *window)
     {
         return SDL_WindowHasSurface(window);
     }
 
-    SDL_Surface* GetWindowSurface(SDL_Window* window)
+    SDL_Surface *GetWindowSurface(SDL_Window *window)
     {
         return SDL_GetWindowSurface(window);
     }
 
-    bool SetWindowSurfaceVSync(SDL_Window* window, int vsync)
+    bool SetWindowSurfaceVSync(SDL_Window *window, int vsync)
     {
         return SDL_SetWindowSurfaceVSync(window, vsync);
     }
 
-    constexpr auto WINDOW_SURFACE_VSYNC_DISABLED() { return 0; }
+    constexpr auto WINDOW_SURFACE_VSYNC_DISABLED()
+    {
+        return 0;
+    }
 
-    constexpr auto WINDOW_SURFACE_VSYNC_ADAPTIVE() { return (-1); }
+    constexpr auto WINDOW_SURFACE_VSYNC_ADAPTIVE()
+    {
+        return (-1);
+    }
 
-    bool GetWindowSurfaceVSync(SDL_Window* window, int* vsync)
+    bool GetWindowSurfaceVSync(SDL_Window *window, int *vsync)
     {
         return SDL_GetWindowSurfaceVSync(window, vsync);
     }
 
-    bool UpdateWindowSurface(SDL_Window* window)
+    bool UpdateWindowSurface(SDL_Window *window)
     {
         return SDL_UpdateWindowSurface(window);
     }
 
-    bool UpdateWindowSurfaceRects(SDL_Window* window, const SDL_Rect* rects, int numrects)
+    bool UpdateWindowSurfaceRects(SDL_Window *window, const SDL_Rect *rects, int numrects)
     {
         return SDL_UpdateWindowSurfaceRects(window, rects, numrects);
     }
 
-    bool DestroyWindowSurface(SDL_Window* window)
+    bool DestroyWindowSurface(SDL_Window *window)
     {
         return SDL_DestroyWindowSurface(window);
     }
 
-    bool SetWindowKeyboardGrab(SDL_Window* window, bool grabbed)
+    bool SetWindowKeyboardGrab(SDL_Window *window, bool grabbed)
     {
         return SDL_SetWindowKeyboardGrab(window, grabbed);
     }
 
-    bool SetWindowMouseGrab(SDL_Window* window, bool grabbed)
+    bool SetWindowMouseGrab(SDL_Window *window, bool grabbed)
     {
         return SDL_SetWindowMouseGrab(window, grabbed);
     }
 
-    bool GetWindowKeyboardGrab(SDL_Window* window)
+    bool GetWindowKeyboardGrab(SDL_Window *window)
     {
         return SDL_GetWindowKeyboardGrab(window);
     }
 
-    bool GetWindowMouseGrab(SDL_Window* window)
+    bool GetWindowMouseGrab(SDL_Window *window)
     {
         return SDL_GetWindowMouseGrab(window);
     }
 
-    SDL_Window* GetGrabbedWindow(void )
+    SDL_Window *GetGrabbedWindow(void)
     {
         return SDL_GetGrabbedWindow();
     }
 
-    bool SetWindowMouseRect(SDL_Window* window, const SDL_Rect* rect)
+    bool SetWindowMouseRect(SDL_Window *window, const SDL_Rect *rect)
     {
         return SDL_SetWindowMouseRect(window, rect);
     }
 
-    const SDL_Rect* GetWindowMouseRect(SDL_Window* window)
+    const SDL_Rect *GetWindowMouseRect(SDL_Window *window)
     {
         return SDL_GetWindowMouseRect(window);
     }
 
-    bool SetWindowOpacity(SDL_Window* window, float opacity)
+    bool SetWindowOpacity(SDL_Window *window, float opacity)
     {
         return SDL_SetWindowOpacity(window, opacity);
     }
 
-    float GetWindowOpacity(SDL_Window* window)
+    float GetWindowOpacity(SDL_Window *window)
     {
         return SDL_GetWindowOpacity(window);
     }
 
-    bool SetWindowParent(SDL_Window* window, SDL_Window* parent)
+    bool SetWindowParent(SDL_Window *window, SDL_Window *parent)
     {
         return SDL_SetWindowParent(window, parent);
     }
 
-    bool SetWindowModal(SDL_Window* window, bool modal)
+    bool SetWindowModal(SDL_Window *window, bool modal)
     {
         return SDL_SetWindowModal(window, modal);
     }
 
-    bool SetWindowFocusable(SDL_Window* window, bool focusable)
+    bool SetWindowFocusable(SDL_Window *window, bool focusable)
     {
         return SDL_SetWindowFocusable(window, focusable);
     }
 
-    bool ShowWindowSystemMenu(SDL_Window* window, int x, int y)
+    bool ShowWindowSystemMenu(SDL_Window *window, int x, int y)
     {
         return SDL_ShowWindowSystemMenu(window, x, y);
     }
@@ -2897,67 +3403,67 @@ export namespace sdl
     };
     REGULAR_ENUM(HitTestResult);
 
-    bool SetWindowHitTest(SDL_Window* window, SDL_HitTest callback, void* callback_data)
+    bool SetWindowHitTest(SDL_Window *window, SDL_HitTest callback, void *callback_data)
     {
         return SDL_SetWindowHitTest(window, callback, callback_data);
     }
 
-    bool SetWindowShape(SDL_Window* window, SDL_Surface* shape)
+    bool SetWindowShape(SDL_Window *window, SDL_Surface *shape)
     {
         return SDL_SetWindowShape(window, shape);
     }
 
-    bool FlashWindow(SDL_Window* window, FlashOperation operation)
+    bool FlashWindow(SDL_Window *window, FlashOperation operation)
     {
         return SDL_FlashWindow(window, (SDL_FlashOperation)(operation));
     }
 
-    void DestroyWindow(SDL_Window* window)
+    void DestroyWindow(SDL_Window *window)
     {
         SDL_DestroyWindow(window);
     }
 
-    bool ScreenSaverEnabled(void )
+    bool ScreenSaverEnabled(void)
     {
         return SDL_ScreenSaverEnabled();
     }
 
-    bool EnableScreenSaver(void )
+    bool EnableScreenSaver(void)
     {
         return SDL_EnableScreenSaver();
     }
 
-    bool DisableScreenSaver(void )
+    bool DisableScreenSaver(void)
     {
         return SDL_DisableScreenSaver();
     }
 
-    bool GL_LoadLibrary(const char* path)
+    bool GL_LoadLibrary(const char *path)
     {
         return SDL_GL_LoadLibrary(path);
     }
 
-    SDL_FunctionPointer GL_GetProcAddress(const char* proc)
+    SDL_FunctionPointer GL_GetProcAddress(const char *proc)
     {
         return SDL_GL_GetProcAddress(proc);
     }
 
-    SDL_FunctionPointer EGL_GetProcAddress(const char* proc)
+    SDL_FunctionPointer EGL_GetProcAddress(const char *proc)
     {
         return SDL_EGL_GetProcAddress(proc);
     }
 
-    void GL_UnloadLibrary(void )
+    void GL_UnloadLibrary(void)
     {
         SDL_GL_UnloadLibrary();
     }
 
-    bool GL_ExtensionSupported(const char* extension)
+    bool GL_ExtensionSupported(const char *extension)
     {
         return SDL_GL_ExtensionSupported(extension);
     }
 
-    void GL_ResetAttributes(void )
+    void GL_ResetAttributes(void)
     {
         SDL_GL_ResetAttributes();
     }
@@ -2967,47 +3473,50 @@ export namespace sdl
         return SDL_GL_SetAttribute((SDL_GLAttr)(attr), value);
     }
 
-    bool GL_GetAttribute(GLAttr attr, int* value)
+    bool GL_GetAttribute(GLAttr attr, int *value)
     {
         return SDL_GL_GetAttribute((SDL_GLAttr)(attr), value);
     }
 
-    SDL_GLContext GL_CreateContext(SDL_Window* window)
+    SDL_GLContext GL_CreateContext(SDL_Window *window)
     {
         return SDL_GL_CreateContext(window);
     }
 
-    bool GL_MakeCurrent(SDL_Window* window, SDL_GLContext context)
+    bool GL_MakeCurrent(SDL_Window *window, SDL_GLContext context)
     {
         return SDL_GL_MakeCurrent(window, context);
     }
 
-    SDL_Window* GL_GetCurrentWindow(void )
+    SDL_Window *GL_GetCurrentWindow(void)
     {
         return SDL_GL_GetCurrentWindow();
     }
 
-    SDL_GLContext GL_GetCurrentContext(void )
+    SDL_GLContext GL_GetCurrentContext(void)
     {
         return SDL_GL_GetCurrentContext();
     }
 
-    SDL_EGLDisplay EGL_GetCurrentDisplay(void )
+    SDL_EGLDisplay EGL_GetCurrentDisplay(void)
     {
         return SDL_EGL_GetCurrentDisplay();
     }
 
-    SDL_EGLConfig EGL_GetCurrentConfig(void )
+    SDL_EGLConfig EGL_GetCurrentConfig(void)
     {
         return SDL_EGL_GetCurrentConfig();
     }
 
-    SDL_EGLSurface EGL_GetWindowSurface(SDL_Window* window)
+    SDL_EGLSurface EGL_GetWindowSurface(SDL_Window *window)
     {
         return SDL_EGL_GetWindowSurface(window);
     }
 
-    void EGL_SetAttributeCallbacks(SDL_EGLAttribArrayCallback platformAttribCallback, SDL_EGLIntArrayCallback surfaceAttribCallback, SDL_EGLIntArrayCallback contextAttribCallback, void* userdata)
+    void EGL_SetAttributeCallbacks(SDL_EGLAttribArrayCallback platformAttribCallback,
+                                   SDL_EGLIntArrayCallback surfaceAttribCallback,
+                                   SDL_EGLIntArrayCallback contextAttribCallback,
+                                   void *userdata)
     {
         SDL_EGL_SetAttributeCallbacks(platformAttribCallback, surfaceAttribCallback, contextAttribCallback, userdata);
     }
@@ -3017,12 +3526,12 @@ export namespace sdl
         return SDL_GL_SetSwapInterval(interval);
     }
 
-    bool GL_GetSwapInterval(int* interval)
+    bool GL_GetSwapInterval(int *interval)
     {
         return SDL_GL_GetSwapInterval(interval);
     }
 
-    bool GL_SwapWindow(SDL_Window* window)
+    bool GL_SwapWindow(SDL_Window *window)
     {
         return SDL_GL_SwapWindow(window);
     }
@@ -3034,17 +3543,32 @@ export namespace sdl
 
     using DialogFileFilter = SDL_DialogFileFilter;
 
-    void ShowOpenFileDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const SDL_DialogFileFilter* filters, int nfilters, const char* default_location, bool allow_many)
+    void ShowOpenFileDialog(SDL_DialogFileCallback callback,
+                            void *userdata,
+                            SDL_Window *window,
+                            const SDL_DialogFileFilter *filters,
+                            int nfilters,
+                            const char *default_location,
+                            bool allow_many)
     {
         SDL_ShowOpenFileDialog(callback, userdata, window, filters, nfilters, default_location, allow_many);
     }
 
-    void ShowSaveFileDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const SDL_DialogFileFilter* filters, int nfilters, const char* default_location)
+    void ShowSaveFileDialog(SDL_DialogFileCallback callback,
+                            void *userdata,
+                            SDL_Window *window,
+                            const SDL_DialogFileFilter *filters,
+                            int nfilters,
+                            const char *default_location)
     {
         SDL_ShowSaveFileDialog(callback, userdata, window, filters, nfilters, default_location);
     }
 
-    void ShowOpenFolderDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const char* default_location, bool allow_many)
+    void ShowOpenFolderDialog(SDL_DialogFileCallback callback,
+                              void *userdata,
+                              SDL_Window *window,
+                              const char *default_location,
+                              bool allow_many)
     {
         SDL_ShowOpenFolderDialog(callback, userdata, window, default_location, allow_many);
     }
@@ -3057,35 +3581,62 @@ export namespace sdl
     };
     REGULAR_ENUM(FileDialogType);
 
-    void ShowFileDialogWithProperties(FileDialogType type, SDL_DialogFileCallback callback, void* userdata, SDL_PropertiesID props)
+    void ShowFileDialogWithProperties(FileDialogType type,
+                                      SDL_DialogFileCallback callback,
+                                      void *userdata,
+                                      SDL_PropertiesID props)
     {
         SDL_ShowFileDialogWithProperties((SDL_FileDialogType)(type), callback, userdata, props);
     }
 
-    constexpr auto PROP_FILE_DIALOG_FILTERS_POINTER() { return "SDL.filedialog.filters"; }
+    constexpr auto PROP_FILE_DIALOG_FILTERS_POINTER()
+    {
+        return "SDL.filedialog.filters";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_NFILTERS_NUMBER() { return "SDL.filedialog.nfilters"; }
+    constexpr auto PROP_FILE_DIALOG_NFILTERS_NUMBER()
+    {
+        return "SDL.filedialog.nfilters";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_WINDOW_POINTER() { return "SDL.filedialog.window"; }
+    constexpr auto PROP_FILE_DIALOG_WINDOW_POINTER()
+    {
+        return "SDL.filedialog.window";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_LOCATION_STRING() { return "SDL.filedialog.location"; }
+    constexpr auto PROP_FILE_DIALOG_LOCATION_STRING()
+    {
+        return "SDL.filedialog.location";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_MANY_BOOLEAN() { return "SDL.filedialog.many"; }
+    constexpr auto PROP_FILE_DIALOG_MANY_BOOLEAN()
+    {
+        return "SDL.filedialog.many";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_TITLE_STRING() { return "SDL.filedialog.title"; }
+    constexpr auto PROP_FILE_DIALOG_TITLE_STRING()
+    {
+        return "SDL.filedialog.title";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_ACCEPT_STRING() { return "SDL.filedialog.accept"; }
+    constexpr auto PROP_FILE_DIALOG_ACCEPT_STRING()
+    {
+        return "SDL.filedialog.accept";
+    }
 
-    constexpr auto PROP_FILE_DIALOG_CANCEL_STRING() { return "SDL.filedialog.cancel"; }
+    constexpr auto PROP_FILE_DIALOG_CANCEL_STRING()
+    {
+        return "SDL.filedialog.cancel";
+    }
 
     using GUID = SDL_GUID;
 
-    void GUIDToString(SDL_GUID guid, char* pszGUID, int cbGUID)
+    void GUIDToString(SDL_GUID guid, char *pszGUID, int cbGUID)
     {
         SDL_GUIDToString(guid, pszGUID, cbGUID);
     }
 
-    SDL_GUID StringToGUID(const char* pchGUID)
+    SDL_GUID StringToGUID(const char *pchGUID)
     {
         return SDL_StringToGUID(pchGUID);
     }
@@ -3101,7 +3652,7 @@ export namespace sdl
     };
     REGULAR_ENUM(PowerState);
 
-    SDL_PowerState GetPowerInfo(int* seconds, int* percent)
+    SDL_PowerState GetPowerInfo(int *seconds, int *percent)
     {
         return SDL_GetPowerInfo(seconds, percent);
     }
@@ -3110,7 +3661,10 @@ export namespace sdl
 
     using SensorID = Uint32;
 
-    constexpr auto STANDARD_GRAVITY() { return 9.80665f; }
+    constexpr auto STANDARD_GRAVITY()
+    {
+        return 9.80665f;
+    }
 
     enum class SensorType
     {
@@ -3126,12 +3680,12 @@ export namespace sdl
     };
     REGULAR_ENUM(SensorType);
 
-    SDL_SensorID* GetSensors(int* count)
+    SDL_SensorID *GetSensors(int *count)
     {
         return SDL_GetSensors(count);
     }
 
-    const char* GetSensorNameForID(SDL_SensorID instance_id)
+    const char *GetSensorNameForID(SDL_SensorID instance_id)
     {
         return SDL_GetSensorNameForID(instance_id);
     }
@@ -3146,52 +3700,52 @@ export namespace sdl
         return SDL_GetSensorNonPortableTypeForID(instance_id);
     }
 
-    SDL_Sensor* OpenSensor(SDL_SensorID instance_id)
+    SDL_Sensor *OpenSensor(SDL_SensorID instance_id)
     {
         return SDL_OpenSensor(instance_id);
     }
 
-    SDL_Sensor* GetSensorFromID(SDL_SensorID instance_id)
+    SDL_Sensor *GetSensorFromID(SDL_SensorID instance_id)
     {
         return SDL_GetSensorFromID(instance_id);
     }
 
-    SDL_PropertiesID GetSensorProperties(SDL_Sensor* sensor)
+    SDL_PropertiesID GetSensorProperties(SDL_Sensor *sensor)
     {
         return SDL_GetSensorProperties(sensor);
     }
 
-    const char* GetSensorName(SDL_Sensor* sensor)
+    const char *GetSensorName(SDL_Sensor *sensor)
     {
         return SDL_GetSensorName(sensor);
     }
 
-    SDL_SensorType GetSensorType(SDL_Sensor* sensor)
+    SDL_SensorType GetSensorType(SDL_Sensor *sensor)
     {
         return SDL_GetSensorType(sensor);
     }
 
-    int GetSensorNonPortableType(SDL_Sensor* sensor)
+    int GetSensorNonPortableType(SDL_Sensor *sensor)
     {
         return SDL_GetSensorNonPortableType(sensor);
     }
 
-    SDL_SensorID GetSensorID(SDL_Sensor* sensor)
+    SDL_SensorID GetSensorID(SDL_Sensor *sensor)
     {
         return SDL_GetSensorID(sensor);
     }
 
-    bool GetSensorData(SDL_Sensor* sensor, float* data, int num_values)
+    bool GetSensorData(SDL_Sensor *sensor, float *data, int num_values)
     {
         return SDL_GetSensorData(sensor, data, num_values);
     }
 
-    void CloseSensor(SDL_Sensor* sensor)
+    void CloseSensor(SDL_Sensor *sensor)
     {
         SDL_CloseSensor(sensor);
     }
 
-    void UpdateSensors(void )
+    void UpdateSensors(void)
     {
         SDL_UpdateSensors();
     }
@@ -3225,26 +3779,32 @@ export namespace sdl
     };
     REGULAR_ENUM(JoystickConnectionState);
 
-    constexpr auto JOYSTICK_AXIS_MAX() { return 32767; }
+    constexpr auto JOYSTICK_AXIS_MAX()
+    {
+        return 32767;
+    }
 
-    constexpr auto JOYSTICK_AXIS_MIN() { return -32768; }
+    constexpr auto JOYSTICK_AXIS_MIN()
+    {
+        return -32768;
+    }
 
-    bool HasJoystick(void )
+    bool HasJoystick(void)
     {
         return SDL_HasJoystick();
     }
 
-    SDL_JoystickID* GetJoysticks(int* count)
+    SDL_JoystickID *GetJoysticks(int *count)
     {
         return SDL_GetJoysticks(count);
     }
 
-    const char* GetJoystickNameForID(SDL_JoystickID instance_id)
+    const char *GetJoystickNameForID(SDL_JoystickID instance_id)
     {
         return SDL_GetJoystickNameForID(instance_id);
     }
 
-    const char* GetJoystickPathForID(SDL_JoystickID instance_id)
+    const char *GetJoystickPathForID(SDL_JoystickID instance_id)
     {
         return SDL_GetJoystickPathForID(instance_id);
     }
@@ -3279,17 +3839,17 @@ export namespace sdl
         return SDL_GetJoystickTypeForID(instance_id);
     }
 
-    SDL_Joystick* OpenJoystick(SDL_JoystickID instance_id)
+    SDL_Joystick *OpenJoystick(SDL_JoystickID instance_id)
     {
         return SDL_OpenJoystick(instance_id);
     }
 
-    SDL_Joystick* GetJoystickFromID(SDL_JoystickID instance_id)
+    SDL_Joystick *GetJoystickFromID(SDL_JoystickID instance_id)
     {
         return SDL_GetJoystickFromID(instance_id);
     }
 
-    SDL_Joystick* GetJoystickFromPlayerIndex(int player_index)
+    SDL_Joystick *GetJoystickFromPlayerIndex(int player_index)
     {
         return SDL_GetJoystickFromPlayerIndex(player_index);
     }
@@ -3300,7 +3860,7 @@ export namespace sdl
 
     using VirtualJoystickDesc = SDL_VirtualJoystickDesc;
 
-    SDL_JoystickID AttachVirtualJoystick(const SDL_VirtualJoystickDesc* desc)
+    SDL_JoystickID AttachVirtualJoystick(const SDL_VirtualJoystickDesc *desc)
     {
         return SDL_AttachVirtualJoystick(desc);
     }
@@ -3315,137 +3875,162 @@ export namespace sdl
         return SDL_IsJoystickVirtual(instance_id);
     }
 
-    bool SetJoystickVirtualAxis(SDL_Joystick* joystick, int axis, Sint16 value)
+    bool SetJoystickVirtualAxis(SDL_Joystick *joystick, int axis, Sint16 value)
     {
         return SDL_SetJoystickVirtualAxis(joystick, axis, value);
     }
 
-    bool SetJoystickVirtualBall(SDL_Joystick* joystick, int ball, Sint16 xrel, Sint16 yrel)
+    bool SetJoystickVirtualBall(SDL_Joystick *joystick, int ball, Sint16 xrel, Sint16 yrel)
     {
         return SDL_SetJoystickVirtualBall(joystick, ball, xrel, yrel);
     }
 
-    bool SetJoystickVirtualButton(SDL_Joystick* joystick, int button, bool down)
+    bool SetJoystickVirtualButton(SDL_Joystick *joystick, int button, bool down)
     {
         return SDL_SetJoystickVirtualButton(joystick, button, down);
     }
 
-    bool SetJoystickVirtualHat(SDL_Joystick* joystick, int hat, Uint8 value)
+    bool SetJoystickVirtualHat(SDL_Joystick *joystick, int hat, Uint8 value)
     {
         return SDL_SetJoystickVirtualHat(joystick, hat, value);
     }
 
-    bool SetJoystickVirtualTouchpad(SDL_Joystick* joystick, int touchpad, int finger, bool down, float x, float y, float pressure)
+    bool SetJoystickVirtualTouchpad(SDL_Joystick *joystick,
+                                    int touchpad,
+                                    int finger,
+                                    bool down,
+                                    float x,
+                                    float y,
+                                    float pressure)
     {
         return SDL_SetJoystickVirtualTouchpad(joystick, touchpad, finger, down, x, y, pressure);
     }
 
-    bool SendJoystickVirtualSensorData(SDL_Joystick* joystick, SensorType type, Uint64 sensor_timestamp, const float* data, int num_values)
+    bool SendJoystickVirtualSensorData(SDL_Joystick *joystick,
+                                       SensorType type,
+                                       Uint64 sensor_timestamp,
+                                       const float *data,
+                                       int num_values)
     {
         return SDL_SendJoystickVirtualSensorData(joystick, (SDL_SensorType)(type), sensor_timestamp, data, num_values);
     }
 
-    SDL_PropertiesID GetJoystickProperties(SDL_Joystick* joystick)
+    SDL_PropertiesID GetJoystickProperties(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickProperties(joystick);
     }
 
-    constexpr auto PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN() { return "SDL.joystick.cap.mono_led"; }
+    constexpr auto PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN()
+    {
+        return "SDL.joystick.cap.mono_led";
+    }
 
-    constexpr auto PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN() { return "SDL.joystick.cap.rgb_led"; }
+    constexpr auto PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN()
+    {
+        return "SDL.joystick.cap.rgb_led";
+    }
 
-    constexpr auto PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN() { return "SDL.joystick.cap.player_led"; }
+    constexpr auto PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN()
+    {
+        return "SDL.joystick.cap.player_led";
+    }
 
-    constexpr auto PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN() { return "SDL.joystick.cap.rumble"; }
+    constexpr auto PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN()
+    {
+        return "SDL.joystick.cap.rumble";
+    }
 
-    constexpr auto PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN() { return "SDL.joystick.cap.trigger_rumble"; }
+    constexpr auto PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN()
+    {
+        return "SDL.joystick.cap.trigger_rumble";
+    }
 
-    const char* GetJoystickName(SDL_Joystick* joystick)
+    const char *GetJoystickName(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickName(joystick);
     }
 
-    const char* GetJoystickPath(SDL_Joystick* joystick)
+    const char *GetJoystickPath(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickPath(joystick);
     }
 
-    int GetJoystickPlayerIndex(SDL_Joystick* joystick)
+    int GetJoystickPlayerIndex(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickPlayerIndex(joystick);
     }
 
-    bool SetJoystickPlayerIndex(SDL_Joystick* joystick, int player_index)
+    bool SetJoystickPlayerIndex(SDL_Joystick *joystick, int player_index)
     {
         return SDL_SetJoystickPlayerIndex(joystick, player_index);
     }
 
-    SDL_GUID GetJoystickGUID(SDL_Joystick* joystick)
+    SDL_GUID GetJoystickGUID(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickGUID(joystick);
     }
 
-    Uint16 GetJoystickVendor(SDL_Joystick* joystick)
+    Uint16 GetJoystickVendor(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickVendor(joystick);
     }
 
-    Uint16 GetJoystickProduct(SDL_Joystick* joystick)
+    Uint16 GetJoystickProduct(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickProduct(joystick);
     }
 
-    Uint16 GetJoystickProductVersion(SDL_Joystick* joystick)
+    Uint16 GetJoystickProductVersion(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickProductVersion(joystick);
     }
 
-    Uint16 GetJoystickFirmwareVersion(SDL_Joystick* joystick)
+    Uint16 GetJoystickFirmwareVersion(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickFirmwareVersion(joystick);
     }
 
-    const char* GetJoystickSerial(SDL_Joystick* joystick)
+    const char *GetJoystickSerial(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickSerial(joystick);
     }
 
-    SDL_JoystickType GetJoystickType(SDL_Joystick* joystick)
+    SDL_JoystickType GetJoystickType(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickType(joystick);
     }
 
-    void GetJoystickGUIDInfo(SDL_GUID guid, Uint16* vendor, Uint16* product, Uint16* version, Uint16* crc16)
+    void GetJoystickGUIDInfo(SDL_GUID guid, Uint16 *vendor, Uint16 *product, Uint16 *version, Uint16 *crc16)
     {
         SDL_GetJoystickGUIDInfo(guid, vendor, product, version, crc16);
     }
 
-    bool JoystickConnected(SDL_Joystick* joystick)
+    bool JoystickConnected(SDL_Joystick *joystick)
     {
         return SDL_JoystickConnected(joystick);
     }
 
-    SDL_JoystickID GetJoystickID(SDL_Joystick* joystick)
+    SDL_JoystickID GetJoystickID(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickID(joystick);
     }
 
-    int GetNumJoystickAxes(SDL_Joystick* joystick)
+    int GetNumJoystickAxes(SDL_Joystick *joystick)
     {
         return SDL_GetNumJoystickAxes(joystick);
     }
 
-    int GetNumJoystickBalls(SDL_Joystick* joystick)
+    int GetNumJoystickBalls(SDL_Joystick *joystick)
     {
         return SDL_GetNumJoystickBalls(joystick);
     }
 
-    int GetNumJoystickHats(SDL_Joystick* joystick)
+    int GetNumJoystickHats(SDL_Joystick *joystick)
     {
         return SDL_GetNumJoystickHats(joystick);
     }
 
-    int GetNumJoystickButtons(SDL_Joystick* joystick)
+    int GetNumJoystickButtons(SDL_Joystick *joystick)
     {
         return SDL_GetNumJoystickButtons(joystick);
     }
@@ -3455,90 +4040,120 @@ export namespace sdl
         SDL_SetJoystickEventsEnabled(enabled);
     }
 
-    bool JoystickEventsEnabled(void )
+    bool JoystickEventsEnabled(void)
     {
         return SDL_JoystickEventsEnabled();
     }
 
-    void UpdateJoysticks(void )
+    void UpdateJoysticks(void)
     {
         SDL_UpdateJoysticks();
     }
 
-    Sint16 GetJoystickAxis(SDL_Joystick* joystick, int axis)
+    Sint16 GetJoystickAxis(SDL_Joystick *joystick, int axis)
     {
         return SDL_GetJoystickAxis(joystick, axis);
     }
 
-    bool GetJoystickAxisInitialState(SDL_Joystick* joystick, int axis, Sint16* state)
+    bool GetJoystickAxisInitialState(SDL_Joystick *joystick, int axis, Sint16 *state)
     {
         return SDL_GetJoystickAxisInitialState(joystick, axis, state);
     }
 
-    bool GetJoystickBall(SDL_Joystick* joystick, int ball, int* dx, int* dy)
+    bool GetJoystickBall(SDL_Joystick *joystick, int ball, int *dx, int *dy)
     {
         return SDL_GetJoystickBall(joystick, ball, dx, dy);
     }
 
-    Uint8 GetJoystickHat(SDL_Joystick* joystick, int hat)
+    Uint8 GetJoystickHat(SDL_Joystick *joystick, int hat)
     {
         return SDL_GetJoystickHat(joystick, hat);
     }
 
-    constexpr auto HAT_CENTERED() { return 0x00u; }
+    constexpr auto HAT_CENTERED()
+    {
+        return 0x00u;
+    }
 
-    constexpr auto HAT_UP() { return 0x01u; }
+    constexpr auto HAT_UP()
+    {
+        return 0x01u;
+    }
 
-    constexpr auto HAT_RIGHT() { return 0x02u; }
+    constexpr auto HAT_RIGHT()
+    {
+        return 0x02u;
+    }
 
-    constexpr auto HAT_DOWN() { return 0x04u; }
+    constexpr auto HAT_DOWN()
+    {
+        return 0x04u;
+    }
 
-    constexpr auto HAT_LEFT() { return 0x08u; }
+    constexpr auto HAT_LEFT()
+    {
+        return 0x08u;
+    }
 
-    constexpr auto HAT_RIGHTUP() { return (SDL_HAT_RIGHT|SDL_HAT_UP); }
+    constexpr auto HAT_RIGHTUP()
+    {
+        return (SDL_HAT_RIGHT | SDL_HAT_UP);
+    }
 
-    constexpr auto HAT_RIGHTDOWN() { return (SDL_HAT_RIGHT|SDL_HAT_DOWN); }
+    constexpr auto HAT_RIGHTDOWN()
+    {
+        return (SDL_HAT_RIGHT | SDL_HAT_DOWN);
+    }
 
-    constexpr auto HAT_LEFTUP() { return (SDL_HAT_LEFT|SDL_HAT_UP); }
+    constexpr auto HAT_LEFTUP()
+    {
+        return (SDL_HAT_LEFT | SDL_HAT_UP);
+    }
 
-    constexpr auto HAT_LEFTDOWN() { return (SDL_HAT_LEFT|SDL_HAT_DOWN); }
+    constexpr auto HAT_LEFTDOWN()
+    {
+        return (SDL_HAT_LEFT | SDL_HAT_DOWN);
+    }
 
-    bool GetJoystickButton(SDL_Joystick* joystick, int button)
+    bool GetJoystickButton(SDL_Joystick *joystick, int button)
     {
         return SDL_GetJoystickButton(joystick, button);
     }
 
-    bool RumbleJoystick(SDL_Joystick* joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)
+    bool RumbleJoystick(SDL_Joystick *joystick,
+                        Uint16 low_frequency_rumble,
+                        Uint16 high_frequency_rumble,
+                        Uint32 duration_ms)
     {
         return SDL_RumbleJoystick(joystick, low_frequency_rumble, high_frequency_rumble, duration_ms);
     }
 
-    bool RumbleJoystickTriggers(SDL_Joystick* joystick, Uint16 left_rumble, Uint16 right_rumble, Uint32 duration_ms)
+    bool RumbleJoystickTriggers(SDL_Joystick *joystick, Uint16 left_rumble, Uint16 right_rumble, Uint32 duration_ms)
     {
         return SDL_RumbleJoystickTriggers(joystick, left_rumble, right_rumble, duration_ms);
     }
 
-    bool SetJoystickLED(SDL_Joystick* joystick, Uint8 red, Uint8 green, Uint8 blue)
+    bool SetJoystickLED(SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
     {
         return SDL_SetJoystickLED(joystick, red, green, blue);
     }
 
-    bool SendJoystickEffect(SDL_Joystick* joystick, const void* data, int size)
+    bool SendJoystickEffect(SDL_Joystick *joystick, const void *data, int size)
     {
         return SDL_SendJoystickEffect(joystick, data, size);
     }
 
-    void CloseJoystick(SDL_Joystick* joystick)
+    void CloseJoystick(SDL_Joystick *joystick)
     {
         SDL_CloseJoystick(joystick);
     }
 
-    SDL_JoystickConnectionState GetJoystickConnectionState(SDL_Joystick* joystick)
+    SDL_JoystickConnectionState GetJoystickConnectionState(SDL_Joystick *joystick)
     {
         return SDL_GetJoystickConnectionState(joystick);
     }
 
-    SDL_PowerState GetJoystickPowerInfo(SDL_Joystick* joystick, int* percent)
+    SDL_PowerState GetJoystickPowerInfo(SDL_Joystick *joystick, int *percent)
     {
         return SDL_GetJoystickPowerInfo(joystick, percent);
     }
@@ -3633,47 +4248,47 @@ export namespace sdl
 
     using GamepadBinding = SDL_GamepadBinding;
 
-    int AddGamepadMapping(const char* mapping)
+    int AddGamepadMapping(const char *mapping)
     {
         return SDL_AddGamepadMapping(mapping);
     }
 
-    int AddGamepadMappingsFromIO(SDL_IOStream* src, bool closeio)
+    int AddGamepadMappingsFromIO(SDL_IOStream *src, bool closeio)
     {
         return SDL_AddGamepadMappingsFromIO(src, closeio);
     }
 
-    int AddGamepadMappingsFromFile(const char* file)
+    int AddGamepadMappingsFromFile(const char *file)
     {
         return SDL_AddGamepadMappingsFromFile(file);
     }
 
-    bool ReloadGamepadMappings(void )
+    bool ReloadGamepadMappings(void)
     {
         return SDL_ReloadGamepadMappings();
     }
 
-    char* GetGamepadMappingForGUID(SDL_GUID guid)
+    char *GetGamepadMappingForGUID(SDL_GUID guid)
     {
         return SDL_GetGamepadMappingForGUID(guid);
     }
 
-    char* GetGamepadMapping(SDL_Gamepad* gamepad)
+    char *GetGamepadMapping(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadMapping(gamepad);
     }
 
-    bool SetGamepadMapping(SDL_JoystickID instance_id, const char* mapping)
+    bool SetGamepadMapping(SDL_JoystickID instance_id, const char *mapping)
     {
         return SDL_SetGamepadMapping(instance_id, mapping);
     }
 
-    bool HasGamepad(void )
+    bool HasGamepad(void)
     {
         return SDL_HasGamepad();
     }
 
-    SDL_JoystickID* GetGamepads(int* count)
+    SDL_JoystickID *GetGamepads(int *count)
     {
         return SDL_GetGamepads(count);
     }
@@ -3683,12 +4298,12 @@ export namespace sdl
         return SDL_IsGamepad(instance_id);
     }
 
-    const char* GetGamepadNameForID(SDL_JoystickID instance_id)
+    const char *GetGamepadNameForID(SDL_JoystickID instance_id)
     {
         return SDL_GetGamepadNameForID(instance_id);
     }
 
-    const char* GetGamepadPathForID(SDL_JoystickID instance_id)
+    const char *GetGamepadPathForID(SDL_JoystickID instance_id)
     {
         return SDL_GetGamepadPathForID(instance_id);
     }
@@ -3728,122 +4343,137 @@ export namespace sdl
         return SDL_GetRealGamepadTypeForID(instance_id);
     }
 
-    char* GetGamepadMappingForID(SDL_JoystickID instance_id)
+    char *GetGamepadMappingForID(SDL_JoystickID instance_id)
     {
         return SDL_GetGamepadMappingForID(instance_id);
     }
 
-    SDL_Gamepad* OpenGamepad(SDL_JoystickID instance_id)
+    SDL_Gamepad *OpenGamepad(SDL_JoystickID instance_id)
     {
         return SDL_OpenGamepad(instance_id);
     }
 
-    SDL_Gamepad* GetGamepadFromID(SDL_JoystickID instance_id)
+    SDL_Gamepad *GetGamepadFromID(SDL_JoystickID instance_id)
     {
         return SDL_GetGamepadFromID(instance_id);
     }
 
-    SDL_Gamepad* GetGamepadFromPlayerIndex(int player_index)
+    SDL_Gamepad *GetGamepadFromPlayerIndex(int player_index)
     {
         return SDL_GetGamepadFromPlayerIndex(player_index);
     }
 
-    SDL_PropertiesID GetGamepadProperties(SDL_Gamepad* gamepad)
+    SDL_PropertiesID GetGamepadProperties(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadProperties(gamepad);
     }
 
-    constexpr auto PROP_GAMEPAD_CAP_MONO_LED_BOOLEAN() { return SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN; }
+    constexpr auto PROP_GAMEPAD_CAP_MONO_LED_BOOLEAN()
+    {
+        return SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN;
+    }
 
-    constexpr auto PROP_GAMEPAD_CAP_RGB_LED_BOOLEAN() { return SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN; }
+    constexpr auto PROP_GAMEPAD_CAP_RGB_LED_BOOLEAN()
+    {
+        return SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN;
+    }
 
-    constexpr auto PROP_GAMEPAD_CAP_PLAYER_LED_BOOLEAN() { return SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN; }
+    constexpr auto PROP_GAMEPAD_CAP_PLAYER_LED_BOOLEAN()
+    {
+        return SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN;
+    }
 
-    constexpr auto PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN() { return SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN; }
+    constexpr auto PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN()
+    {
+        return SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN;
+    }
 
-    constexpr auto PROP_GAMEPAD_CAP_TRIGGER_RUMBLE_BOOLEAN() { return SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN; }
+    constexpr auto PROP_GAMEPAD_CAP_TRIGGER_RUMBLE_BOOLEAN()
+    {
+        return SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN;
+    }
 
-    SDL_JoystickID GetGamepadID(SDL_Gamepad* gamepad)
+    SDL_JoystickID GetGamepadID(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadID(gamepad);
     }
 
-    const char* GetGamepadName(SDL_Gamepad* gamepad)
+    const char *GetGamepadName(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadName(gamepad);
     }
 
-    const char* GetGamepadPath(SDL_Gamepad* gamepad)
+    const char *GetGamepadPath(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadPath(gamepad);
     }
 
-    SDL_GamepadType GetGamepadType(SDL_Gamepad* gamepad)
+    SDL_GamepadType GetGamepadType(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadType(gamepad);
     }
 
-    SDL_GamepadType GetRealGamepadType(SDL_Gamepad* gamepad)
+    SDL_GamepadType GetRealGamepadType(SDL_Gamepad *gamepad)
     {
         return SDL_GetRealGamepadType(gamepad);
     }
 
-    int GetGamepadPlayerIndex(SDL_Gamepad* gamepad)
+    int GetGamepadPlayerIndex(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadPlayerIndex(gamepad);
     }
 
-    bool SetGamepadPlayerIndex(SDL_Gamepad* gamepad, int player_index)
+    bool SetGamepadPlayerIndex(SDL_Gamepad *gamepad, int player_index)
     {
         return SDL_SetGamepadPlayerIndex(gamepad, player_index);
     }
 
-    Uint16 GetGamepadVendor(SDL_Gamepad* gamepad)
+    Uint16 GetGamepadVendor(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadVendor(gamepad);
     }
 
-    Uint16 GetGamepadProduct(SDL_Gamepad* gamepad)
+    Uint16 GetGamepadProduct(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadProduct(gamepad);
     }
 
-    Uint16 GetGamepadProductVersion(SDL_Gamepad* gamepad)
+    Uint16 GetGamepadProductVersion(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadProductVersion(gamepad);
     }
 
-    Uint16 GetGamepadFirmwareVersion(SDL_Gamepad* gamepad)
+    Uint16 GetGamepadFirmwareVersion(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadFirmwareVersion(gamepad);
     }
 
-    const char* GetGamepadSerial(SDL_Gamepad* gamepad)
+    const char *GetGamepadSerial(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadSerial(gamepad);
     }
 
-    Uint64 GetGamepadSteamHandle(SDL_Gamepad* gamepad)
+    Uint64 GetGamepadSteamHandle(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadSteamHandle(gamepad);
     }
 
-    SDL_JoystickConnectionState GetGamepadConnectionState(SDL_Gamepad* gamepad)
+    SDL_JoystickConnectionState GetGamepadConnectionState(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadConnectionState(gamepad);
     }
 
-    SDL_PowerState GetGamepadPowerInfo(SDL_Gamepad* gamepad, int* percent)
+    SDL_PowerState GetGamepadPowerInfo(SDL_Gamepad *gamepad, int *percent)
     {
         return SDL_GetGamepadPowerInfo(gamepad, percent);
     }
 
-    bool GamepadConnected(SDL_Gamepad* gamepad)
+    bool GamepadConnected(SDL_Gamepad *gamepad)
     {
         return SDL_GamepadConnected(gamepad);
     }
 
-    SDL_Joystick* GetGamepadJoystick(SDL_Gamepad* gamepad)
+    SDL_Joystick *GetGamepadJoystick(SDL_Gamepad *gamepad)
     {
         return SDL_GetGamepadJoystick(gamepad);
     }
@@ -3853,62 +4483,62 @@ export namespace sdl
         SDL_SetGamepadEventsEnabled(enabled);
     }
 
-    bool GamepadEventsEnabled(void )
+    bool GamepadEventsEnabled(void)
     {
         return SDL_GamepadEventsEnabled();
     }
 
-    void UpdateGamepads(void )
+    void UpdateGamepads(void)
     {
         SDL_UpdateGamepads();
     }
 
-    SDL_GamepadType GetGamepadTypeFromString(const char* str)
+    SDL_GamepadType GetGamepadTypeFromString(const char *str)
     {
         return SDL_GetGamepadTypeFromString(str);
     }
 
-    const char* GetGamepadStringForType(GamepadType type)
+    const char *GetGamepadStringForType(GamepadType type)
     {
         return SDL_GetGamepadStringForType((SDL_GamepadType)(type));
     }
 
-    SDL_GamepadAxis GetGamepadAxisFromString(const char* str)
+    SDL_GamepadAxis GetGamepadAxisFromString(const char *str)
     {
         return SDL_GetGamepadAxisFromString(str);
     }
 
-    const char* GetGamepadStringForAxis(GamepadAxis axis)
+    const char *GetGamepadStringForAxis(GamepadAxis axis)
     {
         return SDL_GetGamepadStringForAxis((SDL_GamepadAxis)(axis));
     }
 
-    bool GamepadHasAxis(SDL_Gamepad* gamepad, GamepadAxis axis)
+    bool GamepadHasAxis(SDL_Gamepad *gamepad, GamepadAxis axis)
     {
         return SDL_GamepadHasAxis(gamepad, (SDL_GamepadAxis)(axis));
     }
 
-    Sint16 GetGamepadAxis(SDL_Gamepad* gamepad, GamepadAxis axis)
+    Sint16 GetGamepadAxis(SDL_Gamepad *gamepad, GamepadAxis axis)
     {
         return SDL_GetGamepadAxis(gamepad, (SDL_GamepadAxis)(axis));
     }
 
-    SDL_GamepadButton GetGamepadButtonFromString(const char* str)
+    SDL_GamepadButton GetGamepadButtonFromString(const char *str)
     {
         return SDL_GetGamepadButtonFromString(str);
     }
 
-    const char* GetGamepadStringForButton(GamepadButton button)
+    const char *GetGamepadStringForButton(GamepadButton button)
     {
         return SDL_GetGamepadStringForButton((SDL_GamepadButton)(button));
     }
 
-    bool GamepadHasButton(SDL_Gamepad* gamepad, GamepadButton button)
+    bool GamepadHasButton(SDL_Gamepad *gamepad, GamepadButton button)
     {
         return SDL_GamepadHasButton(gamepad, (SDL_GamepadButton)(button));
     }
 
-    bool GetGamepadButton(SDL_Gamepad* gamepad, GamepadButton button)
+    bool GetGamepadButton(SDL_Gamepad *gamepad, GamepadButton button)
     {
         return SDL_GetGamepadButton(gamepad, (SDL_GamepadButton)(button));
     }
@@ -3918,82 +4548,91 @@ export namespace sdl
         return SDL_GetGamepadButtonLabelForType((SDL_GamepadType)(type), (SDL_GamepadButton)(button));
     }
 
-    SDL_GamepadButtonLabel GetGamepadButtonLabel(SDL_Gamepad* gamepad, GamepadButton button)
+    SDL_GamepadButtonLabel GetGamepadButtonLabel(SDL_Gamepad *gamepad, GamepadButton button)
     {
         return SDL_GetGamepadButtonLabel(gamepad, (SDL_GamepadButton)(button));
     }
 
-    int GetNumGamepadTouchpads(SDL_Gamepad* gamepad)
+    int GetNumGamepadTouchpads(SDL_Gamepad *gamepad)
     {
         return SDL_GetNumGamepadTouchpads(gamepad);
     }
 
-    int GetNumGamepadTouchpadFingers(SDL_Gamepad* gamepad, int touchpad)
+    int GetNumGamepadTouchpadFingers(SDL_Gamepad *gamepad, int touchpad)
     {
         return SDL_GetNumGamepadTouchpadFingers(gamepad, touchpad);
     }
 
-    bool GetGamepadTouchpadFinger(SDL_Gamepad* gamepad, int touchpad, int finger, bool* down, float* x, float* y, float* pressure)
+    bool GetGamepadTouchpadFinger(SDL_Gamepad *gamepad,
+                                  int touchpad,
+                                  int finger,
+                                  bool *down,
+                                  float *x,
+                                  float *y,
+                                  float *pressure)
     {
         return SDL_GetGamepadTouchpadFinger(gamepad, touchpad, finger, down, x, y, pressure);
     }
 
-    bool GamepadHasSensor(SDL_Gamepad* gamepad, SensorType type)
+    bool GamepadHasSensor(SDL_Gamepad *gamepad, SensorType type)
     {
         return SDL_GamepadHasSensor(gamepad, (SDL_SensorType)(type));
     }
 
-    bool SetGamepadSensorEnabled(SDL_Gamepad* gamepad, SensorType type, bool enabled)
+    bool SetGamepadSensorEnabled(SDL_Gamepad *gamepad, SensorType type, bool enabled)
     {
         return SDL_SetGamepadSensorEnabled(gamepad, (SDL_SensorType)(type), enabled);
     }
 
-    bool GamepadSensorEnabled(SDL_Gamepad* gamepad, SensorType type)
+    bool GamepadSensorEnabled(SDL_Gamepad *gamepad, SensorType type)
     {
         return SDL_GamepadSensorEnabled(gamepad, (SDL_SensorType)(type));
     }
 
-    float GetGamepadSensorDataRate(SDL_Gamepad* gamepad, SensorType type)
+    float GetGamepadSensorDataRate(SDL_Gamepad *gamepad, SensorType type)
     {
         return SDL_GetGamepadSensorDataRate(gamepad, (SDL_SensorType)(type));
     }
 
-    bool GetGamepadSensorData(SDL_Gamepad* gamepad, SensorType type, float* data, int num_values)
+    bool GetGamepadSensorData(SDL_Gamepad *gamepad, SensorType type, float *data, int num_values)
     {
         return SDL_GetGamepadSensorData(gamepad, (SDL_SensorType)(type), data, num_values);
     }
 
-    bool RumbleGamepad(SDL_Gamepad* gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)
+    bool RumbleGamepad(SDL_Gamepad *gamepad,
+                       Uint16 low_frequency_rumble,
+                       Uint16 high_frequency_rumble,
+                       Uint32 duration_ms)
     {
         return SDL_RumbleGamepad(gamepad, low_frequency_rumble, high_frequency_rumble, duration_ms);
     }
 
-    bool RumbleGamepadTriggers(SDL_Gamepad* gamepad, Uint16 left_rumble, Uint16 right_rumble, Uint32 duration_ms)
+    bool RumbleGamepadTriggers(SDL_Gamepad *gamepad, Uint16 left_rumble, Uint16 right_rumble, Uint32 duration_ms)
     {
         return SDL_RumbleGamepadTriggers(gamepad, left_rumble, right_rumble, duration_ms);
     }
 
-    bool SetGamepadLED(SDL_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue)
+    bool SetGamepadLED(SDL_Gamepad *gamepad, Uint8 red, Uint8 green, Uint8 blue)
     {
         return SDL_SetGamepadLED(gamepad, red, green, blue);
     }
 
-    bool SendGamepadEffect(SDL_Gamepad* gamepad, const void* data, int size)
+    bool SendGamepadEffect(SDL_Gamepad *gamepad, const void *data, int size)
     {
         return SDL_SendGamepadEffect(gamepad, data, size);
     }
 
-    void CloseGamepad(SDL_Gamepad* gamepad)
+    void CloseGamepad(SDL_Gamepad *gamepad)
     {
         SDL_CloseGamepad(gamepad);
     }
 
-    const char* GetGamepadAppleSFSymbolsNameForButton(SDL_Gamepad* gamepad, GamepadButton button)
+    const char *GetGamepadAppleSFSymbolsNameForButton(SDL_Gamepad *gamepad, GamepadButton button)
     {
         return SDL_GetGamepadAppleSFSymbolsNameForButton(gamepad, (SDL_GamepadButton)(button));
     }
 
-    const char* GetGamepadAppleSFSymbolsNameForAxis(SDL_Gamepad* gamepad, GamepadAxis axis)
+    const char *GetGamepadAppleSFSymbolsNameForAxis(SDL_Gamepad *gamepad, GamepadAxis axis)
     {
         return SDL_GetGamepadAppleSFSymbolsNameForAxis(gamepad, (SDL_GamepadAxis)(axis));
     }
@@ -4540,37 +5179,37 @@ export namespace sdl
 
     using KeyboardID = Uint32;
 
-    bool HasKeyboard(void )
+    bool HasKeyboard(void)
     {
         return SDL_HasKeyboard();
     }
 
-    SDL_KeyboardID* GetKeyboards(int* count)
+    SDL_KeyboardID *GetKeyboards(int *count)
     {
         return SDL_GetKeyboards(count);
     }
 
-    const char* GetKeyboardNameForID(SDL_KeyboardID instance_id)
+    const char *GetKeyboardNameForID(SDL_KeyboardID instance_id)
     {
         return SDL_GetKeyboardNameForID(instance_id);
     }
 
-    SDL_Window* GetKeyboardFocus(void )
+    SDL_Window *GetKeyboardFocus(void)
     {
         return SDL_GetKeyboardFocus();
     }
 
-    const bool* GetKeyboardState(int* numkeys)
+    const bool *GetKeyboardState(int *numkeys)
     {
         return SDL_GetKeyboardState(numkeys);
     }
 
-    void ResetKeyboard(void )
+    void ResetKeyboard(void)
     {
         SDL_ResetKeyboard();
     }
 
-    SDL_Keymod GetModState(void )
+    SDL_Keymod GetModState(void)
     {
         return SDL_GetModState();
     }
@@ -4585,37 +5224,37 @@ export namespace sdl
         return SDL_GetKeyFromScancode((SDL_Scancode)(scancode), (SDL_Keymod)(modstate), key_event);
     }
 
-    SDL_Scancode GetScancodeFromKey(Keycode key, Keymod* modstate)
+    SDL_Scancode GetScancodeFromKey(Keycode key, Keymod *modstate)
     {
-        return SDL_GetScancodeFromKey((SDL_Keycode)(key), (SDL_Keymod*)(modstate));
+        return SDL_GetScancodeFromKey((SDL_Keycode)(key), (SDL_Keymod *)(modstate));
     }
 
-    bool SetScancodeName(Scancode scancode, const char* name)
+    bool SetScancodeName(Scancode scancode, const char *name)
     {
         return SDL_SetScancodeName((SDL_Scancode)(scancode), name);
     }
 
-    const char* GetScancodeName(Scancode scancode)
+    const char *GetScancodeName(Scancode scancode)
     {
         return SDL_GetScancodeName((SDL_Scancode)(scancode));
     }
 
-    SDL_Scancode GetScancodeFromName(const char* name)
+    SDL_Scancode GetScancodeFromName(const char *name)
     {
         return SDL_GetScancodeFromName(name);
     }
 
-    const char* GetKeyName(Keycode key)
+    const char *GetKeyName(Keycode key)
     {
         return SDL_GetKeyName((SDL_Keycode)(key));
     }
 
-    SDL_Keycode GetKeyFromName(const char* name)
+    SDL_Keycode GetKeyFromName(const char *name)
     {
         return SDL_GetKeyFromName(name);
     }
 
-    bool StartTextInput(SDL_Window* window)
+    bool StartTextInput(SDL_Window *window)
     {
         return SDL_StartTextInput(window);
     }
@@ -4643,52 +5282,67 @@ export namespace sdl
     };
     REGULAR_ENUM(Capitalization);
 
-    bool StartTextInputWithProperties(SDL_Window* window, SDL_PropertiesID props)
+    bool StartTextInputWithProperties(SDL_Window *window, SDL_PropertiesID props)
     {
         return SDL_StartTextInputWithProperties(window, props);
     }
 
-    constexpr auto PROP_TEXTINPUT_TYPE_NUMBER() { return "SDL.textinput.type"; }
+    constexpr auto PROP_TEXTINPUT_TYPE_NUMBER()
+    {
+        return "SDL.textinput.type";
+    }
 
-    constexpr auto PROP_TEXTINPUT_CAPITALIZATION_NUMBER() { return "SDL.textinput.capitalization"; }
+    constexpr auto PROP_TEXTINPUT_CAPITALIZATION_NUMBER()
+    {
+        return "SDL.textinput.capitalization";
+    }
 
-    constexpr auto PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN() { return "SDL.textinput.autocorrect"; }
+    constexpr auto PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN()
+    {
+        return "SDL.textinput.autocorrect";
+    }
 
-    constexpr auto PROP_TEXTINPUT_MULTILINE_BOOLEAN() { return "SDL.textinput.multiline"; }
+    constexpr auto PROP_TEXTINPUT_MULTILINE_BOOLEAN()
+    {
+        return "SDL.textinput.multiline";
+    }
 
-    constexpr auto PROP_TEXTINPUT_ANDROID_INPUTTYPE_NUMBER() { return "SDL.textinput.android.inputtype"; }
+    constexpr auto PROP_TEXTINPUT_ANDROID_INPUTTYPE_NUMBER()
+    {
+        return "SDL.textinput.android.inputtype";
+    }
 
-    bool TextInputActive(SDL_Window* window)
+    bool TextInputActive(SDL_Window *window)
     {
         return SDL_TextInputActive(window);
     }
 
-    bool StopTextInput(SDL_Window* window)
+    bool StopTextInput(SDL_Window *window)
     {
         return SDL_StopTextInput(window);
     }
 
-    bool ClearComposition(SDL_Window* window)
+    bool ClearComposition(SDL_Window *window)
     {
         return SDL_ClearComposition(window);
     }
 
-    bool SetTextInputArea(SDL_Window* window, const SDL_Rect* rect, int cursor)
+    bool SetTextInputArea(SDL_Window *window, const SDL_Rect *rect, int cursor)
     {
         return SDL_SetTextInputArea(window, rect, cursor);
     }
 
-    bool GetTextInputArea(SDL_Window* window, SDL_Rect* rect, int* cursor)
+    bool GetTextInputArea(SDL_Window *window, SDL_Rect *rect, int *cursor)
     {
         return SDL_GetTextInputArea(window, rect, cursor);
     }
 
-    bool HasScreenKeyboardSupport(void )
+    bool HasScreenKeyboardSupport(void)
     {
         return SDL_HasScreenKeyboardSupport();
     }
 
-    bool ScreenKeyboardShown(SDL_Window* window)
+    bool ScreenKeyboardShown(SDL_Window *window)
     {
         return SDL_ScreenKeyboardShown(window);
     }
@@ -4745,42 +5399,42 @@ export namespace sdl
     };
     BITFLAG_ENUM(MouseButtonFlags);
 
-    bool HasMouse(void )
+    bool HasMouse(void)
     {
         return SDL_HasMouse();
     }
 
-    SDL_MouseID* GetMice(int* count)
+    SDL_MouseID *GetMice(int *count)
     {
         return SDL_GetMice(count);
     }
 
-    const char* GetMouseNameForID(SDL_MouseID instance_id)
+    const char *GetMouseNameForID(SDL_MouseID instance_id)
     {
         return SDL_GetMouseNameForID(instance_id);
     }
 
-    SDL_Window* GetMouseFocus(void )
+    SDL_Window *GetMouseFocus(void)
     {
         return SDL_GetMouseFocus();
     }
 
-    SDL_MouseButtonFlags GetMouseState(float* x, float* y)
+    SDL_MouseButtonFlags GetMouseState(float *x, float *y)
     {
         return SDL_GetMouseState(x, y);
     }
 
-    SDL_MouseButtonFlags GetGlobalMouseState(float* x, float* y)
+    SDL_MouseButtonFlags GetGlobalMouseState(float *x, float *y)
     {
         return SDL_GetGlobalMouseState(x, y);
     }
 
-    SDL_MouseButtonFlags GetRelativeMouseState(float* x, float* y)
+    SDL_MouseButtonFlags GetRelativeMouseState(float *x, float *y)
     {
         return SDL_GetRelativeMouseState(x, y);
     }
 
-    void WarpMouseInWindow(SDL_Window* window, float x, float y)
+    void WarpMouseInWindow(SDL_Window *window, float x, float y)
     {
         SDL_WarpMouseInWindow(window, x, y);
     }
@@ -4790,12 +5444,12 @@ export namespace sdl
         return SDL_WarpMouseGlobal(x, y);
     }
 
-    bool SetWindowRelativeMouseMode(SDL_Window* window, bool enabled)
+    bool SetWindowRelativeMouseMode(SDL_Window *window, bool enabled)
     {
         return SDL_SetWindowRelativeMouseMode(window, enabled);
     }
 
-    bool GetWindowRelativeMouseMode(SDL_Window* window)
+    bool GetWindowRelativeMouseMode(SDL_Window *window)
     {
         return SDL_GetWindowRelativeMouseMode(window);
     }
@@ -4805,52 +5459,52 @@ export namespace sdl
         return SDL_CaptureMouse(enabled);
     }
 
-    SDL_Cursor* CreateCursor(const Uint8* data, const Uint8* mask, int w, int h, int hot_x, int hot_y)
+    SDL_Cursor *CreateCursor(const Uint8 *data, const Uint8 *mask, int w, int h, int hot_x, int hot_y)
     {
         return SDL_CreateCursor(data, mask, w, h, hot_x, hot_y);
     }
 
-    SDL_Cursor* CreateColorCursor(SDL_Surface* surface, int hot_x, int hot_y)
+    SDL_Cursor *CreateColorCursor(SDL_Surface *surface, int hot_x, int hot_y)
     {
         return SDL_CreateColorCursor(surface, hot_x, hot_y);
     }
 
-    SDL_Cursor* CreateSystemCursor(SystemCursor id)
+    SDL_Cursor *CreateSystemCursor(SystemCursor id)
     {
         return SDL_CreateSystemCursor((SDL_SystemCursor)(id));
     }
 
-    bool SetCursor(SDL_Cursor* cursor)
+    bool SetCursor(SDL_Cursor *cursor)
     {
         return SDL_SetCursor(cursor);
     }
 
-    SDL_Cursor* GetCursor(void )
+    SDL_Cursor *GetCursor(void)
     {
         return SDL_GetCursor();
     }
 
-    SDL_Cursor* GetDefaultCursor(void )
+    SDL_Cursor *GetDefaultCursor(void)
     {
         return SDL_GetDefaultCursor();
     }
 
-    void DestroyCursor(SDL_Cursor* cursor)
+    void DestroyCursor(SDL_Cursor *cursor)
     {
         SDL_DestroyCursor(cursor);
     }
 
-    bool ShowCursor(void )
+    bool ShowCursor(void)
     {
         return SDL_ShowCursor();
     }
 
-    bool HideCursor(void )
+    bool HideCursor(void)
     {
         return SDL_HideCursor();
     }
 
-    bool CursorVisible(void )
+    bool CursorVisible(void)
     {
         return SDL_CursorVisible();
     }
@@ -4870,16 +5524,22 @@ export namespace sdl
 
     using Finger = SDL_Finger;
 
-    constexpr auto TOUCH_MOUSEID() { return ((SDL_MouseID)-1); }
+    constexpr auto TOUCH_MOUSEID()
+    {
+        return ((SDL_MouseID)-1);
+    }
 
-    constexpr auto MOUSE_TOUCHID() { return ((SDL_TouchID)-1); }
+    constexpr auto MOUSE_TOUCHID()
+    {
+        return ((SDL_TouchID)-1);
+    }
 
-    SDL_TouchID* GetTouchDevices(int* count)
+    SDL_TouchID *GetTouchDevices(int *count)
     {
         return SDL_GetTouchDevices(count);
     }
 
-    const char* GetTouchDeviceName(SDL_TouchID touchID)
+    const char *GetTouchDeviceName(SDL_TouchID touchID)
     {
         return SDL_GetTouchDeviceName(touchID);
     }
@@ -4891,9 +5551,15 @@ export namespace sdl
 
     using PenID = Uint32;
 
-    constexpr auto PEN_MOUSEID() { return ((SDL_MouseID)-2); }
+    constexpr auto PEN_MOUSEID()
+    {
+        return ((SDL_MouseID)-2);
+    }
 
-    constexpr auto PEN_TOUCHID() { return ((SDL_TouchID)-2); }
+    constexpr auto PEN_TOUCHID()
+    {
+        return ((SDL_TouchID)-2);
+    }
 
     enum class PenInputFlags : Uint32
     {
@@ -5119,7 +5785,7 @@ export namespace sdl
 
     using Event = SDL_Event;
 
-    void PumpEvents(void )
+    void PumpEvents(void)
     {
         SDL_PumpEvents();
     }
@@ -5132,7 +5798,7 @@ export namespace sdl
     };
     REGULAR_ENUM(EventAction);
 
-    int PeepEvents(SDL_Event* events, int numevents, EventAction action, Uint32 minType, Uint32 maxType)
+    int PeepEvents(SDL_Event *events, int numevents, EventAction action, Uint32 minType, Uint32 maxType)
     {
         return SDL_PeepEvents(events, numevents, (SDL_EventAction)(action), minType, maxType);
     }
@@ -5157,47 +5823,47 @@ export namespace sdl
         SDL_FlushEvents(minType, maxType);
     }
 
-    bool PollEvent(SDL_Event* event)
+    bool PollEvent(SDL_Event *event)
     {
         return SDL_PollEvent(event);
     }
 
-    bool WaitEvent(SDL_Event* event)
+    bool WaitEvent(SDL_Event *event)
     {
         return SDL_WaitEvent(event);
     }
 
-    bool WaitEventTimeout(SDL_Event* event, Sint32 timeoutMS)
+    bool WaitEventTimeout(SDL_Event *event, Sint32 timeoutMS)
     {
         return SDL_WaitEventTimeout(event, timeoutMS);
     }
 
-    bool PushEvent(SDL_Event* event)
+    bool PushEvent(SDL_Event *event)
     {
         return SDL_PushEvent(event);
     }
 
-    void SetEventFilter(SDL_EventFilter filter, void* userdata)
+    void SetEventFilter(SDL_EventFilter filter, void *userdata)
     {
         SDL_SetEventFilter(filter, userdata);
     }
 
-    bool GetEventFilter(SDL_EventFilter* filter, void** userdata)
+    bool GetEventFilter(SDL_EventFilter *filter, void **userdata)
     {
         return SDL_GetEventFilter(filter, userdata);
     }
 
-    bool AddEventWatch(SDL_EventFilter filter, void* userdata)
+    bool AddEventWatch(SDL_EventFilter filter, void *userdata)
     {
         return SDL_AddEventWatch(filter, userdata);
     }
 
-    void RemoveEventWatch(SDL_EventFilter filter, void* userdata)
+    void RemoveEventWatch(SDL_EventFilter filter, void *userdata)
     {
         SDL_RemoveEventWatch(filter, userdata);
     }
 
-    void FilterEvents(SDL_EventFilter filter, void* userdata)
+    void FilterEvents(SDL_EventFilter filter, void *userdata)
     {
         SDL_FilterEvents(filter, userdata);
     }
@@ -5217,17 +5883,17 @@ export namespace sdl
         return SDL_RegisterEvents(numevents);
     }
 
-    SDL_Window* GetWindowFromEvent(const SDL_Event* event)
+    SDL_Window *GetWindowFromEvent(const SDL_Event *event)
     {
         return SDL_GetWindowFromEvent(event);
     }
 
-    const char* GetBasePath(void )
+    const char *GetBasePath(void)
     {
         return SDL_GetBasePath();
     }
 
-    char* GetPrefPath(const char* org, const char* app)
+    char *GetPrefPath(const char *org, const char *app)
     {
         return SDL_GetPrefPath(org, app);
     }
@@ -5249,7 +5915,7 @@ export namespace sdl
     };
     REGULAR_ENUM(Folder);
 
-    const char* GetUserFolder(Folder folder)
+    const char *GetUserFolder(Folder folder)
     {
         return SDL_GetUserFolder((SDL_Folder)(folder));
     }
@@ -5271,7 +5937,7 @@ export namespace sdl
     };
     BITFLAG_ENUM(GlobFlags);
 
-    bool CreateDirectory(const char* path)
+    bool CreateDirectory(const char *path)
     {
         return SDL_CreateDirectory(path);
     }
@@ -5284,32 +5950,32 @@ export namespace sdl
     };
     REGULAR_ENUM(EnumerationResult);
 
-    bool EnumerateDirectory(const char* path, SDL_EnumerateDirectoryCallback callback, void* userdata)
+    bool EnumerateDirectory(const char *path, SDL_EnumerateDirectoryCallback callback, void *userdata)
     {
         return SDL_EnumerateDirectory(path, callback, userdata);
     }
 
-    bool RemovePath(const char* path)
+    bool RemovePath(const char *path)
     {
         return SDL_RemovePath(path);
     }
 
-    bool RenamePath(const char* oldpath, const char* newpath)
+    bool RenamePath(const char *oldpath, const char *newpath)
     {
         return SDL_RenamePath(oldpath, newpath);
     }
 
-    bool CopyFile(const char* oldpath, const char* newpath)
+    bool CopyFile(const char *oldpath, const char *newpath)
     {
         return SDL_CopyFile(oldpath, newpath);
     }
 
-    bool GetPathInfo(const char* path, SDL_PathInfo* info)
+    bool GetPathInfo(const char *path, SDL_PathInfo *info)
     {
         return SDL_GetPathInfo(path, info);
     }
 
-    char* GetCurrentDirectory(void )
+    char *GetCurrentDirectory(void)
     {
         return SDL_GetCurrentDirectory();
     }
@@ -5804,7 +6470,7 @@ export namespace sdl
 
     using GPUStorageTextureReadWriteBinding = SDL_GPUStorageTextureReadWriteBinding;
 
-    bool GPUSupportsShaderFormats(GPUShaderFormat format_flags, const char* name)
+    bool GPUSupportsShaderFormats(GPUShaderFormat format_flags, const char *name)
     {
         return SDL_GPUSupportsShaderFormats((SDL_GPUShaderFormat)(format_flags), name);
     }
@@ -5814,478 +6480,671 @@ export namespace sdl
         return SDL_GPUSupportsProperties(props);
     }
 
-    SDL_GPUDevice* CreateGPUDevice(GPUShaderFormat format_flags, bool debug_mode, const char* name)
+    SDL_GPUDevice *CreateGPUDevice(GPUShaderFormat format_flags, bool debug_mode, const char *name)
     {
         return SDL_CreateGPUDevice((SDL_GPUShaderFormat)(format_flags), debug_mode, name);
     }
 
-    SDL_GPUDevice* CreateGPUDeviceWithProperties(SDL_PropertiesID props)
+    SDL_GPUDevice *CreateGPUDeviceWithProperties(SDL_PropertiesID props)
     {
         return SDL_CreateGPUDeviceWithProperties(props);
     }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN() { return "SDL.gpu.device.create.debugmode"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.debugmode";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN() { return "SDL.gpu.device.create.preferlowpower"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.preferlowpower";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_NAME_STRING() { return "SDL.gpu.device.create.name"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.device.create.name";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN() { return "SDL.gpu.device.create.shaders.private"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.private";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN() { return "SDL.gpu.device.create.shaders.spirv"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.spirv";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN() { return "SDL.gpu.device.create.shaders.dxbc"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.dxbc";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN() { return "SDL.gpu.device.create.shaders.dxil"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.dxil";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN() { return "SDL.gpu.device.create.shaders.msl"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.msl";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN() { return "SDL.gpu.device.create.shaders.metallib"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN()
+    {
+        return "SDL.gpu.device.create.shaders.metallib";
+    }
 
-    constexpr auto PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING() { return "SDL.gpu.device.create.d3d12.semantic"; }
+    constexpr auto PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING()
+    {
+        return "SDL.gpu.device.create.d3d12.semantic";
+    }
 
-    void DestroyGPUDevice(SDL_GPUDevice* device)
+    void DestroyGPUDevice(SDL_GPUDevice *device)
     {
         SDL_DestroyGPUDevice(device);
     }
 
-    int GetNumGPUDrivers(void )
+    int GetNumGPUDrivers(void)
     {
         return SDL_GetNumGPUDrivers();
     }
 
-    const char* GetGPUDriver(int index)
+    const char *GetGPUDriver(int index)
     {
         return SDL_GetGPUDriver(index);
     }
 
-    const char* GetGPUDeviceDriver(SDL_GPUDevice* device)
+    const char *GetGPUDeviceDriver(SDL_GPUDevice *device)
     {
         return SDL_GetGPUDeviceDriver(device);
     }
 
-    SDL_GPUShaderFormat GetGPUShaderFormats(SDL_GPUDevice* device)
+    SDL_GPUShaderFormat GetGPUShaderFormats(SDL_GPUDevice *device)
     {
         return SDL_GetGPUShaderFormats(device);
     }
 
-    SDL_GPUComputePipeline* CreateGPUComputePipeline(SDL_GPUDevice* device, const SDL_GPUComputePipelineCreateInfo* createinfo)
+    SDL_GPUComputePipeline *CreateGPUComputePipeline(SDL_GPUDevice *device,
+                                                     const SDL_GPUComputePipelineCreateInfo *createinfo)
     {
         return SDL_CreateGPUComputePipeline(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING() { return "SDL.gpu.computepipeline.create.name"; }
+    constexpr auto PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.computepipeline.create.name";
+    }
 
-    SDL_GPUGraphicsPipeline* CreateGPUGraphicsPipeline(SDL_GPUDevice* device, const SDL_GPUGraphicsPipelineCreateInfo* createinfo)
+    SDL_GPUGraphicsPipeline *CreateGPUGraphicsPipeline(SDL_GPUDevice *device,
+                                                       const SDL_GPUGraphicsPipelineCreateInfo *createinfo)
     {
         return SDL_CreateGPUGraphicsPipeline(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING() { return "SDL.gpu.graphicspipeline.create.name"; }
+    constexpr auto PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.graphicspipeline.create.name";
+    }
 
-    SDL_GPUSampler* CreateGPUSampler(SDL_GPUDevice* device, const SDL_GPUSamplerCreateInfo* createinfo)
+    SDL_GPUSampler *CreateGPUSampler(SDL_GPUDevice *device, const SDL_GPUSamplerCreateInfo *createinfo)
     {
         return SDL_CreateGPUSampler(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_SAMPLER_CREATE_NAME_STRING() { return "SDL.gpu.sampler.create.name"; }
+    constexpr auto PROP_GPU_SAMPLER_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.sampler.create.name";
+    }
 
-    SDL_GPUShader* CreateGPUShader(SDL_GPUDevice* device, const SDL_GPUShaderCreateInfo* createinfo)
+    SDL_GPUShader *CreateGPUShader(SDL_GPUDevice *device, const SDL_GPUShaderCreateInfo *createinfo)
     {
         return SDL_CreateGPUShader(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_SHADER_CREATE_NAME_STRING() { return "SDL.gpu.shader.create.name"; }
+    constexpr auto PROP_GPU_SHADER_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.shader.create.name";
+    }
 
-    SDL_GPUTexture* CreateGPUTexture(SDL_GPUDevice* device, const SDL_GPUTextureCreateInfo* createinfo)
+    SDL_GPUTexture *CreateGPUTexture(SDL_GPUDevice *device, const SDL_GPUTextureCreateInfo *createinfo)
     {
         return SDL_CreateGPUTexture(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT() { return "SDL.gpu.texture.create.d3d12.clear.r"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.r";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT() { return "SDL.gpu.texture.create.d3d12.clear.g"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.g";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT() { return "SDL.gpu.texture.create.d3d12.clear.b"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.b";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT() { return "SDL.gpu.texture.create.d3d12.clear.a"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.a";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT() { return "SDL.gpu.texture.create.d3d12.clear.depth"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.depth";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_NUMBER() { return "SDL.gpu.texture.create.d3d12.clear.stencil"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_NUMBER()
+    {
+        return "SDL.gpu.texture.create.d3d12.clear.stencil";
+    }
 
-    constexpr auto PROP_GPU_TEXTURE_CREATE_NAME_STRING() { return "SDL.gpu.texture.create.name"; }
+    constexpr auto PROP_GPU_TEXTURE_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.texture.create.name";
+    }
 
-    SDL_GPUBuffer* CreateGPUBuffer(SDL_GPUDevice* device, const SDL_GPUBufferCreateInfo* createinfo)
+    SDL_GPUBuffer *CreateGPUBuffer(SDL_GPUDevice *device, const SDL_GPUBufferCreateInfo *createinfo)
     {
         return SDL_CreateGPUBuffer(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_BUFFER_CREATE_NAME_STRING() { return "SDL.gpu.buffer.create.name"; }
+    constexpr auto PROP_GPU_BUFFER_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.buffer.create.name";
+    }
 
-    SDL_GPUTransferBuffer* CreateGPUTransferBuffer(SDL_GPUDevice* device, const SDL_GPUTransferBufferCreateInfo* createinfo)
+    SDL_GPUTransferBuffer *CreateGPUTransferBuffer(SDL_GPUDevice *device,
+                                                   const SDL_GPUTransferBufferCreateInfo *createinfo)
     {
         return SDL_CreateGPUTransferBuffer(device, createinfo);
     }
 
-    constexpr auto PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING() { return "SDL.gpu.transferbuffer.create.name"; }
+    constexpr auto PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING()
+    {
+        return "SDL.gpu.transferbuffer.create.name";
+    }
 
-    void SetGPUBufferName(SDL_GPUDevice* device, SDL_GPUBuffer* buffer, const char* text)
+    void SetGPUBufferName(SDL_GPUDevice *device, SDL_GPUBuffer *buffer, const char *text)
     {
         SDL_SetGPUBufferName(device, buffer, text);
     }
 
-    void SetGPUTextureName(SDL_GPUDevice* device, SDL_GPUTexture* texture, const char* text)
+    void SetGPUTextureName(SDL_GPUDevice *device, SDL_GPUTexture *texture, const char *text)
     {
         SDL_SetGPUTextureName(device, texture, text);
     }
 
-    void InsertGPUDebugLabel(SDL_GPUCommandBuffer* command_buffer, const char* text)
+    void InsertGPUDebugLabel(SDL_GPUCommandBuffer *command_buffer, const char *text)
     {
         SDL_InsertGPUDebugLabel(command_buffer, text);
     }
 
-    void PushGPUDebugGroup(SDL_GPUCommandBuffer* command_buffer, const char* name)
+    void PushGPUDebugGroup(SDL_GPUCommandBuffer *command_buffer, const char *name)
     {
         SDL_PushGPUDebugGroup(command_buffer, name);
     }
 
-    void PopGPUDebugGroup(SDL_GPUCommandBuffer* command_buffer)
+    void PopGPUDebugGroup(SDL_GPUCommandBuffer *command_buffer)
     {
         SDL_PopGPUDebugGroup(command_buffer);
     }
 
-    void ReleaseGPUTexture(SDL_GPUDevice* device, SDL_GPUTexture* texture)
+    void ReleaseGPUTexture(SDL_GPUDevice *device, SDL_GPUTexture *texture)
     {
         SDL_ReleaseGPUTexture(device, texture);
     }
 
-    void ReleaseGPUSampler(SDL_GPUDevice* device, SDL_GPUSampler* sampler)
+    void ReleaseGPUSampler(SDL_GPUDevice *device, SDL_GPUSampler *sampler)
     {
         SDL_ReleaseGPUSampler(device, sampler);
     }
 
-    void ReleaseGPUBuffer(SDL_GPUDevice* device, SDL_GPUBuffer* buffer)
+    void ReleaseGPUBuffer(SDL_GPUDevice *device, SDL_GPUBuffer *buffer)
     {
         SDL_ReleaseGPUBuffer(device, buffer);
     }
 
-    void ReleaseGPUTransferBuffer(SDL_GPUDevice* device, SDL_GPUTransferBuffer* transfer_buffer)
+    void ReleaseGPUTransferBuffer(SDL_GPUDevice *device, SDL_GPUTransferBuffer *transfer_buffer)
     {
         SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
     }
 
-    void ReleaseGPUComputePipeline(SDL_GPUDevice* device, SDL_GPUComputePipeline* compute_pipeline)
+    void ReleaseGPUComputePipeline(SDL_GPUDevice *device, SDL_GPUComputePipeline *compute_pipeline)
     {
         SDL_ReleaseGPUComputePipeline(device, compute_pipeline);
     }
 
-    void ReleaseGPUShader(SDL_GPUDevice* device, SDL_GPUShader* shader)
+    void ReleaseGPUShader(SDL_GPUDevice *device, SDL_GPUShader *shader)
     {
         SDL_ReleaseGPUShader(device, shader);
     }
 
-    void ReleaseGPUGraphicsPipeline(SDL_GPUDevice* device, SDL_GPUGraphicsPipeline* graphics_pipeline)
+    void ReleaseGPUGraphicsPipeline(SDL_GPUDevice *device, SDL_GPUGraphicsPipeline *graphics_pipeline)
     {
         SDL_ReleaseGPUGraphicsPipeline(device, graphics_pipeline);
     }
 
-    SDL_GPUCommandBuffer* AcquireGPUCommandBuffer(SDL_GPUDevice* device)
+    SDL_GPUCommandBuffer *AcquireGPUCommandBuffer(SDL_GPUDevice *device)
     {
         return SDL_AcquireGPUCommandBuffer(device);
     }
 
-    void PushGPUVertexUniformData(SDL_GPUCommandBuffer* command_buffer, Uint32 slot_index, const void* data, Uint32 length)
+    void PushGPUVertexUniformData(SDL_GPUCommandBuffer *command_buffer,
+                                  Uint32 slot_index,
+                                  const void *data,
+                                  Uint32 length)
     {
         SDL_PushGPUVertexUniformData(command_buffer, slot_index, data, length);
     }
 
-    void PushGPUFragmentUniformData(SDL_GPUCommandBuffer* command_buffer, Uint32 slot_index, const void* data, Uint32 length)
+    void PushGPUFragmentUniformData(SDL_GPUCommandBuffer *command_buffer,
+                                    Uint32 slot_index,
+                                    const void *data,
+                                    Uint32 length)
     {
         SDL_PushGPUFragmentUniformData(command_buffer, slot_index, data, length);
     }
 
-    void PushGPUComputeUniformData(SDL_GPUCommandBuffer* command_buffer, Uint32 slot_index, const void* data, Uint32 length)
+    void PushGPUComputeUniformData(SDL_GPUCommandBuffer *command_buffer,
+                                   Uint32 slot_index,
+                                   const void *data,
+                                   Uint32 length)
     {
         SDL_PushGPUComputeUniformData(command_buffer, slot_index, data, length);
     }
 
-    SDL_GPURenderPass* BeginGPURenderPass(SDL_GPUCommandBuffer* command_buffer, const SDL_GPUColorTargetInfo* color_target_infos, Uint32 num_color_targets, const SDL_GPUDepthStencilTargetInfo* depth_stencil_target_info)
+    SDL_GPURenderPass *BeginGPURenderPass(SDL_GPUCommandBuffer *command_buffer,
+                                          const SDL_GPUColorTargetInfo *color_target_infos,
+                                          Uint32 num_color_targets,
+                                          const SDL_GPUDepthStencilTargetInfo *depth_stencil_target_info)
     {
         return SDL_BeginGPURenderPass(command_buffer, color_target_infos, num_color_targets, depth_stencil_target_info);
     }
 
-    void BindGPUGraphicsPipeline(SDL_GPURenderPass* render_pass, SDL_GPUGraphicsPipeline* graphics_pipeline)
+    void BindGPUGraphicsPipeline(SDL_GPURenderPass *render_pass, SDL_GPUGraphicsPipeline *graphics_pipeline)
     {
         SDL_BindGPUGraphicsPipeline(render_pass, graphics_pipeline);
     }
 
-    void SetGPUViewport(SDL_GPURenderPass* render_pass, const SDL_GPUViewport* viewport)
+    void SetGPUViewport(SDL_GPURenderPass *render_pass, const SDL_GPUViewport *viewport)
     {
         SDL_SetGPUViewport(render_pass, viewport);
     }
 
-    void SetGPUScissor(SDL_GPURenderPass* render_pass, const SDL_Rect* scissor)
+    void SetGPUScissor(SDL_GPURenderPass *render_pass, const SDL_Rect *scissor)
     {
         SDL_SetGPUScissor(render_pass, scissor);
     }
 
-    void SetGPUBlendConstants(SDL_GPURenderPass* render_pass, SDL_FColor blend_constants)
+    void SetGPUBlendConstants(SDL_GPURenderPass *render_pass, SDL_FColor blend_constants)
     {
         SDL_SetGPUBlendConstants(render_pass, blend_constants);
     }
 
-    void SetGPUStencilReference(SDL_GPURenderPass* render_pass, Uint8 reference)
+    void SetGPUStencilReference(SDL_GPURenderPass *render_pass, Uint8 reference)
     {
         SDL_SetGPUStencilReference(render_pass, reference);
     }
 
-    void BindGPUVertexBuffers(SDL_GPURenderPass* render_pass, Uint32 first_slot, const SDL_GPUBufferBinding* bindings, Uint32 num_bindings)
+    void BindGPUVertexBuffers(SDL_GPURenderPass *render_pass,
+                              Uint32 first_slot,
+                              const SDL_GPUBufferBinding *bindings,
+                              Uint32 num_bindings)
     {
         SDL_BindGPUVertexBuffers(render_pass, first_slot, bindings, num_bindings);
     }
 
-    void BindGPUIndexBuffer(SDL_GPURenderPass* render_pass, const SDL_GPUBufferBinding* binding, GPUIndexElementSize index_element_size)
+    void BindGPUIndexBuffer(SDL_GPURenderPass *render_pass,
+                            const SDL_GPUBufferBinding *binding,
+                            GPUIndexElementSize index_element_size)
     {
         SDL_BindGPUIndexBuffer(render_pass, binding, (SDL_GPUIndexElementSize)(index_element_size));
     }
 
-    void BindGPUVertexSamplers(SDL_GPURenderPass* render_pass, Uint32 first_slot, const SDL_GPUTextureSamplerBinding* texture_sampler_bindings, Uint32 num_bindings)
+    void BindGPUVertexSamplers(SDL_GPURenderPass *render_pass,
+                               Uint32 first_slot,
+                               const SDL_GPUTextureSamplerBinding *texture_sampler_bindings,
+                               Uint32 num_bindings)
     {
         SDL_BindGPUVertexSamplers(render_pass, first_slot, texture_sampler_bindings, num_bindings);
     }
 
-    void BindGPUVertexStorageTextures(SDL_GPURenderPass* render_pass, Uint32 first_slot, SDL_GPUTexture** storage_textures, Uint32 num_bindings)
+    void BindGPUVertexStorageTextures(SDL_GPURenderPass *render_pass,
+                                      Uint32 first_slot,
+                                      SDL_GPUTexture **storage_textures,
+                                      Uint32 num_bindings)
     {
         SDL_BindGPUVertexStorageTextures(render_pass, first_slot, storage_textures, num_bindings);
     }
 
-    void BindGPUVertexStorageBuffers(SDL_GPURenderPass* render_pass, Uint32 first_slot, SDL_GPUBuffer** storage_buffers, Uint32 num_bindings)
+    void BindGPUVertexStorageBuffers(SDL_GPURenderPass *render_pass,
+                                     Uint32 first_slot,
+                                     SDL_GPUBuffer **storage_buffers,
+                                     Uint32 num_bindings)
     {
         SDL_BindGPUVertexStorageBuffers(render_pass, first_slot, storage_buffers, num_bindings);
     }
 
-    void BindGPUFragmentSamplers(SDL_GPURenderPass* render_pass, Uint32 first_slot, const SDL_GPUTextureSamplerBinding* texture_sampler_bindings, Uint32 num_bindings)
+    void BindGPUFragmentSamplers(SDL_GPURenderPass *render_pass,
+                                 Uint32 first_slot,
+                                 const SDL_GPUTextureSamplerBinding *texture_sampler_bindings,
+                                 Uint32 num_bindings)
     {
         SDL_BindGPUFragmentSamplers(render_pass, first_slot, texture_sampler_bindings, num_bindings);
     }
 
-    void BindGPUFragmentStorageTextures(SDL_GPURenderPass* render_pass, Uint32 first_slot, SDL_GPUTexture** storage_textures, Uint32 num_bindings)
+    void BindGPUFragmentStorageTextures(SDL_GPURenderPass *render_pass,
+                                        Uint32 first_slot,
+                                        SDL_GPUTexture **storage_textures,
+                                        Uint32 num_bindings)
     {
         SDL_BindGPUFragmentStorageTextures(render_pass, first_slot, storage_textures, num_bindings);
     }
 
-    void BindGPUFragmentStorageBuffers(SDL_GPURenderPass* render_pass, Uint32 first_slot, SDL_GPUBuffer** storage_buffers, Uint32 num_bindings)
+    void BindGPUFragmentStorageBuffers(SDL_GPURenderPass *render_pass,
+                                       Uint32 first_slot,
+                                       SDL_GPUBuffer **storage_buffers,
+                                       Uint32 num_bindings)
     {
         SDL_BindGPUFragmentStorageBuffers(render_pass, first_slot, storage_buffers, num_bindings);
     }
 
-    void DrawGPUIndexedPrimitives(SDL_GPURenderPass* render_pass, Uint32 num_indices, Uint32 num_instances, Uint32 first_index, Sint32 vertex_offset, Uint32 first_instance)
+    void DrawGPUIndexedPrimitives(SDL_GPURenderPass *render_pass,
+                                  Uint32 num_indices,
+                                  Uint32 num_instances,
+                                  Uint32 first_index,
+                                  Sint32 vertex_offset,
+                                  Uint32 first_instance)
     {
-        SDL_DrawGPUIndexedPrimitives(render_pass, num_indices, num_instances, first_index, vertex_offset, first_instance);
+        SDL_DrawGPUIndexedPrimitives(render_pass,
+                                     num_indices,
+                                     num_instances,
+                                     first_index,
+                                     vertex_offset,
+                                     first_instance);
     }
 
-    void DrawGPUPrimitives(SDL_GPURenderPass* render_pass, Uint32 num_vertices, Uint32 num_instances, Uint32 first_vertex, Uint32 first_instance)
+    void DrawGPUPrimitives(SDL_GPURenderPass *render_pass,
+                           Uint32 num_vertices,
+                           Uint32 num_instances,
+                           Uint32 first_vertex,
+                           Uint32 first_instance)
     {
         SDL_DrawGPUPrimitives(render_pass, num_vertices, num_instances, first_vertex, first_instance);
     }
 
-    void DrawGPUPrimitivesIndirect(SDL_GPURenderPass* render_pass, SDL_GPUBuffer* buffer, Uint32 offset, Uint32 draw_count)
+    void DrawGPUPrimitivesIndirect(SDL_GPURenderPass *render_pass,
+                                   SDL_GPUBuffer *buffer,
+                                   Uint32 offset,
+                                   Uint32 draw_count)
     {
         SDL_DrawGPUPrimitivesIndirect(render_pass, buffer, offset, draw_count);
     }
 
-    void DrawGPUIndexedPrimitivesIndirect(SDL_GPURenderPass* render_pass, SDL_GPUBuffer* buffer, Uint32 offset, Uint32 draw_count)
+    void DrawGPUIndexedPrimitivesIndirect(SDL_GPURenderPass *render_pass,
+                                          SDL_GPUBuffer *buffer,
+                                          Uint32 offset,
+                                          Uint32 draw_count)
     {
         SDL_DrawGPUIndexedPrimitivesIndirect(render_pass, buffer, offset, draw_count);
     }
 
-    void EndGPURenderPass(SDL_GPURenderPass* render_pass)
+    void EndGPURenderPass(SDL_GPURenderPass *render_pass)
     {
         SDL_EndGPURenderPass(render_pass);
     }
 
-    SDL_GPUComputePass* BeginGPUComputePass(SDL_GPUCommandBuffer* command_buffer, const SDL_GPUStorageTextureReadWriteBinding* storage_texture_bindings, Uint32 num_storage_texture_bindings, const SDL_GPUStorageBufferReadWriteBinding* storage_buffer_bindings, Uint32 num_storage_buffer_bindings)
+    SDL_GPUComputePass *BeginGPUComputePass(SDL_GPUCommandBuffer *command_buffer,
+                                            const SDL_GPUStorageTextureReadWriteBinding *storage_texture_bindings,
+                                            Uint32 num_storage_texture_bindings,
+                                            const SDL_GPUStorageBufferReadWriteBinding *storage_buffer_bindings,
+                                            Uint32 num_storage_buffer_bindings)
     {
-        return SDL_BeginGPUComputePass(command_buffer, storage_texture_bindings, num_storage_texture_bindings, storage_buffer_bindings, num_storage_buffer_bindings);
+        return SDL_BeginGPUComputePass(command_buffer,
+                                       storage_texture_bindings,
+                                       num_storage_texture_bindings,
+                                       storage_buffer_bindings,
+                                       num_storage_buffer_bindings);
     }
 
-    void BindGPUComputePipeline(SDL_GPUComputePass* compute_pass, SDL_GPUComputePipeline* compute_pipeline)
+    void BindGPUComputePipeline(SDL_GPUComputePass *compute_pass, SDL_GPUComputePipeline *compute_pipeline)
     {
         SDL_BindGPUComputePipeline(compute_pass, compute_pipeline);
     }
 
-    void BindGPUComputeSamplers(SDL_GPUComputePass* compute_pass, Uint32 first_slot, const SDL_GPUTextureSamplerBinding* texture_sampler_bindings, Uint32 num_bindings)
+    void BindGPUComputeSamplers(SDL_GPUComputePass *compute_pass,
+                                Uint32 first_slot,
+                                const SDL_GPUTextureSamplerBinding *texture_sampler_bindings,
+                                Uint32 num_bindings)
     {
         SDL_BindGPUComputeSamplers(compute_pass, first_slot, texture_sampler_bindings, num_bindings);
     }
 
-    void BindGPUComputeStorageTextures(SDL_GPUComputePass* compute_pass, Uint32 first_slot, SDL_GPUTexture** storage_textures, Uint32 num_bindings)
+    void BindGPUComputeStorageTextures(SDL_GPUComputePass *compute_pass,
+                                       Uint32 first_slot,
+                                       SDL_GPUTexture **storage_textures,
+                                       Uint32 num_bindings)
     {
         SDL_BindGPUComputeStorageTextures(compute_pass, first_slot, storage_textures, num_bindings);
     }
 
-    void BindGPUComputeStorageBuffers(SDL_GPUComputePass* compute_pass, Uint32 first_slot, SDL_GPUBuffer** storage_buffers, Uint32 num_bindings)
+    void BindGPUComputeStorageBuffers(SDL_GPUComputePass *compute_pass,
+                                      Uint32 first_slot,
+                                      SDL_GPUBuffer **storage_buffers,
+                                      Uint32 num_bindings)
     {
         SDL_BindGPUComputeStorageBuffers(compute_pass, first_slot, storage_buffers, num_bindings);
     }
 
-    void DispatchGPUCompute(SDL_GPUComputePass* compute_pass, Uint32 groupcount_x, Uint32 groupcount_y, Uint32 groupcount_z)
+    void DispatchGPUCompute(SDL_GPUComputePass *compute_pass,
+                            Uint32 groupcount_x,
+                            Uint32 groupcount_y,
+                            Uint32 groupcount_z)
     {
         SDL_DispatchGPUCompute(compute_pass, groupcount_x, groupcount_y, groupcount_z);
     }
 
-    void DispatchGPUComputeIndirect(SDL_GPUComputePass* compute_pass, SDL_GPUBuffer* buffer, Uint32 offset)
+    void DispatchGPUComputeIndirect(SDL_GPUComputePass *compute_pass, SDL_GPUBuffer *buffer, Uint32 offset)
     {
         SDL_DispatchGPUComputeIndirect(compute_pass, buffer, offset);
     }
 
-    void EndGPUComputePass(SDL_GPUComputePass* compute_pass)
+    void EndGPUComputePass(SDL_GPUComputePass *compute_pass)
     {
         SDL_EndGPUComputePass(compute_pass);
     }
 
-    void* MapGPUTransferBuffer(SDL_GPUDevice* device, SDL_GPUTransferBuffer* transfer_buffer, bool cycle)
+    void *MapGPUTransferBuffer(SDL_GPUDevice *device, SDL_GPUTransferBuffer *transfer_buffer, bool cycle)
     {
         return SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle);
     }
 
-    void UnmapGPUTransferBuffer(SDL_GPUDevice* device, SDL_GPUTransferBuffer* transfer_buffer)
+    void UnmapGPUTransferBuffer(SDL_GPUDevice *device, SDL_GPUTransferBuffer *transfer_buffer)
     {
         SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
     }
 
-    SDL_GPUCopyPass* BeginGPUCopyPass(SDL_GPUCommandBuffer* command_buffer)
+    SDL_GPUCopyPass *BeginGPUCopyPass(SDL_GPUCommandBuffer *command_buffer)
     {
         return SDL_BeginGPUCopyPass(command_buffer);
     }
 
-    void UploadToGPUTexture(SDL_GPUCopyPass* copy_pass, const SDL_GPUTextureTransferInfo* source, const SDL_GPUTextureRegion* destination, bool cycle)
+    void UploadToGPUTexture(SDL_GPUCopyPass *copy_pass,
+                            const SDL_GPUTextureTransferInfo *source,
+                            const SDL_GPUTextureRegion *destination,
+                            bool cycle)
     {
         SDL_UploadToGPUTexture(copy_pass, source, destination, cycle);
     }
 
-    void UploadToGPUBuffer(SDL_GPUCopyPass* copy_pass, const SDL_GPUTransferBufferLocation* source, const SDL_GPUBufferRegion* destination, bool cycle)
+    void UploadToGPUBuffer(SDL_GPUCopyPass *copy_pass,
+                           const SDL_GPUTransferBufferLocation *source,
+                           const SDL_GPUBufferRegion *destination,
+                           bool cycle)
     {
         SDL_UploadToGPUBuffer(copy_pass, source, destination, cycle);
     }
 
-    void CopyGPUTextureToTexture(SDL_GPUCopyPass* copy_pass, const SDL_GPUTextureLocation* source, const SDL_GPUTextureLocation* destination, Uint32 w, Uint32 h, Uint32 d, bool cycle)
+    void CopyGPUTextureToTexture(SDL_GPUCopyPass *copy_pass,
+                                 const SDL_GPUTextureLocation *source,
+                                 const SDL_GPUTextureLocation *destination,
+                                 Uint32 w,
+                                 Uint32 h,
+                                 Uint32 d,
+                                 bool cycle)
     {
         SDL_CopyGPUTextureToTexture(copy_pass, source, destination, w, h, d, cycle);
     }
 
-    void CopyGPUBufferToBuffer(SDL_GPUCopyPass* copy_pass, const SDL_GPUBufferLocation* source, const SDL_GPUBufferLocation* destination, Uint32 size, bool cycle)
+    void CopyGPUBufferToBuffer(SDL_GPUCopyPass *copy_pass,
+                               const SDL_GPUBufferLocation *source,
+                               const SDL_GPUBufferLocation *destination,
+                               Uint32 size,
+                               bool cycle)
     {
         SDL_CopyGPUBufferToBuffer(copy_pass, source, destination, size, cycle);
     }
 
-    void DownloadFromGPUTexture(SDL_GPUCopyPass* copy_pass, const SDL_GPUTextureRegion* source, const SDL_GPUTextureTransferInfo* destination)
+    void DownloadFromGPUTexture(SDL_GPUCopyPass *copy_pass,
+                                const SDL_GPUTextureRegion *source,
+                                const SDL_GPUTextureTransferInfo *destination)
     {
         SDL_DownloadFromGPUTexture(copy_pass, source, destination);
     }
 
-    void DownloadFromGPUBuffer(SDL_GPUCopyPass* copy_pass, const SDL_GPUBufferRegion* source, const SDL_GPUTransferBufferLocation* destination)
+    void DownloadFromGPUBuffer(SDL_GPUCopyPass *copy_pass,
+                               const SDL_GPUBufferRegion *source,
+                               const SDL_GPUTransferBufferLocation *destination)
     {
         SDL_DownloadFromGPUBuffer(copy_pass, source, destination);
     }
 
-    void EndGPUCopyPass(SDL_GPUCopyPass* copy_pass)
+    void EndGPUCopyPass(SDL_GPUCopyPass *copy_pass)
     {
         SDL_EndGPUCopyPass(copy_pass);
     }
 
-    void GenerateMipmapsForGPUTexture(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture* texture)
+    void GenerateMipmapsForGPUTexture(SDL_GPUCommandBuffer *command_buffer, SDL_GPUTexture *texture)
     {
         SDL_GenerateMipmapsForGPUTexture(command_buffer, texture);
     }
 
-    void BlitGPUTexture(SDL_GPUCommandBuffer* command_buffer, const SDL_GPUBlitInfo* info)
+    void BlitGPUTexture(SDL_GPUCommandBuffer *command_buffer, const SDL_GPUBlitInfo *info)
     {
         SDL_BlitGPUTexture(command_buffer, info);
     }
 
-    bool WindowSupportsGPUSwapchainComposition(SDL_GPUDevice* device, SDL_Window* window, GPUSwapchainComposition swapchain_composition)
+    bool WindowSupportsGPUSwapchainComposition(SDL_GPUDevice *device,
+                                               SDL_Window *window,
+                                               GPUSwapchainComposition swapchain_composition)
     {
-        return SDL_WindowSupportsGPUSwapchainComposition(device, window, (SDL_GPUSwapchainComposition)(swapchain_composition));
+        return SDL_WindowSupportsGPUSwapchainComposition(device,
+                                                         window,
+                                                         (SDL_GPUSwapchainComposition)(swapchain_composition));
     }
 
-    bool WindowSupportsGPUPresentMode(SDL_GPUDevice* device, SDL_Window* window, GPUPresentMode present_mode)
+    bool WindowSupportsGPUPresentMode(SDL_GPUDevice *device, SDL_Window *window, GPUPresentMode present_mode)
     {
         return SDL_WindowSupportsGPUPresentMode(device, window, (SDL_GPUPresentMode)(present_mode));
     }
 
-    bool ClaimWindowForGPUDevice(SDL_GPUDevice* device, SDL_Window* window)
+    bool ClaimWindowForGPUDevice(SDL_GPUDevice *device, SDL_Window *window)
     {
         return SDL_ClaimWindowForGPUDevice(device, window);
     }
 
-    void ReleaseWindowFromGPUDevice(SDL_GPUDevice* device, SDL_Window* window)
+    void ReleaseWindowFromGPUDevice(SDL_GPUDevice *device, SDL_Window *window)
     {
         SDL_ReleaseWindowFromGPUDevice(device, window);
     }
 
-    bool SetGPUSwapchainParameters(SDL_GPUDevice* device, SDL_Window* window, GPUSwapchainComposition swapchain_composition, GPUPresentMode present_mode)
+    bool SetGPUSwapchainParameters(SDL_GPUDevice *device,
+                                   SDL_Window *window,
+                                   GPUSwapchainComposition swapchain_composition,
+                                   GPUPresentMode present_mode)
     {
-        return SDL_SetGPUSwapchainParameters(device, window, (SDL_GPUSwapchainComposition)(swapchain_composition), (SDL_GPUPresentMode)(present_mode));
+        return SDL_SetGPUSwapchainParameters(device,
+                                             window,
+                                             (SDL_GPUSwapchainComposition)(swapchain_composition),
+                                             (SDL_GPUPresentMode)(present_mode));
     }
 
-    bool SetGPUAllowedFramesInFlight(SDL_GPUDevice* device, Uint32 allowed_frames_in_flight)
+    bool SetGPUAllowedFramesInFlight(SDL_GPUDevice *device, Uint32 allowed_frames_in_flight)
     {
         return SDL_SetGPUAllowedFramesInFlight(device, allowed_frames_in_flight);
     }
 
-    SDL_GPUTextureFormat GetGPUSwapchainTextureFormat(SDL_GPUDevice* device, SDL_Window* window)
+    SDL_GPUTextureFormat GetGPUSwapchainTextureFormat(SDL_GPUDevice *device, SDL_Window *window)
     {
         return SDL_GetGPUSwapchainTextureFormat(device, window);
     }
 
-    bool AcquireGPUSwapchainTexture(SDL_GPUCommandBuffer* command_buffer, SDL_Window* window, SDL_GPUTexture** swapchain_texture, Uint32* swapchain_texture_width, Uint32* swapchain_texture_height)
+    bool AcquireGPUSwapchainTexture(SDL_GPUCommandBuffer *command_buffer,
+                                    SDL_Window *window,
+                                    SDL_GPUTexture **swapchain_texture,
+                                    Uint32 *swapchain_texture_width,
+                                    Uint32 *swapchain_texture_height)
     {
-        return SDL_AcquireGPUSwapchainTexture(command_buffer, window, swapchain_texture, swapchain_texture_width, swapchain_texture_height);
+        return SDL_AcquireGPUSwapchainTexture(command_buffer,
+                                              window,
+                                              swapchain_texture,
+                                              swapchain_texture_width,
+                                              swapchain_texture_height);
     }
 
-    bool WaitForGPUSwapchain(SDL_GPUDevice* device, SDL_Window* window)
+    bool WaitForGPUSwapchain(SDL_GPUDevice *device, SDL_Window *window)
     {
         return SDL_WaitForGPUSwapchain(device, window);
     }
 
-    bool WaitAndAcquireGPUSwapchainTexture(SDL_GPUCommandBuffer* command_buffer, SDL_Window* window, SDL_GPUTexture** swapchain_texture, Uint32* swapchain_texture_width, Uint32* swapchain_texture_height)
+    bool WaitAndAcquireGPUSwapchainTexture(SDL_GPUCommandBuffer *command_buffer,
+                                           SDL_Window *window,
+                                           SDL_GPUTexture **swapchain_texture,
+                                           Uint32 *swapchain_texture_width,
+                                           Uint32 *swapchain_texture_height)
     {
-        return SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, window, swapchain_texture, swapchain_texture_width, swapchain_texture_height);
+        return SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer,
+                                                     window,
+                                                     swapchain_texture,
+                                                     swapchain_texture_width,
+                                                     swapchain_texture_height);
     }
 
-    bool SubmitGPUCommandBuffer(SDL_GPUCommandBuffer* command_buffer)
+    bool SubmitGPUCommandBuffer(SDL_GPUCommandBuffer *command_buffer)
     {
         return SDL_SubmitGPUCommandBuffer(command_buffer);
     }
 
-    SDL_GPUFence* SubmitGPUCommandBufferAndAcquireFence(SDL_GPUCommandBuffer* command_buffer)
+    SDL_GPUFence *SubmitGPUCommandBufferAndAcquireFence(SDL_GPUCommandBuffer *command_buffer)
     {
         return SDL_SubmitGPUCommandBufferAndAcquireFence(command_buffer);
     }
 
-    bool CancelGPUCommandBuffer(SDL_GPUCommandBuffer* command_buffer)
+    bool CancelGPUCommandBuffer(SDL_GPUCommandBuffer *command_buffer)
     {
         return SDL_CancelGPUCommandBuffer(command_buffer);
     }
 
-    bool WaitForGPUIdle(SDL_GPUDevice* device)
+    bool WaitForGPUIdle(SDL_GPUDevice *device)
     {
         return SDL_WaitForGPUIdle(device);
     }
 
-    bool WaitForGPUFences(SDL_GPUDevice* device, bool wait_all, SDL_GPUFence** fences, Uint32 num_fences)
+    bool WaitForGPUFences(SDL_GPUDevice *device, bool wait_all, SDL_GPUFence **fences, Uint32 num_fences)
     {
         return SDL_WaitForGPUFences(device, wait_all, fences, num_fences);
     }
 
-    bool QueryGPUFence(SDL_GPUDevice* device, SDL_GPUFence* fence)
+    bool QueryGPUFence(SDL_GPUDevice *device, SDL_GPUFence *fence)
     {
         return SDL_QueryGPUFence(device, fence);
     }
 
-    void ReleaseGPUFence(SDL_GPUDevice* device, SDL_GPUFence* fence)
+    void ReleaseGPUFence(SDL_GPUDevice *device, SDL_GPUFence *fence)
     {
         SDL_ReleaseGPUFence(device, fence);
     }
@@ -6295,23 +7154,34 @@ export namespace sdl
         return SDL_GPUTextureFormatTexelBlockSize((SDL_GPUTextureFormat)(format));
     }
 
-    bool GPUTextureSupportsFormat(SDL_GPUDevice* device, GPUTextureFormat format, GPUTextureType type, GPUTextureUsageFlags usage)
+    bool GPUTextureSupportsFormat(SDL_GPUDevice *device,
+                                  GPUTextureFormat format,
+                                  GPUTextureType type,
+                                  GPUTextureUsageFlags usage)
     {
-        return SDL_GPUTextureSupportsFormat(device, (SDL_GPUTextureFormat)(format), (SDL_GPUTextureType)(type), (SDL_GPUTextureUsageFlags)(usage));
+        return SDL_GPUTextureSupportsFormat(device,
+                                            (SDL_GPUTextureFormat)(format),
+                                            (SDL_GPUTextureType)(type),
+                                            (SDL_GPUTextureUsageFlags)(usage));
     }
 
-    bool GPUTextureSupportsSampleCount(SDL_GPUDevice* device, GPUTextureFormat format, GPUSampleCount sample_count)
+    bool GPUTextureSupportsSampleCount(SDL_GPUDevice *device, GPUTextureFormat format, GPUSampleCount sample_count)
     {
-        return SDL_GPUTextureSupportsSampleCount(device, (SDL_GPUTextureFormat)(format), (SDL_GPUSampleCount)(sample_count));
+        return SDL_GPUTextureSupportsSampleCount(device,
+                                                 (SDL_GPUTextureFormat)(format),
+                                                 (SDL_GPUSampleCount)(sample_count));
     }
 
-    Uint32 CalculateGPUTextureFormatSize(GPUTextureFormat format, Uint32 width, Uint32 height, Uint32 depth_or_layer_count)
+    Uint32 CalculateGPUTextureFormatSize(GPUTextureFormat format,
+                                         Uint32 width,
+                                         Uint32 height,
+                                         Uint32 depth_or_layer_count)
     {
         return SDL_CalculateGPUTextureFormatSize((SDL_GPUTextureFormat)(format), width, height, depth_or_layer_count);
     }
 #if defined(SDL_PLATFORM_GDK)
 
-    void GDKSuspendGPU(SDL_GPUDevice* device)
+    void GDKSuspendGPU(SDL_GPUDevice *device)
     {
         SDL_GDKSuspendGPU(device);
     }
@@ -6319,64 +7189,138 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_GDK)
 
-    void GDKResumeGPU(SDL_GPUDevice* device)
+    void GDKResumeGPU(SDL_GPUDevice *device)
     {
         SDL_GDKResumeGPU(device);
     }
 #endif
 
-
     using SDL_Haptic = SDL_Haptic;
 
-    constexpr auto HAPTIC_CONSTANT() { return (1u<<0); }
+    constexpr auto HAPTIC_CONSTANT()
+    {
+        return (1u << 0);
+    }
 
-    constexpr auto HAPTIC_SINE() { return (1u<<1); }
+    constexpr auto HAPTIC_SINE()
+    {
+        return (1u << 1);
+    }
 
-    constexpr auto HAPTIC_SQUARE() { return (1u<<2); }
+    constexpr auto HAPTIC_SQUARE()
+    {
+        return (1u << 2);
+    }
 
-    constexpr auto HAPTIC_TRIANGLE() { return (1u<<3); }
+    constexpr auto HAPTIC_TRIANGLE()
+    {
+        return (1u << 3);
+    }
 
-    constexpr auto HAPTIC_SAWTOOTHUP() { return (1u<<4); }
+    constexpr auto HAPTIC_SAWTOOTHUP()
+    {
+        return (1u << 4);
+    }
 
-    constexpr auto HAPTIC_SAWTOOTHDOWN() { return (1u<<5); }
+    constexpr auto HAPTIC_SAWTOOTHDOWN()
+    {
+        return (1u << 5);
+    }
 
-    constexpr auto HAPTIC_RAMP() { return (1u<<6); }
+    constexpr auto HAPTIC_RAMP()
+    {
+        return (1u << 6);
+    }
 
-    constexpr auto HAPTIC_SPRING() { return (1u<<7); }
+    constexpr auto HAPTIC_SPRING()
+    {
+        return (1u << 7);
+    }
 
-    constexpr auto HAPTIC_DAMPER() { return (1u<<8); }
+    constexpr auto HAPTIC_DAMPER()
+    {
+        return (1u << 8);
+    }
 
-    constexpr auto HAPTIC_INERTIA() { return (1u<<9); }
+    constexpr auto HAPTIC_INERTIA()
+    {
+        return (1u << 9);
+    }
 
-    constexpr auto HAPTIC_FRICTION() { return (1u<<10); }
+    constexpr auto HAPTIC_FRICTION()
+    {
+        return (1u << 10);
+    }
 
-    constexpr auto HAPTIC_LEFTRIGHT() { return (1u<<11); }
+    constexpr auto HAPTIC_LEFTRIGHT()
+    {
+        return (1u << 11);
+    }
 
-    constexpr auto HAPTIC_RESERVED1() { return (1u<<12); }
+    constexpr auto HAPTIC_RESERVED1()
+    {
+        return (1u << 12);
+    }
 
-    constexpr auto HAPTIC_RESERVED2() { return (1u<<13); }
+    constexpr auto HAPTIC_RESERVED2()
+    {
+        return (1u << 13);
+    }
 
-    constexpr auto HAPTIC_RESERVED3() { return (1u<<14); }
+    constexpr auto HAPTIC_RESERVED3()
+    {
+        return (1u << 14);
+    }
 
-    constexpr auto HAPTIC_CUSTOM() { return (1u<<15); }
+    constexpr auto HAPTIC_CUSTOM()
+    {
+        return (1u << 15);
+    }
 
-    constexpr auto HAPTIC_GAIN() { return (1u<<16); }
+    constexpr auto HAPTIC_GAIN()
+    {
+        return (1u << 16);
+    }
 
-    constexpr auto HAPTIC_AUTOCENTER() { return (1u<<17); }
+    constexpr auto HAPTIC_AUTOCENTER()
+    {
+        return (1u << 17);
+    }
 
-    constexpr auto HAPTIC_STATUS() { return (1u<<18); }
+    constexpr auto HAPTIC_STATUS()
+    {
+        return (1u << 18);
+    }
 
-    constexpr auto HAPTIC_PAUSE() { return (1u<<19); }
+    constexpr auto HAPTIC_PAUSE()
+    {
+        return (1u << 19);
+    }
 
-    constexpr auto HAPTIC_POLAR() { return 0; }
+    constexpr auto HAPTIC_POLAR()
+    {
+        return 0;
+    }
 
-    constexpr auto HAPTIC_CARTESIAN() { return 1; }
+    constexpr auto HAPTIC_CARTESIAN()
+    {
+        return 1;
+    }
 
-    constexpr auto HAPTIC_SPHERICAL() { return 2; }
+    constexpr auto HAPTIC_SPHERICAL()
+    {
+        return 2;
+    }
 
-    constexpr auto HAPTIC_STEERING_AXIS() { return 3; }
+    constexpr auto HAPTIC_STEERING_AXIS()
+    {
+        return 3;
+    }
 
-    constexpr auto HAPTIC_INFINITY() { return 4294967295U; }
+    constexpr auto HAPTIC_INFINITY()
+    {
+        return 4294967295U;
+    }
 
     using HapticDirection = SDL_HapticDirection;
 
@@ -6396,636 +7340,1350 @@ export namespace sdl
 
     using HapticID = Uint32;
 
-    SDL_HapticID* GetHaptics(int* count)
+    SDL_HapticID *GetHaptics(int *count)
     {
         return SDL_GetHaptics(count);
     }
 
-    const char* GetHapticNameForID(SDL_HapticID instance_id)
+    const char *GetHapticNameForID(SDL_HapticID instance_id)
     {
         return SDL_GetHapticNameForID(instance_id);
     }
 
-    SDL_Haptic* OpenHaptic(SDL_HapticID instance_id)
+    SDL_Haptic *OpenHaptic(SDL_HapticID instance_id)
     {
         return SDL_OpenHaptic(instance_id);
     }
 
-    SDL_Haptic* GetHapticFromID(SDL_HapticID instance_id)
+    SDL_Haptic *GetHapticFromID(SDL_HapticID instance_id)
     {
         return SDL_GetHapticFromID(instance_id);
     }
 
-    SDL_HapticID GetHapticID(SDL_Haptic* haptic)
+    SDL_HapticID GetHapticID(SDL_Haptic *haptic)
     {
         return SDL_GetHapticID(haptic);
     }
 
-    const char* GetHapticName(SDL_Haptic* haptic)
+    const char *GetHapticName(SDL_Haptic *haptic)
     {
         return SDL_GetHapticName(haptic);
     }
 
-    bool IsMouseHaptic(void )
+    bool IsMouseHaptic(void)
     {
         return SDL_IsMouseHaptic();
     }
 
-    SDL_Haptic* OpenHapticFromMouse(void )
+    SDL_Haptic *OpenHapticFromMouse(void)
     {
         return SDL_OpenHapticFromMouse();
     }
 
-    bool IsJoystickHaptic(SDL_Joystick* joystick)
+    bool IsJoystickHaptic(SDL_Joystick *joystick)
     {
         return SDL_IsJoystickHaptic(joystick);
     }
 
-    SDL_Haptic* OpenHapticFromJoystick(SDL_Joystick* joystick)
+    SDL_Haptic *OpenHapticFromJoystick(SDL_Joystick *joystick)
     {
         return SDL_OpenHapticFromJoystick(joystick);
     }
 
-    void CloseHaptic(SDL_Haptic* haptic)
+    void CloseHaptic(SDL_Haptic *haptic)
     {
         SDL_CloseHaptic(haptic);
     }
 
-    int GetMaxHapticEffects(SDL_Haptic* haptic)
+    int GetMaxHapticEffects(SDL_Haptic *haptic)
     {
         return SDL_GetMaxHapticEffects(haptic);
     }
 
-    int GetMaxHapticEffectsPlaying(SDL_Haptic* haptic)
+    int GetMaxHapticEffectsPlaying(SDL_Haptic *haptic)
     {
         return SDL_GetMaxHapticEffectsPlaying(haptic);
     }
 
-    Uint32 GetHapticFeatures(SDL_Haptic* haptic)
+    Uint32 GetHapticFeatures(SDL_Haptic *haptic)
     {
         return SDL_GetHapticFeatures(haptic);
     }
 
-    int GetNumHapticAxes(SDL_Haptic* haptic)
+    int GetNumHapticAxes(SDL_Haptic *haptic)
     {
         return SDL_GetNumHapticAxes(haptic);
     }
 
-    bool HapticEffectSupported(SDL_Haptic* haptic, const SDL_HapticEffect* effect)
+    bool HapticEffectSupported(SDL_Haptic *haptic, const SDL_HapticEffect *effect)
     {
         return SDL_HapticEffectSupported(haptic, effect);
     }
 
-    int CreateHapticEffect(SDL_Haptic* haptic, const SDL_HapticEffect* effect)
+    int CreateHapticEffect(SDL_Haptic *haptic, const SDL_HapticEffect *effect)
     {
         return SDL_CreateHapticEffect(haptic, effect);
     }
 
-    bool UpdateHapticEffect(SDL_Haptic* haptic, int effect, const SDL_HapticEffect* data)
+    bool UpdateHapticEffect(SDL_Haptic *haptic, int effect, const SDL_HapticEffect *data)
     {
         return SDL_UpdateHapticEffect(haptic, effect, data);
     }
 
-    bool RunHapticEffect(SDL_Haptic* haptic, int effect, Uint32 iterations)
+    bool RunHapticEffect(SDL_Haptic *haptic, int effect, Uint32 iterations)
     {
         return SDL_RunHapticEffect(haptic, effect, iterations);
     }
 
-    bool StopHapticEffect(SDL_Haptic* haptic, int effect)
+    bool StopHapticEffect(SDL_Haptic *haptic, int effect)
     {
         return SDL_StopHapticEffect(haptic, effect);
     }
 
-    void DestroyHapticEffect(SDL_Haptic* haptic, int effect)
+    void DestroyHapticEffect(SDL_Haptic *haptic, int effect)
     {
         SDL_DestroyHapticEffect(haptic, effect);
     }
 
-    bool GetHapticEffectStatus(SDL_Haptic* haptic, int effect)
+    bool GetHapticEffectStatus(SDL_Haptic *haptic, int effect)
     {
         return SDL_GetHapticEffectStatus(haptic, effect);
     }
 
-    bool SetHapticGain(SDL_Haptic* haptic, int gain)
+    bool SetHapticGain(SDL_Haptic *haptic, int gain)
     {
         return SDL_SetHapticGain(haptic, gain);
     }
 
-    bool SetHapticAutocenter(SDL_Haptic* haptic, int autocenter)
+    bool SetHapticAutocenter(SDL_Haptic *haptic, int autocenter)
     {
         return SDL_SetHapticAutocenter(haptic, autocenter);
     }
 
-    bool PauseHaptic(SDL_Haptic* haptic)
+    bool PauseHaptic(SDL_Haptic *haptic)
     {
         return SDL_PauseHaptic(haptic);
     }
 
-    bool ResumeHaptic(SDL_Haptic* haptic)
+    bool ResumeHaptic(SDL_Haptic *haptic)
     {
         return SDL_ResumeHaptic(haptic);
     }
 
-    bool StopHapticEffects(SDL_Haptic* haptic)
+    bool StopHapticEffects(SDL_Haptic *haptic)
     {
         return SDL_StopHapticEffects(haptic);
     }
 
-    bool HapticRumbleSupported(SDL_Haptic* haptic)
+    bool HapticRumbleSupported(SDL_Haptic *haptic)
     {
         return SDL_HapticRumbleSupported(haptic);
     }
 
-    bool InitHapticRumble(SDL_Haptic* haptic)
+    bool InitHapticRumble(SDL_Haptic *haptic)
     {
         return SDL_InitHapticRumble(haptic);
     }
 
-    bool PlayHapticRumble(SDL_Haptic* haptic, float strength, Uint32 length)
+    bool PlayHapticRumble(SDL_Haptic *haptic, float strength, Uint32 length)
     {
         return SDL_PlayHapticRumble(haptic, strength, length);
     }
 
-    bool StopHapticRumble(SDL_Haptic* haptic)
+    bool StopHapticRumble(SDL_Haptic *haptic)
     {
         return SDL_StopHapticRumble(haptic);
     }
 
-    constexpr auto HINT_ALLOW_ALT_TAB_WHILE_GRABBED() { return "SDL_ALLOW_ALT_TAB_WHILE_GRABBED"; }
-
-    constexpr auto HINT_ANDROID_ALLOW_RECREATE_ACTIVITY() { return "SDL_ANDROID_ALLOW_RECREATE_ACTIVITY"; }
-
-    constexpr auto HINT_ANDROID_BLOCK_ON_PAUSE() { return "SDL_ANDROID_BLOCK_ON_PAUSE"; }
-
-    constexpr auto HINT_ANDROID_LOW_LATENCY_AUDIO() { return "SDL_ANDROID_LOW_LATENCY_AUDIO"; }
-
-    constexpr auto HINT_ANDROID_TRAP_BACK_BUTTON() { return "SDL_ANDROID_TRAP_BACK_BUTTON"; }
-
-    constexpr auto HINT_APP_ID() { return "SDL_APP_ID"; }
-
-    constexpr auto HINT_APP_NAME() { return "SDL_APP_NAME"; }
-
-    constexpr auto HINT_APPLE_TV_CONTROLLER_UI_EVENTS() { return "SDL_APPLE_TV_CONTROLLER_UI_EVENTS"; }
-
-    constexpr auto HINT_APPLE_TV_REMOTE_ALLOW_ROTATION() { return "SDL_APPLE_TV_REMOTE_ALLOW_ROTATION"; }
-
-    constexpr auto HINT_AUDIO_ALSA_DEFAULT_DEVICE() { return "SDL_AUDIO_ALSA_DEFAULT_DEVICE"; }
-
-    constexpr auto HINT_AUDIO_ALSA_DEFAULT_PLAYBACK_DEVICE() { return "SDL_AUDIO_ALSA_DEFAULT_PLAYBACK_DEVICE"; }
-
-    constexpr auto HINT_AUDIO_ALSA_DEFAULT_RECORDING_DEVICE() { return "SDL_AUDIO_ALSA_DEFAULT_RECORDING_DEVICE"; }
-
-    constexpr auto HINT_AUDIO_CATEGORY() { return "SDL_AUDIO_CATEGORY"; }
-
-    constexpr auto HINT_AUDIO_CHANNELS() { return "SDL_AUDIO_CHANNELS"; }
-
-    constexpr auto HINT_AUDIO_DEVICE_APP_ICON_NAME() { return "SDL_AUDIO_DEVICE_APP_ICON_NAME"; }
-
-    constexpr auto HINT_AUDIO_DEVICE_SAMPLE_FRAMES() { return "SDL_AUDIO_DEVICE_SAMPLE_FRAMES"; }
-
-    constexpr auto HINT_AUDIO_DEVICE_STREAM_NAME() { return "SDL_AUDIO_DEVICE_STREAM_NAME"; }
-
-    constexpr auto HINT_AUDIO_DEVICE_STREAM_ROLE() { return "SDL_AUDIO_DEVICE_STREAM_ROLE"; }
-
-    constexpr auto HINT_AUDIO_DISK_INPUT_FILE() { return "SDL_AUDIO_DISK_INPUT_FILE"; }
-
-    constexpr auto HINT_AUDIO_DISK_OUTPUT_FILE() { return "SDL_AUDIO_DISK_OUTPUT_FILE"; }
-
-    constexpr auto HINT_AUDIO_DISK_TIMESCALE() { return "SDL_AUDIO_DISK_TIMESCALE"; }
-
-    constexpr auto HINT_AUDIO_DRIVER() { return "SDL_AUDIO_DRIVER"; }
-
-    constexpr auto HINT_AUDIO_DUMMY_TIMESCALE() { return "SDL_AUDIO_DUMMY_TIMESCALE"; }
-
-    constexpr auto HINT_AUDIO_FORMAT() { return "SDL_AUDIO_FORMAT"; }
-
-    constexpr auto HINT_AUDIO_FREQUENCY() { return "SDL_AUDIO_FREQUENCY"; }
-
-    constexpr auto HINT_AUDIO_INCLUDE_MONITORS() { return "SDL_AUDIO_INCLUDE_MONITORS"; }
-
-    constexpr auto HINT_AUTO_UPDATE_JOYSTICKS() { return "SDL_AUTO_UPDATE_JOYSTICKS"; }
-
-    constexpr auto HINT_AUTO_UPDATE_SENSORS() { return "SDL_AUTO_UPDATE_SENSORS"; }
-
-    constexpr auto HINT_BMP_SAVE_LEGACY_FORMAT() { return "SDL_BMP_SAVE_LEGACY_FORMAT"; }
-
-    constexpr auto HINT_CAMERA_DRIVER() { return "SDL_CAMERA_DRIVER"; }
-
-    constexpr auto HINT_CPU_FEATURE_MASK() { return "SDL_CPU_FEATURE_MASK"; }
-
-    constexpr auto HINT_JOYSTICK_DIRECTINPUT() { return "SDL_JOYSTICK_DIRECTINPUT"; }
-
-    constexpr auto HINT_FILE_DIALOG_DRIVER() { return "SDL_FILE_DIALOG_DRIVER"; }
-
-    constexpr auto HINT_DISPLAY_USABLE_BOUNDS() { return "SDL_DISPLAY_USABLE_BOUNDS"; }
-
-    constexpr auto HINT_EMSCRIPTEN_ASYNCIFY() { return "SDL_EMSCRIPTEN_ASYNCIFY"; }
-
-    constexpr auto HINT_EMSCRIPTEN_CANVAS_SELECTOR() { return "SDL_EMSCRIPTEN_CANVAS_SELECTOR"; }
-
-    constexpr auto HINT_EMSCRIPTEN_KEYBOARD_ELEMENT() { return "SDL_EMSCRIPTEN_KEYBOARD_ELEMENT"; }
-
-    constexpr auto HINT_ENABLE_SCREEN_KEYBOARD() { return "SDL_ENABLE_SCREEN_KEYBOARD"; }
-
-    constexpr auto HINT_EVDEV_DEVICES() { return "SDL_EVDEV_DEVICES"; }
-
-    constexpr auto HINT_EVENT_LOGGING() { return "SDL_EVENT_LOGGING"; }
-
-    constexpr auto HINT_FORCE_RAISEWINDOW() { return "SDL_FORCE_RAISEWINDOW"; }
-
-    constexpr auto HINT_FRAMEBUFFER_ACCELERATION() { return "SDL_FRAMEBUFFER_ACCELERATION"; }
-
-    constexpr auto HINT_GAMECONTROLLERCONFIG() { return "SDL_GAMECONTROLLERCONFIG"; }
-
-    constexpr auto HINT_GAMECONTROLLERCONFIG_FILE() { return "SDL_GAMECONTROLLERCONFIG_FILE"; }
-
-    constexpr auto HINT_GAMECONTROLLERTYPE() { return "SDL_GAMECONTROLLERTYPE"; }
-
-    constexpr auto HINT_GAMECONTROLLER_IGNORE_DEVICES() { return "SDL_GAMECONTROLLER_IGNORE_DEVICES"; }
-
-    constexpr auto HINT_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT() { return "SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT"; }
-
-    constexpr auto HINT_GAMECONTROLLER_SENSOR_FUSION() { return "SDL_GAMECONTROLLER_SENSOR_FUSION"; }
-
-    constexpr auto HINT_GDK_TEXTINPUT_DEFAULT_TEXT() { return "SDL_GDK_TEXTINPUT_DEFAULT_TEXT"; }
-
-    constexpr auto HINT_GDK_TEXTINPUT_DESCRIPTION() { return "SDL_GDK_TEXTINPUT_DESCRIPTION"; }
-
-    constexpr auto HINT_GDK_TEXTINPUT_MAX_LENGTH() { return "SDL_GDK_TEXTINPUT_MAX_LENGTH"; }
-
-    constexpr auto HINT_GDK_TEXTINPUT_SCOPE() { return "SDL_GDK_TEXTINPUT_SCOPE"; }
-
-    constexpr auto HINT_GDK_TEXTINPUT_TITLE() { return "SDL_GDK_TEXTINPUT_TITLE"; }
-
-    constexpr auto HINT_HIDAPI_LIBUSB() { return "SDL_HIDAPI_LIBUSB"; }
-
-    constexpr auto HINT_HIDAPI_LIBUSB_WHITELIST() { return "SDL_HIDAPI_LIBUSB_WHITELIST"; }
-
-    constexpr auto HINT_HIDAPI_UDEV() { return "SDL_HIDAPI_UDEV"; }
-
-    constexpr auto HINT_GPU_DRIVER() { return "SDL_GPU_DRIVER"; }
-
-    constexpr auto HINT_HIDAPI_ENUMERATE_ONLY_CONTROLLERS() { return "SDL_HIDAPI_ENUMERATE_ONLY_CONTROLLERS"; }
-
-    constexpr auto HINT_HIDAPI_IGNORE_DEVICES() { return "SDL_HIDAPI_IGNORE_DEVICES"; }
-
-    constexpr auto HINT_IME_IMPLEMENTED_UI() { return "SDL_IME_IMPLEMENTED_UI"; }
-
-    constexpr auto HINT_IOS_HIDE_HOME_INDICATOR() { return "SDL_IOS_HIDE_HOME_INDICATOR"; }
-
-    constexpr auto HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS() { return "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"; }
-
-    constexpr auto HINT_JOYSTICK_ARCADESTICK_DEVICES() { return "SDL_JOYSTICK_ARCADESTICK_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_ARCADESTICK_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_ARCADESTICK_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_BLACKLIST_DEVICES() { return "SDL_JOYSTICK_BLACKLIST_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_BLACKLIST_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_BLACKLIST_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_DEVICE() { return "SDL_JOYSTICK_DEVICE"; }
-
-    constexpr auto HINT_JOYSTICK_ENHANCED_REPORTS() { return "SDL_JOYSTICK_ENHANCED_REPORTS"; }
-
-    constexpr auto HINT_JOYSTICK_FLIGHTSTICK_DEVICES() { return "SDL_JOYSTICK_FLIGHTSTICK_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_FLIGHTSTICK_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_FLIGHTSTICK_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_GAMEINPUT() { return "SDL_JOYSTICK_GAMEINPUT"; }
-
-    constexpr auto HINT_JOYSTICK_GAMECUBE_DEVICES() { return "SDL_JOYSTICK_GAMECUBE_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_GAMECUBE_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_GAMECUBE_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI() { return "SDL_JOYSTICK_HIDAPI"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_COMBINE_JOY_CONS() { return "SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_GAMECUBE() { return "SDL_JOYSTICK_HIDAPI_GAMECUBE"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_GAMECUBE_RUMBLE_BRAKE() { return "SDL_JOYSTICK_HIDAPI_GAMECUBE_RUMBLE_BRAKE"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_JOY_CONS() { return "SDL_JOYSTICK_HIDAPI_JOY_CONS"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_JOYCON_HOME_LED() { return "SDL_JOYSTICK_HIDAPI_JOYCON_HOME_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_LUNA() { return "SDL_JOYSTICK_HIDAPI_LUNA"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_NINTENDO_CLASSIC() { return "SDL_JOYSTICK_HIDAPI_NINTENDO_CLASSIC"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS3() { return "SDL_JOYSTICK_HIDAPI_PS3"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER() { return "SDL_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS4() { return "SDL_JOYSTICK_HIDAPI_PS4"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS4_REPORT_INTERVAL() { return "SDL_JOYSTICK_HIDAPI_PS4_REPORT_INTERVAL"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS5() { return "SDL_JOYSTICK_HIDAPI_PS5"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED() { return "SDL_JOYSTICK_HIDAPI_PS5_PLAYER_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_SHIELD() { return "SDL_JOYSTICK_HIDAPI_SHIELD"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_STADIA() { return "SDL_JOYSTICK_HIDAPI_STADIA"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM() { return "SDL_JOYSTICK_HIDAPI_STEAM"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM_HOME_LED() { return "SDL_JOYSTICK_HIDAPI_STEAM_HOME_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_STEAMDECK() { return "SDL_JOYSTICK_HIDAPI_STEAMDECK"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM_HORI() { return "SDL_JOYSTICK_HIDAPI_STEAM_HORI"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH() { return "SDL_JOYSTICK_HIDAPI_SWITCH"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED() { return "SDL_JOYSTICK_HIDAPI_SWITCH_HOME_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH_PLAYER_LED() { return "SDL_JOYSTICK_HIDAPI_SWITCH_PLAYER_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_VERTICAL_JOY_CONS() { return "SDL_JOYSTICK_HIDAPI_VERTICAL_JOY_CONS"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_WII() { return "SDL_JOYSTICK_HIDAPI_WII"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_WII_PLAYER_LED() { return "SDL_JOYSTICK_HIDAPI_WII_PLAYER_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX() { return "SDL_JOYSTICK_HIDAPI_XBOX"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360() { return "SDL_JOYSTICK_HIDAPI_XBOX_360"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360_PLAYER_LED() { return "SDL_JOYSTICK_HIDAPI_XBOX_360_PLAYER_LED"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360_WIRELESS() { return "SDL_JOYSTICK_HIDAPI_XBOX_360_WIRELESS"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_ONE() { return "SDL_JOYSTICK_HIDAPI_XBOX_ONE"; }
-
-    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_ONE_HOME_LED() { return "SDL_JOYSTICK_HIDAPI_XBOX_ONE_HOME_LED"; }
-
-    constexpr auto HINT_JOYSTICK_IOKIT() { return "SDL_JOYSTICK_IOKIT"; }
-
-    constexpr auto HINT_JOYSTICK_LINUX_CLASSIC() { return "SDL_JOYSTICK_LINUX_CLASSIC"; }
-
-    constexpr auto HINT_JOYSTICK_LINUX_DEADZONES() { return "SDL_JOYSTICK_LINUX_DEADZONES"; }
-
-    constexpr auto HINT_JOYSTICK_LINUX_DIGITAL_HATS() { return "SDL_JOYSTICK_LINUX_DIGITAL_HATS"; }
-
-    constexpr auto HINT_JOYSTICK_LINUX_HAT_DEADZONES() { return "SDL_JOYSTICK_LINUX_HAT_DEADZONES"; }
-
-    constexpr auto HINT_JOYSTICK_MFI() { return "SDL_JOYSTICK_MFI"; }
-
-    constexpr auto HINT_JOYSTICK_RAWINPUT() { return "SDL_JOYSTICK_RAWINPUT"; }
-
-    constexpr auto HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT() { return "SDL_JOYSTICK_RAWINPUT_CORRELATE_XINPUT"; }
-
-    constexpr auto HINT_JOYSTICK_ROG_CHAKRAM() { return "SDL_JOYSTICK_ROG_CHAKRAM"; }
-
-    constexpr auto HINT_JOYSTICK_THREAD() { return "SDL_JOYSTICK_THREAD"; }
-
-    constexpr auto HINT_JOYSTICK_THROTTLE_DEVICES() { return "SDL_JOYSTICK_THROTTLE_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_THROTTLE_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_THROTTLE_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_WGI() { return "SDL_JOYSTICK_WGI"; }
-
-    constexpr auto HINT_JOYSTICK_WHEEL_DEVICES() { return "SDL_JOYSTICK_WHEEL_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_WHEEL_DEVICES_EXCLUDED() { return "SDL_JOYSTICK_WHEEL_DEVICES_EXCLUDED"; }
-
-    constexpr auto HINT_JOYSTICK_ZERO_CENTERED_DEVICES() { return "SDL_JOYSTICK_ZERO_CENTERED_DEVICES"; }
-
-    constexpr auto HINT_JOYSTICK_HAPTIC_AXES() { return "SDL_JOYSTICK_HAPTIC_AXES"; }
-
-    constexpr auto HINT_KEYCODE_OPTIONS() { return "SDL_KEYCODE_OPTIONS"; }
-
-    constexpr auto HINT_KMSDRM_DEVICE_INDEX() { return "SDL_KMSDRM_DEVICE_INDEX"; }
-
-    constexpr auto HINT_KMSDRM_REQUIRE_DRM_MASTER() { return "SDL_KMSDRM_REQUIRE_DRM_MASTER"; }
-
-    constexpr auto HINT_LOGGING() { return "SDL_LOGGING"; }
-
-    constexpr auto HINT_MAC_BACKGROUND_APP() { return "SDL_MAC_BACKGROUND_APP"; }
-
-    constexpr auto HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK() { return "SDL_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK"; }
-
-    constexpr auto HINT_MAC_OPENGL_ASYNC_DISPATCH() { return "SDL_MAC_OPENGL_ASYNC_DISPATCH"; }
-
-    constexpr auto HINT_MAC_OPTION_AS_ALT() { return "SDL_MAC_OPTION_AS_ALT"; }
-
-    constexpr auto HINT_MAC_SCROLL_MOMENTUM() { return "SDL_MAC_SCROLL_MOMENTUM"; }
-
-    constexpr auto HINT_MAIN_CALLBACK_RATE() { return "SDL_MAIN_CALLBACK_RATE"; }
-
-    constexpr auto HINT_MOUSE_AUTO_CAPTURE() { return "SDL_MOUSE_AUTO_CAPTURE"; }
-
-    constexpr auto HINT_MOUSE_DOUBLE_CLICK_RADIUS() { return "SDL_MOUSE_DOUBLE_CLICK_RADIUS"; }
-
-    constexpr auto HINT_MOUSE_DOUBLE_CLICK_TIME() { return "SDL_MOUSE_DOUBLE_CLICK_TIME"; }
-
-    constexpr auto HINT_MOUSE_DEFAULT_SYSTEM_CURSOR() { return "SDL_MOUSE_DEFAULT_SYSTEM_CURSOR"; }
-
-    constexpr auto HINT_MOUSE_EMULATE_WARP_WITH_RELATIVE() { return "SDL_MOUSE_EMULATE_WARP_WITH_RELATIVE"; }
-
-    constexpr auto HINT_MOUSE_FOCUS_CLICKTHROUGH() { return "SDL_MOUSE_FOCUS_CLICKTHROUGH"; }
-
-    constexpr auto HINT_MOUSE_NORMAL_SPEED_SCALE() { return "SDL_MOUSE_NORMAL_SPEED_SCALE"; }
-
-    constexpr auto HINT_MOUSE_RELATIVE_MODE_CENTER() { return "SDL_MOUSE_RELATIVE_MODE_CENTER"; }
-
-    constexpr auto HINT_MOUSE_RELATIVE_SPEED_SCALE() { return "SDL_MOUSE_RELATIVE_SPEED_SCALE"; }
-
-    constexpr auto HINT_MOUSE_RELATIVE_SYSTEM_SCALE() { return "SDL_MOUSE_RELATIVE_SYSTEM_SCALE"; }
-
-    constexpr auto HINT_MOUSE_RELATIVE_WARP_MOTION() { return "SDL_MOUSE_RELATIVE_WARP_MOTION"; }
-
-    constexpr auto HINT_MOUSE_RELATIVE_CURSOR_VISIBLE() { return "SDL_MOUSE_RELATIVE_CURSOR_VISIBLE"; }
-
-    constexpr auto HINT_MOUSE_TOUCH_EVENTS() { return "SDL_MOUSE_TOUCH_EVENTS"; }
-
-    constexpr auto HINT_MUTE_CONSOLE_KEYBOARD() { return "SDL_MUTE_CONSOLE_KEYBOARD"; }
-
-    constexpr auto HINT_NO_SIGNAL_HANDLERS() { return "SDL_NO_SIGNAL_HANDLERS"; }
-
-    constexpr auto HINT_OPENGL_LIBRARY() { return "SDL_OPENGL_LIBRARY"; }
-
-    constexpr auto HINT_EGL_LIBRARY() { return "SDL_EGL_LIBRARY"; }
-
-    constexpr auto HINT_OPENGL_ES_DRIVER() { return "SDL_OPENGL_ES_DRIVER"; }
-
-    constexpr auto HINT_OPENVR_LIBRARY() { return "SDL_OPENVR_LIBRARY"; }
-
-    constexpr auto HINT_ORIENTATIONS() { return "SDL_ORIENTATIONS"; }
-
-    constexpr auto HINT_POLL_SENTINEL() { return "SDL_POLL_SENTINEL"; }
-
-    constexpr auto HINT_PREFERRED_LOCALES() { return "SDL_PREFERRED_LOCALES"; }
-
-    constexpr auto HINT_QUIT_ON_LAST_WINDOW_CLOSE() { return "SDL_QUIT_ON_LAST_WINDOW_CLOSE"; }
-
-    constexpr auto HINT_RENDER_DIRECT3D_THREADSAFE() { return "SDL_RENDER_DIRECT3D_THREADSAFE"; }
-
-    constexpr auto HINT_RENDER_DIRECT3D11_DEBUG() { return "SDL_RENDER_DIRECT3D11_DEBUG"; }
-
-    constexpr auto HINT_RENDER_VULKAN_DEBUG() { return "SDL_RENDER_VULKAN_DEBUG"; }
-
-    constexpr auto HINT_RENDER_GPU_DEBUG() { return "SDL_RENDER_GPU_DEBUG"; }
-
-    constexpr auto HINT_RENDER_GPU_LOW_POWER() { return "SDL_RENDER_GPU_LOW_POWER"; }
-
-    constexpr auto HINT_RENDER_DRIVER() { return "SDL_RENDER_DRIVER"; }
-
-    constexpr auto HINT_RENDER_LINE_METHOD() { return "SDL_RENDER_LINE_METHOD"; }
-
-    constexpr auto HINT_RENDER_METAL_PREFER_LOW_POWER_DEVICE() { return "SDL_RENDER_METAL_PREFER_LOW_POWER_DEVICE"; }
-
-    constexpr auto HINT_RENDER_VSYNC() { return "SDL_RENDER_VSYNC"; }
-
-    constexpr auto HINT_RETURN_KEY_HIDES_IME() { return "SDL_RETURN_KEY_HIDES_IME"; }
-
-    constexpr auto HINT_ROG_GAMEPAD_MICE() { return "SDL_ROG_GAMEPAD_MICE"; }
-
-    constexpr auto HINT_ROG_GAMEPAD_MICE_EXCLUDED() { return "SDL_ROG_GAMEPAD_MICE_EXCLUDED"; }
-
-    constexpr auto HINT_RPI_VIDEO_LAYER() { return "SDL_RPI_VIDEO_LAYER"; }
-
-    constexpr auto HINT_SCREENSAVER_INHIBIT_ACTIVITY_NAME() { return "SDL_SCREENSAVER_INHIBIT_ACTIVITY_NAME"; }
-
-    constexpr auto HINT_SHUTDOWN_DBUS_ON_QUIT() { return "SDL_SHUTDOWN_DBUS_ON_QUIT"; }
-
-    constexpr auto HINT_STORAGE_TITLE_DRIVER() { return "SDL_STORAGE_TITLE_DRIVER"; }
-
-    constexpr auto HINT_STORAGE_USER_DRIVER() { return "SDL_STORAGE_USER_DRIVER"; }
-
-    constexpr auto HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL() { return "SDL_THREAD_FORCE_REALTIME_TIME_CRITICAL"; }
-
-    constexpr auto HINT_THREAD_PRIORITY_POLICY() { return "SDL_THREAD_PRIORITY_POLICY"; }
-
-    constexpr auto HINT_TIMER_RESOLUTION() { return "SDL_TIMER_RESOLUTION"; }
-
-    constexpr auto HINT_TOUCH_MOUSE_EVENTS() { return "SDL_TOUCH_MOUSE_EVENTS"; }
-
-    constexpr auto HINT_TRACKPAD_IS_TOUCH_ONLY() { return "SDL_TRACKPAD_IS_TOUCH_ONLY"; }
-
-    constexpr auto HINT_TV_REMOTE_AS_JOYSTICK() { return "SDL_TV_REMOTE_AS_JOYSTICK"; }
-
-    constexpr auto HINT_VIDEO_ALLOW_SCREENSAVER() { return "SDL_VIDEO_ALLOW_SCREENSAVER"; }
-
-    constexpr auto HINT_VIDEO_DISPLAY_PRIORITY() { return "SDL_VIDEO_DISPLAY_PRIORITY"; }
-
-    constexpr auto HINT_VIDEO_DOUBLE_BUFFER() { return "SDL_VIDEO_DOUBLE_BUFFER"; }
-
-    constexpr auto HINT_VIDEO_DRIVER() { return "SDL_VIDEO_DRIVER"; }
-
-    constexpr auto HINT_VIDEO_DUMMY_SAVE_FRAMES() { return "SDL_VIDEO_DUMMY_SAVE_FRAMES"; }
-
-    constexpr auto HINT_VIDEO_EGL_ALLOW_GETDISPLAY_FALLBACK() { return "SDL_VIDEO_EGL_ALLOW_GETDISPLAY_FALLBACK"; }
-
-    constexpr auto HINT_VIDEO_FORCE_EGL() { return "SDL_VIDEO_FORCE_EGL"; }
-
-    constexpr auto HINT_VIDEO_MAC_FULLSCREEN_SPACES() { return "SDL_VIDEO_MAC_FULLSCREEN_SPACES"; }
-
-    constexpr auto HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY() { return "SDL_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY"; }
-
-    constexpr auto HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS() { return "SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS"; }
-
-    constexpr auto HINT_VIDEO_OFFSCREEN_SAVE_FRAMES() { return "SDL_VIDEO_OFFSCREEN_SAVE_FRAMES"; }
-
-    constexpr auto HINT_VIDEO_SYNC_WINDOW_OPERATIONS() { return "SDL_VIDEO_SYNC_WINDOW_OPERATIONS"; }
-
-    constexpr auto HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR() { return "SDL_VIDEO_WAYLAND_ALLOW_LIBDECOR"; }
-
-    constexpr auto HINT_VIDEO_WAYLAND_MODE_EMULATION() { return "SDL_VIDEO_WAYLAND_MODE_EMULATION"; }
-
-    constexpr auto HINT_VIDEO_WAYLAND_MODE_SCALING() { return "SDL_VIDEO_WAYLAND_MODE_SCALING"; }
-
-    constexpr auto HINT_VIDEO_WAYLAND_PREFER_LIBDECOR() { return "SDL_VIDEO_WAYLAND_PREFER_LIBDECOR"; }
-
-    constexpr auto HINT_VIDEO_WAYLAND_SCALE_TO_DISPLAY() { return "SDL_VIDEO_WAYLAND_SCALE_TO_DISPLAY"; }
-
-    constexpr auto HINT_VIDEO_WIN_D3DCOMPILER() { return "SDL_VIDEO_WIN_D3DCOMPILER"; }
-
-    constexpr auto HINT_VIDEO_X11_EXTERNAL_WINDOW_INPUT() { return "SDL_VIDEO_X11_EXTERNAL_WINDOW_INPUT"; }
-
-    constexpr auto HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR() { return "SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR"; }
-
-    constexpr auto HINT_VIDEO_X11_NET_WM_PING() { return "SDL_VIDEO_X11_NET_WM_PING"; }
-
-    constexpr auto HINT_VIDEO_X11_NODIRECTCOLOR() { return "SDL_VIDEO_X11_NODIRECTCOLOR"; }
-
-    constexpr auto HINT_VIDEO_X11_SCALING_FACTOR() { return "SDL_VIDEO_X11_SCALING_FACTOR"; }
-
-    constexpr auto HINT_VIDEO_X11_VISUALID() { return "SDL_VIDEO_X11_VISUALID"; }
-
-    constexpr auto HINT_VIDEO_X11_WINDOW_VISUALID() { return "SDL_VIDEO_X11_WINDOW_VISUALID"; }
-
-    constexpr auto HINT_VIDEO_X11_XRANDR() { return "SDL_VIDEO_X11_XRANDR"; }
-
-    constexpr auto HINT_VITA_ENABLE_BACK_TOUCH() { return "SDL_VITA_ENABLE_BACK_TOUCH"; }
-
-    constexpr auto HINT_VITA_ENABLE_FRONT_TOUCH() { return "SDL_VITA_ENABLE_FRONT_TOUCH"; }
-
-    constexpr auto HINT_VITA_MODULE_PATH() { return "SDL_VITA_MODULE_PATH"; }
-
-    constexpr auto HINT_VITA_PVR_INIT() { return "SDL_VITA_PVR_INIT"; }
-
-    constexpr auto HINT_VITA_RESOLUTION() { return "SDL_VITA_RESOLUTION"; }
-
-    constexpr auto HINT_VITA_PVR_OPENGL() { return "SDL_VITA_PVR_OPENGL"; }
-
-    constexpr auto HINT_VITA_TOUCH_MOUSE_DEVICE() { return "SDL_VITA_TOUCH_MOUSE_DEVICE"; }
-
-    constexpr auto HINT_VULKAN_DISPLAY() { return "SDL_VULKAN_DISPLAY"; }
-
-    constexpr auto HINT_VULKAN_LIBRARY() { return "SDL_VULKAN_LIBRARY"; }
-
-    constexpr auto HINT_WAVE_FACT_CHUNK() { return "SDL_WAVE_FACT_CHUNK"; }
-
-    constexpr auto HINT_WAVE_CHUNK_LIMIT() { return "SDL_WAVE_CHUNK_LIMIT"; }
-
-    constexpr auto HINT_WAVE_RIFF_CHUNK_SIZE() { return "SDL_WAVE_RIFF_CHUNK_SIZE"; }
-
-    constexpr auto HINT_WAVE_TRUNCATION() { return "SDL_WAVE_TRUNCATION"; }
-
-    constexpr auto HINT_WINDOW_ACTIVATE_WHEN_RAISED() { return "SDL_WINDOW_ACTIVATE_WHEN_RAISED"; }
-
-    constexpr auto HINT_WINDOW_ACTIVATE_WHEN_SHOWN() { return "SDL_WINDOW_ACTIVATE_WHEN_SHOWN"; }
-
-    constexpr auto HINT_WINDOW_ALLOW_TOPMOST() { return "SDL_WINDOW_ALLOW_TOPMOST"; }
-
-    constexpr auto HINT_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN() { return "SDL_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN"; }
-
-    constexpr auto HINT_WINDOWS_CLOSE_ON_ALT_F4() { return "SDL_WINDOWS_CLOSE_ON_ALT_F4"; }
-
-    constexpr auto HINT_WINDOWS_ENABLE_MENU_MNEMONICS() { return "SDL_WINDOWS_ENABLE_MENU_MNEMONICS"; }
-
-    constexpr auto HINT_WINDOWS_ENABLE_MESSAGELOOP() { return "SDL_WINDOWS_ENABLE_MESSAGELOOP"; }
-
-    constexpr auto HINT_WINDOWS_GAMEINPUT() { return "SDL_WINDOWS_GAMEINPUT"; }
-
-    constexpr auto HINT_WINDOWS_RAW_KEYBOARD() { return "SDL_WINDOWS_RAW_KEYBOARD"; }
-
-    constexpr auto HINT_WINDOWS_FORCE_SEMAPHORE_KERNEL() { return "SDL_WINDOWS_FORCE_SEMAPHORE_KERNEL"; }
-
-    constexpr auto HINT_WINDOWS_INTRESOURCE_ICON() { return "SDL_WINDOWS_INTRESOURCE_ICON"; }
-
-    constexpr auto HINT_WINDOWS_INTRESOURCE_ICON_SMALL() { return "SDL_WINDOWS_INTRESOURCE_ICON_SMALL"; }
-
-    constexpr auto HINT_WINDOWS_USE_D3D9EX() { return "SDL_WINDOWS_USE_D3D9EX"; }
-
-    constexpr auto HINT_WINDOWS_ERASE_BACKGROUND_MODE() { return "SDL_WINDOWS_ERASE_BACKGROUND_MODE"; }
-
-    constexpr auto HINT_X11_FORCE_OVERRIDE_REDIRECT() { return "SDL_X11_FORCE_OVERRIDE_REDIRECT"; }
-
-    constexpr auto HINT_X11_WINDOW_TYPE() { return "SDL_X11_WINDOW_TYPE"; }
-
-    constexpr auto HINT_X11_XCB_LIBRARY() { return "SDL_X11_XCB_LIBRARY"; }
-
-    constexpr auto HINT_XINPUT_ENABLED() { return "SDL_XINPUT_ENABLED"; }
-
-    constexpr auto HINT_ASSERT() { return "SDL_ASSERT"; }
-
-    constexpr auto HINT_PEN_MOUSE_EVENTS() { return "SDL_PEN_MOUSE_EVENTS"; }
-
-    constexpr auto HINT_PEN_TOUCH_EVENTS() { return "SDL_PEN_TOUCH_EVENTS"; }
+    constexpr auto HINT_ALLOW_ALT_TAB_WHILE_GRABBED()
+    {
+        return "SDL_ALLOW_ALT_TAB_WHILE_GRABBED";
+    }
+
+    constexpr auto HINT_ANDROID_ALLOW_RECREATE_ACTIVITY()
+    {
+        return "SDL_ANDROID_ALLOW_RECREATE_ACTIVITY";
+    }
+
+    constexpr auto HINT_ANDROID_BLOCK_ON_PAUSE()
+    {
+        return "SDL_ANDROID_BLOCK_ON_PAUSE";
+    }
+
+    constexpr auto HINT_ANDROID_LOW_LATENCY_AUDIO()
+    {
+        return "SDL_ANDROID_LOW_LATENCY_AUDIO";
+    }
+
+    constexpr auto HINT_ANDROID_TRAP_BACK_BUTTON()
+    {
+        return "SDL_ANDROID_TRAP_BACK_BUTTON";
+    }
+
+    constexpr auto HINT_APP_ID()
+    {
+        return "SDL_APP_ID";
+    }
+
+    constexpr auto HINT_APP_NAME()
+    {
+        return "SDL_APP_NAME";
+    }
+
+    constexpr auto HINT_APPLE_TV_CONTROLLER_UI_EVENTS()
+    {
+        return "SDL_APPLE_TV_CONTROLLER_UI_EVENTS";
+    }
+
+    constexpr auto HINT_APPLE_TV_REMOTE_ALLOW_ROTATION()
+    {
+        return "SDL_APPLE_TV_REMOTE_ALLOW_ROTATION";
+    }
+
+    constexpr auto HINT_AUDIO_ALSA_DEFAULT_DEVICE()
+    {
+        return "SDL_AUDIO_ALSA_DEFAULT_DEVICE";
+    }
+
+    constexpr auto HINT_AUDIO_ALSA_DEFAULT_PLAYBACK_DEVICE()
+    {
+        return "SDL_AUDIO_ALSA_DEFAULT_PLAYBACK_DEVICE";
+    }
+
+    constexpr auto HINT_AUDIO_ALSA_DEFAULT_RECORDING_DEVICE()
+    {
+        return "SDL_AUDIO_ALSA_DEFAULT_RECORDING_DEVICE";
+    }
+
+    constexpr auto HINT_AUDIO_CATEGORY()
+    {
+        return "SDL_AUDIO_CATEGORY";
+    }
+
+    constexpr auto HINT_AUDIO_CHANNELS()
+    {
+        return "SDL_AUDIO_CHANNELS";
+    }
+
+    constexpr auto HINT_AUDIO_DEVICE_APP_ICON_NAME()
+    {
+        return "SDL_AUDIO_DEVICE_APP_ICON_NAME";
+    }
+
+    constexpr auto HINT_AUDIO_DEVICE_SAMPLE_FRAMES()
+    {
+        return "SDL_AUDIO_DEVICE_SAMPLE_FRAMES";
+    }
+
+    constexpr auto HINT_AUDIO_DEVICE_STREAM_NAME()
+    {
+        return "SDL_AUDIO_DEVICE_STREAM_NAME";
+    }
+
+    constexpr auto HINT_AUDIO_DEVICE_STREAM_ROLE()
+    {
+        return "SDL_AUDIO_DEVICE_STREAM_ROLE";
+    }
+
+    constexpr auto HINT_AUDIO_DISK_INPUT_FILE()
+    {
+        return "SDL_AUDIO_DISK_INPUT_FILE";
+    }
+
+    constexpr auto HINT_AUDIO_DISK_OUTPUT_FILE()
+    {
+        return "SDL_AUDIO_DISK_OUTPUT_FILE";
+    }
+
+    constexpr auto HINT_AUDIO_DISK_TIMESCALE()
+    {
+        return "SDL_AUDIO_DISK_TIMESCALE";
+    }
+
+    constexpr auto HINT_AUDIO_DRIVER()
+    {
+        return "SDL_AUDIO_DRIVER";
+    }
+
+    constexpr auto HINT_AUDIO_DUMMY_TIMESCALE()
+    {
+        return "SDL_AUDIO_DUMMY_TIMESCALE";
+    }
+
+    constexpr auto HINT_AUDIO_FORMAT()
+    {
+        return "SDL_AUDIO_FORMAT";
+    }
+
+    constexpr auto HINT_AUDIO_FREQUENCY()
+    {
+        return "SDL_AUDIO_FREQUENCY";
+    }
+
+    constexpr auto HINT_AUDIO_INCLUDE_MONITORS()
+    {
+        return "SDL_AUDIO_INCLUDE_MONITORS";
+    }
+
+    constexpr auto HINT_AUTO_UPDATE_JOYSTICKS()
+    {
+        return "SDL_AUTO_UPDATE_JOYSTICKS";
+    }
+
+    constexpr auto HINT_AUTO_UPDATE_SENSORS()
+    {
+        return "SDL_AUTO_UPDATE_SENSORS";
+    }
+
+    constexpr auto HINT_BMP_SAVE_LEGACY_FORMAT()
+    {
+        return "SDL_BMP_SAVE_LEGACY_FORMAT";
+    }
+
+    constexpr auto HINT_CAMERA_DRIVER()
+    {
+        return "SDL_CAMERA_DRIVER";
+    }
+
+    constexpr auto HINT_CPU_FEATURE_MASK()
+    {
+        return "SDL_CPU_FEATURE_MASK";
+    }
+
+    constexpr auto HINT_JOYSTICK_DIRECTINPUT()
+    {
+        return "SDL_JOYSTICK_DIRECTINPUT";
+    }
+
+    constexpr auto HINT_FILE_DIALOG_DRIVER()
+    {
+        return "SDL_FILE_DIALOG_DRIVER";
+    }
+
+    constexpr auto HINT_DISPLAY_USABLE_BOUNDS()
+    {
+        return "SDL_DISPLAY_USABLE_BOUNDS";
+    }
+
+    constexpr auto HINT_EMSCRIPTEN_ASYNCIFY()
+    {
+        return "SDL_EMSCRIPTEN_ASYNCIFY";
+    }
+
+    constexpr auto HINT_EMSCRIPTEN_CANVAS_SELECTOR()
+    {
+        return "SDL_EMSCRIPTEN_CANVAS_SELECTOR";
+    }
+
+    constexpr auto HINT_EMSCRIPTEN_KEYBOARD_ELEMENT()
+    {
+        return "SDL_EMSCRIPTEN_KEYBOARD_ELEMENT";
+    }
+
+    constexpr auto HINT_ENABLE_SCREEN_KEYBOARD()
+    {
+        return "SDL_ENABLE_SCREEN_KEYBOARD";
+    }
+
+    constexpr auto HINT_EVDEV_DEVICES()
+    {
+        return "SDL_EVDEV_DEVICES";
+    }
+
+    constexpr auto HINT_EVENT_LOGGING()
+    {
+        return "SDL_EVENT_LOGGING";
+    }
+
+    constexpr auto HINT_FORCE_RAISEWINDOW()
+    {
+        return "SDL_FORCE_RAISEWINDOW";
+    }
+
+    constexpr auto HINT_FRAMEBUFFER_ACCELERATION()
+    {
+        return "SDL_FRAMEBUFFER_ACCELERATION";
+    }
+
+    constexpr auto HINT_GAMECONTROLLERCONFIG()
+    {
+        return "SDL_GAMECONTROLLERCONFIG";
+    }
+
+    constexpr auto HINT_GAMECONTROLLERCONFIG_FILE()
+    {
+        return "SDL_GAMECONTROLLERCONFIG_FILE";
+    }
+
+    constexpr auto HINT_GAMECONTROLLERTYPE()
+    {
+        return "SDL_GAMECONTROLLERTYPE";
+    }
+
+    constexpr auto HINT_GAMECONTROLLER_IGNORE_DEVICES()
+    {
+        return "SDL_GAMECONTROLLER_IGNORE_DEVICES";
+    }
+
+    constexpr auto HINT_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT()
+    {
+        return "SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT";
+    }
+
+    constexpr auto HINT_GAMECONTROLLER_SENSOR_FUSION()
+    {
+        return "SDL_GAMECONTROLLER_SENSOR_FUSION";
+    }
+
+    constexpr auto HINT_GDK_TEXTINPUT_DEFAULT_TEXT()
+    {
+        return "SDL_GDK_TEXTINPUT_DEFAULT_TEXT";
+    }
+
+    constexpr auto HINT_GDK_TEXTINPUT_DESCRIPTION()
+    {
+        return "SDL_GDK_TEXTINPUT_DESCRIPTION";
+    }
+
+    constexpr auto HINT_GDK_TEXTINPUT_MAX_LENGTH()
+    {
+        return "SDL_GDK_TEXTINPUT_MAX_LENGTH";
+    }
+
+    constexpr auto HINT_GDK_TEXTINPUT_SCOPE()
+    {
+        return "SDL_GDK_TEXTINPUT_SCOPE";
+    }
+
+    constexpr auto HINT_GDK_TEXTINPUT_TITLE()
+    {
+        return "SDL_GDK_TEXTINPUT_TITLE";
+    }
+
+    constexpr auto HINT_HIDAPI_LIBUSB()
+    {
+        return "SDL_HIDAPI_LIBUSB";
+    }
+
+    constexpr auto HINT_HIDAPI_LIBUSB_WHITELIST()
+    {
+        return "SDL_HIDAPI_LIBUSB_WHITELIST";
+    }
+
+    constexpr auto HINT_HIDAPI_UDEV()
+    {
+        return "SDL_HIDAPI_UDEV";
+    }
+
+    constexpr auto HINT_GPU_DRIVER()
+    {
+        return "SDL_GPU_DRIVER";
+    }
+
+    constexpr auto HINT_HIDAPI_ENUMERATE_ONLY_CONTROLLERS()
+    {
+        return "SDL_HIDAPI_ENUMERATE_ONLY_CONTROLLERS";
+    }
+
+    constexpr auto HINT_HIDAPI_IGNORE_DEVICES()
+    {
+        return "SDL_HIDAPI_IGNORE_DEVICES";
+    }
+
+    constexpr auto HINT_IME_IMPLEMENTED_UI()
+    {
+        return "SDL_IME_IMPLEMENTED_UI";
+    }
+
+    constexpr auto HINT_IOS_HIDE_HOME_INDICATOR()
+    {
+        return "SDL_IOS_HIDE_HOME_INDICATOR";
+    }
+
+    constexpr auto HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS()
+    {
+        return "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS";
+    }
+
+    constexpr auto HINT_JOYSTICK_ARCADESTICK_DEVICES()
+    {
+        return "SDL_JOYSTICK_ARCADESTICK_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_ARCADESTICK_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_ARCADESTICK_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_BLACKLIST_DEVICES()
+    {
+        return "SDL_JOYSTICK_BLACKLIST_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_BLACKLIST_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_BLACKLIST_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_DEVICE()
+    {
+        return "SDL_JOYSTICK_DEVICE";
+    }
+
+    constexpr auto HINT_JOYSTICK_ENHANCED_REPORTS()
+    {
+        return "SDL_JOYSTICK_ENHANCED_REPORTS";
+    }
+
+    constexpr auto HINT_JOYSTICK_FLIGHTSTICK_DEVICES()
+    {
+        return "SDL_JOYSTICK_FLIGHTSTICK_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_FLIGHTSTICK_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_FLIGHTSTICK_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_GAMEINPUT()
+    {
+        return "SDL_JOYSTICK_GAMEINPUT";
+    }
+
+    constexpr auto HINT_JOYSTICK_GAMECUBE_DEVICES()
+    {
+        return "SDL_JOYSTICK_GAMECUBE_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_GAMECUBE_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_GAMECUBE_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI()
+    {
+        return "SDL_JOYSTICK_HIDAPI";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_COMBINE_JOY_CONS()
+    {
+        return "SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_GAMECUBE()
+    {
+        return "SDL_JOYSTICK_HIDAPI_GAMECUBE";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_GAMECUBE_RUMBLE_BRAKE()
+    {
+        return "SDL_JOYSTICK_HIDAPI_GAMECUBE_RUMBLE_BRAKE";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_JOY_CONS()
+    {
+        return "SDL_JOYSTICK_HIDAPI_JOY_CONS";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_JOYCON_HOME_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_JOYCON_HOME_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_LUNA()
+    {
+        return "SDL_JOYSTICK_HIDAPI_LUNA";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_NINTENDO_CLASSIC()
+    {
+        return "SDL_JOYSTICK_HIDAPI_NINTENDO_CLASSIC";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS3()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS3";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS3_SIXAXIS_DRIVER";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS4()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS4";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS4_REPORT_INTERVAL()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS4_REPORT_INTERVAL";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS5()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS5";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_PS5_PLAYER_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_SHIELD()
+    {
+        return "SDL_JOYSTICK_HIDAPI_SHIELD";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_STADIA()
+    {
+        return "SDL_JOYSTICK_HIDAPI_STADIA";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM()
+    {
+        return "SDL_JOYSTICK_HIDAPI_STEAM";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM_HOME_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_STEAM_HOME_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_STEAMDECK()
+    {
+        return "SDL_JOYSTICK_HIDAPI_STEAMDECK";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_STEAM_HORI()
+    {
+        return "SDL_JOYSTICK_HIDAPI_STEAM_HORI";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH()
+    {
+        return "SDL_JOYSTICK_HIDAPI_SWITCH";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_SWITCH_HOME_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_SWITCH_PLAYER_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_SWITCH_PLAYER_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_VERTICAL_JOY_CONS()
+    {
+        return "SDL_JOYSTICK_HIDAPI_VERTICAL_JOY_CONS";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_WII()
+    {
+        return "SDL_JOYSTICK_HIDAPI_WII";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_WII_PLAYER_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_WII_PLAYER_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX_360";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360_PLAYER_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX_360_PLAYER_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_360_WIRELESS()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX_360_WIRELESS";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_ONE()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX_ONE";
+    }
+
+    constexpr auto HINT_JOYSTICK_HIDAPI_XBOX_ONE_HOME_LED()
+    {
+        return "SDL_JOYSTICK_HIDAPI_XBOX_ONE_HOME_LED";
+    }
+
+    constexpr auto HINT_JOYSTICK_IOKIT()
+    {
+        return "SDL_JOYSTICK_IOKIT";
+    }
+
+    constexpr auto HINT_JOYSTICK_LINUX_CLASSIC()
+    {
+        return "SDL_JOYSTICK_LINUX_CLASSIC";
+    }
+
+    constexpr auto HINT_JOYSTICK_LINUX_DEADZONES()
+    {
+        return "SDL_JOYSTICK_LINUX_DEADZONES";
+    }
+
+    constexpr auto HINT_JOYSTICK_LINUX_DIGITAL_HATS()
+    {
+        return "SDL_JOYSTICK_LINUX_DIGITAL_HATS";
+    }
+
+    constexpr auto HINT_JOYSTICK_LINUX_HAT_DEADZONES()
+    {
+        return "SDL_JOYSTICK_LINUX_HAT_DEADZONES";
+    }
+
+    constexpr auto HINT_JOYSTICK_MFI()
+    {
+        return "SDL_JOYSTICK_MFI";
+    }
+
+    constexpr auto HINT_JOYSTICK_RAWINPUT()
+    {
+        return "SDL_JOYSTICK_RAWINPUT";
+    }
+
+    constexpr auto HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT()
+    {
+        return "SDL_JOYSTICK_RAWINPUT_CORRELATE_XINPUT";
+    }
+
+    constexpr auto HINT_JOYSTICK_ROG_CHAKRAM()
+    {
+        return "SDL_JOYSTICK_ROG_CHAKRAM";
+    }
+
+    constexpr auto HINT_JOYSTICK_THREAD()
+    {
+        return "SDL_JOYSTICK_THREAD";
+    }
+
+    constexpr auto HINT_JOYSTICK_THROTTLE_DEVICES()
+    {
+        return "SDL_JOYSTICK_THROTTLE_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_THROTTLE_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_THROTTLE_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_WGI()
+    {
+        return "SDL_JOYSTICK_WGI";
+    }
+
+    constexpr auto HINT_JOYSTICK_WHEEL_DEVICES()
+    {
+        return "SDL_JOYSTICK_WHEEL_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_WHEEL_DEVICES_EXCLUDED()
+    {
+        return "SDL_JOYSTICK_WHEEL_DEVICES_EXCLUDED";
+    }
+
+    constexpr auto HINT_JOYSTICK_ZERO_CENTERED_DEVICES()
+    {
+        return "SDL_JOYSTICK_ZERO_CENTERED_DEVICES";
+    }
+
+    constexpr auto HINT_JOYSTICK_HAPTIC_AXES()
+    {
+        return "SDL_JOYSTICK_HAPTIC_AXES";
+    }
+
+    constexpr auto HINT_KEYCODE_OPTIONS()
+    {
+        return "SDL_KEYCODE_OPTIONS";
+    }
+
+    constexpr auto HINT_KMSDRM_DEVICE_INDEX()
+    {
+        return "SDL_KMSDRM_DEVICE_INDEX";
+    }
+
+    constexpr auto HINT_KMSDRM_REQUIRE_DRM_MASTER()
+    {
+        return "SDL_KMSDRM_REQUIRE_DRM_MASTER";
+    }
+
+    constexpr auto HINT_LOGGING()
+    {
+        return "SDL_LOGGING";
+    }
+
+    constexpr auto HINT_MAC_BACKGROUND_APP()
+    {
+        return "SDL_MAC_BACKGROUND_APP";
+    }
+
+    constexpr auto HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK()
+    {
+        return "SDL_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK";
+    }
+
+    constexpr auto HINT_MAC_OPENGL_ASYNC_DISPATCH()
+    {
+        return "SDL_MAC_OPENGL_ASYNC_DISPATCH";
+    }
+
+    constexpr auto HINT_MAC_OPTION_AS_ALT()
+    {
+        return "SDL_MAC_OPTION_AS_ALT";
+    }
+
+    constexpr auto HINT_MAC_SCROLL_MOMENTUM()
+    {
+        return "SDL_MAC_SCROLL_MOMENTUM";
+    }
+
+    constexpr auto HINT_MAIN_CALLBACK_RATE()
+    {
+        return "SDL_MAIN_CALLBACK_RATE";
+    }
+
+    constexpr auto HINT_MOUSE_AUTO_CAPTURE()
+    {
+        return "SDL_MOUSE_AUTO_CAPTURE";
+    }
+
+    constexpr auto HINT_MOUSE_DOUBLE_CLICK_RADIUS()
+    {
+        return "SDL_MOUSE_DOUBLE_CLICK_RADIUS";
+    }
+
+    constexpr auto HINT_MOUSE_DOUBLE_CLICK_TIME()
+    {
+        return "SDL_MOUSE_DOUBLE_CLICK_TIME";
+    }
+
+    constexpr auto HINT_MOUSE_DEFAULT_SYSTEM_CURSOR()
+    {
+        return "SDL_MOUSE_DEFAULT_SYSTEM_CURSOR";
+    }
+
+    constexpr auto HINT_MOUSE_EMULATE_WARP_WITH_RELATIVE()
+    {
+        return "SDL_MOUSE_EMULATE_WARP_WITH_RELATIVE";
+    }
+
+    constexpr auto HINT_MOUSE_FOCUS_CLICKTHROUGH()
+    {
+        return "SDL_MOUSE_FOCUS_CLICKTHROUGH";
+    }
+
+    constexpr auto HINT_MOUSE_NORMAL_SPEED_SCALE()
+    {
+        return "SDL_MOUSE_NORMAL_SPEED_SCALE";
+    }
+
+    constexpr auto HINT_MOUSE_RELATIVE_MODE_CENTER()
+    {
+        return "SDL_MOUSE_RELATIVE_MODE_CENTER";
+    }
+
+    constexpr auto HINT_MOUSE_RELATIVE_SPEED_SCALE()
+    {
+        return "SDL_MOUSE_RELATIVE_SPEED_SCALE";
+    }
+
+    constexpr auto HINT_MOUSE_RELATIVE_SYSTEM_SCALE()
+    {
+        return "SDL_MOUSE_RELATIVE_SYSTEM_SCALE";
+    }
+
+    constexpr auto HINT_MOUSE_RELATIVE_WARP_MOTION()
+    {
+        return "SDL_MOUSE_RELATIVE_WARP_MOTION";
+    }
+
+    constexpr auto HINT_MOUSE_RELATIVE_CURSOR_VISIBLE()
+    {
+        return "SDL_MOUSE_RELATIVE_CURSOR_VISIBLE";
+    }
+
+    constexpr auto HINT_MOUSE_TOUCH_EVENTS()
+    {
+        return "SDL_MOUSE_TOUCH_EVENTS";
+    }
+
+    constexpr auto HINT_MUTE_CONSOLE_KEYBOARD()
+    {
+        return "SDL_MUTE_CONSOLE_KEYBOARD";
+    }
+
+    constexpr auto HINT_NO_SIGNAL_HANDLERS()
+    {
+        return "SDL_NO_SIGNAL_HANDLERS";
+    }
+
+    constexpr auto HINT_OPENGL_LIBRARY()
+    {
+        return "SDL_OPENGL_LIBRARY";
+    }
+
+    constexpr auto HINT_EGL_LIBRARY()
+    {
+        return "SDL_EGL_LIBRARY";
+    }
+
+    constexpr auto HINT_OPENGL_ES_DRIVER()
+    {
+        return "SDL_OPENGL_ES_DRIVER";
+    }
+
+    constexpr auto HINT_OPENVR_LIBRARY()
+    {
+        return "SDL_OPENVR_LIBRARY";
+    }
+
+    constexpr auto HINT_ORIENTATIONS()
+    {
+        return "SDL_ORIENTATIONS";
+    }
+
+    constexpr auto HINT_POLL_SENTINEL()
+    {
+        return "SDL_POLL_SENTINEL";
+    }
+
+    constexpr auto HINT_PREFERRED_LOCALES()
+    {
+        return "SDL_PREFERRED_LOCALES";
+    }
+
+    constexpr auto HINT_QUIT_ON_LAST_WINDOW_CLOSE()
+    {
+        return "SDL_QUIT_ON_LAST_WINDOW_CLOSE";
+    }
+
+    constexpr auto HINT_RENDER_DIRECT3D_THREADSAFE()
+    {
+        return "SDL_RENDER_DIRECT3D_THREADSAFE";
+    }
+
+    constexpr auto HINT_RENDER_DIRECT3D11_DEBUG()
+    {
+        return "SDL_RENDER_DIRECT3D11_DEBUG";
+    }
+
+    constexpr auto HINT_RENDER_VULKAN_DEBUG()
+    {
+        return "SDL_RENDER_VULKAN_DEBUG";
+    }
+
+    constexpr auto HINT_RENDER_GPU_DEBUG()
+    {
+        return "SDL_RENDER_GPU_DEBUG";
+    }
+
+    constexpr auto HINT_RENDER_GPU_LOW_POWER()
+    {
+        return "SDL_RENDER_GPU_LOW_POWER";
+    }
+
+    constexpr auto HINT_RENDER_DRIVER()
+    {
+        return "SDL_RENDER_DRIVER";
+    }
+
+    constexpr auto HINT_RENDER_LINE_METHOD()
+    {
+        return "SDL_RENDER_LINE_METHOD";
+    }
+
+    constexpr auto HINT_RENDER_METAL_PREFER_LOW_POWER_DEVICE()
+    {
+        return "SDL_RENDER_METAL_PREFER_LOW_POWER_DEVICE";
+    }
+
+    constexpr auto HINT_RENDER_VSYNC()
+    {
+        return "SDL_RENDER_VSYNC";
+    }
+
+    constexpr auto HINT_RETURN_KEY_HIDES_IME()
+    {
+        return "SDL_RETURN_KEY_HIDES_IME";
+    }
+
+    constexpr auto HINT_ROG_GAMEPAD_MICE()
+    {
+        return "SDL_ROG_GAMEPAD_MICE";
+    }
+
+    constexpr auto HINT_ROG_GAMEPAD_MICE_EXCLUDED()
+    {
+        return "SDL_ROG_GAMEPAD_MICE_EXCLUDED";
+    }
+
+    constexpr auto HINT_RPI_VIDEO_LAYER()
+    {
+        return "SDL_RPI_VIDEO_LAYER";
+    }
+
+    constexpr auto HINT_SCREENSAVER_INHIBIT_ACTIVITY_NAME()
+    {
+        return "SDL_SCREENSAVER_INHIBIT_ACTIVITY_NAME";
+    }
+
+    constexpr auto HINT_SHUTDOWN_DBUS_ON_QUIT()
+    {
+        return "SDL_SHUTDOWN_DBUS_ON_QUIT";
+    }
+
+    constexpr auto HINT_STORAGE_TITLE_DRIVER()
+    {
+        return "SDL_STORAGE_TITLE_DRIVER";
+    }
+
+    constexpr auto HINT_STORAGE_USER_DRIVER()
+    {
+        return "SDL_STORAGE_USER_DRIVER";
+    }
+
+    constexpr auto HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL()
+    {
+        return "SDL_THREAD_FORCE_REALTIME_TIME_CRITICAL";
+    }
+
+    constexpr auto HINT_THREAD_PRIORITY_POLICY()
+    {
+        return "SDL_THREAD_PRIORITY_POLICY";
+    }
+
+    constexpr auto HINT_TIMER_RESOLUTION()
+    {
+        return "SDL_TIMER_RESOLUTION";
+    }
+
+    constexpr auto HINT_TOUCH_MOUSE_EVENTS()
+    {
+        return "SDL_TOUCH_MOUSE_EVENTS";
+    }
+
+    constexpr auto HINT_TRACKPAD_IS_TOUCH_ONLY()
+    {
+        return "SDL_TRACKPAD_IS_TOUCH_ONLY";
+    }
+
+    constexpr auto HINT_TV_REMOTE_AS_JOYSTICK()
+    {
+        return "SDL_TV_REMOTE_AS_JOYSTICK";
+    }
+
+    constexpr auto HINT_VIDEO_ALLOW_SCREENSAVER()
+    {
+        return "SDL_VIDEO_ALLOW_SCREENSAVER";
+    }
+
+    constexpr auto HINT_VIDEO_DISPLAY_PRIORITY()
+    {
+        return "SDL_VIDEO_DISPLAY_PRIORITY";
+    }
+
+    constexpr auto HINT_VIDEO_DOUBLE_BUFFER()
+    {
+        return "SDL_VIDEO_DOUBLE_BUFFER";
+    }
+
+    constexpr auto HINT_VIDEO_DRIVER()
+    {
+        return "SDL_VIDEO_DRIVER";
+    }
+
+    constexpr auto HINT_VIDEO_DUMMY_SAVE_FRAMES()
+    {
+        return "SDL_VIDEO_DUMMY_SAVE_FRAMES";
+    }
+
+    constexpr auto HINT_VIDEO_EGL_ALLOW_GETDISPLAY_FALLBACK()
+    {
+        return "SDL_VIDEO_EGL_ALLOW_GETDISPLAY_FALLBACK";
+    }
+
+    constexpr auto HINT_VIDEO_FORCE_EGL()
+    {
+        return "SDL_VIDEO_FORCE_EGL";
+    }
+
+    constexpr auto HINT_VIDEO_MAC_FULLSCREEN_SPACES()
+    {
+        return "SDL_VIDEO_MAC_FULLSCREEN_SPACES";
+    }
+
+    constexpr auto HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY()
+    {
+        return "SDL_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY";
+    }
+
+    constexpr auto HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS()
+    {
+        return "SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS";
+    }
+
+    constexpr auto HINT_VIDEO_OFFSCREEN_SAVE_FRAMES()
+    {
+        return "SDL_VIDEO_OFFSCREEN_SAVE_FRAMES";
+    }
+
+    constexpr auto HINT_VIDEO_SYNC_WINDOW_OPERATIONS()
+    {
+        return "SDL_VIDEO_SYNC_WINDOW_OPERATIONS";
+    }
+
+    constexpr auto HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR()
+    {
+        return "SDL_VIDEO_WAYLAND_ALLOW_LIBDECOR";
+    }
+
+    constexpr auto HINT_VIDEO_WAYLAND_MODE_EMULATION()
+    {
+        return "SDL_VIDEO_WAYLAND_MODE_EMULATION";
+    }
+
+    constexpr auto HINT_VIDEO_WAYLAND_MODE_SCALING()
+    {
+        return "SDL_VIDEO_WAYLAND_MODE_SCALING";
+    }
+
+    constexpr auto HINT_VIDEO_WAYLAND_PREFER_LIBDECOR()
+    {
+        return "SDL_VIDEO_WAYLAND_PREFER_LIBDECOR";
+    }
+
+    constexpr auto HINT_VIDEO_WAYLAND_SCALE_TO_DISPLAY()
+    {
+        return "SDL_VIDEO_WAYLAND_SCALE_TO_DISPLAY";
+    }
+
+    constexpr auto HINT_VIDEO_WIN_D3DCOMPILER()
+    {
+        return "SDL_VIDEO_WIN_D3DCOMPILER";
+    }
+
+    constexpr auto HINT_VIDEO_X11_EXTERNAL_WINDOW_INPUT()
+    {
+        return "SDL_VIDEO_X11_EXTERNAL_WINDOW_INPUT";
+    }
+
+    constexpr auto HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR()
+    {
+        return "SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR";
+    }
+
+    constexpr auto HINT_VIDEO_X11_NET_WM_PING()
+    {
+        return "SDL_VIDEO_X11_NET_WM_PING";
+    }
+
+    constexpr auto HINT_VIDEO_X11_NODIRECTCOLOR()
+    {
+        return "SDL_VIDEO_X11_NODIRECTCOLOR";
+    }
+
+    constexpr auto HINT_VIDEO_X11_SCALING_FACTOR()
+    {
+        return "SDL_VIDEO_X11_SCALING_FACTOR";
+    }
+
+    constexpr auto HINT_VIDEO_X11_VISUALID()
+    {
+        return "SDL_VIDEO_X11_VISUALID";
+    }
+
+    constexpr auto HINT_VIDEO_X11_WINDOW_VISUALID()
+    {
+        return "SDL_VIDEO_X11_WINDOW_VISUALID";
+    }
+
+    constexpr auto HINT_VIDEO_X11_XRANDR()
+    {
+        return "SDL_VIDEO_X11_XRANDR";
+    }
+
+    constexpr auto HINT_VITA_ENABLE_BACK_TOUCH()
+    {
+        return "SDL_VITA_ENABLE_BACK_TOUCH";
+    }
+
+    constexpr auto HINT_VITA_ENABLE_FRONT_TOUCH()
+    {
+        return "SDL_VITA_ENABLE_FRONT_TOUCH";
+    }
+
+    constexpr auto HINT_VITA_MODULE_PATH()
+    {
+        return "SDL_VITA_MODULE_PATH";
+    }
+
+    constexpr auto HINT_VITA_PVR_INIT()
+    {
+        return "SDL_VITA_PVR_INIT";
+    }
+
+    constexpr auto HINT_VITA_RESOLUTION()
+    {
+        return "SDL_VITA_RESOLUTION";
+    }
+
+    constexpr auto HINT_VITA_PVR_OPENGL()
+    {
+        return "SDL_VITA_PVR_OPENGL";
+    }
+
+    constexpr auto HINT_VITA_TOUCH_MOUSE_DEVICE()
+    {
+        return "SDL_VITA_TOUCH_MOUSE_DEVICE";
+    }
+
+    constexpr auto HINT_VULKAN_DISPLAY()
+    {
+        return "SDL_VULKAN_DISPLAY";
+    }
+
+    constexpr auto HINT_VULKAN_LIBRARY()
+    {
+        return "SDL_VULKAN_LIBRARY";
+    }
+
+    constexpr auto HINT_WAVE_FACT_CHUNK()
+    {
+        return "SDL_WAVE_FACT_CHUNK";
+    }
+
+    constexpr auto HINT_WAVE_CHUNK_LIMIT()
+    {
+        return "SDL_WAVE_CHUNK_LIMIT";
+    }
+
+    constexpr auto HINT_WAVE_RIFF_CHUNK_SIZE()
+    {
+        return "SDL_WAVE_RIFF_CHUNK_SIZE";
+    }
+
+    constexpr auto HINT_WAVE_TRUNCATION()
+    {
+        return "SDL_WAVE_TRUNCATION";
+    }
+
+    constexpr auto HINT_WINDOW_ACTIVATE_WHEN_RAISED()
+    {
+        return "SDL_WINDOW_ACTIVATE_WHEN_RAISED";
+    }
+
+    constexpr auto HINT_WINDOW_ACTIVATE_WHEN_SHOWN()
+    {
+        return "SDL_WINDOW_ACTIVATE_WHEN_SHOWN";
+    }
+
+    constexpr auto HINT_WINDOW_ALLOW_TOPMOST()
+    {
+        return "SDL_WINDOW_ALLOW_TOPMOST";
+    }
+
+    constexpr auto HINT_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN()
+    {
+        return "SDL_WINDOW_FRAME_USABLE_WHILE_CURSOR_HIDDEN";
+    }
+
+    constexpr auto HINT_WINDOWS_CLOSE_ON_ALT_F4()
+    {
+        return "SDL_WINDOWS_CLOSE_ON_ALT_F4";
+    }
+
+    constexpr auto HINT_WINDOWS_ENABLE_MENU_MNEMONICS()
+    {
+        return "SDL_WINDOWS_ENABLE_MENU_MNEMONICS";
+    }
+
+    constexpr auto HINT_WINDOWS_ENABLE_MESSAGELOOP()
+    {
+        return "SDL_WINDOWS_ENABLE_MESSAGELOOP";
+    }
+
+    constexpr auto HINT_WINDOWS_GAMEINPUT()
+    {
+        return "SDL_WINDOWS_GAMEINPUT";
+    }
+
+    constexpr auto HINT_WINDOWS_RAW_KEYBOARD()
+    {
+        return "SDL_WINDOWS_RAW_KEYBOARD";
+    }
+
+    constexpr auto HINT_WINDOWS_FORCE_SEMAPHORE_KERNEL()
+    {
+        return "SDL_WINDOWS_FORCE_SEMAPHORE_KERNEL";
+    }
+
+    constexpr auto HINT_WINDOWS_INTRESOURCE_ICON()
+    {
+        return "SDL_WINDOWS_INTRESOURCE_ICON";
+    }
+
+    constexpr auto HINT_WINDOWS_INTRESOURCE_ICON_SMALL()
+    {
+        return "SDL_WINDOWS_INTRESOURCE_ICON_SMALL";
+    }
+
+    constexpr auto HINT_WINDOWS_USE_D3D9EX()
+    {
+        return "SDL_WINDOWS_USE_D3D9EX";
+    }
+
+    constexpr auto HINT_WINDOWS_ERASE_BACKGROUND_MODE()
+    {
+        return "SDL_WINDOWS_ERASE_BACKGROUND_MODE";
+    }
+
+    constexpr auto HINT_X11_FORCE_OVERRIDE_REDIRECT()
+    {
+        return "SDL_X11_FORCE_OVERRIDE_REDIRECT";
+    }
+
+    constexpr auto HINT_X11_WINDOW_TYPE()
+    {
+        return "SDL_X11_WINDOW_TYPE";
+    }
+
+    constexpr auto HINT_X11_XCB_LIBRARY()
+    {
+        return "SDL_X11_XCB_LIBRARY";
+    }
+
+    constexpr auto HINT_XINPUT_ENABLED()
+    {
+        return "SDL_XINPUT_ENABLED";
+    }
+
+    constexpr auto HINT_ASSERT()
+    {
+        return "SDL_ASSERT";
+    }
+
+    constexpr auto HINT_PEN_MOUSE_EVENTS()
+    {
+        return "SDL_PEN_MOUSE_EVENTS";
+    }
+
+    constexpr auto HINT_PEN_TOUCH_EVENTS()
+    {
+        return "SDL_PEN_TOUCH_EVENTS";
+    }
 
     enum class HintPriority
     {
@@ -7035,42 +8693,42 @@ export namespace sdl
     };
     REGULAR_ENUM(HintPriority);
 
-    bool SetHintWithPriority(const char* name, const char* value, HintPriority priority)
+    bool SetHintWithPriority(const char *name, const char *value, HintPriority priority)
     {
         return SDL_SetHintWithPriority(name, value, (SDL_HintPriority)(priority));
     }
 
-    bool SetHint(const char* name, const char* value)
+    bool SetHint(const char *name, const char *value)
     {
         return SDL_SetHint(name, value);
     }
 
-    bool ResetHint(const char* name)
+    bool ResetHint(const char *name)
     {
         return SDL_ResetHint(name);
     }
 
-    void ResetHints(void )
+    void ResetHints(void)
     {
         SDL_ResetHints();
     }
 
-    const char* GetHint(const char* name)
+    const char *GetHint(const char *name)
     {
         return SDL_GetHint(name);
     }
 
-    bool GetHintBoolean(const char* name, bool default_value)
+    bool GetHintBoolean(const char *name, bool default_value)
     {
         return SDL_GetHintBoolean(name, default_value);
     }
 
-    bool AddHintCallback(const char* name, SDL_HintCallback callback, void* userdata)
+    bool AddHintCallback(const char *name, SDL_HintCallback callback, void *userdata)
     {
         return SDL_AddHintCallback(name, callback, userdata);
     }
 
-    void RemoveHintCallback(const char* name, SDL_HintCallback callback, void* userdata)
+    void RemoveHintCallback(const char *name, SDL_HintCallback callback, void *userdata)
     {
         SDL_RemoveHintCallback(name, callback, userdata);
     }
@@ -7116,63 +8774,84 @@ export namespace sdl
         return SDL_WasInit((SDL_InitFlags)(flags));
     }
 
-    void Quit(void )
+    void Quit(void)
     {
         SDL_Quit();
     }
 
-    bool IsMainThread(void )
+    bool IsMainThread(void)
     {
         return SDL_IsMainThread();
     }
 
-    bool RunOnMainThread(SDL_MainThreadCallback callback, void* userdata, bool wait_complete)
+    bool RunOnMainThread(SDL_MainThreadCallback callback, void *userdata, bool wait_complete)
     {
         return SDL_RunOnMainThread(callback, userdata, wait_complete);
     }
 
-    bool SetAppMetadata(const char* appname, const char* appversion, const char* appidentifier)
+    bool SetAppMetadata(const char *appname, const char *appversion, const char *appidentifier)
     {
         return SDL_SetAppMetadata(appname, appversion, appidentifier);
     }
 
-    bool SetAppMetadataProperty(const char* name, const char* value)
+    bool SetAppMetadataProperty(const char *name, const char *value)
     {
         return SDL_SetAppMetadataProperty(name, value);
     }
 
-    constexpr auto PROP_APP_METADATA_NAME_STRING() { return "SDL.app.metadata.name"; }
+    constexpr auto PROP_APP_METADATA_NAME_STRING()
+    {
+        return "SDL.app.metadata.name";
+    }
 
-    constexpr auto PROP_APP_METADATA_VERSION_STRING() { return "SDL.app.metadata.version"; }
+    constexpr auto PROP_APP_METADATA_VERSION_STRING()
+    {
+        return "SDL.app.metadata.version";
+    }
 
-    constexpr auto PROP_APP_METADATA_IDENTIFIER_STRING() { return "SDL.app.metadata.identifier"; }
+    constexpr auto PROP_APP_METADATA_IDENTIFIER_STRING()
+    {
+        return "SDL.app.metadata.identifier";
+    }
 
-    constexpr auto PROP_APP_METADATA_CREATOR_STRING() { return "SDL.app.metadata.creator"; }
+    constexpr auto PROP_APP_METADATA_CREATOR_STRING()
+    {
+        return "SDL.app.metadata.creator";
+    }
 
-    constexpr auto PROP_APP_METADATA_COPYRIGHT_STRING() { return "SDL.app.metadata.copyright"; }
+    constexpr auto PROP_APP_METADATA_COPYRIGHT_STRING()
+    {
+        return "SDL.app.metadata.copyright";
+    }
 
-    constexpr auto PROP_APP_METADATA_URL_STRING() { return "SDL.app.metadata.url"; }
+    constexpr auto PROP_APP_METADATA_URL_STRING()
+    {
+        return "SDL.app.metadata.url";
+    }
 
-    constexpr auto PROP_APP_METADATA_TYPE_STRING() { return "SDL.app.metadata.type"; }
+    constexpr auto PROP_APP_METADATA_TYPE_STRING()
+    {
+        return "SDL.app.metadata.type";
+    }
 
-    const char* GetAppMetadataProperty(const char* name)
+    const char *GetAppMetadataProperty(const char *name)
     {
         return SDL_GetAppMetadataProperty(name);
     }
 
     using SDL_SharedObject = SDL_SharedObject;
 
-    SDL_SharedObject* LoadObject(const char* sofile)
+    SDL_SharedObject *LoadObject(const char *sofile)
     {
         return SDL_LoadObject(sofile);
     }
 
-    SDL_FunctionPointer LoadFunction(SDL_SharedObject* handle, const char* name)
+    SDL_FunctionPointer LoadFunction(SDL_SharedObject *handle, const char *name)
     {
         return SDL_LoadFunction(handle, name);
     }
 
-    void UnloadObject(SDL_SharedObject* handle)
+    void UnloadObject(SDL_SharedObject *handle)
     {
         SDL_UnloadObject(handle);
     }
@@ -7233,27 +8912,27 @@ export namespace sdl
         return SDL_GetLogPriority(category);
     }
 
-    void ResetLogPriorities(void )
+    void ResetLogPriorities(void)
     {
         SDL_ResetLogPriorities();
     }
 
-    bool SetLogPriorityPrefix(LogPriority priority, const char* prefix)
+    bool SetLogPriorityPrefix(LogPriority priority, const char *prefix)
     {
         return SDL_SetLogPriorityPrefix((SDL_LogPriority)(priority), prefix);
     }
 
-    SDL_LogOutputFunction GetDefaultLogOutputFunction(void )
+    SDL_LogOutputFunction GetDefaultLogOutputFunction(void)
     {
         return SDL_GetDefaultLogOutputFunction();
     }
 
-    void GetLogOutputFunction(SDL_LogOutputFunction* callback, void** userdata)
+    void GetLogOutputFunction(SDL_LogOutputFunction *callback, void **userdata)
     {
         SDL_GetLogOutputFunction(callback, userdata);
     }
 
-    void SetLogOutputFunction(SDL_LogOutputFunction callback, void* userdata)
+    void SetLogOutputFunction(SDL_LogOutputFunction callback, void *userdata)
     {
         SDL_SetLogOutputFunction(callback, userdata);
     }
@@ -7294,19 +8973,19 @@ export namespace sdl
 
     using MessageBoxData = SDL_MessageBoxData;
 
-    bool ShowMessageBox(const SDL_MessageBoxData* messageboxdata, int* buttonid)
+    bool ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
     {
         return SDL_ShowMessageBox(messageboxdata, buttonid);
     }
 
-    bool ShowSimpleMessageBox(MessageBoxFlags flags, const char* title, const char* message, SDL_Window* window)
+    bool ShowSimpleMessageBox(MessageBoxFlags flags, const char *title, const char *message, SDL_Window *window)
     {
         return SDL_ShowSimpleMessageBox((SDL_MessageBoxFlags)(flags), title, message, window);
     }
 
     using MetalView = void;
 
-    SDL_MetalView Metal_CreateView(SDL_Window* window)
+    SDL_MetalView Metal_CreateView(SDL_Window *window)
     {
         return SDL_Metal_CreateView(window);
     }
@@ -7316,24 +8995,24 @@ export namespace sdl
         SDL_Metal_DestroyView(view);
     }
 
-    void* Metal_GetLayer(SDL_MetalView view)
+    void *Metal_GetLayer(SDL_MetalView view)
     {
         return SDL_Metal_GetLayer(view);
     }
 
-    bool OpenURL(const char* url)
+    bool OpenURL(const char *url)
     {
         return SDL_OpenURL(url);
     }
 
-    const char* GetPlatform(void )
+    const char *GetPlatform(void)
     {
         return SDL_GetPlatform();
     }
 
     using SDL_Process = SDL_Process;
 
-    SDL_Process* CreateProcess(const char** args, bool pipe_stdio)
+    SDL_Process *CreateProcess(const char **args, bool pipe_stdio)
     {
         return SDL_CreateProcess(args, pipe_stdio);
     }
@@ -7347,77 +9026,125 @@ export namespace sdl
     };
     REGULAR_ENUM(ProcessIO);
 
-    SDL_Process* CreateProcessWithProperties(SDL_PropertiesID props)
+    SDL_Process *CreateProcessWithProperties(SDL_PropertiesID props)
     {
         return SDL_CreateProcessWithProperties(props);
     }
 
-    constexpr auto PROP_PROCESS_CREATE_ARGS_POINTER() { return "SDL.process.create.args"; }
+    constexpr auto PROP_PROCESS_CREATE_ARGS_POINTER()
+    {
+        return "SDL.process.create.args";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_ENVIRONMENT_POINTER() { return "SDL.process.create.environment"; }
+    constexpr auto PROP_PROCESS_CREATE_ENVIRONMENT_POINTER()
+    {
+        return "SDL.process.create.environment";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDIN_NUMBER() { return "SDL.process.create.stdin_option"; }
+    constexpr auto PROP_PROCESS_CREATE_STDIN_NUMBER()
+    {
+        return "SDL.process.create.stdin_option";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDIN_POINTER() { return "SDL.process.create.stdin_source"; }
+    constexpr auto PROP_PROCESS_CREATE_STDIN_POINTER()
+    {
+        return "SDL.process.create.stdin_source";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDOUT_NUMBER() { return "SDL.process.create.stdout_option"; }
+    constexpr auto PROP_PROCESS_CREATE_STDOUT_NUMBER()
+    {
+        return "SDL.process.create.stdout_option";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDOUT_POINTER() { return "SDL.process.create.stdout_source"; }
+    constexpr auto PROP_PROCESS_CREATE_STDOUT_POINTER()
+    {
+        return "SDL.process.create.stdout_source";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDERR_NUMBER() { return "SDL.process.create.stderr_option"; }
+    constexpr auto PROP_PROCESS_CREATE_STDERR_NUMBER()
+    {
+        return "SDL.process.create.stderr_option";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDERR_POINTER() { return "SDL.process.create.stderr_source"; }
+    constexpr auto PROP_PROCESS_CREATE_STDERR_POINTER()
+    {
+        return "SDL.process.create.stderr_source";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN() { return "SDL.process.create.stderr_to_stdout"; }
+    constexpr auto PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN()
+    {
+        return "SDL.process.create.stderr_to_stdout";
+    }
 
-    constexpr auto PROP_PROCESS_CREATE_BACKGROUND_BOOLEAN() { return "SDL.process.create.background"; }
+    constexpr auto PROP_PROCESS_CREATE_BACKGROUND_BOOLEAN()
+    {
+        return "SDL.process.create.background";
+    }
 
-    SDL_PropertiesID GetProcessProperties(SDL_Process* process)
+    SDL_PropertiesID GetProcessProperties(SDL_Process *process)
     {
         return SDL_GetProcessProperties(process);
     }
 
-    constexpr auto PROP_PROCESS_PID_NUMBER() { return "SDL.process.pid"; }
+    constexpr auto PROP_PROCESS_PID_NUMBER()
+    {
+        return "SDL.process.pid";
+    }
 
-    constexpr auto PROP_PROCESS_STDIN_POINTER() { return "SDL.process.stdin"; }
+    constexpr auto PROP_PROCESS_STDIN_POINTER()
+    {
+        return "SDL.process.stdin";
+    }
 
-    constexpr auto PROP_PROCESS_STDOUT_POINTER() { return "SDL.process.stdout"; }
+    constexpr auto PROP_PROCESS_STDOUT_POINTER()
+    {
+        return "SDL.process.stdout";
+    }
 
-    constexpr auto PROP_PROCESS_STDERR_POINTER() { return "SDL.process.stderr"; }
+    constexpr auto PROP_PROCESS_STDERR_POINTER()
+    {
+        return "SDL.process.stderr";
+    }
 
-    constexpr auto PROP_PROCESS_BACKGROUND_BOOLEAN() { return "SDL.process.background"; }
+    constexpr auto PROP_PROCESS_BACKGROUND_BOOLEAN()
+    {
+        return "SDL.process.background";
+    }
 
-    void* ReadProcess(SDL_Process* process, size_t* datasize, int* exitcode)
+    void *ReadProcess(SDL_Process *process, size_t *datasize, int *exitcode)
     {
         return SDL_ReadProcess(process, datasize, exitcode);
     }
 
-    SDL_IOStream* GetProcessInput(SDL_Process* process)
+    SDL_IOStream *GetProcessInput(SDL_Process *process)
     {
         return SDL_GetProcessInput(process);
     }
 
-    SDL_IOStream* GetProcessOutput(SDL_Process* process)
+    SDL_IOStream *GetProcessOutput(SDL_Process *process)
     {
         return SDL_GetProcessOutput(process);
     }
 
-    bool KillProcess(SDL_Process* process, bool force)
+    bool KillProcess(SDL_Process *process, bool force)
     {
         return SDL_KillProcess(process, force);
     }
 
-    bool WaitProcess(SDL_Process* process, bool block, int* exitcode)
+    bool WaitProcess(SDL_Process *process, bool block, int *exitcode)
     {
         return SDL_WaitProcess(process, block, exitcode);
     }
 
-    void DestroyProcess(SDL_Process* process)
+    void DestroyProcess(SDL_Process *process)
     {
         SDL_DestroyProcess(process);
     }
 
-    constexpr auto SOFTWARE_RENDERER() { return "software"; }
+    constexpr auto SOFTWARE_RENDERER()
+    {
+        return "software";
+    }
 
     using Vertex = SDL_Vertex;
 
@@ -7443,616 +9170,955 @@ export namespace sdl
 
     using SDL_Texture = SDL_Texture;
 
-    int GetNumRenderDrivers(void )
+    int GetNumRenderDrivers(void)
     {
         return SDL_GetNumRenderDrivers();
     }
 
-    const char* GetRenderDriver(int index)
+    const char *GetRenderDriver(int index)
     {
         return SDL_GetRenderDriver(index);
     }
 
-    bool CreateWindowAndRenderer(const char* title, int width, int height, WindowFlags window_flags, SDL_Window** window, SDL_Renderer** renderer)
+    bool CreateWindowAndRenderer(const char *title,
+                                 int width,
+                                 int height,
+                                 WindowFlags window_flags,
+                                 SDL_Window **window,
+                                 SDL_Renderer **renderer)
     {
         return SDL_CreateWindowAndRenderer(title, width, height, (SDL_WindowFlags)(window_flags), window, renderer);
     }
 
-    SDL_Renderer* CreateRenderer(SDL_Window* window, const char* name)
+    SDL_Renderer *CreateRenderer(SDL_Window *window, const char *name)
     {
         return SDL_CreateRenderer(window, name);
     }
 
-    SDL_Renderer* CreateRendererWithProperties(SDL_PropertiesID props)
+    SDL_Renderer *CreateRendererWithProperties(SDL_PropertiesID props)
     {
         return SDL_CreateRendererWithProperties(props);
     }
 
-    constexpr auto PROP_RENDERER_CREATE_NAME_STRING() { return "SDL.renderer.create.name"; }
+    constexpr auto PROP_RENDERER_CREATE_NAME_STRING()
+    {
+        return "SDL.renderer.create.name";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_WINDOW_POINTER() { return "SDL.renderer.create.window"; }
+    constexpr auto PROP_RENDERER_CREATE_WINDOW_POINTER()
+    {
+        return "SDL.renderer.create.window";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_SURFACE_POINTER() { return "SDL.renderer.create.surface"; }
+    constexpr auto PROP_RENDERER_CREATE_SURFACE_POINTER()
+    {
+        return "SDL.renderer.create.surface";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_OUTPUT_COLORSPACE_NUMBER() { return "SDL.renderer.create.output_colorspace"; }
+    constexpr auto PROP_RENDERER_CREATE_OUTPUT_COLORSPACE_NUMBER()
+    {
+        return "SDL.renderer.create.output_colorspace";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER() { return "SDL.renderer.create.present_vsync"; }
+    constexpr auto PROP_RENDERER_CREATE_PRESENT_VSYNC_NUMBER()
+    {
+        return "SDL.renderer.create.present_vsync";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_INSTANCE_POINTER() { return "SDL.renderer.create.vulkan.instance"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_INSTANCE_POINTER()
+    {
+        return "SDL.renderer.create.vulkan.instance";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_SURFACE_NUMBER() { return "SDL.renderer.create.vulkan.surface"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_SURFACE_NUMBER()
+    {
+        return "SDL.renderer.create.vulkan.surface";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_PHYSICAL_DEVICE_POINTER() { return "SDL.renderer.create.vulkan.physical_device"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_PHYSICAL_DEVICE_POINTER()
+    {
+        return "SDL.renderer.create.vulkan.physical_device";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_DEVICE_POINTER() { return "SDL.renderer.create.vulkan.device"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_DEVICE_POINTER()
+    {
+        return "SDL.renderer.create.vulkan.device";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_GRAPHICS_QUEUE_FAMILY_INDEX_NUMBER() { return "SDL.renderer.create.vulkan.graphics_queue_family_index"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_GRAPHICS_QUEUE_FAMILY_INDEX_NUMBER()
+    {
+        return "SDL.renderer.create.vulkan.graphics_queue_family_index";
+    }
 
-    constexpr auto PROP_RENDERER_CREATE_VULKAN_PRESENT_QUEUE_FAMILY_INDEX_NUMBER() { return "SDL.renderer.create.vulkan.present_queue_family_index"; }
+    constexpr auto PROP_RENDERER_CREATE_VULKAN_PRESENT_QUEUE_FAMILY_INDEX_NUMBER()
+    {
+        return "SDL.renderer.create.vulkan.present_queue_family_index";
+    }
 
-    SDL_Renderer* CreateSoftwareRenderer(SDL_Surface* surface)
+    SDL_Renderer *CreateSoftwareRenderer(SDL_Surface *surface)
     {
         return SDL_CreateSoftwareRenderer(surface);
     }
 
-    SDL_Renderer* GetRenderer(SDL_Window* window)
+    SDL_Renderer *GetRenderer(SDL_Window *window)
     {
         return SDL_GetRenderer(window);
     }
 
-    SDL_Window* GetRenderWindow(SDL_Renderer* renderer)
+    SDL_Window *GetRenderWindow(SDL_Renderer *renderer)
     {
         return SDL_GetRenderWindow(renderer);
     }
 
-    const char* GetRendererName(SDL_Renderer* renderer)
+    const char *GetRendererName(SDL_Renderer *renderer)
     {
         return SDL_GetRendererName(renderer);
     }
 
-    SDL_PropertiesID GetRendererProperties(SDL_Renderer* renderer)
+    SDL_PropertiesID GetRendererProperties(SDL_Renderer *renderer)
     {
         return SDL_GetRendererProperties(renderer);
     }
 
-    constexpr auto PROP_RENDERER_NAME_STRING() { return "SDL.renderer.name"; }
+    constexpr auto PROP_RENDERER_NAME_STRING()
+    {
+        return "SDL.renderer.name";
+    }
 
-    constexpr auto PROP_RENDERER_WINDOW_POINTER() { return "SDL.renderer.window"; }
+    constexpr auto PROP_RENDERER_WINDOW_POINTER()
+    {
+        return "SDL.renderer.window";
+    }
 
-    constexpr auto PROP_RENDERER_SURFACE_POINTER() { return "SDL.renderer.surface"; }
+    constexpr auto PROP_RENDERER_SURFACE_POINTER()
+    {
+        return "SDL.renderer.surface";
+    }
 
-    constexpr auto PROP_RENDERER_VSYNC_NUMBER() { return "SDL.renderer.vsync"; }
+    constexpr auto PROP_RENDERER_VSYNC_NUMBER()
+    {
+        return "SDL.renderer.vsync";
+    }
 
-    constexpr auto PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER() { return "SDL.renderer.max_texture_size"; }
+    constexpr auto PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER()
+    {
+        return "SDL.renderer.max_texture_size";
+    }
 
-    constexpr auto PROP_RENDERER_TEXTURE_FORMATS_POINTER() { return "SDL.renderer.texture_formats"; }
+    constexpr auto PROP_RENDERER_TEXTURE_FORMATS_POINTER()
+    {
+        return "SDL.renderer.texture_formats";
+    }
 
-    constexpr auto PROP_RENDERER_OUTPUT_COLORSPACE_NUMBER() { return "SDL.renderer.output_colorspace"; }
+    constexpr auto PROP_RENDERER_OUTPUT_COLORSPACE_NUMBER()
+    {
+        return "SDL.renderer.output_colorspace";
+    }
 
-    constexpr auto PROP_RENDERER_HDR_ENABLED_BOOLEAN() { return "SDL.renderer.HDR_enabled"; }
+    constexpr auto PROP_RENDERER_HDR_ENABLED_BOOLEAN()
+    {
+        return "SDL.renderer.HDR_enabled";
+    }
 
-    constexpr auto PROP_RENDERER_SDR_WHITE_POINT_FLOAT() { return "SDL.renderer.SDR_white_point"; }
+    constexpr auto PROP_RENDERER_SDR_WHITE_POINT_FLOAT()
+    {
+        return "SDL.renderer.SDR_white_point";
+    }
 
-    constexpr auto PROP_RENDERER_HDR_HEADROOM_FLOAT() { return "SDL.renderer.HDR_headroom"; }
+    constexpr auto PROP_RENDERER_HDR_HEADROOM_FLOAT()
+    {
+        return "SDL.renderer.HDR_headroom";
+    }
 
-    constexpr auto PROP_RENDERER_D3D9_DEVICE_POINTER() { return "SDL.renderer.d3d9.device"; }
+    constexpr auto PROP_RENDERER_D3D9_DEVICE_POINTER()
+    {
+        return "SDL.renderer.d3d9.device";
+    }
 
-    constexpr auto PROP_RENDERER_D3D11_DEVICE_POINTER() { return "SDL.renderer.d3d11.device"; }
+    constexpr auto PROP_RENDERER_D3D11_DEVICE_POINTER()
+    {
+        return "SDL.renderer.d3d11.device";
+    }
 
-    constexpr auto PROP_RENDERER_D3D11_SWAPCHAIN_POINTER() { return "SDL.renderer.d3d11.swap_chain"; }
+    constexpr auto PROP_RENDERER_D3D11_SWAPCHAIN_POINTER()
+    {
+        return "SDL.renderer.d3d11.swap_chain";
+    }
 
-    constexpr auto PROP_RENDERER_D3D12_DEVICE_POINTER() { return "SDL.renderer.d3d12.device"; }
+    constexpr auto PROP_RENDERER_D3D12_DEVICE_POINTER()
+    {
+        return "SDL.renderer.d3d12.device";
+    }
 
-    constexpr auto PROP_RENDERER_D3D12_SWAPCHAIN_POINTER() { return "SDL.renderer.d3d12.swap_chain"; }
+    constexpr auto PROP_RENDERER_D3D12_SWAPCHAIN_POINTER()
+    {
+        return "SDL.renderer.d3d12.swap_chain";
+    }
 
-    constexpr auto PROP_RENDERER_D3D12_COMMAND_QUEUE_POINTER() { return "SDL.renderer.d3d12.command_queue"; }
+    constexpr auto PROP_RENDERER_D3D12_COMMAND_QUEUE_POINTER()
+    {
+        return "SDL.renderer.d3d12.command_queue";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_INSTANCE_POINTER() { return "SDL.renderer.vulkan.instance"; }
+    constexpr auto PROP_RENDERER_VULKAN_INSTANCE_POINTER()
+    {
+        return "SDL.renderer.vulkan.instance";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_SURFACE_NUMBER() { return "SDL.renderer.vulkan.surface"; }
+    constexpr auto PROP_RENDERER_VULKAN_SURFACE_NUMBER()
+    {
+        return "SDL.renderer.vulkan.surface";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_PHYSICAL_DEVICE_POINTER() { return "SDL.renderer.vulkan.physical_device"; }
+    constexpr auto PROP_RENDERER_VULKAN_PHYSICAL_DEVICE_POINTER()
+    {
+        return "SDL.renderer.vulkan.physical_device";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_DEVICE_POINTER() { return "SDL.renderer.vulkan.device"; }
+    constexpr auto PROP_RENDERER_VULKAN_DEVICE_POINTER()
+    {
+        return "SDL.renderer.vulkan.device";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_GRAPHICS_QUEUE_FAMILY_INDEX_NUMBER() { return "SDL.renderer.vulkan.graphics_queue_family_index"; }
+    constexpr auto PROP_RENDERER_VULKAN_GRAPHICS_QUEUE_FAMILY_INDEX_NUMBER()
+    {
+        return "SDL.renderer.vulkan.graphics_queue_family_index";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_PRESENT_QUEUE_FAMILY_INDEX_NUMBER() { return "SDL.renderer.vulkan.present_queue_family_index"; }
+    constexpr auto PROP_RENDERER_VULKAN_PRESENT_QUEUE_FAMILY_INDEX_NUMBER()
+    {
+        return "SDL.renderer.vulkan.present_queue_family_index";
+    }
 
-    constexpr auto PROP_RENDERER_VULKAN_SWAPCHAIN_IMAGE_COUNT_NUMBER() { return "SDL.renderer.vulkan.swapchain_image_count"; }
+    constexpr auto PROP_RENDERER_VULKAN_SWAPCHAIN_IMAGE_COUNT_NUMBER()
+    {
+        return "SDL.renderer.vulkan.swapchain_image_count";
+    }
 
-    constexpr auto PROP_RENDERER_GPU_DEVICE_POINTER() { return "SDL.renderer.gpu.device"; }
+    constexpr auto PROP_RENDERER_GPU_DEVICE_POINTER()
+    {
+        return "SDL.renderer.gpu.device";
+    }
 
-    bool GetRenderOutputSize(SDL_Renderer* renderer, int* w, int* h)
+    bool GetRenderOutputSize(SDL_Renderer *renderer, int *w, int *h)
     {
         return SDL_GetRenderOutputSize(renderer, w, h);
     }
 
-    bool GetCurrentRenderOutputSize(SDL_Renderer* renderer, int* w, int* h)
+    bool GetCurrentRenderOutputSize(SDL_Renderer *renderer, int *w, int *h)
     {
         return SDL_GetCurrentRenderOutputSize(renderer, w, h);
     }
 
-    SDL_Texture* CreateTexture(SDL_Renderer* renderer, PixelFormat format, TextureAccess access, int w, int h)
+    SDL_Texture *CreateTexture(SDL_Renderer *renderer, PixelFormat format, TextureAccess access, int w, int h)
     {
         return SDL_CreateTexture(renderer, (SDL_PixelFormat)(format), (SDL_TextureAccess)(access), w, h);
     }
 
-    SDL_Texture* CreateTextureFromSurface(SDL_Renderer* renderer, SDL_Surface* surface)
+    SDL_Texture *CreateTextureFromSurface(SDL_Renderer *renderer, SDL_Surface *surface)
     {
         return SDL_CreateTextureFromSurface(renderer, surface);
     }
 
-    SDL_Texture* CreateTextureWithProperties(SDL_Renderer* renderer, SDL_PropertiesID props)
+    SDL_Texture *CreateTextureWithProperties(SDL_Renderer *renderer, SDL_PropertiesID props)
     {
         return SDL_CreateTextureWithProperties(renderer, props);
     }
 
-    constexpr auto PROP_TEXTURE_CREATE_COLORSPACE_NUMBER() { return "SDL.texture.create.colorspace"; }
+    constexpr auto PROP_TEXTURE_CREATE_COLORSPACE_NUMBER()
+    {
+        return "SDL.texture.create.colorspace";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_FORMAT_NUMBER() { return "SDL.texture.create.format"; }
+    constexpr auto PROP_TEXTURE_CREATE_FORMAT_NUMBER()
+    {
+        return "SDL.texture.create.format";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_ACCESS_NUMBER() { return "SDL.texture.create.access"; }
+    constexpr auto PROP_TEXTURE_CREATE_ACCESS_NUMBER()
+    {
+        return "SDL.texture.create.access";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_WIDTH_NUMBER() { return "SDL.texture.create.width"; }
+    constexpr auto PROP_TEXTURE_CREATE_WIDTH_NUMBER()
+    {
+        return "SDL.texture.create.width";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_HEIGHT_NUMBER() { return "SDL.texture.create.height"; }
+    constexpr auto PROP_TEXTURE_CREATE_HEIGHT_NUMBER()
+    {
+        return "SDL.texture.create.height";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_SDR_WHITE_POINT_FLOAT() { return "SDL.texture.create.SDR_white_point"; }
+    constexpr auto PROP_TEXTURE_CREATE_SDR_WHITE_POINT_FLOAT()
+    {
+        return "SDL.texture.create.SDR_white_point";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_HDR_HEADROOM_FLOAT() { return "SDL.texture.create.HDR_headroom"; }
+    constexpr auto PROP_TEXTURE_CREATE_HDR_HEADROOM_FLOAT()
+    {
+        return "SDL.texture.create.HDR_headroom";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_POINTER() { return "SDL.texture.create.d3d11.texture"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_POINTER()
+    {
+        return "SDL.texture.create.d3d11.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_U_POINTER() { return "SDL.texture.create.d3d11.texture_u"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_U_POINTER()
+    {
+        return "SDL.texture.create.d3d11.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_V_POINTER() { return "SDL.texture.create.d3d11.texture_v"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D11_TEXTURE_V_POINTER()
+    {
+        return "SDL.texture.create.d3d11.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_POINTER() { return "SDL.texture.create.d3d12.texture"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_POINTER()
+    {
+        return "SDL.texture.create.d3d12.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_U_POINTER() { return "SDL.texture.create.d3d12.texture_u"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_U_POINTER()
+    {
+        return "SDL.texture.create.d3d12.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_V_POINTER() { return "SDL.texture.create.d3d12.texture_v"; }
+    constexpr auto PROP_TEXTURE_CREATE_D3D12_TEXTURE_V_POINTER()
+    {
+        return "SDL.texture.create.d3d12.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER() { return "SDL.texture.create.metal.pixelbuffer"; }
+    constexpr auto PROP_TEXTURE_CREATE_METAL_PIXELBUFFER_POINTER()
+    {
+        return "SDL.texture.create.metal.pixelbuffer";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_NUMBER() { return "SDL.texture.create.opengl.texture"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.create.opengl.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_UV_NUMBER() { return "SDL.texture.create.opengl.texture_uv"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_UV_NUMBER()
+    {
+        return "SDL.texture.create.opengl.texture_uv";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_U_NUMBER() { return "SDL.texture.create.opengl.texture_u"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_U_NUMBER()
+    {
+        return "SDL.texture.create.opengl.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_V_NUMBER() { return "SDL.texture.create.opengl.texture_v"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGL_TEXTURE_V_NUMBER()
+    {
+        return "SDL.texture.create.opengl.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_NUMBER() { return "SDL.texture.create.opengles2.texture"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.create.opengles2.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_UV_NUMBER() { return "SDL.texture.create.opengles2.texture_uv"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_UV_NUMBER()
+    {
+        return "SDL.texture.create.opengles2.texture_uv";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_U_NUMBER() { return "SDL.texture.create.opengles2.texture_u"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_U_NUMBER()
+    {
+        return "SDL.texture.create.opengles2.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_V_NUMBER() { return "SDL.texture.create.opengles2.texture_v"; }
+    constexpr auto PROP_TEXTURE_CREATE_OPENGLES2_TEXTURE_V_NUMBER()
+    {
+        return "SDL.texture.create.opengles2.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_CREATE_VULKAN_TEXTURE_NUMBER() { return "SDL.texture.create.vulkan.texture"; }
+    constexpr auto PROP_TEXTURE_CREATE_VULKAN_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.create.vulkan.texture";
+    }
 
-    SDL_PropertiesID GetTextureProperties(SDL_Texture* texture)
+    SDL_PropertiesID GetTextureProperties(SDL_Texture *texture)
     {
         return SDL_GetTextureProperties(texture);
     }
 
-    constexpr auto PROP_TEXTURE_COLORSPACE_NUMBER() { return "SDL.texture.colorspace"; }
+    constexpr auto PROP_TEXTURE_COLORSPACE_NUMBER()
+    {
+        return "SDL.texture.colorspace";
+    }
 
-    constexpr auto PROP_TEXTURE_FORMAT_NUMBER() { return "SDL.texture.format"; }
+    constexpr auto PROP_TEXTURE_FORMAT_NUMBER()
+    {
+        return "SDL.texture.format";
+    }
 
-    constexpr auto PROP_TEXTURE_ACCESS_NUMBER() { return "SDL.texture.access"; }
+    constexpr auto PROP_TEXTURE_ACCESS_NUMBER()
+    {
+        return "SDL.texture.access";
+    }
 
-    constexpr auto PROP_TEXTURE_WIDTH_NUMBER() { return "SDL.texture.width"; }
+    constexpr auto PROP_TEXTURE_WIDTH_NUMBER()
+    {
+        return "SDL.texture.width";
+    }
 
-    constexpr auto PROP_TEXTURE_HEIGHT_NUMBER() { return "SDL.texture.height"; }
+    constexpr auto PROP_TEXTURE_HEIGHT_NUMBER()
+    {
+        return "SDL.texture.height";
+    }
 
-    constexpr auto PROP_TEXTURE_SDR_WHITE_POINT_FLOAT() { return "SDL.texture.SDR_white_point"; }
+    constexpr auto PROP_TEXTURE_SDR_WHITE_POINT_FLOAT()
+    {
+        return "SDL.texture.SDR_white_point";
+    }
 
-    constexpr auto PROP_TEXTURE_HDR_HEADROOM_FLOAT() { return "SDL.texture.HDR_headroom"; }
+    constexpr auto PROP_TEXTURE_HDR_HEADROOM_FLOAT()
+    {
+        return "SDL.texture.HDR_headroom";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_POINTER() { return "SDL.texture.d3d11.texture"; }
+    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_POINTER()
+    {
+        return "SDL.texture.d3d11.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_U_POINTER() { return "SDL.texture.d3d11.texture_u"; }
+    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_U_POINTER()
+    {
+        return "SDL.texture.d3d11.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_V_POINTER() { return "SDL.texture.d3d11.texture_v"; }
+    constexpr auto PROP_TEXTURE_D3D11_TEXTURE_V_POINTER()
+    {
+        return "SDL.texture.d3d11.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_POINTER() { return "SDL.texture.d3d12.texture"; }
+    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_POINTER()
+    {
+        return "SDL.texture.d3d12.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_U_POINTER() { return "SDL.texture.d3d12.texture_u"; }
+    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_U_POINTER()
+    {
+        return "SDL.texture.d3d12.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_V_POINTER() { return "SDL.texture.d3d12.texture_v"; }
+    constexpr auto PROP_TEXTURE_D3D12_TEXTURE_V_POINTER()
+    {
+        return "SDL.texture.d3d12.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_NUMBER() { return "SDL.texture.opengl.texture"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.opengl.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_UV_NUMBER() { return "SDL.texture.opengl.texture_uv"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_UV_NUMBER()
+    {
+        return "SDL.texture.opengl.texture_uv";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_U_NUMBER() { return "SDL.texture.opengl.texture_u"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_U_NUMBER()
+    {
+        return "SDL.texture.opengl.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_V_NUMBER() { return "SDL.texture.opengl.texture_v"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_V_NUMBER()
+    {
+        return "SDL.texture.opengl.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_TARGET_NUMBER() { return "SDL.texture.opengl.target"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEXTURE_TARGET_NUMBER()
+    {
+        return "SDL.texture.opengl.target";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEX_W_FLOAT() { return "SDL.texture.opengl.tex_w"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEX_W_FLOAT()
+    {
+        return "SDL.texture.opengl.tex_w";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGL_TEX_H_FLOAT() { return "SDL.texture.opengl.tex_h"; }
+    constexpr auto PROP_TEXTURE_OPENGL_TEX_H_FLOAT()
+    {
+        return "SDL.texture.opengl.tex_h";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER() { return "SDL.texture.opengles2.texture"; }
+    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.opengles2.texture";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_UV_NUMBER() { return "SDL.texture.opengles2.texture_uv"; }
+    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_UV_NUMBER()
+    {
+        return "SDL.texture.opengles2.texture_uv";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_U_NUMBER() { return "SDL.texture.opengles2.texture_u"; }
+    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_U_NUMBER()
+    {
+        return "SDL.texture.opengles2.texture_u";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_V_NUMBER() { return "SDL.texture.opengles2.texture_v"; }
+    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_V_NUMBER()
+    {
+        return "SDL.texture.opengles2.texture_v";
+    }
 
-    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_TARGET_NUMBER() { return "SDL.texture.opengles2.target"; }
+    constexpr auto PROP_TEXTURE_OPENGLES2_TEXTURE_TARGET_NUMBER()
+    {
+        return "SDL.texture.opengles2.target";
+    }
 
-    constexpr auto PROP_TEXTURE_VULKAN_TEXTURE_NUMBER() { return "SDL.texture.vulkan.texture"; }
+    constexpr auto PROP_TEXTURE_VULKAN_TEXTURE_NUMBER()
+    {
+        return "SDL.texture.vulkan.texture";
+    }
 
-    SDL_Renderer* GetRendererFromTexture(SDL_Texture* texture)
+    SDL_Renderer *GetRendererFromTexture(SDL_Texture *texture)
     {
         return SDL_GetRendererFromTexture(texture);
     }
 
-    bool GetTextureSize(SDL_Texture* texture, float* w, float* h)
+    bool GetTextureSize(SDL_Texture *texture, float *w, float *h)
     {
         return SDL_GetTextureSize(texture, w, h);
     }
 
-    bool SetTextureColorMod(SDL_Texture* texture, Uint8 r, Uint8 g, Uint8 b)
+    bool SetTextureColorMod(SDL_Texture *texture, Uint8 r, Uint8 g, Uint8 b)
     {
         return SDL_SetTextureColorMod(texture, r, g, b);
     }
 
-    bool SetTextureColorModFloat(SDL_Texture* texture, float r, float g, float b)
+    bool SetTextureColorModFloat(SDL_Texture *texture, float r, float g, float b)
     {
         return SDL_SetTextureColorModFloat(texture, r, g, b);
     }
 
-    bool GetTextureColorMod(SDL_Texture* texture, Uint8* r, Uint8* g, Uint8* b)
+    bool GetTextureColorMod(SDL_Texture *texture, Uint8 *r, Uint8 *g, Uint8 *b)
     {
         return SDL_GetTextureColorMod(texture, r, g, b);
     }
 
-    bool GetTextureColorModFloat(SDL_Texture* texture, float* r, float* g, float* b)
+    bool GetTextureColorModFloat(SDL_Texture *texture, float *r, float *g, float *b)
     {
         return SDL_GetTextureColorModFloat(texture, r, g, b);
     }
 
-    bool SetTextureAlphaMod(SDL_Texture* texture, Uint8 alpha)
+    bool SetTextureAlphaMod(SDL_Texture *texture, Uint8 alpha)
     {
         return SDL_SetTextureAlphaMod(texture, alpha);
     }
 
-    bool SetTextureAlphaModFloat(SDL_Texture* texture, float alpha)
+    bool SetTextureAlphaModFloat(SDL_Texture *texture, float alpha)
     {
         return SDL_SetTextureAlphaModFloat(texture, alpha);
     }
 
-    bool GetTextureAlphaMod(SDL_Texture* texture, Uint8* alpha)
+    bool GetTextureAlphaMod(SDL_Texture *texture, Uint8 *alpha)
     {
         return SDL_GetTextureAlphaMod(texture, alpha);
     }
 
-    bool GetTextureAlphaModFloat(SDL_Texture* texture, float* alpha)
+    bool GetTextureAlphaModFloat(SDL_Texture *texture, float *alpha)
     {
         return SDL_GetTextureAlphaModFloat(texture, alpha);
     }
 
-    bool SetTextureBlendMode(SDL_Texture* texture, BlendMode blendMode)
+    bool SetTextureBlendMode(SDL_Texture *texture, BlendMode blendMode)
     {
         return SDL_SetTextureBlendMode(texture, (SDL_BlendMode)(blendMode));
     }
 
-    bool GetTextureBlendMode(SDL_Texture* texture, BlendMode* blendMode)
+    bool GetTextureBlendMode(SDL_Texture *texture, BlendMode *blendMode)
     {
-        return SDL_GetTextureBlendMode(texture, (SDL_BlendMode*)(blendMode));
+        return SDL_GetTextureBlendMode(texture, (SDL_BlendMode *)(blendMode));
     }
 
-    bool SetTextureScaleMode(SDL_Texture* texture, ScaleMode scaleMode)
+    bool SetTextureScaleMode(SDL_Texture *texture, ScaleMode scaleMode)
     {
         return SDL_SetTextureScaleMode(texture, (SDL_ScaleMode)(scaleMode));
     }
 
-    bool GetTextureScaleMode(SDL_Texture* texture, ScaleMode* scaleMode)
+    bool GetTextureScaleMode(SDL_Texture *texture, ScaleMode *scaleMode)
     {
-        return SDL_GetTextureScaleMode(texture, (SDL_ScaleMode*)(scaleMode));
+        return SDL_GetTextureScaleMode(texture, (SDL_ScaleMode *)(scaleMode));
     }
 
-    bool UpdateTexture(SDL_Texture* texture, const SDL_Rect* rect, const void* pixels, int pitch)
+    bool UpdateTexture(SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch)
     {
         return SDL_UpdateTexture(texture, rect, pixels, pitch);
     }
 
-    bool UpdateYUVTexture(SDL_Texture* texture, const SDL_Rect* rect, const Uint8* Yplane, int Ypitch, const Uint8* Uplane, int Upitch, const Uint8* Vplane, int Vpitch)
+    bool UpdateYUVTexture(SDL_Texture *texture,
+                          const SDL_Rect *rect,
+                          const Uint8 *Yplane,
+                          int Ypitch,
+                          const Uint8 *Uplane,
+                          int Upitch,
+                          const Uint8 *Vplane,
+                          int Vpitch)
     {
         return SDL_UpdateYUVTexture(texture, rect, Yplane, Ypitch, Uplane, Upitch, Vplane, Vpitch);
     }
 
-    bool UpdateNVTexture(SDL_Texture* texture, const SDL_Rect* rect, const Uint8* Yplane, int Ypitch, const Uint8* UVplane, int UVpitch)
+    bool UpdateNVTexture(SDL_Texture *texture,
+                         const SDL_Rect *rect,
+                         const Uint8 *Yplane,
+                         int Ypitch,
+                         const Uint8 *UVplane,
+                         int UVpitch)
     {
         return SDL_UpdateNVTexture(texture, rect, Yplane, Ypitch, UVplane, UVpitch);
     }
 
-    bool LockTexture(SDL_Texture* texture, const SDL_Rect* rect, void** pixels, int* pitch)
+    bool LockTexture(SDL_Texture *texture, const SDL_Rect *rect, void **pixels, int *pitch)
     {
         return SDL_LockTexture(texture, rect, pixels, pitch);
     }
 
-    bool LockTextureToSurface(SDL_Texture* texture, const SDL_Rect* rect, SDL_Surface** surface)
+    bool LockTextureToSurface(SDL_Texture *texture, const SDL_Rect *rect, SDL_Surface **surface)
     {
         return SDL_LockTextureToSurface(texture, rect, surface);
     }
 
-    void UnlockTexture(SDL_Texture* texture)
+    void UnlockTexture(SDL_Texture *texture)
     {
         SDL_UnlockTexture(texture);
     }
 
-    bool SetRenderTarget(SDL_Renderer* renderer, SDL_Texture* texture)
+    bool SetRenderTarget(SDL_Renderer *renderer, SDL_Texture *texture)
     {
         return SDL_SetRenderTarget(renderer, texture);
     }
 
-    SDL_Texture* GetRenderTarget(SDL_Renderer* renderer)
+    SDL_Texture *GetRenderTarget(SDL_Renderer *renderer)
     {
         return SDL_GetRenderTarget(renderer);
     }
 
-    bool SetRenderLogicalPresentation(SDL_Renderer* renderer, int w, int h, RendererLogicalPresentation mode)
+    bool SetRenderLogicalPresentation(SDL_Renderer *renderer, int w, int h, RendererLogicalPresentation mode)
     {
         return SDL_SetRenderLogicalPresentation(renderer, w, h, (SDL_RendererLogicalPresentation)(mode));
     }
 
-    bool GetRenderLogicalPresentation(SDL_Renderer* renderer, int* w, int* h, RendererLogicalPresentation* mode)
+    bool GetRenderLogicalPresentation(SDL_Renderer *renderer, int *w, int *h, RendererLogicalPresentation *mode)
     {
-        return SDL_GetRenderLogicalPresentation(renderer, w, h, (SDL_RendererLogicalPresentation*)(mode));
+        return SDL_GetRenderLogicalPresentation(renderer, w, h, (SDL_RendererLogicalPresentation *)(mode));
     }
 
-    bool GetRenderLogicalPresentationRect(SDL_Renderer* renderer, SDL_FRect* rect)
+    bool GetRenderLogicalPresentationRect(SDL_Renderer *renderer, SDL_FRect *rect)
     {
         return SDL_GetRenderLogicalPresentationRect(renderer, rect);
     }
 
-    bool RenderCoordinatesFromWindow(SDL_Renderer* renderer, float window_x, float window_y, float* x, float* y)
+    bool RenderCoordinatesFromWindow(SDL_Renderer *renderer, float window_x, float window_y, float *x, float *y)
     {
         return SDL_RenderCoordinatesFromWindow(renderer, window_x, window_y, x, y);
     }
 
-    bool RenderCoordinatesToWindow(SDL_Renderer* renderer, float x, float y, float* window_x, float* window_y)
+    bool RenderCoordinatesToWindow(SDL_Renderer *renderer, float x, float y, float *window_x, float *window_y)
     {
         return SDL_RenderCoordinatesToWindow(renderer, x, y, window_x, window_y);
     }
 
-    bool ConvertEventToRenderCoordinates(SDL_Renderer* renderer, SDL_Event* event)
+    bool ConvertEventToRenderCoordinates(SDL_Renderer *renderer, SDL_Event *event)
     {
         return SDL_ConvertEventToRenderCoordinates(renderer, event);
     }
 
-    bool SetRenderViewport(SDL_Renderer* renderer, const SDL_Rect* rect)
+    bool SetRenderViewport(SDL_Renderer *renderer, const SDL_Rect *rect)
     {
         return SDL_SetRenderViewport(renderer, rect);
     }
 
-    bool GetRenderViewport(SDL_Renderer* renderer, SDL_Rect* rect)
+    bool GetRenderViewport(SDL_Renderer *renderer, SDL_Rect *rect)
     {
         return SDL_GetRenderViewport(renderer, rect);
     }
 
-    bool RenderViewportSet(SDL_Renderer* renderer)
+    bool RenderViewportSet(SDL_Renderer *renderer)
     {
         return SDL_RenderViewportSet(renderer);
     }
 
-    bool GetRenderSafeArea(SDL_Renderer* renderer, SDL_Rect* rect)
+    bool GetRenderSafeArea(SDL_Renderer *renderer, SDL_Rect *rect)
     {
         return SDL_GetRenderSafeArea(renderer, rect);
     }
 
-    bool SetRenderClipRect(SDL_Renderer* renderer, const SDL_Rect* rect)
+    bool SetRenderClipRect(SDL_Renderer *renderer, const SDL_Rect *rect)
     {
         return SDL_SetRenderClipRect(renderer, rect);
     }
 
-    bool GetRenderClipRect(SDL_Renderer* renderer, SDL_Rect* rect)
+    bool GetRenderClipRect(SDL_Renderer *renderer, SDL_Rect *rect)
     {
         return SDL_GetRenderClipRect(renderer, rect);
     }
 
-    bool RenderClipEnabled(SDL_Renderer* renderer)
+    bool RenderClipEnabled(SDL_Renderer *renderer)
     {
         return SDL_RenderClipEnabled(renderer);
     }
 
-    bool SetRenderScale(SDL_Renderer* renderer, float scaleX, float scaleY)
+    bool SetRenderScale(SDL_Renderer *renderer, float scaleX, float scaleY)
     {
         return SDL_SetRenderScale(renderer, scaleX, scaleY);
     }
 
-    bool GetRenderScale(SDL_Renderer* renderer, float* scaleX, float* scaleY)
+    bool GetRenderScale(SDL_Renderer *renderer, float *scaleX, float *scaleY)
     {
         return SDL_GetRenderScale(renderer, scaleX, scaleY);
     }
 
-    bool SetRenderDrawColor(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+    bool SetRenderDrawColor(SDL_Renderer *renderer, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
     {
         return SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
 
-    bool SetRenderDrawColorFloat(SDL_Renderer* renderer, float r, float g, float b, float a)
+    bool SetRenderDrawColorFloat(SDL_Renderer *renderer, float r, float g, float b, float a)
     {
         return SDL_SetRenderDrawColorFloat(renderer, r, g, b, a);
     }
 
-    bool GetRenderDrawColor(SDL_Renderer* renderer, Uint8* r, Uint8* g, Uint8* b, Uint8* a)
+    bool GetRenderDrawColor(SDL_Renderer *renderer, Uint8 *r, Uint8 *g, Uint8 *b, Uint8 *a)
     {
         return SDL_GetRenderDrawColor(renderer, r, g, b, a);
     }
 
-    bool GetRenderDrawColorFloat(SDL_Renderer* renderer, float* r, float* g, float* b, float* a)
+    bool GetRenderDrawColorFloat(SDL_Renderer *renderer, float *r, float *g, float *b, float *a)
     {
         return SDL_GetRenderDrawColorFloat(renderer, r, g, b, a);
     }
 
-    bool SetRenderColorScale(SDL_Renderer* renderer, float scale)
+    bool SetRenderColorScale(SDL_Renderer *renderer, float scale)
     {
         return SDL_SetRenderColorScale(renderer, scale);
     }
 
-    bool GetRenderColorScale(SDL_Renderer* renderer, float* scale)
+    bool GetRenderColorScale(SDL_Renderer *renderer, float *scale)
     {
         return SDL_GetRenderColorScale(renderer, scale);
     }
 
-    bool SetRenderDrawBlendMode(SDL_Renderer* renderer, BlendMode blendMode)
+    bool SetRenderDrawBlendMode(SDL_Renderer *renderer, BlendMode blendMode)
     {
         return SDL_SetRenderDrawBlendMode(renderer, (SDL_BlendMode)(blendMode));
     }
 
-    bool GetRenderDrawBlendMode(SDL_Renderer* renderer, BlendMode* blendMode)
+    bool GetRenderDrawBlendMode(SDL_Renderer *renderer, BlendMode *blendMode)
     {
-        return SDL_GetRenderDrawBlendMode(renderer, (SDL_BlendMode*)(blendMode));
+        return SDL_GetRenderDrawBlendMode(renderer, (SDL_BlendMode *)(blendMode));
     }
 
-    bool RenderClear(SDL_Renderer* renderer)
+    bool RenderClear(SDL_Renderer *renderer)
     {
         return SDL_RenderClear(renderer);
     }
 
-    bool RenderPoint(SDL_Renderer* renderer, float x, float y)
+    bool RenderPoint(SDL_Renderer *renderer, float x, float y)
     {
         return SDL_RenderPoint(renderer, x, y);
     }
 
-    bool RenderPoints(SDL_Renderer* renderer, const SDL_FPoint* points, int count)
+    bool RenderPoints(SDL_Renderer *renderer, const SDL_FPoint *points, int count)
     {
         return SDL_RenderPoints(renderer, points, count);
     }
 
-    bool RenderLine(SDL_Renderer* renderer, float x1, float y1, float x2, float y2)
+    bool RenderLine(SDL_Renderer *renderer, float x1, float y1, float x2, float y2)
     {
         return SDL_RenderLine(renderer, x1, y1, x2, y2);
     }
 
-    bool RenderLines(SDL_Renderer* renderer, const SDL_FPoint* points, int count)
+    bool RenderLines(SDL_Renderer *renderer, const SDL_FPoint *points, int count)
     {
         return SDL_RenderLines(renderer, points, count);
     }
 
-    bool RenderRect(SDL_Renderer* renderer, const SDL_FRect* rect)
+    bool RenderRect(SDL_Renderer *renderer, const SDL_FRect *rect)
     {
         return SDL_RenderRect(renderer, rect);
     }
 
-    bool RenderRects(SDL_Renderer* renderer, const SDL_FRect* rects, int count)
+    bool RenderRects(SDL_Renderer *renderer, const SDL_FRect *rects, int count)
     {
         return SDL_RenderRects(renderer, rects, count);
     }
 
-    bool RenderFillRect(SDL_Renderer* renderer, const SDL_FRect* rect)
+    bool RenderFillRect(SDL_Renderer *renderer, const SDL_FRect *rect)
     {
         return SDL_RenderFillRect(renderer, rect);
     }
 
-    bool RenderFillRects(SDL_Renderer* renderer, const SDL_FRect* rects, int count)
+    bool RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects, int count)
     {
         return SDL_RenderFillRects(renderer, rects, count);
     }
 
-    bool RenderTexture(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_FRect* srcrect, const SDL_FRect* dstrect)
+    bool RenderTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_FRect *srcrect, const SDL_FRect *dstrect)
     {
         return SDL_RenderTexture(renderer, texture, srcrect, dstrect);
     }
 
-    bool RenderTextureRotated(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_FRect* srcrect, const SDL_FRect* dstrect, double angle, const SDL_FPoint* center, FlipMode flip)
+    bool RenderTextureRotated(SDL_Renderer *renderer,
+                              SDL_Texture *texture,
+                              const SDL_FRect *srcrect,
+                              const SDL_FRect *dstrect,
+                              double angle,
+                              const SDL_FPoint *center,
+                              FlipMode flip)
     {
         return SDL_RenderTextureRotated(renderer, texture, srcrect, dstrect, angle, center, (SDL_FlipMode)(flip));
     }
 
-    bool RenderTextureAffine(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_FRect* srcrect, const SDL_FPoint* origin, const SDL_FPoint* right, const SDL_FPoint* down)
+    bool RenderTextureAffine(SDL_Renderer *renderer,
+                             SDL_Texture *texture,
+                             const SDL_FRect *srcrect,
+                             const SDL_FPoint *origin,
+                             const SDL_FPoint *right,
+                             const SDL_FPoint *down)
     {
         return SDL_RenderTextureAffine(renderer, texture, srcrect, origin, right, down);
     }
 
-    bool RenderTextureTiled(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_FRect* srcrect, float scale, const SDL_FRect* dstrect)
+    bool RenderTextureTiled(SDL_Renderer *renderer,
+                            SDL_Texture *texture,
+                            const SDL_FRect *srcrect,
+                            float scale,
+                            const SDL_FRect *dstrect)
     {
         return SDL_RenderTextureTiled(renderer, texture, srcrect, scale, dstrect);
     }
 
-    bool RenderTexture9Grid(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_FRect* srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, const SDL_FRect* dstrect)
+    bool RenderTexture9Grid(SDL_Renderer *renderer,
+                            SDL_Texture *texture,
+                            const SDL_FRect *srcrect,
+                            float left_width,
+                            float right_width,
+                            float top_height,
+                            float bottom_height,
+                            float scale,
+                            const SDL_FRect *dstrect)
     {
-        return SDL_RenderTexture9Grid(renderer, texture, srcrect, left_width, right_width, top_height, bottom_height, scale, dstrect);
+        return SDL_RenderTexture9Grid(renderer,
+                                      texture,
+                                      srcrect,
+                                      left_width,
+                                      right_width,
+                                      top_height,
+                                      bottom_height,
+                                      scale,
+                                      dstrect);
     }
 
-    bool RenderGeometry(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Vertex* vertices, int num_vertices, const int* indices, int num_indices)
+    bool RenderGeometry(SDL_Renderer *renderer,
+                        SDL_Texture *texture,
+                        const SDL_Vertex *vertices,
+                        int num_vertices,
+                        const int *indices,
+                        int num_indices)
     {
         return SDL_RenderGeometry(renderer, texture, vertices, num_vertices, indices, num_indices);
     }
 
-    bool RenderGeometryRaw(SDL_Renderer* renderer, SDL_Texture* texture, const float* xy, int xy_stride, const SDL_FColor* color, int color_stride, const float* uv, int uv_stride, int num_vertices, const void* indices, int num_indices, int size_indices)
+    bool RenderGeometryRaw(SDL_Renderer *renderer,
+                           SDL_Texture *texture,
+                           const float *xy,
+                           int xy_stride,
+                           const SDL_FColor *color,
+                           int color_stride,
+                           const float *uv,
+                           int uv_stride,
+                           int num_vertices,
+                           const void *indices,
+                           int num_indices,
+                           int size_indices)
     {
-        return SDL_RenderGeometryRaw(renderer, texture, xy, xy_stride, color, color_stride, uv, uv_stride, num_vertices, indices, num_indices, size_indices);
+        return SDL_RenderGeometryRaw(renderer,
+                                     texture,
+                                     xy,
+                                     xy_stride,
+                                     color,
+                                     color_stride,
+                                     uv,
+                                     uv_stride,
+                                     num_vertices,
+                                     indices,
+                                     num_indices,
+                                     size_indices);
     }
 
-    SDL_Surface* RenderReadPixels(SDL_Renderer* renderer, const SDL_Rect* rect)
+    SDL_Surface *RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect)
     {
         return SDL_RenderReadPixels(renderer, rect);
     }
 
-    bool RenderPresent(SDL_Renderer* renderer)
+    bool RenderPresent(SDL_Renderer *renderer)
     {
         return SDL_RenderPresent(renderer);
     }
 
-    void DestroyTexture(SDL_Texture* texture)
+    void DestroyTexture(SDL_Texture *texture)
     {
         SDL_DestroyTexture(texture);
     }
 
-    void DestroyRenderer(SDL_Renderer* renderer)
+    void DestroyRenderer(SDL_Renderer *renderer)
     {
         SDL_DestroyRenderer(renderer);
     }
 
-    bool FlushRenderer(SDL_Renderer* renderer)
+    bool FlushRenderer(SDL_Renderer *renderer)
     {
         return SDL_FlushRenderer(renderer);
     }
 
-    void* GetRenderMetalLayer(SDL_Renderer* renderer)
+    void *GetRenderMetalLayer(SDL_Renderer *renderer)
     {
         return SDL_GetRenderMetalLayer(renderer);
     }
 
-    void* GetRenderMetalCommandEncoder(SDL_Renderer* renderer)
+    void *GetRenderMetalCommandEncoder(SDL_Renderer *renderer)
     {
         return SDL_GetRenderMetalCommandEncoder(renderer);
     }
 
-    bool AddVulkanRenderSemaphores(SDL_Renderer* renderer, Uint32 wait_stage_mask, Sint64 wait_semaphore, Sint64 signal_semaphore)
+    bool AddVulkanRenderSemaphores(SDL_Renderer *renderer,
+                                   Uint32 wait_stage_mask,
+                                   Sint64 wait_semaphore,
+                                   Sint64 signal_semaphore)
     {
         return SDL_AddVulkanRenderSemaphores(renderer, wait_stage_mask, wait_semaphore, signal_semaphore);
     }
 
-    bool SetRenderVSync(SDL_Renderer* renderer, int vsync)
+    bool SetRenderVSync(SDL_Renderer *renderer, int vsync)
     {
         return SDL_SetRenderVSync(renderer, vsync);
     }
 
-    constexpr auto RENDERER_VSYNC_DISABLED() { return 0; }
+    constexpr auto RENDERER_VSYNC_DISABLED()
+    {
+        return 0;
+    }
 
-    constexpr auto RENDERER_VSYNC_ADAPTIVE() { return (-1); }
+    constexpr auto RENDERER_VSYNC_ADAPTIVE()
+    {
+        return (-1);
+    }
 
-    bool GetRenderVSync(SDL_Renderer* renderer, int* vsync)
+    bool GetRenderVSync(SDL_Renderer *renderer, int *vsync)
     {
         return SDL_GetRenderVSync(renderer, vsync);
     }
 
-    constexpr auto DEBUG_TEXT_FONT_CHARACTER_SIZE() { return 8; }
+    constexpr auto DEBUG_TEXT_FONT_CHARACTER_SIZE()
+    {
+        return 8;
+    }
 
-    bool RenderDebugText(SDL_Renderer* renderer, float x, float y, const char* str)
+    bool RenderDebugText(SDL_Renderer *renderer, float x, float y, const char *str)
     {
         return SDL_RenderDebugText(renderer, x, y, str);
     }
@@ -8061,82 +10127,85 @@ export namespace sdl
 
     using SDL_Storage = SDL_Storage;
 
-    SDL_Storage* OpenTitleStorage(const char* override, SDL_PropertiesID props)
+    SDL_Storage *OpenTitleStorage(const char *override, SDL_PropertiesID props)
     {
         return SDL_OpenTitleStorage(override, props);
     }
 
-    SDL_Storage* OpenUserStorage(const char* org, const char* app, SDL_PropertiesID props)
+    SDL_Storage *OpenUserStorage(const char *org, const char *app, SDL_PropertiesID props)
     {
         return SDL_OpenUserStorage(org, app, props);
     }
 
-    SDL_Storage* OpenFileStorage(const char* path)
+    SDL_Storage *OpenFileStorage(const char *path)
     {
         return SDL_OpenFileStorage(path);
     }
 
-    SDL_Storage* OpenStorage(const SDL_StorageInterface* iface, void* userdata)
+    SDL_Storage *OpenStorage(const SDL_StorageInterface *iface, void *userdata)
     {
         return SDL_OpenStorage(iface, userdata);
     }
 
-    bool CloseStorage(SDL_Storage* storage)
+    bool CloseStorage(SDL_Storage *storage)
     {
         return SDL_CloseStorage(storage);
     }
 
-    bool StorageReady(SDL_Storage* storage)
+    bool StorageReady(SDL_Storage *storage)
     {
         return SDL_StorageReady(storage);
     }
 
-    bool GetStorageFileSize(SDL_Storage* storage, const char* path, Uint64* length)
+    bool GetStorageFileSize(SDL_Storage *storage, const char *path, Uint64 *length)
     {
         return SDL_GetStorageFileSize(storage, path, length);
     }
 
-    bool ReadStorageFile(SDL_Storage* storage, const char* path, void* destination, Uint64 length)
+    bool ReadStorageFile(SDL_Storage *storage, const char *path, void *destination, Uint64 length)
     {
         return SDL_ReadStorageFile(storage, path, destination, length);
     }
 
-    bool WriteStorageFile(SDL_Storage* storage, const char* path, const void* source, Uint64 length)
+    bool WriteStorageFile(SDL_Storage *storage, const char *path, const void *source, Uint64 length)
     {
         return SDL_WriteStorageFile(storage, path, source, length);
     }
 
-    bool CreateStorageDirectory(SDL_Storage* storage, const char* path)
+    bool CreateStorageDirectory(SDL_Storage *storage, const char *path)
     {
         return SDL_CreateStorageDirectory(storage, path);
     }
 
-    bool EnumerateStorageDirectory(SDL_Storage* storage, const char* path, SDL_EnumerateDirectoryCallback callback, void* userdata)
+    bool EnumerateStorageDirectory(SDL_Storage *storage,
+                                   const char *path,
+                                   SDL_EnumerateDirectoryCallback callback,
+                                   void *userdata)
     {
         return SDL_EnumerateStorageDirectory(storage, path, callback, userdata);
     }
 
-    bool RemoveStoragePath(SDL_Storage* storage, const char* path)
+    bool RemoveStoragePath(SDL_Storage *storage, const char *path)
     {
         return SDL_RemoveStoragePath(storage, path);
     }
 
-    bool RenameStoragePath(SDL_Storage* storage, const char* oldpath, const char* newpath)
+    bool RenameStoragePath(SDL_Storage *storage, const char *oldpath, const char *newpath)
     {
         return SDL_RenameStoragePath(storage, oldpath, newpath);
     }
 
-    bool CopyStorageFile(SDL_Storage* storage, const char* oldpath, const char* newpath)
+    bool CopyStorageFile(SDL_Storage *storage, const char *oldpath, const char *newpath)
     {
         return SDL_CopyStorageFile(storage, oldpath, newpath);
     }
 
-    bool GetStoragePathInfo(SDL_Storage* storage, const char* path, SDL_PathInfo* info)
+    bool GetStoragePathInfo(SDL_Storage *storage, const char *path, SDL_PathInfo *info)
     {
         return SDL_GetStoragePathInfo(storage, path, info);
     }
 
-    Uint64 GetStorageSpaceRemaining(SDL_Storage* storage)
+    Uint64 GetStorageSpaceRemaining(SDL_Storage *storage)
     {
         return SDL_GetStorageSpaceRemaining(storage);
     }
@@ -8150,7 +10219,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_WINDOWS)
 
-    void SetWindowsMessageHook(SDL_WindowsMessageHook callback, void* userdata)
+    void SetWindowsMessageHook(SDL_WindowsMessageHook callback, void *userdata)
     {
         SDL_SetWindowsMessageHook(callback, userdata);
     }
@@ -8166,14 +10235,13 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
 
-    bool GetDXGIOutputInfo(SDL_DisplayID displayID, int* adapterIndex, int* outputIndex)
+    bool GetDXGIOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex)
     {
         return SDL_GetDXGIOutputInfo(displayID, adapterIndex, outputIndex);
     }
 #endif
 
-
-    void SetX11EventHook(SDL_X11EventHook callback, void* userdata)
+    void SetX11EventHook(SDL_X11EventHook callback, void *userdata)
     {
         SDL_SetX11EventHook(callback, userdata);
     }
@@ -8198,7 +10266,10 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_IOS)
 
-    bool SetiOSAnimationCallback(SDL_Window* window, int interval, SDL_iOSAnimationCallback callback, void* callbackParam)
+    bool SetiOSAnimationCallback(SDL_Window *window,
+                                 int interval,
+                                 SDL_iOSAnimationCallback callback,
+                                 void *callbackParam)
     {
         return SDL_SetiOSAnimationCallback(window, interval, callback, callbackParam);
     }
@@ -8214,7 +10285,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    void* GetAndroidJNIEnv(void )
+    void *GetAndroidJNIEnv(void)
     {
         return SDL_GetAndroidJNIEnv();
     }
@@ -8222,7 +10293,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    void* GetAndroidActivity(void )
+    void *GetAndroidActivity(void)
     {
         return SDL_GetAndroidActivity();
     }
@@ -8230,7 +10301,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    int GetAndroidSDKVersion(void )
+    int GetAndroidSDKVersion(void)
     {
         return SDL_GetAndroidSDKVersion();
     }
@@ -8238,7 +10309,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    bool IsChromebook(void )
+    bool IsChromebook(void)
     {
         return SDL_IsChromebook();
     }
@@ -8246,7 +10317,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    bool IsDeXMode(void )
+    bool IsDeXMode(void)
     {
         return SDL_IsDeXMode();
     }
@@ -8254,7 +10325,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    void SendAndroidBackButton(void )
+    void SendAndroidBackButton(void)
     {
         SDL_SendAndroidBackButton();
     }
@@ -8262,17 +10333,23 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    constexpr auto ANDROID_EXTERNAL_STORAGE_READ() { return 0x01; }
+    constexpr auto ANDROID_EXTERNAL_STORAGE_READ()
+    {
+        return 0x01;
+    }
 #endif
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    constexpr auto ANDROID_EXTERNAL_STORAGE_WRITE() { return 0x02; }
+    constexpr auto ANDROID_EXTERNAL_STORAGE_WRITE()
+    {
+        return 0x02;
+    }
 #endif
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    const char* GetAndroidInternalStoragePath(void )
+    const char *GetAndroidInternalStoragePath(void)
     {
         return SDL_GetAndroidInternalStoragePath();
     }
@@ -8280,7 +10357,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    Uint32 GetAndroidExternalStorageState(void )
+    Uint32 GetAndroidExternalStorageState(void)
     {
         return SDL_GetAndroidExternalStorageState();
     }
@@ -8288,7 +10365,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    const char* GetAndroidExternalStoragePath(void )
+    const char *GetAndroidExternalStoragePath(void)
     {
         return SDL_GetAndroidExternalStoragePath();
     }
@@ -8296,7 +10373,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    const char* GetAndroidCachePath(void )
+    const char *GetAndroidCachePath(void)
     {
         return SDL_GetAndroidCachePath();
     }
@@ -8307,7 +10384,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    bool RequestAndroidPermission(const char* permission, SDL_RequestAndroidPermissionCallback cb, void* userdata)
+    bool RequestAndroidPermission(const char *permission, SDL_RequestAndroidPermissionCallback cb, void *userdata)
     {
         return SDL_RequestAndroidPermission(permission, cb, userdata);
     }
@@ -8315,7 +10392,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_ANDROID)
 
-    bool ShowAndroidToast(const char* message, int duration, int gravity, int xoffset, int yoffset)
+    bool ShowAndroidToast(const char *message, int duration, int gravity, int xoffset, int yoffset)
     {
         return SDL_ShowAndroidToast(message, duration, gravity, xoffset, yoffset);
     }
@@ -8329,13 +10406,12 @@ export namespace sdl
     }
 #endif
 
-
-    bool IsTablet(void )
+    bool IsTablet(void)
     {
         return SDL_IsTablet();
     }
 
-    bool IsTV(void )
+    bool IsTV(void)
     {
         return SDL_IsTV();
     }
@@ -8350,43 +10426,43 @@ export namespace sdl
     };
     REGULAR_ENUM(Sandbox);
 
-    SDL_Sandbox GetSandbox(void )
+    SDL_Sandbox GetSandbox(void)
     {
         return SDL_GetSandbox();
     }
 
-    void OnApplicationWillTerminate(void )
+    void OnApplicationWillTerminate(void)
     {
         SDL_OnApplicationWillTerminate();
     }
 
-    void OnApplicationDidReceiveMemoryWarning(void )
+    void OnApplicationDidReceiveMemoryWarning(void)
     {
         SDL_OnApplicationDidReceiveMemoryWarning();
     }
 
-    void OnApplicationWillEnterBackground(void )
+    void OnApplicationWillEnterBackground(void)
     {
         SDL_OnApplicationWillEnterBackground();
     }
 
-    void OnApplicationDidEnterBackground(void )
+    void OnApplicationDidEnterBackground(void)
     {
         SDL_OnApplicationDidEnterBackground();
     }
 
-    void OnApplicationWillEnterForeground(void )
+    void OnApplicationWillEnterForeground(void)
     {
         SDL_OnApplicationWillEnterForeground();
     }
 
-    void OnApplicationDidEnterForeground(void )
+    void OnApplicationDidEnterForeground(void)
     {
         SDL_OnApplicationDidEnterForeground();
     }
 #if defined(SDL_PLATFORM_IOS)
 
-    void OnApplicationDidChangeStatusBarOrientation(void )
+    void OnApplicationDidChangeStatusBarOrientation(void)
     {
         SDL_OnApplicationDidChangeStatusBarOrientation();
     }
@@ -8404,7 +10480,7 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_GDK)
 
-    bool GetGDKTaskQueue(XTaskQueueHandle* outTaskQueue)
+    bool GetGDKTaskQueue(XTaskQueueHandle *outTaskQueue)
     {
         return SDL_GetGDKTaskQueue(outTaskQueue);
     }
@@ -8412,12 +10488,11 @@ export namespace sdl
 
 #if defined(SDL_PLATFORM_GDK)
 
-    bool GetGDKDefaultUser(XUserHandle* outUserHandle)
+    bool GetGDKDefaultUser(XUserHandle *outUserHandle)
     {
         return SDL_GetGDKDefaultUser(outUserHandle);
     }
 #endif
-
 
     using DateTime = SDL_DateTime;
 
@@ -8436,27 +10511,27 @@ export namespace sdl
     };
     REGULAR_ENUM(TimeFormat);
 
-    bool GetDateTimeLocalePreferences(DateFormat* dateFormat, TimeFormat* timeFormat)
+    bool GetDateTimeLocalePreferences(DateFormat *dateFormat, TimeFormat *timeFormat)
     {
-        return SDL_GetDateTimeLocalePreferences((SDL_DateFormat*)(dateFormat), (SDL_TimeFormat*)(timeFormat));
+        return SDL_GetDateTimeLocalePreferences((SDL_DateFormat *)(dateFormat), (SDL_TimeFormat *)(timeFormat));
     }
 
-    bool GetCurrentTime(SDL_Time* ticks)
+    bool GetCurrentTime(SDL_Time *ticks)
     {
         return SDL_GetCurrentTime(ticks);
     }
 
-    bool TimeToDateTime(SDL_Time ticks, SDL_DateTime* dt, bool localTime)
+    bool TimeToDateTime(SDL_Time ticks, SDL_DateTime *dt, bool localTime)
     {
         return SDL_TimeToDateTime(ticks, dt, localTime);
     }
 
-    bool DateTimeToTime(const SDL_DateTime* dt, SDL_Time* ticks)
+    bool DateTimeToTime(const SDL_DateTime *dt, SDL_Time *ticks)
     {
         return SDL_DateTimeToTime(dt, ticks);
     }
 
-    void TimeToWindows(SDL_Time ticks, Uint32* dwLowDateTime, Uint32* dwHighDateTime)
+    void TimeToWindows(SDL_Time ticks, Uint32 *dwLowDateTime, Uint32 *dwHighDateTime)
     {
         SDL_TimeToWindows(ticks, dwLowDateTime, dwHighDateTime);
     }
@@ -8481,32 +10556,47 @@ export namespace sdl
         return SDL_GetDayOfWeek(year, month, day);
     }
 
-    constexpr auto MS_PER_SECOND() { return 1000; }
+    constexpr auto MS_PER_SECOND()
+    {
+        return 1000;
+    }
 
-    constexpr auto US_PER_SECOND() { return 1000000; }
+    constexpr auto US_PER_SECOND()
+    {
+        return 1000000;
+    }
 
-    constexpr auto NS_PER_SECOND() { return 1000000000LL; }
+    constexpr auto NS_PER_SECOND()
+    {
+        return 1000000000LL;
+    }
 
-    constexpr auto NS_PER_MS() { return 1000000; }
+    constexpr auto NS_PER_MS()
+    {
+        return 1000000;
+    }
 
-    constexpr auto NS_PER_US() { return 1000; }
+    constexpr auto NS_PER_US()
+    {
+        return 1000;
+    }
 
-    Uint64 GetTicks(void )
+    Uint64 GetTicks(void)
     {
         return SDL_GetTicks();
     }
 
-    Uint64 GetTicksNS(void )
+    Uint64 GetTicksNS(void)
     {
         return SDL_GetTicksNS();
     }
 
-    Uint64 GetPerformanceCounter(void )
+    Uint64 GetPerformanceCounter(void)
     {
         return SDL_GetPerformanceCounter();
     }
 
-    Uint64 GetPerformanceFrequency(void )
+    Uint64 GetPerformanceFrequency(void)
     {
         return SDL_GetPerformanceFrequency();
     }
@@ -8528,12 +10618,12 @@ export namespace sdl
 
     using TimerID = Uint32;
 
-    SDL_TimerID AddTimer(Uint32 interval, SDL_TimerCallback callback, void* userdata)
+    SDL_TimerID AddTimer(Uint32 interval, SDL_TimerCallback callback, void *userdata)
     {
         return SDL_AddTimer(interval, callback, userdata);
     }
 
-    SDL_TimerID AddTimerNS(Uint64 interval, SDL_NSTimerCallback callback, void* userdata)
+    SDL_TimerID AddTimerNS(Uint64 interval, SDL_NSTimerCallback callback, void *userdata)
     {
         return SDL_AddTimerNS(interval, callback, userdata);
     }
@@ -8559,155 +10649,160 @@ export namespace sdl
     };
     BITFLAG_ENUM(TrayEntryFlags);
 
-    SDL_Tray* CreateTray(SDL_Surface* icon, const char* tooltip)
+    SDL_Tray *CreateTray(SDL_Surface *icon, const char *tooltip)
     {
         return SDL_CreateTray(icon, tooltip);
     }
 
-    void SetTrayIcon(SDL_Tray* tray, SDL_Surface* icon)
+    void SetTrayIcon(SDL_Tray *tray, SDL_Surface *icon)
     {
         SDL_SetTrayIcon(tray, icon);
     }
 
-    void SetTrayTooltip(SDL_Tray* tray, const char* tooltip)
+    void SetTrayTooltip(SDL_Tray *tray, const char *tooltip)
     {
         SDL_SetTrayTooltip(tray, tooltip);
     }
 
-    SDL_TrayMenu* CreateTrayMenu(SDL_Tray* tray)
+    SDL_TrayMenu *CreateTrayMenu(SDL_Tray *tray)
     {
         return SDL_CreateTrayMenu(tray);
     }
 
-    SDL_TrayMenu* CreateTraySubmenu(SDL_TrayEntry* entry)
+    SDL_TrayMenu *CreateTraySubmenu(SDL_TrayEntry *entry)
     {
         return SDL_CreateTraySubmenu(entry);
     }
 
-    SDL_TrayMenu* GetTrayMenu(SDL_Tray* tray)
+    SDL_TrayMenu *GetTrayMenu(SDL_Tray *tray)
     {
         return SDL_GetTrayMenu(tray);
     }
 
-    SDL_TrayMenu* GetTraySubmenu(SDL_TrayEntry* entry)
+    SDL_TrayMenu *GetTraySubmenu(SDL_TrayEntry *entry)
     {
         return SDL_GetTraySubmenu(entry);
     }
 
-    void RemoveTrayEntry(SDL_TrayEntry* entry)
+    void RemoveTrayEntry(SDL_TrayEntry *entry)
     {
         SDL_RemoveTrayEntry(entry);
     }
 
-    SDL_TrayEntry* InsertTrayEntryAt(SDL_TrayMenu* menu, int pos, const char* label, TrayEntryFlags flags)
+    SDL_TrayEntry *InsertTrayEntryAt(SDL_TrayMenu *menu, int pos, const char *label, TrayEntryFlags flags)
     {
         return SDL_InsertTrayEntryAt(menu, pos, label, (SDL_TrayEntryFlags)(flags));
     }
 
-    void SetTrayEntryLabel(SDL_TrayEntry* entry, const char* label)
+    void SetTrayEntryLabel(SDL_TrayEntry *entry, const char *label)
     {
         SDL_SetTrayEntryLabel(entry, label);
     }
 
-    const char* GetTrayEntryLabel(SDL_TrayEntry* entry)
+    const char *GetTrayEntryLabel(SDL_TrayEntry *entry)
     {
         return SDL_GetTrayEntryLabel(entry);
     }
 
-    void SetTrayEntryChecked(SDL_TrayEntry* entry, bool checked)
+    void SetTrayEntryChecked(SDL_TrayEntry *entry, bool checked)
     {
         SDL_SetTrayEntryChecked(entry, checked);
     }
 
-    bool GetTrayEntryChecked(SDL_TrayEntry* entry)
+    bool GetTrayEntryChecked(SDL_TrayEntry *entry)
     {
         return SDL_GetTrayEntryChecked(entry);
     }
 
-    void SetTrayEntryEnabled(SDL_TrayEntry* entry, bool enabled)
+    void SetTrayEntryEnabled(SDL_TrayEntry *entry, bool enabled)
     {
         SDL_SetTrayEntryEnabled(entry, enabled);
     }
 
-    bool GetTrayEntryEnabled(SDL_TrayEntry* entry)
+    bool GetTrayEntryEnabled(SDL_TrayEntry *entry)
     {
         return SDL_GetTrayEntryEnabled(entry);
     }
 
-    void SetTrayEntryCallback(SDL_TrayEntry* entry, SDL_TrayCallback callback, void* userdata)
+    void SetTrayEntryCallback(SDL_TrayEntry *entry, SDL_TrayCallback callback, void *userdata)
     {
         SDL_SetTrayEntryCallback(entry, callback, userdata);
     }
 
-    void ClickTrayEntry(SDL_TrayEntry* entry)
+    void ClickTrayEntry(SDL_TrayEntry *entry)
     {
         SDL_ClickTrayEntry(entry);
     }
 
-    void DestroyTray(SDL_Tray* tray)
+    void DestroyTray(SDL_Tray *tray)
     {
         SDL_DestroyTray(tray);
     }
 
-    SDL_TrayMenu* GetTrayEntryParent(SDL_TrayEntry* entry)
+    SDL_TrayMenu *GetTrayEntryParent(SDL_TrayEntry *entry)
     {
         return SDL_GetTrayEntryParent(entry);
     }
 
-    SDL_TrayEntry* GetTrayMenuParentEntry(SDL_TrayMenu* menu)
+    SDL_TrayEntry *GetTrayMenuParentEntry(SDL_TrayMenu *menu)
     {
         return SDL_GetTrayMenuParentEntry(menu);
     }
 
-    SDL_Tray* GetTrayMenuParentTray(SDL_TrayMenu* menu)
+    SDL_Tray *GetTrayMenuParentTray(SDL_TrayMenu *menu)
     {
         return SDL_GetTrayMenuParentTray(menu);
     }
 
-    void UpdateTrays(void )
+    void UpdateTrays(void)
     {
         SDL_UpdateTrays();
     }
-}
+} // namespace sdl
 
 export namespace sdl::main
 {
 #if defined(SDL_PLATFORM_PRIVATE_MAIN)
 #endif
 
+    constexpr auto AIN_DECLSPEC()
+    {
+        return SDL_DECLSPEC;
+    }
 
-    constexpr auto AIN_DECLSPEC() { return SDL_DECLSPEC; }
-
-    void SetMainReady(void )
+    void SetMainReady(void)
     {
         SDL_SetMainReady();
     }
-}
+} // namespace sdl::main
 
 export namespace sdl::vulkan
 {
 
-    bool LoadLibrary(const char* path)
+    bool LoadLibrary(const char *path)
     {
         return SDL_Vulkan_LoadLibrary(path);
     }
 
-    SDL_FunctionPointer GetVkGetInstanceProcAddr(void )
+    SDL_FunctionPointer GetVkGetInstanceProcAddr(void)
     {
         return SDL_Vulkan_GetVkGetInstanceProcAddr();
     }
 
-    void UnloadLibrary(void )
+    void UnloadLibrary(void)
     {
         SDL_Vulkan_UnloadLibrary();
     }
 
-    bool CreateSurface(SDL_Window* window, VkInstance instance, const struct VkAllocationCallbacks* allocator, VkSurfaceKHR* surface)
+    bool CreateSurface(SDL_Window *window,
+                       VkInstance instance,
+                       const struct VkAllocationCallbacks *allocator,
+                       VkSurfaceKHR *surface)
     {
         return SDL_Vulkan_CreateSurface(window, instance, allocator, surface);
     }
 
-    void DestroySurface(VkInstance instance, VkSurfaceKHR surface, const struct VkAllocationCallbacks* allocator)
+    void DestroySurface(VkInstance instance, VkSurfaceKHR surface, const struct VkAllocationCallbacks *allocator)
     {
         SDL_Vulkan_DestroySurface(instance, surface, allocator);
     }
@@ -8717,8 +10812,8 @@ export namespace sdl::vulkan
         return SDL_Vulkan_GetPresentationSupport(instance, physicalDevice, queueFamilyIndex);
     }
 
-    char const * const * GetInstanceExtensions(Uint32 *count)
+    char const *const *GetInstanceExtensions(Uint32 *count)
     {
         return SDL_Vulkan_GetInstanceExtensions(count);
     }
-}
+} // namespace sdl::vulkan

@@ -10,7 +10,7 @@ namespace retro
 {
     struct QuadData
     {
-        Color   color;
+        Color color;
         Vector2f position;
         Vector2f size;
         Vector2f viewport_size;
@@ -305,19 +305,11 @@ namespace retro
                                                              1,
                                                              &color_blend_attachment};
 
-        vk::PushConstantRange range{
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-            0,
-            sizeof(QuadData)
-        };
+        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                                    0,
+                                    sizeof(QuadData)};
 
-        vk::PipelineLayoutCreateInfo pipeline_layout_info{
-            {},
-            0,
-            nullptr,
-            1,
-            &range
-        };
+        vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, 0, nullptr, 1, &range};
         pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
 
         vk::GraphicsPipelineCreateInfo pipeline_info{{},
@@ -401,21 +393,18 @@ namespace retro
 
         const auto [viewportW, viewportH] = viewport_->size();
 
-        for (const auto& quad : pending_quads_)
+        for (const auto &quad : pending_quads_)
         {
-            QuadData push{
-                .color = quad.color,
-                .position     = quad.position,
-                .size = quad.size,
-                .viewport_size = {static_cast<float>(viewportW), static_cast<float>(viewportH)}
-            };
+            QuadData push{.color = quad.color,
+                          .position = quad.position,
+                          .size = quad.size,
+                          .viewport_size = {static_cast<float>(viewportW), static_cast<float>(viewportH)}};
 
-            cmd.pushConstants(
-                pipeline_layout_.get(),
-                vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                0,
-                sizeof(QuadData),
-                &push);
+            cmd.pushConstants(pipeline_layout_.get(),
+                              vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                              0,
+                              sizeof(QuadData),
+                              &push);
 
             cmd.draw(6, 1, 0, 0);
         }

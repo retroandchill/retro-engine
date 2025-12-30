@@ -1,4 +1,5 @@
-add_executable(retro_core_tests strings/test_name.cpp)
+add_executable(retro_core_tests strings/test_name.cpp
+        math/test_vector.cpp)
 
 target_include_directories(retro_core_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

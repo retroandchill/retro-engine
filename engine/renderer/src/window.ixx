@@ -50,11 +50,12 @@ namespace retro
             sdl::SetWindowTitle(window_.get(), title.data());
         }
 
-        vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
+        [[nodiscard]] vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
 
-        [[nodiscard]] inline Size2<uint32> size() const override
+        [[nodiscard]] inline Vector2u size() const override
         {
-            int w = 0, h = 0;
+            int w = 0;
+            int h = 0;
             sdl::GetWindowSizeInPixels(window_.get(), &w, &h);
             return {static_cast<uint32>(w), static_cast<uint32>(h)};
         }

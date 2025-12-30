@@ -93,10 +93,10 @@ void Engine::render()
     {
         for (int j = 0; j < height; j++)
         {
-            const int index = i + j * width;         // linear index if needed
-            const float r = (index & 1) ? 1.0f : 0.0f;        // bit 0
-            const float g = (index & 2) ? 1.0f : 0.0f;        // bit 1
-            const float b = (index & 4) ? 1.0f : 0.0f;        // bit 2
+            const int index = i + j * width;           // linear index if needed
+            const float r = (index & 1) ? 1.0f : 0.0f; // bit 0
+            const float g = (index & 2) ? 1.0f : 0.0f; // bit 1
+            const float b = (index & 4) ? 1.0f : 0.0f; // bit 2
 
             const Color c{r, g, b, 1.0f};
             renderer_->draw_quad({i * 100.0f, j * 100.0f}, {100.0f, 100.0f}, c);

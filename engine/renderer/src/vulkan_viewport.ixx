@@ -15,16 +15,16 @@ namespace retro
 
         virtual vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const = 0;
 
-        [[nodiscard]] virtual Size2<uint32> size() const = 0;
+        [[nodiscard]] virtual Vector2u size() const = 0;
 
         [[nodiscard]] inline uint32 width() const
         {
-            return size().width;
+            return size().x;
         }
 
         [[nodiscard]] inline uint32 height() const
         {
-            return size().height;
+            return size().y;
         }
     };
 } // namespace retro

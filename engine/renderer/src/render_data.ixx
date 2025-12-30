@@ -22,6 +22,6 @@ namespace retro
     {
         Vector2f position;
         Vector2f size;
-        Color   color;
+        Color color;
     };
-}
+} // namespace retro
