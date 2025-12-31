@@ -18,6 +18,7 @@ void Engine::run()
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
+    scene_ = std::make_unique<Scene2D>();
 
     // FPS tracking state
     float fps_timer = 0.0f;

@@ -12,6 +12,7 @@ export module retro.runtime:engine;
 import std;
 import retro.core;
 import :interfaces;
+import :scene;
 
 namespace retro
 {
@@ -73,6 +74,12 @@ namespace retro
 
         void request_shutdown();
 
+        [[nodiscard]] inline Scene2D &scene() const
+        {
+            assert(scene_ != nullptr);
+            return *scene_;
+        }
+
       private:
         void tick(float delta_time);
         void render();
@@ -83,6 +90,7 @@ namespace retro
         std::unique_ptr<Renderer2D> renderer_{};
 
         std::atomic<bool> running_{false};
+        std::unique_ptr<Scene2D> scene_{};
     };
 
     export struct EngineLifecycle

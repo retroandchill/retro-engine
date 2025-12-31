@@ -8,9 +8,10 @@ import std;
 
 namespace retro
 {
-    export class RenderProxy
+    template <typename T>
+    class RenderProxyImpl
     {
-      public:
+
       private:
     };
 }; // namespace retro

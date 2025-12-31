@@ -6,4 +6,5 @@ export module retro.runtime:scene.rendering;
 
 export import :scene.rendering.render_component;
 export import :scene.rendering.render_proxy;
-export import :scene.rendering.render_data_bucket;
+export import :scene.rendering.render_proxy_manager;
+export import :scene.rendering.render_proxy_bucket;
