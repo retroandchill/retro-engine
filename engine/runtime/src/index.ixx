@@ -8,3 +8,4 @@ export import :interfaces;
 export import :engine;
 export import :sdl_runtime;
 export import :filesystem;
+export import :scene;

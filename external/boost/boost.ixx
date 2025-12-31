@@ -6,18 +6,61 @@ module;
 #define BOOST_DLL_USE_STD_FS
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
 #include <boost/dll.hpp>
+#include <boost/uuid.hpp>
 
 export module boost;
 
-namespace boost::dll
+namespace boost
 {
-    export using dll::shared_library;
-    export using dll::import_symbol;
-    export using dll::library_info;
-    export using dll::symbol_location_ptr;
-    export using dll::symbol_location;
-    export using dll::program_location;
-    export using dll::operator==;
-    export using dll::operator!=;
-    export using dll::swap;
+    namespace dll
+    {
+        export using dll::shared_library;
+        export using dll::import_symbol;
+        export using dll::library_info;
+        export using dll::symbol_location_ptr;
+        export using dll::symbol_location;
+        export using dll::program_location;
+        export using dll::operator==;
+        export using dll::operator!=;
+        export using dll::swap;
+    }
+
+    namespace uuids
+    {
+        export using uuids::uuid;
+        export using uuids::operator==;
+        export using uuids::operator!=;
+        export using uuids::operator<;
+        export using uuids::operator<=;
+        export using uuids::operator>;
+        export using uuids::operator>=;
+        export using uuids::operator<=>;
+
+        export using uuids::swap;
+        export using uuids::hash_value;
+
+        export using uuids::to_chars;
+        export using uuids::operator<<;
+        export using uuids::operator>>;
+        export using uuids::to_string;
+        export using uuids::to_wstring;
+
+        export using uuids::nil_generator;
+        export using uuids::string_generator;
+        export using uuids::name_generator;
+        export using uuids::random_generator;
+        export using uuids::time_generator_v1;
+        export using uuids::time_generator_v6;
+        export using uuids::time_generator_v7;
+
+        namespace ns
+        {
+            export using ns::dns;
+            export using ns::url;
+            export using ns::oid;
+            export using ns::x500dn;
+        }
+
+        export using uuids::nil_uuid;
+    }
 } // namespace boost::dll

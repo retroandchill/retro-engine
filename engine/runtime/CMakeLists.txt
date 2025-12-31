@@ -16,7 +16,11 @@ target_sources(retro_runtime PUBLIC
         src/interfaces/script_runtime.ixx
         src/sdl_runtime.ixx
         src/filesystem/utils.ixx
-        src/filesystem/index.ixx)
+        src/filesystem/index.ixx
+        src/scene/index.ixx
+        src/scene/scene2d.ixx
+        src/scene/entity.ixx
+        src/scene/component.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_sdl retro_boost)
 
