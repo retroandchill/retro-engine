@@ -8,14 +8,6 @@ import vulkan_hpp;
 
 namespace retro
 {
-    struct QuadData
-    {
-        Color color;
-        Vector2f position;
-        Vector2f size;
-        Vector2f viewport_size;
-    };
-
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
         : viewport_{std::move(viewport)}, instance_{create_instance()},
           surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
@@ -40,9 +32,7 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
           }),
-          pipeline_cache_(device_.device().createPipelineCache(vk::PipelineCacheCreateInfo{})),
-          pipeline_layout_(create_pipeline_layout()),
-          graphics_pipeline_(create_graphics_pipeline())
+          pipeline_manager_{device_.device(), swapchain_, render_pass_.get()}
     {
     }
 
@@ -132,13 +122,11 @@ namespace retro
         }
 
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
-
-        pending_quads_.clear();
     }
 
     void VulkanRenderer2D::draw_quad(Vector2f position, Vector2f size, Color color)
     {
-        pending_quads_.emplace_back(position, size, color);
+        pipeline_manager_.draw_quad(position, size, color);
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance()
@@ -246,125 +234,6 @@ namespace retro
                std::ranges::to<std::vector>();
     }
 
-    void VulkanRenderer2D::create_pipeline()
-    {
-        pipeline_layout_ = create_pipeline_layout();
-        graphics_pipeline_ = create_graphics_pipeline();
-    }
-
-    vk::UniquePipelineLayout VulkanRenderer2D::create_pipeline_layout()
-    {
-        const auto device = device_.device();
-
-        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                                    0,
-                                    sizeof(QuadData)};
-
-        vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, 0, nullptr, 1, &range};
-        return device.createPipelineLayoutUnique(pipeline_layout_info);
-    }
-
-    vk::UniquePipeline VulkanRenderer2D::create_graphics_pipeline()
-    {
-        const auto device = device_.device();
-
-        // No vertex buffers: all positions come from gl_VertexIndex
-        vk::PipelineVertexInputStateCreateInfo vertex_input{};
-
-        // TODO: adjust shader paths as needed
-        auto vert_module = create_shader_module(device, "shaders/fullscreen_quad.vert.spv");
-        auto frag_module = create_shader_module(device, "shaders/solid_color.frag.spv");
-
-        vk::PipelineShaderStageCreateInfo vert_stage{{}, vk::ShaderStageFlagBits::eVertex, vert_module.get(), "main"};
-
-        vk::PipelineShaderStageCreateInfo frag_stage{{}, vk::ShaderStageFlagBits::eFragment, frag_module.get(), "main"};
-
-        std::array shader_stages = {vert_stage, frag_stage};
-
-        vk::PipelineInputAssemblyStateCreateInfo input_assembly{{}, vk::PrimitiveTopology::eTriangleList, vk::False};
-
-        vk::Viewport viewport{0.0f,
-                              0.0f,
-                              static_cast<float>(swapchain_.extent().width),
-                              static_cast<float>(swapchain_.extent().height),
-                              0.0f,
-                              1.0f};
-
-        vk::Rect2D scissor{{0, 0}, swapchain_.extent()};
-
-        vk::PipelineViewportStateCreateInfo viewport_state{{}, 1, &viewport, 1, &scissor};
-
-        vk::PipelineRasterizationStateCreateInfo rasterizer{{},
-                                                            vk::False,
-                                                            vk::False,
-                                                            vk::PolygonMode::eFill,
-                                                            vk::CullModeFlagBits::eBack,
-                                                            vk::FrontFace::eCounterClockwise,
-                                                            vk::False,
-                                                            0.0f,
-                                                            0.0f,
-                                                            0.0f,
-                                                            1.0f};
-
-        vk::PipelineMultisampleStateCreateInfo multisampling{{}, vk::SampleCountFlagBits::e1, vk::False};
-
-        vk::PipelineColorBlendAttachmentState color_blend_attachment{
-            vk::False,
-            vk::BlendFactor::eOne,
-            vk::BlendFactor::eZero,
-            vk::BlendOp::eAdd,
-            vk::BlendFactor::eOne,
-            vk::BlendFactor::eZero,
-            vk::BlendOp::eAdd,
-            vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
-                vk::ColorComponentFlagBits::eA};
-
-        vk::PipelineColorBlendStateCreateInfo color_blending{{},
-                                                             vk::False,
-                                                             vk::LogicOp::eCopy,
-                                                             1,
-                                                             &color_blend_attachment};
-
-        vk::GraphicsPipelineCreateInfo pipeline_info{{},
-                                                     static_cast<uint32>(shader_stages.size()),
-                                                     shader_stages.data(),
-                                                     &vertex_input,
-                                                     &input_assembly,
-                                                     nullptr,
-                                                     &viewport_state,
-                                                     &rasterizer,
-                                                     &multisampling,
-                                                     nullptr,
-                                                     &color_blending,
-                                                     nullptr,
-                                                     pipeline_layout_.get(),
-                                                     render_pass_.get(),
-                                                     0};
-
-        auto [result, pipeline] = device.createGraphicsPipelineUnique(nullptr, pipeline_info);
-        if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
-        }
-
-        return std::move(pipeline);
-    }
-
-    vk::UniqueShaderModule VulkanRenderer2D::create_shader_module(const vk::Device device,
-                                                                  const std::filesystem::path &path)
-    {
-        const auto bytes = read_binary_file(path);
-        const auto *code = std::bit_cast<const uint32 *>(bytes.data());
-
-        if (bytes.size() % sizeof(uint32) != 0)
-        {
-            throw std::runtime_error{"SPIR-V file size is not a multiple of 4 bytes"};
-        }
-
-        const vk::ShaderModuleCreateInfo info{{}, bytes.size(), code};
-        return device.createShaderModuleUnique(info);
-    }
-
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
@@ -385,7 +254,7 @@ namespace retro
         }}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
-        create_pipeline();
+        pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
     }
 
     void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const uint32 image_index)
@@ -402,29 +271,8 @@ namespace retro
                                               &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline_.get());
-
-        const auto [viewportW, viewportH] = viewport_->size();
-
-        for (const auto &quad : pending_quads_)
-        {
-            QuadData push{.color = quad.color,
-                          .position = quad.position,
-                          .size = quad.size,
-                          .viewport_size = {static_cast<float>(viewportW), static_cast<float>(viewportH)}};
-
-            cmd.pushConstants(pipeline_layout_.get(),
-                              vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                              0,
-                              sizeof(QuadData),
-                              &push);
-
-            cmd.draw(6, 1, 0, 0);
-        }
-
+        pipeline_manager_.bind_and_render(cmd, viewport_->size());
         cmd.endRenderPass();
         cmd.end();
-
-        pending_quads_.clear();
     }
 } // namespace retro

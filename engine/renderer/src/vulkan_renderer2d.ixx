@@ -12,6 +12,7 @@ import retro.runtime;
 import :vulkan_viewport;
 import :render_data;
 import :components;
+import :pipeline;
 
 namespace retro
 {
@@ -43,10 +44,6 @@ namespace retro
         static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
                                                                       vk::RenderPass render_pass,
                                                                       const VulkanSwapchain &swapchain);
-        void create_pipeline();
-        vk::UniquePipelineLayout create_pipeline_layout();
-        vk::UniquePipeline create_graphics_pipeline();
-        static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
@@ -61,10 +58,7 @@ namespace retro
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool command_pool_;
         VulkanSyncObjects sync_;
-        vk::UniquePipelineCache pipeline_cache_;
-        vk::UniquePipelineLayout pipeline_layout_;
-        vk::UniquePipeline graphics_pipeline_;
-        std::vector<Quad> pending_quads_;
+        PipelineManager pipeline_manager_;
 
         uint32 current_frame_ = 0;
 
