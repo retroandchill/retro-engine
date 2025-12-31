@@ -20,8 +20,8 @@ namespace retro
 
     export struct Quad
     {
-        Vector2f position;
-        Vector2f size;
-        Color color;
+        Vector2f position{};
+        Vector2f size{};
+        Color color{};
     };
 } // namespace retro

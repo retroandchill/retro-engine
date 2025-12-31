@@ -39,9 +39,11 @@ namespace retro
               .device = device_.device(),
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
-          })
+          }),
+          pipeline_cache_(device_.device().createPipelineCache(vk::PipelineCacheCreateInfo{})),
+          pipeline_layout_(create_pipeline_layout()),
+          graphics_pipeline_(create_graphics_pipeline())
     {
-        create_pipeline();
     }
 
     VulkanRenderer2D::~VulkanRenderer2D()
@@ -246,7 +248,28 @@ namespace retro
 
     void VulkanRenderer2D::create_pipeline()
     {
-        auto device = device_.device();
+        pipeline_layout_ = create_pipeline_layout();
+        graphics_pipeline_ = create_graphics_pipeline();
+    }
+
+    vk::UniquePipelineLayout VulkanRenderer2D::create_pipeline_layout()
+    {
+        const auto device = device_.device();
+
+        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                                    0,
+                                    sizeof(QuadData)};
+
+        vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, 0, nullptr, 1, &range};
+        return device.createPipelineLayoutUnique(pipeline_layout_info);
+    }
+
+    vk::UniquePipeline VulkanRenderer2D::create_graphics_pipeline()
+    {
+        const auto device = device_.device();
+
+        // No vertex buffers: all positions come from gl_VertexIndex
+        vk::PipelineVertexInputStateCreateInfo vertex_input{};
 
         // TODO: adjust shader paths as needed
         auto vert_module = create_shader_module(device, "shaders/fullscreen_quad.vert.spv");
@@ -257,9 +280,6 @@ namespace retro
         vk::PipelineShaderStageCreateInfo frag_stage{{}, vk::ShaderStageFlagBits::eFragment, frag_module.get(), "main"};
 
         std::array shader_stages = {vert_stage, frag_stage};
-
-        // No vertex buffers: all positions come from gl_VertexIndex
-        vk::PipelineVertexInputStateCreateInfo vertex_input{};
 
         vk::PipelineInputAssemblyStateCreateInfo input_assembly{{}, vk::PrimitiveTopology::eTriangleList, vk::False};
 
@@ -305,13 +325,6 @@ namespace retro
                                                              1,
                                                              &color_blend_attachment};
 
-        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                                    0,
-                                    sizeof(QuadData)};
-
-        vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, 0, nullptr, 1, &range};
-        pipeline_layout_ = device.createPipelineLayoutUnique(pipeline_layout_info);
-
         vk::GraphicsPipelineCreateInfo pipeline_info{{},
                                                      static_cast<uint32>(shader_stages.size()),
                                                      shader_stages.data(),
@@ -334,7 +347,7 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
         }
 
-        graphics_pipeline_ = std::move(pipeline);
+        return std::move(pipeline);
     }
 
     vk::UniqueShaderModule VulkanRenderer2D::create_shader_module(const vk::Device device,
