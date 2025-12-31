@@ -23,7 +23,7 @@ namespace boost
         export using dll::operator==;
         export using dll::operator!=;
         export using dll::swap;
-    }
+    } // namespace dll
 
     namespace uuids
     {
@@ -59,8 +59,8 @@ namespace boost
             export using ns::url;
             export using ns::oid;
             export using ns::x500dn;
-        }
+        } // namespace ns
 
         export using uuids::nil_uuid;
-    }
-} // namespace boost::dll
+    } // namespace uuids
+} // namespace boost

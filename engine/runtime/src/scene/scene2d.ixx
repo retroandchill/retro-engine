@@ -15,9 +15,8 @@ namespace retro
 {
     export class RETRO_API Scene2D
     {
-    public:
-        
-    private:
+      public:
+      private:
         std::vector<Entity> entities;
     };
-}
+} // namespace retro

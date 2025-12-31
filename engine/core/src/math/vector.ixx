@@ -32,12 +32,30 @@ namespace retro
         {
         }
 
-        static constexpr Vector zero() noexcept { return {0, 0}; }
-        static constexpr Vector one() noexcept { return {1, 1}; }
-        static constexpr Vector right() noexcept { return {1, 0}; }
-        static constexpr Vector left() noexcept { return {-1, 0}; }
-        static constexpr Vector up() noexcept { return {0, 1}; }
-        static constexpr Vector down() noexcept { return {0, -1}; }
+        static constexpr Vector zero() noexcept
+        {
+            return {0, 0};
+        }
+        static constexpr Vector one() noexcept
+        {
+            return {1, 1};
+        }
+        static constexpr Vector right() noexcept
+        {
+            return {1, 0};
+        }
+        static constexpr Vector left() noexcept
+        {
+            return {-1, 0};
+        }
+        static constexpr Vector up() noexcept
+        {
+            return {0, 1};
+        }
+        static constexpr Vector down() noexcept
+        {
+            return {0, -1};
+        }
 
         [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
     };
@@ -74,14 +92,38 @@ namespace retro
         {
         }
 
-        static constexpr Vector zero() noexcept { return {0, 0, 0}; }
-        static constexpr Vector one() noexcept { return {1, 1, 1}; }
-        static constexpr Vector forward() noexcept { return {0, 0, 1}; }
-        static constexpr Vector back() noexcept { return {0, 0, -1}; }
-        static constexpr Vector up() noexcept { return {0, 1, 0}; }
-        static constexpr Vector down() noexcept { return {0, -1, 0}; }
-        static constexpr Vector right() noexcept { return {1, 0, 0}; }
-        static constexpr Vector left() noexcept { return {-1, 0, 0}; }
+        static constexpr Vector zero() noexcept
+        {
+            return {0, 0, 0};
+        }
+        static constexpr Vector one() noexcept
+        {
+            return {1, 1, 1};
+        }
+        static constexpr Vector forward() noexcept
+        {
+            return {0, 0, 1};
+        }
+        static constexpr Vector back() noexcept
+        {
+            return {0, 0, -1};
+        }
+        static constexpr Vector up() noexcept
+        {
+            return {0, 1, 0};
+        }
+        static constexpr Vector down() noexcept
+        {
+            return {0, -1, 0};
+        }
+        static constexpr Vector right() noexcept
+        {
+            return {1, 0, 0};
+        }
+        static constexpr Vector left() noexcept
+        {
+            return {-1, 0, 0};
+        }
 
         [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
     };
@@ -123,14 +165,38 @@ namespace retro
         {
         }
 
-        static constexpr Vector zero() noexcept { return {0, 0, 0, 0}; }
-        static constexpr Vector one() noexcept { return {1, 1, 1, 1}; }
-        static constexpr Vector forward() noexcept { return {0, 0, 1, 0}; }
-        static constexpr Vector back() noexcept { return {0, 0, -1, 0}; }
-        static constexpr Vector up() noexcept { return {0, 1, 0, 0}; }
-        static constexpr Vector down() noexcept { return {0, -1, 0, 0}; }
-        static constexpr Vector right() noexcept { return {1, 0, 0, 0}; }
-        static constexpr Vector left() noexcept { return {-1, 0, 0, 0}; }
+        static constexpr Vector zero() noexcept
+        {
+            return {0, 0, 0, 0};
+        }
+        static constexpr Vector one() noexcept
+        {
+            return {1, 1, 1, 1};
+        }
+        static constexpr Vector forward() noexcept
+        {
+            return {0, 0, 1, 0};
+        }
+        static constexpr Vector back() noexcept
+        {
+            return {0, 0, -1, 0};
+        }
+        static constexpr Vector up() noexcept
+        {
+            return {0, 1, 0, 0};
+        }
+        static constexpr Vector down() noexcept
+        {
+            return {0, -1, 0, 0};
+        }
+        static constexpr Vector right() noexcept
+        {
+            return {1, 0, 0, 0};
+        }
+        static constexpr Vector left() noexcept
+        {
+            return {-1, 0, 0, 0};
+        }
 
         [[nodiscard]] constexpr bool operator==(const Vector &other) const = default;
     };
@@ -250,7 +316,6 @@ namespace retro
         else
             return vec.w;
     }
-
 
     template <Numeric T, usize N, typename Op, usize... Is>
         requires std::is_invocable_r_v<T, Op, const T &, const T &>

@@ -1,6 +1,7 @@
 add_library(retro_runtime
         src/engine.cpp
         src/filesystem/utils.cpp
+        src/scene/rendering/render_component.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -20,7 +21,11 @@ target_sources(retro_runtime PUBLIC
         src/scene/index.ixx
         src/scene/scene2d.ixx
         src/scene/entity.ixx
-        src/scene/component.ixx)
+        src/scene/component.ixx
+        src/scene/rendering/index.ixx
+        src/scene/rendering/render_component.ixx
+        src/scene/rendering/render_proxy.ixx
+        src/scene/rendering/render_data_bucket.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_sdl retro_boost)
 

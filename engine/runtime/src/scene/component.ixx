@@ -11,10 +11,10 @@ namespace retro
 {
     export class RETRO_API Component
     {
-    public:
+      public:
         virtual ~Component() = default;
 
         virtual void on_attach() = 0;
         virtual void on_detach() = 0;
     };
-}
+} // namespace retro

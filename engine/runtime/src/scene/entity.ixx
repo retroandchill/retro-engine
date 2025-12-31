@@ -14,9 +14,8 @@ namespace retro
 {
     export class RETRO_API Entity
     {
-    public:
-
-    private:
+      public:
+      private:
         std::vector<std::shared_ptr<Component>> components;
     };
-}
+} // namespace retro

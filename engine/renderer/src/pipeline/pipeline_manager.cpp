@@ -9,4 +9,4 @@ namespace retro
     {
         pipeline_.bind_and_render(cmd, viewport_size);
     }
-}
+} // namespace retro

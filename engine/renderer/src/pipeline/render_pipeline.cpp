@@ -13,7 +13,9 @@ namespace retro
         Vector2f viewport_size{};
     };
 
-    void RenderPipeline::recreate(const vk::Device device, const VulkanSwapchain &swapchain, const vk::RenderPass render_pass)
+    void RenderPipeline::recreate(const vk::Device device,
+                                  const VulkanSwapchain &swapchain,
+                                  const vk::RenderPass render_pass)
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain, render_pass);
@@ -55,7 +57,10 @@ namespace retro
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
-    vk::UniquePipeline RenderPipeline::create_graphics_pipeline(vk::Device device, vk::PipelineLayout layout, const VulkanSwapchain &swapchain, vk::RenderPass render_pass)
+    vk::UniquePipeline RenderPipeline::create_graphics_pipeline(vk::Device device,
+                                                                vk::PipelineLayout layout,
+                                                                const VulkanSwapchain &swapchain,
+                                                                vk::RenderPass render_pass)
     {
         // No vertex buffers: all positions come from gl_VertexIndex
         vk::PipelineVertexInputStateCreateInfo vertex_input{};
@@ -151,4 +156,4 @@ namespace retro
         const vk::ShaderModuleCreateInfo info{{}, bytes.size(), code};
         return device.createShaderModuleUnique(info);
     }
-}
+} // namespace retro
