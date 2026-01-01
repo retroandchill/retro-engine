@@ -38,6 +38,7 @@ namespace retro
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain, render_pass);
+        pending_quads_.clear();
     }
 
     void QuadRenderPipeline::queue_draw_calls(const std::any &render_data)
@@ -73,6 +74,11 @@ namespace retro
 
             cmd.draw(6, 1, 0, 0);
         }
+    }
+
+    void QuadRenderPipeline::clear_draw_queue()
+    {
+        pending_quads_.clear();
     }
 
     vk::UniquePipelineLayout QuadRenderPipeline::create_pipeline_layout(vk::Device device)

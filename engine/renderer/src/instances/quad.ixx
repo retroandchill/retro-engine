@@ -108,6 +108,7 @@ namespace retro
         void draw_quad(Vector2f position, Vector2f size, Color color);
 
         void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size) override;
+        void clear_draw_queue() override;
 
       private:
         static vk::UniquePipelineLayout create_pipeline_layout(vk::Device device);
@@ -117,6 +118,7 @@ namespace retro
                                                            vk::RenderPass render_pass);
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
+    private:
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniquePipeline graphics_pipeline_;
         std::vector<Quad> pending_quads_;

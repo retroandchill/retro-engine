@@ -12,4 +12,12 @@ namespace retro
             pipeline->bind_and_render(cmd, viewport_size);
         }
     }
+
+    void PipelineManager::clear_draw_queue()
+    {
+        for (const auto &pipeline : pipelines_)
+        {
+            pipeline->clear_draw_queue();
+        }
+    }
 } // namespace retro

@@ -49,6 +49,8 @@ namespace retro
 
         void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size) const;
 
+        void clear_draw_queue();
+
       private:
         vk::Device device_;
         vk::UniquePipelineCache cache_;

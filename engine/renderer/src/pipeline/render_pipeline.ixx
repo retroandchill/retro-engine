@@ -20,6 +20,8 @@ namespace retro
 
         virtual Name type() const = 0;
 
+        virtual void clear_draw_queue() = 0;
+
         virtual void recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass) = 0;
 
         virtual void queue_draw_calls(const std::any &render_data) = 0;
