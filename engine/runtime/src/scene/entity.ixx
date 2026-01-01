@@ -15,15 +15,13 @@ import :scene.transform;
 
 namespace retro
 {
-    export struct EntityID
-    {
-        uint32 index{};
-        uint32 generation{};
-    };
+    using EntityID = DefaultHandle;
 
     export class RETRO_API Entity
     {
       public:
+        using IdType = EntityID;
+
         explicit inline Entity(const EntityID id, const Transform& transform) : id_{id}, transform_{transform} {}
         ~Entity() = default;
 

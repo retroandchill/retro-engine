@@ -22,7 +22,9 @@ target_sources(retro_core PUBLIC
         src/filesystem/file_loader.ixx
         src/math/index.ixx
         src/math/concepts.ixx
-        src/math/vector.ixx)
+        src/math/vector.ixx
+        src/containers/index.ixx
+        src/containers/packed_pool.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_fmt)

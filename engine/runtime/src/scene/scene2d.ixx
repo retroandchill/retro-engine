@@ -42,9 +42,7 @@ namespace retro
         void destroy_entity(EntityID id);
 
     private:
-        std::vector<std::unique_ptr<Entity>> entities_;
-        std::vector<EntitySlot> slots_;
-        std::vector<uint32> free_list_;
+        PackedPool<std::unique_ptr<Entity>> entities_;
 
         RenderProxyManager render_proxy_manager_;
     };
