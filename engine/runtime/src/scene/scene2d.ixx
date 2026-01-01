@@ -14,6 +14,13 @@ import :scene.rendering;
 
 namespace retro
 {
+    struct EntitySlot
+    {
+        uint32 dense_index{};
+        uint32 generation{};
+        bool alive{};
+    };
+
     export class RETRO_API Scene2D
     {
       public:
@@ -30,13 +37,15 @@ namespace retro
             return render_proxy_manager_;
         }
 
-        inline Entity &create_entity()
-        {
-            return *entities_.emplace_back(std::make_unique<Entity>());
-        }
+        Entity &create_entity(const Transform &transform = {}) noexcept;
 
-      private:
+        void destroy_entity(EntityID id);
+
+    private:
         std::vector<std::unique_ptr<Entity>> entities_;
+        std::vector<EntitySlot> slots_;
+        std::vector<uint32> free_list_;
+
         RenderProxyManager render_proxy_manager_;
     };
 } // namespace retro

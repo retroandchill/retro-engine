@@ -118,7 +118,7 @@ namespace retro
                                                            vk::RenderPass render_pass);
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
-    private:
+      private:
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniquePipeline graphics_pipeline_;
         std::vector<Quad> pending_quads_;

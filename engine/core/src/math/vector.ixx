@@ -110,11 +110,11 @@ namespace retro
         }
         static constexpr Vector up() noexcept
         {
-            return {0, 1, 0};
+            return {0, -1, 0};
         }
         static constexpr Vector down() noexcept
         {
-            return {0, -1, 0};
+            return {0, 1, 0};
         }
         static constexpr Vector right() noexcept
         {
@@ -183,11 +183,11 @@ namespace retro
         }
         static constexpr Vector up() noexcept
         {
-            return {0, 1, 0, 0};
+            return {0, -1, 0, 0};
         }
         static constexpr Vector down() noexcept
         {
-            return {0, -1, 0, 0};
+            return {0, 1, 0, 0};
         }
         static constexpr Vector right() noexcept
         {

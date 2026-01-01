@@ -1,5 +1,8 @@
-﻿namespace RetroEngine.Core;
+﻿using RetroEngine.Binds;
 
+namespace RetroEngine.Core;
+
+[BlittableType("bool")]
 public enum NativeBool : byte
 {
     False = 0,

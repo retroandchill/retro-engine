@@ -15,4 +15,17 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
+    <ItemGroup>
+        <Folder Include="Scene\Components\Renderer\" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
+        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+        <ProjectReference
+            Include="..\RetroEngine.SourceGenerator\RetroEngine.SourceGenerator.csproj"
+            OutputItemType="Analyzer"
+            ReferenceOutputAssembly="false"
+        />
+        <ProjectReference Include="..\RetroEngine.Strings.Native\RetroEngine.Strings.Native.csproj" />
+    </ItemGroup>
 </Project>

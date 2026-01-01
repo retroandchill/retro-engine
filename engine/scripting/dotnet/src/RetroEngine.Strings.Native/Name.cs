@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using DefaultNamespace;
 using MessagePack;
+using RetroEngine.Binds;
 using RetroEngine.Core;
 using RetroEngine.Strings.Interop;
 using RetroEngine.Strings.Serialization.Json;
@@ -12,6 +13,7 @@ namespace RetroEngine.Strings;
 /// <summary>
 /// Enumeration used to determine whether to add a new name or simply try to retrieve an existing one.
 /// </summary>
+[BlittableType("retro::FindType", CppModule = "retro.core")]
 public enum FindName : byte
 {
     /// <summary>
@@ -38,6 +40,7 @@ public enum FindName : byte
 /// This type is thread-safe due to its immutable nature.
 /// </threadsafety>
 [StructLayout(LayoutKind.Sequential)]
+[BlittableType(CppModule = "retro.core")]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name

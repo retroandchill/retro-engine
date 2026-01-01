@@ -20,12 +20,12 @@ int main()
     try
     {
         auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
-        const EngineConfig config{
-            .script_runtime_factory = [&]
-        {
-            register_script_binds();
-            return std::make_unique<DotnetManager>();
-        },
+        const EngineConfig config{.script_runtime_factory =
+                                      [&]
+                                  {
+                                      register_script_binds();
+                                      return std::make_unique<DotnetManager>();
+                                  },
                                   .renderer_factory =
                                       [&]
                                   {
@@ -102,7 +102,7 @@ void set_up_test_scene(const retro::Engine &engine)
 
             const Color c{r, g, b, 1.0f};
             auto &entity = engine.scene().create_entity();
-            entity.transform().position = {i * 100.0f, j * 100.0f};
+            entity.set_position({static_cast<float>(i) * 100.0f, static_cast<float>(j) * 100.0f});
             auto &component = entity.create_component<QuadRenderComponent>();
             component.set_size({100.0f, 100.0f});
             component.set_color(c);

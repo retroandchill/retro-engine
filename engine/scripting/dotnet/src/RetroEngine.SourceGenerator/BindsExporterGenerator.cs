@@ -91,7 +91,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
                     parameters.Add(bindMethodInfo.ManagedReturnType);
                 }
 
-                parameters.AddRange(bindMethodInfo.Parameters.Select(parameter => parameter.ManagedType));
+                parameters.AddRange(bindMethodInfo.Parameters.Select(parameter => parameter.SizeofName));
 
                 var fullString = string.Join(" + ", parameters.Select(p => $"sizeof({p})"));
                 writer.Write(fullString);
@@ -109,7 +109,9 @@ public class BindsExporterGenerator : IIncrementalGenerator
 
                 var parameters = string.Join(
                     ", ",
-                    bindMethodInfo.Parameters.Select(parameter => $"{parameter.ManagedType} {parameter.Name}")
+                    bindMethodInfo.Parameters.Select(parameter =>
+                        $"{parameter.Prefix}{parameter.ManagedType} {parameter.Name}"
+                    )
                 );
                 writer.Write(parameters);
             }
@@ -124,7 +126,10 @@ public class BindsExporterGenerator : IIncrementalGenerator
                     return;
                 }
 
-                var parameters = string.Join(", ", bindMethodInfo.Parameters.Select(parameter => $"{parameter.Name}"));
+                var parameters = string.Join(
+                    ", ",
+                    bindMethodInfo.Parameters.Select(parameter => $"{parameter.Prefix}{parameter.Name}")
+                );
                 writer.Write(parameters);
             }
         );
@@ -164,6 +169,11 @@ public class BindsExporterGenerator : IIncrementalGenerator
         var isByRef = method.ReturnsByRef || method.ReturnsByRefReadonly;
         var isReadOnlyByRef = method.ReturnsByRefReadonly;
 
+        if (hasAttr && info.CppModule is not null)
+        {
+            imports.Add(info.CppModule);
+        }
+
         return InferCppType(
             method.ReturnType,
             isByRef,
@@ -177,24 +187,27 @@ public class BindsExporterGenerator : IIncrementalGenerator
 
     private static BindMethodParameter GetBindMethodParameter(IParameterSymbol parameter, HashSet<string> imports)
     {
+        var (prefix, managedType) = GetManagedParameterType(parameter);
         return new BindMethodParameter
         {
             Name = parameter.Name,
-            ManagedType = GetManagedParameterType(parameter),
+            ManagedType = managedType,
+            Prefix = prefix,
+            SizeofName = parameter.Type.ToDisplayString(),
             CppType = GetCppParameterType(parameter, imports),
         };
     }
 
-    private static string GetManagedParameterType(IParameterSymbol parameter)
+    private static (string Prefix, string Type) GetManagedParameterType(IParameterSymbol parameter)
     {
         var baseType = parameter.Type.ToDisplayString();
         return parameter.RefKind switch
         {
-            RefKind.RefReadOnlyParameter => $"ref readonly {baseType}",
-            RefKind.Ref => $"ref {baseType}",
-            RefKind.Out => $"out {baseType}",
-            RefKind.In => $"in {baseType}",
-            _ => baseType,
+            RefKind.RefReadOnlyParameter => ("ref readonly ", baseType),
+            RefKind.Ref => ("ref ", baseType),
+            RefKind.Out => ("out ", baseType),
+            RefKind.In => ("in ", baseType),
+            _ => ("", baseType),
         };
     }
 
@@ -207,6 +220,11 @@ public class BindsExporterGenerator : IIncrementalGenerator
         {
             if (!attributeData.TryGetCppTypeInfo(out info))
                 continue;
+
+            if (info.CppModule is not null)
+            {
+                imports.Add(info.CppModule);
+            }
             hasAttr = true;
             break;
         }
@@ -310,19 +328,19 @@ public class BindsExporterGenerator : IIncrementalGenerator
 
     private static string GetCppTypeNameForNonSpecialType(ITypeSymbol typeSymbol, HashSet<string> imports)
     {
-        var fullName = typeSymbol.ToDisplayString();
-        switch (fullName)
+        if (
+            typeSymbol is INamedTypeSymbol namedTypeSymbol
+            && namedTypeSymbol.TryGetBlittableTypeInfo(out var blittableInfo)
+        )
         {
-            case "RetroEngine.Core.NativeBool":
-                return "bool";
-            case "RetroEngine.Strings.Name":
-                imports.Add("retro.core");
-                return "retro::Name";
-            case "RetroEngine.Strings.FindName":
-                imports.Add("retro.core");
-                return "retro::FindType";
-            default:
-                throw new InvalidOperationException($"Cannot infer cpp type for {fullName}");
+            if (blittableInfo.CppModule is not null)
+            {
+                imports.Add(blittableInfo.CppModule);
+            }
+            
+            return blittableInfo.CppType ?? $"retro::{namedTypeSymbol.Name}";
         }
+
+        throw new InvalidOperationException($"Cannot infer cpp type for {typeSymbol.ToDisplayString()}");
     }
 }

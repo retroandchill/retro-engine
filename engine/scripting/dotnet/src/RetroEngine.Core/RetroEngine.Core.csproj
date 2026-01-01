@@ -14,4 +14,7 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
+    </ItemGroup>
 </Project>

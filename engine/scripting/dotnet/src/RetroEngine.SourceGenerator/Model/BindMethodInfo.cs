@@ -4,9 +4,11 @@ namespace RetroEngine.SourceGenerator.Model;
 
 public record BindMethodParameter
 {
-    public string Name { get; init; } = "";
-    public string ManagedType { get; init; } = "";
-    public string CppType { get; init; } = "";
+    public required string Name { get; init; }
+    public required string ManagedType { get; init; }
+    public required string SizeofName { get; init; }
+    public required string Prefix { get; init; }
+    public required string CppType { get; init; }
 }
 
 public record BindMethodInfo

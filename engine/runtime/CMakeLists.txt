@@ -2,6 +2,7 @@ add_library(retro_runtime
         src/engine.cpp
         src/filesystem/utils.cpp
         src/scene/rendering/render_component.cpp
+        src/scene/scene2d.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)

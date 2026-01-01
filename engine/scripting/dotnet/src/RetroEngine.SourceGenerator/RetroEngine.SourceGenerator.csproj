@@ -17,6 +17,9 @@
         <PackageReference Include="System.Text.Json" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="..\RetroEngine.Binds\BlittableTypeAttribute.cs">
+            <Link>Attributes\BlittableTypeAttribute.cs</Link>
+        </Compile>
         <Compile Include="..\RetroEngine.Binds\BindExportAttribute.cs">
             <Link>Attributes\BindExportAttribute.cs</Link>
         </Compile>

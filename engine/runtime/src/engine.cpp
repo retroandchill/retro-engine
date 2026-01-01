@@ -5,16 +5,19 @@ module retro.runtime;
 
 using namespace retro;
 
-static void precise_wait(const std::chrono::microseconds duration) {
+static void precise_wait(const std::chrono::microseconds duration)
+{
     const auto start = std::chrono::steady_clock::now();
     const auto end = start + duration;
 
-    if (duration > std::chrono::milliseconds(5)) {
+    if (duration > std::chrono::milliseconds(5))
+    {
         std::this_thread::sleep_for(duration - std::chrono::milliseconds(5));
     }
 
     // Busy-wait for the remaining short duration to maximize precision
-    while (std::chrono::steady_clock::now() < end) {
+    while (std::chrono::steady_clock::now() < end)
+    {
         // Spin lock: do nothing, consume CPU cycles
     }
 }
@@ -66,7 +69,8 @@ void Engine::run(const std::function<void()> &post_init)
         if (work_seconds < target_frame_time)
         {
             const float remaining = target_frame_time - work_seconds;
-            precise_wait(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<float>(remaining)));
+            precise_wait(
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<float>(remaining)));
         }
 
         // FPS accumulation (based on actual frame length)

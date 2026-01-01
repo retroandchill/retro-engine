@@ -14,6 +14,7 @@ add_custom_target(retro_generate_interop
 add_library(retro_interop
         src/generated/name_exporter.cpp
         src/generated/registration.cpp
+        src/generated/entity_exporter.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -25,6 +26,7 @@ target_sources(retro_interop PUBLIC
         src/index.ixx
         src/generated/registration.ixx
         src/generated/name_exporter.ixx
+        src/generated/entity_exporter.ixx
         src/generated/index.ixx)
 
 target_link_libraries(retro_interop PUBLIC
