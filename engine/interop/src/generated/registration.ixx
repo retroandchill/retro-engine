@@ -1,4 +1,4 @@
-export module retro.scripting:interop.registration;
+export module retro.interop:generated.registration;
 
 namespace retro
 {

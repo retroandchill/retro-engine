@@ -4,23 +4,28 @@ import retro.core;
 import retro.runtime;
 import retro.scripting;
 import retro.renderer;
+import retro.interop;
 import std;
-
 import sdl;
-
-using namespace retro;
 
 void set_up_test_scene(const retro::Engine &engine);
 
 int main()
 {
+    using namespace retro;
+
     sdl::main::SetMainReady();
     SdlRuntime sdl_runtime;
 
     try
     {
         auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
-        const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
+        const EngineConfig config{
+            .script_runtime_factory = [&]
+        {
+            register_script_binds();
+            return std::make_unique<DotnetManager>();
+        },
                                   .renderer_factory =
                                       [&]
                                   {
@@ -79,8 +84,10 @@ int main()
     }
 }
 
-void set_up_test_scene(const Engine &engine)
+void set_up_test_scene(const retro::Engine &engine)
 {
+    using namespace retro;
+
     constexpr int width = 1280 / 100 + 1;
     constexpr int height = 720 / 100 + 1;
     int count = 0;

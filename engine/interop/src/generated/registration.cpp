@@ -1,4 +1,4 @@
-module retro.scripting;
+module retro.interop;
 
 import retro.scripting;
 

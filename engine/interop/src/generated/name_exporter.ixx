@@ -1,4 +1,4 @@
-export module retro.scripting:interop.name_exporter;
+export module retro.interop:generated.name_exporter;
 
 import retro.core;
 

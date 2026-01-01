@@ -1,10 +1,9 @@
 //
 // Created by fcors on 12/25/2025.
 //
-module retro.scripting;
+module retro.interop;
 
-using retro::FindType;
-using retro::Name;
+import std;
 
 namespace retro::name_exporter
 {
