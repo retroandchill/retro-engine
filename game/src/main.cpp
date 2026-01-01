@@ -83,6 +83,7 @@ void set_up_test_scene(const Engine &engine)
 {
     constexpr int width = 1280 / 100 + 1;
     constexpr int height = 720 / 100 + 1;
+    int count = 0;
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)
@@ -98,6 +99,8 @@ void set_up_test_scene(const Engine &engine)
             auto &component = entity.create_component<QuadRenderComponent>();
             component.set_size({100.0f, 100.0f});
             component.set_color(c);
+
+            count++;
         }
     }
 }

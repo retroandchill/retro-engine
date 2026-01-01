@@ -32,11 +32,11 @@ namespace retro
 
         inline Entity &create_entity()
         {
-            return entities_.emplace_back();
+            return *entities_.emplace_back(std::make_unique<Entity>());
         }
 
       private:
-        std::vector<Entity> entities_;
+        std::vector<std::unique_ptr<Entity>> entities_;
         RenderProxyManager render_proxy_manager_;
     };
 } // namespace retro

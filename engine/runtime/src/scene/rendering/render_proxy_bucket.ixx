@@ -38,7 +38,7 @@ namespace retro
 
         uint64 add(T proxy)
         {
-            auto id = proxy.id;
+            auto id = proxy.id();
             proxies_.push_back(std::move(proxy));
             proxy_indices_.emplace(id, proxies_.size() - 1);
             return id;
