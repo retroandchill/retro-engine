@@ -124,9 +124,9 @@ namespace retro
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    void VulkanRenderer2D::draw_quad(Vector2f position, Vector2f size, Color color)
+    void VulkanRenderer2D::queue_draw_calls(const Name type, const std::any &data)
     {
-        pipeline_manager_.draw_quad(position, size, color);
+        pipeline_manager_.queue_draw_calls(type, data);
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance()

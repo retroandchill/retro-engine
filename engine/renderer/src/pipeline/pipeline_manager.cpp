@@ -5,8 +5,11 @@ module retro.renderer;
 
 namespace retro
 {
-    void PipelineManager::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
+    void PipelineManager::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size) const
     {
-        pipeline_.bind_and_render(cmd, viewport_size);
+        for (const auto &pipeline : pipelines_)
+        {
+            pipeline->bind_and_render(cmd, viewport_size);
+        }
     }
 } // namespace retro

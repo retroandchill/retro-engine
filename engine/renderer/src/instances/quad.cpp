@@ -13,20 +13,46 @@ namespace retro
         Vector2f viewport_size{};
     };
 
-    void RenderPipeline::recreate(const vk::Device device,
-                                  const VulkanSwapchain &swapchain,
-                                  const vk::RenderPass render_pass)
+    void QuadRenderComponent::create_render_proxy(RenderProxyManager &proxy_manager)
+    {
+        proxy_manager.emplace_proxy<QuadRenderProxy>(id(), *this);
+    }
+
+    void QuadRenderComponent::destroy_render_proxy(RenderProxyManager &proxy_manager)
+    {
+        proxy_manager.remove_proxy<QuadRenderProxy>(id());
+    }
+
+    const Name QuadRenderProxy::TYPE_ID = u"quad"_name;
+
+    Quad QuadRenderProxy::get_draw_call() const
+    {
+        return Quad{};
+    }
+
+    void QuadRenderPipeline::recreate(const vk::Device device,
+                                      const VulkanSwapchain &swapchain,
+                                      const vk::RenderPass render_pass)
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain, render_pass);
     }
 
-    void RenderPipeline::draw_quad(Vector2f position, Vector2f size, Color color)
+    void QuadRenderPipeline::queue_draw_calls(const std::any &render_data)
+    {
+        for (auto &quads = std::any_cast<const std::vector<Quad> &>(render_data);
+             const auto &[position, size, color] : quads)
+        {
+            pending_quads_.emplace_back(position, size, color);
+        }
+    }
+
+    void QuadRenderPipeline::draw_quad(Vector2f position, Vector2f size, Color color)
     {
         pending_quads_.emplace_back(position, size, color);
     }
 
-    void RenderPipeline::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
+    void QuadRenderPipeline::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
     {
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline_.get());
 
@@ -47,7 +73,7 @@ namespace retro
         }
     }
 
-    vk::UniquePipelineLayout RenderPipeline::create_pipeline_layout(vk::Device device)
+    vk::UniquePipelineLayout QuadRenderPipeline::create_pipeline_layout(vk::Device device)
     {
         vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                     0,
@@ -57,10 +83,10 @@ namespace retro
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
-    vk::UniquePipeline RenderPipeline::create_graphics_pipeline(vk::Device device,
-                                                                vk::PipelineLayout layout,
-                                                                const VulkanSwapchain &swapchain,
-                                                                vk::RenderPass render_pass)
+    vk::UniquePipeline QuadRenderPipeline::create_graphics_pipeline(vk::Device device,
+                                                                    vk::PipelineLayout layout,
+                                                                    const VulkanSwapchain &swapchain,
+                                                                    vk::RenderPass render_pass)
     {
         // No vertex buffers: all positions come from gl_VertexIndex
         vk::PipelineVertexInputStateCreateInfo vertex_input{};
@@ -143,7 +169,8 @@ namespace retro
         return std::move(pipeline);
     }
 
-    vk::UniqueShaderModule RenderPipeline::create_shader_module(vk::Device device, const std::filesystem::path &path)
+    vk::UniqueShaderModule QuadRenderPipeline::create_shader_module(vk::Device device,
+                                                                    const std::filesystem::path &path)
     {
         const auto bytes = read_binary_file(path);
         const auto *code = std::bit_cast<const uint32 *>(bytes.data());

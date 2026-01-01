@@ -10,7 +10,6 @@ export module retro.renderer:vulkan_renderer2d;
 import vulkan_hpp;
 import retro.runtime;
 import :vulkan_viewport;
-import :render_data;
 import :components;
 import :pipeline;
 
@@ -33,7 +32,7 @@ namespace retro
 
         void end_frame() override;
 
-        void draw_quad(Vector2f position, Vector2f size, Color color) override;
+        void queue_draw_calls(Name type, const std::any &data) override;
 
       private:
         static vk::UniqueInstance create_instance();

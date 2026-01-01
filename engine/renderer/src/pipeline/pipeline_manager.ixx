@@ -12,6 +12,7 @@ import retro.core;
 import :pipeline.render_pipeline;
 import vulkan_hpp;
 import :components;
+import :pipeline.pipeline_registry;
 
 namespace retro
 {
@@ -22,26 +23,37 @@ namespace retro
                                         const VulkanSwapchain &swapchain,
                                         const vk::RenderPass render_pass)
             : device_{device}, cache_{device.createPipelineCacheUnique(vk::PipelineCacheCreateInfo{})},
-              pipeline_(device, swapchain, render_pass)
+              pipelines_(PipelineRegistry::instance().create_pipelines(device, swapchain, render_pass))
         {
+            for (usize i = 0; i < pipelines_.size(); ++i)
+            {
+                pipeline_indices_[pipelines_[i]->type()] = i;
+            }
         }
 
         inline void recreate_pipelines(const VulkanSwapchain &swapchain, const vk::RenderPass render_pass)
         {
-            pipeline_.recreate(device_, swapchain, render_pass);
+            for (const auto &pipeline : pipelines_)
+            {
+                pipeline->recreate(device_, swapchain, render_pass);
+            }
         }
 
-        inline void draw_quad(const Vector2f position, const Vector2f size, const Color color)
+        inline void queue_draw_calls(const Name type, const std::any &render_data)
         {
-            pipeline_.draw_quad(position, size, color);
+            if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
+            {
+                pipelines_[it->second]->queue_draw_calls(render_data);
+            }
         }
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size);
+        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size) const;
 
       private:
         vk::Device device_;
         vk::UniquePipelineCache cache_;
 
-        RenderPipeline pipeline_;
+        std::vector<std::unique_ptr<RenderPipeline>> pipelines_;
+        std::map<Name, usize> pipeline_indices_;
     };
 } // namespace retro

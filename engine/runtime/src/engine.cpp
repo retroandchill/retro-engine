@@ -100,7 +100,7 @@ void Engine::render()
             const float b = (index & 4) ? 1.0f : 0.0f; // bit 2
 
             const Color c{r, g, b, 1.0f};
-            renderer_->draw_quad({i * 100.0f, j * 100.0f}, {100.0f, 100.0f}, c);
+            // renderer_->queue_draw_calls({100.0f, 100.0f}, c);
         }
     }
 

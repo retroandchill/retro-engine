@@ -13,6 +13,14 @@ namespace retro
     export class RenderProxyManager
     {
       public:
+        RenderProxyManager() = default;
+        ~RenderProxyManager() = default;
+
+        RenderProxyManager(const RenderProxyManager &) = delete;
+        RenderProxyManager(RenderProxyManager &&) = default;
+        RenderProxyManager &operator=(const RenderProxyManager &) = delete;
+        RenderProxyManager &operator=(RenderProxyManager &&) = default;
+
         template <typename T>
             requires RenderProxy<std::remove_cvref_t<T>> && std::constructible_from<std::remove_cvref_t<T>, T>
         uint64 add_proxy(T &&proxy)
@@ -28,7 +36,7 @@ namespace retro
 
             auto new_bucket = std::make_unique<RenderProxyBucketImpl<ProxyType>>();
             auto id = new_bucket->add(std::forward<T>(proxy));
-            buckets_.emplace(std::move(new_bucket));
+            buckets_.emplace_back(std::move(new_bucket));
             proxy_indices_.emplace(ProxyType::type_id, buckets_.size() - 1);
             return id;
         }
@@ -37,22 +45,33 @@ namespace retro
             requires std::constructible_from<T, Args...>
         uint64 emplace_proxy(Args &&...args)
         {
-            auto existing = proxy_indices_.find(T::type_id);
+            auto existing = proxy_indices_.find(T::type_id());
             if (existing != proxy_indices_.end())
             {
-                auto proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[*existing]);
+                auto proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[existing->second]);
                 return proxyBucket.emplace(std::forward<Args>(args)...);
             }
 
             auto new_bucket = std::make_unique<RenderProxyBucketImpl<T>>();
             auto id = new_bucket->emplace(std::forward<Args>(args)...);
-            buckets_.emplace(std::move(new_bucket));
-            proxy_indices_.emplace(T::type_id, buckets_.size() - 1);
+            buckets_.emplace_back(std::move(new_bucket));
+            proxy_indices_.emplace(T::type_id(), buckets_.size() - 1);
             return id;
+        }
+
+        template <RenderProxy T>
+        void remove_proxy(const uint64 id)
+        {
+            auto existing = proxy_indices_.find(T::type_id());
+            if (existing != proxy_indices_.end())
+            {
+                auto proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[existing->second]);
+                return proxyBucket.remove(id);
+            }
         }
 
       private:
         std::vector<std::unique_ptr<RenderProxyBucket>> buckets_;
-        std::map<Name, uint64> proxy_indices_;
+        std::map<Name, usize> proxy_indices_;
     };
 } // namespace retro

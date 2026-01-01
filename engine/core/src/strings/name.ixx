@@ -278,6 +278,11 @@ namespace retro
         int32 number_ = 0;
         uint32 display_index_ = 0;
     };
+
+    export inline Name operator"" _name(const char16_t *name, const usize length)
+    {
+        return Name{std::u16string_view{name, length}};
+    }
 } // namespace retro
 
 export template <>

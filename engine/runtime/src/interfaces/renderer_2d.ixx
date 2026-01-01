@@ -5,6 +5,7 @@
 export module retro.runtime:interfaces.renderer_2d;
 
 import retro.core;
+import std;
 
 namespace retro
 {
@@ -17,6 +18,6 @@ namespace retro
 
         virtual void end_frame() = 0;
 
-        virtual void draw_quad(Vector2f position, Vector2f size, Color color) = 0;
+        virtual void queue_draw_calls(Name type, const std::any &data) = 0;
     };
 } // namespace retro

@@ -42,8 +42,9 @@ add_library(retro_renderer
         src/components/vulkan_command_pool.cpp
         src/components/vulkan_sync.cpp
         src/window.cpp
-        src/pipeline/render_pipeline.cpp
         src/pipeline/pipeline_manager.cpp
+        src/instances/quad.cpp
+        src/pipeline/pipeline_registry.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -61,10 +62,12 @@ target_sources(retro_renderer PUBLIC
         src/components/vulkan_swapchain.ixx
         src/components/vulkan_command_pool.ixx
         src/components/vulkan_sync.ixx
-        src/render_data.ixx
         src/pipeline/index.ixx
         src/pipeline/pipeline_manager.ixx
         src/pipeline/render_pipeline.ixx
+        src/instances/index.ixx
+        src/instances/quad.ixx
+        src/pipeline/pipeline_registry.ixx
         )
 
 target_link_libraries(retro_renderer

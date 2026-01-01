@@ -6,3 +6,4 @@ export module retro.renderer:pipeline;
 
 export import :pipeline.pipeline_manager;
 export import :pipeline.render_pipeline;
+export import :pipeline.pipeline_registry;
