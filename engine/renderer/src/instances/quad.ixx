@@ -25,9 +25,38 @@ namespace retro
     export class QuadRenderComponent final : public RenderComponent
     {
       public:
+        inline explicit QuadRenderComponent(Entity &entity) : RenderComponent{entity}
+        {
+        }
+
         void create_render_proxy(RenderProxyManager &proxy_manager) override;
 
         void destroy_render_proxy(RenderProxyManager &proxy_manager) override;
+
+        inline const Color &color() const noexcept
+        {
+            return color_;
+        }
+
+        inline void set_color(const Color color) noexcept
+        {
+            color_ = color;
+        }
+
+        inline Vector2f size() const noexcept
+        {
+            auto &[scale_x, scale_y] = entity().transform().scale;
+            return {size_.x * scale_x, size_.y * scale_y};
+        }
+
+        inline void set_size(const Vector2f size) noexcept
+        {
+            size_ = size;
+        }
+
+      private:
+        Vector2f size_;
+        Color color_{};
     };
 
     export class QuadRenderProxy
@@ -35,8 +64,7 @@ namespace retro
       public:
         using DrawCallData = Quad;
 
-        inline QuadRenderProxy(const uint64 id, QuadRenderComponent &component)
-            : id_(id), component_(component.shared_from_this())
+        inline QuadRenderProxy(const uint64 id, QuadRenderComponent &component) : id_(id), component_(&component)
         {
         }
 
@@ -56,10 +84,10 @@ namespace retro
         static const Name TYPE_ID;
 
         uint64 id_;
-        std::weak_ptr<QuadRenderComponent> component_;
+        QuadRenderComponent *component_;
     };
 
-    export class RETRO_API QuadRenderPipeline final : RenderPipeline
+    export class RETRO_API QuadRenderPipeline final : public RenderPipeline
     {
       public:
         inline QuadRenderPipeline(const vk::Device device,

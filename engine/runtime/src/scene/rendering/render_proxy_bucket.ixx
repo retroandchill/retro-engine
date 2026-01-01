@@ -22,6 +22,8 @@ namespace retro
       public:
         virtual ~RenderProxyBucket() = default;
 
+        virtual Name type_id() const = 0;
+
         virtual std::any collect_draw_calls() const = 0;
     };
 
@@ -29,6 +31,11 @@ namespace retro
     class RenderProxyBucketImpl final : public RenderProxyBucket
     {
       public:
+        Name type_id() const override
+        {
+            return T::type_id();
+        }
+
         uint64 add(T proxy)
         {
             auto id = proxy.id;

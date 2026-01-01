@@ -70,7 +70,7 @@ namespace retro
             instance_.reset();
         }
 
-        void run();
+        void run(const std::function<void()> &post_init);
 
         void request_shutdown();
 

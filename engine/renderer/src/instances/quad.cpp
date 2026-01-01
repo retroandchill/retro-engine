@@ -27,7 +27,9 @@ namespace retro
 
     Quad QuadRenderProxy::get_draw_call() const
     {
-        return Quad{};
+        return Quad{.position = component_->entity().transform().position,
+                    .size = component_->size(),
+                    .color = component_->color()};
     }
 
     void QuadRenderPipeline::recreate(const vk::Device device,

@@ -12,13 +12,15 @@ Engine::Engine(const EngineConfig &config)
 {
 }
 
-void Engine::run()
+void Engine::run(const std::function<void()> &post_init)
 {
     using clock = std::chrono::steady_clock;
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
     scene_ = std::make_unique<Scene2D>();
+
+    post_init();
 
     // FPS tracking state
     float fps_timer = 0.0f;
@@ -88,20 +90,9 @@ void Engine::render()
 {
     renderer_->begin_frame();
 
-    constexpr int width = 1280 / 100 + 1;
-    constexpr int height = 720 / 100 + 1;
-    for (int i = 0; i < width; i++)
+    for (auto [type_id, data] : scene_->render_proxy_manager().collect_draw_calls())
     {
-        for (int j = 0; j < height; j++)
-        {
-            const int index = i + j * width;           // linear index if needed
-            const float r = (index & 1) ? 1.0f : 0.0f; // bit 0
-            const float g = (index & 2) ? 1.0f : 0.0f; // bit 1
-            const float b = (index & 4) ? 1.0f : 0.0f; // bit 2
-
-            const Color c{r, g, b, 1.0f};
-            // renderer_->queue_draw_calls({100.0f, 100.0f}, c);
-        }
+        renderer_->queue_draw_calls(type_id, data);
     }
 
     renderer_->end_frame();

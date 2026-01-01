@@ -1,6 +1,9 @@
 //
 // Created by fcors on 12/31/2025.
 //
+module;
+
+#include "retro/core/exports.h"
 
 export module retro.runtime:scene.rendering.render_proxy_manager;
 
@@ -10,7 +13,7 @@ import :scene.rendering.render_proxy_bucket;
 
 namespace retro
 {
-    export class RenderProxyManager
+    export class RETRO_API RenderProxyManager
     {
       public:
         RenderProxyManager() = default;
@@ -48,7 +51,7 @@ namespace retro
             auto existing = proxy_indices_.find(T::type_id());
             if (existing != proxy_indices_.end())
             {
-                auto proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[existing->second]);
+                auto &proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[existing->second]);
                 return proxyBucket.emplace(std::forward<Args>(args)...);
             }
 
@@ -68,6 +71,13 @@ namespace retro
                 auto proxyBucket = static_cast<RenderProxyBucketImpl<T> &>(*buckets_[existing->second]);
                 return proxyBucket.remove(id);
             }
+        }
+
+        auto collect_draw_calls() const
+        {
+            return buckets_ |
+                   std::views::transform([](const std::unique_ptr<RenderProxyBucket> &bucket)
+                                         { return std::make_pair(bucket->type_id(), bucket->collect_draw_calls()); });
         }
 
       private:

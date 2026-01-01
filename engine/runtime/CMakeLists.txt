@@ -26,7 +26,8 @@ target_sources(retro_runtime PUBLIC
         src/scene/rendering/render_component.ixx
         src/scene/rendering/render_proxy.ixx
         src/scene/rendering/render_proxy_manager.ixx
-        src/scene/rendering/render_proxy_bucket.ixx)
+        src/scene/rendering/render_proxy_bucket.ixx
+        src/scene/transform.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_sdl retro_boost)
 

@@ -6,6 +6,16 @@ module retro.renderer;
 
 namespace retro
 {
+    PipelineRegistry::PipelineRegistry()
+    {
+        factories_[QuadRenderProxy::type_id()] = [](vk::Device device,
+                                                    const VulkanSwapchain &swapchain,
+                                                    vk::RenderPass render_pass) -> std::unique_ptr<RenderPipeline>
+        {
+            return std::make_unique<QuadRenderPipeline>(device, swapchain, render_pass);
+        };
+    }
+
     PipelineRegistry &PipelineRegistry::instance()
     {
         static PipelineRegistry instance;

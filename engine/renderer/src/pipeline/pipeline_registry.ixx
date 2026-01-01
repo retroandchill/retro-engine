@@ -15,7 +15,7 @@ namespace retro
 
     export class PipelineRegistry
     {
-        PipelineRegistry() = default;
+        PipelineRegistry();
         ~PipelineRegistry() = default;
 
       public:

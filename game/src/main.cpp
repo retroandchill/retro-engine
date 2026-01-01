@@ -1,5 +1,6 @@
 //
 // Created by fcors on 12/19/20
+import retro.core;
 import retro.runtime;
 import retro.scripting;
 import retro.renderer;
@@ -8,6 +9,8 @@ import std;
 import sdl;
 
 using namespace retro;
+
+void set_up_test_scene(const retro::Engine &engine);
 
 int main()
 {
@@ -31,7 +34,7 @@ int main()
                                            {
                                                EngineLifecycle engine_lifecycle{config};
                                                auto &engine = Engine::instance();
-                                               engine.run();
+                                               engine.run([&] { set_up_test_scene(engine); });
                                            }
                                            catch (const std::exception &ex)
                                            {
@@ -73,5 +76,28 @@ int main()
     {
         std::cerr << "Fatal error: " << ex.what() << '\n';
         return -1;
+    }
+}
+
+void set_up_test_scene(const Engine &engine)
+{
+    constexpr int width = 1280 / 100 + 1;
+    constexpr int height = 720 / 100 + 1;
+    for (int i = 0; i < width; i++)
+    {
+        for (int j = 0; j < height; j++)
+        {
+            const int index = i + j * width;           // linear index if needed
+            const float r = (index & 1) ? 1.0f : 0.0f; // bit 0
+            const float g = (index & 2) ? 1.0f : 0.0f; // bit 1
+            const float b = (index & 4) ? 1.0f : 0.0f; // bit 2
+
+            const Color c{r, g, b, 1.0f};
+            auto &entity = engine.scene().create_entity();
+            entity.transform().position = {i * 100.0f, j * 100.0f};
+            auto &component = entity.create_component<QuadRenderComponent>();
+            component.set_size({100.0f, 100.0f});
+            component.set_color(c);
+        }
     }
 }

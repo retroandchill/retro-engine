@@ -12,8 +12,15 @@ import retro.core;
 
 namespace retro
 {
-    export class RETRO_API Component : public std::enable_shared_from_this<Component>
+    export class RETRO_API Component
     {
+      protected:
+        static uint64 next_id_;
+
+        inline explicit Component(class Entity &owner) : id_{next_id_++}, entity_{&owner}
+        {
+        }
+
       public:
         virtual ~Component() = default;
 
@@ -22,24 +29,18 @@ namespace retro
             return id_;
         }
 
+        inline Entity &entity() const noexcept
+        {
+            return *entity_;
+        }
+
         virtual void on_attach() = 0;
         virtual void on_detach() = 0;
 
-        template <typename Self>
-        std::shared_ptr<std::remove_cvref_t<Self>> shared_from_this(this Self &self)
-        {
-            return std::static_pointer_cast<std::remove_cvref_t<Self>>(
-                self.std::template enable_shared_from_this<Component>::shared_from_this());
-        }
-
-        template <typename Self>
-        std::weak_ptr<std::remove_cvref_t<Self>> weak_this(this Self &self)
-        {
-            return std::static_pointer_cast<std::remove_reference_t<Self>>(
-                self.std::template enable_shared_from_this<Component>::shared_from_this());
-        }
-
       private:
         uint64 id_;
+        Entity *entity_;
     };
+
+    uint64 Component::next_id_ = 0;
 } // namespace retro

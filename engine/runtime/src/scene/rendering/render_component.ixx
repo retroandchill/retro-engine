@@ -14,11 +14,17 @@ namespace retro
 {
     export class RETRO_API RenderComponent : public Component
     {
+      protected:
+        inline explicit RenderComponent(Entity &owner) : Component{owner}
+        {
+        }
+
       public:
         void on_attach() override;
 
         void on_detach() override;
 
+      protected:
         virtual void create_render_proxy(RenderProxyManager &proxy_manager) = 0;
 
         virtual void destroy_render_proxy(RenderProxyManager &proxy_manager) = 0;
