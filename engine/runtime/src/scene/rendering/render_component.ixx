@@ -29,7 +29,7 @@ namespace retro
 
         virtual void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) = 0;
 
-    private:
-      std::optional<RenderProxyID> render_proxy_id_;
+      private:
+        std::optional<RenderProxyID> render_proxy_id_;
     };
 } // namespace retro

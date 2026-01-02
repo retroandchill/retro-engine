@@ -1,8 +1,10 @@
-add_library(retro_logging SHARED )
+add_library(retro_logging SHARED)
 
 target_sources(retro_logging PUBLIC
         FILE_SET CXX_MODULES FILES
-        src/index.ixx)
+        src/index.ixx
+        src/level.ixx
+        src/record.ixx)
 
 target_link_libraries(retro_logging PUBLIC retro_fmt)
 

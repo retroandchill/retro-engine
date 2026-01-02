@@ -3,3 +3,6 @@
 //
 
 export module retro.logging;
+
+export import :level;
+export import :record;
