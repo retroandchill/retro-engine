@@ -25,8 +25,11 @@ namespace retro
         void on_detach() override;
 
       protected:
-        virtual void create_render_proxy(RenderProxyManager &proxy_manager) = 0;
+        virtual RenderProxyID create_render_proxy(RenderProxyManager &proxy_manager) = 0;
 
-        virtual void destroy_render_proxy(RenderProxyManager &proxy_manager) = 0;
+        virtual void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) = 0;
+
+    private:
+      std::optional<RenderProxyID> render_proxy_id_;
     };
 } // namespace retro

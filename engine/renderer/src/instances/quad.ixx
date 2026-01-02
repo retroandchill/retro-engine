@@ -29,9 +29,9 @@ namespace retro
         {
         }
 
-        void create_render_proxy(RenderProxyManager &proxy_manager) override;
+        RenderProxyID create_render_proxy(RenderProxyManager &proxy_manager) override;
 
-        void destroy_render_proxy(RenderProxyManager &proxy_manager) override;
+        void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) override;
 
         inline const Color &color() const noexcept
         {

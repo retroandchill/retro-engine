@@ -13,14 +13,14 @@ namespace retro
         Vector2f viewport_size{};
     };
 
-    void QuadRenderComponent::create_render_proxy(RenderProxyManager &proxy_manager)
+    RenderProxyID QuadRenderComponent::create_render_proxy(RenderProxyManager &proxy_manager)
     {
-        proxy_manager.emplace_proxy<QuadRenderProxy>(*this);
+        return proxy_manager.emplace_proxy<QuadRenderProxy>(*this);
     }
 
-    void QuadRenderComponent::destroy_render_proxy(RenderProxyManager &proxy_manager)
+    void QuadRenderComponent::destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id)
     {
-        proxy_manager.remove_proxy<QuadRenderProxy>(id());
+        proxy_manager.remove_proxy<QuadRenderProxy>(id);
     }
 
     const Name QuadRenderProxy::TYPE_ID = u"quad"_name;
