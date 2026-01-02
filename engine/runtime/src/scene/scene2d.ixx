@@ -41,7 +41,7 @@ namespace retro
 
         void destroy_entity(EntityID id);
 
-    private:
+      private:
         PackedPool<std::unique_ptr<Entity>> entities_;
 
         RenderProxyManager render_proxy_manager_;

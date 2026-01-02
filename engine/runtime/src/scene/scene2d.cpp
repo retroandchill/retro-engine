@@ -6,7 +6,7 @@ module retro.runtime;
 
 namespace retro
 {
-    Entity & Scene2D::create_entity(const Transform &transform) noexcept
+    Entity &Scene2D::create_entity(const Transform &transform) noexcept
     {
         return *entities_.emplace(transform);
     }
@@ -15,4 +15,4 @@ namespace retro
     {
         entities_.remove(id);
     }
-}
+} // namespace retro

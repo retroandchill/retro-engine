@@ -337,7 +337,7 @@ public class BindsExporterGenerator : IIncrementalGenerator
             {
                 imports.Add(blittableInfo.CppModule);
             }
-            
+
             return blittableInfo.CppType ?? $"retro::{namedTypeSymbol.Name}";
         }
 

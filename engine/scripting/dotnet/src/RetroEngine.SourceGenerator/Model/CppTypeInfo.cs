@@ -7,7 +7,7 @@ namespace RetroEngine.SourceGenerator.Model;
 public readonly record struct CppTypeInfo
 {
     public string? TypeName { get; init; }
-    
+
     public string? CppModule { get; init; }
 
     public bool UseReference { get; init; }

@@ -9,7 +9,7 @@ public class Scene2D
 
     internal int Generation { get; }
 
-    private readonly Dictionary<ulong, Entity> _instantiatedEntities = [];
+    private readonly Dictionary<EntityId, Entity> _instantiatedEntities = [];
 
     public Entity CreateNewEntity(in Transform transform = default)
     {
@@ -19,7 +19,7 @@ public class Scene2D
         return entity;
     }
 
-    internal void RemoveEntity(ulong id)
+    internal void RemoveEntity(EntityId id)
     {
         _instantiatedEntities.Remove(id);
     }

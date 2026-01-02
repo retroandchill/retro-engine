@@ -1,4 +1,6 @@
-﻿using RetroEngine.Core.Math;
+﻿using System.Runtime.InteropServices;
+using RetroEngine.Binds;
+using RetroEngine.Core.Math;
 using RetroEngine.Interop;
 using RetroEngine.Strings;
 
@@ -6,9 +8,13 @@ namespace RetroEngine.Scene;
 
 internal readonly record struct ComponentKey(Type ComponentType, Name Identifier = default);
 
+[BlittableType("retro::EntityID", CppModule = "retro.runtime")]
+[StructLayout(LayoutKind.Sequential)]
+public readonly record struct EntityId(uint Index, uint Generation);
+
 public sealed class Entity : IDisposable
 {
-    private ulong Id { get; }
+    private EntityId Id { get; }
     private IntPtr _entityPtr;
     internal int Generation { get; }
     private readonly Dictionary<ComponentKey, Component> _components = new();
@@ -53,7 +59,7 @@ public sealed class Entity : IDisposable
         set => Transform = Transform with { Scale = value };
     }
 
-    internal Entity(Scene2D scene, ulong id, IntPtr entityPtr)
+    internal Entity(Scene2D scene, EntityId id, IntPtr entityPtr)
     {
         Id = id;
         _entityPtr = entityPtr;

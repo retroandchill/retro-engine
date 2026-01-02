@@ -3,9 +3,9 @@
 //
 module;
 
-#include <cstddef>
-
 #include "retro/core/exports.h"
+
+#include <cstddef>
 
 export module retro.runtime:scene.entity;
 
@@ -15,14 +15,16 @@ import :scene.transform;
 
 namespace retro
 {
-    using EntityID = DefaultHandle;
+    export using EntityID = DefaultHandle;
 
     export class RETRO_API Entity
     {
       public:
         using IdType = EntityID;
 
-        explicit inline Entity(const EntityID id, const Transform& transform) : id_{id}, transform_{transform} {}
+        explicit inline Entity(const EntityID id, const Transform &transform) : id_{id}, transform_{transform}
+        {
+        }
         ~Entity() = default;
 
         Entity(const Entity &) = delete;
