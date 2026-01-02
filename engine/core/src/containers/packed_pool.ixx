@@ -58,22 +58,24 @@ namespace retro
         bool alive{false};
     };
 
-    template <typename T>
+    export template <typename T>
     concept PackableType = requires(T value) {
         typename std::remove_cvref_t<T>::IdType;
         { value.id() } -> std::convertible_to<typename std::remove_cvref_t<T>::IdType>;
     } && BasicHandleSpecialization<typename std::remove_cvref_t<T>::IdType>;
 
-    export template <typename>
+    template <typename>
     struct PackableConstructionType
     {
         static constexpr bool is_valid = false;
     };
 
-    export template <PackableType T>
+    template <PackableType T>
     struct PackableConstructionType<T>
     {
         static constexpr bool is_valid = true;
+
+        static constexpr bool allow_polymorphic = false;
 
         using IdType = std::remove_cvref_t<T>::IdType;
 
@@ -83,12 +85,19 @@ namespace retro
         {
             return values.emplace_back(id, std::forward<Args>(args)...);
         }
+
+        static IdType get_id(const T &ptr)
+        {
+            return ptr.id();
+        }
     };
 
-    export template <PackableType T>
+    template <PackableType T>
     struct PackableConstructionType<std::unique_ptr<T>>
     {
         static constexpr bool is_valid = true;
+
+        static constexpr bool allow_polymorphic = true;
 
         using IdType = PackableConstructionType<T>::IdType;
 
@@ -100,6 +109,20 @@ namespace retro
         {
             return values.emplace_back(std::make_unique<T>(id, std::forward<Args>(args)...));
         }
+
+        template <std::derived_from<T> U, typename... Args>
+            requires std::constructible_from<U, IdType, Args...>
+        static constexpr std::unique_ptr<T> &emplace_as(std::vector<std::unique_ptr<T>> &values,
+                                                        IdType id,
+                                                        Args &&...args)
+        {
+            return values.emplace_back(std::make_unique<U>(id, std::forward<Args>(args)...));
+        }
+
+        static IdType get_id(const std::unique_ptr<T> &ptr)
+        {
+            return ptr->id();
+        }
     };
 
     template <typename T>
@@ -109,6 +132,15 @@ namespace retro
     concept EmplaceablePackable = Packable<T> && requires(std::vector<T> &values, Args &&...args) {
         { PackableConstructionType<T>::emplace_info(values, std::forward<Args>(args)...) } -> std::same_as<T &>;
     };
+
+    template <typename T, typename U, typename... Args>
+    concept EmplaceablePackableAs =
+        Packable<T> && PackableConstructionType<T>::allow_polymorphic &&
+        requires(std::vector<T> &values, Args &&...args) {
+            {
+                PackableConstructionType<T>::template emplace_as<U>(values, std::forward<Args>(args)...)
+            } -> std::same_as<T &>;
+        };
 
     export template <Packable T>
     class PackedPool
@@ -277,6 +309,55 @@ namespace retro
             requires EmplaceablePackable<T, HandleType, Args...>
         constexpr T &emplace(Args &&...args)
         {
+            return emplace_impl(
+                [&](HandleType id) -> T &
+                { return PackableConstructionType<T>::emplace_info(values_, id, std::forward<Args>(args)...); });
+        }
+
+        template <typename U, typename... Args>
+            requires EmplaceablePackableAs<T, U, HandleType, Args...>
+        constexpr T &emplace_as(Args &&...args)
+        {
+            return emplace_impl(
+                [&](HandleType id) -> T &
+                {
+                    return PackableConstructionType<T>::template emplace_as<U>(values_,
+                                                                               id,
+                                                                               std::forward<Args>(args)...);
+                });
+        }
+
+        constexpr void remove(HandleType id)
+        {
+            if (id.index >= slots_.size())
+                return;
+
+            auto &[dense_index, generation, alive] = slots_[id.index];
+            if (!alive || generation != id.generation)
+                return;
+
+            if (const uint32 last_index = slots_.size() - 1; dense_index != last_index)
+            {
+                slots_[dense_index] = std::move(slots_[last_index]);
+
+                const auto &moved = values_[dense_index];
+                auto [index, generation] = PackableConstructionType<T>::get_id(moved);
+                auto &moved_slot = slots_[index];
+                moved_slot.dense_index = dense_index;
+            }
+
+            values_.pop_back();
+
+            alive = false;
+            ++generation;
+            free_list_.push_back(id.index);
+        }
+
+      private:
+        template <typename Functor>
+            requires std::invocable<Functor, HandleType>
+        constexpr T &emplace_impl(Functor &&functor)
+        {
             uint32 slot_index;
 
             if (!free_list_.empty())
@@ -295,39 +376,12 @@ namespace retro
             dense_index = static_cast<uint32>(values_.size());
 
             HandleType id{.index = slot_index, .generation = generation};
-            auto &value = PackableConstructionType<T>::emplace_info(values_, id, std::forward<Args>(args)...);
+            auto &value = std::forward<Functor>(functor)(id);
             alive = true;
 
             return value;
         }
 
-        constexpr void remove(HandleType id)
-        {
-            if (id.index >= slots_.size())
-                return;
-
-            auto &[dense_index, generation, alive] = slots_[id.index];
-            if (!alive || generation != id.generation)
-                return;
-
-            if (const uint32 last_index = slots_.size() - 1; dense_index != last_index)
-            {
-                slots_[dense_index] = std::move(slots_[last_index]);
-
-                const auto &moved = *values_[dense_index];
-                auto [index, generation] = moved.id();
-                auto &moved_slot = slots_[index];
-                moved_slot.dense_index = dense_index;
-            }
-
-            values_.pop_back();
-
-            alive = false;
-            ++generation;
-            free_list_.push_back(id.index);
-        }
-
-      private:
         using SlotType = SlotEntry<IndexType, GenerationType>;
 
         std::vector<T> values_{};

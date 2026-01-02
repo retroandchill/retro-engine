@@ -9,11 +9,12 @@ import retro.core;
 
 namespace retro
 {
+    export using RenderProxyID = DefaultHandle;
+
     template <typename T>
-    concept RenderProxy = requires(const T &t) {
+    concept RenderProxy = PackableType<T> && requires(const T &t) {
         typename T::DrawCallData;
         { T::type_id() } -> std::convertible_to<Name>;
-        { t.id() } -> std::convertible_to<uint64>;
         { t.get_draw_call() } -> std::convertible_to<typename T::DrawCallData>;
     };
 
@@ -36,30 +37,17 @@ namespace retro
             return T::type_id();
         }
 
-        uint64 add(T proxy)
-        {
-            auto id = proxy.id();
-            proxies_.push_back(std::move(proxy));
-            proxy_indices_.emplace(id, proxies_.size() - 1);
-            return id;
-        }
-
         template <typename... Args>
-            requires std::constructible_from<T, Args...>
-        uint64 emplace(Args &&...args)
+            requires std::constructible_from<T, RenderProxyID, Args...>
+        RenderProxyID emplace(Args &&...args)
         {
-            auto &added = proxies_.emplace_back(std::forward<Args>(args)...);
-            proxy_indices_.emplace(added.id(), proxies_.size() - 1);
+            auto &added = proxies_.emplace(std::forward<Args>(args)...);
             return added.id();
         }
 
-        void remove(const uint64 id)
+        void remove(const RenderProxyID id)
         {
-            if (const auto index = proxy_indices_.find(id); index != proxy_indices_.end())
-            {
-                proxies_.erase(proxies_.begin() + index->second);
-                proxy_indices_.erase(index);
-            }
+            proxies_.remove(id);
         }
 
         std::any collect_draw_calls() const override
@@ -69,7 +57,6 @@ namespace retro
         }
 
       private:
-        std::vector<T> proxies_;
-        std::map<uint64, usize> proxy_indices_;
+        PackedPool<T> proxies_;
     };
 } // namespace retro

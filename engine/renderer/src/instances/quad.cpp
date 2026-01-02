@@ -15,7 +15,7 @@ namespace retro
 
     void QuadRenderComponent::create_render_proxy(RenderProxyManager &proxy_manager)
     {
-        proxy_manager.emplace_proxy<QuadRenderProxy>(id(), *this);
+        proxy_manager.emplace_proxy<QuadRenderProxy>(*this);
     }
 
     void QuadRenderComponent::destroy_render_proxy(RenderProxyManager &proxy_manager)

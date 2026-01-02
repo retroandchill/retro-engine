@@ -15,7 +15,7 @@ namespace retro
     export class RETRO_API RenderComponent : public Component
     {
       protected:
-        inline explicit RenderComponent(Entity &owner) : Component{owner}
+        inline explicit RenderComponent(const ComponentID &id, Entity &owner) : Component{id, owner}
         {
         }
 

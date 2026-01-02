@@ -25,7 +25,6 @@ target_sources(retro_runtime PUBLIC
         src/scene/component.ixx
         src/scene/rendering/index.ixx
         src/scene/rendering/render_component.ixx
-        src/scene/rendering/render_proxy.ixx
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx)

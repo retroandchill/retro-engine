@@ -12,19 +12,22 @@ import retro.core;
 
 namespace retro
 {
+    export using ComponentID = DefaultHandle;
+
     export class RETRO_API Component
     {
-      protected:
-        static uint64 next_id_;
+      public:
+        using IdType = ComponentID;
 
-        inline explicit Component(class Entity &owner) : id_{next_id_++}, entity_{&owner}
+      protected:
+        inline explicit Component(const ComponentID &id, class Entity &owner) : id_{id}, entity_{&owner}
         {
         }
 
       public:
         virtual ~Component() = default;
 
-        [[nodiscard]] inline uint64 id() const
+        [[nodiscard]] inline ComponentID id() const
         {
             return id_;
         }
@@ -38,9 +41,7 @@ namespace retro
         virtual void on_detach() = 0;
 
       private:
-        uint64 id_;
+        ComponentID id_;
         Entity *entity_;
     };
-
-    uint64 Component::next_id_ = 0;
 } // namespace retro

@@ -45,8 +45,8 @@ namespace retro
         }
 
         template <RenderProxy T, typename... Args>
-            requires std::constructible_from<T, Args...>
-        uint64 emplace_proxy(Args &&...args)
+            requires std::constructible_from<T, RenderProxyID, Args...>
+        RenderProxyID emplace_proxy(Args &&...args)
         {
             auto existing = proxy_indices_.find(T::type_id());
             if (existing != proxy_indices_.end())
@@ -63,7 +63,7 @@ namespace retro
         }
 
         template <RenderProxy T>
-        void remove_proxy(const uint64 id)
+        void remove_proxy(const RenderProxyID id)
         {
             auto existing = proxy_indices_.find(T::type_id());
             if (existing != proxy_indices_.end())

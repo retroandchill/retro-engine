@@ -78,11 +78,10 @@ namespace retro
         }
 
         template <std::derived_from<Component> T, typename... Args>
-            requires std::constructible_from<T, Entity &, Args...>
+            requires std::constructible_from<T, ComponentID, Entity &, Args...>
         T &create_component(Args &&...args)
         {
-            std::unique_ptr<Component> &component =
-                components.emplace_back(std::make_unique<T>(*this, std::forward<Args>(args)...));
+            std::unique_ptr<Component> &component = components_.emplace_as<T>(*this, std::forward<Args>(args)...);
             component->on_attach();
             return static_cast<T &>(*component);
         }
@@ -95,6 +94,6 @@ namespace retro
       private:
         EntityID id_;
         Transform transform_;
-        std::vector<std::unique_ptr<Component>> components;
+        PackedPool<std::unique_ptr<Component>> components_;
     };
 } // namespace retro

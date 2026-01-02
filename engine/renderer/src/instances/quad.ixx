@@ -25,7 +25,7 @@ namespace retro
     export class QuadRenderComponent final : public RenderComponent
     {
       public:
-        inline explicit QuadRenderComponent(Entity &entity) : RenderComponent{entity}
+        inline QuadRenderComponent(const ComponentID &id, Entity &entity) : RenderComponent{id, entity}
         {
         }
 
@@ -55,16 +55,17 @@ namespace retro
         }
 
       private:
-        Vector2f size_;
+        Vector2f size_{};
         Color color_{};
     };
 
     export class QuadRenderProxy
     {
       public:
+        using IdType = RenderProxyID;
         using DrawCallData = Quad;
 
-        inline QuadRenderProxy(const uint64 id, QuadRenderComponent &component) : id_(id), component_(&component)
+        inline QuadRenderProxy(const RenderProxyID id, QuadRenderComponent &component) : id_(id), component_(&component)
         {
         }
 
@@ -73,17 +74,17 @@ namespace retro
             return TYPE_ID;
         }
 
-        inline uint64 id() const
+        [[nodiscard]] inline RenderProxyID id() const
         {
             return id_;
         }
 
-        Quad get_draw_call() const;
+        [[nodiscard]] Quad get_draw_call() const;
 
       private:
         static const Name TYPE_ID;
 
-        uint64 id_;
+        RenderProxyID id_;
         QuadRenderComponent *component_;
     };
 
