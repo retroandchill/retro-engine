@@ -3,7 +3,6 @@
 //
 module;
 
-#define SPDLOG_USE_STD_FORMAT
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
 #include <spdlog/async.h>

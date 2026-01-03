@@ -4,5 +4,5 @@
 
 export module retro.logging;
 
-export import :level;
-export import :record;
+export import :log_level;
+export import :logger;

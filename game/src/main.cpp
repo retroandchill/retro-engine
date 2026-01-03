@@ -5,6 +5,7 @@ import retro.runtime;
 import retro.scripting;
 import retro.renderer;
 import retro.interop;
+import retro.logging;
 import std;
 import sdl;
 
@@ -13,6 +14,11 @@ void set_up_test_scene(const retro::Engine &engine);
 int main()
 {
     using namespace retro;
+
+    init_default_console(LogLevel::Debug);
+
+    log<int32>(LogLevel::Info, "Starting up with {} worker threads", 4);
+    log<int32>(LogLevel::Warn, "Low memory: {} MB left", 128);
 
     sdl::main::SetMainReady();
     SdlRuntime sdl_runtime;
