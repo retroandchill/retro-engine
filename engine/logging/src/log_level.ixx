@@ -49,14 +49,22 @@ namespace retro
         switch (level)
         {
             using enum spdlog::level::level_enum;
-            case trace: return LogLevel::Trace;
-            case debug: return LogLevel::Debug;
-            case info: return LogLevel::Info;
-            case warn: return LogLevel::Warn;
-            case err: return LogLevel::Error;
-            case critical: return LogLevel::Critical;
-            case off: return LogLevel::Off;
-            default: return LogLevel::Off;
+            case trace:
+                return LogLevel::Trace;
+            case debug:
+                return LogLevel::Debug;
+            case info:
+                return LogLevel::Info;
+            case warn:
+                return LogLevel::Warn;
+            case err:
+                return LogLevel::Error;
+            case critical:
+                return LogLevel::Critical;
+            case off:
+                return LogLevel::Off;
+            default:
+                return LogLevel::Off;
         }
     }
 
@@ -65,21 +73,22 @@ namespace retro
         switch (level)
         {
             using enum LogLevel;
-        case Trace:
-            return spdlog::level::trace;
-        case Debug:
-            return spdlog::level::debug;
-        case Info:
-            return spdlog::level::info;
-        case Warn:
-            return spdlog::level::warn;
-        case Error:
-            return spdlog::level::err;
-        case Critical:
-            return spdlog::level::critical;
-        case Off:
-            return spdlog::level::off;
-        default: return spdlog::level::off;
+            case Trace:
+                return spdlog::level::trace;
+            case Debug:
+                return spdlog::level::debug;
+            case Info:
+                return spdlog::level::info;
+            case Warn:
+                return spdlog::level::warn;
+            case Error:
+                return spdlog::level::err;
+            case Critical:
+                return spdlog::level::critical;
+            case Off:
+                return spdlog::level::off;
+            default:
+                return spdlog::level::off;
         }
     }
-} // namespace retro::logging
+} // namespace retro
