@@ -15,10 +15,7 @@ int main()
 {
     using namespace retro;
 
-    init_default_console(LogLevel::Debug);
-
-    log<int32>(LogLevel::Info, "Starting up with {} worker threads", 4);
-    log<int32>(LogLevel::Warn, "Low memory: {} MB left", 128);
+    init_logger();
 
     sdl::main::SetMainReady();
     SdlRuntime sdl_runtime;
@@ -85,7 +82,7 @@ int main()
     }
     catch (const std::exception &ex)
     {
-        std::cerr << "Fatal error: " << ex.what() << '\n';
+        get_logger().critical("Fatal error: {}", ex.what());
         return -1;
     }
 }

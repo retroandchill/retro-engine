@@ -29,7 +29,7 @@ target_sources(retro_runtime PUBLIC
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx)
 
-target_link_libraries(retro_runtime PUBLIC retro_core retro_sdl retro_boost)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

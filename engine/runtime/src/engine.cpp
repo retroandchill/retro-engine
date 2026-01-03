@@ -3,6 +3,8 @@
 //
 module retro.runtime;
 
+import retro.logging;
+
 using namespace retro;
 
 static void precise_wait(const std::chrono::microseconds duration)
@@ -84,7 +86,7 @@ void Engine::run(const std::function<void()> &post_init)
         if (fps_timer >= 1.0f)
         {
             const float fps = static_cast<float>(fps_frames) / fps_timer;
-            std::println("FPS: {:.2f}", fps);
+            get_logger().info("FPS: {:.2f}", fps);
 
             fps_timer = 0.0f;
             fps_frames = 0;
