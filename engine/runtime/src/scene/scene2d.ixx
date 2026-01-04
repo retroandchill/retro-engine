@@ -18,13 +18,6 @@ import :scene.rendering;
 
 namespace retro
 {
-    struct EntitySlot
-    {
-        uint32 dense_index{};
-        uint32 generation{};
-        bool alive{};
-    };
-
     export class RETRO_API Scene2D
     {
       public:
@@ -47,8 +40,22 @@ namespace retro
 
         void destroy_entity(EntityID id);
 
+        boost::optional<Component &> get_component(ComponentID id);
+
+        template <std::derived_from<Component> T, typename... Args>
+            requires std::constructible_from<T, ComponentID, EntityID, Args...>
+        T &create_component(EntityID entity_id, Args &&...args)
+        {
+            std::unique_ptr<Component> &component = components_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
+            component->on_attach();
+            return static_cast<T &>(*component);
+        }
+
+        void destroy_component(ComponentID component_id);
+
       private:
         PackedPool<Entity> entities_{};
+        PackedPool<std::unique_ptr<Component>> components_{};
 
         RenderProxyManager render_proxy_manager_;
     };

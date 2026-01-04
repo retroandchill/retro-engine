@@ -10,6 +10,6 @@ namespace retro
 {
     Entity &Component::entity() const noexcept
     {
-        return Engine::instance().scene().get_entity(entity_id_).value();
+        return entity_.get();
     }
 } // namespace retro

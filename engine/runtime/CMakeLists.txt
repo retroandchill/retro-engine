@@ -8,6 +8,7 @@ add_library(retro_runtime
         src/scene/rendering/render_component.cpp
         src/scene/scene2d.cpp
         src/scene/component.cpp
+        src/scene/actor_ptr.cpp
 )
 
 if(NOT RETRO_BUILD_SHARED)
@@ -32,7 +33,8 @@ target_sources(retro_runtime PUBLIC
         src/scene/rendering/render_component.ixx
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
-        src/scene/transform.ixx)
+        src/scene/transform.ixx
+        src/scene/actor_ptr.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost)
 

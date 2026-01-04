@@ -12,19 +12,17 @@ export module retro.runtime:scene.component;
 
 import std;
 import retro.core;
+import :scene.actor_ptr;
 
 namespace retro
 {
-    export using EntityID = DefaultHandle;
-    export using ComponentID = DefaultHandle;
-
     export class RETRO_API Component
     {
       public:
         using IdType = ComponentID;
 
       protected:
-        inline explicit Component(const ComponentID id, const EntityID entity_id) : id_{id}, entity_id_{entity_id}
+        inline explicit Component(const ComponentID id, const EntityID entity_id) : id_{id}, entity_{entity_id}
         {
         }
 
@@ -43,6 +41,7 @@ namespace retro
 
       private:
         ComponentID id_;
-        EntityID entity_id_;
+        ActorPtr<Entity> entity_;
     };
+
 } // namespace retro

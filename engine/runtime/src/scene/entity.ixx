@@ -78,18 +78,9 @@ namespace retro
             transform_.scale = scale;
         }
 
-        template <std::derived_from<Component> T, typename... Args>
-            requires std::constructible_from<T, ComponentID, EntityID, Args...>
-        T &create_component(Args &&...args)
-        {
-            std::unique_ptr<Component> &component = components_.emplace_as<T>(id_, std::forward<Args>(args)...);
-            component->on_attach();
-            return static_cast<T &>(*component);
-        }
-
       private:
         EntityID id_;
         Transform transform_;
-        PackedPool<std::unique_ptr<Component>> components_;
+        std::set<ComponentID> components_;
     };
 } // namespace retro

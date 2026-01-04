@@ -112,7 +112,7 @@ void set_up_test_scene(const retro::Engine &engine)
             const Color c{r, g, b, 1.0f};
             auto &entity = engine.scene().create_entity();
             entity.set_position({static_cast<float>(i) * 100.0f, static_cast<float>(j) * 100.0f});
-            auto &component = entity.create_component<QuadRenderComponent>();
+            auto &component = engine.scene().create_component<QuadRenderComponent>(entity.id());
             component.set_size({100.0f, 100.0f});
             component.set_color(c);
 

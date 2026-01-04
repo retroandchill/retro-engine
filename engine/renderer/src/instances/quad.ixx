@@ -36,7 +36,7 @@ namespace retro
 
         void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) override;
 
-        inline const Color &color() const noexcept
+        [[nodiscard]] inline const Color &color() const noexcept
         {
             return color_;
         }
@@ -46,7 +46,7 @@ namespace retro
             color_ = color;
         }
 
-        inline Vector2f size() const noexcept
+        [[nodiscard]] inline Vector2f size() const noexcept
         {
             auto &[scale_x, scale_y] = entity().transform().scale;
             return {size_.x * scale_x, size_.y * scale_y};
@@ -87,8 +87,8 @@ namespace retro
       private:
         static const Name TYPE_ID;
 
-        RenderProxyID id_;
-        QuadRenderComponent *component_;
+        RenderProxyID id_{};
+        ActorPtr<QuadRenderComponent> component_{};
     };
 
     export class RETRO_API QuadRenderPipeline final : public RenderPipeline
@@ -102,7 +102,7 @@ namespace retro
         {
         }
 
-        inline Name type() const override
+        [[nodiscard]] inline Name type() const override
         {
             return QuadRenderProxy::type_id();
         }
