@@ -73,7 +73,6 @@ target_sources(retro_renderer PUBLIC
 target_link_libraries(retro_renderer
         PUBLIC
             retro_runtime
-        PRIVATE
             retro_vulkan)
 
 add_dependencies(retro_renderer renderer_shaders)

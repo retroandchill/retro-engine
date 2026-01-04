@@ -1,4 +1,4 @@
-add_library(retro_logging SHARED src/logger.cpp)
+add_library(retro_logging src/logger.cpp)
 
 target_sources(retro_logging PUBLIC
         FILE_SET CXX_MODULES FILES

@@ -41,10 +41,10 @@ namespace retro
         EngineDependencyFactory<Renderer2D> renderer_factory;
     };
 
-    export class RETRO_API Engine
+    export class Engine
     {
       public:
-        explicit Engine(const EngineConfig &config);
+        RETRO_API explicit Engine(const EngineConfig &config);
 
         ~Engine() = default;
 
@@ -70,9 +70,9 @@ namespace retro
             instance_.reset();
         }
 
-        void run(const std::function<void()> &post_init);
+        RETRO_API void run(const std::function<void()> &post_init);
 
-        void request_shutdown();
+        RETRO_API void request_shutdown();
 
         [[nodiscard]] inline Scene2D &scene() const
         {
@@ -84,7 +84,7 @@ namespace retro
         void tick(float delta_time);
         void render();
 
-        static std::unique_ptr<Engine> instance_;
+        RETRO_API static std::unique_ptr<Engine> instance_;
 
         std::unique_ptr<ScriptRuntime> script_runtime{};
         std::unique_ptr<Renderer2D> renderer_{};

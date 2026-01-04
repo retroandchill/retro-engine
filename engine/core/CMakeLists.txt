@@ -1,4 +1,4 @@
-add_library(retro_core SHARED src/strings/name.cpp
+add_library(retro_core src/strings/name.cpp
         src/filesystem/file_loader.cpp)
 
 target_include_directories(retro_core PUBLIC include)

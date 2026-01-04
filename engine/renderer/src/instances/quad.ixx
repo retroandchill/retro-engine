@@ -22,7 +22,7 @@ namespace retro
         Color color{};
     };
 
-    export class QuadRenderComponent final : public RenderComponent
+    export class RETRO_API QuadRenderComponent final : public RenderComponent
     {
       public:
         inline QuadRenderComponent(const ComponentID &id, Entity &entity) : RenderComponent{id, entity}
@@ -59,7 +59,7 @@ namespace retro
         Color color_{};
     };
 
-    export class QuadRenderProxy
+    export class RETRO_API QuadRenderProxy
     {
       public:
         using IdType = RenderProxyID;

@@ -18,6 +18,8 @@ if(NOT RETRO_BUILD_SHARED)
     else()
         set(VCPKG_TARGET_TRIPLET "x64-linux-static" CACHE STRING "")
     endif()
+else()
+    set(BUILD_SHARED_LIBS ON)
 endif()
 
 set(VCPKG_DEPS_DIR ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
