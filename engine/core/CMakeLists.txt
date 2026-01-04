@@ -29,7 +29,8 @@ target_sources(retro_core PUBLIC
         src/math/concepts.ixx
         src/math/vector.ixx
         src/containers/index.ixx
-        src/containers/packed_pool.ixx)
+        src/containers/packed_pool.ixx
+        src/containers/polymorphic.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_boost retro_fmt)

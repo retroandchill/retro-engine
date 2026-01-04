@@ -9,6 +9,7 @@ export module retro.core:containers.packed_pool;
 import std;
 import boost;
 import :defines;
+import :containers.polymorphic;
 
 namespace retro
 {
@@ -125,6 +126,39 @@ namespace retro
         }
 
         static IdType get_id(const std::unique_ptr<T> &ptr)
+        {
+            return ptr->id();
+        }
+    };
+
+    template <PackableType T, PolymorphicType Type, usize Size>
+    struct PackableConstructionType<Polymorphic<T, Type, Size>>
+    {
+        static constexpr bool is_valid = true;
+
+        static constexpr bool allow_polymorphic = true;
+
+        using IdType = PackableConstructionType<T>::IdType;
+
+        template <typename... Args>
+            requires std::constructible_from<T, IdType, Args...>
+        static constexpr Polymorphic<T, Type, Size> &emplace_info(std::vector<Polymorphic<T, Type, Size>> &values,
+                                                                  IdType id,
+                                                                  Args &&...args)
+        {
+            return values.emplace_back(std::in_place_type<T>, id, std::forward<Args>(args)...);
+        }
+
+        template <std::derived_from<T> U, typename... Args>
+            requires std::constructible_from<U, IdType, Args...>
+        static constexpr Polymorphic<T, Type, Size> &emplace_as(std::vector<Polymorphic<T, Type, Size>> &values,
+                                                                IdType id,
+                                                                Args &&...args)
+        {
+            return values.emplace_back(std::in_place_type<U>, id, std::forward<Args>(args)...);
+        }
+
+        static IdType get_id(const Polymorphic<T, Type, Size> &ptr)
         {
             return ptr->id();
         }

@@ -25,8 +25,7 @@ namespace retro
 
     boost::optional<Component &> Scene2D::get_component(const ComponentID id)
     {
-        return components_.get(id).map([](const std::unique_ptr<Component> &component) -> Component &
-                                       { return *component; });
+        return components_.get(id).map([](Polymorphic<Component> &component) -> Component & { return *component; });
     }
 
     void Scene2D::destroy_component(const ComponentID component_id)

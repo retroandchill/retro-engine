@@ -46,7 +46,7 @@ namespace retro
             requires std::constructible_from<T, ComponentID, EntityID, Args...>
         T &create_component(EntityID entity_id, Args &&...args)
         {
-            std::unique_ptr<Component> &component = components_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
+            auto &component = components_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
             component->on_attach();
             return static_cast<T &>(*component);
         }
@@ -55,7 +55,7 @@ namespace retro
 
       private:
         PackedPool<Entity> entities_{};
-        PackedPool<std::unique_ptr<Component>> components_{};
+        PackedPool<Polymorphic<Component>> components_{};
 
         RenderProxyManager render_proxy_manager_;
     };

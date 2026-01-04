@@ -7,3 +7,4 @@
 export module retro.core:containers;
 
 export import :containers.packed_pool;
+export import :containers.polymorphic;
