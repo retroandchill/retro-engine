@@ -1,5 +1,6 @@
 # CLion/Rider
-.idea
+.idea/*
+!.idea/fileTemplates/
 
 # CMake
 cmake-build-*/

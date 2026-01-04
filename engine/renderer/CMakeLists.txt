@@ -1,3 +1,7 @@
+﻿# @file CMakeLists.txt
+#
+# @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RENDERER_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 set(RENDERER_SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 

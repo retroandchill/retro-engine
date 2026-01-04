@@ -1,3 +1,7 @@
+# @file run_clang_format.py
+#
+# @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
 import os
 import subprocess
 from argparse import ArgumentParser
@@ -65,7 +69,8 @@ def find_files(spec: pathspec.PathSpec, check_only: bool) -> list[FormatArgs]:
             if not any(filename.endswith(ext) for ext in LINE_ENDINGS):
                 continue
 
-            full_path = os.path.join(rel_path, filename)  # type: ignore[type-arg]
+            # type: ignore[type-arg]
+            full_path = os.path.join(rel_path, filename)
             if not spec.match_file(full_path):  # type: ignore[type-arg]
                 files_to_format.append(
                     FormatArgs(
@@ -105,9 +110,11 @@ def format_file(args: FormatArgs) -> FormatResult:
             message="" if not needs_formatting else "needs formatting"
         )
     else:
-        result = subprocess.run(['clang-format', '-i', filepath], capture_output=True)
+        result = subprocess.run(
+            ['clang-format', '-i', filepath], capture_output=True)
         if result.returncode != 0:
-            return FormatResult(success=False, filepath=filepath, message=result.stderr)  # type: ignore[type-arg]
+            # type: ignore[type-arg]
+            return FormatResult(success=False, filepath=filepath, message=result.stderr)
 
         return FormatResult(
             success=True,

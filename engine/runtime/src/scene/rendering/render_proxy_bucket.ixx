@@ -1,7 +1,9 @@
-//
-// Created by fcors on 12/31/2025.
-//
-
+﻿/**
+ * @file render_proxy_bucket.ixx
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 export module retro.runtime:scene.rendering.render_proxy_bucket;
 
 import std;
@@ -14,8 +16,12 @@ namespace retro
     template <typename T>
     concept RenderProxy = PackableType<T> && requires(const T &t) {
         typename T::DrawCallData;
-        { T::type_id() } -> std::convertible_to<Name>;
-        { t.get_draw_call() } -> std::convertible_to<typename T::DrawCallData>;
+        {
+            T::type_id()
+        } -> std::convertible_to<Name>;
+        {
+            t.get_draw_call()
+        } -> std::convertible_to<typename T::DrawCallData>;
     };
 
     export class RenderProxyBucket

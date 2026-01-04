@@ -1,7 +1,9 @@
-//
-// Created by fcors on 1/1/2026.
-//
-
+﻿/**
+ * @file index.ixx
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 export module retro.core:containers;
 
 export import :containers.packed_pool;

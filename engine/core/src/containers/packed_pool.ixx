@@ -1,7 +1,9 @@
-//
-// Created by fcors on 1/1/2026.
-//
-
+﻿/**
+ * @file packed_pool.ixx
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 export module retro.core:containers.packed_pool;
 
 import std;
@@ -61,7 +63,9 @@ namespace retro
     export template <typename T>
     concept PackableType = requires(T value) {
         typename std::remove_cvref_t<T>::IdType;
-        { value.id() } -> std::convertible_to<typename std::remove_cvref_t<T>::IdType>;
+        {
+            value.id()
+        } -> std::convertible_to<typename std::remove_cvref_t<T>::IdType>;
     } && BasicHandleSpecialization<typename std::remove_cvref_t<T>::IdType>;
 
     template <typename>
@@ -130,7 +134,9 @@ namespace retro
 
     template <typename T, typename... Args>
     concept EmplaceablePackable = Packable<T> && requires(std::vector<T> &values, Args &&...args) {
-        { PackableConstructionType<T>::emplace_info(values, std::forward<Args>(args)...) } -> std::same_as<T &>;
+        {
+            PackableConstructionType<T>::emplace_info(values, std::forward<Args>(args)...)
+        } -> std::same_as<T &>;
     };
 
     template <typename T, typename U, typename... Args>
@@ -319,8 +325,7 @@ namespace retro
         constexpr T &emplace_as(Args &&...args)
         {
             return emplace_impl(
-                [&](HandleType id) -> T &
-                {
+                [&](HandleType id) -> T & {
                     return PackableConstructionType<T>::template emplace_as<U>(values_,
                                                                                id,
                                                                                std::forward<Args>(args)...);

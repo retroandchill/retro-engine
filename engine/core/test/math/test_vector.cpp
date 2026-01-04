@@ -1,6 +1,9 @@
-//
-// Created by fcors on 12/29/2025.
-//
+﻿/**
+ * @file test_vector.cpp
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 

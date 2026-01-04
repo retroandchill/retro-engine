@@ -1,3 +1,9 @@
+﻿/**
+ * @file main.cpp
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 //
 // Created by fcors on 12/19/20
 import retro.core;
