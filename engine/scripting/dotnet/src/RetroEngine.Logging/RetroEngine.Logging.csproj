@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>14</LangVersion>
@@ -6,13 +7,8 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <ItemGroup>
-        <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
-        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
-        <ProjectReference Include="..\RetroEngine.Logging\RetroEngine.Logging.csproj" />
-    </ItemGroup>
     <PropertyGroup
-        Condition="'$(RetroEngineBackend)' == 'Native'
+            Condition="'$(RetroEngineBackend)' == 'Native'
                             and '$(RetroEngineNativeOutputDirectory)' != ''"
     >
         <!-- Only redirect Native builds driven by CMake -->
@@ -20,4 +16,14 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
+        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+        <ProjectReference
+                Include="..\RetroEngine.SourceGenerator\RetroEngine.SourceGenerator.csproj"
+                OutputItemType="Analyzer"
+                ReferenceOutputAssembly="false"
+        />
+        <ProjectReference Include="..\RetroEngine.Strings.Native\RetroEngine.Strings.Native.csproj" />
+    </ItemGroup>
 </Project>

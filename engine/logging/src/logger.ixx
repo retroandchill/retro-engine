@@ -12,10 +12,25 @@ export module retro.logging:logger;
 
 import std;
 import spdlog;
+import utfcpp;
 import :log_level;
 
 namespace retro
 {
+    template <typename T, typename OutputIt>
+        requires Char<std::remove_cvref_t<decltype(*std::declval<T>())>>
+    auto convert_to_utf8(T begin, T end, OutputIt out)
+    {
+        if constexpr (std::same_as<std::remove_cvref_t<decltype(*std::declval<T>())>, char16_t>)
+        {
+            return utf8::utf16to8(begin, end, out);
+        }
+        else
+        {
+            return utf8::utf32to8(begin, end, out);
+        }
+    }
+
     export class Logger
     {
       public:
@@ -23,6 +38,39 @@ namespace retro
                                std::source_location location = std::source_location::current())
             : logger_(logger), location_(std::move(location))
         {
+        }
+
+        template <Char T>
+        void log(const LogLevel level, std::basic_string_view<T> message)
+        {
+            const auto file_name = location_.file_name();
+            const auto line = location_.line();
+            const auto function_name = location_.function_name();
+            spdlog::source_loc loc(file_name, line, function_name);
+            if constexpr (std::is_same_v<T, char>)
+            {
+                logger_->log(loc, to_spd_level(level), message);
+            }
+            else
+            {
+                constexpr size_t SmallBufferSize = 1024;
+
+                if (message.size() * 4 <= SmallBufferSize)
+                {
+                    std::array<char, SmallBufferSize> buffer;
+                    auto it = convert_to_utf8(message.begin(), message.end(), buffer.begin());
+                    const usize length = std::distance(buffer.begin(), it);
+                    logger_->log(loc, to_spd_level(level), std::string_view(buffer.data(), length));
+                }
+                else
+                {
+                    // Fallback to heap for unusually large strings
+                    std::string long_message;
+                    long_message.reserve(message.size() * 3); // Average case
+                    convert_to_utf8(message.begin(), message.end(), std::back_inserter(long_message));
+                    logger_->log(loc, to_spd_level(level), long_message);
+                }
+            }
         }
 
         template <typename... Args>

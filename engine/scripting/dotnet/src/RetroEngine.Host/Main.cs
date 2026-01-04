@@ -5,6 +5,7 @@
 using System.Runtime.InteropServices;
 using RetroEngine.Binds;
 using RetroEngine.Core;
+using RetroEngine.Logging;
 
 namespace RetroEngine.Host;
 
@@ -24,8 +25,8 @@ public static class Main
                 new ReadOnlySpan<char>(workingDirectoryPath, workingDirectoryPathLength).ToString()
             );
 
-            Console.WriteLine("Script engine initialized successfully.");
             BindsManager.Initialize(bindsCallbacks);
+            Logger.Info("Script engine initialized successfully.");
             return NativeBool.True;
         }
         catch (Exception e)

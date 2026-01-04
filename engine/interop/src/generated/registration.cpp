@@ -1,9 +1,3 @@
-/**
- * @file registration.cpp
- *
- * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
- * Licensed under the MIT License. See LICENSE file in the project root for full license information.
- */
 module retro.interop;
 
 import retro.scripting;
@@ -37,5 +31,8 @@ namespace retro
         BindsManager::register_exported_function(
             entity_exporter_name,
             ExportedFunction(u"RemoveEntityFromScene", &entity_exporter::remove_entity_from_scene));
+
+        const Name log_exporter_name = u"LogExporter";
+        BindsManager::register_exported_function(log_exporter_name, ExportedFunction(u"Log", &log_exporter::log));
     }
 } // namespace retro
