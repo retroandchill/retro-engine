@@ -18,6 +18,8 @@ import :scene.rendering;
 
 namespace retro
 {
+    export using ComponentHandle = Polymorphic<Component, PolymorphicType::Copyable, 128>;
+
     export class RETRO_API Scene2D
     {
       public:
@@ -55,7 +57,7 @@ namespace retro
 
       private:
         PackedPool<Entity> entities_{};
-        PackedPool<Polymorphic<Component>> components_{};
+        PackedPool<ComponentHandle> components_{};
 
         RenderProxyManager render_proxy_manager_;
     };
