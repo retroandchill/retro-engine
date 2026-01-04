@@ -8,12 +8,17 @@ module retro.runtime;
 
 namespace retro
 {
-    Entity &Scene2D::create_entity(const Transform &transform) noexcept
+    boost::optional<Entity &> Scene2D::get_entity(const EntityID id)
     {
-        return *entities_.emplace(transform);
+        return entities_.get(id);
     }
 
-    void Scene2D::destroy_entity(EntityID id)
+    Entity &Scene2D::create_entity(const Transform &transform) noexcept
+    {
+        return entities_.emplace(transform);
+    }
+
+    void Scene2D::destroy_entity(const EntityID id)
     {
         entities_.remove(id);
     }

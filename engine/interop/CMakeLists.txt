@@ -8,6 +8,7 @@ add_custom_target(retro_generate_interop
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${RETRO_INTEROP_GEN_DIR}"
         COMMAND dotnet "${RETRO_BIN_DIR}/RetroEngine.NativeBindsGenerator.dll"
         --source-assemblies "${RETRO_BIN_DIR}/RetroEngine.Strings.dll"
+        --source-assemblies "${RETRO_BIN_DIR}/RetroEngine.dll"
         --output-directory "${RETRO_INTEROP_GEN_DIR}"
         --module-name "retro.interop"
         --fragment-prefix "generated"

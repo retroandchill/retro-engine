@@ -6,18 +6,18 @@ namespace {{ManagedNamespace}};
 unsafe partial class {{Name}}
 {
     {{#Methods}}
-    private static readonly delegate *unmanaged<{{#Parameters}}{{Prefix}}{{ManagedType}}, {{/Parameters}}{{ManagedReturnType}}> {{Name}}_Delegate;
+    private static readonly delegate *unmanaged<{{#Parameters}}{{Prefix}}{{ManagedType}}, {{/Parameters}}{{ReturnPrefix}}{{ManagedReturnType}}> {{Name}}_Delegate;
     {{/Methods}}
 
     static {{Name}}()
     {
         {{#Methods}}
         var {{Name}}_Delegate_Size = {{DelegateSize}};
-        {{Name}}_Delegate = (delegate *unmanaged<{{#Parameters}}{{Prefix}}{{ManagedType}}, {{/Parameters}}{{Prefix}}{{ManagedReturnType}}>) BindsManager.GetBoundFunction("{{../Name}}", "{{Name}}", {{Name}}_Delegate_Size);
+        {{Name}}_Delegate = (delegate *unmanaged<{{#Parameters}}{{Prefix}}{{ManagedType}}, {{/Parameters}}{{ReturnPrefix}}{{ManagedReturnType}}>) BindsManager.GetBoundFunction("{{../Name}}", "{{Name}}", {{Name}}_Delegate_Size);
         {{/Methods}}
     }
-    
+
     {{#Methods}}
-    public static partial {{ManagedReturnType}} {{Name}}({{MethodParameters}}) => {{Name}}_Delegate({{ParameterNames}});
+    public static partial {{ReturnPrefix}}{{ManagedReturnType}} {{Name}}({{MethodParameters}}) => {{ReturnValuePrefix}}{{Name}}_Delegate({{ParameterNames}});
     {{/Methods}}
 }

@@ -3,7 +3,8 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 add_library(retro_core src/strings/name.cpp
-        src/filesystem/file_loader.cpp)
+        src/filesystem/file_loader.cpp
+)
 
 target_include_directories(retro_core PUBLIC include)
 
@@ -31,7 +32,7 @@ target_sources(retro_core PUBLIC
         src/containers/packed_pool.ixx)
 
 
-target_link_libraries(retro_core PUBLIC retro_fmt)
+target_link_libraries(retro_core PUBLIC retro_boost retro_fmt)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file registration.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
@@ -27,7 +27,10 @@ namespace retro
         const Name entity_exporter_name = u"EntityExporter";
         BindsManager::register_exported_function(
             entity_exporter_name,
-            ExportedFunction(u"GetEntityTransformOffset", &entity_exporter::get_entity_transform_offset));
+            ExportedFunction(u"GetEntityTransform", &entity_exporter::get_entity_transform));
+        BindsManager::register_exported_function(
+            entity_exporter_name,
+            ExportedFunction(u"SetEntityTransform", &entity_exporter::set_entity_transform));
         BindsManager::register_exported_function(
             entity_exporter_name,
             ExportedFunction(u"CreateNewEntity", &entity_exporter::create_new_entity));

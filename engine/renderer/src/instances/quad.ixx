@@ -28,7 +28,7 @@ namespace retro
     export class RETRO_API QuadRenderComponent final : public RenderComponent
     {
       public:
-        inline QuadRenderComponent(const ComponentID &id, Entity &entity) : RenderComponent{id, entity}
+        inline QuadRenderComponent(const ComponentID id, const EntityID entity_id) : RenderComponent{id, entity_id}
         {
         }
 

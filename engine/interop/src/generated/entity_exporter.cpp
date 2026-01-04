@@ -8,20 +8,23 @@ module retro.interop;
 
 namespace retro::entity_exporter
 {
-    int32 get_entity_transform_offset()
+    const Transform &get_entity_transform(const EntityID entity_id)
     {
-        return Entity::transform_offset();
+        return Engine::instance().scene().get_entity(entity_id).value().transform();
     }
 
-    Entity &create_new_entity(const Transform &transform, EntityID &id)
+    void set_entity_transform(const EntityID entity_id, const Transform &transform)
     {
-        auto &entity = Engine::instance().scene().create_entity(transform);
-        id = entity.id();
-        return entity;
+        Engine::instance().scene().get_entity(entity_id).value().set_transform(transform);
     }
 
-    void remove_entity_from_scene(const Entity &entityPtr)
+    EntityID create_new_entity(const Transform &transform)
     {
-        Engine::instance().scene().destroy_entity(entityPtr.id());
+        return Engine::instance().scene().create_entity(transform).id();
+    }
+
+    void remove_entity_from_scene(const EntityID entity_id)
+    {
+        Engine::instance().scene().destroy_entity(entity_id);
     }
 } // namespace retro::entity_exporter

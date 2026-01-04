@@ -9,6 +9,7 @@ module;
 #define BOOST_DLL_USE_STD_FS
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
 #include <boost/dll.hpp>
+#include <boost/optional.hpp>
 #include <boost/uuid.hpp>
 
 export module boost;
@@ -66,4 +67,24 @@ namespace boost
 
         export using uuids::nil_uuid;
     } // namespace uuids
+
+    export using boost::none_t;
+    export using boost::none;
+    export using boost::in_place_init_t;
+    export using boost::in_place_init;
+    export using boost::in_place_init_if_t;
+    export using boost::in_place_init_if;
+    export using boost::optional;
+    export using boost::swap;
+    export using boost::make_optional;
+    export using boost::get;
+    export using boost::get_optional_value_or;
+    export using boost::get_pointer;
+    export using boost::operator<<;
+    export using boost::operator==;
+    export using boost::operator<;
+    export using boost::operator>;
+    export using boost::operator<=;
+    export using boost::operator>=;
+
 } // namespace boost

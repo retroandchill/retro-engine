@@ -17,9 +17,9 @@ public class Scene2D
 
     public Entity CreateNewEntity(in Transform transform = default)
     {
-        var nativeEntity = EntityExporter.CreateNewEntity(in transform, out var id);
-        var entity = new Entity(this, id, nativeEntity);
-        _instantiatedEntities.Add(id, entity);
+        var entityId = EntityExporter.CreateNewEntity(in transform);
+        var entity = new Entity(this, entityId);
+        _instantiatedEntities.Add(entityId, entity);
         return entity;
     }
 

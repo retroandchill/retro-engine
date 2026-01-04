@@ -11,6 +11,7 @@ module;
 export module retro.runtime:scene.scene2d;
 
 import std;
+import boost;
 import retro.core;
 import :scene.entity;
 import :scene.rendering;
@@ -40,12 +41,14 @@ namespace retro
             return render_proxy_manager_;
         }
 
+        boost::optional<Entity &> get_entity(EntityID id);
+
         Entity &create_entity(const Transform &transform = {}) noexcept;
 
         void destroy_entity(EntityID id);
 
       private:
-        PackedPool<std::unique_ptr<Entity>> entities_;
+        PackedPool<Entity> entities_{};
 
         RenderProxyManager render_proxy_manager_;
     };

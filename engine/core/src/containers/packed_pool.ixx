@@ -7,6 +7,7 @@
 export module retro.core:containers.packed_pool;
 
 import std;
+import boost;
 import :defines;
 
 namespace retro
@@ -296,6 +297,20 @@ namespace retro
         [[nodiscard]] constexpr bool empty() const noexcept
         {
             return values_.empty();
+        }
+
+        template <typename Self>
+        [[nodiscard]] constexpr auto get(this Self &self, const HandleType id) noexcept
+            -> boost::optional<std::remove_cvref_t<T> &>
+        {
+            if (id.index >= self.slots_.size())
+                return boost::none;
+
+            const auto &[dense_index, generation, alive] = self.slots_[id.index];
+            if (!alive || generation != id.generation)
+                return boost::none;
+
+            return self.values_[dense_index];
         }
 
         constexpr void reserve(usize size)

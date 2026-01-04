@@ -7,6 +7,7 @@
 module retro.renderer;
 
 import retro.core;
+import retro.logging;
 import vulkan_hpp;
 
 namespace retro
@@ -155,7 +156,7 @@ namespace retro
         }
         else
         {
-            std::cerr << "WARNING: Vulkan validation layers requested, but not available!\n";
+            get_logger().warn("Vulkan validation layers requested, but not available!");
         }
 #endif
 

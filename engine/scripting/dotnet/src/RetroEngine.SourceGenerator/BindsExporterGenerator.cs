@@ -157,6 +157,24 @@ public class BindsExporterGenerator : IIncrementalGenerator
         {
             Name = method.Name,
             ManagedReturnType = method.ReturnType.ToDisplayString(),
+            ReturnPrefix = method.RefKind switch
+            {
+                RefKind.None => "",
+                RefKind.Ref => "ref ",
+                RefKind.Out => "out ",
+                RefKind.In => "ref readonly ",
+                RefKind.RefReadOnlyParameter => "ref readonly ",
+                _ => throw new ArgumentOutOfRangeException(),
+            },
+            ReturnValuePrefix = method.RefKind switch
+            {
+                RefKind.None => "",
+                RefKind.Ref => "ref ",
+                RefKind.Out => "out ",
+                RefKind.In => "ref ",
+                RefKind.RefReadOnlyParameter => "ref ",
+                _ => throw new ArgumentOutOfRangeException(),
+            },
             CppReturnType = GetCppReturnType(method, imports),
             ReturnsVoid = method.ReturnsVoid,
             Parameters = [.. method.Parameters.Select(x => GetBindMethodParameter(x, imports))],
@@ -204,8 +222,13 @@ public class BindsExporterGenerator : IIncrementalGenerator
 
     private static (string Prefix, string Type) GetManagedParameterType(IParameterSymbol parameter)
     {
-        var baseType = parameter.Type.ToDisplayString();
-        return parameter.RefKind switch
+        return GetManagedParameterType(parameter.Type, parameter.RefKind);
+    }
+
+    private static (string Prefix, string Type) GetManagedParameterType(ITypeSymbol parameterType, RefKind refKind)
+    {
+        var baseType = parameterType.ToDisplayString();
+        return refKind switch
         {
             RefKind.RefReadOnlyParameter => ("ref readonly ", baseType),
             RefKind.Ref => ("ref ", baseType),

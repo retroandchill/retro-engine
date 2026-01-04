@@ -19,6 +19,8 @@ public record BindMethodInfo
 {
     public required string Name { get; init; }
     public required string ManagedReturnType { get; init; }
+    public required string ReturnPrefix { get; init; }
+    public required string ReturnValuePrefix { get; init; }
     public required string CppReturnType { get; init; }
     public required bool ReturnsVoid { get; init; }
     public required ImmutableArray<BindMethodParameter> Parameters { get; init; }

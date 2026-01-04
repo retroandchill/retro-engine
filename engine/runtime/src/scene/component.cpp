@@ -1,16 +1,15 @@
 /**
- * @file registration.ixx
+ * @file component.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/exports.h"
-
-export module retro.interop:generated.registration;
+module retro.runtime;
 
 namespace retro
 {
-    export RETRO_API void register_script_binds();
-}
+    Entity &Component::entity() const noexcept
+    {
+        return Engine::instance().scene().get_entity(entity_id_).value();
+    }
+} // namespace retro

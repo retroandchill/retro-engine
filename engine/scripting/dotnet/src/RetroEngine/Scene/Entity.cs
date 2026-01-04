@@ -19,29 +19,21 @@ public readonly record struct EntityId(uint Index, uint Generation);
 public sealed class Entity : IDisposable
 {
     private EntityId Id { get; }
-    private IntPtr _entityPtr;
     internal int Generation { get; }
+    private bool _disposed;
     private readonly Dictionary<ComponentKey, Component> _components = new();
-
-    private static readonly int TransformOffset = EntityExporter.GetEntityTransformOffset();
 
     public Transform Transform
     {
         get
         {
             ThrowIfInvalid();
-            unsafe
-            {
-                return *(Transform*)IntPtr.Add(_entityPtr, TransformOffset);
-            }
+            return EntityExporter.GetEntityTransform(Id);
         }
         set
         {
             ThrowIfInvalid();
-            unsafe
-            {
-                *(Transform*)IntPtr.Add(_entityPtr, TransformOffset) = value;
-            }
+            EntityExporter.SetEntityTransform(Id, in value);
         }
     }
 
@@ -63,10 +55,9 @@ public sealed class Entity : IDisposable
         set => Transform = Transform with { Scale = value };
     }
 
-    internal Entity(Scene2D scene, EntityId id, IntPtr entityPtr)
+    internal Entity(Scene2D scene, EntityId id)
     {
         Id = id;
-        _entityPtr = entityPtr;
         Generation = scene.Generation;
     }
 
@@ -90,18 +81,18 @@ public sealed class Entity : IDisposable
 
     private void ThrowIfInvalid()
     {
-        if (_entityPtr != IntPtr.Zero && Generation == Scene2D.Current.Generation)
+        if (_disposed && Generation == Scene2D.Current.Generation)
             return;
         throw new ObjectDisposedException(nameof(Entity));
     }
 
     public void Dispose()
     {
-        if (_entityPtr == IntPtr.Zero || Generation != Scene2D.Current.Generation)
+        if (_disposed || Generation != Scene2D.Current.Generation)
             return;
 
-        EntityExporter.RemoveEntityFromScene(_entityPtr);
+        EntityExporter.RemoveEntityFromScene(Id);
         Scene2D.Current.RemoveEntity(Id);
-        _entityPtr = IntPtr.Zero;
+        _disposed = true;
     }
 }

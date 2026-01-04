@@ -18,8 +18,6 @@ import :scene.transform;
 
 namespace retro
 {
-    export using EntityID = DefaultHandle;
-
     export class RETRO_API Entity
     {
       public:
@@ -81,17 +79,12 @@ namespace retro
         }
 
         template <std::derived_from<Component> T, typename... Args>
-            requires std::constructible_from<T, ComponentID, Entity &, Args...>
+            requires std::constructible_from<T, ComponentID, EntityID, Args...>
         T &create_component(Args &&...args)
         {
-            std::unique_ptr<Component> &component = components_.emplace_as<T>(*this, std::forward<Args>(args)...);
+            std::unique_ptr<Component> &component = components_.emplace_as<T>(id_, std::forward<Args>(args)...);
             component->on_attach();
             return static_cast<T &>(*component);
-        }
-
-        constexpr static int32 transform_offset()
-        {
-            return offsetof(Entity, transform_);
         }
 
       private:
