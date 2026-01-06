@@ -8,26 +8,27 @@ module;
 
 #include "retro/core/exports.h"
 
+#include <boost/pool/pool_alloc.hpp>
+
 export module retro.logging:logger;
 
 import std;
 import spdlog;
-import utfcpp;
+import uni_algo;
 import :log_level;
 
 namespace retro
 {
-    template <typename T, typename OutputIt>
-        requires Char<std::remove_cvref_t<decltype(*std::declval<T>())>>
-    auto convert_to_utf8(T begin, T end, OutputIt out)
+    template <Char T>
+    auto convert_to_utf8(std::basic_string_view<T> str)
     {
-        if constexpr (std::same_as<std::remove_cvref_t<decltype(*std::declval<T>())>, char16_t>)
+        if constexpr (std::same_as<T, char16_t>)
         {
-            return utf8::utf16to8(begin, end, out);
+            return una::utf16to8(str, boost::pool_allocator<char>{});
         }
         else
         {
-            return utf8::utf32to8(begin, end, out);
+            return una::utf32to8(str, boost::pool_allocator<char>{});
         }
     }
 
@@ -53,6 +54,7 @@ namespace retro
             }
             else
             {
+                auto log_string = convert_to_utf8(message);
                 constexpr size_t SmallBufferSize = 1024;
 
                 if (message.size() * 4 <= SmallBufferSize)

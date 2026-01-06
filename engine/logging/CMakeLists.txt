@@ -10,7 +10,7 @@ target_sources(retro_logging PUBLIC
         src/log_level.ixx
         src/logger.ixx)
 
-target_link_libraries(retro_logging PUBLIC retro_core retro_utfcpp retro_fmt retro_spdlog)
+target_link_libraries(retro_logging PUBLIC retro_core retro_fmt retro_spdlog)
 
 set_target_properties(retro_logging PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

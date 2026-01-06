@@ -32,25 +32,16 @@
   }, {
     "name" : "boost-optional",
     "version>=" : "1.90.0"
-  }, {
-    "name" : "utfcpp",
-    "version>=" : "4.0.6"
-  }, {
+  },
+  {
     "name" : "uni-algo",
     "version>=" : "1.2.0"
-  }, {
-    "name" : "cityhash",
-    "version>=" : "2013-01-08#3"
-  }, {
-    "name" : "boost-container",
-    "version>=" : "1.90.0"
-  }, {
+  },
+  {
     "name" : "boost-unordered",
     "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-container-hash",
-    "version>=" : "1.90.0"
-  }, {
+  },
+  {
     "name" : "boost-pool",
     "version>=" : "1.90.0"
   } ],

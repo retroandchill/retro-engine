@@ -35,7 +35,7 @@ target_sources(retro_core PUBLIC
         src/memory/simple_arena.ixx)
 
 
-target_link_libraries(retro_core PUBLIC retro_boost retro_cityhash retro_uni_algo retro_fmt)
+target_link_libraries(retro_core PUBLIC retro_boost retro_uni_algo retro_fmt)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
