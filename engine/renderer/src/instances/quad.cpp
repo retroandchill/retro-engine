@@ -26,7 +26,7 @@ namespace retro
         proxy_manager.remove_proxy<QuadRenderProxy>(id);
     }
 
-    const Name QuadRenderProxy::TYPE_ID = u"quad"_name;
+    const Name QuadRenderProxy::TYPE_ID = "quad"_name;
 
     Quad QuadRenderProxy::get_draw_call() const
     {

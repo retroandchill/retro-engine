@@ -41,6 +41,18 @@
   }, {
     "name" : "cityhash",
     "version>=" : "2013-01-08#3"
+  }, {
+    "name" : "boost-container",
+    "version>=" : "1.90.0"
+  }, {
+    "name" : "boost-unordered",
+    "version>=" : "1.90.0"
+  }, {
+    "name" : "boost-container-hash",
+    "version>=" : "1.90.0"
+  }, {
+    "name" : "boost-pool",
+    "version>=" : "1.90.0"
   } ],
   "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
 }

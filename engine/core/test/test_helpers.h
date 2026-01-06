@@ -54,6 +54,6 @@ struct Catch::StringMaker<Name>
 {
     static std::string convert(const Name value)
     {
-        return StringMaker<std::u16string>::convert(value.to_string());
+        return StringMaker<std::string>::convert(value.to_string());
     }
 };

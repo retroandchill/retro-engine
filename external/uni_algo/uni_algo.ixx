@@ -139,27 +139,27 @@ export namespace una
 
     namespace norm
     {
-        using norm::to_nfc_utf8;
-        using norm::to_nfd_utf8;
-        using norm::to_nfkc_utf8;
-        using norm::to_nfkd_utf8;
-        using norm::to_unaccent_utf8;
+        using una::norm::to_nfc_utf8;
+        using una::norm::to_nfd_utf8;
+        using una::norm::to_nfkc_utf8;
+        using una::norm::to_nfkd_utf8;
+        using una::norm::to_unaccent_utf8;
 
-        using norm::to_nfc_utf16;
-        using norm::to_nfd_utf16;
-        using norm::to_nfkc_utf16;
-        using norm::to_nfkd_utf16;
-        using norm::to_unaccent_utf16;
+        using una::norm::to_nfc_utf16;
+        using una::norm::to_nfd_utf16;
+        using una::norm::to_nfkc_utf16;
+        using una::norm::to_nfkd_utf16;
+        using una::norm::to_unaccent_utf16;
 
-        using norm::is_nfc_utf8;
-        using norm::is_nfd_utf8;
-        using norm::is_nfkc_utf8;
-        using norm::is_nfkd_utf8;
+        using una::norm::is_nfc_utf8;
+        using una::norm::is_nfd_utf8;
+        using una::norm::is_nfkc_utf8;
+        using una::norm::is_nfkd_utf8;
 
-        using norm::is_nfc_utf16;
-        using norm::is_nfd_utf16;
-        using norm::is_nfkc_utf16;
-        using norm::is_nfkd_utf16;
+        using una::norm::is_nfc_utf16;
+        using una::norm::is_nfd_utf16;
+        using una::norm::is_nfkc_utf16;
+        using una::norm::is_nfkd_utf16;
     } // namespace norm
 
     namespace codepoint

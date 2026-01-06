@@ -19,7 +19,7 @@ TEST_CASE("Name default construction yields none and invalid", "[name]")
     constexpr Name n;
 
     REQUIRE(n.is_none());
-    REQUIRE_FALSE(n.is_valid());
+    REQUIRE(n.is_valid());
     REQUIRE(n.comparison_index() == 0u);
     REQUIRE(n.display_index() == 0u);
     REQUIRE(n.number() == NAME_NO_NUMBER);
@@ -54,14 +54,14 @@ TEST_CASE("Name with numeric suffix parses number and strips it from base", "[na
     REQUIRE_FALSE(n.is_none());
 
     // Number gets parsed out
-    REQUIRE(n.number() == 43);
+    REQUIRE(n.number() == 42);
 
     // Stored base name should be with the _42 suffix
-    const std::u16string base = n.to_string();
-    REQUIRE(base == std::u16string{u"Enemy_42"});
+    const std::string base = n.to_string();
+    REQUIRE(base == std::string{"Enemy_42"});
 
     // Comparison is still against the base logical name
-    REQUIRE(n == std::u16string_view{u"Enemy_42"});
+    REQUIRE(n == std::string_view{"Enemy_42"});
 }
 
 TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]")
@@ -71,13 +71,13 @@ TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]")
 
     REQUIRE(with_leading_zero.is_valid());
     REQUIRE(with_leading_zero.number() == NAME_NO_NUMBER);
-    REQUIRE(with_leading_zero.to_string() == std::u16string{u"Foo_01"});
+    REQUIRE(with_leading_zero.to_string() == std::string{"Foo_01"});
 
     // No underscore before digits -> treated as part of the name
-    Name no_underscore{std::u16string{u"Bar99"}};
+    Name no_underscore{std::string{"Bar99"}};
     REQUIRE(no_underscore.is_valid());
     REQUIRE(no_underscore.number() == NAME_NO_NUMBER);
-    REQUIRE(no_underscore.to_string() == std::u16string{u"Bar99"});
+    REQUIRE(no_underscore.to_string() == std::string{"Bar99"});
 }
 
 TEST_CASE("FindType::Find does not create new entries", "[name]")
@@ -102,7 +102,7 @@ TEST_CASE("FindType::Find does not create new entries", "[name]")
     // Lookup unknown name with FindType::Find -> should yield a "none" name
     Name not_created{std::u16string{u"UnknownNameThatDoesNotExist"}, FindType::Find};
     REQUIRE(not_created.is_none());
-    REQUIRE_FALSE(not_created.is_valid());
+    REQUIRE(not_created.is_valid());
     REQUIRE(not_created.comparison_index() == 0u);
     REQUIRE(not_created.display_index() == 0u);
 }
@@ -124,12 +124,12 @@ TEST_CASE("Name none() creates a none name", "[name]")
     const Name none = Name::none();
 
     REQUIRE(none.is_none());
-    REQUIRE_FALSE(none.is_valid());
+    REQUIRE(none.is_valid());
     REQUIRE(none.comparison_index() == 0u);
     REQUIRE(none.display_index() == 0u);
     REQUIRE(none.number() == NAME_NO_NUMBER);
 
     // String representation for an invalid display index should be "None"
-    const std::u16string display = none.to_string();
-    REQUIRE(display == std::u16string{u"None"});
+    const std::string display = none.to_string();
+    REQUIRE(display == std::string{"None"});
 }

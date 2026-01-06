@@ -10,6 +10,8 @@ module;
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
 #include <boost/dll.hpp>
 #include <boost/optional.hpp>
+#include <boost/pool/pool_alloc.hpp>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <boost/uuid.hpp>
 
 export module boost;
@@ -17,6 +19,19 @@ export module boost;
 namespace boost
 {
     export using boost::noncopyable;
+
+    export using boost::simple_segregated_storage;
+    export using boost::default_user_allocator_new_delete;
+    export using boost::default_user_allocator_malloc_free;
+    export using boost::pool;
+    export using boost::object_pool;
+    export using boost::singleton_pool;
+    export using boost::pool_allocator_tag;
+    export using boost::pool_allocator;
+    export using boost::fast_pool_allocator_tag;
+    export using boost::fast_pool_allocator;
+
+    export using boost::unordered_flat_map;
 
     namespace dll
     {

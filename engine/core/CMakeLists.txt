@@ -31,10 +31,8 @@ target_sources(retro_core PUBLIC
         src/containers/index.ixx
         src/containers/packed_pool.ixx
         src/containers/polymorphic.ixx
-        src/memory/alignment.ixx
-        src/memory/optimization.ixx
-        src/memory/fixed_buffer_allocator.ixx
-        src/math/rounding.ixx)
+        src/math/rounding.ixx
+        src/memory/simple_arena.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_boost retro_cityhash retro_uni_algo retro_fmt)

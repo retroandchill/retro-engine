@@ -9,6 +9,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 
 option(BUILD_TESTS "Should the test cases be built as well" ON)
+option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
 
 if(NOT RETRO_BUILD_SHARED)
     set(BUILD_SHARED_LIBS OFF)
@@ -36,6 +37,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_MODULE_STD ON)
 if (MSVC)
     add_compile_definitions(_UTF8)
+endif()
+
+if (RETRO_WITH_CASE_PRESERVING_NAME)
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
+else()
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
 endif()
 
 set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
