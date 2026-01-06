@@ -131,6 +131,7 @@ namespace retro
 
         [[nodiscard]] std::string_view get(const NameEntryId id) const
         {
+            std::shared_lock lock{mutex_};
             if (id.is_none())
             {
                 return NONE_STRING;
@@ -156,14 +157,17 @@ namespace retro
 
         [[nodiscard]] bool is_within_bounds(const NameEntryId index) const noexcept
         {
+            std::shared_lock lock{mutex_};
             return index.value() < entries_.size();
         }
 
       private:
         NameIndices get_or_add_entry_internal(std::string_view str, const FindType find_type)
         {
+
             if (find_type == FindType::Add)
             {
+                std::unique_lock lock{mutex_};
                 const auto next_index = static_cast<uint32>(entries_.size());
                 const auto comparison_index =
                     comparison_entries_.find_or_add(str, std::bind_front(&NameTable::create_new_entry, this));
@@ -189,6 +193,7 @@ namespace retro
                 };
             }
 
+            std::shared_lock lock{mutex_};
             return comparison_entries_.find(str)
                 .map(
                     [&](NameEntryId comparison_index)
@@ -227,6 +232,7 @@ namespace retro
         static constexpr usize INITIAL_BLOCKS = 16;
         static constexpr usize MAX_BLOCKS = 1024;
 
+        mutable std::shared_mutex mutex_;
         SimpleArena allocator_{BLOCK_SIZE, INITIAL_BLOCKS, MAX_BLOCKS};
         NameTableSet<NameCase::IgnoreCase> comparison_entries_;
 #if RETRO_WITH_CASE_PRESERVING_NAME

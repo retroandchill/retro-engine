@@ -7,6 +7,4 @@
 export module retro.core:memory;
 
 export import :memory.ref_counted_ptr;
-export import :memory.alignment;
-export import :memory.optimization;
 export import :memory.simple_arena;
