@@ -16,6 +16,8 @@ export module boost;
 
 namespace boost
 {
+    export using boost::noncopyable;
+
     namespace dll
     {
         export using dll::shared_library;

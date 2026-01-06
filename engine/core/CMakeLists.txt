@@ -30,10 +30,14 @@ target_sources(retro_core PUBLIC
         src/math/vector.ixx
         src/containers/index.ixx
         src/containers/packed_pool.ixx
-        src/containers/polymorphic.ixx)
+        src/containers/polymorphic.ixx
+        src/memory/alignment.ixx
+        src/memory/optimization.ixx
+        src/memory/fixed_buffer_allocator.ixx
+        src/math/rounding.ixx)
 
 
-target_link_libraries(retro_core PUBLIC retro_boost retro_fmt)
+target_link_libraries(retro_core PUBLIC retro_boost retro_cityhash retro_uni_algo retro_fmt)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
