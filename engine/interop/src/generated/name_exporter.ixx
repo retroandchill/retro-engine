@@ -13,6 +13,7 @@ namespace retro::name_exporter
 {
     Name lookup(const char16_t *name, int32 length, FindType findType);
     bool is_valid(Name name);
-    bool equals(Name lhs, const char16_t *rhs, int32 length);
+    int32 compare(Name lhs, const char16_t *rhs, int32 length);
+    int32 compare_lexical(NameEntryId lhs, NameEntryId rhs, NameCase nameCase);
     int32 to_string(Name name, char16_t *buffer, int32 bufferSize);
 } // namespace retro::name_exporter

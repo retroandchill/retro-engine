@@ -24,11 +24,11 @@ namespace retro
     {
         if constexpr (std::same_as<T, char16_t>)
         {
-            return una::utf16to8(str, boost::pool_allocator<char>{});
+            return una::utf16to8<char16_t, char>(str, boost::pool_allocator<char>{});
         }
         else
         {
-            return una::utf32to8(str, boost::pool_allocator<char>{});
+            return una::utf32to8<char32_t, char>(str, boost::pool_allocator<char>{});
         }
     }
 
@@ -55,23 +55,7 @@ namespace retro
             else
             {
                 auto log_string = convert_to_utf8(message);
-                constexpr size_t SmallBufferSize = 1024;
-
-                if (message.size() * 4 <= SmallBufferSize)
-                {
-                    std::array<char, SmallBufferSize> buffer;
-                    auto it = convert_to_utf8(message.begin(), message.end(), buffer.begin());
-                    const usize length = std::distance(buffer.begin(), it);
-                    logger_->log(loc, to_spd_level(level), std::string_view(buffer.data(), length));
-                }
-                else
-                {
-                    // Fallback to heap for unusually large strings
-                    std::string long_message;
-                    long_message.reserve(message.size() * 3); // Average case
-                    convert_to_utf8(message.begin(), message.end(), std::back_inserter(long_message));
-                    logger_->log(loc, to_spd_level(level), long_message);
-                }
+                logger_->log(loc, to_spd_level(level), log_string);
             }
         }
 

@@ -7,208 +7,169 @@ using System.Runtime.CompilerServices;
 
 namespace RetroEngine.Strings;
 
-internal readonly record struct NameHashEntry(uint Id, int Hash);
+internal readonly record struct NameHash(int Hash, int Length);
 
-internal readonly record struct NameIndices(uint ComparisonIndex, uint DisplayStringIndex)
+internal readonly struct NameTableSet(StringComparison comparison)
 {
-    public bool IsNone => ComparisonIndex == 0;
+    private readonly ConcurrentDictionary<NameHash, NameEntryId> _entryIndexes = new();
 
-    public static readonly NameIndices None = new(0, 0);
+    public NameEntryId? Find(ReadOnlySpan<char> str)
+    {
+        var hash = Hash(str, comparison);
+        return _entryIndexes.TryGetValue(hash, out var entryId) ? entryId : null;
+    }
+
+    public NameEntryId FindOrAdd(ReadOnlySpan<char> str, Func<ReadOnlySpan<char>, NameEntryId> addFunc)
+    {
+        var hash = Hash(str, comparison);
+        if (_entryIndexes.TryGetValue(hash, out var entryId))
+        {
+            return entryId;
+        }
+
+        var newId = addFunc(str);
+        _entryIndexes.TryAdd(hash, newId);
+        return newId;
+    }
+
+    public NameEntryId Add(ReadOnlySpan<char> str, Func<ReadOnlySpan<char>, NameEntryId> addFunc)
+    {
+        var hash = Hash(str, comparison);
+        var newId = addFunc(str);
+        return _entryIndexes.TryAdd(hash, newId) ? newId : throw new InvalidOperationException("Duplicate name");
+    }
+
+    private static NameHash Hash(ReadOnlySpan<char> name, StringComparison comparisonType)
+    {
+        return new NameHash(string.GetHashCode(name, comparisonType), name.Length);
+    }
+}
+
+#if RETRO_WITH_CASE_PRESERVING_NAME
+internal readonly record struct NameIndices(NameEntryId ComparisonIndex, NameEntryId DisplayIndex)
+#else
+internal readonly record struct NameIndices(NameEntryId ComparisonIndex)
+#endif
+{
+    public static NameIndices None =>
+        new()
+        {
+            ComparisonIndex = NameEntryId.None,
+#if RETRO_WITH_CASE_PRESERVING_NAME
+            DisplayIndex = NameEntryId.None,
+#endif
+        };
+
+    public bool IsNone => ComparisonIndex.IsNone;
 }
 
 internal class NameTable
 {
-    private const int BucketCount = 1024;
-    private const int BucketMask = BucketCount - 1;
+    private readonly Lock _lock = new();
+    private readonly NameTableSet _comparisonEntries = new(StringComparison.OrdinalIgnoreCase);
+#if RETRO_WITH_CASE_PRESERVING_NAME
+    private readonly NameTableSet _displayEntries = new(StringComparison.Ordinal);
+#endif
+    private readonly List<string> _entries = [];
 
-    private readonly ConcurrentBag<NameHashEntry>[] _comparisonBuckets = new ConcurrentBag<NameHashEntry>[BucketCount];
-    private readonly ConcurrentDictionary<uint, string> _comparisonStrings = new();
+    public static NameTable Instance { get; } = new();
 
-    private readonly ConcurrentBag<NameHashEntry>[] _displayBuckets = new ConcurrentBag<NameHashEntry>[BucketCount];
-    private readonly ConcurrentDictionary<uint, string> _displayStrings = new();
-
-    private uint _nextComparisonId = 1;
-    private uint _nextDisplayId = 1;
-
-    public static readonly NameTable Instance = new();
-
-    private NameTable()
+    public NameTable()
     {
-        for (var i = 0; i < BucketCount; i++)
-        {
-            _comparisonBuckets[i] = [];
-            _displayBuckets[i] = [];
-        }
+        GetOrAddEntryInternal(Name.NoneString, FindName.Add);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int ComputeHashIgnoreCase(ReadOnlySpan<char> span)
+    public NameIndices GetOrAddEntry(ReadOnlySpan<char> str, FindName findType)
     {
-        var hash = 0;
-
-        foreach (var t in span)
+        if (str.Equals(Name.NoneString, StringComparison.OrdinalIgnoreCase))
         {
-            var c = char.ToLowerInvariant(t);
-            hash = ((hash << 5) + hash) ^ c;
-        }
-        return hash;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int ComputeHashCaseSensitive(ReadOnlySpan<char> span)
-    {
-        var hash = 0;
-
-        foreach (var c in span)
-        {
-            hash = ((hash << 5) + hash) ^ c;
-        }
-        return hash;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool SpanEqualsString(ReadOnlySpan<char> span, string str, bool caseSensitive = false)
-    {
-        if (span.Length != str.Length)
-            return false;
-
-        for (var i = 0; i < span.Length; i++)
-        {
-            if (caseSensitive)
+            return new NameIndices
             {
-                if (span[i] != str[i])
-                    return false;
+                ComparisonIndex = NameEntryId.None,
+#if RETRO_WITH_CASE_PRESERVING_NAME
+                DisplayIndex = NameEntryId.None,
+#endif
+            };
+        }
 
-                continue;
+        return GetOrAddEntryInternal(str, findType);
+    }
+
+    public string Get(NameEntryId id)
+    {
+        return !id.IsNone ? _entries[(int)id.Value] : Name.NoneString;
+    }
+
+    public int Compare(NameEntryId left, NameEntryId right, StringComparison comparison)
+    {
+        return Get(left).CompareTo(Get(right), comparison);
+    }
+
+    public int Compare(NameEntryId left, ReadOnlySpan<char> right, StringComparison comparison)
+    {
+        return Get(left).CompareTo(right, comparison);
+    }
+
+    public bool IsWithinBounds(NameEntryId index)
+    {
+        return index.Value < _entries.Count;
+    }
+
+    private NameIndices GetOrAddEntryInternal(ReadOnlySpan<char> str, FindName findType)
+    {
+        if (findType == FindName.Add)
+        {
+            var nextId = (uint)_entries.Count;
+            var comparisonIndex = _comparisonEntries.FindOrAdd(str, CreateNewEntry);
+#if RETRO_WITH_CASE_PRESERVING_NAME
+            if (comparisonIndex.Value == nextId)
+            {
+                var displayIndex = _displayEntries.FindOrAdd(str, _ => comparisonIndex);
+                ArgumentOutOfRangeException.ThrowIfNotEqual(displayIndex.Value, comparisonIndex.Value);
+                return new NameIndices(comparisonIndex, displayIndex);
             }
 
-            if (char.ToLowerInvariant(span[i]) != char.ToLowerInvariant(str[i]))
-                return false;
+            var displayId = _displayEntries.Add(str, CreateNewEntry);
+#endif
+
+            return new NameIndices
+            {
+                ComparisonIndex = comparisonIndex,
+#if RETRO_WITH_CASE_PRESERVING_NAME
+                DisplayIndex = displayId,
+#endif
+            };
         }
-        return true;
+
+        var compIndex = _comparisonEntries.Find(str);
+        if (compIndex is not null)
+        {
+            return new NameIndices
+            {
+                ComparisonIndex = compIndex.Value,
+#if RETRO_WITH_CASE_PRESERVING_NAME
+                DisplayIndex = _displayEntries.Find(str) ?? compIndex.Value,
+#endif
+            };
+        }
+
+        return new NameIndices
+        {
+            ComparisonIndex = NameEntryId.None,
+#if RETRO_WITH_CASE_PRESERVING_NAME
+            DisplayIndex = NameEntryId.None,
+#endif
+        };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public NameIndices GetOrAddEntry(ReadOnlySpan<char> value, FindName findType)
+    private NameEntryId CreateNewEntry(ReadOnlySpan<char> str)
     {
-        if (IsNoneSpan(value))
-            return NameIndices.None;
+        if (str.Length > Name.MaxLength)
+            throw new ArgumentException("Name is too long");
 
-        var hashIgnore = ComputeHashIgnoreCase(value);
-        var hashCase = ComputeHashCaseSensitive(value);
-
-        var cmpBucketIdx = hashIgnore & BucketMask;
-        var dispBucketIdx = hashCase & BucketMask;
-
-        var cmpBucket = _comparisonBuckets[cmpBucketIdx];
-        var dispBucket = _displayBuckets[dispBucketIdx];
-
-        uint comparisonId = 0;
-        uint displayId = 0;
-
-        // ---- Comparison lookup (case-insensitive) ----
-        foreach (var entry in cmpBucket)
-        {
-            if (entry.Hash != hashIgnore)
-                continue;
-
-            if (!SpanEqualsString(value, _comparisonStrings[entry.Id], caseSensitive: false))
-                continue;
-
-            comparisonId = entry.Id;
-            break;
-        }
-
-        // ---- Display lookup (case-sensitive) ----
-        foreach (var entry in dispBucket)
-        {
-            if (entry.Hash != hashCase)
-                continue;
-
-            if (!SpanEqualsString(value, _displayStrings[entry.Id], caseSensitive: true))
-                continue;
-            displayId = entry.Id;
-            break;
-        }
-
-        // If both found, we're done.
-        if (comparisonId != 0 && displayId != 0)
-            return new NameIndices(comparisonId, displayId);
-
-        if (findType == FindName.Find)
-        {
-            // For strict "find only", require that both indices exist.
-            // If you want looser semantics (e.g., comparison exists but
-            // display doesn't), this is the place to tweak.
-            return new NameIndices(0, 0);
-        }
-
-        // ---- Add path ----
-        // We only allocate the string once here.
-        var str = value.ToString();
-
-        // (1) Ensure comparison entry exists
-        if (comparisonId == 0)
-        {
-            comparisonId = _nextComparisonId;
-            Interlocked.Increment(ref _nextComparisonId);
-            var cmpEntry = new NameHashEntry(comparisonId, hashIgnore);
-            cmpBucket.Add(cmpEntry);
-            _comparisonStrings.TryAdd(comparisonId, str);
-        }
-
-        // (2) Ensure display entry exists
-        if (displayId != 0)
-            return new NameIndices(comparisonId, displayId);
-
-        displayId = _nextDisplayId;
-        Interlocked.Increment(ref _nextDisplayId);
-        var dispEntry = new NameHashEntry(displayId, hashCase);
-        dispBucket.Add(dispEntry);
-        _displayStrings.TryAdd(displayId, str);
-
-        return new NameIndices(comparisonId, displayId);
-    }
-
-    public bool IsValid(uint comparisonId, uint displayId)
-    {
-        if (comparisonId == 0 || displayId == 0)
-        {
-            return false;
-        }
-
-        return _comparisonStrings.ContainsKey(comparisonId) && _displayStrings.ContainsKey(displayId);
-    }
-
-    /// <summary>
-    /// Get display string for a display id (case-preserving).
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string GetDisplayString(uint displayId) => _displayStrings.GetValueOrDefault(displayId, "None");
-
-    /// <summary>
-    /// Compare comparison id against a span, case-insensitive.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool EqualsComparison(uint comparisonId, ReadOnlySpan<char> span)
-    {
-        if (comparisonId == 0)
-            return IsNoneSpan(span);
-
-        return _comparisonStrings.TryGetValue(comparisonId, out var value)
-            && SpanEqualsString(span, value, caseSensitive: false);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsNoneSpan(ReadOnlySpan<char> span)
-    {
-        return span.IsEmpty
-            || (
-                span.Length == 4
-                && (span[0] == 'N' || span[0] == 'n')
-                && (span[1] == 'o' || span[1] == 'O')
-                && (span[2] == 'n' || span[2] == 'N')
-                && (span[3] == 'e' || span[3] == 'E')
-            );
+        using var locked = _lock.EnterScope();
+        var entryId = new NameEntryId((uint)_entries.Count);
+        _entries.Add(str.ToString());
+        return entryId;
     }
 }

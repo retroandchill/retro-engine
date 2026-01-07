@@ -108,7 +108,7 @@ namespace retro
     export constexpr RETRO_API int32 NAME_NO_NUMBER = name_internal_to_external(NAME_NO_NUMBER_INTERNAL);
 
     template <Char CharType>
-    constexpr std::pair<uint32, usize> parse_number_from_name(std::basic_string_view<CharType> name)
+    constexpr std::pair<int32, usize> parse_number_from_name(std::basic_string_view<CharType> name)
     {
         int32 digits = 0;
         for (auto *c = name.data() + name.size() - 1; c >= name.data() && *c >= '0' && *c <= '9'; --c)
@@ -127,8 +127,7 @@ namespace retro
             }
             if (Number < std::numeric_limits<int32>::max())
             {
-                return std::make_pair(static_cast<uint32>(name_external_to_internal(Number)),
-                                      name.size() - (1 + digits));
+                return std::make_pair(name_external_to_internal(Number), name.size() - (1 + digits));
             }
         }
 
@@ -281,6 +280,12 @@ namespace retro
         }
 
         [[nodiscard]] friend RETRO_API bool operator==(const Name &lhs, std::string_view rhs);
+
+        [[nodiscard]] friend RETRO_API bool operator==(const Name &lhs, std::u16string_view rhs);
+
+        [[nodiscard]] friend RETRO_API std::strong_ordering operator<=>(const Name &lhs, std::string_view rhs);
+
+        [[nodiscard]] friend RETRO_API std::strong_ordering operator<=>(const Name &lhs, std::u16string_view rhs);
 
       private:
         static bool is_within_bounds(NameEntryId index);

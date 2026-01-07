@@ -131,12 +131,12 @@ namespace retro
 
         [[nodiscard]] std::string_view get(const NameEntryId id) const
         {
-            std::shared_lock lock{mutex_};
             if (id.is_none())
             {
                 return NONE_STRING;
             }
 
+            std::shared_lock lock{mutex_};
             auto &entry = *entries_[id.value()];
             return entry.name();
         }
@@ -289,6 +289,29 @@ namespace retro
         return name_table.compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length)) ==
                    std::strong_ordering::equal &&
                number == lhs.number_;
+    }
+
+    [[nodiscard]] bool operator==(const Name &lhs, std::u16string_view rhs)
+    {
+        const auto utf8_str = una::utf16to8<char16_t, char>(rhs, boost::pool_allocator<char>{});
+        return lhs == utf8_str;
+    }
+
+    std::strong_ordering operator<=>(const Name &lhs, std::string_view rhs)
+    {
+        const auto [number, new_length] = parse_number_from_name(rhs);
+        auto compareString = name_table.compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length));
+        if (compareString != std::strong_ordering::equal)
+        {
+            return compareString;
+        }
+        return number <=> lhs.number_;
+    }
+
+    std::strong_ordering operator<=>(const Name &lhs, std::u16string_view rhs)
+    {
+        const auto utf8_str = una::utf16to8<char16_t, char>(rhs, boost::pool_allocator<char>{});
+        return lhs <=> utf8_str;
     }
 
     bool Name::is_within_bounds(const NameEntryId index)

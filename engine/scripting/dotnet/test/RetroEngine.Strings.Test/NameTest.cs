@@ -12,9 +12,9 @@ public class NameTest
         var name = new Name();
         using var scope = Assert.EnterMultipleScope();
         Assert.That(name.IsNone);
-        Assert.That(name.IsValid, Is.False);
-        Assert.That(name.ComparisonIndex, Is.Zero);
-        Assert.That(name.DisplayStringIndex, Is.Zero);
+        Assert.That(name.IsValid);
+        Assert.That(name.ComparisonIndex.Value, Is.Zero);
+        Assert.That(name.DisplayIndex.Value, Is.Zero);
         Assert.That(name.Number, Is.EqualTo(Name.NoNumber));
     }
 
@@ -34,13 +34,13 @@ public class NameTest
             Assert.That(upper.ComparisonIndex, Is.EqualTo(lower.ComparisonIndex));
 
             // Display strings are case-sensitive; they may differ
-            Assert.That(upper.DisplayStringIndex, Is.Not.Zero);
-            Assert.That(lower.DisplayStringIndex, Is.Not.Zero);
+            Assert.That(upper.DisplayIndex, Is.Not.Zero);
+            Assert.That(lower.DisplayIndex, Is.Not.Zero);
         }
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(upper.DisplayStringIndex, Is.Not.EqualTo(lower.DisplayStringIndex));
+            Assert.That(upper.DisplayIndex, Is.Not.EqualTo(lower.DisplayIndex));
 
             // Equality operator only cares about comparison_index + number
             Assert.That(upper, Is.EqualTo(lower));
@@ -58,7 +58,7 @@ public class NameTest
             Assert.That(n.IsNone, Is.False);
 
             // Number gets parsed out
-            Assert.That(n.Number, Is.EqualTo(43));
+            Assert.That(n.Number, Is.EqualTo(42));
         }
 
         using (Assert.EnterMultipleScope())
@@ -101,8 +101,8 @@ public class NameTest
         Name existing = "Knight";
 
         Assert.That(existing.IsValid);
-        var existing_comparison = existing.ComparisonIndex;
-        var existing_display = existing.DisplayStringIndex;
+        var existingComparison = existing.ComparisonIndex;
+        var existingDisplay = existing.DisplayIndex;
 
         // Lookup again using FindType::Find -> should find the same indices
         var foundExisting = new Name("Knight", FindName.Find);
@@ -110,8 +110,8 @@ public class NameTest
         {
             Assert.That(foundExisting.IsValid);
             Assert.That(foundExisting.IsNone, Is.False);
-            Assert.That(foundExisting.ComparisonIndex, Is.EqualTo(existing_comparison));
-            Assert.That(foundExisting.DisplayStringIndex, Is.EqualTo(existing_display));
+            Assert.That(foundExisting.ComparisonIndex, Is.EqualTo(existingComparison));
+            Assert.That(foundExisting.DisplayIndex, Is.EqualTo(existingDisplay));
         }
 
         // Lookup unknown name with FindType::Find -> should yield a "none" name
@@ -119,9 +119,9 @@ public class NameTest
         using (Assert.EnterMultipleScope())
         {
             Assert.That(notCreated.IsNone);
-            Assert.That(notCreated.IsValid, Is.False);
-            Assert.That(notCreated.ComparisonIndex, Is.Zero);
-            Assert.That(notCreated.DisplayStringIndex, Is.Zero);
+            Assert.That(notCreated.IsValid);
+            Assert.That(notCreated.ComparisonIndex.Value, Is.Zero);
+            Assert.That(notCreated.DisplayIndex.Value, Is.Zero);
         }
     }
 
@@ -146,9 +146,9 @@ public class NameTest
         using (Assert.EnterMultipleScope())
         {
             Assert.That(none.IsNone);
-            Assert.That(none.IsValid, Is.False);
-            Assert.That(none.ComparisonIndex, Is.Zero);
-            Assert.That(none.DisplayStringIndex, Is.Zero);
+            Assert.That(none.IsValid);
+            Assert.That(none.ComparisonIndex.Value, Is.Zero);
+            Assert.That(none.DisplayIndex.Value, Is.Zero);
             Assert.That(none.Number, Is.EqualTo(Name.NoNumber));
         }
 

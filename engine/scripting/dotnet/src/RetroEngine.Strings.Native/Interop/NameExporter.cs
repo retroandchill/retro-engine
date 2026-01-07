@@ -14,7 +14,9 @@ internal static unsafe partial class NameExporter
 
     public static partial NativeBool IsValid(Name name);
 
-    public static partial NativeBool Equals(Name lhs, [CppType(IsConst = true)] char* rhs, int length);
+    public static partial int Compare(Name lhs, [CppType(IsConst = true)] char* rhs, int length);
+
+    public static partial int CompareLexical(NameEntryId lhs, NameEntryId rhs, NameCase nameCase);
 
     public static partial int ToString(Name name, char* buffer, int bufferSize);
 }

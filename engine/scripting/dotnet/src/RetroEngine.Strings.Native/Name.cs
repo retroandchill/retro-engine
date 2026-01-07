@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using DefaultNamespace;
+using JetBrains.Annotations;
 using MessagePack;
 using RetroEngine.Binds;
 using RetroEngine.Core;
@@ -13,6 +14,95 @@ using RetroEngine.Strings.Interop;
 using RetroEngine.Strings.Serialization.Json;
 
 namespace RetroEngine.Strings;
+
+[StructLayout(LayoutKind.Sequential)]
+[BlittableType("retro::NameEntryId", CppModule = "retro.core")]
+public readonly struct NameEntryId(uint value)
+    : IEquatable<NameEntryId>,
+        IComparable<NameEntryId>,
+        IComparisonOperators<NameEntryId, NameEntryId, bool>
+{
+    public uint Value { get; } = value;
+
+    public bool IsNone => Value == 0;
+
+    public static NameEntryId None => new(0);
+
+    public override bool Equals(object? obj)
+    {
+        return obj is NameEntryId other && Equals(other);
+    }
+
+    public bool Equals(NameEntryId other)
+    {
+        return Value == other.Value;
+    }
+
+    public int CompareLexical(NameEntryId other, StringComparison comparison)
+    {
+        return NameExporter.CompareLexical(
+            this,
+            other,
+            comparison switch
+            {
+                StringComparison.CurrentCulture => NameCase.CaseSensitive,
+                StringComparison.CurrentCultureIgnoreCase => NameCase.IgnoreCase,
+                StringComparison.InvariantCulture => NameCase.CaseSensitive,
+                StringComparison.InvariantCultureIgnoreCase => NameCase.IgnoreCase,
+                StringComparison.Ordinal => NameCase.CaseSensitive,
+                StringComparison.OrdinalIgnoreCase => NameCase.IgnoreCase,
+                _ => throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null),
+            }
+        );
+    }
+
+    public int CompareTo(NameEntryId other)
+    {
+        return Value.CompareTo(other.Value);
+    }
+
+    public static bool operator ==(NameEntryId left, NameEntryId right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(NameEntryId left, NameEntryId right)
+    {
+        return !(left == right);
+    }
+
+    public static bool operator >(NameEntryId left, NameEntryId right)
+    {
+        return left.CompareTo(right) > 0;
+    }
+
+    public static bool operator >=(NameEntryId left, NameEntryId right)
+    {
+        return left.CompareTo(right) >= 0;
+    }
+
+    public static bool operator <(NameEntryId left, NameEntryId right)
+    {
+        return left.CompareTo(right) < 0;
+    }
+
+    public static bool operator <=(NameEntryId left, NameEntryId right)
+    {
+        return left.CompareTo(right) <= 0;
+    }
+
+    public override int GetHashCode()
+    {
+        return (int)Value;
+    }
+}
+
+[BlittableType("retro::NameCase", CppModule = "retro.core")]
+public enum NameCase : byte
+{
+    CaseSensitive,
+    IgnoreCase,
+}
 
 /// <summary>
 /// Enumeration used to determine whether to add a new name or simply try to retrieve an existing one.
@@ -55,27 +145,47 @@ public readonly struct Name
         IEqualityOperators<Name, Name, bool>,
         IEqualityOperators<Name, string?, bool>
 {
+    public const int MaxLength = 1024;
+
+    private const int NoNumberInternal = 0;
+
     /// <summary>
     /// Represents a "none" or null-like state for <see cref="Name"/> instances.
     /// </summary>
-    public const int NoNumber = 0;
+    public const int NoNumber = NoNumberInternal - 1;
+
+    private static int NameInternalToExternal(int x) => x - 1;
+
+    private static int ExternalToNameInternal(int x) => x + 1;
 
     /// <summary>
     /// Gets the comparison index for this <see cref="Name"/>. This is the primary value used for equality comparisons.
     /// </summary>
-    public uint ComparisonIndex { get; }
+    [UsedImplicitly]
+    public NameEntryId ComparisonIndex { get; }
+
+    private readonly int _number;
 
     /// <summary>
     /// Gets the number of the name. A number that is greater than 0 indicates that the name is a numbered name, which
-    /// means calles to <see cref="ToString"/> will return the one less than the number as a suffix.
+    /// means callees to <see cref="ToString"/> will return the one less than the number as a suffix.
     /// </summary>
-    public int Number { get; }
+    public int Number
+    {
+        get => NameInternalToExternal(_number);
+        init => _number = ExternalToNameInternal(value);
+    }
 
     /// <summary>
     /// Gets the display string index for this <see cref="Name"/>. This is the way in which Name is able to get back
     /// the correct case-sensitive string representation of the name.
     /// </summary>
-    public uint DisplayStringIndex { get; }
+    [UsedImplicitly]
+#if RETRO_WITH_CASE_PRESERVING_NAME
+    public NameEntryId DisplayIndex { get; }
+#else
+    public NameEntryId DisplayIndex => ComparisonIndex;
+#endif
 
     /// <summary>
     /// Construct a new <see cref="Name"/> from a <see cref="ReadOnlySpan{char}"/>
@@ -104,13 +214,6 @@ public readonly struct Name
     /// </param>
     public Name(string name, FindName findType = FindName.Add)
         : this(name.AsSpan(), findType) { }
-
-    internal Name(uint comparisonIndex, uint displayStringIndex, int number)
-    {
-        ComparisonIndex = comparisonIndex;
-        DisplayStringIndex = displayStringIndex;
-        Number = number;
-    }
 
     /// <summary>
     /// Gets a predefined, immutable <see cref="Name"/> instance representing a "none" or null-like state.
@@ -169,7 +272,7 @@ public readonly struct Name
     /// </returns>
     public static bool operator ==(Name lhs, Name rhs)
     {
-        return lhs.ComparisonIndex == rhs.ComparisonIndex && lhs.Number == rhs.Number;
+        return lhs.ComparisonIndex == rhs.ComparisonIndex && lhs._number == rhs._number;
     }
 
     /// <summary>
@@ -220,7 +323,7 @@ public readonly struct Name
         {
             fixed (char* rhsPtr = rhs)
             {
-                return NameExporter.Equals(lhs, rhsPtr, newLength).ToManagedBool() && number == lhs.Number;
+                return NameExporter.Compare(lhs, rhsPtr, newLength) == 0 && number == lhs._number;
             }
         }
     }
@@ -277,13 +380,13 @@ public readonly struct Name
     /// <inheritdoc />
     public int CompareTo(Name other)
     {
-        return (int)(ComparisonIndex - other.ComparisonIndex);
+        return ComparisonIndex.CompareTo(other.ComparisonIndex);
     }
 
     /// <inheritdoc />
     public override string ToString()
     {
-        Span<char> buffer = stackalloc char[1024];
+        Span<char> buffer = stackalloc char[MaxLength];
         int newLength;
         unsafe
         {
@@ -299,7 +402,7 @@ public readonly struct Name
     /// <inheritdoc />
     public override int GetHashCode()
     {
-        return HashCode.Combine(ComparisonIndex, Number);
+        return HashCode.Combine(ComparisonIndex, _number);
     }
 
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
@@ -316,7 +419,7 @@ public readonly struct Name
 
         var firstDigit = name.Length - digits;
         if (firstDigit == 0)
-            return (Name.NoNumber, name.Length);
+            return (NoNumberInternal, name.Length);
 
         const int maxDigits = 10;
         if (
@@ -326,10 +429,10 @@ public readonly struct Name
             || digits > maxDigits
             || digits != 1 && name[firstDigit] == '0'
         )
-            return (Name.NoNumber, name.Length);
+            return (NoNumberInternal, name.Length);
 
         return int.TryParse(name.Slice(firstDigit, digits), out var number)
-            ? (number + 1, name.Length - (digits + 1))
-            : (NoNumber, name.Length);
+            ? (ExternalToNameInternal(number), name.Length - (digits + 1))
+            : (NoNumberInternal, name.Length);
     }
 }

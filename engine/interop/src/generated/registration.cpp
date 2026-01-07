@@ -1,3 +1,9 @@
+﻿/**
+ * @file registration.cpp
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
 module retro.interop;
 
 import retro.scripting;
@@ -14,7 +20,9 @@ namespace retro
         BindsManager::register_exported_function(name_exporter_name,
                                                  ExportedFunction(u"IsValid", &name_exporter::is_valid));
         BindsManager::register_exported_function(name_exporter_name,
-                                                 ExportedFunction(u"Equals", &name_exporter::equals));
+                                                 ExportedFunction(u"Compare", &name_exporter::compare));
+        BindsManager::register_exported_function(name_exporter_name,
+                                                 ExportedFunction(u"CompareLexical", &name_exporter::compare_lexical));
         BindsManager::register_exported_function(name_exporter_name,
                                                  ExportedFunction(u"ToString", &name_exporter::to_string));
 
