@@ -9,7 +9,11 @@ add_library(retro_runtime
         src/scene/scene2d.cpp
         src/scene/component.cpp
         src/scene/actor_ptr.cpp
+        src/interop/registration.cpp
+        src/interop/entity_exporter.cpp
 )
+
+retro_add_boilerplate(retro_runtime)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_runtime PUBLIC RETRO_STATIC)
@@ -34,7 +38,9 @@ target_sources(retro_runtime PUBLIC
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
-        src/scene/actor_ptr.ixx)
+        src/scene/actor_ptr.ixx
+        src/interop/entity_exporter.ixx
+        src/interop/index.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost)
 

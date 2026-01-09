@@ -51,6 +51,8 @@ add_library(retro_renderer
         src/pipeline/pipeline_registry.cpp
 )
 
+retro_add_boilerplate(retro_renderer)
+
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_renderer PUBLIC RETRO_STATIC)
 endif()

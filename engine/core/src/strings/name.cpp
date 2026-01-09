@@ -107,10 +107,16 @@ namespace retro
 
     class NameTable
     {
-      public:
         NameTable()
         {
             get_or_add_entry_internal(NONE_STRING, FindType::Add);
+        }
+
+      public:
+        static NameTable &instance()
+        {
+            static NameTable instance;
+            return instance;
         }
 
         NameIndices get_or_add_entry(const std::string_view str, const FindType find_type)
@@ -159,6 +165,11 @@ namespace retro
         {
             std::shared_lock lock{mutex_};
             return index.value() < entries_.size();
+        }
+
+        [[nodiscard]] const std::vector<const NameEntry *> &entries() const noexcept
+        {
+            return entries_;
         }
 
       private:
@@ -219,10 +230,11 @@ namespace retro
             if (str.size() > MAX_NAME_LENGTH)
                 throw std::runtime_error{"Name too long"};
 
-            const usize byte_size = str.size() * sizeof(char);
+            const usize byte_size = (str.size() + 1) * sizeof(char);
             auto &entry =
                 *std::bit_cast<NameEntry *>(&allocator_.allocate_with_tail<NameEntryHeader>(byte_size, str.size()));
             std::memcpy(entry.characters_, str.data(), byte_size);
+            entry.characters_[str.size()] = '\0';
             const auto entry_id = NameEntryId{static_cast<uint32>(entries_.size())};
             entries_.push_back(&entry);
             return entry_id;
@@ -232,7 +244,7 @@ namespace retro
         static constexpr usize INITIAL_BLOCKS = 16;
         static constexpr usize MAX_BLOCKS = 1024;
 
-        mutable std::shared_mutex mutex_;
+        mutable std::shared_mutex mutex_{};
         SimpleArena allocator_{BLOCK_SIZE, INITIAL_BLOCKS, MAX_BLOCKS};
         NameTableSet<NameCase::IgnoreCase> comparison_entries_;
 #if RETRO_WITH_CASE_PRESERVING_NAME
@@ -241,16 +253,14 @@ namespace retro
         std::vector<const NameEntry *> entries_{};
     };
 
-    NameTable name_table{};
-
     std::strong_ordering NameEntryId::compare_lexical(const NameEntryId other) const noexcept
     {
-        return name_table.compare<NameCase::IgnoreCase>(*this, other);
+        return NameTable::instance().compare<NameCase::IgnoreCase>(*this, other);
     }
 
     std::strong_ordering NameEntryId::compare_lexical_case_sensitive(const NameEntryId other) const noexcept
     {
-        return name_table.compare<NameCase::CaseSensitive>(*this, other);
+        return NameTable::instance().compare<NameCase::CaseSensitive>(*this, other);
     }
 
     Name::Name(const std::string_view value, const FindType find_type) : Name(lookup_name(value, find_type))
@@ -274,7 +284,7 @@ namespace retro
     {
         // ReSharper disable once CppDFAUnreadVariable
         // ReSharper disable once CppDFAUnusedValue
-        const auto baseString = name_table.get(display_index_);
+        const auto baseString = NameTable::instance().get(display_index_);
         if (number_ == NAME_NO_NUMBER_INTERNAL)
         {
             return std::string{baseString};
@@ -286,7 +296,7 @@ namespace retro
     bool operator==(const Name &lhs, const std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
-        return name_table.compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length)) ==
+        return NameTable::instance().compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length)) ==
                    std::strong_ordering::equal &&
                number == lhs.number_;
     }
@@ -300,7 +310,8 @@ namespace retro
     std::strong_ordering operator<=>(const Name &lhs, std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
-        auto compareString = name_table.compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length));
+        auto compareString =
+            NameTable::instance().compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length));
         if (compareString != std::strong_ordering::equal)
         {
             return compareString;
@@ -316,7 +327,7 @@ namespace retro
 
     bool Name::is_within_bounds(const NameEntryId index)
     {
-        return name_table.is_within_bounds(index);
+        return NameTable::instance().is_within_bounds(index);
     }
 
     // NOLINTNEXTLINE
@@ -343,13 +354,18 @@ namespace retro
         auto [internal_number, new_length] = parse_number_from_name(value);
         const auto new_slice = value.substr(0, new_length);
 
-        return LookupResult{.indices = name_table.get_or_add_entry(new_slice, find_type),
-                            .number = static_cast<int32>(internal_number)};
+        return LookupResult{.indices = NameTable::instance().get_or_add_entry(new_slice, find_type),
+                            .number = internal_number};
     }
 
     Name::LookupResult Name::lookup_name(const std::u16string_view value, const FindType find_type)
     {
         const auto utf8_str = una::utf16to8<char16_t, char>(value, boost::pool_allocator<char>{});
         return lookup_name(utf8_str, find_type);
+    }
+
+    const std::vector<const NameEntry *> &debug_get_name_entries()
+    {
+        return NameTable::instance().entries();
     }
 } // namespace retro

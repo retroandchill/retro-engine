@@ -47,7 +47,6 @@ public class RootCommand
         handlebars.Configuration.TextEncoder = null;
 
         var exporterTemplate = handlebars.Compile(SourceTemplates.CppInterface);
-        var registrationInterfaceTemplate = handlebars.Compile(SourceTemplates.RegistrationMethodInterface);
         var registrationImplementationTemplate = handlebars.Compile(SourceTemplates.RegistrationMethodImplementation);
         var indexTemplate = handlebars.Compile(SourceTemplates.Index);
         var exporters = ImmutableArray.CreateBuilder<CppModuleInterface>();
@@ -107,9 +106,6 @@ public class RootCommand
             CppNamespace = GeneratedNamespace,
             Exporters = exporters.DrainToImmutable(),
         };
-
-        var registrationInterface = registrationInterfaceTemplate(registrationParameters);
-        await File.WriteAllTextAsync($"{OutputDirectory}/registration.ixx", registrationInterface);
 
         var registrationImplementation = registrationImplementationTemplate(registrationParameters);
         await File.WriteAllTextAsync($"{OutputDirectory}/registration.cpp", registrationImplementation);

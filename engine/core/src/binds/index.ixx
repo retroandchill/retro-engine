@@ -4,9 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.interop:generated;
+export module retro.core:binds;
 
-export import :generated.registration;
-export import :generated.name_exporter;
-export import :generated.entity_exporter;
-export import :generated.log_exporter;
+export import :binds.binds_manager;
+export import :binds.exported_function;

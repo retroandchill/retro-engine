@@ -6,12 +6,13 @@ add_executable(retro_game
     src/main.cpp
 )
 
+retro_add_boilerplate(retro_game)
+
 target_link_libraries(retro_game
         PRIVATE
             retro_scripting
             retro_renderer
             retro_sdl
-            retro_interop
             retro_logging)
 
 set_target_properties(retro_game PROPERTIES

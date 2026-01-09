@@ -300,6 +300,8 @@ namespace retro
 #endif
     };
 
+    export const RETRO_API std::vector<const NameEntry *> &debug_get_name_entries();
+
     export inline Name operator"" _name(const char *name, const usize length)
     {
         return Name{std::string_view{name, length}};

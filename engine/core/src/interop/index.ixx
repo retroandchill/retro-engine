@@ -1,10 +1,9 @@
-﻿/**
+/**
  * @file index.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.scripting:binds;
+export module retro.core.interop;
 
-export import :binds.binds_manager;
-export import :binds.exported_function;
+export import :name_exporter;

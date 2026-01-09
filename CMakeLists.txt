@@ -73,7 +73,15 @@ if (NOT GLSLC_EXECUTABLE)
     message(FATAL_ERROR "glslc not found. Install Vulkan SDK or add glslc to PATH.")
 endif ()
 
-
+function(retro_add_boilerplate TARGET_NAME)
+    set(BOILERPLATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_boilerplate.cpp")
+    configure_file(
+            "${CMAKE_SOURCE_DIR}/config/per_project_boilerplate.cpp.in"
+            "${BOILERPLATE_FILE}"
+            @ONLY
+    )
+    target_sources(${TARGET_NAME} PRIVATE "${BOILERPLATE_FILE}")
+endfunction()
 
 add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"

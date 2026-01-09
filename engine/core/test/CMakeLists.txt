@@ -3,7 +3,10 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 add_executable(retro_core_tests strings/test_name.cpp
-        math/test_vector.cpp)
+        math/test_vector.cpp
+)
+
+retro_add_boilerplate(retro_core_tests)
 
 target_include_directories(retro_core_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

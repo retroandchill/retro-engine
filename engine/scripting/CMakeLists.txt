@@ -5,8 +5,9 @@
 add_library(retro_scripting
         src/dotnet/dotnet_loader.cpp
         src/dotnet/dotnet_manager.cpp
-        src/binds/binds_manager.cpp
 )
+
+retro_add_boilerplate(retro_scripting)
 
 if(NOT RETRO_BUILD_SHARED)
     target_compile_definitions(retro_scripting PUBLIC RETRO_STATIC)
@@ -17,10 +18,7 @@ target_sources(retro_scripting PUBLIC
         src/index.ixx
         src/dotnet/dotnet_loader.ixx
         src/dotnet/index.ixx
-        src/dotnet/dotnet_manager.ixx
-        src/binds/binds_manager.ixx
-        src/binds/index.ixx
-        src/binds/exported_function.ixx)
+        src/dotnet/dotnet_manager.ixx)
 
 find_package(unofficial-nethost CONFIG REQUIRED)
 target_link_libraries(retro_scripting PUBLIC

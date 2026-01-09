@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <Type Name="retro::NameEntryId">
+        <DisplayString>{(*debug_name_table)[value_]->characters_,s8}</DisplayString>
+    </Type>
+    <Type Name="retro::Name" Priority="MediumHigh">
+        <DisplayString Condition="number_ > 0">{comparison_index_}_{(number_ - 1),d}</DisplayString>
+        <DisplayString Condition="number_ == 0">{comparison_index_}</DisplayString>
+    </Type>
+    <Type Name="retro::Name" Priority="High">
+        <DisplayString Condition="number_ > 0">{display_index_}_{(number_ - 1),d}</DisplayString>
+        <DisplayString Condition="number_ == 0">{display_index_}</DisplayString>
+    </Type>
+</AutoVisualizer>

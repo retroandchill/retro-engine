@@ -2,13 +2,20 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-add_library(retro_logging src/logger.cpp)
+add_library(retro_logging src/logger.cpp
+        src/interop/log_exporter.cpp
+        src/interop/registration.cpp
+)
+
+retro_add_boilerplate(retro_logging)
 
 target_sources(retro_logging PUBLIC
         FILE_SET CXX_MODULES FILES
         src/index.ixx
         src/log_level.ixx
-        src/logger.ixx)
+        src/logger.ixx
+        src/interop/index.ixx
+        src/interop/log_exporter.ixx)
 
 target_link_libraries(retro_logging PUBLIC retro_core retro_fmt retro_spdlog)
 

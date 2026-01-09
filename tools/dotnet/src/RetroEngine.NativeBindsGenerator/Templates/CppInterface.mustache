@@ -1,12 +1,12 @@
 export module {{ModuleName}}:{{FragmentName}};
 
 {{#Imports}}
-import {{Name}};    
+import {{Name}};
 {{/Imports}}
 
-namespace {{CppNamespace}}::{{CppName}} 
+namespace {{CppNamespace}}::{{CppName}}
 {
     {{#Methods}}
-    {{CppReturnType}} {{CppName}}({{CppParameters}});
+    export {{CppReturnType}} {{CppName}}({{CppParameters}});
     {{/Methods}}
 }

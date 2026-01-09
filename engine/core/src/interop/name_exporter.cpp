@@ -8,9 +8,10 @@ module;
 
 #include <cassert>
 
-module retro.interop;
+module retro.core.interop;
 
 import std;
+import retro.core;
 
 namespace retro::name_exporter
 {

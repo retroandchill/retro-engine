@@ -4,13 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-//
-// Created by fcors on 12/19/20
 import retro.core;
 import retro.runtime;
 import retro.scripting;
 import retro.renderer;
-import retro.interop;
 import retro.logging;
 import std;
 import sdl;
@@ -29,12 +26,7 @@ int main()
     try
     {
         auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
-        const EngineConfig config{.script_runtime_factory =
-                                      [&]
-                                  {
-                                      register_script_binds();
-                                      return std::make_unique<DotnetManager>();
-                                  },
+        const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
                                   .renderer_factory =
                                       [&]
                                   {

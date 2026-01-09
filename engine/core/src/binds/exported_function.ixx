@@ -4,10 +4,15 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.scripting:binds.exported_function;
+module;
+
+#include "retro/core/exports.h"
+
+export module retro.core:binds.exported_function;
 
 import std;
-import retro.core;
+import :defines;
+import :strings.name;
 
 namespace retro
 {
@@ -58,9 +63,11 @@ namespace retro
         usize function_size = 0;
 
         template <SizedFunction F>
-        explicit ExportedFunction(const Name function_name, F function_ptr)
-            : name(function_name), function_ptr(function_ptr), function_size(FunctionSize<F>)
+        explicit ExportedFunction(const Name namespace_name, const Name function_name, F function_ptr)
+            : ExportedFunction(namespace_name, function_name, function_ptr, FunctionSize<F>)
         {
         }
+
+        RETRO_API ExportedFunction(Name namespace_name, Name function_name, void *function_ptr, usize function_size);
     };
 } // namespace retro

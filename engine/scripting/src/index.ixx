@@ -7,4 +7,3 @@
 export module retro.scripting;
 
 export import :dotnet;
-export import :binds;

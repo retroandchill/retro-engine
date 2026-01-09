@@ -8,10 +8,9 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.scripting:binds.binds_manager;
+export module retro.core:binds.binds_manager;
 
 import std;
-import retro.core;
 import :binds.exported_function;
 
 namespace retro
