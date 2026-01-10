@@ -1,5 +1,5 @@
 ﻿/**
- * @file scene2d.ixx
+ * @file scene.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,17 +8,17 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime:scene.scene2d;
+export module retro.runtime:scene.scene;
 
 import std;
 import boost;
 import retro.core;
-import :scene.entity;
+import :scene.viewport;
 import :scene.rendering;
 
 namespace retro
 {
-    export using ComponentHandle = Polymorphic<Component, PolymorphicType::Copyable, 128>;
+    export using ComponentHandle = Polymorphic<RenderObject, PolymorphicType::Copyable, 128>;
 
     export class RETRO_API Scene2D
     {
@@ -36,28 +36,28 @@ namespace retro
             return render_proxy_manager_;
         }
 
-        boost::optional<Entity &> get_entity(EntityID id);
+        boost::optional<Viewport &> get_entity(ViewportID id);
 
-        Entity &create_entity(const Transform &transform = {}) noexcept;
+        Viewport &create_viewport() noexcept;
 
-        void destroy_entity(EntityID id);
+        void destroy_viewport(ViewportID id);
 
-        boost::optional<Component &> get_component(ComponentID id);
+        boost::optional<RenderObject &> get_render_object(RenderObjectID id);
 
-        template <std::derived_from<Component> T, typename... Args>
-            requires std::constructible_from<T, ComponentID, EntityID, Args...>
-        T &create_component(EntityID entity_id, Args &&...args)
+        template <std::derived_from<RenderObject> T, typename... Args>
+            requires std::constructible_from<T, RenderObjectID, ViewportID, Args...>
+        T &create_render_object(ViewportID entity_id, Args &&...args)
         {
-            auto &component = components_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
+            auto &component = render_objects_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
             component->on_attach();
             return static_cast<T &>(*component);
         }
 
-        void destroy_component(ComponentID component_id);
+        void destroy_render_object(RenderObjectID render_object_id);
 
       private:
-        PackedPool<Entity> entities_{};
-        PackedPool<ComponentHandle> components_{};
+        PackedPool<Viewport> viewports_{};
+        PackedPool<ComponentHandle> render_objects_{};
 
         RenderProxyManager render_proxy_manager_;
     };

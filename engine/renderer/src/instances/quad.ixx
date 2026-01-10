@@ -25,10 +25,13 @@ namespace retro
         Color color{};
     };
 
-    export class RETRO_API QuadRenderComponent final : public RenderComponent
+    export class RETRO_API QuadRenderComponent final : public RenderObject
     {
       public:
-        inline QuadRenderComponent(const ComponentID id, const EntityID entity_id) : RenderComponent{id, entity_id}
+        inline QuadRenderComponent(const RenderObjectID id,
+                                   const ViewportID viewport_id,
+                                   const Transform &transform = {})
+            : RenderObject{id, viewport_id, transform}
         {
         }
 
@@ -48,7 +51,7 @@ namespace retro
 
         [[nodiscard]] inline Vector2f size() const noexcept
         {
-            auto &[scale_x, scale_y] = entity().transform().scale;
+            auto &[scale_x, scale_y] = transform().scale;
             return {size_.x * scale_x, size_.y * scale_y};
         }
 

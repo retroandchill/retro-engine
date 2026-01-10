@@ -91,34 +91,34 @@ namespace retro
         IdType id_{};
     };
 
-    export using EntityID = DefaultHandle;
-    export using ComponentID = DefaultHandle;
+    export using ViewportID = DefaultHandle;
+    export using RenderObjectID = DefaultHandle;
 
     template <>
-    struct ActorHandleResolver<class Entity>
+    struct ActorHandleResolver<class Viewport>
     {
-        using HandleType = EntityID;
+        using HandleType = ViewportID;
 
-        RETRO_API static boost::optional<Entity &> resolve(EntityID id);
+        RETRO_API static boost::optional<Viewport &> resolve(ViewportID id);
     };
 
     template <>
-    struct ActorHandleResolver<class Component>
+    struct ActorHandleResolver<class RenderObject>
     {
-        using HandleType = ComponentID;
+        using HandleType = RenderObjectID;
 
-        RETRO_API static boost::optional<Component &> resolve(ComponentID id);
+        RETRO_API static boost::optional<RenderObject &> resolve(RenderObjectID id);
     };
 
-    template <std::derived_from<Component> T>
+    template <std::derived_from<RenderObject> T>
     struct ActorHandleResolver<T>
     {
-        using HandleType = ComponentID;
+        using HandleType = RenderObjectID;
 
-        static boost::optional<T &> resolve(const ComponentID id)
+        static boost::optional<T &> resolve(const RenderObjectID id)
         {
-            return ActorHandleResolver<Component>::resolve(id).map([](Component &value) -> T &
-                                                                   { return dynamic_cast<T &>(value); });
+            return ActorHandleResolver<RenderObject>::resolve(id).map([](RenderObject &value) -> T &
+                                                                      { return dynamic_cast<T &>(value); });
         }
     };
 } // namespace retro

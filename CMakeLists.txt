@@ -55,7 +55,7 @@ set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib")
 set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output directory")
 set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")
 
-set(RETRO_MANAGED_SOLUTION "${CMAKE_SOURCE_DIR}/RetroEngine.Managed.sln")
+set(RETRO_MANAGED_SOLUTION "${CMAKE_SOURCE_DIR}/RetroEngine.Managed.slnx")
 
 if(CMAKE_CONFIGURATION_TYPES)  # multi-config generators (Visual Studio, etc.)
     # Map any non-Debug config to Release for dotnet

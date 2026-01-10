@@ -8,13 +8,13 @@ module retro.runtime;
 
 namespace retro
 {
-    boost::optional<Entity &> ActorHandleResolver<Entity>::resolve(const EntityID id)
+    boost::optional<Viewport &> ActorHandleResolver<Viewport>::resolve(const ViewportID id)
     {
         return Engine::instance().scene().get_entity(id);
     }
 
-    boost::optional<Component &> ActorHandleResolver<Component>::resolve(ComponentID id)
+    boost::optional<RenderObject &> ActorHandleResolver<RenderObject>::resolve(RenderObjectID id)
     {
-        return Engine::instance().scene().get_component(id);
+        return Engine::instance().scene().get_render_object(id);
     }
 } // namespace retro

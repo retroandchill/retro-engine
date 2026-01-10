@@ -5,9 +5,8 @@
 add_library(retro_runtime
         src/engine.cpp
         src/filesystem/utils.cpp
-        src/scene/rendering/render_component.cpp
-        src/scene/scene2d.cpp
-        src/scene/component.cpp
+        src/scene/scene.cpp
+        src/scene/render_object.cpp
         src/scene/actor_ptr.cpp
 )
 
@@ -28,11 +27,10 @@ target_sources(retro_runtime PUBLIC
         src/filesystem/utils.ixx
         src/filesystem/index.ixx
         src/scene/index.ixx
-        src/scene/scene2d.ixx
-        src/scene/entity.ixx
-        src/scene/component.ixx
+        src/scene/scene.ixx
+        src/scene/viewport.ixx
+        src/scene/render_object.ixx
         src/scene/rendering/index.ixx
-        src/scene/rendering/render_component.ixx
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx

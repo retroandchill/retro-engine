@@ -1,5 +1,5 @@
 ﻿/**
- * @file entity.ixx
+ * @file render_object.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,35 +8,38 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <cstddef>
-
-export module retro.runtime:scene.entity;
+export module retro.runtime:scene.render_object;
 
 import std;
-import :scene.component;
+import retro.core;
+import :scene.actor_ptr;
+import :scene.rendering;
 import :scene.transform;
 
 namespace retro
 {
-    export class RETRO_API Entity
+    export class RETRO_API RenderObject
     {
       public:
-        using IdType = EntityID;
+        using IdType = RenderObjectID;
 
-        explicit inline Entity(const EntityID id, const Transform &transform) : id_{id}, transform_{transform}
+      protected:
+        inline explicit RenderObject(const RenderObjectID id,
+                                     const ViewportID viewport_id,
+                                     const Transform &transform = {})
+            : id_{id}, viewport_{viewport_id}, transform_{transform}
         {
         }
-        ~Entity() = default;
 
-        Entity(const Entity &) = delete;
-        Entity(Entity &&) = default;
-        Entity &operator=(const Entity &) = delete;
-        Entity &operator=(Entity &&) = default;
+      public:
+        virtual ~RenderObject() = default;
 
-        [[nodiscard]] inline EntityID id() const noexcept
+        [[nodiscard]] inline RenderObjectID id() const
         {
             return id_;
         }
+
+        [[nodiscard]] Viewport &viewport() const noexcept;
 
         [[nodiscard]] inline const Transform &transform() const noexcept
         {
@@ -78,9 +81,19 @@ namespace retro
             transform_.scale = scale;
         }
 
+        void on_attach();
+        void on_detach();
+
+      protected:
+        virtual RenderProxyID create_render_proxy(RenderProxyManager &proxy_manager) = 0;
+
+        virtual void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) = 0;
+
       private:
-        EntityID id_;
+        RenderObjectID id_;
+        ActorPtr<Viewport> viewport_;
         Transform transform_;
-        std::set<ComponentID> components_;
+        std::optional<RenderProxyID> render_proxy_id_;
     };
+
 } // namespace retro

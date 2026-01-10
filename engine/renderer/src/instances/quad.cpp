@@ -30,7 +30,7 @@ namespace retro
 
     Quad QuadRenderProxy::get_draw_call() const
     {
-        return Quad{.position = component_->entity().transform().position,
+        return Quad{.position = component_->transform().position,
                     .size = component_->size(),
                     .color = component_->color()};
     }
