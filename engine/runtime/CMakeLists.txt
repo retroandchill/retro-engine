@@ -6,8 +6,10 @@ add_library(retro_runtime
         src/engine.cpp
         src/filesystem/utils.cpp
         src/scene/scene.cpp
-        src/scene/render_object.cpp
+        src/scene/rendering/render_object.cpp
         src/scene/actor_ptr.cpp
+        src/interop/scene_exporter.cpp
+        src/scene/rendering/render_object_registry.cpp
 )
 
 retro_add_boilerplate(retro_runtime)
@@ -29,12 +31,14 @@ target_sources(retro_runtime PUBLIC
         src/scene/index.ixx
         src/scene/scene.ixx
         src/scene/viewport.ixx
-        src/scene/render_object.ixx
+        src/scene/rendering/render_object.ixx
         src/scene/rendering/index.ixx
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
-        src/scene/actor_ptr.ixx)
+        src/scene/actor_ptr.ixx
+        src/scene/events.ixx
+        src/scene/rendering/render_object_registry.ixx)
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost)
 

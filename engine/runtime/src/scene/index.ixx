@@ -9,6 +9,6 @@ export module retro.runtime:scene;
 export import :scene.actor_ptr;
 export import :scene.scene;
 export import :scene.viewport;
-export import :scene.render_object;
 export import :scene.rendering;
 export import :scene.transform;
+export import :scene.events;

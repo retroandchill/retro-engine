@@ -8,12 +8,12 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime:scene.render_object;
+export module retro.runtime:scene.rendering.render_object;
 
 import std;
 import retro.core;
 import :scene.actor_ptr;
-import :scene.rendering;
+import :scene.rendering.render_proxy_manager;
 import :scene.transform;
 
 namespace retro

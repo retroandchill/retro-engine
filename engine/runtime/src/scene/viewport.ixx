@@ -11,7 +11,7 @@ module;
 export module retro.runtime:scene.viewport;
 
 import std;
-import :scene.render_object;
+import :scene.rendering;
 import :scene.transform;
 
 namespace retro

@@ -35,7 +35,10 @@ target_sources(retro_core PUBLIC
         src/containers/packed_pool.ixx
         src/containers/polymorphic.ixx
         src/math/rounding.ixx
-        src/memory/simple_arena.ixx)
+        src/memory/simple_arena.ixx
+        src/functional/index.ixx
+        src/functional/overload.ixx
+        src/functional/function_traits.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_boost retro_uni_algo retro_fmt)

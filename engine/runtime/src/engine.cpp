@@ -40,7 +40,7 @@ void Engine::run(const std::function<void()> &post_init)
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
-    scene_ = std::make_unique<Scene2D>();
+    scene_ = std::make_unique<Scene>();
 
     post_init();
 

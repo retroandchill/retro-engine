@@ -10,7 +10,7 @@ namespace retro
 {
     boost::optional<Viewport &> ActorHandleResolver<Viewport>::resolve(const ViewportID id)
     {
-        return Engine::instance().scene().get_entity(id);
+        return Engine::instance().scene().get_viewport(id);
     }
 
     boost::optional<RenderObject &> ActorHandleResolver<RenderObject>::resolve(RenderObjectID id)

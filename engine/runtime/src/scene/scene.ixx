@@ -15,28 +15,29 @@ import boost;
 import retro.core;
 import :scene.viewport;
 import :scene.rendering;
+import :scene.events;
 
 namespace retro
 {
-    export using ComponentHandle = Polymorphic<RenderObject, PolymorphicType::Copyable, 128>;
+    export using RenderObjectHandle = Polymorphic<RenderObject, PolymorphicType::Copyable, 128>;
 
-    export class RETRO_API Scene2D
+    export class RETRO_API Scene
     {
       public:
-        Scene2D() = default;
-        ~Scene2D() = default;
+        Scene() = default;
+        ~Scene() = default;
 
-        Scene2D(const Scene2D &) = delete;
-        Scene2D(Scene2D &&) = default;
-        Scene2D &operator=(const Scene2D &) = delete;
-        Scene2D &operator=(Scene2D &&) = default;
+        Scene(const Scene &) = delete;
+        Scene(Scene &&) = default;
+        Scene &operator=(const Scene &) = delete;
+        Scene &operator=(Scene &&) = default;
 
         RenderProxyManager &render_proxy_manager()
         {
             return render_proxy_manager_;
         }
 
-        boost::optional<Viewport &> get_entity(ViewportID id);
+        boost::optional<Viewport &> get_viewport(ViewportID id);
 
         Viewport &create_viewport() noexcept;
 
@@ -55,10 +56,19 @@ namespace retro
 
         void destroy_render_object(RenderObjectID render_object_id);
 
+        template <IsSceneEvent T, typename... Args>
+            requires std::constructible_from<T, Args...>
+        void enqueue_event(Args &&...args)
+        {
+            events_.emplace(std::in_place_type<T>, std::forward<Args>(args)...);
+        }
+
+        void process_scene_events();
+
       private:
         PackedPool<Viewport> viewports_{};
-        PackedPool<ComponentHandle> render_objects_{};
-
+        PackedPool<RenderObjectHandle> render_objects_{};
         RenderProxyManager render_proxy_manager_;
+        std::queue<SceneEvent> events_;
     };
 } // namespace retro

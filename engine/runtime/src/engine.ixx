@@ -77,7 +77,7 @@ namespace retro
 
         RETRO_API void request_shutdown();
 
-        [[nodiscard]] inline Scene2D &scene() const
+        [[nodiscard]] inline Scene &scene() const
         {
             assert(scene_ != nullptr);
             return *scene_;
@@ -93,7 +93,7 @@ namespace retro
         std::unique_ptr<Renderer2D> renderer_{};
 
         std::atomic<bool> running_{false};
-        std::unique_ptr<Scene2D> scene_{};
+        std::unique_ptr<Scene> scene_{};
     };
 
     export struct EngineLifecycle
