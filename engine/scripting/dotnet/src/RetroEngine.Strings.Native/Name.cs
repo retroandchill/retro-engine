@@ -8,15 +8,12 @@ using System.Text.Json.Serialization;
 using DefaultNamespace;
 using JetBrains.Annotations;
 using MessagePack;
-using RetroEngine.Binds;
-using RetroEngine.Core;
 using RetroEngine.Strings.Interop;
 using RetroEngine.Strings.Serialization.Json;
 
 namespace RetroEngine.Strings;
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::NameEntryId", CppModule = "retro.core")]
 public readonly struct NameEntryId(uint value)
     : IEquatable<NameEntryId>,
         IComparable<NameEntryId>,
@@ -97,7 +94,6 @@ public readonly struct NameEntryId(uint value)
     }
 }
 
-[BlittableType("retro::NameCase", CppModule = "retro.core")]
 public enum NameCase : byte
 {
     CaseSensitive,
@@ -107,7 +103,6 @@ public enum NameCase : byte
 /// <summary>
 /// Enumeration used to determine whether to add a new name or simply try to retrieve an existing one.
 /// </summary>
-[BlittableType("retro::FindType", CppModule = "retro.core")]
 public enum FindName : byte
 {
     /// <summary>
@@ -134,7 +129,6 @@ public enum FindName : byte
 /// This type is thread-safe due to its immutable nature.
 /// </threadsafety>
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType(CppModule = "retro.core")]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name
@@ -244,7 +238,7 @@ public readonly struct Name
     /// <threadsafety>
     /// This property is thread-safe due to the immutable nature of the <see cref="Name"/> struct.
     /// </threadsafety>
-    public bool IsValid => NameExporter.IsValid(this).ToManagedBool();
+    public bool IsValid => NameExporter.IsValid(this);
 
     /// <summary>
     /// Indicates whether the current <see cref="Name"/> instance represents a "none" or null-like state.

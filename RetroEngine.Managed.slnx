@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/engine/" />
+  <Folder Name="/engine/scripting/" />
+  <Folder Name="/engine/scripting/dotnet/" />
+  <Folder Name="/engine/scripting/dotnet/src/">
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Core/RetroEngine.Core.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Host/RetroEngine.Host.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Logging/RetroEngine.Logging.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Strings.Managed/RetroEngine.Strings.Managed.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Strings.Native/RetroEngine.Strings.Native.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Strings/RetroEngine.Strings.csproj" />
+    <Project Path="engine/scripting/dotnet/src/RetroEngine/RetroEngine.csproj" />
+  </Folder>
+  <Folder Name="/engine/scripting/dotnet/test/">
+    <Project Path="engine/scripting/dotnet/test/RetroEngine.Strings.Test/RetroEngine.Strings.Test.csproj" />
+  </Folder>
+</Solution>

@@ -3,7 +3,6 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System.Runtime.InteropServices;
-using RetroEngine.Binds;
 using RetroEngine.Core;
 using RetroEngine.Logging;
 
@@ -12,11 +11,7 @@ namespace RetroEngine.Host;
 public static class Main
 {
     [UnmanagedCallersOnly]
-    public static unsafe NativeBool InitializeScriptEngine(
-        char* workingDirectoryPath,
-        int workingDirectoryPathLength,
-        IntPtr bindsCallbacks
-    )
+    public static unsafe int InitializeScriptEngine(char* workingDirectoryPath, int workingDirectoryPathLength)
     {
         try
         {
@@ -25,14 +20,13 @@ public static class Main
                 new ReadOnlySpan<char>(workingDirectoryPath, workingDirectoryPathLength).ToString()
             );
 
-            BindsManager.Initialize(bindsCallbacks);
             Logger.Info("Script engine initialized successfully.");
-            return NativeBool.True;
+            return 0;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return NativeBool.False;
+            return 1;
         }
     }
 }

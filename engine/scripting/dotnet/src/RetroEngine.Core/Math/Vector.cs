@@ -4,7 +4,6 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System.Numerics;
 using System.Runtime.InteropServices;
-using RetroEngine.Binds;
 
 namespace RetroEngine.Core.Math;
 
@@ -87,7 +86,6 @@ public interface IVector4<TSelf, TValue> : IVector<TSelf, TValue>
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector2i", CppModule = "retro.core")]
 public readonly record struct Vector2I(int X, int Y) : IVector2<Vector2I, int>
 {
     public static Vector2I Create(int x, int y) => new(x, y);
@@ -122,7 +120,6 @@ public readonly record struct Vector2I(int X, int Y) : IVector2<Vector2I, int>
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector2f", CppModule = "retro.core")]
 public readonly record struct Vector2F(float X, float Y) : IVector2<Vector2F, float>
 {
     public static Vector2F Create(float x, float y) => new(x, y);
@@ -156,7 +153,6 @@ public readonly record struct Vector2F(float X, float Y) : IVector2<Vector2F, fl
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector3i", CppModule = "retro.core")]
 public readonly record struct Vector3I(int X, int Y, int Z) : IVector3<Vector3I, int>
 {
     public static Vector3I Create(int x, int y, int z) => new(x, y, z);
@@ -195,7 +191,6 @@ public readonly record struct Vector3I(int X, int Y, int Z) : IVector3<Vector3I,
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector3f", CppModule = "retro.core")]
 public readonly record struct Vector3F(float X, float Y, float Z) : IVector3<Vector3F, float>
 {
     public static Vector3F Create(float x, float y, float z) => new(x, y, z);
@@ -235,7 +230,6 @@ public readonly record struct Vector3F(float X, float Y, float Z) : IVector3<Vec
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector4i", CppModule = "retro.core")]
 public readonly record struct Vector4I(int X, int Y, int Z, int W) : IVector4<Vector4I, int>
 {
     public static Vector4I Create(int x, int y, int z, int w) => new(x, y, z, w);
@@ -278,7 +272,6 @@ public readonly record struct Vector4I(int X, int Y, int Z, int W) : IVector4<Ve
 }
 
 [StructLayout(LayoutKind.Sequential)]
-[BlittableType("retro::Vector4f", CppModule = "retro.core")]
 public readonly record struct Vector4F(float X, float Y, float Z, float W) : IVector4<Vector4F, float>
 {
     public static Vector4F Create(float x, float y, float z, float w) => new(x, y, z, w);

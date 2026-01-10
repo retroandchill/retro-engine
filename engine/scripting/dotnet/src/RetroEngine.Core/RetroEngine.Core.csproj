@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup
-        Condition="'$(RetroEngineBackend)' == 'Native' 
+        Condition="'$(RetroEngineBackend)' == 'Native'
                             and '$(RetroEngineNativeOutputDirectory)' != ''"
     >
         <!-- Only redirect Native builds driven by CMake -->
@@ -14,7 +14,4 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
-    <ItemGroup>
-        <ProjectReference Include="..\RetroEngine.Binds\RetroEngine.Binds.csproj" />
-    </ItemGroup>
 </Project>

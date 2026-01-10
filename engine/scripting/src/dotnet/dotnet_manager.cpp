@@ -21,8 +21,7 @@ using namespace retro::filesystem;
 
 DotnetManager::DotnetManager()
 {
-    using GetFoundFunctionFn = decltype(&BindsManager::get_bound_function);
-    using InitializeRuntimeHostFn = bool (*)(const char16_t *, int32, GetFoundFunctionFn);
+    using InitializeRuntimeHostFn = int32 (*)(const char16_t *, int32);
 
     const auto native_host_fptr = initialize_native_host();
 
@@ -46,11 +45,10 @@ DotnetManager::DotnetManager()
     }
 
     const auto exe_path_u16 = exe_path.u16string();
-    if (!initialize_runtime_host(exe_path_u16.data(),
-                                 static_cast<int32>(exe_path_u16.size()),
-                                 &BindsManager::get_bound_function))
+    if (int32 result_code = initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()));
+        result_code != 0)
     {
-        throw std::runtime_error("Failed to initialize script engine!");
+        throw std::runtime_error(std::format("Failed to initialize script engine! Error code: {}", result_code));
     }
 }
 

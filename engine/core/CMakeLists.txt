@@ -4,10 +4,7 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 add_library(retro_core src/strings/name.cpp
         src/filesystem/file_loader.cpp
-        src/binds/binds_manager.cpp
-        src/binds/exported_function.cpp
         src/interop/name_exporter.cpp
-        src/interop/registration.cpp
 )
 
 retro_add_boilerplate(retro_core)
@@ -38,12 +35,7 @@ target_sources(retro_core PUBLIC
         src/containers/packed_pool.ixx
         src/containers/polymorphic.ixx
         src/math/rounding.ixx
-        src/memory/simple_arena.ixx
-        src/binds/binds_manager.ixx
-        src/binds/index.ixx
-        src/binds/exported_function.ixx
-        src/interop/index.ixx
-        src/interop/name_exporter.ixx)
+        src/memory/simple_arena.ixx)
 
 
 target_link_libraries(retro_core PUBLIC retro_boost retro_uni_algo retro_fmt)

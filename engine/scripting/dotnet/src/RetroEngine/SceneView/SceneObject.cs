@@ -3,15 +3,12 @@
 // // @copyright Copyright (c) $[InvalidReference] Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-namespace RetroEngine.Logging;
+using RetroEngine.Core.Math;
 
-public enum LogLevel : byte
+namespace RetroEngine.SceneView;
+
+public abstract class SceneObject
 {
-    Trace,
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Critical,
-    Off,
+    public Transform Transform { get; set; }
+    public Viewport Viewport { get; internal set; }
 }
