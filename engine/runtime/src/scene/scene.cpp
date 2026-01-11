@@ -42,9 +42,13 @@ namespace retro
                      [&](const DestroyViewportEvent &event) { destroy_viewport(event.viewport_id); },
                      [&](const UpdateRenderObjectTransformEvent &event)
                      {
-                         render_objects_.get(event.render_object_id)
-                             .map([](RenderObjectHandle &handle) -> RenderObject & { return *handle; })
-                             .map([&](RenderObject &render_object) { render_object.set_transform(event.transform); });
+                         const auto render_object =
+                             render_objects_.get(event.render_object_id)
+                                 .map([](RenderObjectHandle &handle) -> RenderObject & { return *handle; });
+                         if (render_object.has_value())
+                         {
+                             render_object->set_transform(event.transform);
+                         }
                      }};
 
         while (!render_objects_.empty())
