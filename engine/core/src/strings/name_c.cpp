@@ -17,17 +17,17 @@ static_assert(sizeof(retro::NameEntryId) == sizeof(Retro_NameId) &&
 
 namespace
 {
-    retro::Name from_c(const Retro_Name name)
+    constexpr retro::Name from_c(const Retro_Name name)
     {
         return std::bit_cast<retro::Name>(name);
     }
 
-    Retro_Name to_c(const retro::Name name)
+    constexpr Retro_Name to_c(const retro::Name name)
     {
         return std::bit_cast<Retro_Name>(name);
     }
 
-    retro::NameEntryId from_c(const Retro_NameId id)
+    constexpr retro::NameEntryId from_c(const Retro_NameId id)
     {
         return retro::NameEntryId{id.id};
     }

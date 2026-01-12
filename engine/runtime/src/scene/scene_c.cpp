@@ -12,17 +12,17 @@ import std;
 
 namespace
 {
-    retro::DefaultHandle from_c(const Retro_DefaultHandle id)
+    constexpr retro::DefaultHandle from_c(const Retro_DefaultHandle id)
     {
         return retro::ViewportID{id.index, id.generation};
     }
 
-    Retro_DefaultHandle to_c(const retro::DefaultHandle id)
+    constexpr Retro_DefaultHandle to_c(const retro::DefaultHandle id)
     {
         return Retro_DefaultHandle{id.index, id.generation};
     }
 
-    retro::Name from_c(const Retro_Name name)
+    constexpr retro::Name from_c(const Retro_Name name)
     {
         static_assert(sizeof(retro::Name) == sizeof(Retro_Name) && alignof(retro::Name) == alignof(Retro_Name));
         static_assert(sizeof(retro::NameEntryId) == sizeof(Retro_NameId) &&
@@ -30,7 +30,7 @@ namespace
         return std::bit_cast<retro::Name>(name);
     }
 
-    const retro::Transform &from_c(const Retro_Transform *transform)
+    constexpr const retro::Transform &from_c(const Retro_Transform *transform)
     {
         static_assert(sizeof(Retro_Transform) == sizeof(retro::Transform));
         static_assert(alignof(Retro_Transform) == alignof(retro::Transform));
