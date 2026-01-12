@@ -209,8 +209,18 @@ namespace retro
         {
         }
 
-        explicit(false) inline Name(const char16_t *value, const FindType find_type = FindType::Add)
-            : Name(std::u16string_view{value}, find_type)
+        constexpr Name(const NameEntryId comparison_index,
+                       const int32 number
+#if RETRO_WITH_CASE_PRESERVING_NAME
+                       ,
+                       const NameEntryId display_index
+#endif
+                       )
+            : comparison_index_(comparison_index), number_(number)
+#if RETRO_WITH_CASE_PRESERVING_NAME
+              ,
+              display_index_(display_index)
+#endif
         {
         }
 

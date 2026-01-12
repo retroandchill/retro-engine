@@ -39,8 +39,7 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
         COMMENT "Copying compiled shaders to runtime directory"
 )
 
-add_library(retro_renderer
-        src/vulkan_renderer2d.cpp
+set(RETRO_RENDER_SOURCES src/vulkan_renderer2d.cpp
         src/components/vulkan_device.cpp
         src/components/vulkan_swapchain.cpp
         src/components/vulkan_command_pool.cpp
@@ -48,18 +47,9 @@ add_library(retro_renderer
         src/window.cpp
         src/pipeline/pipeline_manager.cpp
         src/instances/quad.cpp
-        src/pipeline/pipeline_registry.cpp
-)
+        src/pipeline/pipeline_registry.cpp)
 
-retro_add_boilerplate(retro_renderer)
-
-if(NOT RETRO_BUILD_SHARED)
-    target_compile_definitions(retro_renderer PUBLIC RETRO_STATIC)
-endif()
-
-target_sources(retro_renderer PUBLIC
-        FILE_SET CXX_MODULES FILES
-        src/index.ixx
+set(RETRO_RENDER_MODULES src/index.ixx
         src/vulkan_renderer2d.ixx
         src/vulkan_viewport.ixx
         src/window.ixx
@@ -73,7 +63,25 @@ target_sources(retro_renderer PUBLIC
         src/pipeline/render_pipeline.ixx
         src/instances/index.ixx
         src/instances/quad.ixx
-        src/pipeline/pipeline_registry.ixx
+        src/pipeline/pipeline_registry.ixx)
+
+set(RETRO_RENDER_HEADERS )
+
+add_library(retro_renderer
+        ${RETRO_RENDER_SOURCES}
+        ${RETRO_RENDER_MODULES}
+        ${RETRO_RENDER_HEADERS}
+)
+
+retro_add_boilerplate(retro_renderer)
+
+if(NOT RETRO_BUILD_SHARED)
+    target_compile_definitions(retro_renderer PUBLIC RETRO_STATIC)
+endif()
+
+target_sources(retro_renderer PUBLIC
+        FILE_SET CXX_MODULES FILES
+        ${RETRO_RENDER_MODULES}
         )
 
 target_link_libraries(retro_renderer

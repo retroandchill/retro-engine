@@ -2,18 +2,17 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-add_library(retro_core src/strings/name.cpp
+set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/filesystem/file_loader.cpp
-        src/interop/name_exporter.cpp
+        src/strings/name_c.cpp
 )
 
-retro_add_boilerplate(retro_core)
+set(RETRO_CORE_HEADERS include/retro/core/exports.h
+        include/retro/core/per_project_boilerplate.h
+        include/retro/core/strings/name.h
+        include/retro/core/math/vector.h)
 
-target_include_directories(retro_core PUBLIC include)
-
-target_sources(retro_core PUBLIC
-    FILE_SET CXX_MODULES FILES
-        src/index.ixx
+set(RETRO_CORE_MODULES src/index.ixx
         src/strings/concepts.ixx
         src/strings/index.ixx
         src/strings/cstring_view.ixx
@@ -38,7 +37,18 @@ target_sources(retro_core PUBLIC
         src/memory/simple_arena.ixx
         src/functional/index.ixx
         src/functional/overload.ixx
-        src/functional/function_traits.ixx)
+        src/functional/function_traits.ixx
+)
+
+add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
+
+retro_add_boilerplate(retro_core)
+
+target_include_directories(retro_core PUBLIC include)
+
+target_sources(retro_core PUBLIC
+    FILE_SET CXX_MODULES FILES
+        ${RETRO_CORE_MODULES})
 
 
 target_link_libraries(retro_core PUBLIC retro_boost retro_uni_algo retro_fmt)
