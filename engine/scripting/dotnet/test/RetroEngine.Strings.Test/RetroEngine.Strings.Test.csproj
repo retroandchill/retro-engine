@@ -22,9 +22,9 @@
         <Using Include="NUnit.Framework" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\..\src\RetroEngine.Strings.Managed\RetroEngine.Strings.Managed.csproj" />
+        <ProjectReference Include="..\..\src\RetroEngine.Strings\RetroEngine.Strings.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="..\..\src\RetroEngine.Strings.Native\RetroEngine.Strings.Native.csproj" />
+        <ProjectReference Include="..\..\src\RetroEngine.Strings\RetroEngine.Strings.Native.csproj" />
     </ItemGroup>
 </Project>

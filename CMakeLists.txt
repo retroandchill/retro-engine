@@ -42,8 +42,10 @@ endif()
 
 if (RETRO_WITH_CASE_PRESERVING_NAME)
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
+    set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="true")
 else()
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
+    set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="false")
 endif()
 
 set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
@@ -75,6 +77,7 @@ add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
             -c "${RETRO_DOTNET_CONFIGURATION}"
             -p:Platform="Any CPU"
+            ${RETRO_MANAGED_OPTIONS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         USES_TERMINAL
         COMMENT "Building .NET managed assemblies")

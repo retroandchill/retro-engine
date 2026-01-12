@@ -6,11 +6,16 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using DefaultNamespace;
+using JetBrains.Annotations;
 using MessagePack;
 using RetroEngine.Strings.Serialization.Json;
+#if RETRO_NAME_BACKEND_NATIVE
+using RetroEngine.Strings.Interop;
+#endif
 
 namespace RetroEngine.Strings;
 
+[StructLayout(LayoutKind.Sequential)]
 public readonly struct NameEntryId(uint value)
     : IEquatable<NameEntryId>,
         IComparable<NameEntryId>,
@@ -34,7 +39,24 @@ public readonly struct NameEntryId(uint value)
 
     public int CompareLexical(NameEntryId other, StringComparison comparison)
     {
+#if RETRO_NAME_BACKEND_NATIVE
+        return NameExporter.CompareLexical(
+            this,
+            other,
+            comparison switch
+            {
+                StringComparison.CurrentCulture => NameCase.CaseSensitive,
+                StringComparison.CurrentCultureIgnoreCase => NameCase.IgnoreCase,
+                StringComparison.InvariantCulture => NameCase.CaseSensitive,
+                StringComparison.InvariantCultureIgnoreCase => NameCase.IgnoreCase,
+                StringComparison.Ordinal => NameCase.CaseSensitive,
+                StringComparison.OrdinalIgnoreCase => NameCase.IgnoreCase,
+                _ => throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null),
+            }
+        );
+#else
         return NameTable.Instance.Compare(this, other, comparison);
+#endif
     }
 
     public int CompareTo(NameEntryId other)
@@ -78,6 +100,12 @@ public readonly struct NameEntryId(uint value)
     }
 }
 
+public enum NameCase : byte
+{
+    CaseSensitive,
+    IgnoreCase,
+}
+
 /// <summary>
 /// Enumeration used to determine whether to add a new name or simply try to retrieve an existing one.
 /// </summary>
@@ -106,6 +134,7 @@ public enum FindName : byte
 /// <threadsafety>
 /// This type is thread-safe due to its immutable nature.
 /// </threadsafety>
+[StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
 public readonly struct Name
@@ -125,22 +154,25 @@ public readonly struct Name
     /// </summary>
     public const int NoNumber = NoNumberInternal - 1;
 
-    internal const string NoneString = "None";
-
     private static int NameInternalToExternal(int x) => x - 1;
 
     private static int ExternalToNameInternal(int x) => x + 1;
 
+#if !RETRO_NAME_BACKEND_NATIVE
+    internal const string NoneString = "None";
+#endif
+
     /// <summary>
     /// Gets the comparison index for this <see cref="Name"/>. This is the primary value used for equality comparisons.
     /// </summary>
+    [UsedImplicitly]
     public NameEntryId ComparisonIndex { get; }
 
     private readonly int _number;
 
     /// <summary>
     /// Gets the number of the name. A number that is greater than 0 indicates that the name is a numbered name, which
-    /// means calles to <see cref="ToString"/> will return the one less than the number as a suffix.
+    /// means callees to <see cref="ToString"/> will return the one less than the number as a suffix.
     /// </summary>
     public int Number
     {
@@ -152,6 +184,7 @@ public readonly struct Name
     /// Gets the display string index for this <see cref="Name"/>. This is the way in which Name is able to get back
     /// the correct case-sensitive string representation of the name.
     /// </summary>
+    [UsedImplicitly]
 #if RETRO_WITH_CASE_PRESERVING_NAME
     public NameEntryId DisplayIndex { get; }
 #else
@@ -167,10 +200,20 @@ public readonly struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
+#if RETRO_NAME_BACKEND_NATIVE
+        unsafe
+        {
+            fixed (char* namePtr = name)
+            {
+                this = NameExporter.Lookup(namePtr, name.Length, findType);
+            }
+        }
+#else
         (var indices, _number) = LookupName(name, findType);
         ComparisonIndex = indices.ComparisonIndex;
 #if RETRO_WITH_CASE_PRESERVING_NAME
         DisplayIndex = indices.DisplayIndex;
+#endif
 #endif
     }
 
@@ -213,7 +256,11 @@ public readonly struct Name
     /// <threadsafety>
     /// This property is thread-safe due to the immutable nature of the <see cref="Name"/> struct.
     /// </threadsafety>
+#if RETRO_NAME_BACKEND_NATIVE
+    public bool IsValid => NameExporter.IsValid(this);
+#else
     public bool IsValid => NameTable.Instance.IsWithinBounds(ComparisonIndex);
+#endif
 
     /// <summary>
     /// Indicates whether the current <see cref="Name"/> instance represents a "none" or null-like state.
@@ -287,10 +334,21 @@ public readonly struct Name
     /// </returns>
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
+#if RETRO_NAME_BACKEND_NATIVE
+        var (number, newLength) = ParseNumber(rhs);
+        unsafe
+        {
+            fixed (char* rhsPtr = rhs)
+            {
+                return NameExporter.Compare(lhs, rhsPtr, newLength) == 0 && number == lhs._number;
+            }
+        }
+#else
         var (number, newLength) = ParseNumber(rhs);
         return NameTable.Instance.Compare(lhs.ComparisonIndex, rhs[..newLength], StringComparison.OrdinalIgnoreCase)
                 == 0
             && number == lhs._number;
+#endif
     }
 
     /// <summary>
@@ -351,8 +409,22 @@ public readonly struct Name
     /// <inheritdoc />
     public override string ToString()
     {
+#if RETRO_NAME_BACKEND_NATIVE
+        Span<char> buffer = stackalloc char[MaxLength];
+        int newLength;
+        unsafe
+        {
+            fixed (char* ch = buffer)
+            {
+                newLength = NameExporter.ToString(this, ch, buffer.Length);
+            }
+        }
+
+        return buffer[..newLength].ToString();
+#else
         var baseString = NameTable.Instance.Get(DisplayIndex);
         return _number != NoNumberInternal ? $"{baseString}_{NameInternalToExternal(_number)}" : baseString;
+#endif
     }
 
     /// <inheritdoc />
@@ -361,6 +433,7 @@ public readonly struct Name
         return HashCode.Combine(ComparisonIndex, _number);
     }
 
+#if !RETRO_NAME_BACKEND_NATIVE
     private static (NameIndices Indices, int Number) LookupName(ReadOnlySpan<char> value, FindName findType)
     {
         if (value.Length == 0)
@@ -371,6 +444,7 @@ public readonly struct Name
         var indices = NameTable.Instance.GetOrAddEntry(newSlice, findType);
         return !indices.IsNone ? (indices, internalNumber) : (NameIndices.None, NoNumberInternal);
     }
+#endif
 
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
     {

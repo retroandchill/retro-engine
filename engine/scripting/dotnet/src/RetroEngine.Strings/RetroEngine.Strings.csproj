@@ -13,6 +13,9 @@
         <None Include="RetroEngine.Strings.targets" Pack="true" PackagePath="buildTransitive\" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Remove="Name.cs" />
+        <Compile Remove="NameTable.cs" />
         <Compile Remove="Serialization\**\*.cs" />
+        <Compile Remove="Interop\**\*.cs" />
     </ItemGroup>
 </Project>

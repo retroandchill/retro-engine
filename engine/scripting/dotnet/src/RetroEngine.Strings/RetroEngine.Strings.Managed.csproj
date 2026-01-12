@@ -7,16 +7,13 @@
         <AssemblyName>RetroEngine.Strings</AssemblyName>
         <Configurations>Managed-Debug;Managed-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <DefineConstants>$(DefineConstants);RETRO_NAME_BACKEND_MANAGED</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="..\RetroEngine.Strings\Serialization\Json\*.cs">
-            <Link>Serialization\Json\NameJsonConverter.cs</Link>
-        </Compile>
-        <Compile Include="..\RetroEngine.Strings\Serialization\MessagePack\*.cs">
-            <Link>Serialization\MessagePack\NameMessagePackFormatter.cs</Link>
-        </Compile>
+        <Compile Remove="Interop/**/*.cs"/>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
     </ItemGroup>
 </Project>
