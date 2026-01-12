@@ -2,9 +2,17 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
+set(RETRO_SCRIPTING_SOURCES src/dotnet/dotnet_loader.cpp
+        src/dotnet/dotnet_manager.cpp)
+
+set(RETRO_SCRIPTING_MODULES src/index.ixx
+        src/dotnet/dotnet_loader.ixx
+        src/dotnet/index.ixx
+        src/dotnet/dotnet_manager.ixx)
+
 add_library(retro_scripting
-        src/dotnet/dotnet_loader.cpp
-        src/dotnet/dotnet_manager.cpp
+        ${RETRO_SCRIPTING_SOURCES}
+        ${RETRO_SCRIPTING_MODULES}
 )
 
 retro_add_boilerplate(retro_scripting)
@@ -15,10 +23,8 @@ endif()
 
 target_sources(retro_scripting PUBLIC
         FILE_SET CXX_MODULES FILES
-        src/index.ixx
-        src/dotnet/dotnet_loader.ixx
-        src/dotnet/index.ixx
-        src/dotnet/dotnet_manager.ixx)
+        ${RETRO_SCRIPTING_MODULES}
+        )
 
 find_package(unofficial-nethost CONFIG REQUIRED)
 target_link_libraries(retro_scripting PUBLIC

@@ -6,6 +6,8 @@
         <RetroEngineVersion>0.1.0</RetroEngineVersion>
         <IsPackable>true</IsPackable>
         <IncludeBuildOutput>false</IncludeBuildOutput>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <None Include="RetroEngine.Strings.targets" Pack="true" PackagePath="buildTransitive\" />

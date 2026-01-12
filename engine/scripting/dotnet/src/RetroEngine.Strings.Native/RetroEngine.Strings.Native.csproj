@@ -6,6 +6,8 @@
         <AssemblyName>RetroEngine.Strings</AssemblyName>
         <RootNamespace>RetroEngine.Strings</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <PropertyGroup
             Condition="'$(RetroEngineCasePreservingNames)' == 'true' or ('$(RetroEngineNativeOutputDirectory)' == '' and '$(Configuration)' == 'Debug')"
@@ -16,15 +18,6 @@
             Condition="'$(RetroEngineCasePreservingNames)' == 'true'"
     >
         <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup
-        Condition="'$(RetroEngineBackend)' == 'Native'
-                            and '$(RetroEngineNativeOutputDirectory)' != ''"
-    >
-        <!-- Only redirect Native builds driven by CMake -->
-        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />

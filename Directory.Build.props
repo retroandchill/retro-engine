@@ -1,0 +1,43 @@
+﻿<Project>
+    <PropertyGroup Condition="'$(Configuration)' == 'Dev-Debug'">
+        <RetroEngineBackend>Native</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <OutputPath>$(SolutionDir)/cmake-build-dev-debug/bin</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Dev-Release'">
+        <RetroEngineBackend>Native</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <OutputPath>$(SolutionDir)/cmake-build-dev-release/bin</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Pkg-Debug'">
+        <RetroEngineBackend>Native</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <OutputPath>$(SolutionDir)/cmake-build-pkg-debug/bin</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Pkg-Release'">
+        <RetroEngineBackend>Native</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <OutputPath>$(SolutionDir)/cmake-build-pkg-release/bin</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Managed-Release'">
+        <RetroEngineBackend>Managed</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Managed-Release'">
+        <RetroEngineBackend>Managed</RetroEngineBackend>
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+    </PropertyGroup>
+</Project>

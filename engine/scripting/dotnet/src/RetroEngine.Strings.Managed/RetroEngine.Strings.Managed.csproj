@@ -5,7 +5,8 @@
         <Nullable>enable</Nullable>
         <RootNamespace>RetroEngine.Strings</RootNamespace>
         <AssemblyName>RetroEngine.Strings</AssemblyName>
-        <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
+        <Configurations>Managed-Debug;Managed-Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="..\RetroEngine.Strings\Serialization\Json\*.cs">

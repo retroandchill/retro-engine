@@ -5,15 +5,8 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    </PropertyGroup>
-    <PropertyGroup
-        Condition="'$(RetroEngineBackend)' == 'Native'
-                            and '$(RetroEngineNativeOutputDirectory)' != ''"
-    >
-        <!-- Only redirect Native builds driven by CMake -->
-        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />

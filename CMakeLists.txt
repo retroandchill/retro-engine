@@ -10,6 +10,7 @@ option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 
 option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
+option(RETRO_DOTNET_CONFIGURATION "What is the name of the .NET configuration" ON)
 
 if(NOT RETRO_BUILD_SHARED)
     set(BUILD_SHARED_LIBS OFF)
@@ -41,10 +42,8 @@ endif()
 
 if (RETRO_WITH_CASE_PRESERVING_NAME)
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
-    set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="true")
 else()
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
-    set(RETRO_MANAGED_OPTIONS )
 endif()
 
 set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
@@ -56,17 +55,6 @@ set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output dire
 set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")
 
 set(RETRO_MANAGED_SOLUTION "${CMAKE_SOURCE_DIR}/RetroEngine.Managed.slnx")
-
-if(CMAKE_CONFIGURATION_TYPES)  # multi-config generators (Visual Studio, etc.)
-    # Map any non-Debug config to Release for dotnet
-    set(DOTNET_CONFIGURATION "$<IF:$<CONFIG:Debug>,Debug,Release>")
-else()  # single-config generators (Ninja, Makefiles, typical CLion setup)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(DOTNET_CONFIGURATION "Debug")
-    else()
-        set(DOTNET_CONFIGURATION "Release")
-    endif()
-endif()
 
 find_program(GLSLC_EXECUTABLE glslc HINTS "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/Bin32")
 if (NOT GLSLC_EXECUTABLE)
@@ -85,11 +73,8 @@ endfunction()
 
 add_custom_target(retro_managed ALL
         COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
-            -c "${DOTNET_CONFIGURATION}"
+            -c "${RETRO_DOTNET_CONFIGURATION}"
             -p:Platform="Any CPU"
-            -p:RetroEngineNativeOutputDirectory="${RETRO_BIN_DIR}/"
-            -p:RetroEngineBackend="Native"
-            ${RETRO_MANAGED_OPTIONS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         USES_TERMINAL
         COMMENT "Building .NET managed assemblies")
