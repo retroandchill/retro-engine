@@ -307,10 +307,10 @@ namespace retro
         return lhs == utf8_str;
     }
 
-    std::strong_ordering operator<=>(const Name &lhs, std::string_view rhs)
+    std::strong_ordering operator<=>(const Name &lhs, const std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
-        auto compareString =
+        const auto compareString =
             NameTable::instance().compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length));
         if (compareString != std::strong_ordering::equal)
         {
@@ -319,7 +319,7 @@ namespace retro
         return number <=> lhs.number_;
     }
 
-    std::strong_ordering operator<=>(const Name &lhs, std::u16string_view rhs)
+    std::strong_ordering operator<=>(const Name &lhs, const std::u16string_view rhs)
     {
         const auto utf8_str = una::utf16to8<char16_t, char>(rhs, boost::pool_allocator<char>{});
         return lhs <=> utf8_str;

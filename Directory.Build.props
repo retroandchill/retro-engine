@@ -4,6 +4,7 @@
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
         <OutputPath>$(SolutionDir)/cmake-build-dev-debug/bin</OutputPath>
         <IntermediateOutputPath>$(SolutionDir)/cmake-build-dev-debug/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
+        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
@@ -13,6 +14,7 @@
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
         <OutputPath>$(SolutionDir)/cmake-build-dev-release/bin</OutputPath>
         <IntermediateOutputPath>$(SolutionDir)/cmake-build-dev-release/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
+        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
@@ -22,6 +24,7 @@
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
         <OutputPath>$(SolutionDir)/cmake-build-pkg-debug/bin</OutputPath>
         <IntermediateOutputPath>$(SolutionDir)/cmake-build-pkg-debug/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
+        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
@@ -31,6 +34,7 @@
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
         <OutputPath>$(SolutionDir)/cmake-build-pkg-release/bin</OutputPath>
         <IntermediateOutputPath>$(SolutionDir)/cmake-build-pkg-release/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
+        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>

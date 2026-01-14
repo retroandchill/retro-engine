@@ -6,7 +6,9 @@
  */
 #include "retro/core/strings/name.h"
 
+#include <boost/pool/pool_alloc.hpp>
 #include <cassert>
+#include <uni_algo/conv.h>
 
 import std;
 import retro.core;
@@ -61,21 +63,24 @@ extern "C"
         return strong_ordering_to_int(from_c(lhs) <=> std::u16string_view{rhs, static_cast<usize>(length)});
     }
 
-    int32 retro_name_compare_lexical(const Retro_NameId lhs, const Retro_NameId rhs, const Retro_NameCase nameCase)
+    int32 retro_name_compare_lexical(const Retro_NameId lhs_id,
+                                     const Retro_NameId rhs_id,
+                                     const Retro_NameCase nameCase)
     {
         if (static_cast<retro::NameCase>(nameCase) == retro::NameCase::CaseSensitive)
         {
-            return strong_ordering_to_int(from_c(lhs).compare_lexical_case_sensitive(from_c(rhs)));
+            return strong_ordering_to_int(from_c(lhs_id).compare_lexical_case_sensitive(from_c(rhs_id)));
         }
 
-        return strong_ordering_to_int(from_c(lhs).compare_lexical(from_c(rhs)));
+        return strong_ordering_to_int(from_c(lhs_id).compare_lexical(from_c(rhs_id)));
     }
 
     int32 retro_name_to_string(const Retro_Name name, char16_t *buffer, const int32 length)
     {
         const auto as_string = from_c(name).to_string();
-        const usize string_length = std::min(as_string.size(), static_cast<usize>(length));
-        std::memcpy(buffer, as_string.data(), string_length);
+        const auto utf16_string = una::utf8to16<char, char16_t>(as_string, boost::pool_allocator<char16_t>{});
+        const usize string_length = std::min(utf16_string.size(), static_cast<usize>(length));
+        std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
         return string_length;
     }
 }

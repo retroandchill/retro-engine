@@ -107,12 +107,12 @@ public enum NameCase : byte
 }
 
 /// <summary>
-/// Enumeration used to determine whether to add a new name or simply try to retrieve an existing one.
+/// Enumeration used to determine whether to add a new name or try to retrieve an existing one.
 /// </summary>
 public enum FindName : byte
 {
     /// <summary>
-    /// Simply find an existing name, but do not try to add a new one.
+    /// Find an existing name, but do not try to add a new one.
     /// </summary>
     Find,
 
@@ -145,6 +145,7 @@ public readonly struct Name
         IEqualityOperators<Name, Name, bool>,
         IEqualityOperators<Name, string?, bool>
 {
+    [PublicAPI]
     public const int MaxLength = 1024;
 
     private const int NoNumberInternal = 0;
@@ -335,12 +336,11 @@ public readonly struct Name
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
 #if RETRO_NAME_BACKEND_NATIVE
-        var (number, newLength) = ParseNumber(rhs);
         unsafe
         {
             fixed (char* rhsPtr = rhs)
             {
-                return NameExporter.Compare(lhs, rhsPtr, newLength) == 0 && number == lhs._number;
+                return NameExporter.Compare(lhs, rhsPtr, rhs.Length) == 0;
             }
         }
 #else
@@ -444,7 +444,6 @@ public readonly struct Name
         var indices = NameTable.Instance.GetOrAddEntry(newSlice, findType);
         return !indices.IsNone ? (indices, internalNumber) : (NameIndices.None, NoNumberInternal);
     }
-#endif
 
     private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
     {
@@ -476,4 +475,5 @@ public readonly struct Name
             ? (ExternalToNameInternal(number), name.Length - (digits + 1))
             : (NoNumberInternal, name.Length);
     }
+#endif
 }
