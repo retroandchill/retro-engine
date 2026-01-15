@@ -1,0 +1,11 @@
+﻿{
+  "profiles": {
+    "retro_game (Dev-Debug)": {
+      "commandName": "Executable",
+      "executablePath": "$(MSBuildProjectDirectory)\\..\\..\\..\\cmake-build-dev-debug\\bin\\retro_game.exe",
+      "workingDirectory": "$(MSBuildProjectDirectory)\\..\\..\\..\\cmake-build-dev-debug\\bin",
+      "commandLineArgs": "",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -30,11 +30,11 @@ static void precise_wait(const std::chrono::microseconds duration)
 std::unique_ptr<Engine> Engine::instance_{};
 
 Engine::Engine(const EngineConfig &config)
-    : script_runtime(config.script_runtime_factory()), renderer_(config.renderer_factory())
+    : script_runtime_(config.script_runtime_factory()), renderer_(config.renderer_factory())
 {
 }
 
-void Engine::run(const std::function<void()> &post_init)
+void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
 {
     using clock = std::chrono::steady_clock;
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
@@ -42,7 +42,8 @@ void Engine::run(const std::function<void()> &post_init)
     running_.store(true);
     scene_ = std::make_unique<Scene>();
 
-    post_init();
+    if (script_runtime_->start_scripts(assembly_path, class_name, entry_point) != 0)
+        return;
 
     // FPS tracking state
     float fps_timer = 0.0f;
@@ -68,10 +69,9 @@ void Engine::run(const std::function<void()> &post_init)
         // Measure how long the work actually took
         const auto frame_end = clock::now();
         const std::chrono::duration<float> work_time = frame_end - frame_start;
-        const float work_seconds = work_time.count();
 
         // Sleep to hit target frame duration (if work was faster than target)
-        if (work_seconds < target_frame_time)
+        if (const float work_seconds = work_time.count(); work_seconds < target_frame_time)
         {
             const float remaining = target_frame_time - work_seconds;
             precise_wait(
@@ -95,6 +95,8 @@ void Engine::run(const std::function<void()> &post_init)
             fps_frames = 0;
         }
     }
+
+    script_runtime_->tear_down();
 }
 
 void Engine::request_shutdown()
@@ -102,9 +104,9 @@ void Engine::request_shutdown()
     running_.store(false);
 }
 
-void Engine::tick(float delta_time)
+void Engine::tick(const float delta_time) const
 {
-    // TODO: Add tick logic
+    script_runtime_->tick(delta_time);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

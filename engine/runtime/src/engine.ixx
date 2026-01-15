@@ -73,7 +73,9 @@ namespace retro
             instance_.reset();
         }
 
-        RETRO_API void run(const std::function<void()> &post_init);
+        RETRO_API void run(std::u16string_view assembly_path,
+                           std::u16string_view class_name,
+                           std::u16string_view entry_point);
 
         RETRO_API void request_shutdown();
 
@@ -84,12 +86,12 @@ namespace retro
         }
 
       private:
-        void tick(float delta_time);
+        void tick(float delta_time) const;
         void render();
 
         RETRO_API static std::unique_ptr<Engine> instance_;
 
-        std::unique_ptr<ScriptRuntime> script_runtime{};
+        std::unique_ptr<ScriptRuntime> script_runtime_{};
         std::unique_ptr<Renderer2D> renderer_{};
 
         std::atomic<bool> running_{false};

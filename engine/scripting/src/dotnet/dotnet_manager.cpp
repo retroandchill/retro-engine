@@ -21,7 +21,7 @@ using namespace retro::filesystem;
 
 DotnetManager::DotnetManager()
 {
-    using InitializeRuntimeHostFn = int32 (*)(const char16_t *, int32);
+    using InitializeRuntimeHostFn = int32(_cdecl *)(const char16_t *, int32, ScriptingCallbacks *);
 
     const auto native_host_fptr = initialize_native_host();
 
@@ -45,11 +45,34 @@ DotnetManager::DotnetManager()
     }
 
     const auto exe_path_u16 = exe_path.u16string();
-    if (int32 result_code = initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()));
+    if (int32 result_code =
+            initialize_runtime_host(exe_path_u16.data(), static_cast<int32>(exe_path_u16.size()), &callbacks_);
         result_code != 0)
     {
         throw std::runtime_error(std::format("Failed to initialize script engine! Error code: {}", result_code));
     }
+}
+
+int32 DotnetManager::start_scripts(const std::u16string_view assembly_path,
+                                   const std::u16string_view class_name,
+                                   const std::u16string_view entry_point) const
+{
+    return callbacks_.start(assembly_path.data(),
+                            static_cast<int32>(assembly_path.size()),
+                            class_name.data(),
+                            static_cast<int32>(class_name.size()),
+                            entry_point.data(),
+                            static_cast<int32>(entry_point.size()));
+}
+
+void DotnetManager::tick(const float delta_time)
+{
+    callbacks_.tick(delta_time, std::numeric_limits<int32>::max());
+}
+
+void DotnetManager::tear_down()
+{
+    callbacks_.exit();
 }
 
 load_assembly_and_get_function_pointer_fn DotnetManager::initialize_native_host() const

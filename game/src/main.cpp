@@ -34,20 +34,21 @@ int main()
                                   }};
 
         std::atomic game_thread_exited = false;
-        auto game_thread = std::thread{[&]
-                                       {
-                                           try
-                                           {
-                                               EngineLifecycle engine_lifecycle{config};
-                                               auto &engine = Engine::instance();
-                                               engine.run([&] { set_up_test_scene(engine); });
-                                           }
-                                           catch (const std::exception &ex)
-                                           {
-                                               std::cerr << "Fatal error: " << ex.what() << '\n';
-                                           }
-                                           game_thread_exited.store(true);
-                                       }};
+        auto game_thread = std::thread{
+            [&]
+            {
+                try
+                {
+                    EngineLifecycle engine_lifecycle{config};
+                    auto &engine = Engine::instance();
+                    engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
+                }
+                catch (const std::exception &ex)
+                {
+                    std::cerr << "Fatal error: " << ex.what() << '\n';
+                }
+                game_thread_exited.store(true);
+            }};
 
         while (!game_thread_exited.load())
         {

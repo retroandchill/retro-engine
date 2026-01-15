@@ -6,11 +6,22 @@
  */
 export module retro.runtime:interfaces.script_runtime;
 
+import std;
+import retro.core;
+
 namespace retro
 {
     export class ScriptRuntime
     {
       public:
         virtual ~ScriptRuntime() = default;
+
+        [[nodiscard]] virtual int32 start_scripts(std::u16string_view assembly_path,
+                                                  std::u16string_view class_name,
+                                                  std::u16string_view entry_point) const = 0;
+
+        virtual void tick(float delta_time) = 0;
+
+        virtual void tear_down() = 0;
     };
 } // namespace retro

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Logging\RetroEngine.Logging.csproj" />
+      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine\RetroEngine.csproj" />
+    </ItemGroup>
+
+</Project>
