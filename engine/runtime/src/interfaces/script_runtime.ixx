@@ -17,8 +17,7 @@ namespace retro
         virtual ~ScriptRuntime() = default;
 
         [[nodiscard]] virtual int32 start_scripts(std::u16string_view assembly_path,
-                                                  std::u16string_view class_name,
-                                                  std::u16string_view entry_point) const = 0;
+                                                  std::u16string_view class_name) const = 0;
 
         virtual void tick(float delta_time) = 0;
 

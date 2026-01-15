@@ -42,7 +42,7 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     running_.store(true);
     scene_ = std::make_unique<Scene>();
 
-    if (script_runtime_->start_scripts(assembly_path, class_name, entry_point) != 0)
+    if (script_runtime_->start_scripts(assembly_path, class_name) != 0)
         return;
 
     // FPS tracking state
@@ -99,8 +99,9 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     script_runtime_->tear_down();
 }
 
-void Engine::request_shutdown()
+void Engine::request_shutdown(const int32 exit_code)
 {
+    exit_code_.store(exit_code);
     running_.store(false);
 }
 

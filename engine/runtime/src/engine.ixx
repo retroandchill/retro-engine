@@ -77,7 +77,7 @@ namespace retro
                            std::u16string_view class_name,
                            std::u16string_view entry_point);
 
-        RETRO_API void request_shutdown();
+        RETRO_API void request_shutdown(int32 exit_code = 0);
 
         [[nodiscard]] inline Scene &scene() const
         {
@@ -94,6 +94,7 @@ namespace retro
         std::unique_ptr<ScriptRuntime> script_runtime_{};
         std::unique_ptr<Renderer2D> renderer_{};
 
+        std::atomic<int32> exit_code_{0};
         std::atomic<bool> running_{false};
         std::unique_ptr<Scene> scene_{};
     };

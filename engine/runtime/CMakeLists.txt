@@ -8,7 +8,8 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/rendering/render_object.cpp
         src/scene/actor_ptr.cpp
         src/scene/scene_c.cpp
-        src/scene/rendering/render_object_registry.cpp)
+        src/scene/rendering/render_object_registry.cpp
+        src/engine_c.cpp)
 
 set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/index.ixx
@@ -31,7 +32,8 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_object_registry.ixx)
 
 set(RETRO_RUNTIME_HEADERS
-        include/retro/runtime/scene/scene.h)
+        include/retro/runtime/scene/scene.h
+        include/retro/runtime/engine.h)
 
 
 add_library(retro_runtime

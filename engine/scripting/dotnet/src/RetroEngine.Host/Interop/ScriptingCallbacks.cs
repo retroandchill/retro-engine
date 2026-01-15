@@ -10,7 +10,7 @@ namespace RetroEngine.Host.Interop;
 [StructLayout(LayoutKind.Sequential)]
 public readonly unsafe struct ScriptingCallbacks
 {
-    public required delegate* unmanaged[Cdecl]<char*, int, char*, int, char*, int, int> Start { get; init; }
+    public required delegate* unmanaged[Cdecl]<char*, int, char*, int, int> Start { get; init; }
     public required delegate* unmanaged[Cdecl]<float, int, int> Tick { get; init; }
     public required delegate* unmanaged[Cdecl]<void> Exit { get; init; }
 }

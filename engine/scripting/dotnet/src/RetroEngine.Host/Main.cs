@@ -6,6 +6,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using RetroEngine.Core.Async;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
@@ -15,7 +16,7 @@ namespace RetroEngine.Host;
 public static class Main
 {
     private static GameThreadSynchronizationContext? _synchronizationContext;
-    private static GameContext? _gameContext;
+    private static IGameSession? _gameSession;
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static unsafe int InitializeScriptEngine(
@@ -43,6 +44,20 @@ public static class Main
 
             SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
 
+            var currentAssembly = Assembly.GetExecutingAssembly();
+            var loadContext = AssemblyLoadContext.GetLoadContext(currentAssembly);
+            if (loadContext is null)
+            {
+                Logger.Error("Could not find assembly load context for entry assembly.");
+                return 1;
+            }
+
+            loadContext.Resolving += (context, name) =>
+            {
+                var candidatePath = Path.Combine(AppContext.BaseDirectory, $"{name.Name}.dll");
+                return File.Exists(candidatePath) ? context.LoadFromAssemblyPath(candidatePath) : null;
+            };
+
             Logger.Info("Script engine initialized successfully.");
             return 0;
         }
@@ -54,22 +69,31 @@ public static class Main
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    public static unsafe int StartGame(
-        char* assemblyPath,
-        int assemblyPathLength,
-        char* className,
-        int classNameLength,
-        char* methodName,
-        int methodNameLength
-    )
+    public static unsafe int StartGame(char* assemblyPath, int assemblyPathLength, char* className, int classNameLength)
     {
         try
         {
+            if (_gameSession is not null)
+            {
+                Logger.Error("Game session is already running.");
+                return 1;
+            }
+
             var assemblyPathString = new ReadOnlySpan<char>(assemblyPath, assemblyPathLength);
             var classNameString = new ReadOnlySpan<char>(className, classNameLength);
-            var methodNameString = new ReadOnlySpan<char>(methodName, methodNameLength);
 
-            var assembly = Assembly.LoadFrom(assemblyPathString.ToString());
+            var currentAssembly = Assembly.GetExecutingAssembly();
+            var loadContext = AssemblyLoadContext.GetLoadContext(currentAssembly);
+            if (loadContext is null)
+            {
+                Logger.Error("Could not find assembly load context for entry assembly.");
+                return 1;
+            }
+
+            var baseDirectory = AppContext.BaseDirectory;
+            var absoluteAssemblyPath = Path.GetFullPath(assemblyPathString.ToString(), baseDirectory);
+
+            var assembly = loadContext.LoadFromAssemblyPath(absoluteAssemblyPath);
             var type = assembly.GetType(classNameString.ToString());
             if (type is null)
             {
@@ -77,17 +101,16 @@ public static class Main
                 return 1;
             }
 
-            var method = type.GetMethod(methodNameString.ToString());
-            if (method is null)
+            _gameSession = Activator.CreateInstance(type) as IGameSession;
+            if (_gameSession is null)
             {
-                Logger.Error($"Could not find method '{methodNameString}' in type '{classNameString}'.");
+                Logger.Error(
+                    $"Could not create instance of type '{classNameString}' in assembly '{assemblyPathString}'."
+                );
                 return 1;
             }
 
-            var taskDelegate = method.CreateDelegate<Func<CancellationToken, Task<int>>>();
-
-            _gameContext = new GameContext(taskDelegate);
-
+            _gameSession.Start();
             return 0;
         }
         catch (Exception e)
@@ -106,7 +129,9 @@ public static class Main
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static void ShutdownScriptEngine()
     {
-        _gameContext?.Dispose();
+        _gameSession?.Terminate();
+        _gameSession = null;
+
         _synchronizationContext?.Dispose();
         _synchronizationContext = null;
     }

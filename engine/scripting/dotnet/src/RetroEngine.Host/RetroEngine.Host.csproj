@@ -11,5 +11,6 @@
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
         <ProjectReference Include="..\RetroEngine.Logging\RetroEngine.Logging.csproj" />
+        <ProjectReference Include="..\RetroEngine\RetroEngine.csproj" />
     </ItemGroup>
 </Project>

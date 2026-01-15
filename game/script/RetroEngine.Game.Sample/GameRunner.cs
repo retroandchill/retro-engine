@@ -8,14 +8,21 @@ using RetroEngine.SceneView;
 
 namespace RetroEngine.Game.Sample;
 
-public class GameRunner
+public sealed class GameRunner : IGameSession
 {
-    public static async Task<int> Main(CancellationToken cancellationToken)
-    {
-        Logger.Info("Starting game runner.");
-        using var mainViewport = new Viewport();
+    private Viewport? _viewport;
 
-        await Task.Delay(Timeout.Infinite, cancellationToken);
-        return 0;
+    public void Start()
+    {
+        if (_viewport is not null)
+            throw new InvalidOperationException("Game session is already running.");
+
+        Logger.Info("Starting game runner.");
+        _viewport = new Viewport();
+    }
+
+    public void Stop()
+    {
+        _viewport?.Dispose();
     }
 }

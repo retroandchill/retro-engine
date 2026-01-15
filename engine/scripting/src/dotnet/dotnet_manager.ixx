@@ -20,9 +20,7 @@ namespace retro
     using StartFn = int32(_cdecl *)(const char16_t *assembly_path,
                                     int32 assembly_path_length,
                                     const char16_t *class_name,
-                                    int32 class_name_length,
-                                    const char16_t *entry_point,
-                                    int32 entry_point_length);
+                                    int32 class_name_length);
     using TickFn = int32(_cdecl *)(float delta_time, int32 max_tasks);
     using ExitFn = void(_cdecl *)();
 
@@ -40,8 +38,7 @@ namespace retro
         DotnetManager();
 
         [[nodiscard]] int32 start_scripts(std::u16string_view assembly_path,
-                                          std::u16string_view class_name,
-                                          std::u16string_view entry_point) const override;
+                                          std::u16string_view class_name) const override;
 
         void tick(float delta_time) override;
 

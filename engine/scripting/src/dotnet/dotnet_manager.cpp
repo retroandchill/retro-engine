@@ -53,16 +53,12 @@ DotnetManager::DotnetManager()
     }
 }
 
-int32 DotnetManager::start_scripts(const std::u16string_view assembly_path,
-                                   const std::u16string_view class_name,
-                                   const std::u16string_view entry_point) const
+int32 DotnetManager::start_scripts(const std::u16string_view assembly_path, const std::u16string_view class_name) const
 {
     return callbacks_.start(assembly_path.data(),
                             static_cast<int32>(assembly_path.size()),
                             class_name.data(),
-                            static_cast<int32>(class_name.size()),
-                            entry_point.data(),
-                            static_cast<int32>(entry_point.size()));
+                            static_cast<int32>(class_name.size()));
 }
 
 void DotnetManager::tick(const float delta_time)
