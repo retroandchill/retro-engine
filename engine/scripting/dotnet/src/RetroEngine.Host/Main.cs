@@ -6,7 +6,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using RetroEngine.Core.Threading;
+using RetroEngine.Core.Async;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
 
