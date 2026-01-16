@@ -1,6 +1,6 @@
-﻿// // @file $FILE
+﻿// // @file GameRunner.cs
 // //
-// // @copyright Copyright (c) $[InvalidReference] Retro & Chill. All rights reserved.
+// // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Core.Drawing;
