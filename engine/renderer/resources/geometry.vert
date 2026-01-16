@@ -16,6 +16,7 @@ layout(push_constant) uniform SceneData {
     uint zOrder;
     float rotation;
     vec2 scale;
+    uint hasTexture;
 } uData;
 
 void main() {

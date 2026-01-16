@@ -82,6 +82,7 @@ namespace retro
         uint32 z_order{};
         float rotation{};
         Vector2f scale{};
+        uint32 has_texture{};
     };
 
     export class RETRO_API GeometryRenderPipeline final : public RenderPipeline

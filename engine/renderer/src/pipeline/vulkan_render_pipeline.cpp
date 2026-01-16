@@ -127,11 +127,22 @@ namespace retro
 
     vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device) const
     {
+        vk::DescriptorSetLayoutBinding sampler_layout_binding{0,
+                                                              vk::DescriptorType::eCombinedImageSampler,
+                                                              1,
+                                                              vk::ShaderStageFlagBits::eFragment};
+
+        vk::DescriptorSetLayoutCreateInfo layout_info{{}, 1, &sampler_layout_binding};
+
+        auto descriptor_set_layout = device.createDescriptorSetLayoutUnique(layout_info);
+
         vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                     0,
                                     static_cast<uint32>(pipeline_->push_constants_size())};
 
-        const vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, 0, nullptr, 1, &range};
+        std::array layouts = {descriptor_set_layout.get()};
+
+        const vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, layouts.size(), layouts.data(), 1, &range};
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
