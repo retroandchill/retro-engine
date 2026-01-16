@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using RetroEngine.Core.Async;
+using RetroEngine.Core.State;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
 
@@ -123,7 +124,9 @@ public static class Main
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static int Tick(float deltaTime, int maxTasks)
     {
-        return _synchronizationContext?.Pump(maxTasks) ?? 0;
+        var tasksCalled = _synchronizationContext?.Pump(maxTasks) ?? 0;
+        NativeSynchronizationManager.Sync();
+        return tasksCalled;
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]

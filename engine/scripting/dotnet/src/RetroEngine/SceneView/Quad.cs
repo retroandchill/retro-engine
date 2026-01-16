@@ -6,12 +6,11 @@
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
-using RetroEngine.Interop;
 using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
-public sealed class Quad(Viewport viewport) : SceneObject(Type, viewport)
+public sealed partial class Quad(Viewport viewport) : SceneObject(Type, viewport)
 {
     private static readonly Name Type = new("Quad");
 
@@ -20,9 +19,8 @@ public sealed class Quad(Viewport viewport) : SceneObject(Type, viewport)
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            QuadExporter.SetQuadSize(Id, value);
+            MarkDirty();
         }
     }
 
@@ -31,9 +29,20 @@ public sealed class Quad(Viewport viewport) : SceneObject(Type, viewport)
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            QuadExporter.SetQuadColor(Id, field);
+            MarkDirty();
         }
     }
+
+    public override void SyncToNative()
+    {
+        base.SyncToNative();
+        UpdateNativeData(Id, new QuadNativeUpdate(Size, Color));
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly record struct QuadNativeUpdate(Vector2F Size, Color Color);
+
+    [LibraryImport("retro_renderer", EntryPoint = "retro_quad_update_data")]
+    private static partial void UpdateNativeData(RenderObjectId renderObjectId, in QuadNativeUpdate data);
 }

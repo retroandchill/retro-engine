@@ -5,7 +5,7 @@
 
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Math;
-using RetroEngine.Interop;
+using RetroEngine.Core.State;
 using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
@@ -13,12 +13,12 @@ namespace RetroEngine.SceneView;
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct RenderObjectId(uint Index, uint Generation);
 
-public abstract class SceneObject : IDisposable
+public abstract partial class SceneObject : INativeSynchronizable, IDisposable
 {
     protected SceneObject(Name type, Viewport viewport)
     {
         Viewport = viewport;
-        Id = SceneExporter.CreateRenderObject(type, viewport.Id);
+        Id = NativeCreate(type, viewport.Id);
         Viewport.AddRenderObject(this);
     }
 
@@ -32,9 +32,8 @@ public abstract class SceneObject : IDisposable
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            SceneExporter.SetRenderObjectTransform(Id, in field);
+            MarkDirty();
         }
     }
 
@@ -56,14 +55,37 @@ public abstract class SceneObject : IDisposable
         set => Transform = Transform with { Scale = value };
     }
 
+    public virtual void SyncToNative()
+    {
+        ObjectDisposedException.ThrowIf(Disposed, this);
+        NativeSetTransform(Id, Transform);
+    }
+
     public void Dispose()
     {
         if (Disposed)
             return;
 
-        SceneExporter.DisposeRenderObject(Id);
+        NativeDispose(Id);
         Disposed = true;
         Viewport.RemoveRenderObject(Id);
         GC.SuppressFinalize(this);
     }
+
+    protected void MarkDirty()
+    {
+        ObjectDisposedException.ThrowIf(Disposed, this);
+        this.AddToSyncList();
+    }
+
+    private const string LibraryName = "retro_runtime";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_create")]
+    private static partial RenderObjectId NativeCreate(Name type, ViewportId viewportId);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_dispose")]
+    private static partial void NativeDispose(RenderObjectId renderObjectId);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_set_transform")]
+    private static partial void NativeSetTransform(RenderObjectId renderObjectId, in Transform transform);
 }

@@ -4,18 +4,15 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
-using RetroEngine.Core.Math;
-using RetroEngine.Interop;
-using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct ViewportId(uint Index, uint Generation);
 
-public sealed class Viewport : IDisposable
+public sealed partial class Viewport : IDisposable
 {
-    public ViewportId Id { get; } = SceneExporter.CreateViewport();
+    public ViewportId Id { get; } = NativeCreate();
     private bool _disposed;
 
     private readonly Dictionary<RenderObjectId, SceneObject> _objects = new();
@@ -43,7 +40,15 @@ public sealed class Viewport : IDisposable
         {
             obj.Dispose();
         }
-        SceneExporter.DisposeViewport(Id);
+        NativeDispose(Id);
         _disposed = true;
     }
+
+    private const string LibraryName = "retro_runtime";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_viewport_create")]
+    private static partial ViewportId NativeCreate();
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_viewport_dispose")]
+    private static partial void NativeDispose(ViewportId viewportId);
 }

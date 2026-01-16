@@ -16,9 +16,13 @@ extern "C"
 {
 #endif
 
-    RETRO_API void retro_quad_set_size(Retro_RenderObjectId id, Retro_Vector2f size);
+    typedef struct Retro_QuadUpdateData
+    {
+        Retro_Vector2f size;
+        Retro_Color color;
+    } Retro_QuadUpdateData;
 
-    RETRO_API void retro_quad_set_color(Retro_RenderObjectId id, Retro_Color color);
+    RETRO_API void retro_quad_update_data(Retro_RenderObjectId id, const Retro_QuadUpdateData *color);
 
 #if __cplusplus
 }

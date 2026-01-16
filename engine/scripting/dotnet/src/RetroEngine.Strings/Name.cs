@@ -9,14 +9,11 @@ using DefaultNamespace;
 using JetBrains.Annotations;
 using MessagePack;
 using RetroEngine.Strings.Serialization.Json;
-#if RETRO_NAME_BACKEND_NATIVE
-using RetroEngine.Strings.Interop;
-#endif
 
 namespace RetroEngine.Strings;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct NameEntryId(uint value)
+public readonly partial struct NameEntryId(uint value)
     : IEquatable<NameEntryId>,
         IComparable<NameEntryId>,
         IComparisonOperators<NameEntryId, NameEntryId, bool>
@@ -40,7 +37,7 @@ public readonly struct NameEntryId(uint value)
     public int CompareLexical(NameEntryId other, StringComparison comparison)
     {
 #if RETRO_NAME_BACKEND_NATIVE
-        return NameExporter.CompareLexical(
+        return NativeCompareLexical(
             this,
             other,
             comparison switch
@@ -98,6 +95,13 @@ public readonly struct NameEntryId(uint value)
     {
         return (int)Value;
     }
+
+#if RETRO_NAME_BACKEND_NATIVE
+    private const string LibraryName = "retro_core";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_name_compare_lexical")]
+    private static partial int NativeCompareLexical(NameEntryId lhs, NameEntryId rhs, NameCase nameCase);
+#endif
 }
 
 public enum NameCase : byte
@@ -137,7 +141,7 @@ public enum FindName : byte
 [StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
-public readonly struct Name
+public readonly partial struct Name
     : IEquatable<Name>,
         IEquatable<string>,
         IEquatable<ReadOnlySpan<char>>,
@@ -206,7 +210,7 @@ public readonly struct Name
         {
             fixed (char* namePtr = name)
             {
-                this = NameExporter.Lookup(namePtr, name.Length, findType);
+                this = NativeLookup(namePtr, name.Length, findType);
             }
         }
 #else
@@ -258,7 +262,7 @@ public readonly struct Name
     /// This property is thread-safe due to the immutable nature of the <see cref="Name"/> struct.
     /// </threadsafety>
 #if RETRO_NAME_BACKEND_NATIVE
-    public bool IsValid => NameExporter.IsValid(this);
+    public bool IsValid => NativeIsValid(this);
 #else
     public bool IsValid => NameTable.Instance.IsWithinBounds(ComparisonIndex);
 #endif
@@ -340,7 +344,7 @@ public readonly struct Name
         {
             fixed (char* rhsPtr = rhs)
             {
-                return NameExporter.Compare(lhs, rhsPtr, rhs.Length) == 0;
+                return NativeCompare(lhs, rhsPtr, rhs.Length) == 0;
             }
         }
 #else
@@ -416,7 +420,7 @@ public readonly struct Name
         {
             fixed (char* ch = buffer)
             {
-                newLength = NameExporter.ToString(this, ch, buffer.Length);
+                newLength = NativeToString(this, ch, buffer.Length);
             }
         }
 
@@ -475,5 +479,20 @@ public readonly struct Name
             ? (ExternalToNameInternal(number), name.Length - (digits + 1))
             : (NoNumberInternal, name.Length);
     }
+#else
+    private const string LibraryName = "retro_core";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_name_lookup")]
+    private static unsafe partial Name NativeLookup(char* name, int nameLength, FindName findType);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_name_is_valid")]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static unsafe partial bool NativeIsValid(Name name);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_name_compare")]
+    private static unsafe partial int NativeCompare(Name lhs, char* name, int nameLength);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_name_to_string")]
+    private static unsafe partial int NativeToString(Name name, char* buffer, int bufferLength);
 #endif
 }

@@ -54,4 +54,8 @@
     >
         <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
     </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshalling"/>
+    </ItemGroup>
 </Project>

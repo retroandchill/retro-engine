@@ -31,23 +31,11 @@ namespace
 
 extern "C"
 {
-    void retro_quad_set_size(const Retro_RenderObjectId id, const Retro_Vector2f size)
+    void retro_quad_update_data(const Retro_RenderObjectId id, const Retro_QuadUpdateData *color)
     {
-        retro::Engine::instance()
-            .scene()
-            .get_render_object(from_c(id))
-            .map([](auto &c) -> auto & { return static_cast<retro::QuadRenderComponent &>(c); })
-            .value()
-            .set_size(from_c(size));
-    }
-
-    void retro_quad_set_color(const Retro_RenderObjectId id, const Retro_Color color)
-    {
-        retro::Engine::instance()
-            .scene()
-            .get_render_object(from_c(id))
-            .map([](auto &c) -> auto & { return static_cast<retro::QuadRenderComponent &>(c); })
-            .value()
-            .set_color(from_c(color));
+        auto &render_object = retro::Engine::instance().scene().get_render_object(from_c(id)).value();
+        auto &quad = static_cast<retro::QuadRenderComponent &>(render_object);
+        quad.set_size(from_c(color->size));
+        quad.set_color(from_c(color->color));
     }
 }

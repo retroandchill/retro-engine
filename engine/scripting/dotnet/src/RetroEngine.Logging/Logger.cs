@@ -3,11 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using RetroEngine.Logging.Interop;
+using System.Runtime.InteropServices;
 
 namespace RetroEngine.Logging;
 
-public static class Logger
+public static partial class Logger
 {
     public static void Log(LogLevel level, ReadOnlySpan<char> message)
     {
@@ -15,7 +15,7 @@ public static class Logger
         {
             fixed (char* messagePtr = message)
             {
-                LogExporter.Log(level, messagePtr, message.Length);
+                NativeLog(level, messagePtr, message.Length);
             }
         }
     }
@@ -31,4 +31,9 @@ public static class Logger
     public static void Error(ReadOnlySpan<char> message) => Log(LogLevel.Error, message);
 
     public static void Critical(ReadOnlySpan<char> message) => Log(LogLevel.Critical, message);
+
+    private const string LibraryName = "retro_logging";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_log")]
+    private static unsafe partial void NativeLog(LogLevel level, char* message, int length);
 }
