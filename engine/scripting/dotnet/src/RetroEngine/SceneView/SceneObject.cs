@@ -15,21 +15,15 @@ public readonly record struct RenderObjectId(uint Index, uint Generation);
 
 public abstract class SceneObject : IDisposable
 {
-    protected SceneObject(Name type, Viewport viewport, ReadOnlySpan<byte> payload)
+    protected SceneObject(Name type, Viewport viewport)
     {
         Viewport = viewport;
-        unsafe
-        {
-            fixed (byte* payloadPtr = payload)
-            {
-                Id = SceneExporter.CreateRenderObject(type, viewport.Id, (IntPtr)payloadPtr, payload.Length);
-            }
-        }
+        Id = SceneExporter.CreateRenderObject(type, viewport.Id);
         Viewport.AddRenderObject(this);
     }
 
     public RenderObjectId Id { get; }
-    private bool _disposed;
+    protected bool Disposed { get; private set; }
 
     public Viewport Viewport { get; }
 
@@ -38,6 +32,7 @@ public abstract class SceneObject : IDisposable
         get;
         set
         {
+            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
             SceneExporter.SetRenderObjectTransform(Id, in field);
         }
@@ -63,11 +58,11 @@ public abstract class SceneObject : IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
+        if (Disposed)
             return;
 
         SceneExporter.DisposeRenderObject(Id);
-        _disposed = true;
+        Disposed = true;
         Viewport.RemoveRenderObject(Id);
         GC.SuppressFinalize(this);
     }

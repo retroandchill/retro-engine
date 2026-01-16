@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) $[InvalidReference] Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using RetroEngine.Core.Drawing;
+using RetroEngine.Core.Math;
 using RetroEngine.Logging;
 using RetroEngine.SceneView;
 
@@ -19,6 +21,26 @@ public sealed class GameRunner : IGameSession
 
         Logger.Info("Starting game runner.");
         _viewport = new Viewport();
+
+        const int width = 1280 / 100 + 1;
+        const int height = 720 / 100 + 1;
+        for (var i = 0; i < width; i++)
+        {
+            for (var j = 0; j < height; j++)
+            {
+                var index = i + j * width;
+                var r = (index & 1) != 0 ? 1.0f : 0.0f;
+                var g = (index & 2) != 0 ? 1.0f : 0.0f;
+                var b = (index & 4) != 0 ? 1.0f : 0.0f;
+
+                _ = new Quad(_viewport)
+                {
+                    Transform = new Transform { Position = new Vector2F(i * 100.0f, j * 100.0f) },
+                    Size = new Vector2F(100.0f, 100.0f),
+                    Color = new Color(r, g, b),
+                };
+            }
+        }
     }
 
     public void Stop()

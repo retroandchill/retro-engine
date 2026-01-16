@@ -10,7 +10,8 @@ set(RETRO_CORE_SOURCES src/strings/name.cpp
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
         include/retro/core/per_project_boilerplate.h
         include/retro/core/strings/name.h
-        include/retro/core/math/vector.h)
+        include/retro/core/math/vector.h
+        include/retro/core/math/color.h)
 
 set(RETRO_CORE_MODULES src/index.ixx
         src/strings/concepts.ixx

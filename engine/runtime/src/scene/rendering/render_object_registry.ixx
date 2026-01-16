@@ -15,6 +15,7 @@ import :scene.rendering.render_object;
 
 namespace retro
 {
+    using RenderObjectFactory = std::function<RenderObject &(ViewportID)>;
 
     export class RETRO_API RenderObjectRegistry
     {
@@ -22,16 +23,19 @@ namespace retro
         ~RenderObjectRegistry() = default;
 
       public:
-        using FactoryFunction = std::function<RenderObject &(ViewportID, std::span<const std::byte>)>;
-
         static RenderObjectRegistry &instance();
 
-        void register_type(Name type_name, FactoryFunction creator);
+        void register_type(Name type_name, RenderObjectFactory creator);
 
-        RenderObject &create(Name type_name, ViewportID viewport_id, std::span<const std::byte> payload = {}) const;
+        [[nodiscard]] RenderObject &create(Name type_name, ViewportID viewport_id) const;
 
       private:
-        std::unordered_map<Name, FactoryFunction> factories_;
+        std::unordered_map<Name, RenderObjectFactory> factories_{};
+    };
+
+    export struct RenderObjectTypeRegistration
+    {
+        RETRO_API RenderObjectTypeRegistration(Name type_name, RenderObjectFactory creator);
     };
 
 } // namespace retro

@@ -8,16 +8,6 @@ module retro.renderer;
 
 namespace retro
 {
-    PipelineRegistry::PipelineRegistry()
-    {
-        factories_[QuadRenderProxy::type_id()] = [](vk::Device device,
-                                                    const VulkanSwapchain &swapchain,
-                                                    vk::RenderPass render_pass) -> std::unique_ptr<RenderPipeline>
-        {
-            return std::make_unique<QuadRenderPipeline>(device, swapchain, render_pass);
-        };
-    }
-
     PipelineRegistry &PipelineRegistry::instance()
     {
         static PipelineRegistry instance;
@@ -41,5 +31,10 @@ namespace retro
         return factories_ | std::views::values |
                std::views::transform([&](auto factory) { return factory(device, swapchain, render_pass); }) |
                std::ranges::to<std::vector>();
+    }
+
+    PipelineRegistration::PipelineRegistration(Name pipelineName, PipelineFactory factory)
+    {
+        PipelineRegistry::instance().register_pipeline(pipelineName, std::move(factory));
     }
 } // namespace retro

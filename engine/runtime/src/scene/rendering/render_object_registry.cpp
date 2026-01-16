@@ -14,19 +14,22 @@ namespace retro
         return registry;
     }
 
-    void RenderObjectRegistry::register_type(const Name type_name, FactoryFunction creator)
+    void RenderObjectRegistry::register_type(const Name type_name, RenderObjectFactory creator)
     {
         factories_[type_name] = std::move(creator);
     }
 
-    RenderObject &RenderObjectRegistry::create(const Name type_name,
-                                               const ViewportID viewport_id,
-                                               const std::span<const std::byte> payload) const
+    RenderObject &RenderObjectRegistry::create(const Name type_name, const ViewportID viewport_id) const
     {
         const auto factory = factories_.find(type_name);
         if (factory == factories_.end())
             throw std::runtime_error("No factory registered for type: " + type_name.to_string());
 
-        return factory->second(viewport_id, payload);
+        return factory->second(viewport_id);
+    }
+
+    RenderObjectTypeRegistration::RenderObjectTypeRegistration(const Name type_name, RenderObjectFactory creator)
+    {
+        RenderObjectRegistry::instance().register_type(type_name, std::move(creator));
     }
 } // namespace retro

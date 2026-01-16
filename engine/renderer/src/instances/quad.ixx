@@ -51,8 +51,7 @@ namespace retro
 
         [[nodiscard]] inline Vector2f size() const noexcept
         {
-            auto &[scale_x, scale_y] = transform().scale;
-            return {size_.x * scale_x, size_.y * scale_y};
+            return size_;
         }
 
         inline void set_size(const Vector2f size) noexcept
@@ -125,7 +124,6 @@ namespace retro
                                                            vk::RenderPass render_pass);
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
-      private:
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniquePipeline graphics_pipeline_;
         std::vector<Quad> pending_quads_;

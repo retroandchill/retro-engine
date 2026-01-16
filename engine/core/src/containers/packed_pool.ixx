@@ -386,24 +386,25 @@ namespace retro
             if (id.index >= slots_.size())
                 return;
 
-            auto &[dense_index, generation, alive] = slots_[id.index];
+            auto [dense_index, generation, alive] = slots_[id.index];
             if (!alive || generation != id.generation)
                 return;
 
-            if (const uint32 last_index = slots_.size() - 1; dense_index != last_index)
+            if (const uint32 last_dense_index = static_cast<uint32>(values_.size()) - 1;
+                dense_index != last_dense_index)
             {
-                slots_[dense_index] = std::move(slots_[last_index]);
+                const auto &last_value = values_.back();
+                auto [last_slot_index, last_gen] = PackableConstructionType<T>::get_id(last_value);
 
-                const auto &moved = values_[dense_index];
-                auto [index, generation] = PackableConstructionType<T>::get_id(moved);
-                auto &moved_slot = slots_[index];
-                moved_slot.dense_index = dense_index;
+                values_[dense_index] = std::move(values_.back());
+                slots_[last_slot_index].dense_index = dense_index;
             }
 
             values_.pop_back();
 
-            alive = false;
-            ++generation;
+            auto &slot = slots_[id.index];
+            slot.alive = false;
+            ++slot.generation;
             free_list_.push_back(id.index);
         }
 

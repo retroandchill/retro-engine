@@ -51,15 +51,9 @@ extern "C"
         retro::Engine::instance().scene().destroy_viewport(from_c(viewport_id));
     }
 
-    Retro_RenderObjectId retro_render_object_create(const Retro_Name name,
-                                                    const Retro_ViewportId viewport_id,
-                                                    const void *payload,
-                                                    const int32 size)
+    Retro_RenderObjectId retro_render_object_create(const Retro_Name name, const Retro_ViewportId viewport_id)
     {
-        const auto &component = retro::RenderObjectRegistry::instance().create(
-            from_c(name),
-            from_c(viewport_id),
-            std::span{static_cast<const std::byte *>(payload), static_cast<usize>(size)});
+        const auto &component = retro::RenderObjectRegistry::instance().create(from_c(name), from_c(viewport_id));
         return to_c(component.id());
     }
 

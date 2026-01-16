@@ -39,10 +39,7 @@ extern "C"
 
     RETRO_API void retro_viewport_dispose(Retro_ViewportId viewport_id);
 
-    RETRO_API Retro_RenderObjectId retro_render_object_create(Retro_Name name,
-                                                              Retro_ViewportId viewport_id,
-                                                              const void *payload,
-                                                              int32_t size);
+    RETRO_API Retro_RenderObjectId retro_render_object_create(Retro_Name name, Retro_ViewportId viewport_id);
 
     RETRO_API void retro_render_object_dispose(Retro_RenderObjectId render_object_id);
 

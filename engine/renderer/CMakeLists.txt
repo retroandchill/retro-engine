@@ -47,7 +47,9 @@ set(RETRO_RENDER_SOURCES src/vulkan_renderer2d.cpp
         src/window.cpp
         src/pipeline/pipeline_manager.cpp
         src/instances/quad.cpp
-        src/pipeline/pipeline_registry.cpp)
+        src/pipeline/pipeline_registry.cpp
+        src/instances/registrations.cpp
+        src/instances/quad_c.cpp)
 
 set(RETRO_RENDER_MODULES src/index.ixx
         src/vulkan_renderer2d.ixx
@@ -65,13 +67,16 @@ set(RETRO_RENDER_MODULES src/index.ixx
         src/instances/quad.ixx
         src/pipeline/pipeline_registry.ixx)
 
-set(RETRO_RENDER_HEADERS )
+set(RETRO_RENDER_HEADERS
+        include/retro/renderer/instances/quad.h)
 
 add_library(retro_renderer
         ${RETRO_RENDER_SOURCES}
         ${RETRO_RENDER_MODULES}
         ${RETRO_RENDER_HEADERS}
 )
+
+target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 retro_add_boilerplate(retro_renderer)
 

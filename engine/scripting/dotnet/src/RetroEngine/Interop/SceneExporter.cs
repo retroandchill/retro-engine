@@ -21,12 +21,7 @@ internal static partial class SceneExporter
     public static partial void DisposeViewport(ViewportId viewportId);
 
     [LibraryImport(LibraryName, EntryPoint = "retro_render_object_create")]
-    public static partial RenderObjectId CreateRenderObject(
-        Name type,
-        ViewportId viewportId,
-        IntPtr payload,
-        int payloadSize
-    );
+    public static partial RenderObjectId CreateRenderObject(Name type, ViewportId viewportId);
 
     [LibraryImport(LibraryName, EntryPoint = "retro_render_object_dispose")]
     public static partial void DisposeRenderObject(RenderObjectId renderObjectId);
