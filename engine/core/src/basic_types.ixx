@@ -23,5 +23,10 @@ namespace retro
             : red(red), green(green), blue(blue), alpha(alpha)
         {
         }
+
+        static constexpr Color white() noexcept
+        {
+            return {1.0f, 1.0f, 1.0f, 1.0f};
+        }
     };
 } // namespace retro

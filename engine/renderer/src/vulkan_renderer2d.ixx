@@ -15,6 +15,7 @@ import retro.runtime;
 import :vulkan_viewport;
 import :components;
 import :pipeline;
+import :vulkan_buffer_manager;
 
 namespace retro
 {
@@ -24,18 +25,19 @@ namespace retro
         explicit VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
-        VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
+        VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
 
         ~VulkanRenderer2D() override;
 
         VulkanRenderer2D &operator=(VulkanRenderer2D &&) = delete;
-        VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
-
+        VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
         void begin_frame() override;
 
         void end_frame() override;
 
         void queue_draw_calls(Name type, const std::any &data) override;
+
+        [[nodiscard]] Vector2u viewport_size() const override;
 
       private:
         static vk::UniqueInstance create_instance();
@@ -50,11 +52,13 @@ namespace retro
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
 
+      private:
         std::shared_ptr<VulkanViewport> viewport_;
 
         vk::UniqueInstance instance_;
         vk::UniqueSurfaceKHR surface_;
         VulkanDevice device_;
+        VulkanBufferManagerScope buffer_manager_;
         VulkanSwapchain swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;
@@ -63,6 +67,7 @@ namespace retro
         PipelineManager pipeline_manager_;
 
         uint32 current_frame_ = 0;
+        uint32 image_index_ = 0;
 
         static constexpr uint32 MAX_FRAMES_IN_FLIGHT = 2;
     };

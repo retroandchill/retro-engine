@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module retro.renderer;
+module retro.runtime;
 
 namespace retro
 {
@@ -24,16 +24,13 @@ namespace retro
         factories_.erase(name);
     }
 
-    std::vector<std::unique_ptr<RenderPipeline>> PipelineRegistry::create_pipelines(vk::Device device,
-                                                                                    const VulkanSwapchain &swapchain,
-                                                                                    vk::RenderPass render_pass) const
+    std::vector<std::unique_ptr<RenderPipeline>> PipelineRegistry::create_pipelines() const
     {
-        return factories_ | std::views::values |
-               std::views::transform([&](auto factory) { return factory(device, swapchain, render_pass); }) |
+        return factories_ | std::views::values | std::views::transform([&](auto factory) { return factory(); }) |
                std::ranges::to<std::vector>();
     }
 
-    PipelineRegistration::PipelineRegistration(Name pipelineName, PipelineFactory factory)
+    PipelineRegistration::PipelineRegistration(const Name pipelineName, PipelineFactory factory)
     {
         PipelineRegistry::instance().register_pipeline(pipelineName, std::move(factory));
     }

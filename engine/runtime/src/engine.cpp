@@ -115,7 +115,7 @@ void Engine::render()
 {
     renderer_->begin_frame();
 
-    for (auto [type_id, data] : scene_->render_proxy_manager().collect_draw_calls())
+    for (auto [type_id, data] : scene_->render_proxy_manager().collect_draw_calls(renderer_->viewport_size()))
     {
         renderer_->queue_draw_calls(type_id, data);
     }

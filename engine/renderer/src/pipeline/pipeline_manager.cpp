@@ -8,19 +8,33 @@ module retro.renderer;
 
 namespace retro
 {
-    void PipelineManager::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size) const
+    void PipelineManager::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
     {
-        for (const auto &pipeline : pipelines_)
+        for (auto &pipeline : pipelines_)
         {
-            pipeline->bind_and_render(cmd, viewport_size);
+            pipeline.bind_and_render(cmd, viewport_size);
         }
     }
 
     void PipelineManager::clear_draw_queue()
     {
-        for (const auto &pipeline : pipelines_)
+        for (auto &pipeline : pipelines_)
         {
-            pipeline->clear_draw_queue();
+            pipeline.clear_draw_queue();
         }
+    }
+
+    std::vector<VulkanRenderPipeline> PipelineManager::create_pipelines(vk::Device device,
+                                                                        const VulkanSwapchain &swapchain,
+                                                                        const vk::RenderPass render_pass)
+    {
+        std::vector<VulkanRenderPipeline> pipelines;
+
+        for (auto unique_pipelines = PipelineRegistry::instance().create_pipelines(); auto &pipeline : unique_pipelines)
+        {
+            pipelines.emplace_back(std::move(pipeline), device, swapchain, render_pass);
+        }
+
+        return pipelines;
     }
 } // namespace retro

@@ -11,4 +11,4 @@ export import :vulkan_renderer2d;
 export import :vulkan_viewport;
 export import :window;
 export import :pipeline;
-export import :instances;
+export import :vulkan_buffer_manager;

@@ -12,8 +12,6 @@ import retro.logging;
 import std;
 import sdl;
 
-void set_up_test_scene(const retro::Engine &engine);
-
 int main()
 {
     using namespace retro;
@@ -83,30 +81,5 @@ int main()
     {
         get_logger().critical("Fatal error: {}", ex.what());
         return -1;
-    }
-}
-
-void set_up_test_scene(const retro::Engine &engine)
-{
-    using namespace retro;
-
-    constexpr int width = 1280 / 100 + 1;
-    constexpr int height = 720 / 100 + 1;
-    const auto &entity = engine.scene().create_viewport();
-    for (int i = 0; i < width; i++)
-    {
-        for (int j = 0; j < height; j++)
-        {
-            const int index = i + j * width;           // linear index if needed
-            const float r = (index & 1) ? 1.0f : 0.0f; // bit 0
-            const float g = (index & 2) ? 1.0f : 0.0f; // bit 1
-            const float b = (index & 4) ? 1.0f : 0.0f; // bit 2
-
-            const Color c{r, g, b, 1.0f};
-            auto &component = engine.scene().create_render_object<QuadRenderComponent>(entity.id());
-            component.set_position({static_cast<float>(i) * 100.0f, static_cast<float>(j) * 100.0f});
-            component.set_size({100.0f, 100.0f});
-            component.set_color(c);
-        }
     }
 }

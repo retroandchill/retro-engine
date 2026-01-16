@@ -10,3 +10,6 @@ export import :scene.rendering.render_proxy_manager;
 export import :scene.rendering.render_proxy_bucket;
 export import :scene.rendering.render_object;
 export import :scene.rendering.render_object_registry;
+export import :scene.rendering.geometry_render_object;
+export import :scene.rendering.render_pipeline;
+export import :scene.rendering.pipeline_registry;

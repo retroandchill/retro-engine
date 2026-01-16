@@ -15,15 +15,15 @@ namespace retro
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
         : viewport_{std::move(viewport)}, instance_{create_instance()},
           surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
-          swapchain_(SwapchainConfig{
-              .physical_device = device_.physical_device(),
-              .device = device_.device(),
-              .surface = surface_.get(),
-              .graphics_family = device_.graphics_family_index(),
-              .present_family = device_.present_family_index(),
-              .width = viewport_->width(),
-              .height = viewport_->height(),
-          }),
+          buffer_manager_{device_}, swapchain_(SwapchainConfig{
+                                        .physical_device = device_.physical_device(),
+                                        .device = device_.device(),
+                                        .surface = surface_.get(),
+                                        .graphics_family = device_.graphics_family_index(),
+                                        .present_family = device_.present_family_index(),
+                                        .width = viewport_->width(),
+                                        .height = viewport_->height(),
+                                    }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
           command_pool_(CommandPoolConfig{
@@ -50,10 +50,6 @@ namespace retro
 
     void VulkanRenderer2D::begin_frame()
     {
-    }
-
-    void VulkanRenderer2D::end_frame()
-    {
         auto dev = device_.device();
 
         auto in_flight = sync_.in_flight(current_frame_);
@@ -61,14 +57,12 @@ namespace retro
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
         }
-        dev.resetFences({in_flight});
 
-        uint32 image_index = 0;
         auto result = dev.acquireNextImageKHR(swapchain_.handle(),
                                               std::numeric_limits<uint64>::max(),
                                               sync_.image_available(current_frame_),
                                               nullptr,
-                                              &image_index);
+                                              &image_index_);
 
         if (result == vk::Result::eErrorOutOfDateKHR)
         {
@@ -81,16 +75,23 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
 
+        dev.resetFences({in_flight});
+    }
+
+    void VulkanRenderer2D::end_frame()
+    {
+        const auto in_flight = sync_.in_flight(current_frame_);
         auto cmd = command_pool_.buffer_at(current_frame_);
+
         cmd.reset();
-        record_command_buffer(cmd, image_index);
+        record_command_buffer(cmd, image_index_);
 
         std::array wait_semaphores = {sync_.image_available(current_frame_)};
         std::array wait_stages = {
             static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
 
         // Signal semaphore is now per-image
-        const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index);
+        const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index_);
         std::array signal_semaphores = {render_finished_semaphore};
 
         const vk::SubmitInfo submit_info{wait_semaphores.size(),
@@ -112,11 +113,10 @@ namespace retro
                                         signal_semaphores.data(),
                                         swapchains.size(),
                                         swapchains.data(),
-                                        &image_index};
+                                        &image_index_};
 
-        result = device_.present_queue().presentKHR(&present_info);
-
-        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+        if (const auto result = device_.present_queue().presentKHR(&present_info);
+            result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
         {
             recreate_swapchain();
         }
@@ -132,6 +132,11 @@ namespace retro
     void VulkanRenderer2D::queue_draw_calls(const Name type, const std::any &data)
     {
         pipeline_manager_.queue_draw_calls(type, data);
+    }
+
+    Vector2u VulkanRenderer2D::viewport_size() const
+    {
+        return viewport_->size();
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance()
@@ -162,12 +167,18 @@ namespace retro
 
         const auto extensions = get_required_instance_extensions();
 
+        std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
+
+        vk::ValidationFeaturesEXT validation_features{static_cast<uint32>(validation_feature_enables.size()),
+                                                      validation_feature_enables.data()};
+
         vk::InstanceCreateInfo create_info{{},
                                            &app_info,
                                            static_cast<uint32>(enabled_layers.size()),
                                            enabled_layers.data(),
                                            static_cast<uint32>(extensions.size()),
-                                           extensions.data()};
+                                           extensions.data(),
+                                           &validation_features};
 
         return vk::createInstanceUnique(create_info);
     }

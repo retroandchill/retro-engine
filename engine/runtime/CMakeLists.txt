@@ -9,7 +9,10 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/actor_ptr.cpp
         src/scene/scene_c.cpp
         src/scene/rendering/render_object_registry.cpp
-        src/engine_c.cpp)
+        src/engine_c.cpp
+        src/scene/rendering/geometry_render_object.cpp
+        src/scene/rendering/pipeline_registry.cpp
+        src/scene/rendering/registration.cpp)
 
 set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/index.ixx
@@ -28,7 +31,10 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
         src/scene/actor_ptr.ixx
-        src/scene/rendering/render_object_registry.ixx)
+        src/scene/rendering/render_object_registry.ixx
+        src/scene/rendering/geometry_render_object.ixx
+        src/scene/rendering/render_pipeline.ixx
+        src/scene/rendering/pipeline_registry.ixx)
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h

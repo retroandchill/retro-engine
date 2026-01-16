@@ -12,10 +12,10 @@ export module retro.renderer:pipeline.pipeline_manager;
 
 import std;
 import retro.core;
-import :pipeline.render_pipeline;
+import retro.runtime;
 import vulkan_hpp;
 import :components;
-import :pipeline.pipeline_registry;
+import :pipeline.vulkan_render_pipeline;
 
 namespace retro
 {
@@ -26,19 +26,19 @@ namespace retro
                                         const VulkanSwapchain &swapchain,
                                         const vk::RenderPass render_pass)
             : device_{device}, cache_{device.createPipelineCacheUnique(vk::PipelineCacheCreateInfo{})},
-              pipelines_(PipelineRegistry::instance().create_pipelines(device, swapchain, render_pass))
+              pipelines_(create_pipelines(device, swapchain, render_pass))
         {
             for (usize i = 0; i < pipelines_.size(); ++i)
             {
-                pipeline_indices_[pipelines_[i]->type()] = i;
+                pipeline_indices_[pipelines_[i].type()] = i;
             }
         }
 
         inline void recreate_pipelines(const VulkanSwapchain &swapchain, const vk::RenderPass render_pass)
         {
-            for (const auto &pipeline : pipelines_)
+            for (auto &pipeline : pipelines_)
             {
-                pipeline->recreate(device_, swapchain, render_pass);
+                pipeline.recreate(device_, swapchain, render_pass);
             }
         }
 
@@ -46,19 +46,23 @@ namespace retro
         {
             if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
             {
-                pipelines_[it->second]->queue_draw_calls(render_data);
+                pipelines_[it->second].queue_draw_calls(render_data);
             }
         }
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size) const;
+        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size);
 
         void clear_draw_queue();
 
       private:
+        static std::vector<VulkanRenderPipeline> create_pipelines(vk::Device device,
+                                                                  const VulkanSwapchain &swapchain,
+                                                                  vk::RenderPass render_pass);
+
         vk::Device device_;
         vk::UniquePipelineCache cache_;
 
-        std::vector<std::unique_ptr<RenderPipeline>> pipelines_;
+        std::vector<VulkanRenderPipeline> pipelines_;
         std::map<Name, usize> pipeline_indices_;
     };
 } // namespace retro

@@ -36,6 +36,13 @@ namespace
         static_assert(alignof(Retro_Transform) == alignof(retro::Transform));
         return *std::bit_cast<const retro::Transform *>(transform);
     }
+
+    constexpr const retro::Vertex *from_c(const Retro_Vertex *vertices)
+    {
+        static_assert(sizeof(Retro_Vertex) == sizeof(retro::Vertex));
+        static_assert(alignof(Retro_Vertex) == alignof(retro::Vertex));
+        return std::bit_cast<const retro::Vertex *>(vertices);
+    }
 } // namespace
 
 extern "C"
@@ -70,5 +77,20 @@ extern "C"
             .get_render_object(from_c(render_object_id))
             .value()
             .set_transform(from_c(transform));
+    }
+
+    void retro_geometry_set_render_data(const Retro_RenderObjectId render_object_id,
+                                        const Retro_Vertex *vertices,
+                                        const int32_t vertex_count,
+                                        uint32_t *indices,
+                                        const int32_t index_count)
+    {
+        auto &render_object = retro::Engine::instance().scene().get_render_object(from_c(render_object_id)).value();
+
+        auto &geo_object = static_cast<retro::GeometryRenderObject &>(render_object);
+
+        geo_object.set_geometry(retro::Geometry{
+            .vertices = std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
+            .indices = std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()});
     }
 }

@@ -20,6 +20,8 @@ public abstract partial class SceneObject : INativeSynchronizable, IDisposable
         Viewport = viewport;
         Id = NativeCreate(type, viewport.Id);
         Viewport.AddRenderObject(this);
+
+        Scale = Vector2F.One;
     }
 
     public RenderObjectId Id { get; }

@@ -76,11 +76,12 @@ namespace retro
             }
         }
 
-        auto collect_draw_calls() const
+        auto collect_draw_calls(const Vector2u viewport_size) const
         {
             return buckets_ |
-                   std::views::transform([](const std::unique_ptr<RenderProxyBucket> &bucket)
-                                         { return std::make_pair(bucket->type_id(), bucket->collect_draw_calls()); });
+                   std::views::transform(
+                       [viewport_size](const std::unique_ptr<RenderProxyBucket> &bucket)
+                       { return std::make_pair(bucket->type_id(), bucket->collect_draw_calls(viewport_size)); });
         }
 
       private:

@@ -6,8 +6,8 @@ set(RENDERER_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources")
 set(RENDERER_SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 
 set(RENDERER_SHADERS
-        "${RENDERER_SHADER_DIR}/fullscreen_quad.vert"
-        "${RENDERER_SHADER_DIR}/solid_color.frag"
+        "${RENDERER_SHADER_DIR}/geometry.vert"
+        "${RENDERER_SHADER_DIR}/geometry.frag"
 )
 
 set(COMPILED_SHADERS "")
@@ -46,10 +46,9 @@ set(RETRO_RENDER_SOURCES src/vulkan_renderer2d.cpp
         src/components/vulkan_sync.cpp
         src/window.cpp
         src/pipeline/pipeline_manager.cpp
-        src/instances/quad.cpp
-        src/pipeline/pipeline_registry.cpp
-        src/instances/registrations.cpp
-        src/instances/quad_c.cpp)
+        src/pipeline/vulkan_render_pipeline.cpp
+        src/vulkan_buffer_manager.cpp
+)
 
 set(RETRO_RENDER_MODULES src/index.ixx
         src/vulkan_renderer2d.ixx
@@ -62,13 +61,11 @@ set(RETRO_RENDER_MODULES src/index.ixx
         src/components/vulkan_sync.ixx
         src/pipeline/index.ixx
         src/pipeline/pipeline_manager.ixx
-        src/pipeline/render_pipeline.ixx
-        src/instances/index.ixx
-        src/instances/quad.ixx
-        src/pipeline/pipeline_registry.ixx)
+        src/pipeline/vulkan_render_pipeline.ixx
+        src/vulkan_buffer_manager.ixx
+)
 
-set(RETRO_RENDER_HEADERS
-        include/retro/renderer/instances/quad.h)
+set(RETRO_RENDER_HEADERS )
 
 add_library(retro_renderer
         ${RETRO_RENDER_SOURCES}

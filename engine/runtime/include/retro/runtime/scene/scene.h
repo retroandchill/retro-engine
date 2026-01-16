@@ -9,6 +9,7 @@
 #pragma once
 
 #include "retro/core/exports.h"
+#include "retro/core/math/color.h"
 #include "retro/core/math/vector.h"
 #include "retro/core/strings/name.h"
 
@@ -31,6 +32,13 @@ extern "C"
         Retro_Vector2f scale;
     } Retro_Transform;
 
+    typedef struct Retro_Vertex
+    {
+        Retro_Vector2f position{};
+        Retro_Vector2f uv{};
+        Retro_Color color{};
+    } Retro_Vertex;
+
     typedef Retro_DefaultHandle Retro_ViewportId;
 
     typedef Retro_DefaultHandle Retro_RenderObjectId;
@@ -45,6 +53,12 @@ extern "C"
 
     RETRO_API void retro_render_object_set_transform(Retro_RenderObjectId render_object_id,
                                                      const Retro_Transform *transform);
+
+    RETRO_API void retro_geometry_set_render_data(Retro_RenderObjectId render_object_id,
+                                                  const Retro_Vertex *vertices,
+                                                  int32_t vertex_count,
+                                                  uint32_t *indices,
+                                                  int32_t index_count);
 
 #ifdef __cplusplus
 }

@@ -21,5 +21,7 @@ namespace retro
         virtual void end_frame() = 0;
 
         virtual void queue_draw_calls(Name type, const std::any &data) = 0;
+
+        [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };
 } // namespace retro
