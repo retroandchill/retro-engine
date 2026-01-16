@@ -11,4 +11,3 @@ export import :scene.scene;
 export import :scene.viewport;
 export import :scene.rendering;
 export import :scene.transform;
-export import :scene.events;

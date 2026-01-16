@@ -15,7 +15,6 @@ import boost;
 import retro.core;
 import :scene.viewport;
 import :scene.rendering;
-import :scene.events;
 
 namespace retro
 {
@@ -56,19 +55,9 @@ namespace retro
 
         void destroy_render_object(RenderObjectID render_object_id);
 
-        template <IsSceneEvent T, typename... Args>
-            requires std::constructible_from<T, Args...>
-        void enqueue_event(Args &&...args)
-        {
-            events_.emplace(std::in_place_type<T>, std::forward<Args>(args)...);
-        }
-
-        void process_scene_events();
-
       private:
         PackedPool<Viewport> viewports_{};
         PackedPool<RenderObjectHandle> render_objects_{};
         RenderProxyManager render_proxy_manager_;
-        std::queue<SceneEvent> events_;
     };
 } // namespace retro

@@ -28,7 +28,6 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
         src/scene/actor_ptr.ixx
-        src/scene/events.ixx
         src/scene/rendering/render_object_registry.ixx)
 
 set(RETRO_RUNTIME_HEADERS
