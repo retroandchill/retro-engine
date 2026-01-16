@@ -248,15 +248,14 @@ namespace retro
 
         device_.device().waitIdle();
 
-        swapchain_ = VulkanSwapchain{SwapchainConfig{SwapchainConfig{
-            .physical_device = device_.physical_device(),
-            .device = device_.device(),
-            .surface = surface_.get(),
-            .graphics_family = device_.graphics_family_index(),
-            .present_family = device_.present_family_index(),
-            .width = w,
-            .height = h,
-        }}};
+        swapchain_ = VulkanSwapchain{SwapchainConfig{SwapchainConfig{.physical_device = device_.physical_device(),
+                                                                     .device = device_.device(),
+                                                                     .surface = surface_.get(),
+                                                                     .graphics_family = device_.graphics_family_index(),
+                                                                     .present_family = device_.present_family_index(),
+                                                                     .width = w,
+                                                                     .height = h,
+                                                                     .old_swapchain = swapchain_.handle()}}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
         pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());

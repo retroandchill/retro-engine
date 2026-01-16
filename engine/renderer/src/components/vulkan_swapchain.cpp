@@ -88,6 +88,7 @@ namespace retro
         ci.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
         ci.presentMode = chosen_present_mode;
         ci.clipped = vk::True;
+        ci.oldSwapchain = config.old_swapchain;
 
         swapchain_ = config.device.createSwapchainKHRUnique(ci);
 

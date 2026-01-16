@@ -25,6 +25,7 @@ namespace retro
         uint32 present_family = vk::QueueFamilyIgnored;
         uint32 width = 0;
         uint32 height = 0;
+        vk::SwapchainKHR old_swapchain = nullptr;
     };
 
     export class RETRO_API VulkanSwapchain
