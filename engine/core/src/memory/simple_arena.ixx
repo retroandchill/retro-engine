@@ -132,7 +132,7 @@ namespace retro
                 aligned_offset = 0;
             }
 
-            auto *ptr = std::bit_cast<T *>(block->data.get() + aligned_offset);
+            auto *ptr = reinterpret_cast<T *>(block->data.get() + aligned_offset);
             std::construct_at(ptr, std::forward<Args>(args)...);
             block->current_offset = aligned_offset + sizeof(T) + tail_size;
 

@@ -30,18 +30,18 @@ namespace
         return std::bit_cast<retro::Name>(name);
     }
 
-    constexpr const retro::Transform &from_c(const Retro_Transform *transform)
+    const retro::Transform &from_c(const Retro_Transform *transform)
     {
         static_assert(sizeof(Retro_Transform) == sizeof(retro::Transform));
         static_assert(alignof(Retro_Transform) == alignof(retro::Transform));
-        return *std::bit_cast<const retro::Transform *>(transform);
+        return *reinterpret_cast<const retro::Transform *>(transform);
     }
 
-    constexpr const retro::Vertex *from_c(const Retro_Vertex *vertices)
+    const retro::Vertex *from_c(const Retro_Vertex *vertices)
     {
         static_assert(sizeof(Retro_Vertex) == sizeof(retro::Vertex));
         static_assert(alignof(Retro_Vertex) == alignof(retro::Vertex));
-        return std::bit_cast<const retro::Vertex *>(vertices);
+        return reinterpret_cast<const retro::Vertex *>(vertices);
     }
 } // namespace
 

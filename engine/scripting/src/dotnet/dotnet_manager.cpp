@@ -38,7 +38,7 @@ DotnetManager::DotnetManager()
                                                  ENTRY_POINT_METHOD_NAME.data(),
                                                  UNMANAGEDCALLERSONLY_METHOD,
                                                  nullptr,
-                                                 std::bit_cast<void **>(&initialize_runtime_host));
+                                                 reinterpret_cast<void **>(&initialize_runtime_host));
         error_code != 0)
     {
         throw std::runtime_error(std::format("Failed to initialize runtime host! Error code: {}", error_code));

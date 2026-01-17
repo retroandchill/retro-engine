@@ -248,7 +248,7 @@ namespace retro
                                                                       const std::filesystem::path &path)
     {
         const auto bytes = read_binary_file(path);
-        const auto *code = std::bit_cast<const uint32 *>(bytes.data());
+        const auto *code = reinterpret_cast<const uint32 *>(bytes.data());
 
         if (bytes.size() % sizeof(uint32) != 0)
         {

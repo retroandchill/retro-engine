@@ -29,7 +29,7 @@ namespace retro
     {
         assert(buffer.size() >= sizeof(T) && "Buffer too small for type T");
 
-        auto *data = std::bit_cast<T *>(buffer.data());
+        auto *data = reinterpret_cast<T *>(buffer.data());
         *data = value;
         return data;
     }
@@ -50,7 +50,7 @@ namespace retro
     {
         assert(buffer.size() >= sizeof(T) && "Buffer too small for type T");
 
-        auto *data = std::bit_cast<T *>(buffer.data());
+        auto *data = reinterpret_cast<T *>(buffer.data());
         std::construct_at<T>(data, std::forward<Args>(args)...);
         return data;
     }

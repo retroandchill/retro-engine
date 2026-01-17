@@ -17,7 +17,7 @@ namespace retro
         const auto size = static_cast<size_t>(file.tellg());
         std::vector<std::byte> data(size);
         file.seekg(0);
-        file.read(std::bit_cast<char *>(data.data()), static_cast<std::streamsize>(size));
+        file.read(reinterpret_cast<char *>(data.data()), static_cast<std::streamsize>(size));
         return data;
     }
 } // namespace retro

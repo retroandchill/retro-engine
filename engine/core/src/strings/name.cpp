@@ -231,8 +231,8 @@ namespace retro
                 throw std::runtime_error{"Name too long"};
 
             const usize byte_size = (str.size() + 1) * sizeof(char);
-            auto &entry =
-                *std::bit_cast<NameEntry *>(&allocator_.allocate_with_tail<NameEntryHeader>(byte_size, str.size()));
+            auto &header = allocator_.allocate_with_tail<NameEntryHeader>(byte_size, str.size());
+            auto &entry = *std::launder(reinterpret_cast<NameEntry *>(&header));
             std::memcpy(entry.characters_, str.data(), byte_size);
             entry.characters_[str.size()] = '\0';
             const auto entry_id = NameEntryId{static_cast<uint32>(entries_.size())};

@@ -32,7 +32,7 @@ namespace retro
         {
             if constexpr (sizeof(T) <= Size)
             {
-                std::construct_at(std::bit_cast<T *>(small_buffer.data()), std::forward<A>(Args)...);
+                std::construct_at(reinterpret_cast<T *>(small_buffer.data()), std::forward<A>(Args)...);
             }
             else
             {
@@ -94,7 +94,7 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                return std::bit_cast<T *>(Data.small_buffer.data());
+                return reinterpret_cast<T *>(Data.small_buffer.data());
             }
             else
             {
@@ -106,7 +106,7 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                return std::bit_cast<const T *>(Data.small_buffer.data());
+                return reinterpret_cast<const T *>(Data.small_buffer.data());
             }
             else
             {
@@ -118,7 +118,7 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                std::destroy_at(std::bit_cast<T *>(Data.small_buffer.data()));
+                std::destroy_at(reinterpret_cast<T *>(Data.small_buffer.data()));
             }
             else
             {
@@ -131,7 +131,7 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                dest.template emplace<T>(*std::bit_cast<const T *>(src.small_buffer.data()));
+                dest.template emplace<T>(*reinterpret_cast<const T *>(src.small_buffer.data()));
             }
             else
             {
@@ -144,7 +144,8 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                *std::bit_cast<T *>(dest.small_buffer.data()) = *std::bit_cast<const T *>(src.small_buffer.data());
+                *reinterpret_cast<T *>(dest.small_buffer.data()) =
+                    *reinterpret_cast<const T *>(src.small_buffer.data());
             }
             else
             {
@@ -157,7 +158,7 @@ namespace retro
         {
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                dest.template emplace<T>(std::move(*std::bit_cast<T *>(src.small_buffer.data())));
+                dest.template emplace<T>(std::move(*reinterpret_cast<T *>(src.small_buffer.data())));
             }
             else
             {
@@ -171,7 +172,8 @@ namespace retro
             // NOLINTNEXTLINE
             if constexpr (FITS_STORAGE_BUFFER)
             {
-                *std::bit_cast<T *>(dest.small_buffer.data()) = std::move(*std::bit_cast<T *>(src.small_buffer.data()));
+                *reinterpret_cast<T *>(dest.small_buffer.data()) =
+                    std::move(*reinterpret_cast<T *>(src.small_buffer.data()));
             }
             else
             {

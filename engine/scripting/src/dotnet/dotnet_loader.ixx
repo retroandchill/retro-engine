@@ -77,7 +77,7 @@ namespace retro
                 return std::unexpected{error_code};
             }
 
-            return std::bit_cast<Fn>(function_pointer);
+            return reinterpret_cast<Fn>(function_pointer);
         }
 
         // ReSharper disable once CppParameterMayBeConst
