@@ -8,3 +8,4 @@ export module retro.core:memory;
 
 export import :memory.ref_counted_ptr;
 export import :memory.simple_arena;
+export import :memory.write_to_buffer;

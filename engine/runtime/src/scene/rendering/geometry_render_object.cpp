@@ -38,11 +38,12 @@ namespace retro
         GeometryDrawCall result{.geometry = object.geometry(),
                                 .push_constants = std::vector<std::byte>(sizeof(GeometryRenderData))};
 
-        *std::bit_cast<GeometryRenderData *>(result.push_constants.data()) = {
-            .viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)},
-            .position = object.position(),
-            .rotation = object.rotation(),
-            .scale = object.scale()};
+        write_to_buffer(result.push_constants,
+                        GeometryRenderData{.viewport_size = Vector2f{static_cast<float>(viewport_size.x),
+                                                                     static_cast<float>(viewport_size.y)},
+                                           .position = object.position(),
+                                           .rotation = object.rotation(),
+                                           .scale = object.scale()});
 
         return result;
     }
