@@ -16,6 +16,8 @@ import :defines;
 import :algorithm;
 import :strings.comparison;
 import :strings.concepts;
+import uni_algo;
+import fmt;
 
 namespace retro
 {
@@ -275,7 +277,19 @@ namespace retro
             return comparison_index_.is_none();
         }
 
-        [[nodiscard]] std::string to_string() const;
+        template <Char CharType = char, typename Allocator = std::allocator<CharType>>
+        [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
+        {
+            const auto baseString = get_base_string();
+            if (number_ == NAME_NO_NUMBER_INTERNAL)
+            {
+                return convert_string<CharType>(baseString, std::move(allocator));
+            }
+
+            std::basic_string<CharType, std::char_traits<CharType>, Allocator> result{std::move(allocator)};
+            fmt::format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
+            return result;
+        }
 
         [[nodiscard]] friend constexpr bool operator==(const Name &lhs, const Name &rhs)
         {
@@ -298,6 +312,8 @@ namespace retro
         [[nodiscard]] friend RETRO_API std::strong_ordering operator<=>(const Name &lhs, std::u16string_view rhs);
 
       private:
+        [[nodiscard]] std::string_view get_base_string() const;
+
         static bool is_within_bounds(NameEntryId index);
 
         static LookupResult lookup_name(std::string_view value, FindType find_type);

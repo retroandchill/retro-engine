@@ -77,8 +77,7 @@ extern "C"
 
     int32 retro_name_to_string(const Retro_Name name, char16_t *buffer, const int32 length)
     {
-        const auto as_string = from_c(name).to_string();
-        const auto utf16_string = una::utf8to16<char, char16_t>(as_string, boost::pool_allocator<char16_t>{});
+        const auto utf16_string = from_c(name).to_string<char16_t>(boost::pool_allocator<char16_t>{});
         const usize string_length = std::min(utf16_string.size(), static_cast<usize>(length));
         std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
         return string_length;

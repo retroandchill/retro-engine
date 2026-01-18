@@ -279,20 +279,6 @@ namespace retro
     {
     }
 
-    // NOLINTNEXTLINE
-    std::string Name::to_string() const
-    {
-        // ReSharper disable once CppDFAUnreadVariable
-        // ReSharper disable once CppDFAUnusedValue
-        const auto baseString = NameTable::instance().get(display_index_);
-        if (number_ == NAME_NO_NUMBER_INTERNAL)
-        {
-            return std::string{baseString};
-        }
-
-        return std::format("{}_{}", baseString, name_internal_to_external(number_));
-    }
-
     bool operator==(const Name &lhs, const std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
@@ -303,7 +289,7 @@ namespace retro
 
     [[nodiscard]] bool operator==(const Name &lhs, std::u16string_view rhs)
     {
-        const auto utf8_str = una::utf16to8<char16_t, char>(rhs, boost::pool_allocator<char>{});
+        const auto utf8_str = convert_string<char>(rhs, boost::pool_allocator<char>{});
         return lhs == utf8_str;
     }
 
@@ -321,8 +307,13 @@ namespace retro
 
     std::strong_ordering operator<=>(const Name &lhs, const std::u16string_view rhs)
     {
-        const auto utf8_str = una::utf16to8<char16_t, char>(rhs, boost::pool_allocator<char>{});
+        const auto utf8_str = convert_string<char>(rhs, boost::pool_allocator<char>{});
         return lhs <=> utf8_str;
+    }
+
+    std::string_view Name::get_base_string() const
+    {
+        return NameTable::instance().get(display_index());
     }
 
     bool Name::is_within_bounds(const NameEntryId index)
@@ -360,7 +351,7 @@ namespace retro
 
     Name::LookupResult Name::lookup_name(const std::u16string_view value, const FindType find_type)
     {
-        const auto utf8_str = una::utf16to8<char16_t, char>(value, boost::pool_allocator<char>{});
+        const auto utf8_str = convert_string<char>(value, boost::pool_allocator<char>{});
         return lookup_name(utf8_str, find_type);
     }
 
