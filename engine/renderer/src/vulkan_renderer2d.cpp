@@ -127,6 +127,7 @@ namespace retro
 
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
         pipeline_manager_.clear_draw_queue();
+        VulkanBufferManager::instance().reset();
     }
 
     void VulkanRenderer2D::queue_draw_calls(const Name type, const std::any &data)
