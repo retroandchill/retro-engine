@@ -12,30 +12,28 @@ import std;
 
 namespace retro
 {
-    export class RefCounted
-    {
-      public:
-        virtual ~RefCounted() = default;
-
-        virtual void retain() = 0;
-        virtual void release() = 0;
+    template <typename T>
+    concept RefCounted = requires(T *p) {
+        {
+            p->retain()
+        } noexcept;
+        {
+            p->release()
+        } noexcept;
     };
 
-    export class IntrusiveRefCounted : public RefCounted
+    export class IntrusiveRefCounted
     {
-      public:
+      protected:
         IntrusiveRefCounted() noexcept = default;
 
-      protected:
-        ~IntrusiveRefCounted() override = default;
-
       public:
-        inline void retain() noexcept override
+        inline void retain() noexcept
         {
             ref_count_.fetch_add(1, std::memory_order_relaxed);
         }
 
-        inline void release() noexcept override
+        inline void release() noexcept
         {
             if (ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1)
             {
@@ -52,7 +50,7 @@ namespace retro
         std::atomic<uint32> ref_count_{1};
     };
 
-    export template <std::derived_from<RefCounted> T>
+    export template <RefCounted T>
     class RefCountPtr
     {
       public:
@@ -240,13 +238,13 @@ namespace retro
         T *ptr_{nullptr};
     };
 
-    export template <std::derived_from<RefCounted> T>
+    export template <RefCounted T>
     void swap(RefCountPtr<T> &a, RefCountPtr<T> &b) noexcept
     {
         a.swap(b);
     }
 
-    export template <std::derived_from<RefCounted> T, typename... Args>
+    export template <RefCounted T, typename... Args>
         requires std::constructible_from<T, Args...>
     RefCountPtr<T> make_ref_counted(Args &&...args)
     {
@@ -254,7 +252,7 @@ namespace retro
     }
 } // namespace retro
 
-template <std::derived_from<retro::RefCounted> T>
+template <retro::RefCounted T>
 struct std::hash<retro::RefCountPtr<T>>
 {
     hash() = default;
