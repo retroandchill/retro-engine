@@ -12,56 +12,16 @@ export module retro.runtime:scene.rendering.geometry_render_object;
 
 import std;
 import retro.core;
-import :scene.rendering.render_object;
 import :scene.rendering.render_pipeline;
 import :scene.transform;
 
 namespace retro
 {
-    export class RETRO_API GeometryRenderObject final : public RenderObject
+    export struct GeometryType;
+
+    export struct GeometryRenderObject
     {
-      public:
-        inline GeometryRenderObject(const PoolHandle viewport_id, const Transform &transform = {})
-            : RenderObject{viewport_id, transform}
-        {
-        }
-
-        PoolHandle create_render_proxy(RenderProxyManager &proxy_manager) override;
-
-        void destroy_render_proxy(RenderProxyManager &proxy_manager, PoolHandle id) override;
-
-        [[nodiscard]] inline const Geometry &geometry() const noexcept
-        {
-            return geometry_;
-        }
-
-        inline void set_geometry(Geometry geometry) noexcept
-        {
-            geometry_ = std::move(geometry);
-        }
-
-      private:
-        Geometry geometry_{};
-    };
-
-    export class RETRO_API GeometryRenderProxy
-    {
-      public:
-        using DrawCallData = GeometryDrawCall;
-
-        inline GeometryRenderProxy(GeometryRenderObject &object)
-        {
-        }
-
-        inline static Name type_id()
-        {
-            return TYPE_ID;
-        }
-
-        [[nodiscard]] GeometryDrawCall get_draw_call(Vector2u viewport_size) const;
-
-      private:
-        static const Name TYPE_ID;
+        Geometry geometry{};
     };
 
     export struct GeometryRenderData
@@ -76,7 +36,7 @@ namespace retro
       public:
         [[nodiscard]] inline Name type() const override
         {
-            return GeometryRenderProxy::type_id();
+            return TYPE_ID;
         }
 
         [[nodiscard]] usize push_constants_size() const override;
@@ -85,11 +45,24 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void queue_draw_calls(const std::any &render_data) override;
+        void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size) override;
 
         void execute(RenderContext &context) override;
 
       private:
+        static const Name TYPE_ID;
+        friend struct GeometryType;
+
         std::vector<GeometryDrawCall> pending_geometry_;
+    };
+
+    struct GeometryType
+    {
+        using Component = GeometryRenderObject;
+        using Pipeline = GeometryRenderPipeline;
+        inline static Name name()
+        {
+            return GeometryRenderPipeline::TYPE_ID;
+        }
     };
 } // namespace retro

@@ -30,7 +30,8 @@ namespace retro
     {
         std::vector<VulkanRenderPipeline> pipelines;
 
-        for (auto unique_pipelines = PipelineRegistry::instance().create_pipelines(); auto &pipeline : unique_pipelines)
+        for (auto unique_pipelines = RenderTypeRegistry::instance().create_pipelines();
+             auto &pipeline : unique_pipelines)
         {
             pipelines.emplace_back(std::move(pipeline), device, swapchain, render_pass);
         }

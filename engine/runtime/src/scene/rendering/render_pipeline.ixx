@@ -8,6 +8,7 @@ export module retro.runtime:scene.rendering.render_pipeline;
 
 import std;
 import retro.core;
+import entt;
 
 namespace retro
 {
@@ -65,8 +66,19 @@ namespace retro
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void queue_draw_calls(const std::any &render_data) = 0;
+        virtual void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };
+
+    export template <typename T>
+    concept RenderType =
+        requires {
+            typename T::Component;
+            typename T::Pipeline;
+            {
+                T::name()
+            } -> std::same_as<Name>;
+        } && std::is_default_constructible_v<typename T::Component> &&
+        std::is_default_constructible_v<typename T::Pipeline>;
 } // namespace retro

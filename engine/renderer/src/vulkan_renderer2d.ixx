@@ -8,6 +8,9 @@ module;
 
 #include "retro/core/exports.h"
 
+#include <complex.h>
+#include <entt/entity/registry.hpp>
+
 export module retro.renderer:vulkan_renderer2d;
 
 import vulkan_hpp;
@@ -35,7 +38,7 @@ namespace retro
 
         void end_frame() override;
 
-        void queue_draw_calls(Name type, const std::any &data) override;
+        void queue_draw_calls(Name type, entt::registry &registry) override;
 
         [[nodiscard]] Vector2u viewport_size() const override;
 

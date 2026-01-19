@@ -18,8 +18,6 @@ import :scene.rendering;
 
 namespace retro
 {
-    export using RenderObjectHandle = Polymorphic<RenderObject, PolymorphicType::Copyable, 128>;
-
     export class RETRO_API Scene
     {
       public:
@@ -30,11 +28,6 @@ namespace retro
         Scene(Scene &&) = default;
         Scene &operator=(const Scene &) = delete;
         Scene &operator=(Scene &&) = default;
-
-        RenderProxyManager &render_proxy_manager()
-        {
-            return render_proxy_manager_;
-        }
 
         entt::entity create_entity();
 
@@ -51,9 +44,8 @@ namespace retro
         void update_transforms();
 
       private:
-        void update_transform(entt::entity entity, const Matrix3x3f &parentWorld);
+        void update_transform(entt::entity entity, const Matrix3x3f &parentWorld, bool parent_changed);
 
         entt::registry registry_{};
-        RenderProxyManager render_proxy_manager_{};
     };
 } // namespace retro

@@ -100,9 +100,9 @@ namespace retro
         return pipeline_->type();
     }
 
-    void VulkanRenderPipeline::queue_draw_calls(const std::any &render_data)
+    void VulkanRenderPipeline::queue_draw_calls(entt::registry &registry, Vector2u viewport_size)
     {
-        pipeline_->queue_draw_calls(render_data);
+        pipeline_->collect_draw_calls(registry, viewport_size);
     }
 
     void VulkanRenderPipeline::clear_draw_queue()

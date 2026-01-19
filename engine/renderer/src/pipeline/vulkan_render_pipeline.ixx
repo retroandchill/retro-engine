@@ -15,6 +15,7 @@ import vulkan_hpp;
 import :components;
 import :vulkan_buffer_manager;
 import retro.runtime;
+import entt;
 
 namespace retro
 {
@@ -32,7 +33,7 @@ namespace retro
 
         [[nodiscard]] Name type() const;
 
-        void queue_draw_calls(const std::any &render_data);
+        void queue_draw_calls(entt::registry &registry, Vector2u viewport_size);
 
         void clear_draw_queue();
 

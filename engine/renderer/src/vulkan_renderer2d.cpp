@@ -130,9 +130,9 @@ namespace retro
         VulkanBufferManager::instance().reset();
     }
 
-    void VulkanRenderer2D::queue_draw_calls(const Name type, const std::any &data)
+    void VulkanRenderer2D::queue_draw_calls(const Name type, entt::registry &registry)
     {
-        pipeline_manager_.queue_draw_calls(type, data);
+        pipeline_manager_.queue_draw_calls(type, registry, viewport_->size());
     }
 
     Vector2u VulkanRenderer2D::viewport_size() const

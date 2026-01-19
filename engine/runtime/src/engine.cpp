@@ -118,7 +118,7 @@ void Engine::render()
 
     for (auto [type_id, data] : scene_->render_proxy_manager().collect_draw_calls(renderer_->viewport_size()))
     {
-        renderer_->queue_draw_calls(type_id, data);
+        renderer_->queue_draw_calls(type_id, TODO);
     }
 
     renderer_->end_frame();

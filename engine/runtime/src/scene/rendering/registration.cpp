@@ -11,16 +11,5 @@ import entt;
 
 namespace retro
 {
-    const RenderObjectTypeRegistration geometry_type_registration{"geometry",
-                                                                  [](const entt::entity viewport_id)
-                                                                  {
-                                                                      return Engine::instance().scene().create_entity();
-                                                                      // return
-                                                                      // Engine::instance().scene().create_render_object<GeometryRenderObject>(viewport_id);
-                                                                  }};
-    const PipelineRegistration geometry_pipeline_registration{"pipeline",
-                                                              []
-                                                              {
-                                                                  return std::make_unique<GeometryRenderPipeline>();
-                                                              }};
+    const PipelineRegistration<GeometryType> geometry_pipeline_registration{};
 } // namespace retro

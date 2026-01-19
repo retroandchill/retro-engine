@@ -42,11 +42,11 @@ namespace retro
             }
         }
 
-        inline void queue_draw_calls(const Name type, const std::any &render_data)
+        inline void queue_draw_calls(const Name type, entt::registry &registry, const Vector2u viewport_size)
         {
             if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
             {
-                pipelines_[it->second].queue_draw_calls(render_data);
+                pipelines_[it->second].queue_draw_calls(registry, viewport_size);
             }
         }
 

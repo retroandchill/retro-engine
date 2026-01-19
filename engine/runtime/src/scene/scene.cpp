@@ -40,26 +40,29 @@ namespace retro
 
     void Scene::update_transforms()
     {
-        for (auto &&[entity, viewport] : registry_.view<Viewport>().each())
+        for (const auto view = registry_.view<Viewport>(); const auto entity : view)
         {
-            update_transform(entity, create_translation(viewport.offset));
+            update_transform(entity, Matrix3x3f::identity(), false);
         }
     }
 
-    void Scene::update_transform(entt::entity entity, const Matrix3x3f &parentWorld)
+    void Scene::update_transform(const entt::entity entity, const Matrix3x3f &parentWorld, const bool parent_changed)
     {
         auto &&[transform, hierarchy] = registry_.get<Transform, Hierarchy>(entity);
 
-        if (transform.dirty)
+        const bool should_update = transform.dirty || parent_changed;
+        if (should_update)
         {
             transform.world_matrix = parentWorld * transform.local_matrix();
             transform.dirty = false;
         }
 
-        for (auto child = hierarchy.first_child; child != entt::null;
-             child = registry_.get<Hierarchy>(child).next_sibling)
+        auto child = hierarchy.first_child;
+        while (child != entt::null)
         {
-            update_transform(child, transform.world_matrix);
+            const auto &child_hierarchy = registry_.get<Hierarchy>(child);
+            update_transform(child, transform.world_matrix, should_update);
+            child = child_hierarchy.next_sibling;
         }
     }
 } // namespace retro

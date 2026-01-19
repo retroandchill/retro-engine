@@ -8,6 +8,7 @@ export module retro.runtime:interfaces.renderer_2d;
 
 import retro.core;
 import std;
+import entt;
 
 namespace retro
 {
@@ -20,7 +21,7 @@ namespace retro
 
         virtual void end_frame() = 0;
 
-        virtual void queue_draw_calls(Name type, const std::any &data) = 0;
+        virtual void queue_draw_calls(Name type, entt::registry &registry) = 0;
 
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };

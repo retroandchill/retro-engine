@@ -16,7 +16,5 @@ namespace retro
     export struct Viewport
     {
         Vector2f view_size{};
-        Vector2f offset{};
-        entt::entity root_node = entt::null;
     };
 } // namespace retro

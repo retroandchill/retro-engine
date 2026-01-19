@@ -5,12 +5,10 @@
 set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/filesystem/utils.cpp
         src/scene/scene.cpp
-        src/scene/rendering/render_object.cpp
         src/scene/scene_c.cpp
-        src/scene/rendering/render_object_registry.cpp
         src/engine_c.cpp
         src/scene/rendering/geometry_render_object.cpp
-        src/scene/rendering/pipeline_registry.cpp
+        src/scene/rendering/render_type_registry.cpp
         src/scene/rendering/registration.cpp)
 
 set(RETRO_RUNTIME_MODULES src/engine.ixx
@@ -24,15 +22,11 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/index.ixx
         src/scene/scene.ixx
         src/scene/viewport.ixx
-        src/scene/rendering/render_object.ixx
         src/scene/rendering/index.ixx
-        src/scene/rendering/render_proxy_manager.ixx
-        src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
-        src/scene/rendering/render_object_registry.ixx
         src/scene/rendering/geometry_render_object.ixx
         src/scene/rendering/render_pipeline.ixx
-        src/scene/rendering/pipeline_registry.ixx
+        src/scene/rendering/render_type_registry.ixx
         src/assets/index.ixx
         src/assets/textures/index.ixx
         src/assets/textures/texture_loader.ixx

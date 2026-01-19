@@ -79,13 +79,11 @@ extern "C"
                                         uint32_t *indices,
                                         const int32_t index_count)
     {
-        auto &render_object =
+        auto &geo_object =
             retro::Engine::instance().scene().get_component<retro::GeometryRenderObject>(from_c(render_object_id));
 
-        auto &geo_object = static_cast<retro::GeometryRenderObject &>(render_object);
-
-        geo_object.set_geometry(retro::Geometry{
+        geo_object.geometry = retro::Geometry{
             .vertices = std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
-            .indices = std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()});
+            .indices = std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()};
     }
 }

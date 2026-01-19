@@ -6,6 +6,11 @@
  */
 module;
 
+// Workaround for IntelliSense issues regarding entt
+#ifdef __JETBRAINS_IDE__
+#include <entt/entt.hpp>
+#endif
+
 module retro.runtime;
 
 import retro.logging;
@@ -20,35 +25,7 @@ namespace retro
         Vector2f transform_scale{};
     };
 
-    PoolHandle GeometryRenderObject::create_render_proxy(RenderProxyManager &proxy_manager)
-    {
-        return proxy_manager.emplace_proxy<GeometryRenderProxy>(*this);
-    }
-
-    void GeometryRenderObject::destroy_render_proxy(RenderProxyManager &proxy_manager, const PoolHandle id)
-    {
-        proxy_manager.remove_proxy<GeometryRenderProxy>(id);
-    }
-
-    const Name GeometryRenderProxy::TYPE_ID = "geometry"_name;
-
-    GeometryDrawCall GeometryRenderProxy::get_draw_call(const Vector2u viewport_size) const
-    {
-        // const auto &object = *object_;
-        GeometryDrawCall result{//.geometry = object.geometry(),
-                                .push_constants = std::vector<std::byte>(sizeof(GeometryRenderData))};
-
-        /*
-        write_to_buffer(result.push_constants,
-                        GeometryRenderData{.viewport_size = Vector2f{static_cast<float>(viewport_size.x),
-                                                                     static_cast<float>(viewport_size.y)},
-                                           .position = object.position(),
-                                           .rotation = object.rotation(),
-                                           .scale = object.scale()});
-                                           */
-
-        return result;
-    }
+    const Name GeometryRenderPipeline::TYPE_ID = "geometry"_name;
 
     usize GeometryRenderPipeline::push_constants_size() const
     {
@@ -66,10 +43,22 @@ namespace retro
         pending_geometry_.clear();
     }
 
-    void GeometryRenderPipeline::queue_draw_calls(const std::any &render_data)
+    void GeometryRenderPipeline::collect_draw_calls(const entt::registry &registry, const Vector2u viewport_size)
     {
-        auto &data = std::any_cast<const std::vector<GeometryDrawCall> &>(render_data);
-        pending_geometry_.append_range(data);
+        for (const auto view = registry.view<GeometryRenderObject, Transform>();
+             auto [entity, geometry, transform] : view.each())
+        {
+            GeometryDrawCall draw_call{.geometry = geometry.geometry,
+                                       .push_constants = std::vector<std::byte>(sizeof(GeometryRenderData))};
+
+            write_to_buffer(draw_call.push_constants,
+                            GeometryRenderData{.viewport_size = Vector2f{static_cast<float>(viewport_size.x),
+                                                                         static_cast<float>(viewport_size.y)},
+                                               .world_matrix = transform.world_matrix,
+                                               .has_texture = 0});
+
+            pending_geometry_.push_back(std::move(draw_call));
+        }
     }
 
     void GeometryRenderPipeline::execute(RenderContext &context)
