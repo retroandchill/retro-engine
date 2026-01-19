@@ -32,18 +32,18 @@
   }, {
     "name" : "boost-optional",
     "version>=" : "1.90.0"
-  },
-  {
+  }, {
     "name" : "uni-algo",
     "version>=" : "1.2.0"
-  },
-  {
+  }, {
     "name" : "boost-unordered",
     "version>=" : "1.90.0"
-  },
-  {
+  }, {
     "name" : "boost-pool",
     "version>=" : "1.90.0"
-  } ],
+  }, {
+    "name" : "boost-intrusive",
+    "version>=" : "1.90.0#1"
+  }],
   "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
 }

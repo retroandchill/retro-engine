@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file boost.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
@@ -8,6 +8,8 @@ module;
 
 #define BOOST_DLL_USE_STD_FS
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
+#include "intrusive.hpp"
+
 #include <boost/dll.hpp>
 #include <boost/optional.hpp>
 #include <boost/pool/pool_alloc.hpp>
@@ -114,6 +116,88 @@ export namespace boost
     using boost::operator>;
     using boost::operator<=;
     using boost::operator>=;
+#pragma endregion
+
+#pragma region intrusive
+    namespace intrusive
+    {
+        using intrusive::list;
+        using intrusive::list_base_hook;
+        using intrusive::list_member_hook;
+        using intrusive::slist;
+        using intrusive::slist_base_hook;
+        using intrusive::slist_member_hook;
+
+        using intrusive::bs_multiset;
+        using intrusive::bs_set;
+        using intrusive::bs_set_base_hook;
+        using intrusive::bs_set_member_hook;
+        using intrusive::bstree;
+
+        using intrusive::multiset;
+        using intrusive::rbtree;
+        using intrusive::set;
+        using intrusive::set_base_hook;
+        using intrusive::set_member_hook;
+
+        using intrusive::avl_multiset;
+        using intrusive::avl_set;
+        using intrusive::avl_set_base_hook;
+        using intrusive::avl_set_member_hook;
+        using intrusive::avltree;
+
+        using intrusive::splay_multiset;
+        using intrusive::splay_set;
+        using intrusive::splaytree;
+
+        using intrusive::sg_multiset;
+        using intrusive::sg_set;
+        using intrusive::sgtree;
+
+        using intrusive::treap;
+        using intrusive::treap_multiset;
+        using intrusive::treap_set;
+
+        using intrusive::hashtable;
+        using intrusive::unordered_multiset;
+        using intrusive::unordered_set;
+        using intrusive::unordered_set_base_hook;
+        using intrusive::unordered_set_member_hook;
+
+        using intrusive::any_base_hook;
+        using intrusive::any_member_hook;
+
+        using intrusive::base_hook;
+        using intrusive::bucket_traits;
+        using intrusive::cache_begin;
+        using intrusive::cache_last;
+        using intrusive::compare;
+        using intrusive::compare_hash;
+        using intrusive::constant_time_size;
+        using intrusive::equal;
+        using intrusive::floating_point;
+        using intrusive::function_hook;
+        using intrusive::hash;
+        using intrusive::incremental;
+        using intrusive::linear;
+        using intrusive::link_mode;
+        using intrusive::member_hook;
+        using intrusive::optimize_multikey;
+        using intrusive::optimize_size;
+        using intrusive::power_2_buckets;
+        using intrusive::priority;
+        using intrusive::size_type;
+        using intrusive::store_hash;
+        using intrusive::tag;
+        using intrusive::value_traits;
+        using intrusive::void_pointer;
+
+        using intrusive::derivation_value_traits;
+        using intrusive::trivial_value_traits;
+        using intrusive::value_traits;
+
+        using intrusive::pointer_plus_bits;
+    } // namespace intrusive
 #pragma endregion
 
 } // namespace boost
