@@ -36,28 +36,24 @@ namespace retro
             return render_proxy_manager_;
         }
 
-        boost::optional<Viewport &> get_viewport(ViewportID id);
+        entt::entity create_entity();
 
-        Viewport &create_viewport() noexcept;
+        entt::entity create_viewport(Vector2f view_size);
 
-        void destroy_viewport(ViewportID id);
+        void destroy_entity(entt::entity entity);
 
-        boost::optional<RenderObject &> get_render_object(RenderObjectID id);
-
-        template <std::derived_from<RenderObject> T, typename... Args>
-            requires std::constructible_from<T, RenderObjectID, ViewportID, Args...>
-        T &create_render_object(ViewportID entity_id, Args &&...args)
+        template <typename T>
+        T &get_component(const entt::entity entity)
         {
-            auto &component = render_objects_.emplace_as<T>(entity_id, std::forward<Args>(args)...);
-            component->on_attach();
-            return static_cast<T &>(*component);
+            return registry_.get<T>(entity);
         }
 
-        void destroy_render_object(RenderObjectID render_object_id);
+        void update_transforms();
 
       private:
-        PackedPool<Viewport> viewports_{};
-        PackedPool<RenderObjectHandle> render_objects_{};
-        RenderProxyManager render_proxy_manager_;
+        void update_transform(entt::entity entity, const Matrix3x3f &parentWorld);
+
+        entt::registry registry_{};
+        RenderProxyManager render_proxy_manager_{};
     };
 } // namespace retro

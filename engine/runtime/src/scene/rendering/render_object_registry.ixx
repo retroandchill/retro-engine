@@ -12,10 +12,11 @@ export module retro.runtime:scene.rendering.render_object_registry;
 
 import retro.core;
 import :scene.rendering.render_object;
+import entt;
 
 namespace retro
 {
-    using RenderObjectFactory = std::function<RenderObject &(ViewportID)>;
+    using RenderObjectFactory = std::function<entt::entity(entt::entity)>;
 
     export class RETRO_API RenderObjectRegistry
     {
@@ -27,7 +28,7 @@ namespace retro
 
         void register_type(Name type_name, RenderObjectFactory creator);
 
-        [[nodiscard]] RenderObject &create(Name type_name, ViewportID viewport_id) const;
+        [[nodiscard]] entt::entity create(Name type_name, entt::entity viewport_id) const;
 
       private:
         std::unordered_map<Name, RenderObjectFactory> factories_{};

@@ -40,6 +40,7 @@ set(RETRO_CORE_MODULES src/index.ixx
         src/functional/overload.ixx
         src/functional/function_traits.ixx
         src/memory/write_to_buffer.ixx
+        src/math/matrix.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

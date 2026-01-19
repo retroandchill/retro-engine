@@ -13,22 +13,29 @@ import :containers.polymorphic;
 
 namespace retro
 {
-    export template <typename Index = uint32, typename Generation = uint32>
-        requires std::is_integral_v<Index> && std::is_integral_v<Generation>
-    struct BasicHandle
+    export struct PoolHandle
     {
-        using IndexType = Index;
-        using GenerationType = Generation;
+        static constexpr uint32 INVALID_GENERATION = 0;
 
-        Index index{0};
-        Generation generation{0};
+        uint32 index{0};
+        uint32 generation{0};
 
-        friend constexpr auto operator==(const BasicHandle &lhs, const BasicHandle &rhs) noexcept
+        static constexpr PoolHandle invalid() noexcept
+        {
+            return {0, 0};
+        }
+
+        [[nodiscard]] constexpr bool is_valid() const noexcept
+        {
+            return generation != 0;
+        }
+
+        friend constexpr auto operator==(const PoolHandle &lhs, const PoolHandle &rhs) noexcept
         {
             return lhs.index == rhs.index && lhs.generation == rhs.generation;
         }
 
-        friend constexpr auto operator<=>(const BasicHandle &lhs, const BasicHandle &rhs) noexcept
+        friend constexpr auto operator<=>(const PoolHandle &lhs, const PoolHandle &rhs) noexcept
         {
             auto index_cmp = lhs.index <=> rhs.index;
             if (index_cmp != std::strong_ordering::equal)
@@ -38,159 +45,18 @@ namespace retro
         }
     };
 
-    export using DefaultHandle = BasicHandle<>;
-
-    template <typename>
-    struct IsBasicHandleSpecialization : std::false_type
-    {
-    };
-
-    template <typename Index, typename Generation>
-    struct IsBasicHandleSpecialization<BasicHandle<Index, Generation>> : std::true_type
-    {
-    };
-
-    template <typename T>
-    concept BasicHandleSpecialization = IsBasicHandleSpecialization<T>::value;
-
-    template <typename Index = uint32, typename Generation = uint32>
-        requires std::is_integral_v<Index> && std::is_integral_v<Generation>
     struct SlotEntry
     {
-        Index dense_index{0};
-        Index generation{0};
+        uint32 dense_index{0};
+        uint32 generation{1};
         bool alive{false};
     };
 
     export template <typename T>
-    concept PackableType = requires(T value) {
-        typename std::remove_cvref_t<T>::IdType;
-        {
-            value.id()
-        } -> std::convertible_to<typename std::remove_cvref_t<T>::IdType>;
-    } && BasicHandleSpecialization<typename std::remove_cvref_t<T>::IdType>;
-
-    template <typename>
-    struct PackableConstructionType
-    {
-        static constexpr bool is_valid = false;
-    };
-
-    template <PackableType T>
-    struct PackableConstructionType<T>
-    {
-        static constexpr bool is_valid = true;
-
-        static constexpr bool allow_polymorphic = false;
-
-        using IdType = std::remove_cvref_t<T>::IdType;
-
-        template <typename... Args>
-            requires std::constructible_from<T, IdType, Args...>
-        static constexpr T &emplace_info(std::vector<T> &values, IdType id, Args &&...args)
-        {
-            return values.emplace_back(id, std::forward<Args>(args)...);
-        }
-
-        static IdType get_id(const T &ptr)
-        {
-            return ptr.id();
-        }
-    };
-
-    template <PackableType T>
-    struct PackableConstructionType<std::unique_ptr<T>>
-    {
-        static constexpr bool is_valid = true;
-
-        static constexpr bool allow_polymorphic = true;
-
-        using IdType = PackableConstructionType<T>::IdType;
-
-        template <typename... Args>
-            requires std::constructible_from<T, IdType, Args...>
-        static constexpr std::unique_ptr<T> &emplace_info(std::vector<std::unique_ptr<T>> &values,
-                                                          IdType id,
-                                                          Args &&...args)
-        {
-            return values.emplace_back(std::make_unique<T>(id, std::forward<Args>(args)...));
-        }
-
-        template <std::derived_from<T> U, typename... Args>
-            requires std::constructible_from<U, IdType, Args...>
-        static constexpr std::unique_ptr<T> &emplace_as(std::vector<std::unique_ptr<T>> &values,
-                                                        IdType id,
-                                                        Args &&...args)
-        {
-            return values.emplace_back(std::make_unique<U>(id, std::forward<Args>(args)...));
-        }
-
-        static IdType get_id(const std::unique_ptr<T> &ptr)
-        {
-            return ptr->id();
-        }
-    };
-
-    template <PackableType T, PolymorphicType Type, usize Size>
-    struct PackableConstructionType<Polymorphic<T, Type, Size>>
-    {
-        static constexpr bool is_valid = true;
-
-        static constexpr bool allow_polymorphic = true;
-
-        using IdType = PackableConstructionType<T>::IdType;
-
-        template <typename... Args>
-            requires std::constructible_from<T, IdType, Args...>
-        static constexpr Polymorphic<T, Type, Size> &emplace_info(std::vector<Polymorphic<T, Type, Size>> &values,
-                                                                  IdType id,
-                                                                  Args &&...args)
-        {
-            return values.emplace_back(std::in_place_type<T>, id, std::forward<Args>(args)...);
-        }
-
-        template <std::derived_from<T> U, typename... Args>
-            requires std::constructible_from<U, IdType, Args...>
-        static constexpr Polymorphic<T, Type, Size> &emplace_as(std::vector<Polymorphic<T, Type, Size>> &values,
-                                                                IdType id,
-                                                                Args &&...args)
-        {
-            return values.emplace_back(std::in_place_type<U>, id, std::forward<Args>(args)...);
-        }
-
-        static IdType get_id(const Polymorphic<T, Type, Size> &ptr)
-        {
-            return ptr->id();
-        }
-    };
-
-    template <typename T>
-    concept Packable = PackableConstructionType<T>::is_valid;
-
-    template <typename T, typename... Args>
-    concept EmplaceablePackable = Packable<T> && requires(std::vector<T> &values, Args &&...args) {
-        {
-            PackableConstructionType<T>::emplace_info(values, std::forward<Args>(args)...)
-        } -> std::same_as<T &>;
-    };
-
-    template <typename T, typename U, typename... Args>
-    concept EmplaceablePackableAs =
-        Packable<T> && PackableConstructionType<T>::allow_polymorphic &&
-        requires(std::vector<T> &values, Args &&...args) {
-            {
-                PackableConstructionType<T>::template emplace_as<U>(values, std::forward<Args>(args)...)
-            } -> std::same_as<T &>;
-        };
-
-    export template <Packable T>
     class PackedPool
     {
       public:
         using value_type = T;
-        using HandleType = PackableConstructionType<T>::IdType;
-        using IndexType = HandleType::IndexType;
-        using GenerationType = HandleType::GenerationType;
 
         PackedPool() = default;
 
@@ -334,10 +200,10 @@ namespace retro
         }
 
         template <typename Self>
-        [[nodiscard]] constexpr auto get(this Self &self, const HandleType id) noexcept
+        [[nodiscard]] constexpr auto get(this Self &self, const PoolHandle id) noexcept
             -> boost::optional<std::remove_cvref_t<T> &>
         {
-            if (id.index >= self.slots_.size())
+            if (id.generation == 0 || id.index >= self.slots_.size())
                 return boost::none;
 
             const auto &[dense_index, generation, alive] = self.slots_[id.index];
@@ -361,60 +227,10 @@ namespace retro
         }
 
         template <typename... Args>
-            requires EmplaceablePackable<T, HandleType, Args...>
-        constexpr T &emplace(Args &&...args)
-        {
-            return emplace_impl(
-                [&](HandleType id) -> T &
-                { return PackableConstructionType<T>::emplace_info(values_, id, std::forward<Args>(args)...); });
-        }
-
-        template <typename U, typename... Args>
-            requires EmplaceablePackableAs<T, U, HandleType, Args...>
-        constexpr T &emplace_as(Args &&...args)
-        {
-            return emplace_impl(
-                [&](HandleType id) -> T & {
-                    return PackableConstructionType<T>::template emplace_as<U>(values_,
-                                                                               id,
-                                                                               std::forward<Args>(args)...);
-                });
-        }
-
-        constexpr void remove(HandleType id)
-        {
-            if (id.index >= slots_.size())
-                return;
-
-            auto [dense_index, generation, alive] = slots_[id.index];
-            if (!alive || generation != id.generation)
-                return;
-
-            if (const uint32 last_dense_index = static_cast<uint32>(values_.size()) - 1;
-                dense_index != last_dense_index)
-            {
-                const auto &last_value = values_.back();
-                auto [last_slot_index, last_gen] = PackableConstructionType<T>::get_id(last_value);
-
-                values_[dense_index] = std::move(values_.back());
-                slots_[last_slot_index].dense_index = dense_index;
-            }
-
-            values_.pop_back();
-
-            auto &slot = slots_[id.index];
-            slot.alive = false;
-            ++slot.generation;
-            free_list_.push_back(id.index);
-        }
-
-      private:
-        template <typename Functor>
-            requires std::invocable<Functor, HandleType>
-        constexpr T &emplace_impl(Functor &&functor)
+            requires std::constructible_from<T, Args...>
+        constexpr std::pair<PoolHandle, T &> emplace(Args &&...args)
         {
             uint32 slot_index;
-
             if (!free_list_.empty())
             {
                 slot_index = free_list_.back();
@@ -427,20 +243,51 @@ namespace retro
             }
 
             auto &[dense_index, generation, alive] = slots_[slot_index];
-
             dense_index = static_cast<uint32>(values_.size());
-
-            HandleType id{.index = slot_index, .generation = generation};
-            auto &value = std::forward<Functor>(functor)(id);
             alive = true;
 
-            return value;
+            T &value = values_.emplace_back(std::forward<Args>(args)...);
+            reverse_map_.push_back(slot_index);
+
+            return {{slot_index, generation}, value};
         }
 
-        using SlotType = SlotEntry<IndexType, GenerationType>;
+        constexpr void remove(PoolHandle id)
+        {
+            if (id.index >= slots_.size())
+                return;
 
+            auto &[dense_index, generation, alive] = slots_[id.index];
+            if (!alive || generation != id.generation)
+                return;
+
+            if (const uint32 last_dense_index = static_cast<uint32>(values_.size()) - 1;
+                dense_index != last_dense_index)
+            {
+                // Move the last element into the hole
+                values_[dense_index] = std::move(values_.back());
+
+                // Update the slot of the element we just moved
+                const uint32 moved_slot_index = reverse_map_.back();
+                slots_[moved_slot_index].dense_index = dense_index;
+                reverse_map_[dense_index] = moved_slot_index;
+            }
+
+            values_.pop_back();
+            reverse_map_.pop_back();
+
+            alive = false;
+            ++generation;
+            // Since this is only from the result of unsigned overflow this is very unlikely to ever happen.
+            if (generation == PoolHandle::INVALID_GENERATION) [[unlikely]]
+                generation = 1;
+            free_list_.push_back(id.index);
+        }
+
+      private:
         std::vector<T> values_{};
-        std::vector<SlotType> slots_{};
-        std::vector<IndexType> free_list_{};
+        std::vector<uint32> reverse_map_{};
+        std::vector<SlotEntry> slots_{};
+        std::vector<uint32> free_list_{};
     };
 } // namespace retro

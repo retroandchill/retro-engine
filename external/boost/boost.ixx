@@ -199,5 +199,4 @@ export namespace boost
         using intrusive::pointer_plus_bits;
     } // namespace intrusive
 #pragma endregion
-
 } // namespace boost

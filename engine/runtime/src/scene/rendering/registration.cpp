@@ -7,15 +7,17 @@
 
 import retro.runtime;
 import std;
+import entt;
 
 namespace retro
 {
-    const RenderObjectTypeRegistration geometry_type_registration{
-        "geometry",
-        [](const ViewportID viewport_id) -> auto &
-        {
-            return Engine::instance().scene().create_render_object<GeometryRenderObject>(viewport_id);
-        }};
+    const RenderObjectTypeRegistration geometry_type_registration{"geometry",
+                                                                  [](const entt::entity viewport_id)
+                                                                  {
+                                                                      return Engine::instance().scene().create_entity();
+                                                                      // return
+                                                                      // Engine::instance().scene().create_render_object<GeometryRenderObject>(viewport_id);
+                                                                  }};
     const PipelineRegistration geometry_pipeline_registration{"pipeline",
                                                               []
                                                               {

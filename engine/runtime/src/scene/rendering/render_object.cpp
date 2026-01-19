@@ -12,10 +12,12 @@ module retro.runtime;
 
 namespace retro
 {
+    /*
     Viewport &RenderObject::viewport() const noexcept
     {
         return viewport_.get();
     }
+    */
 
     void RenderObject::on_attach()
     {

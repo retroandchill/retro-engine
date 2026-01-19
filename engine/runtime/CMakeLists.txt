@@ -6,7 +6,6 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/filesystem/utils.cpp
         src/scene/scene.cpp
         src/scene/rendering/render_object.cpp
-        src/scene/actor_ptr.cpp
         src/scene/scene_c.cpp
         src/scene/rendering/render_object_registry.cpp
         src/engine_c.cpp
@@ -30,7 +29,6 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_proxy_manager.ixx
         src/scene/rendering/render_proxy_bucket.ixx
         src/scene/transform.ixx
-        src/scene/actor_ptr.ixx
         src/scene/rendering/render_object_registry.ixx
         src/scene/rendering/geometry_render_object.ixx
         src/scene/rendering/render_pipeline.ixx
@@ -64,7 +62,7 @@ target_sources(retro_runtime PUBLIC
             ${RETRO_RUNTIME_MODULES}
         )
 
-target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl retro_boost retro_entt)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -19,11 +19,7 @@
 extern "C"
 {
 #endif
-    typedef struct Retro_DefaultHandle
-    {
-        uint32_t index;
-        uint32_t generation;
-    } Retro_DefaultHandle;
+    typedef uint32_t Retro_EntityId;
 
     typedef struct Retro_Transform
     {
@@ -39,22 +35,15 @@ extern "C"
         Retro_Color color{};
     } Retro_Vertex;
 
-    typedef Retro_DefaultHandle Retro_ViewportId;
+    RETRO_API Retro_EntityId retro_viewport_create(Retro_Vector2f viewport_size);
 
-    typedef Retro_DefaultHandle Retro_RenderObjectId;
+    RETRO_API void retro_entity_dispose(Retro_EntityId viewport_id);
 
-    RETRO_API Retro_ViewportId retro_viewport_create();
+    RETRO_API Retro_EntityId retro_entity_create(Retro_Name name, Retro_EntityId viewport_id);
 
-    RETRO_API void retro_viewport_dispose(Retro_ViewportId viewport_id);
+    RETRO_API void retro_render_object_set_transform(Retro_EntityId render_object_id, const Retro_Transform *transform);
 
-    RETRO_API Retro_RenderObjectId retro_render_object_create(Retro_Name name, Retro_ViewportId viewport_id);
-
-    RETRO_API void retro_render_object_dispose(Retro_RenderObjectId render_object_id);
-
-    RETRO_API void retro_render_object_set_transform(Retro_RenderObjectId render_object_id,
-                                                     const Retro_Transform *transform);
-
-    RETRO_API void retro_geometry_set_render_data(Retro_RenderObjectId render_object_id,
+    RETRO_API void retro_geometry_set_render_data(Retro_EntityId render_object_id,
                                                   const Retro_Vertex *vertices,
                                                   int32_t vertex_count,
                                                   uint32_t *indices,

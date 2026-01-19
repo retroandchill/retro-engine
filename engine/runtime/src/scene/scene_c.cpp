@@ -9,17 +9,18 @@
 import retro.core;
 import retro.runtime;
 import std;
+import entt;
 
 namespace
 {
-    constexpr retro::DefaultHandle from_c(const Retro_DefaultHandle id)
+    constexpr Retro_EntityId to_c(const entt::entity entity)
     {
-        return retro::ViewportID{id.index, id.generation};
+        return static_cast<Retro_EntityId>(entity);
     }
 
-    constexpr Retro_DefaultHandle to_c(const retro::DefaultHandle id)
+    constexpr entt::entity from_c(const Retro_EntityId entity)
     {
-        return Retro_DefaultHandle{id.index, id.generation};
+        return static_cast<entt::entity>(entity);
     }
 
     constexpr retro::Name from_c(const Retro_Name name)
@@ -30,11 +31,11 @@ namespace
         return std::bit_cast<retro::Name>(name);
     }
 
-    const retro::Transform &from_c(const Retro_Transform *transform)
+    const retro::Vector2f from_c(const Retro_Vector2f vector)
     {
-        static_assert(sizeof(Retro_Transform) == sizeof(retro::Transform));
-        static_assert(alignof(Retro_Transform) == alignof(retro::Transform));
-        return *reinterpret_cast<const retro::Transform *>(transform);
+        static_assert(sizeof(retro::Vector2f) == sizeof(Retro_Vector2f) &&
+                      alignof(retro::Vector2f) == alignof(Retro_Vector2f));
+        return std::bit_cast<retro::Vector2f>(vector);
     }
 
     const retro::Vertex *from_c(const Retro_Vertex *vertices)
@@ -47,45 +48,39 @@ namespace
 
 extern "C"
 {
-    Retro_ViewportId retro_viewport_create()
+    Retro_EntityId retro_viewport_create(const Retro_Vector2f viewport_size)
     {
-        const auto &viewport = retro::Engine::instance().scene().create_viewport();
-        return to_c(viewport.id());
+        return to_c(retro::Engine::instance().scene().create_viewport(from_c(viewport_size)));
     }
 
-    void retro_viewport_dispose(const Retro_ViewportId viewport_id)
+    void retro_entity_dispose(const Retro_EntityId viewport_id)
     {
-        retro::Engine::instance().scene().destroy_viewport(from_c(viewport_id));
+        retro::Engine::instance().scene().destroy_entity(from_c(viewport_id));
     }
 
-    Retro_RenderObjectId retro_render_object_create(const Retro_Name name, const Retro_ViewportId viewport_id)
+    Retro_EntityId retro_entity_create(const Retro_Name name, const Retro_EntityId viewport_id)
     {
-        const auto &component = retro::RenderObjectRegistry::instance().create(from_c(name), from_c(viewport_id));
-        return to_c(component.id());
+        return to_c(retro::RenderObjectRegistry::instance().create(from_c(name), from_c(viewport_id)));
     }
 
-    void retro_render_object_dispose(const Retro_RenderObjectId render_object_id)
+    void retro_render_object_set_transform(const Retro_EntityId render_object_id, const Retro_Transform *transform)
     {
-        retro::Engine::instance().scene().destroy_render_object(from_c(render_object_id));
+        auto &trans = retro::Engine::instance().scene().get_component<retro::Transform>(from_c(render_object_id));
+
+        trans.position = from_c(transform->position);
+        trans.rotation = transform->rotation;
+        trans.scale = from_c(transform->scale);
+        trans.dirty = true;
     }
 
-    void retro_render_object_set_transform(const Retro_RenderObjectId render_object_id,
-                                           const Retro_Transform *transform)
-    {
-        retro::Engine::instance()
-            .scene()
-            .get_render_object(from_c(render_object_id))
-            .value()
-            .set_transform(from_c(transform));
-    }
-
-    void retro_geometry_set_render_data(const Retro_RenderObjectId render_object_id,
+    void retro_geometry_set_render_data(const Retro_EntityId render_object_id,
                                         const Retro_Vertex *vertices,
                                         const int32_t vertex_count,
                                         uint32_t *indices,
                                         const int32_t index_count)
     {
-        auto &render_object = retro::Engine::instance().scene().get_render_object(from_c(render_object_id)).value();
+        auto &render_object =
+            retro::Engine::instance().scene().get_component<retro::GeometryRenderObject>(from_c(render_object_id));
 
         auto &geo_object = static_cast<retro::GeometryRenderObject &>(render_object);
 

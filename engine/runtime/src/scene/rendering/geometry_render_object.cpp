@@ -20,12 +20,12 @@ namespace retro
         Vector2f transform_scale{};
     };
 
-    RenderProxyID GeometryRenderObject::create_render_proxy(RenderProxyManager &proxy_manager)
+    PoolHandle GeometryRenderObject::create_render_proxy(RenderProxyManager &proxy_manager)
     {
         return proxy_manager.emplace_proxy<GeometryRenderProxy>(*this);
     }
 
-    void GeometryRenderObject::destroy_render_proxy(RenderProxyManager &proxy_manager, const RenderProxyID id)
+    void GeometryRenderObject::destroy_render_proxy(RenderProxyManager &proxy_manager, const PoolHandle id)
     {
         proxy_manager.remove_proxy<GeometryRenderProxy>(id);
     }
@@ -34,16 +34,18 @@ namespace retro
 
     GeometryDrawCall GeometryRenderProxy::get_draw_call(const Vector2u viewport_size) const
     {
-        const auto &object = *object_;
-        GeometryDrawCall result{.geometry = object.geometry(),
+        // const auto &object = *object_;
+        GeometryDrawCall result{//.geometry = object.geometry(),
                                 .push_constants = std::vector<std::byte>(sizeof(GeometryRenderData))};
 
+        /*
         write_to_buffer(result.push_constants,
                         GeometryRenderData{.viewport_size = Vector2f{static_cast<float>(viewport_size.x),
                                                                      static_cast<float>(viewport_size.y)},
                                            .position = object.position(),
                                            .rotation = object.rotation(),
                                            .scale = object.scale()});
+                                           */
 
         return result;
     }

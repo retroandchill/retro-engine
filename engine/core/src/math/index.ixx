@@ -9,3 +9,4 @@ export module retro.core:math;
 export import :math.concepts;
 export import :math.vector;
 export import :math.rounding;
+export import :math.matrix;

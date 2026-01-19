@@ -19,7 +19,7 @@ namespace retro
         factories_[type_name] = std::move(creator);
     }
 
-    RenderObject &RenderObjectRegistry::create(const Name type_name, const ViewportID viewport_id) const
+    entt::entity RenderObjectRegistry::create(const Name type_name, const entt::entity viewport_id) const
     {
         const auto factory = factories_.find(type_name);
         if (factory == factories_.end())

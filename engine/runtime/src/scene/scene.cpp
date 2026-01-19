@@ -4,34 +4,62 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+// Workaround for IntelliSense issues regarding entt
+#ifdef __JETBRAINS_IDE__
+#include <entt/entt.hpp>
+#endif
+
 module retro.runtime;
 
 import retro.core;
+import entt;
 
 namespace retro
 {
-    boost::optional<Viewport &> Scene::get_viewport(const ViewportID id)
+    entt::entity Scene::create_entity()
     {
-        return viewports_.get(id);
+        const auto entity = registry_.create();
+        registry_.emplace<Transform>(entity);
+        registry_.emplace<Hierarchy>(entity);
+        return entity;
     }
 
-    Viewport &Scene::create_viewport() noexcept
+    entt::entity Scene::create_viewport(Vector2f view_size)
     {
-        return viewports_.emplace();
+        const auto entity = create_entity();
+        registry_.emplace<Viewport>(entity, view_size);
+        return entity;
     }
 
-    void Scene::destroy_viewport(const ViewportID id)
+    void Scene::destroy_entity(const entt::entity entity)
     {
-        viewports_.remove(id);
+        registry_.destroy(entity);
     }
 
-    boost::optional<RenderObject &> Scene::get_render_object(const RenderObjectID id)
+    void Scene::update_transforms()
     {
-        return render_objects_.get(id).map([](RenderObjectHandle &component) -> RenderObject & { return *component; });
+        for (auto &&[entity, viewport] : registry_.view<Viewport>().each())
+        {
+            update_transform(entity, create_translation(viewport.offset));
+        }
     }
 
-    void Scene::destroy_render_object(const RenderObjectID render_object_id)
+    void Scene::update_transform(entt::entity entity, const Matrix3x3f &parentWorld)
     {
-        render_objects_.remove(render_object_id);
+        auto &&[transform, hierarchy] = registry_.get<Transform, Hierarchy>(entity);
+
+        if (transform.dirty)
+        {
+            transform.world_matrix = parentWorld * transform.local_matrix();
+            transform.dirty = false;
+        }
+
+        for (auto child = hierarchy.first_child; child != entt::null;
+             child = registry_.get<Hierarchy>(child).next_sibling)
+        {
+            update_transform(child, transform.world_matrix);
+        }
     }
 } // namespace retro

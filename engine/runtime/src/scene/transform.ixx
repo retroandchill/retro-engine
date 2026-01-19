@@ -7,6 +7,8 @@
 export module retro.runtime:scene.transform;
 
 import retro.core;
+import std;
+import entt;
 
 namespace retro
 {
@@ -15,5 +17,20 @@ namespace retro
         Vector2f position{};
         float rotation{0};
         Vector2f scale{1, 1};
+
+        Matrix3x3f world_matrix = Matrix3x3f::identity();
+        bool dirty = true;
+
+        [[nodiscard]] constexpr Matrix3x3f local_matrix() const noexcept
+        {
+            return create_translation(position) * create_rotation(rotation) * create_scale(scale);
+        }
+    };
+
+    export struct Hierarchy
+    {
+        entt::entity parent = entt::null;
+        entt::entity first_child = entt::null;
+        entt::entity next_sibling = entt::null;
     };
 } // namespace retro

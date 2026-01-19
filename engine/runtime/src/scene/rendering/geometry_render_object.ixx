@@ -21,16 +21,14 @@ namespace retro
     export class RETRO_API GeometryRenderObject final : public RenderObject
     {
       public:
-        inline GeometryRenderObject(const RenderObjectID id,
-                                    const ViewportID viewport_id,
-                                    const Transform &transform = {})
-            : RenderObject{id, viewport_id, transform}
+        inline GeometryRenderObject(const PoolHandle viewport_id, const Transform &transform = {})
+            : RenderObject{viewport_id, transform}
         {
         }
 
-        RenderProxyID create_render_proxy(RenderProxyManager &proxy_manager) override;
+        PoolHandle create_render_proxy(RenderProxyManager &proxy_manager) override;
 
-        void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) override;
+        void destroy_render_proxy(RenderProxyManager &proxy_manager, PoolHandle id) override;
 
         [[nodiscard]] inline const Geometry &geometry() const noexcept
         {
@@ -49,10 +47,9 @@ namespace retro
     export class RETRO_API GeometryRenderProxy
     {
       public:
-        using IdType = RenderProxyID;
         using DrawCallData = GeometryDrawCall;
 
-        inline GeometryRenderProxy(const RenderProxyID id, GeometryRenderObject &object) : id_{id}, object_(&object)
+        inline GeometryRenderProxy(GeometryRenderObject &object)
         {
         }
 
@@ -61,27 +58,16 @@ namespace retro
             return TYPE_ID;
         }
 
-        [[nodiscard]] inline RenderProxyID id() const
-        {
-            return id_;
-        }
-
         [[nodiscard]] GeometryDrawCall get_draw_call(Vector2u viewport_size) const;
 
       private:
         static const Name TYPE_ID;
-
-        RenderProxyID id_{};
-        ActorPtr<GeometryRenderObject> object_{};
     };
 
     export struct GeometryRenderData
     {
         Vector2f viewport_size{};
-        Vector2f position{};
-        uint32 z_order{};
-        float rotation{};
-        Vector2f scale{};
+        Matrix3x3f world_matrix{};
         uint32 has_texture{};
     };
 

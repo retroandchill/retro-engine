@@ -12,7 +12,6 @@ export module retro.runtime:scene.rendering.render_object;
 
 import std;
 import retro.core;
-import :scene.actor_ptr;
 import :scene.rendering.render_proxy_manager;
 import :scene.transform;
 
@@ -21,26 +20,14 @@ namespace retro
     export class RETRO_API RenderObject
     {
       public:
-        using IdType = RenderObjectID;
-
       protected:
-        inline explicit RenderObject(const RenderObjectID id,
-                                     const ViewportID viewport_id,
-                                     const Transform &transform = {})
-            : id_{id}, viewport_{viewport_id}, transform_{transform}
+        inline explicit RenderObject(const PoolHandle viewport_id, const Transform &transform = {})
+            : transform_{transform}
         {
         }
 
       public:
         virtual ~RenderObject() = default;
-
-        [[nodiscard]] inline RenderObjectID id() const
-        {
-            return id_;
-        }
-
-        [[nodiscard]] Viewport &viewport() const noexcept;
-
         [[nodiscard]] inline const Transform &transform() const noexcept
         {
             return transform_;
@@ -85,15 +72,13 @@ namespace retro
         void on_detach();
 
       protected:
-        virtual RenderProxyID create_render_proxy(RenderProxyManager &proxy_manager) = 0;
+        virtual PoolHandle create_render_proxy(RenderProxyManager &proxy_manager) = 0;
 
-        virtual void destroy_render_proxy(RenderProxyManager &proxy_manager, RenderProxyID id) = 0;
+        virtual void destroy_render_proxy(RenderProxyManager &proxy_manager, PoolHandle id) = 0;
 
       private:
-        RenderObjectID id_;
-        ActorPtr<Viewport> viewport_;
         Transform transform_;
-        std::optional<RenderProxyID> render_proxy_id_;
+        std::optional<PoolHandle> render_proxy_id_;
     };
 
 } // namespace retro

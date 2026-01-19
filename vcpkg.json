@@ -44,6 +44,9 @@
   }, {
     "name" : "boost-intrusive",
     "version>=" : "1.90.0#1"
-  }],
+  }, {
+    "name" : "entt",
+    "version>=" : "3.16.0"
+  } ],
   "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
 }

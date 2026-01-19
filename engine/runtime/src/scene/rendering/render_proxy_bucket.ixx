@@ -11,10 +11,8 @@ import retro.core;
 
 namespace retro
 {
-    export using RenderProxyID = DefaultHandle;
-
     template <typename T>
-    concept RenderProxy = PackableType<T> && requires(const T &t, Vector2u viewport_size) {
+    concept RenderProxy = requires(const T &t, Vector2u viewport_size) {
         typename T::DrawCallData;
         {
             T::type_id()
@@ -44,14 +42,14 @@ namespace retro
         }
 
         template <typename... Args>
-            requires std::constructible_from<T, RenderProxyID, Args...>
-        RenderProxyID emplace(Args &&...args)
+            requires std::constructible_from<T, Args...>
+        PoolHandle emplace(Args &&...args)
         {
-            auto &added = proxies_.emplace(std::forward<Args>(args)...);
-            return added.id();
+            auto &&[id, added] = proxies_.emplace(std::forward<Args>(args)...);
+            return id;
         }
 
-        void remove(const RenderProxyID id)
+        void remove(const PoolHandle id)
         {
             proxies_.remove(id);
         }

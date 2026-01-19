@@ -108,6 +108,7 @@ void Engine::request_shutdown(const int32 exit_code)
 void Engine::tick(const float delta_time) const
 {
     script_runtime_->tick(delta_time);
+    scene_->update_transforms();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
