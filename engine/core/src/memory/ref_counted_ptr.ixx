@@ -116,7 +116,7 @@ namespace retro
             return *this;
         }
 
-        RefCountPtr &operator==(RefCountPtr &&other)
+        RefCountPtr &operator=(RefCountPtr &&other) noexcept
         {
             if (this != std::addressof(other))
             {
@@ -132,7 +132,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
-        RefCountPtr &operator==(RefCountPtr &&other)
+        RefCountPtr &operator=(RefCountPtr<U> &&other) noexcept
         {
             if (ptr_)
             {
