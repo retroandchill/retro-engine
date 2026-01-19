@@ -34,7 +34,11 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_object_registry.ixx
         src/scene/rendering/geometry_render_object.ixx
         src/scene/rendering/render_pipeline.ixx
-        src/scene/rendering/pipeline_registry.ixx)
+        src/scene/rendering/pipeline_registry.ixx
+        src/assets/index.ixx
+        src/assets/textures/index.ixx
+        src/assets/textures/texture_loader.ixx
+        src/assets/textures/texture.ixx)
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h
