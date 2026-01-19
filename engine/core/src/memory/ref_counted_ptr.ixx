@@ -13,12 +13,38 @@ import std;
 namespace retro
 {
     template <typename T>
-    concept RefCounted = requires(T *p) {
+    concept SelfRetainable = requires(T *p) {
         {
             p->retain()
         } noexcept;
+    };
+
+    template <typename T>
+    concept SelfReleaseable = requires(T *p) {
         {
             p->release()
+        } noexcept;
+    };
+
+    template <SelfRetainable T>
+    void intrusive_retain(T *p) noexcept
+    {
+        p->retain();
+    }
+
+    template <SelfReleaseable T>
+    void intrusive_release(T *p) noexcept
+    {
+        p->release();
+    }
+
+    template <typename T>
+    concept RefCounted = requires(T *p) {
+        {
+            intrusive_retain(p)
+        } noexcept;
+        {
+            intrusive_release(p)
         } noexcept;
     };
 
@@ -71,20 +97,20 @@ namespace retro
         explicit RefCountPtr(T *ptr) noexcept : ptr_(ptr)
         {
             if (ptr_ != nullptr)
-                ptr_->retain();
+                intrusive_retain(ptr_);
         }
 
         RefCountPtr(const RefCountPtr &other) noexcept : ptr_(other.ptr_)
         {
             if (ptr_ != nullptr)
-                ptr_->retain();
+                intrusive_retain(ptr_);
         }
 
         template <std::derived_from<T> U>
         explicit(false) RefCountPtr(const RefCountPtr<U> &other) noexcept : ptr_(other.get())
         {
             if (ptr_ != nullptr)
-                ptr_->retain();
+                intrusive_retain(ptr_);
         }
 
         RefCountPtr(RefCountPtr &&other) noexcept : ptr_(other.ptr_)
@@ -101,7 +127,7 @@ namespace retro
         ~RefCountPtr() noexcept
         {
             if (ptr_ != nullptr)
-                ptr_->release();
+                intrusive_release(ptr_);
         }
 
         RefCountPtr &operator=(const RefCountPtr &other) noexcept
@@ -126,7 +152,7 @@ namespace retro
             {
                 if (ptr_)
                 {
-                    ptr_->release();
+                    intrusive_release(ptr_);
                 }
 
                 ptr_ = other.ptr_;
@@ -140,7 +166,7 @@ namespace retro
         {
             if (ptr_)
             {
-                ptr_->release();
+                intrusive_release(ptr_);
             }
 
             ptr_ = other.ptr_;
@@ -174,7 +200,7 @@ namespace retro
         {
             if (ptr_ != nullptr)
             {
-                ptr_->release();
+                intrusive_release(ptr_);
                 ptr_ = nullptr;
             }
         }
@@ -185,11 +211,11 @@ namespace retro
                 return;
 
             if (ptr_ != nullptr)
-                ptr_->release();
+                intrusive_release(ptr_);
 
             ptr_ = ptr;
             if (ptr_ != nullptr)
-                ptr_->retain();
+                intrusive_retain(ptr_);
         }
 
         void swap(RefCountPtr &other) noexcept
