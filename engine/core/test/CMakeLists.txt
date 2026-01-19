@@ -4,6 +4,7 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 add_executable(retro_core_tests strings/test_name.cpp
         math/test_vector.cpp
+        memory/test_ref_counted_ptr.cpp
 )
 
 retro_add_boilerplate(retro_core_tests)

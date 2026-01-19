@@ -26,8 +26,14 @@ namespace retro
     {
       protected:
         IntrusiveRefCounted() noexcept = default;
+        virtual ~IntrusiveRefCounted() noexcept = default;
 
       public:
+        IntrusiveRefCounted(const IntrusiveRefCounted &) noexcept = delete;
+        IntrusiveRefCounted &operator=(const IntrusiveRefCounted &) noexcept = delete;
+        IntrusiveRefCounted(IntrusiveRefCounted &&) noexcept = delete;
+        IntrusiveRefCounted &operator=(IntrusiveRefCounted &&) noexcept = delete;
+
         inline void retain() noexcept
         {
             ref_count_.fetch_add(1, std::memory_order_relaxed);
@@ -47,7 +53,7 @@ namespace retro
         }
 
       private:
-        std::atomic<uint32> ref_count_{1};
+        std::atomic<uint32> ref_count_{0};
     };
 
     export template <RefCounted T>
