@@ -8,11 +8,8 @@ layout(location = 0) out vec4 outColor;
 layout(set = 0, binding = 0) uniform sampler2D texSampler;
 
 layout(push_constant) uniform SceneData {
-    vec2 viewportSize;
-    vec2 position;
-    uint zOrder;
-    float rotation;
-    vec2 scale;
+    vec2 viewportSize; // You'll likely want to pass this here or via a UBO
+    mat3 worldMatrix;
     uint hasTexture;
 } uData;
 

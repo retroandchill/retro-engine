@@ -28,9 +28,7 @@ namespace retro
         template <RenderComponent Component>
         void set_up_pipeline_listener(entt::registry &registry)
         {
-            using Pipeline = Component::PipelineType;
-
-            registry.on_construct<Pipeline>().template connect<&PipelineManager::on_component_added<Component>>(this);
+            registry.on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(this);
             registry.on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(this);
         }
 

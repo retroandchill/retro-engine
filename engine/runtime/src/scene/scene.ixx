@@ -38,6 +38,10 @@ namespace retro
 
         void destroy_entity(entt::entity entity);
 
+        void attach_to_parent(entt::entity child, entt::entity parent);
+
+        void detach_from_parent(entt::entity entity);
+
         template <typename T>
         T &get_component(const entt::entity entity)
         {
@@ -46,10 +50,11 @@ namespace retro
 
         template <RenderComponent T, typename... Args>
             requires std::constructible_from<T, Args...>
-        std::pair<entt::entity, T &> create_render_component(Args &&...args)
+        std::pair<entt::entity, T &> create_render_component(const entt::entity parent, Args &&...args)
         {
             auto entity = create_entity();
             registry_.emplace<T>(entity, std::forward<Args>(args)...);
+            attach_to_parent(entity, parent);
             return {entity, registry_.get<T>(entity)};
         }
 

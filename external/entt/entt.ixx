@@ -18,6 +18,9 @@ export namespace entt
     using entt::id_type;
     using entt::null;
     using entt::registry;
+    using entt::sparse_set;
+
+    using entt::operator!=;
 
     namespace internal
     {

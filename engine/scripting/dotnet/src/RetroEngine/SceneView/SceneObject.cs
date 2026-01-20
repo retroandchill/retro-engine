@@ -1,66 +1,61 @@
-﻿// // @file 2026.cs
-// //
-// // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
-// // Licensed under the MIT License. See LICENSE file in the project root for full license information.
+﻿// @file 2026.cs
+//
+// @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Math;
-using RetroEngine.Core.State;
-using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
-[StructLayout(LayoutKind.Sequential)]
-public readonly record struct RenderObjectId(uint Index, uint Generation);
-
-public abstract partial class SceneObject : INativeSynchronizable, IDisposable
+public abstract partial class SceneObject : ITransformSync, IDisposable
 {
-    protected SceneObject(Name type, Viewport viewport)
+    protected SceneObject(uint id)
     {
-        Viewport = viewport;
-        Id = NativeCreate(type, viewport.Id);
-        Viewport.AddRenderObject(this);
-
+        Id = id;
         Scale = Vector2F.One;
     }
 
-    public RenderObjectId Id { get; }
+    public uint Id { get; }
+
     protected bool Disposed { get; private set; }
 
-    public Viewport Viewport { get; }
-
-    public Transform Transform
+    public Vector2F Position
     {
         get;
         set
         {
+            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            MarkDirty();
+            MarkAsDirty();
         }
-    }
-
-    public Vector2F Position
-    {
-        get => Transform.Position;
-        set => Transform = Transform with { Position = value };
     }
 
     public float Rotation
     {
-        get => Transform.Rotation;
-        set => Transform = Transform with { Rotation = value };
+        get;
+        set
+        {
+            ObjectDisposedException.ThrowIf(Disposed, this);
+            field = value;
+            MarkAsDirty();
+        }
     }
 
     public Vector2F Scale
     {
-        get => Transform.Scale;
-        set => Transform = Transform with { Scale = value };
+        get;
+        set
+        {
+            ObjectDisposedException.ThrowIf(Disposed, this);
+            field = value;
+            MarkAsDirty();
+        }
     }
 
-    public virtual void SyncToNative()
+    protected void MarkAsDirty()
     {
-        ObjectDisposedException.ThrowIf(Disposed, this);
-        NativeSetTransform(Id, Transform);
+        Scene.MarkAsDirty(this);
     }
 
     public void Dispose()
@@ -70,24 +65,11 @@ public abstract partial class SceneObject : INativeSynchronizable, IDisposable
 
         NativeDispose(Id);
         Disposed = true;
-        Viewport.RemoveRenderObject(Id);
         GC.SuppressFinalize(this);
-    }
-
-    protected void MarkDirty()
-    {
-        ObjectDisposedException.ThrowIf(Disposed, this);
-        this.AddToSyncList();
     }
 
     private const string LibraryName = "retro_runtime";
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_create")]
-    private static partial RenderObjectId NativeCreate(Name type, ViewportId viewportId);
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_dispose")]
-    private static partial void NativeDispose(RenderObjectId renderObjectId);
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_render_object_set_transform")]
-    private static partial void NativeSetTransform(RenderObjectId renderObjectId, in Transform transform);
+    [LibraryImport(LibraryName, EntryPoint = "retro_entity_dispose")]
+    private static partial void NativeDispose(uint id);
 }

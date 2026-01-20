@@ -29,7 +29,8 @@ namespace retro
     export struct GeometryRenderData
     {
         Vector2f viewport_size{};
-        Matrix3x3f world_matrix{};
+        std::array<float, 2> _padding{}; // Align columns to 16 bytes
+        std::array<Vector4f, 3> world_matrix{};
         uint32 has_texture{};
     };
 
