@@ -9,6 +9,7 @@ export module retro.core:strings.concepts;
 import std;
 
 import uni_algo;
+import :memory.simple_allocator;
 
 namespace retro
 {
@@ -68,7 +69,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf8, Encoding::Utf16>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf8 && ENCODING_OF<To> == Encoding::Utf16)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -79,7 +80,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf16, Encoding::Utf8>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf16 && ENCODING_OF<To> == Encoding::Utf8)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -90,7 +91,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf8, Encoding::Utf32>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf8 && ENCODING_OF<To> == Encoding::Utf32)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -101,7 +102,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf32, Encoding::Utf8>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf32 && ENCODING_OF<To> == Encoding::Utf8)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -112,7 +113,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf16, Encoding::Utf32>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf16 && ENCODING_OF<To> == Encoding::Utf32)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -123,7 +124,7 @@ namespace retro
     template <>
     struct UnaConverter<Encoding::Utf32, Encoding::Utf16>
     {
-        template <Char To, Char From, typename Allocator>
+        template <Char To, Char From, SimpleAllocator Allocator>
             requires(ENCODING_OF<From> == Encoding::Utf32 && ENCODING_OF<To> == Encoding::Utf16)
         static constexpr auto convert(std::basic_string_view<From> source, Allocator allocator)
         {
@@ -131,7 +132,7 @@ namespace retro
         }
     };
 
-    export template <Char To, Char From, typename Allocator = std::allocator<To>>
+    export template <Char To, Char From, SimpleAllocator Allocator = std::allocator<To>>
     constexpr auto convert_string(std::basic_string_view<From> source, Allocator allocator = Allocator{})
     {
         if constexpr (std::same_as<To, From>)
@@ -147,8 +148,8 @@ namespace retro
     export template <Char To,
                      Char From,
                      typename FromTraits,
-                     typename FromAllocator,
-                     typename ToAllocator = std::allocator<To>>
+                     SimpleAllocator FromAllocator,
+                     SimpleAllocator ToAllocator = std::allocator<To>>
     constexpr auto convert_string(const std::basic_string<From, FromTraits, FromAllocator> &source,
                                   ToAllocator allocator = ToAllocator{})
     {

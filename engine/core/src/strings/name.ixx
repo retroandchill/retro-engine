@@ -277,7 +277,7 @@ namespace retro
             return comparison_index_.is_none();
         }
 
-        template <Char CharType = char, typename Allocator = std::allocator<CharType>>
+        template <Char CharType = char, SimpleAllocator Allocator = std::allocator<CharType>>
         [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
         {
             const auto baseString = get_base_string();

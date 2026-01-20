@@ -7,7 +7,6 @@
 #include "retro/core/strings/name.h"
 
 #include <boost/pool/pool_alloc.hpp>
-#include <cassert>
 #include <uni_algo/conv.h>
 
 import std;

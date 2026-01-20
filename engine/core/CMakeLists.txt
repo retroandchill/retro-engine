@@ -35,12 +35,14 @@ set(RETRO_CORE_MODULES src/index.ixx
         src/containers/packed_pool.ixx
         src/containers/polymorphic.ixx
         src/math/rounding.ixx
-        src/memory/simple_arena.ixx
+        src/memory/arena.ixx
         src/functional/index.ixx
         src/functional/overload.ixx
         src/functional/function_traits.ixx
         src/memory/write_to_buffer.ixx
         src/math/matrix.ixx
+        src/memory/simple_allocator.ixx
+        src/memory/arena_allocator.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

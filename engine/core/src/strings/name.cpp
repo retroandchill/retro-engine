@@ -29,6 +29,13 @@ namespace retro
         return hash_combine(name.hash, name.length);
     }
 
+    /**
+     * This is the size of the stack-allocated arena for the temp strings when performing string operations.
+     * Assuming sizeof(char) is 1 byte, this should allocate about 8KB of stack space, which should be support
+     * multiple dynamic string resizes.
+     */
+    constexpr usize NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
+
     template <NameCase CaseSensitivity>
         requires(CaseSensitivity == NameCase::CaseSensitive || CaseSensitivity == NameCase::IgnoreCase)
     struct NameEntryComparer
@@ -41,7 +48,8 @@ namespace retro
             }
             else
             {
-                const auto as_lower = una::cases::to_lowercase_utf8(name, boost::pool_allocator<char>{});
+                InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+                const auto as_lower = una::cases::to_lowercase_utf8(name, make_allocator<char>(arena));
                 return NameHash{std::hash<std::string_view>{}(as_lower), static_cast<uint32>(name.size())};
             }
         }
@@ -103,6 +111,30 @@ namespace retro
 
       private:
         boost::unordered_flat_map<NameHash, NameEntryId> entry_indexes_;
+    };
+
+    class NameAllocator
+    {
+      public:
+        template <typename T, typename... Args>
+            requires std::constructible_from<T, Args...> && std::is_trivially_destructible_v<T>
+        constexpr decltype(auto) allocate_with_tail(const usize tail_size, Args &&...args)
+        {
+            const usize total_size = sizeof(T) + tail_size;
+            constexpr usize alignment = alignof(T);
+
+            auto *ptr = static_cast<T *>(arena_.allocate(total_size, alignment));
+            std::construct_at(ptr, std::forward<Args>(args)...);
+
+            return *ptr;
+        }
+
+      private:
+        static constexpr usize BLOCK_SIZE = 1024 * 64;
+        static constexpr usize INITIAL_BLOCKS = 16;
+        static constexpr usize MAX_BLOCKS = 1024;
+
+        MultiArena arena_{BLOCK_SIZE, INITIAL_BLOCKS, MAX_BLOCKS};
     };
 
     class NameTable
@@ -240,12 +272,8 @@ namespace retro
             return entry_id;
         }
 
-        static constexpr usize BLOCK_SIZE = 1024 * 64;
-        static constexpr usize INITIAL_BLOCKS = 16;
-        static constexpr usize MAX_BLOCKS = 1024;
-
         mutable std::shared_mutex mutex_{};
-        SimpleArena allocator_{BLOCK_SIZE, INITIAL_BLOCKS, MAX_BLOCKS};
+        NameAllocator allocator_;
         NameTableSet<NameCase::IgnoreCase> comparison_entries_;
 #if RETRO_WITH_CASE_PRESERVING_NAME
         NameTableSet<NameCase::CaseSensitive> display_entries_;
@@ -289,7 +317,8 @@ namespace retro
 
     [[nodiscard]] bool operator==(const Name &lhs, std::u16string_view rhs)
     {
-        const auto utf8_str = convert_string<char>(rhs, boost::pool_allocator<char>{});
+        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+        const auto utf8_str = convert_string<char>(rhs, make_allocator<char>(arena));
         return lhs == utf8_str;
     }
 
@@ -307,7 +336,8 @@ namespace retro
 
     std::strong_ordering operator<=>(const Name &lhs, const std::u16string_view rhs)
     {
-        const auto utf8_str = convert_string<char>(rhs, boost::pool_allocator<char>{});
+        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+        const auto utf8_str = convert_string<char>(rhs, make_allocator<char>(arena));
         return lhs <=> utf8_str;
     }
 
@@ -351,7 +381,8 @@ namespace retro
 
     Name::LookupResult Name::lookup_name(const std::u16string_view value, const FindType find_type)
     {
-        const auto utf8_str = convert_string<char>(value, boost::pool_allocator<char>{});
+        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+        const auto utf8_str = convert_string<char>(value, make_allocator<char>(arena));
         return lookup_name(utf8_str, find_type);
     }
 
