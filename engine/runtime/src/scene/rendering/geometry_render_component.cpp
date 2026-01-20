@@ -33,13 +33,14 @@ namespace retro
         pending_geometry_.clear();
     }
 
-    void GeometryRenderPipeline::collect_draw_calls(const entt::registry &registry, const Vector2u viewport_size)
+    void GeometryRenderPipeline::collect_draw_calls(const entt::registry &registry,
+                                                    const Vector2u viewport_size,
+                                                    SingleArena &arena)
     {
         for (const auto view = registry.view<GeometryRenderComponent, Transform>();
              auto [entity, geometry, transform] : view.each())
         {
-            GeometryDrawCall draw_call{.geometry = geometry.geometry,
-                                       .push_constants = std::vector<std::byte>(sizeof(GeometryRenderData))};
+            GeometryDrawCall draw_call{arena, geometry.geometry, sizeof(GeometryRenderData)};
 
             const auto &matrix = transform.world_matrix();
             write_to_buffer(

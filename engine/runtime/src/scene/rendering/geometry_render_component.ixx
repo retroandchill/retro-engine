@@ -43,7 +43,7 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size) override;
+        void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size, SingleArena &arena) override;
 
         void execute(RenderContext &context) override;
 

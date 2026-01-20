@@ -68,7 +68,7 @@ namespace retro
         friend class ArenaAllocator;
     };
 
-    template <typename T, Arena Allocator>
+    export template <typename T, Arena Allocator>
     constexpr ArenaAllocator<T, Allocator> make_allocator(Allocator &allocator)
     {
         return ArenaAllocator<T, Allocator>(allocator);

@@ -13,6 +13,7 @@ export module retro.renderer:vulkan_buffer_manager;
 import std;
 import vulkan_hpp;
 import :components.vulkan_device;
+import retro.runtime;
 
 namespace retro
 {
@@ -28,9 +29,7 @@ namespace retro
         explicit VulkanBufferManager(const VulkanDevice &device, usize pool_size);
 
       public:
-        static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
-
-        static void initialize(const VulkanDevice &device, usize pool_size = DEFAULT_POOL_SIZE);
+        static void initialize(const VulkanDevice &device, usize pool_size = PipelineManager::DEFAULT_POOL_SIZE);
 
         static void shutdown();
 
@@ -48,7 +47,7 @@ namespace retro
         vk::UniqueBuffer buffer_;
         vk::UniqueDeviceMemory memory_;
         void *mapped_ptr_ = nullptr;
-        usize pool_size_{DEFAULT_POOL_SIZE};
+        usize pool_size_{PipelineManager::DEFAULT_POOL_SIZE};
         usize current_offset_ = 0;
 
         static std::unique_ptr<VulkanBufferManager> instance_;
@@ -58,7 +57,7 @@ namespace retro
     {
       public:
         explicit inline VulkanBufferManagerScope(const VulkanDevice &device,
-                                                 const usize pool_size = VulkanBufferManager::DEFAULT_POOL_SIZE)
+                                                 const usize pool_size = PipelineManager::DEFAULT_POOL_SIZE)
         {
             VulkanBufferManager::initialize(device, pool_size);
         }

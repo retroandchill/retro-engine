@@ -112,6 +112,9 @@ namespace retro
 
     void Scene::collect_draw_calls(const Vector2u viewport_size)
     {
+        // It's probably fine to reset the arena here since we're not deallocating or allocating any memory just
+        // sorta retaining memory to avoid allocations when processing this is probably fine.
+        pipeline_manager_.reset_arena();
         pipeline_manager_.collect_all_draw_calls(registry_, viewport_size);
     }
 

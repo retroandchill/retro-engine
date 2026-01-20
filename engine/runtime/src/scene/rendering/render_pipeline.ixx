@@ -19,16 +19,69 @@ namespace retro
         Color color{};
     };
 
-    export struct Geometry
+    export template <template <typename...> typename Alloc>
+        requires SimpleAllocator<Alloc<Vertex>> && SimpleAllocator<Alloc<uint32>>
+    struct BasicGeometry
     {
-        std::vector<Vertex> vertices{};
-        std::vector<uint32> indices{};
+        std::vector<Vertex, Alloc<Vertex>> vertices{};
+        std::vector<uint32, Alloc<uint32>> indices{};
+
+        constexpr explicit BasicGeometry(Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
+                                         Alloc<uint32> index_allocator = Alloc<uint32>{})
+            : vertices{std::move(vertex_allocator)}, indices{std::move(index_allocator)}
+        {
+        }
+
+        constexpr BasicGeometry(std::span<const Vertex> vertices,
+                                std::span<const uint32> indices,
+                                Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
+                                Alloc<uint32> index_allocator = Alloc<uint32>{}) noexcept
+            : vertices{std::from_range, vertices, std::move(vertex_allocator)},
+              indices{std::from_range, indices, std::move(index_allocator)}
+        {
+        }
+
+        constexpr BasicGeometry(const BasicGeometry &) = default;
+        constexpr BasicGeometry(BasicGeometry &&) noexcept = default;
+
+        template <template <typename...> typename OtherAlloc>
+            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
+        constexpr explicit BasicGeometry(const BasicGeometry<OtherAlloc> &other,
+                                         Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
+                                         Alloc<uint32> index_allocator = Alloc<uint32>{})
+            : vertices{std::from_range, other.vertices, std::move(vertex_allocator)},
+              indices{std::from_range, other.indices, std::move(index_allocator)}
+        {
+        }
+
+        ~BasicGeometry() = default;
+
+        constexpr BasicGeometry &operator=(const BasicGeometry &) = default;
+        constexpr BasicGeometry &operator=(BasicGeometry &&) noexcept = default;
     };
+
+    export template <template <typename...> typename Alloc>
+    BasicGeometry(std::span<Vertex>, std::span<uint32>, Alloc<Vertex>, Alloc<uint32>) -> BasicGeometry<Alloc>;
+
+    export template <template <typename...> typename Alloc, template <typename...> typename OtherAlloc>
+    BasicGeometry(const BasicGeometry<OtherAlloc> &, Alloc<Vertex>, Alloc<uint32>) -> BasicGeometry<Alloc>;
+
+    export using Geometry = BasicGeometry<std::allocator>;
 
     export struct GeometryDrawCall
     {
-        Geometry geometry{};
-        std::vector<std::byte> push_constants{};
+        BasicGeometry<ArenaAllocator> geometry;
+        std::vector<std::byte, ArenaAllocator<std::byte>> push_constants;
+
+        template <template <typename...> typename OtherAlloc>
+            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
+        constexpr GeometryDrawCall(SingleArena &arena,
+                                   const BasicGeometry<OtherAlloc> &other,
+                                   const usize push_constants_size = 0)
+            : geometry(other, make_allocator<Vertex>(arena), make_allocator<uint32>(arena)),
+              push_constants(push_constants_size, make_allocator<std::byte>(arena))
+        {
+        }
     };
 
     export struct ProceduralDrawCall
@@ -64,7 +117,7 @@ namespace retro
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size) = 0;
+        virtual void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size, SingleArena &arena) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };

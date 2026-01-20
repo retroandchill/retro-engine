@@ -70,7 +70,7 @@ namespace retro
         }
 
       private:
-        static PreparedGeometry prepare_geometry(const Geometry &geometry)
+        static PreparedGeometry prepare_geometry(const BasicGeometry<ArenaAllocator> &geometry)
         {
             const usize vertex_size = geometry.vertices.size() * sizeof(Vertex);
             const usize index_size = geometry.indices.size() * sizeof(uint32);
@@ -94,11 +94,6 @@ namespace retro
         vk::PipelineLayout pipeline_layout_{};
         Vector2u viewport_size_{};
     };
-
-    void VulkanRenderPipeline::queue_draw_calls(entt::registry &registry, Vector2u viewport_size)
-    {
-        pipeline_->collect_draw_calls(registry, viewport_size);
-    }
 
     void VulkanRenderPipeline::clear_draw_queue()
     {

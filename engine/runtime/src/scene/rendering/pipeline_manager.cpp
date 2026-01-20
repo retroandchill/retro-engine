@@ -8,11 +8,16 @@ module retro.runtime;
 
 namespace retro
 {
+    void PipelineManager::reset_arena()
+    {
+        arena_.reset();
+    }
+
     void PipelineManager::collect_all_draw_calls(const entt::registry &registry, const Vector2u viewport_size)
     {
         for (const auto &pipeline : active_pipelines_ | std::views::values)
         {
-            pipeline->collect_draw_calls(registry, viewport_size);
+            pipeline->collect_draw_calls(registry, viewport_size, arena_);
         }
     }
 } // namespace retro

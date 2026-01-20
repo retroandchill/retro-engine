@@ -31,8 +31,6 @@ namespace retro
             recreate(device, swapchain, render_pass);
         }
 
-        void queue_draw_calls(entt::registry &registry, Vector2u viewport_size);
-
         void clear_draw_queue();
 
         void recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass);

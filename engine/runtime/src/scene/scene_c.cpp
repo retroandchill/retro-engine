@@ -88,8 +88,7 @@ extern "C"
         auto &geo_object =
             retro::Engine::instance().scene().get_component<retro::GeometryRenderComponent>(from_c(entity_id));
 
-        geo_object.geometry = retro::Geometry{
-            .vertices = std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
-            .indices = std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()};
+        geo_object.geometry = retro::Geometry{std::span{from_c(vertices), static_cast<usize>(vertex_count)},
+                                              std::span{indices, static_cast<usize>(index_count)}};
     }
 }

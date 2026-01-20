@@ -21,7 +21,10 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        explicit PipelineManager(Renderer2D *renderer) : renderer_{renderer}
+        static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
+
+        explicit PipelineManager(Renderer2D *renderer, const usize pool_size = DEFAULT_POOL_SIZE)
+            : renderer_{renderer}, arena_{pool_size}
         {
         }
 
@@ -31,6 +34,8 @@ namespace retro
             registry.on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(this);
             registry.on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(this);
         }
+
+        void reset_arena();
 
         void collect_all_draw_calls(const entt::registry &registry, Vector2u viewport_size);
 
@@ -62,8 +67,9 @@ namespace retro
             }
         }
 
-        Renderer2D *renderer_;
-        std::map<std::type_index, std::shared_ptr<RenderPipeline>> active_pipelines_;
-        std::map<std::type_index, usize> usage_counts_;
+        Renderer2D *renderer_{};
+        std::map<std::type_index, std::shared_ptr<RenderPipeline>> active_pipelines_{};
+        std::map<std::type_index, usize> usage_counts_{};
+        SingleArena arena_{DEFAULT_POOL_SIZE};
     };
 } // namespace retro
