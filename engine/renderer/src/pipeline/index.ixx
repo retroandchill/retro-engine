@@ -6,5 +6,5 @@
  */
 export module retro.renderer:pipeline;
 
-export import :pipeline.pipeline_manager;
+export import :pipeline.vulkan_pipeline_manager;
 export import :pipeline.vulkan_render_pipeline;

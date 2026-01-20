@@ -1,5 +1,5 @@
 /**
- * @file geometry_render_object.cpp
+ * @file geometry_render_component.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -17,16 +17,6 @@ import retro.logging;
 
 namespace retro
 {
-    struct SceneData
-    {
-        Vector2f viewport_size{};
-        Vector2f transform_position{};
-        float transform_rotation{};
-        Vector2f transform_scale{};
-    };
-
-    const Name GeometryRenderPipeline::TYPE_ID = "geometry"_name;
-
     usize GeometryRenderPipeline::push_constants_size() const
     {
         return sizeof(GeometryRenderData);
@@ -45,7 +35,7 @@ namespace retro
 
     void GeometryRenderPipeline::collect_draw_calls(const entt::registry &registry, const Vector2u viewport_size)
     {
-        for (const auto view = registry.view<GeometryRenderObject, Transform>();
+        for (const auto view = registry.view<GeometryRenderComponent, Transform>();
              auto [entity, geometry, transform] : view.each())
         {
             GeometryDrawCall draw_call{.geometry = geometry.geometry,

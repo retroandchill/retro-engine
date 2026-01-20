@@ -40,7 +40,7 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
-    scene_ = std::make_unique<Scene>();
+    scene_ = std::make_unique<Scene>(renderer_.get());
 
     if (script_runtime_->start_scripts(assembly_path, class_name) != 0)
         return;
@@ -116,10 +116,7 @@ void Engine::render()
 {
     renderer_->begin_frame();
 
-    for (auto [type_id, data] : scene_->render_proxy_manager().collect_draw_calls(renderer_->viewport_size()))
-    {
-        renderer_->queue_draw_calls(type_id, TODO);
-    }
+    scene_->collect_draw_calls(renderer_->viewport_size());
 
     renderer_->end_frame();
 }

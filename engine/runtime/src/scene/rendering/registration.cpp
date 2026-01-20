@@ -11,5 +11,5 @@ import entt;
 
 namespace retro
 {
-    const PipelineRegistration<GeometryType> geometry_pipeline_registration{};
+    const PipelineRegistration<GeometryRenderComponent> geometry_pipeline_registration{};
 } // namespace retro

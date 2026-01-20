@@ -95,11 +95,6 @@ namespace retro
         Vector2u viewport_size_{};
     };
 
-    Name VulkanRenderPipeline::type() const
-    {
-        return pipeline_->type();
-    }
-
     void VulkanRenderPipeline::queue_draw_calls(entt::registry &registry, Vector2u viewport_size)
     {
         pipeline_->collect_draw_calls(registry, viewport_size);

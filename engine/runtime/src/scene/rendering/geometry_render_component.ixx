@@ -1,5 +1,5 @@
 /**
- * @file geometry_render_object.ixx
+ * @file geometry_render_component.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime:scene.rendering.geometry_render_object;
+export module retro.runtime:scene.rendering.geometry_render_component;
 
 import std;
 import retro.core;
@@ -17,10 +17,12 @@ import :scene.transform;
 
 namespace retro
 {
-    export struct GeometryType;
+    export class GeometryRenderPipeline;
 
-    export struct GeometryRenderObject
+    export struct GeometryRenderComponent
     {
+        using PipelineType = GeometryRenderPipeline;
+
         Geometry geometry{};
     };
 
@@ -31,14 +33,9 @@ namespace retro
         uint32 has_texture{};
     };
 
-    export class RETRO_API GeometryRenderPipeline final : public RenderPipeline
+    class RETRO_API GeometryRenderPipeline final : public RenderPipeline
     {
       public:
-        [[nodiscard]] inline Name type() const override
-        {
-            return TYPE_ID;
-        }
-
         [[nodiscard]] usize push_constants_size() const override;
 
         [[nodiscard]] PipelineShaders shaders() const override;
@@ -50,19 +47,8 @@ namespace retro
         void execute(RenderContext &context) override;
 
       private:
-        static const Name TYPE_ID;
         friend struct GeometryType;
 
         std::vector<GeometryDrawCall> pending_geometry_;
-    };
-
-    struct GeometryType
-    {
-        using Component = GeometryRenderObject;
-        using Pipeline = GeometryRenderPipeline;
-        inline static Name name()
-        {
-            return GeometryRenderPipeline::TYPE_ID;
-        }
     };
 } // namespace retro

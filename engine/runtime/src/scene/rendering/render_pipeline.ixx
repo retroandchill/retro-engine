@@ -58,8 +58,6 @@ namespace retro
       public:
         virtual ~RenderPipeline() = default;
 
-        [[nodiscard]] virtual Name type() const = 0;
-
         [[nodiscard]] virtual usize push_constants_size() const = 0;
 
         [[nodiscard]] virtual PipelineShaders shaders() const = 0;
@@ -72,13 +70,7 @@ namespace retro
     };
 
     export template <typename T>
-    concept RenderType =
-        requires {
-            typename T::Component;
-            typename T::Pipeline;
-            {
-                T::name()
-            } -> std::same_as<Name>;
-        } && std::is_default_constructible_v<typename T::Component> &&
-        std::is_default_constructible_v<typename T::Pipeline>;
+    concept RenderComponent =
+        requires { typename T::PipelineType; } && std::is_default_constructible_v<typename T::PipelineType> &&
+        std::derived_from<typename T::PipelineType, RenderPipeline>;
 } // namespace retro

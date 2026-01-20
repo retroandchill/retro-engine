@@ -22,7 +22,7 @@ namespace retro
     export class RETRO_API VulkanRenderPipeline
     {
       public:
-        inline VulkanRenderPipeline(std::unique_ptr<RenderPipeline> pipeline,
+        inline VulkanRenderPipeline(std::shared_ptr<RenderPipeline> pipeline,
                                     vk::Device device,
                                     const VulkanSwapchain &swapchain,
                                     vk::RenderPass render_pass)
@@ -30,8 +30,6 @@ namespace retro
         {
             recreate(device, swapchain, render_pass);
         }
-
-        [[nodiscard]] Name type() const;
 
         void queue_draw_calls(entt::registry &registry, Vector2u viewport_size);
 
@@ -51,7 +49,7 @@ namespace retro
 
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::shared_ptr<RenderPipeline> pipeline_;
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniquePipeline graphics_pipeline_;
     };

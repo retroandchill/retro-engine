@@ -38,9 +38,11 @@ namespace retro
 
         void end_frame() override;
 
-        void queue_draw_calls(Name type, entt::registry &registry) override;
-
         [[nodiscard]] Vector2u viewport_size() const override;
+
+        void add_new_render_pipeline(std::type_index type, std::shared_ptr<RenderPipeline> pipeline) override;
+
+        void remove_render_pipeline(std::type_index type) override;
 
       private:
         static vk::UniqueInstance create_instance();
@@ -67,7 +69,7 @@ namespace retro
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool command_pool_;
         VulkanSyncObjects sync_;
-        PipelineManager pipeline_manager_;
+        VulkanPipelineManager pipeline_manager_;
 
         uint32 current_frame_ = 0;
         uint32 image_index_ = 0;

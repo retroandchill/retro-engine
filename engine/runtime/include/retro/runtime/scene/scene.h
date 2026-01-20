@@ -39,8 +39,6 @@ extern "C"
 
     RETRO_API void retro_entity_dispose(Retro_EntityId viewport_id);
 
-    RETRO_API Retro_EntityId retro_entity_create(Retro_Name name, Retro_EntityId viewport_id);
-
     RETRO_API void retro_render_object_set_transform(Retro_EntityId render_object_id, const Retro_Transform *transform);
 
     RETRO_API void retro_geometry_set_render_data(Retro_EntityId render_object_id,

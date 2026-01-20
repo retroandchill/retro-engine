@@ -15,13 +15,16 @@ import boost;
 import retro.core;
 import :scene.viewport;
 import :scene.rendering;
+import :interfaces;
+import entt;
 
 namespace retro
 {
     export class RETRO_API Scene
     {
       public:
-        Scene() = default;
+        explicit Scene(Renderer2D *renderer);
+
         ~Scene() = default;
 
         Scene(const Scene &) = delete;
@@ -41,11 +44,23 @@ namespace retro
             return registry_.get<T>(entity);
         }
 
+        template <RenderComponent T, typename... Args>
+            requires std::constructible_from<T, Args...>
+        std::pair<entt::entity, T &> create_render_component(Args &&...args)
+        {
+            auto entity = create_entity();
+            registry_.emplace<T>(entity, std::forward<Args>(args)...);
+            return {entity, registry_.get<T>(entity)};
+        }
+
         void update_transforms();
+
+        void collect_draw_calls(Vector2u viewport_size);
 
       private:
         void update_transform(entt::entity entity, const Matrix3x3f &parentWorld, bool parent_changed);
 
         entt::registry registry_{};
+        PipelineManager pipeline_manager_;
     };
 } // namespace retro

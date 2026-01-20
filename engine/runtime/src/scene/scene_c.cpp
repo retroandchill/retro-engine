@@ -23,15 +23,7 @@ namespace
         return static_cast<entt::entity>(entity);
     }
 
-    constexpr retro::Name from_c(const Retro_Name name)
-    {
-        static_assert(sizeof(retro::Name) == sizeof(Retro_Name) && alignof(retro::Name) == alignof(Retro_Name));
-        static_assert(sizeof(retro::NameEntryId) == sizeof(Retro_NameId) &&
-                      alignof(retro::NameEntryId) == alignof(Retro_NameId));
-        return std::bit_cast<retro::Name>(name);
-    }
-
-    const retro::Vector2f from_c(const Retro_Vector2f vector)
+    retro::Vector2f from_c(const Retro_Vector2f vector)
     {
         static_assert(sizeof(retro::Vector2f) == sizeof(Retro_Vector2f) &&
                       alignof(retro::Vector2f) == alignof(Retro_Vector2f));
@@ -58,11 +50,6 @@ extern "C"
         retro::Engine::instance().scene().destroy_entity(from_c(viewport_id));
     }
 
-    Retro_EntityId retro_entity_create(const Retro_Name name, const Retro_EntityId viewport_id)
-    {
-        return to_c(retro::RenderObjectRegistry::instance().create(from_c(name), from_c(viewport_id)));
-    }
-
     void retro_render_object_set_transform(const Retro_EntityId render_object_id, const Retro_Transform *transform)
     {
         auto &trans = retro::Engine::instance().scene().get_component<retro::Transform>(from_c(render_object_id));
@@ -80,7 +67,7 @@ extern "C"
                                         const int32_t index_count)
     {
         auto &geo_object =
-            retro::Engine::instance().scene().get_component<retro::GeometryRenderObject>(from_c(render_object_id));
+            retro::Engine::instance().scene().get_component<retro::GeometryRenderComponent>(from_c(render_object_id));
 
         geo_object.geometry = retro::Geometry{
             .vertices = std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),

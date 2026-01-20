@@ -13,16 +13,10 @@ export module retro.runtime:scene.rendering.pipeline_registry;
 import std;
 import retro.core;
 import :scene.rendering.render_pipeline;
+import :scene.rendering.pipeline_manager;
 
 namespace retro
 {
-    export struct RenderTypeRegistration
-    {
-        Name name;
-        std::function<entt::entity(entt::registry &)> create_entity;
-        std::function<std::unique_ptr<RenderPipeline>()> create_pipeline;
-    };
-
     export class RETRO_API RenderTypeRegistry
     {
         RenderTypeRegistry() = default;
@@ -31,33 +25,20 @@ namespace retro
       public:
         static RenderTypeRegistry &instance();
 
-        template <RenderType T>
+        template <RenderComponent T>
         void register_type()
         {
-            registrations_.emplace(T::name(),
-                                   RenderTypeRegistration{.name = T::name(),
-                                                          .create_entity =
-                                                              [](entt::registry &registry)
-                                                          {
-                                                              auto entity = registry.create();
-                                                              registry.emplace<typename T::Component>(entity);
-                                                              return entity;
-                                                          },
-                                                          .create_pipeline =
-                                                              []
-                                                          {
-                                                              return std::make_unique<T::Pipeline>();
-                                                          }});
+            registrations_.emplace_back([](entt::registry &registry, PipelineManager &pipeline_manager)
+                                        { pipeline_manager.set_up_pipeline_listener<T>(registry); });
         }
 
-        void unregister_pipeline(Name name);
-        [[nodiscard]] std::vector<std::unique_ptr<RenderPipeline>> create_pipelines() const;
+        void register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const;
 
       private:
-        std::map<Name, RenderTypeRegistration> registrations_{};
+        std::vector<std::function<void(entt::registry &, PipelineManager &)>> registrations_{};
     };
 
-    export template <RenderType T>
+    export template <RenderComponent T>
     struct PipelineRegistration
     {
         explicit PipelineRegistration()

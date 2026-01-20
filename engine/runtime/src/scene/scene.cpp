@@ -18,6 +18,11 @@ import entt;
 
 namespace retro
 {
+    Scene::Scene(Renderer2D *renderer) : pipeline_manager_{renderer}
+    {
+        RenderTypeRegistry::instance().register_listeners(registry_, pipeline_manager_);
+    }
+
     entt::entity Scene::create_entity()
     {
         const auto entity = registry_.create();
@@ -44,6 +49,11 @@ namespace retro
         {
             update_transform(entity, Matrix3x3f::identity(), false);
         }
+    }
+
+    void Scene::collect_draw_calls(const Vector2u viewport_size)
+    {
+        pipeline_manager_.collect_all_draw_calls(registry_, viewport_size);
     }
 
     void Scene::update_transform(const entt::entity entity, const Matrix3x3f &parentWorld, const bool parent_changed)

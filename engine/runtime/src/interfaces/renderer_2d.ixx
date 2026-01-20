@@ -9,6 +9,7 @@ export module retro.runtime:interfaces.renderer_2d;
 import retro.core;
 import std;
 import entt;
+import :scene.rendering.render_pipeline;
 
 namespace retro
 {
@@ -21,7 +22,9 @@ namespace retro
 
         virtual void end_frame() = 0;
 
-        virtual void queue_draw_calls(Name type, entt::registry &registry) = 0;
+        virtual void add_new_render_pipeline(std::type_index type, std::shared_ptr<RenderPipeline> pipeline) = 0;
+
+        virtual void remove_render_pipeline(std::type_index type) = 0;
 
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };

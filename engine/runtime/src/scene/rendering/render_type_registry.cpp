@@ -14,15 +14,11 @@ namespace retro
         return instance;
     }
 
-    void RenderTypeRegistry::unregister_pipeline(const Name name)
+    void RenderTypeRegistry::register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const
     {
-        registrations_.erase(name);
-    }
-
-    std::vector<std::unique_ptr<RenderPipeline>> RenderTypeRegistry::create_pipelines() const
-    {
-        return registrations_ | std::views::values |
-               std::views::transform([&](auto registration) { return registration.create_pipeline(); }) |
-               std::ranges::to<std::vector>();
+        for (auto &registration : registrations_)
+        {
+            registration(registry, pipeline_manager);
+        }
     }
 } // namespace retro

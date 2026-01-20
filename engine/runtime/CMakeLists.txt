@@ -7,9 +7,10 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/scene.cpp
         src/scene/scene_c.cpp
         src/engine_c.cpp
-        src/scene/rendering/geometry_render_object.cpp
+        src/scene/rendering/geometry_render_component.cpp
         src/scene/rendering/render_type_registry.cpp
-        src/scene/rendering/registration.cpp)
+        src/scene/rendering/registration.cpp
+        src/scene/rendering/pipeline_manager.cpp)
 
 set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/index.ixx
@@ -24,17 +25,19 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/viewport.ixx
         src/scene/rendering/index.ixx
         src/scene/transform.ixx
-        src/scene/rendering/geometry_render_object.ixx
+        src/scene/rendering/geometry_render_component.ixx
         src/scene/rendering/render_pipeline.ixx
         src/scene/rendering/render_type_registry.ixx
         src/assets/index.ixx
         src/assets/textures/index.ixx
         src/assets/textures/texture_loader.ixx
-        src/assets/textures/texture.ixx)
+        src/assets/textures/texture.ixx
+        src/scene/rendering/pipeline_manager.ixx)
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h
-        include/retro/runtime/engine.h)
+        include/retro/runtime/engine.h
+)
 
 
 add_library(retro_runtime

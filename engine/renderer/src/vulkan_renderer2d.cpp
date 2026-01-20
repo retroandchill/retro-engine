@@ -36,7 +36,7 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
           }),
-          pipeline_manager_{device_.device(), swapchain_, render_pass_.get()}
+          pipeline_manager_{device_.device()}
     {
     }
 
@@ -130,14 +130,19 @@ namespace retro
         VulkanBufferManager::instance().reset();
     }
 
-    void VulkanRenderer2D::queue_draw_calls(const Name type, entt::registry &registry)
-    {
-        pipeline_manager_.queue_draw_calls(type, registry, viewport_->size());
-    }
-
     Vector2u VulkanRenderer2D::viewport_size() const
     {
         return viewport_->size();
+    }
+
+    void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, std::shared_ptr<RenderPipeline> pipeline)
+    {
+        pipeline_manager_.create_pipeline(type, std::move(pipeline), swapchain_, render_pass_.get());
+    }
+
+    void VulkanRenderer2D::remove_render_pipeline(const std::type_index type)
+    {
+        pipeline_manager_.destroy_pipeline(type);
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance()
