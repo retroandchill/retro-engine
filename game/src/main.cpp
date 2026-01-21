@@ -11,6 +11,7 @@ import retro.renderer;
 import retro.logging;
 import std;
 import sdl;
+import boost;
 
 int main()
 {
@@ -24,6 +25,10 @@ int main()
     try
     {
         auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
+        auto injector = boost::di::make_injector(boost::di::bind<ScriptRuntime>().to<DotnetManager>(),
+                                                 boost::di::bind<Renderer2D>().to<VulkanRenderer2D>(),
+                                                 boost::di::bind<Window>().to(window));
+
         const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
                                   .renderer_factory =
                                       [&]
