@@ -66,6 +66,34 @@ namespace retro
     template <Encoding FromEnc, Encoding ToEnc>
     struct UnaConverter;
 
+    template <Encoding Encoding>
+    struct UnaConverter<Encoding, Encoding>
+    {
+        template <Char To, std::ranges::input_range Range, SimpleAllocator Allocator>
+            requires(ENCODING_OF<std::ranges::range_value_t<Range>> == Encoding && ENCODING_OF<To> == Encoding)
+        static constexpr auto convert(Range &&source, Allocator allocator)
+        {
+            using From = std::ranges::range_value_t<Range>;
+            if constexpr (std::same_as<To, From>)
+            {
+                return std::basic_string<To, std::char_traits<To>, Allocator>{std::from_range,
+                                                                              std::forward<Range>(source),
+                                                                              std::move(allocator)};
+            }
+            else
+            {
+                static_assert(sizeof(To) == sizeof(From), "Cannot convert between different sized encodings.");
+
+                // Since we've already confirmed we're looking at the same size, we can simply use std::bit_cast
+                // to force a conversion
+                return std::basic_string<To, std::char_traits<To>, Allocator>{
+                    std::from_range,
+                    std::forward<Range>(source) | std::views::transform([](From c) { return std::bit_cast<To>(c); }),
+                    std::move(allocator)};
+            }
+        }
+    };
+
     template <>
     struct UnaConverter<Encoding::Utf8, Encoding::Utf16>
     {
@@ -222,16 +250,7 @@ namespace retro
     constexpr auto convert_string(Range &&source, Allocator allocator = Allocator{})
     {
         using From = std::ranges::range_value_t<Range>;
-        if constexpr (std::same_as<To, From>)
-        {
-            return std::basic_string<To, std::char_traits<To>, Allocator>{std::from_range,
-                                                                          std::forward<Range>(source),
-                                                                          std::move(allocator)};
-        }
-        else
-        {
-            return UnaConverter<ENCODING_OF<From>, ENCODING_OF<To>>::template convert<To>(std::forward<Range>(source),
-                                                                                          std::move(allocator));
-        }
+        return UnaConverter<ENCODING_OF<From>, ENCODING_OF<To>>::template convert<To>(std::forward<Range>(source),
+                                                                                      std::move(allocator));
     }
 } // namespace retro
