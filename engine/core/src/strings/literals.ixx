@@ -8,7 +8,7 @@ export module retro.core:strings.literals;
 
 import std;
 import :defines;
-import :strings.concepts;
+import :strings.encoding;
 import :strings.cstring_view;
 
 namespace retro

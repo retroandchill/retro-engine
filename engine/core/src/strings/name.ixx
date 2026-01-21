@@ -15,7 +15,7 @@ export module retro.core:strings.name;
 import :defines;
 import :algorithm;
 import :strings.comparison;
-import :strings.concepts;
+import :strings.encoding;
 import uni_algo;
 import fmt;
 import :memory.arena;

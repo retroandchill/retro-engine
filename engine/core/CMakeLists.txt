@@ -14,7 +14,7 @@ set(RETRO_CORE_HEADERS include/retro/core/exports.h
         include/retro/core/math/color.h)
 
 set(RETRO_CORE_MODULES src/index.ixx
-        src/strings/concepts.ixx
+        src/strings/encoding.ixx
         src/strings/index.ixx
         src/strings/cstring_view.ixx
         src/strings/literals.ixx

@@ -13,7 +13,7 @@ export module retro.core:strings.cstring_view;
 import std;
 import :defines;
 
-import :strings.concepts;
+import :strings.encoding;
 
 namespace retro
 {
