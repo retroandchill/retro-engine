@@ -11,3 +11,4 @@ export import :memory.arena;
 export import :memory.write_to_buffer;
 export import :memory.simple_allocator;
 export import :memory.arena_allocator;
+export import :memory.align;

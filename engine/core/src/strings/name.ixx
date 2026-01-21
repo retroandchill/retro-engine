@@ -18,6 +18,8 @@ import :strings.comparison;
 import :strings.concepts;
 import uni_algo;
 import fmt;
+import :memory.arena;
+import :memory.arena_allocator;
 
 namespace retro
 {
@@ -177,6 +179,13 @@ namespace retro
         };
     };
 
+    /**
+     * This is the size of the stack-allocated arena for the temp strings when performing string operations.
+     * Assuming sizeof(char) is 1 byte, this should allocate about 8KB of stack space, which should be support
+     * multiple dynamic string resizes.
+     */
+    constexpr usize NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
+
     export RETRO_API constexpr std::string_view NONE_STRING = "None";
 
     struct NameIndices
@@ -195,16 +204,27 @@ namespace retro
             int32 number;
         };
 
+        template <EncodableRange<char>>
+        struct CanImplicitlyConvert : std::false_type
+        {
+        };
+
+        template <Char CharType>
+        struct CanImplicitlyConvert<std::basic_string_view<CharType>> : std::true_type
+        {
+        };
+
+        template <EncodableRange<char> Range>
+        static constexpr bool CAN_IMPLICITLY_CONVERT = CanImplicitlyConvert<std::remove_cvref_t<Range>>::value;
+
       public:
         constexpr Name() = default;
 
-        explicit(false) Name(std::string_view value, FindType find_type = FindType::Add);
-
-        explicit(false) Name(std::u16string_view value, FindType find_type = FindType::Add);
-
-        explicit(false) Name(const std::string &value, FindType find_type = FindType::Add);
-
-        explicit(false) Name(const std::u16string &value, FindType find_type = FindType::Add);
+        template <EncodableRange<char> Range>
+        explicit(!CAN_IMPLICITLY_CONVERT<Range>) Name(Range &&value, FindType find_type = FindType::Add)
+            : Name(lookup_name(std::forward<Range>(value), find_type))
+        {
+        }
 
         explicit(false) inline Name(const char *value, const FindType find_type = FindType::Add)
             : Name(std::string_view{value}, find_type)
@@ -278,6 +298,7 @@ namespace retro
         }
 
         template <Char CharType = char, SimpleAllocator Allocator = std::allocator<CharType>>
+            requires std::same_as<CharType, typename Allocator::value_type>
         [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
         {
             const auto baseString = get_base_string();
@@ -289,6 +310,14 @@ namespace retro
             std::basic_string<CharType, std::char_traits<CharType>, Allocator> result{std::move(allocator)};
             fmt::format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
             return result;
+        }
+
+        template <Char CharType, SimpleAllocator Allocator>
+            requires std::same_as<CharType, typename Allocator::value_type>
+        void append_string(std::basic_string<CharType, std::char_traits<CharType>, Allocator> &output) const
+        {
+            InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+            output.append(to_string<CharType>(make_allocator<CharType>(arena)));
         }
 
         [[nodiscard]] friend constexpr bool operator==(const Name &lhs, const Name &rhs)
@@ -317,7 +346,26 @@ namespace retro
         static bool is_within_bounds(NameEntryId index);
 
         static LookupResult lookup_name(std::string_view value, FindType find_type);
-        static LookupResult lookup_name(std::u16string_view value, FindType find_type);
+
+        template <EncodableRange<char> Range>
+        static LookupResult lookup_name(Range &&value, FindType find_type)
+        {
+            if constexpr (std::convertible_to<Range, std::string_view>)
+            {
+                return lookup_name(std::string_view{std::forward<Range>(value)}, find_type);
+            }
+            else if constexpr (std::ranges::contiguous_range<Range> && std::ranges::sized_range<Range> &&
+                               std::same_as<std::ranges::range_value_t<Range>, char>)
+            {
+                return lookup_name(std::string_view{std::ranges::data(value), std::ranges::size(value)}, find_type);
+            }
+            else
+            {
+                InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+                const auto utf8_str = convert_string<char>(std::forward<Range>(value), make_allocator<char>(arena));
+                return lookup_name(utf8_str, find_type);
+            }
+        }
 
         NameEntryId comparison_index_;
         int32 number_ = NAME_NO_NUMBER_INTERNAL;

@@ -7,3 +7,4 @@
 export module retro.runtime:assets;
 
 export import :assets.textures;
+export import :assets.asset_path;

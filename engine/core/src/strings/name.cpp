@@ -29,13 +29,6 @@ namespace retro
         return hash_combine(name.hash, name.length);
     }
 
-    /**
-     * This is the size of the stack-allocated arena for the temp strings when performing string operations.
-     * Assuming sizeof(char) is 1 byte, this should allocate about 8KB of stack space, which should be support
-     * multiple dynamic string resizes.
-     */
-    constexpr usize NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
-
     template <NameCase CaseSensitivity>
         requires(CaseSensitivity == NameCase::CaseSensitive || CaseSensitivity == NameCase::IgnoreCase)
     struct NameEntryComparer
@@ -291,22 +284,6 @@ namespace retro
         return NameTable::instance().compare<NameCase::CaseSensitive>(*this, other);
     }
 
-    Name::Name(const std::string_view value, const FindType find_type) : Name(lookup_name(value, find_type))
-    {
-    }
-
-    Name::Name(const std::u16string_view value, const FindType find_type) : Name(lookup_name(value, find_type))
-    {
-    }
-
-    Name::Name(const std::string &value, const FindType find_type) : Name(lookup_name(value, find_type))
-    {
-    }
-
-    Name::Name(const std::u16string &value, const FindType find_type) : Name(lookup_name(value, find_type))
-    {
-    }
-
     bool operator==(const Name &lhs, const std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
@@ -377,13 +354,6 @@ namespace retro
 
         return LookupResult{.indices = NameTable::instance().get_or_add_entry(new_slice, find_type),
                             .number = internal_number};
-    }
-
-    Name::LookupResult Name::lookup_name(const std::u16string_view value, const FindType find_type)
-    {
-        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
-        const auto utf8_str = convert_string<char>(value, make_allocator<char>(arena));
-        return lookup_name(utf8_str, find_type);
     }
 
     const std::vector<const NameEntry *> &debug_get_name_entries()

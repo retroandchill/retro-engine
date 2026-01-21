@@ -71,7 +71,7 @@ export namespace una
         } // namespace views
     }     // namespace ranges
 
-    using namespace views;
+    namespace views = ranges::views;
 
     namespace ranges
     {
@@ -254,4 +254,9 @@ export namespace una
             } // namespace word_only
         }     // namespace views
     }         // namespace ranges
+
+    namespace detail::rng
+    {
+        using rng::operator|;
+    }
 } // namespace una

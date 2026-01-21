@@ -13,6 +13,7 @@ export module retro.core:memory.arena;
 import :defines;
 import std;
 import boost;
+import :memory.align;
 
 namespace retro
 {
@@ -46,11 +47,11 @@ namespace retro
         {
         }
 
-        inline void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
+        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
         {
             void *next = data_.get() + current_offset_;
             usize remaining = capacity_ - current_offset_;
-            auto *res = std::align(alignment, size, next, remaining);
+            auto *res = align(alignment, size, next, remaining);
             if (res != nullptr)
             {
                 auto *new_pos = static_cast<std::byte *>(res) + size;
@@ -61,7 +62,7 @@ namespace retro
             return nullptr;
         }
 
-        [[nodiscard]] void *data() const noexcept
+        [[nodiscard]] constexpr void *data() const noexcept
         {
             return data_.get();
         }
@@ -93,7 +94,7 @@ namespace retro
             void *next = data_.get() + current_offset_;
             usize remaining = capacity_ - current_offset_;
 
-            const void *res = std::align(alignment, size, next, remaining);
+            const void *res = align(alignment, size, next, remaining);
             return res != nullptr;
         }
 
@@ -118,7 +119,7 @@ namespace retro
             blocks_.emplace_back(block_capacity);
         }
 
-        inline void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
+        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
         {
             auto *block = &blocks_.back();
 
@@ -166,11 +167,11 @@ namespace retro
     class InlineArena : boost::noncopyable // NOLINT
     {
       public:
-        inline void *allocate(const usize size, const usize alignment = alignof(std::max_align_t))
+        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t))
         {
             void *next = data_.data() + current_offset_;
             usize remaining = N - current_offset_;
-            if (auto *res = std::align(alignment, size, next, remaining); res != nullptr)
+            if (auto *res = align(alignment, size, next, remaining); res != nullptr)
             {
                 auto *new_pos = static_cast<std::byte *>(res) + size;
                 current_offset_ = static_cast<usize>(new_pos - data_.data());
@@ -185,7 +186,7 @@ namespace retro
             current_offset_ = 0;
         }
 
-        constexpr void *data() const noexcept
+        [[nodiscard]] constexpr void *data() const noexcept
         {
             return data_.data();
         }
@@ -211,7 +212,7 @@ namespace retro
             void *next = data_.get() + current_offset_;
             usize remaining = N - current_offset_;
 
-            const void *res = std::align(alignment, size, next, remaining);
+            const void *res = align(alignment, size, next, remaining);
             return res != nullptr;
         }
 

@@ -43,6 +43,7 @@ set(RETRO_CORE_MODULES src/index.ixx
         src/math/matrix.ixx
         src/memory/simple_allocator.ixx
         src/memory/arena_allocator.ixx
+        src/memory/align.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
