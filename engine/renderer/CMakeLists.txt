@@ -45,24 +45,13 @@ set(RETRO_RENDER_SOURCES src/vulkan_renderer2d.cpp
         src/components/vulkan_command_pool.cpp
         src/components/vulkan_sync.cpp
         src/window.cpp
-        src/pipeline/vulkan_pipeline_manager.cpp
-        src/pipeline/vulkan_render_pipeline.cpp
+        src/pipeline/pipeline.cpp
         src/vulkan_buffer_manager.cpp
 )
 
-set(RETRO_RENDER_MODULES src/index.ixx
-        src/vulkan_renderer2d.ixx
-        src/vulkan_viewport.ixx
-        src/window.ixx
-        src/components/index.ixx
-        src/components/vulkan_device.ixx
-        src/components/vulkan_swapchain.ixx
-        src/components/vulkan_command_pool.ixx
-        src/components/vulkan_sync.ixx
-        src/pipeline/index.ixx
-        src/pipeline/vulkan_pipeline_manager.ixx
-        src/pipeline/vulkan_render_pipeline.ixx
-        src/vulkan_buffer_manager.ixx
+set(RETRO_RENDER_MODULES src/renderer.ixx
+        src/components/components.ixx
+        src/pipeline/pipeline.ixx
 )
 
 set(RETRO_RENDER_HEADERS )

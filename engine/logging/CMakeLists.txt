@@ -2,12 +2,11 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_LOGGING_SOURCES src/logger.cpp
+set(RETRO_LOGGING_SOURCES src/logging.cpp
         src/logger_c.cpp)
 
-set(RETRO_LOGGING_MODULES src/index.ixx
-        src/log_level.ixx
-        src/logger.ixx)
+set(RETRO_LOGGING_MODULES src/logging.ixx
+)
 
 set(RETRO_LOGGING_HEADERS include/retro/logging/logger.h)
 

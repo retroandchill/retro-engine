@@ -1,5 +1,5 @@
 ﻿/**
- * @file pipeline_registry.cpp
+ * @file render_type_registry.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.

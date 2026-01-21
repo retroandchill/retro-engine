@@ -12,8 +12,7 @@ export module retro.runtime:scene.rendering.geometry_render_component;
 
 import std;
 import retro.core;
-import :scene.rendering.render_pipeline;
-import :scene.transform;
+import :scene.rendering;
 
 namespace retro
 {

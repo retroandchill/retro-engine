@@ -3,7 +3,7 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_CORE_SOURCES src/strings/name.cpp
-        src/filesystem/file_loader.cpp
+        src/filesystem/filesystem.cpp
         src/strings/name_c.cpp
 )
 
@@ -15,37 +15,18 @@ set(RETRO_CORE_HEADERS include/retro/core/exports.h
         include/retro/core/macros.hpp)
 
 set(RETRO_CORE_MODULES src/index.ixx
-        src/strings/encoding.ixx
-        src/strings/index.ixx
-        src/strings/cstring_view.ixx
-        src/strings/literals.ixx
+        src/strings/strings.ixx
         src/strings/name.ixx
-        src/strings/comparison.ixx
-        src/memory/index.ixx
+        src/memory/memory.ixx
         src/memory/ref_counted_ptr.ixx
         src/defines.ixx
-        src/algorithm/index.ixx
-        src/algorithm/hashing.ixx
+        src/algorithm.ixx
         src/basic_types.ixx
-        src/filesystem/index.ixx
-        src/filesystem/file_loader.ixx
-        src/math/index.ixx
-        src/math/concepts.ixx
-        src/math/vector.ixx
-        src/containers/index.ixx
-        src/containers/packed_pool.ixx
-        src/containers/polymorphic.ixx
-        src/math/rounding.ixx
-        src/memory/arena.ixx
-        src/functional/index.ixx
-        src/functional/overload.ixx
-        src/functional/function_traits.ixx
-        src/memory/write_to_buffer.ixx
-        src/math/matrix.ixx
-        src/memory/simple_allocator.ixx
+        src/filesystem/filesystem.ixx
+        src/math.ixx
+        src/functional/functional.ixx
         src/memory/arena_allocator.ixx
-        src/memory/align.ixx
-        src/type_traits.ixx
+        src/concepts.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

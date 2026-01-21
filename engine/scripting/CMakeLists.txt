@@ -2,13 +2,9 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_SCRIPTING_SOURCES src/dotnet/dotnet_loader.cpp
-        src/dotnet/dotnet_manager.cpp)
+set(RETRO_SCRIPTING_SOURCES src/scripting.cpp)
 
-set(RETRO_SCRIPTING_MODULES src/index.ixx
-        src/dotnet/dotnet_loader.ixx
-        src/dotnet/index.ixx
-        src/dotnet/dotnet_manager.ixx)
+set(RETRO_SCRIPTING_MODULES src/scripting.ixx)
 
 add_library(retro_scripting
         ${RETRO_SCRIPTING_SOURCES}

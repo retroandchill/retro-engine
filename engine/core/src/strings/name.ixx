@@ -14,11 +14,9 @@ export module retro.core:strings.name;
 
 import :defines;
 import :algorithm;
-import :strings.comparison;
-import :strings.encoding;
+import :strings;
 import uni_algo;
 import fmt;
-import :memory.arena;
 import :memory.arena_allocator;
 
 namespace retro

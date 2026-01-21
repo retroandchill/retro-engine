@@ -6,9 +6,8 @@
  */
 export module retro.core:memory.ref_counted_ptr;
 
-import :strings;
 import :defines;
-import :type_traits;
+import :concepts;
 import std;
 
 namespace retro
