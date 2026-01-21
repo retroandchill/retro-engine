@@ -61,6 +61,17 @@ namespace retro
             return asset_name_;
         }
 
+        [[nodiscard]] inline bool is_valid() const noexcept
+        {
+            return package_name_.is_valid() && !package_name_.is_none() && asset_name_.is_valid() &&
+                   !asset_name_.is_none();
+        }
+
+        static constexpr AssetPath none() noexcept
+        {
+            return AssetPath{};
+        }
+
         template <Char CharType = char, SimpleAllocator Allocator = std::allocator<CharType>>
             requires std::same_as<CharType, typename Allocator::value_type>
         [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
@@ -80,8 +91,27 @@ namespace retro
             asset_name_.append_string(target_string);
         }
 
+        friend constexpr bool operator==(const AssetPath &lhs, const AssetPath &rhs) noexcept = default;
+
+        friend constexpr std::strong_ordering operator<=>(const AssetPath &lhs,
+                                                          const AssetPath &rhs) noexcept = default;
+
+        friend constexpr usize hash_value(const AssetPath path)
+        {
+            return hash_combine(path.package_name_, path.asset_name_);
+        }
+
       private:
         Name package_name_{};
         Name asset_name_{};
     };
 } // namespace retro
+
+template <>
+struct std::hash<retro::AssetPath>
+{
+    constexpr usize operator()(const retro::AssetPath &path) const noexcept
+    {
+        return hash_value(path);
+    }
+};

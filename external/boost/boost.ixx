@@ -196,7 +196,17 @@ export namespace boost
         using intrusive::trivial_value_traits;
         using intrusive::value_traits;
 
+        using intrusive::key_of_value;
         using intrusive::pointer_plus_bits;
+
+        using intrusive::auto_unlink;
+        using intrusive::normal_link;
+        using intrusive::safe_link;
+
+        namespace detail
+        {
+            using detail::destructor_impl;
+        }
     } // namespace intrusive
 #pragma endregion
 } // namespace boost

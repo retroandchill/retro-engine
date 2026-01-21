@@ -8,6 +8,7 @@ export module retro.core:memory.ref_counted_ptr;
 
 import :strings;
 import :defines;
+import :casts;
 import std;
 
 namespace retro
@@ -82,6 +83,12 @@ namespace retro
         std::atomic<uint32> ref_count_{0};
     };
 
+    struct RefCountInternal
+    {
+    };
+
+    constexpr RefCountInternal ref_count_internal{};
+
     export template <RefCounted T>
     class RefCountPtr
     {
@@ -90,36 +97,40 @@ namespace retro
 
         constexpr RefCountPtr() noexcept = default;
 
-        constexpr explicit(false) RefCountPtr(std::nullptr_t) noexcept
+        explicit(false) constexpr RefCountPtr(std::nullptr_t) noexcept
         {
         }
 
-        explicit RefCountPtr(T *ptr) noexcept : ptr_(ptr)
+        explicit constexpr RefCountPtr(T *ptr) noexcept : ptr_(ptr)
         {
             if (ptr_ != nullptr)
                 intrusive_retain(ptr_);
         }
 
-        RefCountPtr(const RefCountPtr &other) noexcept : ptr_(other.ptr_)
+        explicit constexpr RefCountPtr(RefCountInternal, T *ptr) noexcept : ptr_(ptr)
+        {
+        }
+
+        constexpr RefCountPtr(const RefCountPtr &other) noexcept : ptr_(other.ptr_)
         {
             if (ptr_ != nullptr)
                 intrusive_retain(ptr_);
         }
 
         template <std::derived_from<T> U>
-        explicit(false) RefCountPtr(const RefCountPtr<U> &other) noexcept : ptr_(other.get())
+        explicit(false) constexpr RefCountPtr(const RefCountPtr<U> &other) noexcept : ptr_(other.get())
         {
             if (ptr_ != nullptr)
                 intrusive_retain(ptr_);
         }
 
-        RefCountPtr(RefCountPtr &&other) noexcept : ptr_(other.ptr_)
+        constexpr RefCountPtr(RefCountPtr &&other) noexcept : ptr_(other.ptr_)
         {
             other.ptr_ = nullptr;
         }
 
         template <std::derived_from<T> U>
-        explicit(false) RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release())
+        explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release())
         {
             other.ptr_ = nullptr;
         }
@@ -130,7 +141,7 @@ namespace retro
                 intrusive_release(ptr_);
         }
 
-        RefCountPtr &operator=(const RefCountPtr &other) noexcept
+        constexpr RefCountPtr &operator=(const RefCountPtr &other) noexcept
         {
             if (this != std::addressof(other))
             {
@@ -140,13 +151,13 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
-        RefCountPtr &operator=(const RefCountPtr<U> &other) noexcept
+        constexpr RefCountPtr &operator=(const RefCountPtr<U> &other) noexcept
         {
             reset(other.get());
             return *this;
         }
 
-        RefCountPtr &operator=(RefCountPtr &&other) noexcept
+        constexpr RefCountPtr &operator=(RefCountPtr &&other) noexcept
         {
             if (this != std::addressof(other))
             {
@@ -162,7 +173,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
-        RefCountPtr &operator=(RefCountPtr<U> &&other) noexcept
+        constexpr RefCountPtr &operator=(RefCountPtr<U> &&other) noexcept
         {
             if (ptr_)
             {
@@ -175,7 +186,7 @@ namespace retro
             return *this;
         }
 
-        RefCountPtr &operator=(T *ptr) noexcept
+        constexpr RefCountPtr &operator=(T *ptr) noexcept
         {
             reset(ptr);
             return *this;
@@ -196,7 +207,14 @@ namespace retro
             return *ptr_;
         }
 
-        void reset() noexcept
+        T *release(RefCountInternal) noexcept
+        {
+            auto ptr = ptr_;
+            ptr_ = nullptr;
+            return ptr;
+        }
+
+        [[nodiscard]] constexpr void reset() noexcept
         {
             if (ptr_ != nullptr)
             {
@@ -205,7 +223,7 @@ namespace retro
             }
         }
 
-        void reset(T *ptr) noexcept
+        constexpr void reset(T *ptr) noexcept
         {
             if (ptr == ptr_)
                 return;
@@ -218,43 +236,44 @@ namespace retro
                 intrusive_retain(ptr_);
         }
 
-        void swap(RefCountPtr &other) noexcept
+        constexpr void swap(RefCountPtr &other) noexcept
         {
             std::swap(ptr_, other.ptr_);
         }
 
-        [[nodiscard]] friend bool operator==(const RefCountPtr &lhs, const RefCountPtr &rhs) noexcept
+        [[nodiscard]] friend constexpr bool operator==(const RefCountPtr &lhs, const RefCountPtr &rhs) noexcept
         {
             return lhs.ptr_ == rhs.ptr_;
         }
 
         template <std::derived_from<T> U>
-        [[nodiscard]] friend bool operator==(const RefCountPtr &lhs, const RefCountPtr<U> &rhs) noexcept
+        [[nodiscard]] friend constexpr bool operator==(const RefCountPtr &lhs, const RefCountPtr<U> &rhs) noexcept
         {
             return lhs.ptr_ == rhs.ptr_;
         }
 
         template <std::derived_from<T> U>
-        [[nodiscard]] friend bool operator==(const RefCountPtr<U> &lhs, const RefCountPtr &rhs) noexcept
+        [[nodiscard]] friend constexpr bool operator==(const RefCountPtr<U> &lhs, const RefCountPtr &rhs) noexcept
         {
             return lhs.ptr_ == rhs.ptr_;
         }
 
-        [[nodiscard]] friend std::strong_ordering operator<=>(const RefCountPtr &lhs, const RefCountPtr &rhs) noexcept
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const RefCountPtr &lhs,
+                                                                        const RefCountPtr &rhs) noexcept
         {
             return lhs.ptr_ <=> rhs.ptr_;
         }
 
         template <std::derived_from<T> U>
-        [[nodiscard]] friend std::strong_ordering operator<=>(const RefCountPtr &lhs,
-                                                              const RefCountPtr<U> &rhs) noexcept
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const RefCountPtr &lhs,
+                                                                        const RefCountPtr<U> &rhs) noexcept
         {
             return lhs.ptr_ <=> rhs.ptr_;
         }
 
         template <std::derived_from<T> U>
-        [[nodiscard]] friend std::strong_ordering operator<=>(const RefCountPtr<U> &lhs,
-                                                              const RefCountPtr &rhs) noexcept
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const RefCountPtr<U> &lhs,
+                                                                        const RefCountPtr &rhs) noexcept
         {
             return lhs.ptr_ <=> rhs.ptr_;
         }
@@ -266,31 +285,66 @@ namespace retro
             return stream << ptr.get();
         }
 
+        friend constexpr usize hash_value(const RefCountPtr path)
+        {
+            return std::hash<T *>{}(path.ptr_);
+        }
+
       private:
         T *ptr_{nullptr};
     };
 
     export template <RefCounted T>
-    void swap(RefCountPtr<T> &a, RefCountPtr<T> &b) noexcept
+    constexpr void swap(RefCountPtr<T> &a, RefCountPtr<T> &b) noexcept
     {
         a.swap(b);
     }
 
     export template <RefCounted T, typename... Args>
         requires std::constructible_from<T, Args...>
-    RefCountPtr<T> make_ref_counted(Args &&...args)
+    constexpr RefCountPtr<T> make_ref_counted(Args &&...args)
     {
         return RefCountPtr<T>{new T{std::forward<Args>(args)...}};
+    }
+
+    export template <RefCounted T, RefCounted U>
+        requires CanStaticCast<T *, U *>
+    constexpr RefCountPtr<U> static_pointer_cast(const RefCountPtr<T> &ptr) noexcept
+    {
+        auto *p = static_cast<U *>(ptr.get());
+        return RefCountPtr<U>{p};
+    }
+
+    export template <RefCounted T, RefCounted U>
+        requires CanStaticCast<T *, U *>
+    constexpr RefCountPtr<U> static_pointer_cast(RefCountPtr<T> &&ptr) noexcept
+    {
+        auto *p = static_cast<U *>(ptr.release(ref_count_internal));
+        return RefCountPtr<U>{ref_count_internal, p};
+    }
+
+    export template <RefCounted T, RefCounted U>
+        requires std::derived_from<T, U> || std::derived_from<U, T>
+    constexpr RefCountPtr<U> dynamic_pointer_cast(const RefCountPtr<T> &ptr) noexcept
+    {
+        auto *p = dynamic_cast<U *>(ptr.get());
+        return RefCountPtr<U>{p};
+    }
+
+    export template <RefCounted T, RefCounted U>
+        requires std::derived_from<T, U> || std::derived_from<U, T>
+    constexpr RefCountPtr<U> dynamic_pointer_cast(RefCountPtr<T> &&ptr) noexcept
+    {
+        auto *p = dynamic_cast<U *>(ptr.release(ref_count_internal));
+        return RefCountPtr<U>{ref_count_internal, p};
     }
 } // namespace retro
 
 template <retro::RefCounted T>
 struct std::hash<retro::RefCountPtr<T>>
 {
-    hash() = default;
-
-    size_t operator()(const retro::RefCountPtr<T> &ptr) const noexcept
+    constexpr size_t operator()(const retro::RefCountPtr<T> &ptr) const noexcept
     {
-        return std::hash<T *>{}(ptr.get());
+        return hash_value(ptr);
     }
 };

@@ -10,7 +10,9 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/rendering/geometry_render_component.cpp
         src/scene/rendering/render_type_registry.cpp
         src/scene/rendering/registration.cpp
-        src/scene/rendering/pipeline_manager.cpp)
+        src/scene/rendering/pipeline_manager.cpp
+        src/assets/asset_manager.cpp
+)
 
 set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/index.ixx
@@ -33,7 +35,10 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/assets/textures/texture_loader.ixx
         src/assets/textures/texture.ixx
         src/scene/rendering/pipeline_manager.ixx
-        src/assets/asset_path.ixx)
+        src/assets/asset_path.ixx
+        src/assets/asset.ixx
+        src/assets/asset_manager.ixx
+        src/assets/asset_loader.ixx)
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h

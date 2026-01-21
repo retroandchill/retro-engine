@@ -8,3 +8,6 @@ export module retro.runtime:assets;
 
 export import :assets.textures;
 export import :assets.asset_path;
+export import :assets.asset;
+export import :assets.asset_manager;
+export import :assets.asset_loader;
