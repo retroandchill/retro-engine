@@ -24,7 +24,7 @@ namespace retro
         }
 
         template <std::derived_from<Asset> T>
-        RefCountPtr<T> load_asset(const AssetPath &path)
+        std::expected<RefCountPtr<T>, AssetLoadError> load_asset(const AssetPath &path)
         {
             if constexpr (std::is_same_v<T, Asset>)
             {
@@ -32,12 +32,25 @@ namespace retro
             }
             else
             {
-                return retro::dynamic_pointer_cast<T>(load_asset_internal(path));
+                return load_asset_internal(path).and_then(
+                    [](RefCountPtr<Asset> &&asset) -> std::expected<RefCountPtr<T>, AssetLoadError>
+                    {
+                        auto *asset_ptr = asset.get();
+                        auto cast_ptr = dynamic_pointer_cast<T>(std::move(asset));
+                        if (cast_ptr == nullptr)
+                        {
+                            return std::unexpected{
+                                AssetLoadError{std::in_place_type<AssetTypeMismatch>, typeid(T), typeid(*asset_ptr)}};
+                        }
+
+                        return std::move(cast_ptr);
+                    });
+                return retro::dynamic_pointer_cast<T>();
             }
         }
 
       private:
-        RefCountPtr<Asset> load_asset_internal(const AssetPath &path);
+        std::expected<RefCountPtr<Asset>, AssetLoadError> load_asset_internal(const AssetPath &path);
 
         std::unique_ptr<AssetLoader> asset_loader_{};
         Asset::Map asset_cache_{};

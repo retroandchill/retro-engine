@@ -8,7 +8,7 @@ module retro.runtime;
 
 namespace retro
 {
-    RefCountPtr<Asset> AssetManager::load_asset_internal(const AssetPath &path)
+    std::expected<RefCountPtr<Asset>, AssetLoadError> AssetManager::load_asset_internal(const AssetPath &path)
     {
         if (const auto existing_asset = asset_cache_.find(path); existing_asset != asset_cache_.end())
         {

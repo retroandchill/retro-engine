@@ -32,7 +32,6 @@ set(RETRO_RUNTIME_MODULES src/engine.ixx
         src/scene/rendering/render_type_registry.ixx
         src/assets/index.ixx
         src/assets/textures/index.ixx
-        src/assets/textures/texture_loader.ixx
         src/assets/textures/texture.ixx
         src/scene/rendering/pipeline_manager.ixx
         src/assets/asset_path.ixx

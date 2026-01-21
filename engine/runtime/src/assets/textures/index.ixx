@@ -6,5 +6,4 @@
  */
 export module retro.runtime:assets.textures;
 
-export import :assets.textures.texture_loader;
 export import :assets.textures.texture;

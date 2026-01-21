@@ -7,10 +7,15 @@
 export module retro.runtime:assets.textures.texture;
 
 import retro.core;
+import :assets.asset;
 
 namespace retro
 {
-    export class Texture : public IntrusiveRefCounted
+    export class Texture : public Asset
     {
+      public:
+        explicit Texture(const AssetPath &path) : Asset{path}
+        {
+        }
     };
 } // namespace retro
