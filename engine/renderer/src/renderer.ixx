@@ -16,6 +16,7 @@ import retro.core;
 import vulkan_hpp;
 import std;
 import sdl;
+import boost;
 
 namespace retro
 {
@@ -210,4 +211,10 @@ namespace retro
 
         static constexpr uint32 MAX_FRAMES_IN_FLIGHT = 2;
     };
+
+    export inline auto make_rendering_injector(std::shared_ptr<VulkanViewport> viewport)
+    {
+        return boost::di::make_injector(boost::di::bind<VulkanViewport>().to(std::move(viewport)),
+                                        boost::di::bind<Renderer2D>().to<VulkanRenderer2D>());
+    }
 } // namespace retro

@@ -127,4 +127,9 @@ namespace retro
         DotnetLoader loader_;
         ScriptingCallbacks callbacks_;
     };
+
+    export inline auto make_scripting_injector()
+    {
+        return boost::di::make_injector(boost::di::bind<ScriptRuntime>.to<DotnetManager>());
+    }
 } // namespace retro

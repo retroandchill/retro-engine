@@ -151,4 +151,9 @@ namespace retro
         EngineLifecycle &operator=(const EngineLifecycle &) = delete;
         EngineLifecycle &operator=(EngineLifecycle &&) noexcept = delete;
     };
+
+    export inline auto make_runtime_injector()
+    {
+        return boost::di::make_injector(boost::di::bind<Engine>());
+    }
 } // namespace retro

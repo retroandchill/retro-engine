@@ -24,11 +24,10 @@ int main()
 
     try
     {
-        auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
-        auto injector = boost::di::make_injector(boost::di::bind<ScriptRuntime>().to<DotnetManager>(),
-                                                 boost::di::bind<Renderer2D>().to<VulkanRenderer2D>(),
-                                                 boost::di::bind<VulkanViewport>().to(window),
-                                                 boost::di::bind<Engine>());
+        const auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
+        const auto injector = boost::di::make_injector(make_scripting_injector(),
+                                                       make_rendering_injector(window),
+                                                       make_runtime_injector());
 
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{
