@@ -17,6 +17,11 @@ import retro.logging;
 
 namespace retro
 {
+    std::type_index GeometryRenderPipeline::component_type() const
+    {
+        return typeid(GeometryRenderComponent);
+    }
+
     usize GeometryRenderPipeline::push_constants_size() const
     {
         return sizeof(GeometryRenderData);
@@ -33,11 +38,9 @@ namespace retro
         pending_geometry_.clear();
     }
 
-    void GeometryRenderPipeline::collect_draw_calls(const entt::registry &registry,
-                                                    const Vector2u viewport_size,
-                                                    SingleArena &arena)
+    void GeometryRenderPipeline::collect_draw_calls(const Vector2u viewport_size, SingleArena &arena)
     {
-        for (const auto view = registry.view<GeometryRenderComponent, Transform>();
+        for (const auto view = registry_->view<GeometryRenderComponent, Transform>();
              auto [entity, geometry, transform] : view.each())
         {
             GeometryDrawCall draw_call{arena, geometry.geometry, sizeof(GeometryRenderData)};

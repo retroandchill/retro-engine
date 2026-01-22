@@ -15,9 +15,12 @@ namespace retro
 
     void PipelineManager::collect_all_draw_calls(const Vector2u viewport_size)
     {
-        for (const auto &pipeline : active_pipelines_ | std::views::values)
+        for (const auto &pipeline :
+             pipelines_ | std::views::values |
+                 std::views::filter([](const PipelineUsage &usage) { return usage.usage_count > 0; }) |
+                 std::views::transform(&PipelineUsage::pipeline))
         {
-            pipeline->collect_draw_calls(*registry_, viewport_size, arena_);
+            pipeline->collect_draw_calls(viewport_size, arena_);
         }
     }
 } // namespace retro

@@ -11,7 +11,6 @@ module;
 #include "intrusive.hpp"
 
 #include <boost/di.hpp>
-#include <boost/di/extension/providers/runtime_provider.hpp>
 #include <boost/dll.hpp>
 #include <boost/optional.hpp>
 #include <boost/pool/pool_alloc.hpp>
@@ -225,11 +224,6 @@ export namespace boost
         using di::deduce;
         using di::singleton;
         using di::unique;
-
-        namespace extension
-        {
-            using extension::runtime_provider;
-        }
     } // namespace ext::di
 
     // We need this so IntelliSense properly picks up the alias

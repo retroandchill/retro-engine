@@ -23,7 +23,7 @@ namespace retro
     Scene::Scene(entt::registry &registry, PipelineManager &pipeline_manager)
         : registry_{&registry}, pipeline_manager_{&pipeline_manager}
     {
-        RenderTypeRegistry::instance().register_listeners(*registry_, *pipeline_manager_);
+        RenderTypeRegistry::instance().register_listeners(*pipeline_manager_);
     }
 
     entt::entity Scene::create_entity()

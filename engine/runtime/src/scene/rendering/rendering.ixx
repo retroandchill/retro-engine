@@ -11,6 +11,7 @@ module;
 export module retro.runtime:scene.rendering;
 
 import retro.core;
+import retro.logging;
 import std;
 import entt;
 
@@ -122,13 +123,15 @@ namespace retro
       public:
         virtual ~RenderPipeline() = default;
 
+        [[nodiscard]] virtual std::type_index component_type() const = 0;
+
         [[nodiscard]] virtual usize push_constants_size() const = 0;
 
         [[nodiscard]] virtual PipelineShaders shaders() const = 0;
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size, SingleArena &arena) = 0;
+        virtual void collect_draw_calls(Vector2u viewport_size, SingleArena &arena) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };
@@ -149,10 +152,21 @@ namespace retro
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };
 
+    export struct PipelineInitContext
+    {
+        entt::registry &registry;
+    };
+
     export template <typename T>
-    concept RenderComponent =
-        requires { typename T::PipelineType; } && std::is_default_constructible_v<typename T::PipelineType> &&
-        std::derived_from<typename T::PipelineType, RenderPipeline>;
+    concept RenderComponent = requires { typename T::PipelineType; } &&
+                              std::constructible_from<typename T::PipelineType, PipelineInitContext> &&
+                              std::derived_from<typename T::PipelineType, RenderPipeline>;
+
+    struct PipelineUsage
+    {
+        std::shared_ptr<RenderPipeline> pipeline;
+        usize usage_count;
+    };
 
     export class RETRO_API PipelineManager
     {
@@ -165,10 +179,12 @@ namespace retro
         }
 
         template <RenderComponent Component>
-        void set_up_pipeline_listener(entt::registry &registry)
+        void set_up_pipeline_listener()
         {
-            registry.on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(this);
-            registry.on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(this);
+            registry_->on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(
+                this);
+            registry_->on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(
+                this);
         }
 
         void reset_arena();
@@ -179,34 +195,42 @@ namespace retro
         template <RenderComponent Component>
         void on_component_added(entt::registry &, entt::entity)
         {
-            using Pipeline = Component::PipelineType;
-            auto type_index = std::type_index(typeid(Pipeline));
-
-            if (usage_counts_[type_index]++ == 0)
+            using Pipeline = typename Component::PipelineType;
+            auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
+            if (existing_pipeline == pipelines_.end())
             {
-                auto pipeline = std::make_shared<Pipeline>();
-                active_pipelines_[type_index] = pipeline;
-                renderer_->add_new_render_pipeline(type_index, std::move(pipeline));
+                PipelineInitContext init_context{*registry_};
+                existing_pipeline = pipelines_
+                                        .emplace(std::type_index{typeid(Component)},
+                                                 PipelineUsage{std::make_shared<Pipeline>(init_context), 0})
+                                        .first;
+            }
+
+            if (const std::type_index type_index{typeid(Component)}; existing_pipeline->second.usage_count++ == 0)
+            {
+                renderer_->add_new_render_pipeline(type_index, existing_pipeline->second.pipeline);
             }
         }
 
         template <RenderComponent Component>
         void on_component_removed(entt::registry &, entt::entity)
         {
-            using Pipeline = Component::PipelineType;
-            auto type_index = std::type_index(typeid(Pipeline));
-
-            if (--usage_counts_[type_index] == 0)
+            const auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
+            if (existing_pipeline == pipelines_.end())
             {
-                active_pipelines_.erase(type_index);
+                get_logger().warn("No pipeline found for component type {}", typeid(Component).name());
+                return;
+            }
+
+            if (const std::type_index type_index{typeid(Component)}; --existing_pipeline->second.usage_count == 0)
+            {
                 renderer_->remove_render_pipeline(type_index);
             }
         }
 
         entt::registry *registry_;
         Renderer2D *renderer_{};
-        std::map<std::type_index, std::shared_ptr<RenderPipeline>> active_pipelines_{};
-        std::map<std::type_index, usize> usage_counts_{};
+        std::map<std::type_index, PipelineUsage> pipelines_{};
         SingleArena arena_{DEFAULT_POOL_SIZE};
     };
 
@@ -221,14 +245,14 @@ namespace retro
         template <RenderComponent T>
         void register_type()
         {
-            registrations_.emplace_back([](entt::registry &registry, PipelineManager &pipeline_manager)
-                                        { pipeline_manager.set_up_pipeline_listener<T>(registry); });
+            registrations_.emplace_back([](PipelineManager &pipeline_manager)
+                                        { pipeline_manager.set_up_pipeline_listener<T>(); });
         }
 
-        void register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const;
+        void register_listeners(PipelineManager &pipeline_manager) const;
 
       private:
-        std::vector<std::function<void(entt::registry &, PipelineManager &)>> registrations_{};
+        std::vector<std::function<void(PipelineManager &)>> registrations_{};
     };
 
     export template <RenderComponent T>

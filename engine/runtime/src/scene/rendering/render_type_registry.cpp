@@ -14,11 +14,11 @@ namespace retro
         return instance;
     }
 
-    void RenderTypeRegistry::register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const
+    void RenderTypeRegistry::register_listeners(PipelineManager &pipeline_manager) const
     {
         for (auto &registration : registrations_)
         {
-            registration(registry, pipeline_manager);
+            registration(pipeline_manager);
         }
     }
 } // namespace retro

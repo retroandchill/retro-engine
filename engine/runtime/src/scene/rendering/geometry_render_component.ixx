@@ -36,19 +36,26 @@ namespace retro
     class RETRO_API GeometryRenderPipeline final : public RenderPipeline
     {
       public:
+        explicit inline GeometryRenderPipeline(const PipelineInitContext &context) : registry_{&context.registry}
+        {
+        }
+
+        [[nodiscard]] std::type_index component_type() const override;
+
         [[nodiscard]] usize push_constants_size() const override;
 
         [[nodiscard]] PipelineShaders shaders() const override;
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(const entt::registry &registry, Vector2u viewport_size, SingleArena &arena) override;
+        void collect_draw_calls(Vector2u viewport_size, SingleArena &arena) override;
 
         void execute(RenderContext &context) override;
 
       private:
         friend struct GeometryType;
 
-        std::vector<GeometryDrawCall> pending_geometry_;
+        entt::registry *registry_{};
+        std::vector<GeometryDrawCall> pending_geometry_{};
     };
 } // namespace retro
