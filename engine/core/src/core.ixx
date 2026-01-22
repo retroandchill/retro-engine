@@ -1,5 +1,5 @@
 ﻿/**
- * @file index.ixx
+ * @file core.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -12,6 +12,7 @@ export import :algorithm;
 export import :basic_types;
 export import :concepts;
 export import :defines;
+export import :di;
 export import :filesystem;
 export import :functional;
 export import :math;

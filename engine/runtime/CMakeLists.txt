@@ -18,13 +18,8 @@ set(RETRO_RUNTIME_MODULES
         src/scene/scene.ixx
         src/scene/rendering/rendering.ixx
         src/scene/rendering/geometry_render_component.ixx
-        src/assets/index.ixx
-        src/assets/textures/index.ixx
-        src/assets/textures/texture.ixx
-        src/assets/asset_path.ixx
-        src/assets/asset.ixx
-        src/assets/asset_manager.ixx
-        src/assets/asset_loader.ixx)
+        src/assets/assets.ixx
+)
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h

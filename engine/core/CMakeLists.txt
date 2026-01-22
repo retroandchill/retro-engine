@@ -3,8 +3,9 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_CORE_SOURCES src/strings/name.cpp
-        src/filesystem/filesystem.cpp
+        src/io/filesystem.cpp
         src/strings/name_c.cpp
+        src/di/di.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
@@ -14,7 +15,7 @@ set(RETRO_CORE_HEADERS include/retro/core/exports.h
         include/retro/core/math/color.h
         include/retro/core/macros.hpp)
 
-set(RETRO_CORE_MODULES src/index.ixx
+set(RETRO_CORE_MODULES src/core.ixx
         src/strings/strings.ixx
         src/strings/name.ixx
         src/memory/memory.ixx
@@ -22,11 +23,12 @@ set(RETRO_CORE_MODULES src/index.ixx
         src/defines.ixx
         src/algorithm.ixx
         src/basic_types.ixx
-        src/filesystem/filesystem.ixx
+        src/io/filesystem.ixx
         src/math.ixx
         src/functional/functional.ixx
         src/memory/arena_allocator.ixx
         src/concepts.ixx
+        src/di/di.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
