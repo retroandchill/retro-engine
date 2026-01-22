@@ -29,18 +29,13 @@ static void precise_wait(const std::chrono::microseconds duration)
 
 std::unique_ptr<Engine> Engine::instance_{};
 
-Engine::Engine(const EngineConfig &config)
-    : script_runtime_(config.script_runtime_factory()), renderer_(config.renderer_factory())
-{
-}
-
 void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
 {
     using clock = std::chrono::steady_clock;
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
-    scene_ = std::make_unique<Scene>(renderer_.get());
+    scene_ = std::make_unique<Scene>(renderer_);
 
     if (script_runtime_->start_scripts(assembly_path, class_name) != 0)
         return;

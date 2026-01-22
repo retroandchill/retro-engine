@@ -27,14 +27,8 @@ int main()
         auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
         auto injector = boost::di::make_injector(boost::di::bind<ScriptRuntime>().to<DotnetManager>(),
                                                  boost::di::bind<Renderer2D>().to<VulkanRenderer2D>(),
-                                                 boost::di::bind<Window>().to(window));
-
-        const EngineConfig config{.script_runtime_factory = [&] { return std::make_unique<DotnetManager>(); },
-                                  .renderer_factory =
-                                      [&]
-                                  {
-                                      return std::make_unique<VulkanRenderer2D>(window);
-                                  }};
+                                                 boost::di::bind<VulkanViewport>().to(window),
+                                                 boost::di::bind<Engine>());
 
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{
@@ -42,7 +36,7 @@ int main()
             {
                 try
                 {
-                    EngineLifecycle engine_lifecycle{config};
+                    EngineLifecycle engine_lifecycle{injector.create<std::unique_ptr<Engine>>()};
                     auto &engine = Engine::instance();
                     engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
                 }

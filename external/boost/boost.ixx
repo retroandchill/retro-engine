@@ -225,5 +225,8 @@ export namespace boost
         using di::singleton;
         using di::unique;
     } // namespace ext::di
+
+    // We need this so IntelliSense properly picks up the alias
+    namespace di = di;
 #pragma endregion
 } // namespace boost

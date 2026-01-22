@@ -76,16 +76,13 @@ namespace retro
         std::function<std::unique_ptr<T>()> factory_{};
     };
 
-    export struct EngineConfig
-    {
-        EngineDependencyFactory<ScriptRuntime> script_runtime_factory;
-        EngineDependencyFactory<Renderer2D> renderer_factory;
-    };
-
     export class Engine
     {
       public:
-        RETRO_API explicit Engine(const EngineConfig &config);
+        inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer)
+            : script_runtime_(&script_runtime), renderer_(&renderer)
+        {
+        }
 
         ~Engine() = default;
 
@@ -100,10 +97,10 @@ namespace retro
             return *instance_;
         }
 
-        inline static void initialize(const EngineConfig &config)
+        inline static void initialize(std::unique_ptr<Engine> engine)
         {
             assert(instance_ == nullptr);
-            instance_ = std::make_unique<Engine>(config);
+            instance_ = std::move(engine);
         }
 
         inline static void shutdown()
@@ -129,8 +126,8 @@ namespace retro
 
         RETRO_API static std::unique_ptr<Engine> instance_;
 
-        std::unique_ptr<ScriptRuntime> script_runtime_{};
-        std::unique_ptr<Renderer2D> renderer_{};
+        ScriptRuntime *script_runtime_{};
+        Renderer2D *renderer_{};
 
         std::atomic<int32> exit_code_{0};
         std::atomic<bool> running_{false};
@@ -139,9 +136,9 @@ namespace retro
 
     export struct EngineLifecycle
     {
-        explicit inline EngineLifecycle(const EngineConfig &config)
+        explicit inline EngineLifecycle(std::unique_ptr<Engine> engine)
         {
-            Engine::initialize(config);
+            Engine::initialize(std::move(engine));
         }
 
         inline ~EngineLifecycle()
