@@ -82,8 +82,8 @@ namespace retro
         constexpr GeometryDrawCall(SingleArena &arena,
                                    const BasicGeometry<OtherAlloc> &other,
                                    const usize push_constants_size = 0)
-            : geometry(other, make_allocator<Vertex>(arena), make_allocator<uint32>(arena)),
-              push_constants(push_constants_size, make_allocator<std::byte>(arena))
+            : geometry{other, make_allocator<Vertex>(arena), make_allocator<uint32>(arena)},
+              push_constants{push_constants_size, make_allocator<std::byte>(arena)}
         {
         }
     };
@@ -91,7 +91,14 @@ namespace retro
     export struct ProceduralDrawCall
     {
         uint32 vertex_count;
-        std::vector<std::byte> push_constants;
+        std::vector<std::byte, ArenaAllocator<std::byte>> push_constants;
+
+        template <template <typename...> typename OtherAlloc>
+            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
+        constexpr ProceduralDrawCall(SingleArena &arena, const uint32 vertex_count, const usize push_constants_size = 0)
+            : vertex_count{vertex_count}, push_constants{push_constants_size, make_allocator<std::byte>(arena)}
+        {
+        }
     };
 
     export class RenderContext
@@ -106,8 +113,8 @@ namespace retro
 
     export struct PipelineShaders
     {
-        std::filesystem::path vertex_shader;
-        std::filesystem::path fragment_shader;
+        std::filesystem::path vertex_shader{};
+        std::filesystem::path fragment_shader{};
     };
 
     export class RenderPipeline
@@ -152,8 +159,8 @@ namespace retro
       public:
         static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
-        explicit PipelineManager(Renderer2D *renderer, const usize pool_size = DEFAULT_POOL_SIZE)
-            : renderer_{renderer}, arena_{pool_size}
+        explicit PipelineManager(entt::registry &registry, Renderer2D &renderer)
+            : registry_{&registry}, renderer_{&renderer}
         {
         }
 
@@ -166,7 +173,7 @@ namespace retro
 
         void reset_arena();
 
-        void collect_all_draw_calls(const entt::registry &registry, Vector2u viewport_size);
+        void collect_all_draw_calls(Vector2u viewport_size);
 
       private:
         template <RenderComponent Component>
@@ -196,6 +203,7 @@ namespace retro
             }
         }
 
+        entt::registry *registry_;
         Renderer2D *renderer_{};
         std::map<std::type_index, std::shared_ptr<RenderPipeline>> active_pipelines_{};
         std::map<std::type_index, usize> usage_counts_{};

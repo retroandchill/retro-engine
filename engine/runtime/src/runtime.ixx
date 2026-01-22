@@ -79,8 +79,8 @@ namespace retro
     export class Engine
     {
       public:
-        inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer)
-            : script_runtime_(&script_runtime), renderer_(&renderer)
+        inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer, Scene &scene)
+            : script_runtime_(&script_runtime), renderer_(&renderer), scene_(&scene)
         {
         }
 
@@ -131,7 +131,7 @@ namespace retro
 
         std::atomic<int32> exit_code_{0};
         std::atomic<bool> running_{false};
-        std::unique_ptr<Scene> scene_{};
+        Scene *scene_{};
     };
 
     export struct EngineLifecycle
@@ -154,6 +154,9 @@ namespace retro
 
     export inline auto make_runtime_injector()
     {
-        return boost::di::make_injector(boost::di::bind<Engine>());
+        return boost::di::make_injector(boost::di::bind<Engine>(),
+                                        boost::di::bind<entt::registry>(),
+                                        boost::di::bind<Scene>(),
+                                        boost::di::bind<PipelineManager>());
     }
 } // namespace retro

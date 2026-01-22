@@ -35,7 +35,6 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
     running_.store(true);
-    scene_ = std::make_unique<Scene>(renderer_);
 
     if (script_runtime_->start_scripts(assembly_path, class_name) != 0)
         return;

@@ -90,7 +90,7 @@ namespace retro
     class RETRO_API Scene
     {
       public:
-        explicit Scene(Renderer2D *renderer);
+        explicit Scene(entt::registry &registry, PipelineManager &pipeline_manager);
 
         ~Scene() = default;
 
@@ -112,7 +112,7 @@ namespace retro
         template <typename T>
         T &get_component(const entt::entity entity)
         {
-            return registry_.get<T>(entity);
+            return registry_->get<T>(entity);
         }
 
         template <RenderComponent T, typename... Args>
@@ -120,9 +120,9 @@ namespace retro
         std::pair<entt::entity, T &> create_render_component(const entt::entity parent, Args &&...args)
         {
             auto entity = create_entity();
-            registry_.emplace<T>(entity, std::forward<Args>(args)...);
+            registry_->emplace<T>(entity, std::forward<Args>(args)...);
             attach_to_parent(entity, parent);
-            return {entity, registry_.get<T>(entity)};
+            return {entity, registry_->get<T>(entity)};
         }
 
         void update_transforms();
@@ -132,7 +132,7 @@ namespace retro
       private:
         void update_transform(entt::entity entity, const Matrix3x3f &parentWorld, bool parent_changed);
 
-        entt::registry registry_{};
-        PipelineManager pipeline_manager_;
+        entt::registry *registry_{};
+        PipelineManager *pipeline_manager_;
     };
 } // namespace retro
