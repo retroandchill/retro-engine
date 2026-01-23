@@ -155,7 +155,6 @@ namespace retro
     export inline auto make_runtime_injector()
     {
         return boost::di::make_injector(boost::di::bind<Engine>(),
-                                        boost::di::bind<entt::registry>(),
                                         boost::di::bind<Scene>(),
                                         boost::di::bind<PipelineManager>());
     }
