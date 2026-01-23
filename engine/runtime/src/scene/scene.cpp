@@ -23,7 +23,7 @@ namespace retro
     Scene::Scene(entt::registry &registry, PipelineManager &pipeline_manager)
         : registry_{&registry}, pipeline_manager_{&pipeline_manager}
     {
-        RenderTypeRegistry::instance().register_listeners(*pipeline_manager_);
+        RenderTypeRegistry::instance().register_listeners(*registry_, *pipeline_manager_);
     }
 
     entt::entity Scene::create_entity()
@@ -116,7 +116,7 @@ namespace retro
         // It's probably fine to reset the arena here since we're not deallocating or allocating any memory just
         // sorta retaining memory to avoid allocations when processing this is probably fine.
         pipeline_manager_->reset_arena();
-        pipeline_manager_->collect_all_draw_calls(viewport_size);
+        pipeline_manager_->collect_all_draw_calls(*registry_, viewport_size);
     }
 
     void Scene::update_transform(const entt::entity entity, const Matrix3x3f &parentWorld, const bool parent_changed)

@@ -5,7 +5,6 @@
 set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/io/filesystem.cpp
         src/strings/name_c.cpp
-        src/di/di.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
@@ -28,8 +27,6 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/functional/functional.ixx
         src/memory/arena_allocator.ixx
         src/concepts.ixx
-        src/di/di.ixx
-        src/di/metadata.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

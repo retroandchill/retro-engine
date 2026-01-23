@@ -160,8 +160,6 @@ namespace retro
     export class RETRO_API VulkanRenderer2D final : public Renderer2D
     {
       public:
-        using Dependencies = TypeList<VulkanViewport>;
-
         explicit VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
@@ -214,9 +212,9 @@ namespace retro
         static constexpr uint32 MAX_FRAMES_IN_FLIGHT = 2;
     };
 
-    export inline void add_rendering_services(ServiceCollection &services, std::shared_ptr<VulkanViewport> viewport)
+    export inline auto make_rendering_injector(std::shared_ptr<VulkanViewport> viewport)
     {
-        services.add_singleton(std::move(viewport));
-        services.add_singleton<Renderer2D, VulkanRenderer2D>();
+        return boost::di::make_injector(boost::di::bind<VulkanViewport>().to(std::move(viewport)),
+                                        boost::di::bind<Renderer2D>().to<VulkanRenderer2D>());
     }
 } // namespace retro

@@ -12,7 +12,6 @@ export import :algorithm;
 export import :basic_types;
 export import :concepts;
 export import :defines;
-export import :di;
 export import :filesystem;
 export import :functional;
 export import :math;

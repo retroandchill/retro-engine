@@ -103,38 +103,4 @@ namespace retro
 
     export template <typename T>
     concept CallableObject = IsCallable<T>::value;
-
-    template <typename>
-    struct IsSharedPtr : std::false_type
-    {
-    };
-
-    template <typename T>
-    struct IsSharedPtr<std::shared_ptr<T>> : std::true_type
-    {
-        using ElementType = T;
-    };
-
-    export template <typename T>
-    concept SharedPtr = IsSharedPtr<T>::value;
-
-    export template <SharedPtr T>
-    using SharedPtrElement = IsSharedPtr<T>::ElementType;
-
-    template <typename>
-    struct IsUniquePtr : std::false_type
-    {
-    };
-
-    template <typename T>
-    struct IsUniquePtr<std::unique_ptr<T>> : std::true_type
-    {
-        using ElementType = T;
-    };
-
-    export template <typename T>
-    concept UniquePtr = IsUniquePtr<T>::value;
-
-    export template <UniquePtr T>
-    using UniquePtrElement = IsUniquePtr<T>::ElementType;
 } // namespace retro

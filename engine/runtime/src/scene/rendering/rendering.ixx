@@ -131,7 +131,7 @@ namespace retro
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void collect_draw_calls(Vector2u viewport_size, SingleArena &arena) = 0;
+        virtual void collect_draw_calls(entt::registry &registry, Vector2u viewport_size, SingleArena &arena) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };
@@ -152,15 +152,10 @@ namespace retro
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };
 
-    export struct PipelineInitContext
-    {
-        entt::registry &registry;
-    };
-
     export template <typename T>
-    concept RenderComponent = requires { typename T::PipelineType; } &&
-                              std::constructible_from<typename T::PipelineType, PipelineInitContext> &&
-                              std::derived_from<typename T::PipelineType, RenderPipeline>;
+    concept RenderComponent =
+        requires { typename T::PipelineType; } && std::is_default_constructible_v<typename T::PipelineType> &&
+        std::derived_from<typename T::PipelineType, RenderPipeline>;
 
     struct PipelineUsage
     {
@@ -171,26 +166,22 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        using Dependencies = TypeList<entt::registry, Renderer2D>;
         static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
-        explicit PipelineManager(entt::registry &registry, Renderer2D &renderer)
-            : registry_{&registry}, renderer_{&renderer}
+        explicit PipelineManager(Renderer2D &renderer) : renderer_{&renderer}
         {
         }
 
         template <RenderComponent Component>
-        void set_up_pipeline_listener()
+        void set_up_pipeline_listener(entt::registry &registry)
         {
-            registry_->on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(
-                this);
-            registry_->on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(
-                this);
+            registry.on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(this);
+            registry.on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(this);
         }
 
         void reset_arena();
 
-        void collect_all_draw_calls(Vector2u viewport_size);
+        void collect_all_draw_calls(entt::registry &registry, Vector2u viewport_size);
 
       private:
         template <RenderComponent Component>
@@ -200,11 +191,10 @@ namespace retro
             auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
             if (existing_pipeline == pipelines_.end())
             {
-                PipelineInitContext init_context{*registry_};
-                existing_pipeline = pipelines_
-                                        .emplace(std::type_index{typeid(Component)},
-                                                 PipelineUsage{std::make_shared<Pipeline>(init_context), 0})
-                                        .first;
+                existing_pipeline =
+                    pipelines_
+                        .emplace(std::type_index{typeid(Component)}, PipelineUsage{std::make_shared<Pipeline>(), 0})
+                        .first;
             }
 
             if (const std::type_index type_index{typeid(Component)}; existing_pipeline->second.usage_count++ == 0)
@@ -229,7 +219,6 @@ namespace retro
             }
         }
 
-        entt::registry *registry_;
         Renderer2D *renderer_{};
         std::map<std::type_index, PipelineUsage> pipelines_{};
         SingleArena arena_{DEFAULT_POOL_SIZE};
@@ -246,14 +235,14 @@ namespace retro
         template <RenderComponent T>
         void register_type()
         {
-            registrations_.emplace_back([](PipelineManager &pipeline_manager)
-                                        { pipeline_manager.set_up_pipeline_listener<T>(); });
+            registrations_.emplace_back([this](entt::registry &registry, PipelineManager &pipeline_manager)
+                                        { pipeline_manager.set_up_pipeline_listener<T>(registry); });
         }
 
-        void register_listeners(PipelineManager &pipeline_manager) const;
+        void register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const;
 
       private:
-        std::vector<std::function<void(PipelineManager &)>> registrations_{};
+        std::vector<std::function<void(entt::registry &, PipelineManager &)>> registrations_{};
     };
 
     export template <RenderComponent T>

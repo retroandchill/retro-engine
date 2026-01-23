@@ -10,6 +10,7 @@ module;
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
 #include "intrusive.hpp"
 
+#include <boost/di.hpp>
 #include <boost/dll.hpp>
 #include <boost/optional.hpp>
 #include <boost/pool/pool_alloc.hpp>
@@ -208,5 +209,24 @@ export namespace boost
             using detail::destructor_impl;
         }
     } // namespace intrusive
+#pragma endregion
+
+#pragma region di
+    namespace ext::di
+    {
+        using di::bind;
+        using di::create;
+        using di::injector;
+        using di::make_injector;
+        using di::named;
+        using di::override;
+
+        using di::deduce;
+        using di::singleton;
+        using di::unique;
+    } // namespace ext::di
+
+    // We need this so IntelliSense properly picks up the alias
+    namespace di = di;
 #pragma endregion
 } // namespace boost

@@ -38,9 +38,11 @@ namespace retro
         pending_geometry_.clear();
     }
 
-    void GeometryRenderPipeline::collect_draw_calls(const Vector2u viewport_size, SingleArena &arena)
+    void GeometryRenderPipeline::collect_draw_calls(entt::registry &registry,
+                                                    const Vector2u viewport_size,
+                                                    SingleArena &arena)
     {
-        for (const auto view = registry_->view<GeometryRenderComponent, Transform>();
+        for (const auto view = registry.view<GeometryRenderComponent, Transform>();
              auto [entity, geometry, transform] : view.each())
         {
             GeometryDrawCall draw_call{arena, geometry.geometry, sizeof(GeometryRenderData)};

@@ -90,8 +90,6 @@ namespace retro
     class RETRO_API Scene
     {
       public:
-        using Dependencies = TypeList<entt::registry, PipelineManager>;
-
         explicit Scene(entt::registry &registry, PipelineManager &pipeline_manager);
 
         ~Scene() = default;

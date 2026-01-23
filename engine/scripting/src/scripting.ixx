@@ -128,8 +128,8 @@ namespace retro
         ScriptingCallbacks callbacks_;
     };
 
-    export inline auto add_scripting_services(ServiceCollection &services)
+    export inline auto make_scripting_injector()
     {
-        services.add_singleton<ScriptRuntime, DotnetManager>();
+        return boost::di::make_injector(boost::di::bind<ScriptRuntime>.to<DotnetManager>());
     }
 } // namespace retro
