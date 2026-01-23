@@ -13,7 +13,6 @@ export module retro.logging;
 import retro.core;
 import std;
 import spdlog;
-import uni_algo;
 import boost;
 
 namespace retro
@@ -98,19 +97,6 @@ namespace retro
         }
     }
 
-    template <Char T>
-    auto convert_to_utf8(std::basic_string_view<T> str)
-    {
-        if constexpr (std::same_as<T, char16_t>)
-        {
-            return una::utf16to8<char16_t, char>(str, boost::pool_allocator<char>{});
-        }
-        else
-        {
-            return una::utf32to8<char32_t, char>(str, boost::pool_allocator<char>{});
-        }
-    }
-
     export class Logger
     {
       public:
@@ -133,7 +119,7 @@ namespace retro
             }
             else
             {
-                auto log_string = convert_to_utf8(message);
+                auto log_string = convert_string<char>(message);
                 logger_->log(loc, to_spd_level(level), log_string);
             }
         }

@@ -15,7 +15,6 @@ export module retro.core:strings.name;
 import :defines;
 import :algorithm;
 import :strings;
-import uni_algo;
 import fmt;
 import :memory.arena_allocator;
 

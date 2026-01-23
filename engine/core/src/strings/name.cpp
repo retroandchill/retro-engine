@@ -10,7 +10,6 @@ module;
 
 module retro.core;
 
-import fmt;
 import boost;
 import uni_algo;
 
