@@ -17,4 +17,4 @@
 
 #define EXPECT_ASSIGN(lhs, expr)                                                                                       \
     EXPECT(expr)                                                                                                       \
-    auto lhs = *std::forward<decltype(RETRO_CONCAT(__try_res, __LINE__))>(RETRO_CONCAT(__try_res, __LINE__));
+    lhs = *std::forward<decltype(RETRO_CONCAT(__try_res, __LINE__))>(RETRO_CONCAT(__try_res, __LINE__));

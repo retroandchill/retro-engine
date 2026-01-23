@@ -154,17 +154,9 @@ namespace retro
         EngineLifecycle &operator=(EngineLifecycle &&) noexcept = delete;
     };
 
-    export inline auto make_runtime_injector()
-    {
-        return boost::di::make_injector(boost::di::bind<Engine>(),
-                                        boost::di::bind<entt::registry>(),
-                                        boost::di::bind<Scene>(),
-                                        boost::di::bind<PipelineManager>());
-    }
-
     export inline auto add_engine_services(ServiceCollection &services)
     {
-        services.add_singleton<Engine>();
+        services.add_transient<Engine>();
         services.add_singleton<entt::registry>();
         services.add_singleton<Scene>();
         services.add_singleton<PipelineManager>();

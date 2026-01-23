@@ -15,10 +15,10 @@ import :defines;
 import :algorithm;
 export import :di.metadata;
 import :concepts;
+import :functional;
 
 namespace retro
 {
-
     export class RETRO_API ServiceNotFoundException : public std::exception
     {
       public:
@@ -27,8 +27,6 @@ namespace retro
 
     export class ServiceCollection;
     export class ServiceProvider;
-
-    using ServiceCreator = std::shared_ptr<void> (*)(ServiceProvider &);
 
     export enum class ServiceLifetime : uint8
     {
@@ -80,18 +78,35 @@ struct std::hash<retro::ServiceCacheKey>
 namespace retro
 {
 
+    using SingletonCreator = std::shared_ptr<void> (*)(ServiceProvider &);
+    using TransientCreator = void *(*)(ServiceProvider &);
+
     struct RealizedSingleton
     {
         std::shared_ptr<void> ptr{};
     };
 
-    struct UnrealizedService
+    struct UnrealizedSingleton
     {
-        ServiceCreator registration{};
-        bool is_singleton{};
+        SingletonCreator registration{};
     };
 
-    using ServiceCallSite = std::variant<RealizedSingleton, UnrealizedService>;
+    struct DirectTransient
+    {
+    };
+
+    struct DerivedTransient
+    {
+        TransientCreator registration{};
+    };
+
+    using ServiceCallSite = std::variant<RealizedSingleton, UnrealizedSingleton, DirectTransient, DerivedTransient>;
+
+    template <Injectable T>
+    void *construct_transient(ServiceProvider &provider);
+
+    template <Injectable T>
+    T construct_transient_in_place(ServiceProvider &provider);
 
     class RETRO_API ServiceProvider
     {
@@ -111,9 +126,69 @@ namespace retro
             }
         }
 
+        template <typename T>
+        auto create()
+        {
+            if (UniquePtr<T>)
+            {
+                return std::unique_ptr<UniquePtrElement<T>>(
+                    create_raw<UniquePtrElement<T>>(typeid(UniquePtrElement<T>)));
+            }
+            // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
+            else if constexpr (SharedPtr<T>)
+            {
+                return std::shared_ptr<SharedPtrElement<T>>(
+                    create_raw<SharedPtrElement<T>>(typeid(SharedPtrElement<T>)));
+            }
+            else
+            {
+                auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{typeid(T)}});
+                if (existing != services_.end())
+                {
+                    std::visit(Overload{[&](const DirectTransient) -> T
+                                        { return construct_transient_in_place<T>(*this); },
+                                        [](auto &&) -> T
+                                        {
+                                            throw ServiceNotFoundException{};
+                                        }},
+                               existing->second);
+                }
+
+                throw ServiceNotFoundException{};
+            }
+        }
+
       private:
         void *get_raw(const std::type_info &type);
         std::shared_ptr<void> get_shared_impl(const std::type_info &type);
+
+        template <typename T>
+        T *create_raw(const std::type_info &type)
+        {
+            auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
+            if (existing != services_.end())
+            {
+                auto *created =
+                    std::visit(Overload{[](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
+                                        [](const UnrealizedSingleton) -> void * { throw ServiceNotFoundException{}; },
+                                        [&](const DerivedTransient transient) { return transient.registration(*this); },
+                                        [&](const DirectTransient) -> void *
+                                        {
+                                            if constexpr (Injectable<T>)
+                                            {
+                                                return construct_transient<T>(*this);
+                                            }
+                                            else
+                                            {
+                                                throw ServiceNotFoundException{};
+                                            }
+                                        }},
+                               existing->second);
+                return static_cast<T *>(created);
+            }
+
+            throw ServiceNotFoundException{};
+        }
 
         auto get_all(const std::type_info &type)
         {
@@ -134,17 +209,19 @@ namespace retro
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
     };
 
-    struct ServiceRegistration
+    struct RETRO_API ServiceRegistration
     {
         std::type_index type;
         ServiceCallSite registration;
 
-        ServiceRegistration(const std::type_info &type, ServiceCreator factory, bool is_singleton) noexcept;
+        explicit ServiceRegistration(const std::type_info &type) noexcept;
+        ServiceRegistration(const std::type_info &type, SingletonCreator factory) noexcept;
+        ServiceRegistration(const std::type_info &type, TransientCreator factory) noexcept;
         ServiceRegistration(const std::type_info &type, std::shared_ptr<void> ptr) noexcept;
     };
 
     template <Injectable T>
-    std::shared_ptr<void> construct_injectable(ServiceProvider &provider)
+    std::shared_ptr<void> construct_singleton(ServiceProvider &provider)
     {
         if constexpr (HasDependencies<T>)
         {
@@ -157,10 +234,38 @@ namespace retro
         }
     }
 
+    template <Injectable T>
+    void *construct_transient(ServiceProvider &provider)
+    {
+        if constexpr (HasDependencies<T>)
+        {
+            return TypeListApply<SelectedCtorArgs<T>>::call([&]<typename... Deps>()
+                                                            { return new T{provider.get<std::decay_t<Deps>>()...}; });
+        }
+        else
+        {
+            return new T{};
+        }
+    }
+
+    template <Injectable T>
+    T construct_transient_in_place(ServiceProvider &provider)
+    {
+        if constexpr (HasDependencies<T>)
+        {
+            return TypeListApply<SelectedCtorArgs<T>>::call([&]<typename... Deps>()
+                                                            { return T{provider.get<std::decay_t<Deps>>()...}; });
+        }
+        else
+        {
+            return T{};
+        }
+    }
+
     export class RETRO_API ServiceCollection
     {
       public:
-        using Factory = ServiceCreator;
+        using Factory = SingletonCreator;
 
         template <typename T>
         using TypedFactory = std::function<std::shared_ptr<T>(ServiceProvider &)>;
@@ -169,15 +274,20 @@ namespace retro
             requires Injectable<Impl>
         void add()
         {
-            constexpr bool is_singleton = (Lifetime == ServiceLifetime::Singleton);
-
-            if constexpr (is_singleton)
+            if constexpr (Lifetime == ServiceLifetime::Singleton)
             {
-                registrations_.emplace_back(typeid(T), &construct_injectable<Impl>, true);
+                registrations_.emplace_back(typeid(T), &construct_singleton<Impl>);
             }
-            else
+            else if constexpr (Lifetime == ServiceLifetime::Transient)
             {
-                registrations_.emplace_back(typeid(T), &construct_injectable<Impl>, true);
+                if (std::same_as<Impl, T>)
+                {
+                    registrations_.emplace_back(typeid(T));
+                }
+                else
+                {
+                    registrations_.emplace_back(typeid(T), &construct_transient<Impl>);
+                }
             }
         }
 

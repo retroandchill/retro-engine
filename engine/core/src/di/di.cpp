@@ -31,10 +31,10 @@ namespace retro
 
     std::shared_ptr<void> ServiceProvider::get_shared_impl(const std::type_info &type)
     {
-        auto existing_singleton = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
-        if (existing_singleton != services_.end())
+        auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
+        if (existing != services_.end())
         {
-            return get_or_create(existing_singleton->second);
+            return get_or_create(existing->second);
         }
 
         throw ServiceNotFoundException{};
@@ -43,22 +43,32 @@ namespace retro
     std::shared_ptr<void> ServiceProvider::get_or_create(ServiceCallSite &call_site)
     {
         return std::visit(Overload{[](const RealizedSingleton &singleton) { return singleton.ptr; },
-                                   [&](const UnrealizedService &service)
+                                   [&](const UnrealizedSingleton service)
                                    {
                                        auto created = service.registration(*this);
-                                       if (service.is_singleton)
-                                       {
-                                           call_site.emplace<RealizedSingleton>(created);
-                                       }
+                                       call_site.emplace<RealizedSingleton>(created);
                                        return created;
+                                   },
+                                   [](DerivedTransient) -> std::shared_ptr<void> { throw ServiceNotFoundException{}; },
+                                   [](const DirectTransient) -> std::shared_ptr<void>
+                                   {
+                                       throw ServiceNotFoundException{};
                                    }},
                           call_site);
     }
 
-    ServiceRegistration::ServiceRegistration(const std::type_info &type,
-                                             ServiceCreator factory,
-                                             const bool is_singleton) noexcept
-        : type(type), registration(std::in_place_type<UnrealizedService>, std::move(factory), is_singleton)
+    ServiceRegistration::ServiceRegistration(const std::type_info &type) noexcept
+        : type{type}, registration{std::in_place_type<DirectTransient>}
+    {
+    }
+
+    ServiceRegistration::ServiceRegistration(const std::type_info &type, SingletonCreator factory) noexcept
+        : type{type}, registration{std::in_place_type<UnrealizedSingleton>, factory}
+    {
+    }
+
+    ServiceRegistration::ServiceRegistration(const std::type_info &type, TransientCreator factory) noexcept
+        : type{type}, registration{std::in_place_type<DerivedTransient>, factory}
     {
     }
 
