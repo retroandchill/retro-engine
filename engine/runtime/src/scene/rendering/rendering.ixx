@@ -171,6 +171,7 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
+        using Dependencies = TypeList<entt::registry, Renderer2D>;
         static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
         explicit PipelineManager(entt::registry &registry, Renderer2D &renderer)
@@ -195,7 +196,7 @@ namespace retro
         template <RenderComponent Component>
         void on_component_added(entt::registry &, entt::entity)
         {
-            using Pipeline = typename Component::PipelineType;
+            using Pipeline = Component::PipelineType;
             auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
             if (existing_pipeline == pipelines_.end())
             {

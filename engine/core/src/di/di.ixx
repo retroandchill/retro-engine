@@ -13,25 +13,28 @@ export module retro.core:di;
 import std;
 import :defines;
 import :algorithm;
+export import :di.metadata;
+import :concepts;
 
 namespace retro
 {
+
     export class RETRO_API ServiceNotFoundException : public std::exception
     {
       public:
         [[nodiscard]] const char *what() const noexcept override;
     };
 
-    export class ServiceProvider;
     export class ServiceCollection;
+    export class ServiceProvider;
 
-    export enum class ServiceType : uint8
+    using ServiceCreator = std::shared_ptr<void> (*)(ServiceProvider &);
+
+    export enum class ServiceLifetime : uint8
     {
         Singleton,
         Transient
     };
-
-    using ServiceFactory = std::function<std::shared_ptr<void>(ServiceProvider &)>;
 
     struct ServiceIdentifier
     {
@@ -84,7 +87,7 @@ namespace retro
 
     struct UnrealizedService
     {
-        ServiceFactory registration{};
+        ServiceCreator registration{};
         bool is_singleton{};
     };
 
@@ -96,31 +99,16 @@ namespace retro
         explicit ServiceProvider(ServiceCollection &service_collection);
 
         template <typename T>
-        T &get()
+        decltype(auto) get()
         {
-            return *get_ptr<T>();
-        }
-
-        template <typename T>
-        std::shared_ptr<T> get_shared()
-        {
-            return get_shared_impl(typeid(T));
-        }
-
-        template <typename T>
-        std::vector<T *> get_all()
-        {
-            return get_all(typeid(T)) |
-                   std::views::transform([](const auto &ptr) { return static_cast<T *>(ptr.get()); }) |
-                   std::ranges::to<std::vector>();
-        }
-
-        template <typename T>
-        std::vector<std::shared_ptr<T>> get_all_shared()
-        {
-            return get_all(typeid(T)) |
-                   std::views::transform([](const auto &ptr) { return std::static_pointer_cast<T>(ptr.get()); }) |
-                   std::ranges::to<std::vector>();
+            if constexpr (SharedPtr<T>)
+            {
+                return std::static_pointer_cast<SharedPtrElement<T>>(get_shared_impl(typeid(SharedPtrElement<T>)));
+            }
+            else
+            {
+                return *get_ptr<T>();
+            }
         }
 
       private:
@@ -151,41 +139,87 @@ namespace retro
         std::type_index type;
         ServiceCallSite registration;
 
-        ServiceRegistration(const std::type_info &type, ServiceFactory factory, bool is_singleton) noexcept;
+        ServiceRegistration(const std::type_info &type, ServiceCreator factory, bool is_singleton) noexcept;
         ServiceRegistration(const std::type_info &type, std::shared_ptr<void> ptr) noexcept;
     };
+
+    template <Injectable T>
+    std::shared_ptr<void> construct_injectable(ServiceProvider &provider)
+    {
+        if constexpr (HasDependencies<T>)
+        {
+            return TypeListApply<SelectedCtorArgs<T>>::call(
+                [&]<typename... Deps>() { return std::make_shared<T>(provider.get<std::decay_t<Deps>>()...); });
+        }
+        else
+        {
+            return std::make_shared<T>();
+        }
+    }
 
     export class RETRO_API ServiceCollection
     {
       public:
-        using Factory = ServiceFactory;
+        using Factory = ServiceCreator;
 
         template <typename T>
         using TypedFactory = std::function<std::shared_ptr<T>(ServiceProvider &)>;
 
-        template <typename T>
-        void add_singleton(TypedFactory<T> factory)
+        template <ServiceLifetime Lifetime, typename T, std::derived_from<T> Impl = T>
+            requires Injectable<Impl>
+        void add()
         {
-            add_singleton(typeid(T), [f = std::move(factory)](ServiceProvider &provider) { return f(provider); });
+            constexpr bool is_singleton = (Lifetime == ServiceLifetime::Singleton);
+
+            if constexpr (is_singleton)
+            {
+                registrations_.emplace_back(typeid(T), &construct_injectable<Impl>, true);
+            }
+            else
+            {
+                registrations_.emplace_back(typeid(T), &construct_injectable<Impl>, true);
+            }
+        }
+
+        template <typename T, std::derived_from<T> Impl = T>
+            requires Injectable<Impl>
+        void add_singleton()
+        {
+            return add<ServiceLifetime::Singleton, T, Impl>();
         }
 
         template <typename T>
         void add_singleton(std::shared_ptr<T> ptr)
         {
-            return add_singleton(typeid(T), std::move(ptr));
+            registrations_.emplace_back(typeid(T), std::move(ptr));
+        }
+
+        template <typename T, std::derived_from<T> Impl = T>
+        void add_singleton(std::shared_ptr<Impl> ptr)
+        {
+            registrations_.emplace_back(typeid(T), std::move(ptr));
         }
 
         template <typename T>
-        void add_transient(TypedFactory<T> factory)
+        void add_singleton(std::unique_ptr<T> ptr)
         {
-            add_transient(typeid(T), [f = std::move(factory)](ServiceProvider &provider) { return f(provider); });
+            registrations_.emplace_back(typeid(T), std::shared_ptr<T>(ptr.release()));
+        }
+
+        template <typename T, std::derived_from<T> Impl = T>
+        void add_singleton(std::unique_ptr<Impl> ptr)
+        {
+            registrations_.emplace_back(typeid(T), std::shared_ptr<Impl>(ptr.release()));
+        }
+
+        template <typename T, std::derived_from<T> Impl = T>
+            requires Injectable<Impl>
+        void add_transient()
+        {
+            return add<ServiceLifetime::Transient, T, Impl>();
         }
 
       private:
-        void add_singleton(const std::type_info &type, Factory factory);
-        void add_singleton(const std::type_info &type, std::shared_ptr<void> ptr);
-        void add_transient(const std::type_info &type, Factory factory);
-
         friend class ServiceProvider;
 
         std::vector<ServiceRegistration> registrations_;

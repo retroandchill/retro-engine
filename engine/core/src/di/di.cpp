@@ -56,7 +56,7 @@ namespace retro
     }
 
     ServiceRegistration::ServiceRegistration(const std::type_info &type,
-                                             ServiceFactory factory,
+                                             ServiceCreator factory,
                                              const bool is_singleton) noexcept
         : type(type), registration(std::in_place_type<UnrealizedService>, std::move(factory), is_singleton)
     {
@@ -65,21 +65,6 @@ namespace retro
     ServiceRegistration::ServiceRegistration(const std::type_info &type, std::shared_ptr<void> ptr) noexcept
         : type(type), registration(std::in_place_type<RealizedSingleton>, std::move(ptr))
     {
-    }
-
-    void ServiceCollection::add_singleton(const std::type_info &type, Factory factory)
-    {
-        registrations_.emplace_back(type, std::move(factory), true);
-    }
-
-    void ServiceCollection::add_singleton(const std::type_info &type, std::shared_ptr<void> ptr)
-    {
-        registrations_.emplace_back(type, std::move(ptr));
-    }
-
-    void ServiceCollection::add_transient(const std::type_info &type, Factory factory)
-    {
-        registrations_.emplace_back(type, std::move(factory), false);
     }
 
     ServiceProvider create_service_provider(ServiceCollection &services)

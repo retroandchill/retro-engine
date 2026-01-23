@@ -79,6 +79,8 @@ namespace retro
     export class Engine
     {
       public:
+        using Dependencies = TypeList<ScriptRuntime, Renderer2D, Scene>;
+
         inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer, Scene &scene)
             : script_runtime_(&script_runtime), renderer_(&renderer), scene_(&scene)
         {
@@ -158,5 +160,13 @@ namespace retro
                                         boost::di::bind<entt::registry>(),
                                         boost::di::bind<Scene>(),
                                         boost::di::bind<PipelineManager>());
+    }
+
+    export inline auto add_engine_services(ServiceCollection &services)
+    {
+        services.add_singleton<Engine>();
+        services.add_singleton<entt::registry>();
+        services.add_singleton<Scene>();
+        services.add_singleton<PipelineManager>();
     }
 } // namespace retro

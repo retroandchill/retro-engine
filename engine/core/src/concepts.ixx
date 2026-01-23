@@ -7,6 +7,7 @@
 export module retro.core:concepts;
 
 import std;
+import :defines;
 
 namespace retro
 {
@@ -102,4 +103,21 @@ namespace retro
 
     export template <typename T>
     concept CallableObject = IsCallable<T>::value;
+
+    template <typename>
+    struct IsSharedPtr : std::false_type
+    {
+    };
+
+    template <typename T>
+    struct IsSharedPtr<std::shared_ptr<T>> : std::true_type
+    {
+        using element_type = T;
+    };
+
+    export template <typename T>
+    concept SharedPtr = IsSharedPtr<T>::value;
+
+    export template <SharedPtr T>
+    using SharedPtrElement = T::element_type;
 } // namespace retro
