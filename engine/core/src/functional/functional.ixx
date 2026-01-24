@@ -21,7 +21,7 @@ namespace retro
     Overload(Ts...) -> Overload<Ts...>;
 
     static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
-    static constexpr usize DELEGATE_INLINE_SIZE = 32;
+    static constexpr usize DELEGATE_INLINE_SIZE = 16;
 
     union DelegateStorage
     {
@@ -305,4 +305,6 @@ namespace retro
         const OpsTable *ops_ = nullptr;
         usize object_size_ = 0;
     };
+
+    export using SimpleDelegate = Delegate<void()>;
 } // namespace retro
