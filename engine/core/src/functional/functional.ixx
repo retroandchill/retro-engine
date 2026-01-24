@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/exports.h"
+
 export module retro.core:functional;
 
 import :concepts;
@@ -84,7 +88,8 @@ namespace retro
 
         template <typename... Args>
             requires std::invocable<Functor, PointerElementT<T> &, Args...>
-        constexpr decltype(auto) operator()(Args &&...args) noexcept(std::is_nothrow_invocable_v<Functor, T &, Args...>)
+        constexpr decltype(auto) operator()(Args &&...args) const
+            noexcept(std::is_nothrow_invocable_v<Functor, T &, Args...>)
         {
             return std::invoke(functor_, *object_.lock(), std::forward<Args>(args)...);
         }
@@ -109,8 +114,8 @@ namespace retro
 
         template <typename... Args>
             requires std::invocable<decltype(Functor), PointerElementT<T> &, Args...>
-        constexpr decltype(auto) operator()(Args &&...args) noexcept(
-            std::is_nothrow_invocable_v<decltype(Functor), T &, Args...>)
+        constexpr decltype(auto) operator()(Args &&...args) const
+            noexcept(std::is_nothrow_invocable_v<decltype(Functor), T &, Args...>)
         {
             return std::invoke(Functor, *object_.lock(), std::forward<Args>(args)...);
         }
@@ -141,17 +146,85 @@ namespace retro
     static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
     static constexpr usize DELEGATE_INLINE_SIZE = 16;
 
+    export struct NoLockPolicy
+    {
+        struct Mutex
+        {
+        };
+
+        struct ReadGuard
+        {
+        };
+
+        struct WriteGuard
+        {
+        };
+    };
+
+    export struct SharedLockPolicy
+    {
+        using Mutex = std::shared_mutex;
+        using ReadGuard = std::shared_lock<Mutex>;
+        using WriteGuard = std::unique_lock<Mutex>;
+    };
+
+    template <typename Policy>
+    class ThreadPolicyMixin
+    {
+      public:
+        using Mutex = Policy::Mutex;
+        using ReadGuard = Policy::ReadGuard;
+        using WriteGuard = Policy::WriteGuard;
+
+        [[nodiscard]] ReadGuard read_lock() const noexcept
+        {
+            return ReadGuard{mutex_};
+        }
+
+        [[nodiscard]] WriteGuard write_lock() noexcept
+        {
+            return WriteGuard{mutex_};
+        }
+
+        [[nodiscard]] Mutex &mutex() noexcept
+        {
+            return mutex_;
+        }
+
+      private:
+        mutable Mutex mutex_{};
+    };
+
+    template <>
+    class ThreadPolicyMixin<NoLockPolicy>
+    {
+      public:
+        using Mutex = NoLockPolicy::Mutex;
+        using ReadGuard = NoLockPolicy::ReadGuard;
+        using WriteGuard = NoLockPolicy::WriteGuard;
+
+        [[nodiscard]] constexpr ReadGuard read_lock() const noexcept
+        {
+            return ReadGuard{};
+        }
+
+        [[nodiscard]] constexpr WriteGuard write_lock() noexcept
+        {
+            return WriteGuard{};
+        }
+    };
+
     union DelegateStorage
     {
         alignas(DELEGATE_INLINE_ALIGN) std::byte inline_buffer[DELEGATE_INLINE_SIZE];
         void *heap_object{};
     };
 
-    export template <typename>
+    export template <typename, typename ThreadPolicy = NoLockPolicy>
     class Delegate;
 
-    export template <typename Ret, typename... Args>
-    class Delegate<Ret(Args...)>
+    export template <typename Ret, typename... Args, typename Policy>
+    class Delegate<Ret(Args...), Policy> : private ThreadPolicyMixin<Policy>
     {
       public:
         using ReturnType = Ret;
@@ -162,8 +235,18 @@ namespace retro
         {
         }
 
-        Delegate(const Delegate &other) : ops_(other.ops_)
+        Delegate(const Delegate &other)
+            requires std::same_as<NoLockPolicy, Policy>
+            : ops_(other.ops_)
         {
+            copy_data(other);
+        }
+
+        Delegate(const Delegate &other)
+            requires(!std::same_as<NoLockPolicy, Policy>)
+        {
+            auto lock = other.read_lock();
+            ops_ = other.ops_;
             copy_data(other);
         }
 
@@ -172,25 +255,65 @@ namespace retro
             if (this == std::addressof(other))
                 return *this;
 
-            delete_data();
+            if constexpr (!std::same_as<Policy, NoLockPolicy>)
+            {
+                typename Policy::WriteGuard write_guard{this->mutex(), std::defer_lock};
+                typename Policy::ReadGuard read_guard{other.mutex(), std::defer_lock};
+                std::lock(read_guard, write_guard);
 
-            ops_ = other.ops_;
-            copy_data(other);
-            return *this;
+                delete_data();
+
+                ops_ = other.ops_;
+                copy_data(other);
+                return *this;
+            }
+            else
+            {
+                delete_data();
+
+                ops_ = other.ops_;
+                copy_data(other);
+                return *this;
+            }
         }
 
-        constexpr Delegate(Delegate &&other) noexcept : ops_(other.ops_)
+        constexpr Delegate(Delegate &&other) noexcept
+            requires std::same_as<NoLockPolicy, Policy>
+            : ops_(other.ops_)
         {
+            move_data(std::move(other));
+        }
+
+        constexpr Delegate(Delegate &&other) noexcept
+            requires(!std::same_as<NoLockPolicy, Policy>)
+        {
+            auto lock = other.write_lock();
+            ops_ = other.ops_;
             move_data(std::move(other));
         }
 
         constexpr Delegate &operator=(Delegate &&other) noexcept
         {
-            delete_data();
+            if constexpr (!std::same_as<Policy, NoLockPolicy>)
+            {
+                typename Policy::WriteGuard this_lock{this->mutex(), std::defer_lock};
+                typename Policy::WriteGuard other_lock{other.mutex(), std::defer_lock};
+                std::lock(this_lock, this_lock);
 
-            ops_ = other.ops_;
-            move_data(std::move(other));
-            return *this;
+                delete_data();
+
+                ops_ = other.ops_;
+                move_data(std::move(other));
+                return *this;
+            }
+            else
+            {
+                delete_data();
+
+                ops_ = other.ops_;
+                move_data(std::move(other));
+                return *this;
+            }
         }
 
         ~Delegate()
@@ -200,18 +323,21 @@ namespace retro
 
         [[nodiscard]] constexpr bool is_bound() const noexcept
         {
-            return ops_ != nullptr && (ops_->is_bound == nullptr || ops_->is_bound(storage_));
+            auto lock = this->read_lock();
+            return is_bound_no_locks();
         }
 
         constexpr void unbind()
         {
+            auto lock = this->write_lock();
             delete_data();
             ops_ = nullptr;
         }
 
-        constexpr Ret execute(Args &&...args)
+        constexpr Ret execute(Args &&...args) const
         {
-            if (!is_bound())
+            auto lock = this->read_lock();
+            if (!is_bound_no_locks())
             {
                 throw std::bad_function_call{};
             }
@@ -219,10 +345,11 @@ namespace retro
             return ops_->invoke(storage_, std::forward<Args>(args)...);
         }
 
-        constexpr bool execute_if_bound(Args... args)
+        constexpr bool execute_if_bound(Args... args) const
             requires std::same_as<Ret, void>
         {
-            if (!is_bound())
+            auto lock = this->read_lock();
+            if (!is_bound_no_locks())
             {
                 return false;
             }
@@ -230,10 +357,11 @@ namespace retro
             ops_->invoke(storage_, std::forward<Args>(args)...);
             return true;
         }
-        constexpr boost::optional<Ret> execute_if_bound(Args... args)
+        constexpr boost::optional<Ret> execute_if_bound(Args... args) const
             requires !std::same_as<Ret, void>
         {
-            if (!is_bound())
+            auto lock = this->read_lock();
+            if (!is_bound_no_locks())
             {
                 return boost::none;
             }
@@ -252,6 +380,7 @@ namespace retro
             }
             else
             {
+                auto lock = this->write_lock();
                 delete_data();
 
                 ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
@@ -353,11 +482,16 @@ namespace retro
         struct OpsTable
         {
             usize object_size{};
-            Ret (*invoke)(DelegateStorage &storage, Args... args) = nullptr;
+            Ret (*invoke)(const DelegateStorage &storage, Args... args) = nullptr;
             void (*copy)(DelegateStorage &dest, const DelegateStorage &src) = nullptr;
             void (*destroy)(DelegateStorage &) = nullptr;
             bool (*is_bound)(const DelegateStorage &) = nullptr;
         };
+
+        [[nodiscard]] constexpr bool is_bound_no_locks() const noexcept
+        {
+            return ops_ != nullptr && (ops_->is_bound == nullptr || ops_->is_bound(storage_));
+        }
 
         [[nodiscard]] constexpr bool is_inline() const noexcept
         {
@@ -460,16 +594,16 @@ namespace retro
         }
 
         template <typename Functor>
-        static Ret invoke_functor(DelegateStorage &obj, Args... args)
+        static Ret invoke_functor(const DelegateStorage &obj, Args... args)
         {
             if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
             {
-                return std::invoke(*std::launder(reinterpret_cast<Functor *>(&obj.inline_buffer)),
+                return std::invoke(*std::launder(reinterpret_cast<const Functor *>(&obj.inline_buffer)),
                                    std::forward<Args>(args)...);
             }
             else
             {
-                return std::invoke(*static_cast<Functor *>(obj.heap_object), std::forward<Args>(args)...);
+                return std::invoke(*static_cast<const Functor *>(obj.heap_object), std::forward<Args>(args)...);
             }
         }
 
@@ -518,4 +652,220 @@ namespace retro
     };
 
     export using SimpleDelegate = Delegate<void()>;
+
+    export struct DelegateHandle
+    {
+        constexpr DelegateHandle() noexcept = default;
+        constexpr DelegateHandle(const uint64 owner_cookie, const uint32 index, const uint32 generation) noexcept
+            : owner_cookie_(owner_cookie), index_(index), generation_(generation)
+        {
+        }
+
+        constexpr uint64 owner_cookie() const noexcept
+        {
+            return owner_cookie_;
+        }
+
+        constexpr uint32 index() const noexcept
+        {
+            return index_;
+        }
+
+        constexpr uint32 generation() const noexcept
+        {
+            return generation_;
+        }
+
+        [[nodiscard]] constexpr bool is_valid() const noexcept
+        {
+            return owner_cookie_ != 0;
+        }
+
+        [[nodiscard]] static constexpr DelegateHandle invalid() noexcept
+        {
+            return DelegateHandle{};
+        }
+
+        [[nodiscard]] static inline uint64 generate_new_cookie() noexcept
+        {
+            return next_cookie_.fetch_add(1, std::memory_order_relaxed);
+        }
+
+      private:
+        uint64 owner_cookie_{};
+        uint32 index_{};
+        uint32 generation_{};
+
+        RETRO_API static std::atomic<uint64> next_cookie_;
+    };
+
+    template <typename, typename Policy = NoLockPolicy>
+    class MulticastDelegate;
+
+    template <typename... Args, typename Policy>
+    class MulticastDelegate<void(Args...), Policy> : private ThreadPolicyMixin<Policy>
+    {
+      public:
+        using DelegateType = Delegate<void(Args...), Policy>;
+
+        MulticastDelegate() = default;
+
+        MulticastDelegate(const MulticastDelegate &)
+            requires std::same_as<Policy, NoLockPolicy>
+        = default;
+
+        MulticastDelegate(const MulticastDelegate &other)
+            requires(!std::same_as<Policy, NoLockPolicy>)
+            : cookie_{other.cookie_}
+        {
+            auto lock = other.read_lock();
+
+            slots_ = other.slots_;
+            free_list_ = other.free_list_;
+        }
+
+        MulticastDelegate(MulticastDelegate &&) noexcept
+            requires std::same_as<Policy, NoLockPolicy>
+        = default;
+
+        MulticastDelegate(MulticastDelegate &&other) noexcept
+            requires(!std::same_as<Policy, NoLockPolicy>)
+        {
+            auto lock = other.write_lock();
+
+            slots_ = std::move(other.slots_);
+            free_list_ = std::move(other.free_list_);
+        }
+
+        ~MulticastDelegate() = default;
+
+        MulticastDelegate &operator=(const MulticastDelegate &)
+            requires std::same_as<Policy, NoLockPolicy>
+        = default;
+
+        MulticastDelegate &operator=(const MulticastDelegate &other)
+            requires(!std::same_as<Policy, NoLockPolicy>)
+        {
+            typename Policy::WriteGuard write_guard{this->mutex(), std::defer_lock};
+            typename Policy::ReadGuard read_guard{other.mutex(), std::defer_lock};
+            std::lock(write_guard, read_guard);
+
+            slots_ = other.slots_;
+            free_list_ = other.free_list_;
+            return *this;
+        }
+
+        MulticastDelegate &operator=(MulticastDelegate &&) noexcept
+            requires std::same_as<Policy, NoLockPolicy>
+        = default;
+
+        MulticastDelegate &operator=(MulticastDelegate &&other) noexcept
+            requires(!std::same_as<Policy, NoLockPolicy>)
+        {
+            typename Policy::WriteGuard write_guard{this->mutex(), std::defer_lock};
+            typename Policy::ReadGuard read_guard{other.mutex(), std::defer_lock};
+            std::lock(write_guard, read_guard);
+
+            cookie_ = other.cookie_;
+            slots_ = std::move(other.slots_);
+            free_list_ = std::move(other.free_list_);
+            return *this;
+        }
+
+        DelegateHandle add(DelegateType delegate)
+        {
+            auto lock = this->write_lock();
+            auto [index, slot] = allocate_slot(std::move(delegate));
+            return DelegateHandle{cookie_, static_cast<uint32>(index), slot.generation};
+        }
+
+        void remove(const DelegateHandle handle)
+        {
+            if (!handle.is_valid() || handle.owner_cookie() != cookie_)
+                return;
+
+            auto lock = this->write_lock();
+            free_slot(handle.index());
+        }
+
+        void clear()
+        {
+            auto lock = this->write_lock();
+            slots_.clear();
+            free_list_.clear();
+        }
+
+        void broadcast(Args... args) const
+        {
+            auto lock = this->read_lock();
+            for (const auto [i, slot] : slots_ | std::views::enumerate)
+            {
+                if (!slot.occupied)
+                {
+                    continue;
+                }
+
+                if (!slot.delegate.is_bound())
+                {
+                    free_slot(i);
+                    continue;
+                }
+
+                slot.delegate.execute(std::forward<Args>(args)...);
+            }
+        }
+
+        [[nodiscard]] usize size() const noexcept
+        {
+            auto lock = this->read_lock();
+            usize count = 0;
+            for (const auto &slot : slots_)
+            {
+                if (slot.occupied)
+                {
+                    ++count;
+                }
+            }
+            return count;
+        }
+
+      private:
+        struct Slot
+        {
+            DelegateType delegate{};
+            uint32 generation{};
+            bool is_bound{false};
+        };
+
+        std::pair<usize, Slot &> allocate_slot(DelegateType delegate)
+        {
+            if (!free_list_.empty())
+            {
+                const usize idx = free_list_.back();
+                free_list_.pop_back();
+                auto &slot = slots_[idx];
+                slot.delegate = std::move(delegate);
+                slot.generation = 0;
+                return {idx, slot};
+            }
+
+            auto &slot = slots_.emplace_back(std::move(delegate), 0, true);
+            return {slots_.size() - 1, slot};
+        }
+
+        void free_slot(usize idx) const
+        {
+            auto &slot = slots_[idx];
+
+            slot.delegate.unbind();
+            slot.occupied = false;
+            ++slot.generation;
+
+            free_list_.push_back(idx);
+        }
+
+        uint64 cookie_{DelegateHandle::generate_new_cookie()};
+        mutable std::vector<Slot> slots_{};
+        mutable std::vector<usize> free_list_{};
+    };
 } // namespace retro

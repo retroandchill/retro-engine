@@ -54,7 +54,7 @@ namespace
         int32 &call_counter;
         int32 value;
 
-        int32 operator()(int32 x)
+        int32 operator()(int32 x) const
         {
             ++call_counter;
             return value + x;
@@ -78,7 +78,7 @@ namespace
             --instance_count;
         }
 
-        void operator()()
+        void operator()() const
         { /* no-op */
         }
     };

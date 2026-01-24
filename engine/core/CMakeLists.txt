@@ -5,6 +5,7 @@
 set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/io/filesystem.cpp
         src/strings/name_c.cpp
+        src/functional/functional.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
