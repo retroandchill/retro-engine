@@ -44,7 +44,7 @@ namespace retro
         {
         }
 
-        Delegate(const Delegate &other) : ops_(other.ops_), object_size_(other.object_size_)
+        Delegate(const Delegate &other) : ops_(other.ops_)
         {
             copy_data();
         }
@@ -57,12 +57,11 @@ namespace retro
             delete_data();
 
             ops_ = other.ops_;
-            object_size_ = other.object_size_;
             copy_data(other);
             return *this;
         }
 
-        constexpr Delegate(Delegate &&other) noexcept : ops_(other.ops_), object_size_(other.object_size_)
+        constexpr Delegate(Delegate &&other) noexcept : ops_(other.ops_)
         {
             move_data(std::move(other));
         }
@@ -72,7 +71,6 @@ namespace retro
             delete_data();
 
             ops_ = other.ops_;
-            object_size_ = other.object_size_;
             move_data(std::move(other));
             return *this;
         }
@@ -84,21 +82,20 @@ namespace retro
 
         [[nodiscard]] constexpr bool is_bound() const noexcept
         {
-            return ops_ != nullptr;
+            return ops_ != nullptr && (ops_->is_bound == nullptr || ops_->is_bound(storage_));
         }
 
         constexpr void unbind()
         {
             delete_data();
             ops_ = nullptr;
-            object_size_ = 0;
         }
 
         constexpr Ret execute(Args &&...args)
         {
-            if (ops_ == nullptr)
+            if (!is_bound())
             {
-                throw std::runtime_error("Delegate is not bound to a function");
+                throw std::bad_function_call{};
             }
 
             return ops_->invoke(storage_, std::forward<Args>(args)...);
@@ -107,7 +104,7 @@ namespace retro
         constexpr bool execute_if_bound(Args... args)
             requires std::same_as<Ret, void>
         {
-            if (ops_ == nullptr)
+            if (!is_bound())
             {
                 return false;
             }
@@ -118,7 +115,7 @@ namespace retro
         constexpr boost::optional<Ret> execute_if_bound(Args... args)
             requires !std::same_as<Ret, void>
         {
-            if (ops_ == nullptr)
+            if (!is_bound())
             {
                 return boost::none;
             }
@@ -133,7 +130,6 @@ namespace retro
             delete_data();
 
             ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
-            object_size_ = sizeof(Functor);
             if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
             {
                 auto *functor_ptr =
@@ -173,14 +169,16 @@ namespace retro
       private:
         struct OpsTable
         {
+            usize object_size{};
             Ret (*invoke)(DelegateStorage &storage, Args... args) = nullptr;
             void (*copy)(DelegateStorage &dest, const DelegateStorage &src) = nullptr;
             void (*destroy)(DelegateStorage &) = nullptr;
+            bool (*is_bound)(const DelegateStorage &) = nullptr;
         };
 
         [[nodiscard]] constexpr bool is_inline() const noexcept
         {
-            return object_size_ <= DELEGATE_INLINE_SIZE;
+            return ops_ != nullptr && ops_->object_size <= DELEGATE_INLINE_SIZE;
         }
 
         void copy_data(const Delegate &other)
@@ -214,7 +212,6 @@ namespace retro
             }
 
             other.ops_ = nullptr;
-            other.object_size_ = 0;
         }
 
         void delete_data()
@@ -229,9 +226,11 @@ namespace retro
             requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
         static OpsTable *get_ops_table()
         {
-            static OpsTable ops_table{.invoke = invoke_functor<Functor>,
+            static OpsTable ops_table{.object_size = sizeof(Functor),
+                                      .invoke = invoke_functor<Functor>,
                                       .copy = get_copy_operation<Functor>(),
-                                      .destroy = get_delete_operation<Functor>()};
+                                      .destroy = get_delete_operation<Functor>(),
+                                      .is_bound = get_bound_check<Functor>()};
             return &ops_table;
         }
 
@@ -261,6 +260,13 @@ namespace retro
             {
                 return nullptr;
             }
+        }
+
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static auto get_bound_check()
+        {
+            return nullptr;
         }
 
         template <typename Functor>
@@ -306,7 +312,6 @@ namespace retro
 
         DelegateStorage storage_;
         const OpsTable *ops_ = nullptr;
-        usize object_size_ = 0;
     };
 
     export using SimpleDelegate = Delegate<void()>;

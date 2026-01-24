@@ -8,6 +8,8 @@
 
 import retro.core;
 
+import std;
+
 using retro::Delegate;
 
 namespace
@@ -91,8 +93,8 @@ TEST_CASE("Delegate default construction and null construction", "[Delegate]")
     REQUIRE_FALSE(d2.is_bound());
 
     // execute() on unbound should throw
-    REQUIRE_THROWS_AS(d1.execute(1, 2), std::runtime_error);
-    REQUIRE_THROWS_AS(d2.execute(1, 2), std::runtime_error);
+    REQUIRE_THROWS_AS(d1.execute(1, 2), std::bad_function_call);
+    REQUIRE_THROWS_AS(d2.execute(1, 2), std::bad_function_call);
 }
 
 TEST_CASE("Delegate bind_static compile-time function pointer", "[Delegate]")
@@ -240,7 +242,7 @@ TEST_CASE("Delegate unbind releases state and makes delegate unusable", "[Delega
 
     d.unbind();
     REQUIRE_FALSE(d.is_bound());
-    REQUIRE_THROWS_AS(d.execute(1, 2), std::runtime_error);
+    REQUIRE_THROWS_AS(d.execute(1, 2), std::bad_function_call);
 }
 
 TEST_CASE("Delegate move construction transfers binding", "[Delegate]")
@@ -254,7 +256,7 @@ TEST_CASE("Delegate move construction transfers binding", "[Delegate]")
 
     // Source should be empty
     REQUIRE_FALSE(source.is_bound());
-    REQUIRE_THROWS_AS(source.execute(2, 2), std::runtime_error);
+    REQUIRE_THROWS_AS(source.execute(2, 2), std::bad_function_call);
 
     // Destination should work
     REQUIRE(dest.is_bound());
@@ -278,7 +280,7 @@ TEST_CASE("Delegate move assignment transfers binding and cleans up previous", "
 
     // d1 now empty
     REQUIRE_FALSE(d1.is_bound());
-    REQUIRE_THROWS_AS(d1.execute(1, 2), std::runtime_error);
+    REQUIRE_THROWS_AS(d1.execute(1, 2), std::bad_function_call);
 
     // d2 now uses former d1 target
     REQUIRE(d2.is_bound());
