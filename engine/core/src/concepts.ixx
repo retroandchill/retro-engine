@@ -155,7 +155,7 @@ namespace retro
 
     export constexpr auto to_weak(SharedPtrLike auto const &sp)
     {
-        return sp.weak_from_this();
+        return std::weak_ptr{sp};
     }
 
     export template <WeakPtrLike T>

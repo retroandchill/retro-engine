@@ -46,11 +46,13 @@ namespace retro
     }
 
     template <typename T>
-    concept DirectMemberBindable = std::is_object_v<std::remove_cvref_t<T>> && std::is_lvalue_reference_v<T>;
+    concept DirectMemberBindable = std::is_object_v<std::remove_cvref_t<T>> && std::is_lvalue_reference_v<T> &&
+                                   !(SharedPtrLike<T> || WeakPtrLike<T>);
 
-    template <typename T>
+    export template <typename T>
     concept MemberBindable =
-        DirectMemberBindable<T> || ((SharedPtrLike<T> || WeakPtrLike<T>)&&std::is_object_v<PointerElementT<T>>);
+        DirectMemberBindable<T> ||
+        ((SharedPtrLike<T> || WeakPtrLike<T>)&&std::is_object_v<PointerElementT<std::remove_cvref_t<T>>>);
 
     template <MemberBindable>
     struct MemberBinding;
@@ -65,7 +67,7 @@ namespace retro
         requires SharedPtrLike<T> || WeakPtrLike<T>
     struct MemberBinding<T>
     {
-        using Type = PointerElementT<T> &;
+        using Type = PointerElementT<std::remove_cvref_t<T>> &;
     };
 
     template <MemberBindable T>
@@ -162,7 +164,7 @@ namespace retro
 
         Delegate(const Delegate &other) : ops_(other.ops_)
         {
-            copy_data();
+            copy_data(other);
         }
 
         Delegate &operator=(const Delegate &other)
@@ -239,8 +241,9 @@ namespace retro
             return ops_->invoke(storage_, std::forward<Args>(args)...);
         }
 
-        template <std::invocable<Args...> Functor, typename... BindArgs>
-            requires std::convertible_to<std::invoke_result_t<Functor, Args..., BindArgs...>, Ret>
+        template <typename Functor, typename... BindArgs>
+            requires std::invocable<Functor, Args..., BindArgs...> &&
+                     std::convertible_to<std::invoke_result_t<Functor, Args..., BindArgs...>, Ret>
         void bind(Functor &&functor, BindArgs &&...args) noexcept
         {
             if constexpr (sizeof...(BindArgs) > 0)
@@ -267,7 +270,7 @@ namespace retro
 
         template <auto Functor, typename... BindArgs>
             requires std::invocable<decltype(Functor), Args..., BindArgs...> &&
-                     std::convertible_to<std::invoke_result_t<decltype(Functor), Args...>, Ret>
+                     std::convertible_to<std::invoke_result_t<decltype(Functor), Args..., BindArgs...>, Ret>
         void bind(BindArgs &&...args) noexcept
         {
             if constexpr (sizeof...(BindArgs) > 0)
@@ -280,8 +283,9 @@ namespace retro
             }
         }
 
-        template <MemberBindable T, std::invocable<T, Args...> Member, typename... BindArgs>
-            requires std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args..., BindArgs...>, Ret> &&
+        template <MemberBindable T, typename Member, typename... BindArgs>
+            requires std::invocable<Member, MemberBindingT<T>, Args..., BindArgs...> &&
+                     std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args..., BindArgs...>, Ret> &&
                      std::is_member_pointer_v<Member>
         void bind(T &&obj, Member member, BindArgs &&...args) noexcept
         {
@@ -312,7 +316,8 @@ namespace retro
         }
 
         template <auto Member, MemberBindable T, typename... BindArgs>
-            requires std::convertible_to<
+            requires std::invocable<decltype(Member), MemberBindingT<T>, Args..., BindArgs...> &&
+                     std::convertible_to<
                          std::invoke_result_t<decltype(Member), MemberBindingT<T>, Args..., BindArgs...>,
                          Ret> &&
                      std::is_member_pointer_v<decltype(Member)>

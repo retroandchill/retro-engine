@@ -82,6 +82,75 @@ namespace
         { /* no-op */
         }
     };
+
+    struct CopyTrackingFunctor
+    {
+        static inline int32 instance_count = 0;
+        int32 value = 0;
+
+        CopyTrackingFunctor(int32 value = 0) : value(value)
+        {
+            ++instance_count;
+        }
+        CopyTrackingFunctor(const CopyTrackingFunctor &other) : value(other.value)
+        {
+            ++instance_count;
+        }
+        ~CopyTrackingFunctor()
+        {
+            --instance_count;
+        }
+
+        int32 operator()(int32 x) const
+        {
+            return value + x;
+        }
+    };
+
+    struct LargeTrackingFunctor
+    {
+        static inline int32 instance_count = 0;
+        int32 value = 0;
+        std::array<char, 64> padding{};
+
+        explicit LargeTrackingFunctor(int32 value = 0) : value(value)
+        {
+            ++instance_count;
+        }
+        LargeTrackingFunctor(const LargeTrackingFunctor &other) : value(other.value), padding(other.padding)
+        {
+            ++instance_count;
+        }
+        ~LargeTrackingFunctor()
+        {
+            --instance_count;
+        }
+
+        int32 operator()(int32 x) const
+        {
+            return value * x;
+        }
+    };
+
+    struct WeakBindingObject
+    {
+        int32 factor = 3;
+
+        int32 multiply(int32 x) const
+        {
+            return factor * x;
+        }
+    };
+
+    struct SharedFromThisObject : std::enable_shared_from_this<SharedFromThisObject>
+    {
+        int32 add_base = 5;
+
+        int32 add(int32 x) const
+        {
+            return add_base + x;
+        }
+    };
 } // namespace
 
 TEST_CASE("Delegate default construction and null construction", "[Delegate]")
@@ -287,6 +356,56 @@ TEST_CASE("Delegate move assignment transfers binding and cleans up previous", "
     REQUIRE(d2.execute(1, 2) == 3);
 }
 
+TEST_CASE("Delegate copy construction clones bound functor", "[Delegate]")
+{
+    REQUIRE(CopyTrackingFunctor::instance_count == 0);
+
+    {
+        Delegate<int32(int32)> source;
+        source.bind(CopyTrackingFunctor{4});
+
+        REQUIRE(source.is_bound());
+        REQUIRE(CopyTrackingFunctor::instance_count == 1);
+        REQUIRE(source.execute(3) == 7);
+
+        Delegate copy{source};
+
+        REQUIRE(copy.is_bound());
+        REQUIRE(CopyTrackingFunctor::instance_count == 2);
+        REQUIRE(copy.execute(3) == 7);
+        REQUIRE(source.execute(1) == 5);
+    }
+
+    REQUIRE(CopyTrackingFunctor::instance_count == 0);
+}
+
+TEST_CASE("Delegate copy assignment replaces existing binding", "[Delegate]")
+{
+    REQUIRE(LargeTrackingFunctor::instance_count == 0);
+
+    {
+        Delegate<int32(int32)> d1;
+        Delegate<int32(int32)> d2;
+
+        d1.bind(LargeTrackingFunctor{2});
+        d2.bind(LargeTrackingFunctor{7});
+
+        REQUIRE(d1.is_bound());
+        REQUIRE(d2.is_bound());
+        REQUIRE(LargeTrackingFunctor::instance_count == 2);
+        REQUIRE(d1.execute(3) == 6);
+        REQUIRE(d2.execute(3) == 21);
+
+        d2 = d1;
+
+        REQUIRE(d2.is_bound());
+        REQUIRE(LargeTrackingFunctor::instance_count == 2);
+        REQUIRE(d2.execute(4) == 8);
+    }
+
+    REQUIRE(LargeTrackingFunctor::instance_count == 0);
+}
+
 TEST_CASE("Delegate properly deletes heap-stored functor on destruction", "[Delegate]")
 {
     REQUIRE(DeletionTracker::instance_count == 0);
@@ -306,4 +425,73 @@ TEST_CASE("Delegate properly deletes heap-stored functor on destruction", "[Dele
 
     // After scope exit, both delegates are destroyed and functor should be deleted
     REQUIRE(DeletionTracker::instance_count == 0);
+}
+
+TEST_CASE("Delegate weak binding with std::shared_ptr", "[Delegate]")
+{
+    Delegate<int32(int32)> d;
+    auto object = std::make_shared<WeakBindingObject>();
+
+    d.bind(object, &WeakBindingObject::multiply);
+    REQUIRE(d.is_bound());
+    REQUIRE(d.execute(4) == 12);
+
+    object.reset();
+    REQUIRE_FALSE(d.is_bound());
+    REQUIRE_THROWS_AS(d.execute(4), std::bad_function_call);
+}
+
+TEST_CASE("Delegate weak binding with std::weak_ptr", "[Delegate]")
+{
+    Delegate<int32(int32)> d;
+    auto object = std::make_shared<WeakBindingObject>();
+    std::weak_ptr weak = object;
+
+    d.bind(weak, &WeakBindingObject::multiply);
+    REQUIRE(d.is_bound());
+    REQUIRE(d.execute(2) == 6);
+
+    object.reset();
+    REQUIRE_FALSE(d.is_bound());
+    REQUIRE_THROWS_AS(d.execute(2), std::bad_function_call);
+}
+
+TEST_CASE("Delegate weak binding with enable_shared_from_this", "[Delegate]")
+{
+    Delegate<int32(int32)> d;
+    auto object = std::make_shared<SharedFromThisObject>();
+
+    d.bind(*object, &SharedFromThisObject::add);
+    REQUIRE(d.is_bound());
+    REQUIRE(d.execute(3) == 8);
+
+    object.reset();
+    REQUIRE_FALSE(d.is_bound());
+    REQUIRE_THROWS_AS(d.execute(1), std::bad_function_call);
+}
+
+TEST_CASE("Delegate bind with additional arguments", "[Delegate]")
+{
+    Delegate<int32(int32)> d1;
+    d1.bind<free_function_add>(3);
+    REQUIRE(d1.is_bound());
+    REQUIRE(d1.execute(5) == 8);
+
+    Delegate<int32(int32)> d2;
+    d2.bind(&free_function_mul, 4);
+    REQUIRE(d2.is_bound());
+    REQUIRE(d2.execute(6) == 24);
+
+    TestObject obj;
+    obj.factor = 2;
+    obj.offset = 0;
+    Delegate<int32()> d3;
+    d3.bind(obj, &TestObject::member_mul, 7);
+    REQUIRE(d3.is_bound());
+    REQUIRE(d3.execute() == 14);
+
+    Delegate<int32(int32)> d4;
+    d4.bind([](int32 x, int32 y) { return x - y; }, 9);
+    REQUIRE(d4.is_bound());
+    REQUIRE(d4.execute(20) == 11);
 }
