@@ -116,4 +116,101 @@ namespace retro
 
     export template <typename T>
     concept CallableObject = IsCallable<T>::value;
+
+    export template <typename T>
+    struct IsStdSharedPtr : std::false_type
+    {
+    };
+
+    template <typename T>
+    struct IsStdSharedPtr<std::shared_ptr<T>> : std::true_type
+    {
+    };
+
+    export template <typename T>
+    concept SharedPtrLike = IsStdSharedPtr<std::remove_cvref_t<T>>::value;
+
+    export template <typename T>
+    struct IsStdWeakPtr : std::false_type
+    {
+    };
+
+    template <typename U>
+    struct IsStdWeakPtr<std::weak_ptr<U>> : std::true_type
+    {
+    };
+
+    export template <typename T>
+    concept WeakPtrLike = IsStdWeakPtr<std::remove_cvref_t<T>>::value;
+
+    export template <typename T>
+    concept WeakFromThisCapable = requires(T &t) {
+        {
+            t.weak_from_this()
+        } -> WeakPtrLike;
+    };
+
+    export template <typename T>
+    concept WeakBindable = SharedPtrLike<T> || WeakPtrLike<T> || WeakFromThisCapable<T>;
+
+    export constexpr auto to_weak(SharedPtrLike auto const &sp)
+    {
+        return sp.weak_from_this();
+    }
+
+    export template <WeakPtrLike T>
+    constexpr decltype(auto) to_weak(T &&wp)
+    {
+        return std::forward<T>(wp);
+    }
+
+    export constexpr auto to_weak(WeakFromThisCapable auto &obj)
+    {
+        return obj.weak_from_this();
+    }
+
+    export template <typename T>
+    struct PointerElement;
+
+    template <typename T>
+    struct PointerElement<T *>
+    {
+        using Type = T;
+    };
+
+    template <typename T>
+    struct PointerElement<std::unique_ptr<T>>
+    {
+        using Type = T;
+    };
+
+    template <typename T>
+    struct PointerElement<std::shared_ptr<T>>
+    {
+        using Type = T;
+    };
+
+    template <typename T>
+    struct PointerElement<std::weak_ptr<T>>
+    {
+        using Type = T;
+    };
+
+    export template <typename T>
+    using PointerElementT = PointerElement<T>::Type;
+
+    template <WeakBindable T>
+    struct WeakBindableElement
+    {
+      private:
+        using Raw = std::remove_cvref_t<T>;
+
+      public:
+        using Type = std::conditional_t<SharedPtrLike<Raw> || WeakPtrLike<Raw>,
+                                        PointerElementT<Raw>,
+                                        PointerElementT<decltype(std::declval<Raw &>().weak_from_this())>>;
+    };
+
+    export template <WeakBindable T>
+    using WeakBindableElementT = WeakBindableElement<T>::Type;
 } // namespace retro

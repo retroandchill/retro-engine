@@ -45,6 +45,97 @@ namespace retro
         return std::bind_back(ConstantBinding<Functor>{}, std::forward<Args>(args)...);
     }
 
+    template <typename T>
+    concept DirectMemberBindable = std::is_object_v<std::remove_cvref_t<T>> && std::is_lvalue_reference_v<T>;
+
+    template <typename T>
+    concept MemberBindable =
+        DirectMemberBindable<T> || ((SharedPtrLike<T> || WeakPtrLike<T>)&&std::is_object_v<PointerElementT<T>>);
+
+    template <MemberBindable>
+    struct MemberBinding;
+
+    template <DirectMemberBindable T>
+    struct MemberBinding<T>
+    {
+        using Type = T;
+    };
+
+    template <typename T>
+        requires SharedPtrLike<T> || WeakPtrLike<T>
+    struct MemberBinding<T>
+    {
+        using Type = PointerElementT<T> &;
+    };
+
+    template <MemberBindable T>
+    using MemberBindingT = MemberBinding<T>::Type;
+
+    template <WeakPtrLike T, typename Functor>
+        requires std::is_member_pointer_v<Functor>
+    struct WeakFunctionBinding
+    {
+        constexpr WeakFunctionBinding(T object, Functor functor)
+            : object_(std::move(object)), functor_(std::move(functor))
+        {
+        }
+
+        template <typename... Args>
+            requires std::invocable<Functor, PointerElementT<T> &, Args...>
+        constexpr decltype(auto) operator()(Args &&...args) noexcept(std::is_nothrow_invocable_v<Functor, T &, Args...>)
+        {
+            return std::invoke(functor_, *object_.lock(), std::forward<Args>(args)...);
+        }
+
+        constexpr bool is_bound() const noexcept
+        {
+            return !object_.expired();
+        }
+
+      private:
+        T object_;
+        Functor functor_;
+    };
+
+    template <WeakPtrLike T, auto Functor>
+        requires std::is_member_pointer_v<decltype(Functor)>
+    struct ConstWeakFunctionBinding
+    {
+        constexpr explicit ConstWeakFunctionBinding(T object) : object_(std::move(object))
+        {
+        }
+
+        template <typename... Args>
+            requires std::invocable<decltype(Functor), PointerElementT<T> &, Args...>
+        constexpr decltype(auto) operator()(Args &&...args) noexcept(
+            std::is_nothrow_invocable_v<decltype(Functor), T &, Args...>)
+        {
+            return std::invoke(Functor, *object_.lock(), std::forward<Args>(args)...);
+        }
+
+        constexpr bool is_bound() const noexcept
+        {
+            return !object_.expired();
+        }
+
+      private:
+        T object_;
+    };
+
+    template <typename>
+    struct IsWeakFunctionBinding : std::false_type
+    {
+    };
+
+    template <WeakPtrLike T, typename Functor>
+        requires std::is_member_pointer_v<Functor>
+    struct IsWeakFunctionBinding<WeakFunctionBinding<T, Functor>> : std::true_type
+    {
+    };
+
+    template <typename T>
+    concept WeakFunctionBindingLike = IsWeakFunctionBinding<std::remove_cvref_t<T>>::value;
+
     static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
     static constexpr usize DELEGATE_INLINE_SIZE = 16;
 
@@ -175,20 +266,36 @@ namespace retro
             bind(ConstantBinding<Functor>{});
         }
 
-        template <typename T, std::invocable<T, Args...> Member>
-            requires std::convertible_to<std::invoke_result_t<Member, T, Args...>, Ret> &&
+        template <MemberBindable T, std::invocable<T, Args...> Member>
+            requires std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args...>, Ret> &&
                      std::is_member_pointer_v<Member>
-        void bind(T &obj, Member member) noexcept
+        void bind(T &&obj, Member member) noexcept
         {
-            bind(std::bind_front(member, std::ref(obj)));
+            if constexpr (WeakBindable<T>)
+            {
+                using WeakType = std::remove_cvref_t<decltype(to_weak(std::forward<T>(obj)))>;
+                bind(WeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj)), member});
+            }
+            else
+            {
+                bind(std::bind_front(member, std::ref(obj)));
+            }
         }
 
-        template <auto Member, typename T>
-            requires std::convertible_to<std::invoke_result_t<decltype(Member), T, Args...>, Ret> &&
+        template <auto Member, MemberBindable T>
+            requires std::convertible_to<std::invoke_result_t<decltype(Member), MemberBindingT<T>, Args...>, Ret> &&
                      std::is_member_pointer_v<decltype(Member)>
-        void bind(T &obj) noexcept
+        void bind(T &&obj) noexcept
         {
-            bind(bind_front<Member>(std::ref(obj)));
+            if constexpr (WeakBindable<T>)
+            {
+                using WeakType = std::remove_cvref_t<decltype(to_weak(std::forward<T>(obj)))>;
+                bind(ConstWeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj))});
+            }
+            else
+            {
+                bind(bind_front<Member>(std::ref(obj)));
+            }
         }
 
       private:
@@ -291,7 +398,14 @@ namespace retro
             requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
         static auto get_bound_check()
         {
-            return nullptr;
+            if constexpr (WeakFunctionBindingLike<Functor>)
+            {
+                return &is_functor_bound<Functor>;
+            }
+            else
+            {
+                return nullptr;
+            }
         }
 
         template <typename Functor>
@@ -332,6 +446,19 @@ namespace retro
             else
             {
                 delete static_cast<Functor *>(obj.heap_object);
+            }
+        }
+
+        template <WeakFunctionBindingLike Functor>
+        static bool is_functor_bound(const DelegateStorage &obj)
+        {
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                return std::launder(reinterpret_cast<Functor *>(&obj.inline_buffer))->is_bound();
+            }
+            else
+            {
+                return static_cast<const Functor *>(obj.heap_object)->is_bound();
             }
         }
 
