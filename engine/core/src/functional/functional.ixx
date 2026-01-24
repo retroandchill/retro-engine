@@ -239,62 +239,108 @@ namespace retro
             return ops_->invoke(storage_, std::forward<Args>(args)...);
         }
 
-        template <std::invocable<Args...> Functor>
-            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
-        void bind(Functor &&functor) noexcept
+        template <std::invocable<Args...> Functor, typename... BindArgs>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args..., BindArgs...>, Ret>
+        void bind(Functor &&functor, BindArgs &&...args) noexcept
         {
-            delete_data();
-
-            ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
-            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            if constexpr (sizeof...(BindArgs) > 0)
             {
-                auto *functor_ptr =
-                    std::launder(reinterpret_cast<std::remove_cvref_t<Functor> *>(&storage_.inline_buffer));
-                std::construct_at(functor_ptr, std::forward<Functor>(functor));
+                bind(std::bind_back(std::forward<Functor>(functor), std::forward<BindArgs>(args)...));
             }
             else
             {
-                storage_.heap_object = new Functor(std::forward<Functor>(functor));
+                delete_data();
+
+                ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
+                if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+                {
+                    auto *functor_ptr =
+                        std::launder(reinterpret_cast<std::remove_cvref_t<Functor> *>(&storage_.inline_buffer));
+                    std::construct_at(functor_ptr, std::forward<Functor>(functor));
+                }
+                else
+                {
+                    storage_.heap_object = new Functor(std::forward<Functor>(functor));
+                }
             }
         }
 
-        template <auto Functor>
-            requires std::invocable<decltype(Functor), Args...> &&
+        template <auto Functor, typename... BindArgs>
+            requires std::invocable<decltype(Functor), Args..., BindArgs...> &&
                      std::convertible_to<std::invoke_result_t<decltype(Functor), Args...>, Ret>
-        void bind() noexcept
+        void bind(BindArgs &&...args) noexcept
         {
-            bind(ConstantBinding<Functor>{});
+            if constexpr (sizeof...(BindArgs) > 0)
+            {
+                return bind(bind_back<Functor>(std::forward<BindArgs>(args)...));
+            }
+            else
+            {
+                bind(ConstantBinding<Functor>{});
+            }
         }
 
-        template <MemberBindable T, std::invocable<T, Args...> Member>
-            requires std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args...>, Ret> &&
+        template <MemberBindable T, std::invocable<T, Args...> Member, typename... BindArgs>
+            requires std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args..., BindArgs...>, Ret> &&
                      std::is_member_pointer_v<Member>
-        void bind(T &&obj, Member member) noexcept
+        void bind(T &&obj, Member member, BindArgs &&...args) noexcept
         {
             if constexpr (WeakBindable<T>)
             {
                 using WeakType = std::remove_cvref_t<decltype(to_weak(std::forward<T>(obj)))>;
-                bind(WeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj)), member});
+                if constexpr (sizeof...(BindArgs) > 0)
+                {
+                    bind(std::bind_back(WeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj)), member},
+                                        std::forward<BindArgs>(args)...));
+                }
+                else
+                {
+                    bind(WeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj)), member});
+                }
             }
             else
             {
-                bind(std::bind_front(member, std::ref(obj)));
+                if constexpr (sizeof...(BindArgs) > 0)
+                {
+                    bind(std::bind_back(std::bind_front(member, std::ref(obj)), std::forward<BindArgs>(args)...));
+                }
+                else
+                {
+                    bind(std::bind_front(member, std::ref(obj)));
+                }
             }
         }
 
-        template <auto Member, MemberBindable T>
-            requires std::convertible_to<std::invoke_result_t<decltype(Member), MemberBindingT<T>, Args...>, Ret> &&
+        template <auto Member, MemberBindable T, typename... BindArgs>
+            requires std::convertible_to<
+                         std::invoke_result_t<decltype(Member), MemberBindingT<T>, Args..., BindArgs...>,
+                         Ret> &&
                      std::is_member_pointer_v<decltype(Member)>
-        void bind(T &&obj) noexcept
+        void bind(T &&obj, BindArgs &&...args) noexcept
         {
             if constexpr (WeakBindable<T>)
             {
                 using WeakType = std::remove_cvref_t<decltype(to_weak(std::forward<T>(obj)))>;
-                bind(ConstWeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj))});
+                if constexpr (sizeof...(BindArgs) > 0)
+                {
+                    bind(std::bind_back(ConstWeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj))},
+                                        std::forward<BindArgs>(args)...));
+                }
+                else
+                {
+                    bind(ConstWeakFunctionBinding<WeakType, Member>{to_weak(std::forward<T>(obj))});
+                }
             }
             else
             {
-                bind(bind_front<Member>(std::ref(obj)));
+                if constexpr (sizeof...(BindArgs) > 0)
+                {
+                    bind(std::bind_back(bind_front<Member>(std::ref(obj)), std::forward<BindArgs>(args)...));
+                }
+                else
+                {
+                    bind(bind_front<Member>(std::ref(obj)));
+                }
             }
         }
 
