@@ -229,34 +229,37 @@ namespace retro
             requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
         static OpsTable *get_ops_table()
         {
-            static constexpr bool requires_copy =
-                !std::is_trivially_copyable_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE;
-            static constexpr bool requires_destroy =
-                !std::is_trivially_destructible_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE;
+            static OpsTable ops_table{.invoke = invoke_functor<Functor>,
+                                      .copy = get_copy_operation<Functor>(),
+                                      .destroy = get_delete_operation<Functor>()};
+            return &ops_table;
+        }
 
-            if constexpr (requires_copy && requires_destroy)
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static auto get_copy_operation()
+        {
+            if constexpr (!std::is_trivially_copyable_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE)
             {
-                static OpsTable ops_table{.invoke = invoke_functor<Functor>,
-                                          .copy = copy_functor<Functor>,
-                                          .destroy = delete_functor<Functor>};
-                return &ops_table;
-            }
-            else if constexpr (requires_copy)
-            {
-                static OpsTable ops_table{.invoke = invoke_functor<Functor>, .copy = copy_functor<Functor>};
-                return &ops_table;
-            }
-            else if constexpr (requires_destroy)
-            {
-                static OpsTable ops_table{.invoke = invoke_functor<Functor>, .destroy = delete_functor<Functor>};
-                return &ops_table;
+                return &copy_functor<Functor>;
             }
             else
             {
-                static OpsTable ops_table{
-                    .invoke = invoke_functor<Functor>,
-                };
-                return &ops_table;
+                return nullptr;
+            }
+        }
+
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static auto get_delete_operation()
+        {
+            if constexpr (!std::is_trivially_destructible_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE)
+            {
+                return &delete_functor<Functor>;
+            }
+            else
+            {
+                return nullptr;
             }
         }
 
