@@ -28,6 +28,8 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/functional/functional.ixx
         src/memory/arena_allocator.ixx
         src/concepts.ixx
+        src/async/async.ixx
+        src/async/async.cpp
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

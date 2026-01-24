@@ -9,6 +9,7 @@ export module retro.core;
 import std;
 
 export import :algorithm;
+export import :async;
 export import :basic_types;
 export import :concepts;
 export import :defines;
