@@ -12,7 +12,7 @@ export import :algorithm;
 export import :basic_types;
 export import :concepts;
 export import :defines;
-export import :filesystem;
+export import :io;
 export import :functional;
 export import :math;
 export import :memory;

@@ -3,7 +3,7 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_CORE_SOURCES src/strings/name.cpp
-        src/io/filesystem.cpp
+        src/io/io.cpp
         src/strings/name_c.cpp
         src/functional/functional.cpp
 )
@@ -23,7 +23,7 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/defines.ixx
         src/algorithm.ixx
         src/basic_types.ixx
-        src/io/filesystem.ixx
+        src/io/io.ixx
         src/math.ixx
         src/functional/functional.ixx
         src/memory/arena_allocator.ixx

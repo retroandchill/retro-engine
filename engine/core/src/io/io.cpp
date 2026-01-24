@@ -1,9 +1,13 @@
 ﻿/**
- * @file filesystem.cpp
+ * @file io.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/macros.hpp"
+
 module retro.core;
 
 namespace retro::filesystem
@@ -24,5 +28,24 @@ namespace retro::filesystem
     std::filesystem::path get_executable_path()
     {
         return boost::dll::program_location().parent_path();
+    }
+
+    StreamResult<int32> Stream::read_byte()
+    {
+        std::array<std::byte, 1> buffer{};
+        EXPECT_ASSIGN(auto bytes_read, read(buffer))
+        if (bytes_read == 0)
+        {
+            return -1;
+        }
+
+        return static_cast<int32>(buffer[0]);
+    }
+
+    StreamResult<void> Stream::write_byte(const std::byte byte)
+    {
+        std::array buffer{byte};
+        EXPECT(write(buffer));
+        return {};
     }
 } // namespace retro::filesystem
