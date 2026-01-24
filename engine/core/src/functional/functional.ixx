@@ -20,12 +20,13 @@ namespace retro
     export template <CallableObject... Ts>
     Overload(Ts...) -> Overload<Ts...>;
 
-    template <typename T, typename Member>
-        requires std::is_member_function_pointer_v<Member> && std::is_object_v<T>
-    struct MemberFunctionStorage
+    static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
+    static constexpr usize DELEGATE_INLINE_SIZE = 32;
+
+    union DelegateStorage
     {
-        T *object;
-        Member member;
+        alignas(DELEGATE_INLINE_ALIGN) std::byte inline_buffer[DELEGATE_INLINE_SIZE];
+        void *heap_object{};
     };
 
     export template <typename>
@@ -43,28 +44,36 @@ namespace retro
         {
         }
 
-        Delegate(const Delegate &) = delete;
-        Delegate &operator=(const Delegate &) = delete;
-
-        constexpr Delegate(Delegate &&other) noexcept
-            : instance_(other.instance_), invoker_(other.invoker_), deleter_(other.deleter_)
+        Delegate(const Delegate &other) : ops_(other.ops_), object_size_(other.object_size_)
         {
-            other.instance_ = nullptr;
-            other.invoker_ = nullptr;
-            other.deleter_ = nullptr;
+            copy_data();
+        }
+
+        Delegate &operator=(const Delegate &other)
+        {
+            if (this == std::addressof(other))
+                return *this;
+
+            delete_data();
+
+            ops_ = other.ops_;
+            object_size_ = other.object_size_;
+            copy_data(other);
+            return *this;
+        }
+
+        constexpr Delegate(Delegate &&other) noexcept : ops_(other.ops_), object_size_(other.object_size_)
+        {
+            move_data(std::move(other));
         }
 
         constexpr Delegate &operator=(Delegate &&other) noexcept
         {
             delete_data();
 
-            instance_ = other.instance_;
-            invoker_ = other.invoker_;
-            deleter_ = other.deleter_;
-
-            other.instance_ = nullptr;
-            other.invoker_ = nullptr;
-            other.deleter_ = nullptr;
+            ops_ = other.ops_;
+            object_size_ = other.object_size_;
+            move_data(std::move(other));
             return *this;
         }
 
@@ -73,167 +82,227 @@ namespace retro
             delete_data();
         }
 
-        constexpr bool is_bound() const noexcept
+        [[nodiscard]] constexpr bool is_bound() const noexcept
         {
-            return invoker_ != nullptr;
+            return ops_ != nullptr;
         }
 
         constexpr void unbind()
         {
             delete_data();
-            deleter_ = nullptr;
-            invoker_ = nullptr;
-            instance_ = nullptr;
+            ops_ = nullptr;
+            object_size_ = 0;
         }
 
-        constexpr Ret execute(Args &&...args) const
+        constexpr Ret execute(Args &&...args)
         {
-            if (invoker_ == nullptr)
+            if (ops_ == nullptr)
             {
                 throw std::runtime_error("Delegate is not bound to a function");
             }
 
-            return invoker_(instance_, std::forward<Args>(args)...);
+            return ops_->invoke(storage_, std::forward<Args>(args)...);
         }
 
-        constexpr bool execute_if_bound(Args... args) const
+        constexpr bool execute_if_bound(Args... args)
             requires std::same_as<Ret, void>
         {
-            if (invoker_ == nullptr)
+            if (ops_ == nullptr)
             {
                 return false;
             }
 
-            invoker_(instance_, std::forward<Args>(args)...);
+            ops_->invoke(storage_, std::forward<Args>(args)...);
             return true;
         }
-        constexpr boost::optional<Ret> execute_if_bound(Args... args) const
+        constexpr boost::optional<Ret> execute_if_bound(Args... args)
             requires !std::same_as<Ret, void>
         {
-            if (invoker_ == nullptr)
+            if (ops_ == nullptr)
             {
                 return boost::none;
             }
 
-            return invoker_(instance_, std::forward<Args>(args)...);
+            return ops_->invoke(storage_, std::forward<Args>(args)...);
         }
 
-        template <Ret (*Func)(Args...)>
-        void bind_static()
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        void bind(Functor &&functor) noexcept
         {
             delete_data();
-            instance_ = nullptr;
-            invoker_ = &invoke_static<Func>;
-            deleter_ = nullptr;
-        }
 
-        void bind_static(Ret (*func)(Args...))
-        {
-            delete_data();
-            instance_ = func;
-            invoker_ = &invoke_static_runtime;
-            deleter_ = nullptr;
-        }
-
-        template <auto MemberPtr, typename T>
-            requires std::is_object_v<T> && std::is_member_function_pointer_v<decltype(MemberPtr)> &&
-                     std::invocable<decltype(MemberPtr), T, Args...>
-        void bind_raw(T &object)
-        {
-            delete_data();
-            instance_ = &object;
-            invoker_ = &invoke_member<T, MemberPtr>;
-            deleter_ = nullptr;
-        }
-
-        template <typename T, typename Member>
-            requires std::is_object_v<T> && std::is_member_function_pointer_v<Member> &&
-                     std::invocable<Member, T, Args...>
-        void bind_raw(T &object, Member member)
-        {
-            delete_data();
-            instance_ = new MemberFunctionStorage<T, Member>{&object, member};
-            invoker_ = &invoke_member_raw<T, Member>;
-            deleter_ = &delete_member_raw<T, Member>;
-        }
-
-        template <typename Functor>
-            requires std::invocable<Functor, Args...>
-        void bind_lambda(Functor &&functor)
-        {
-            using DecayedLambda = std::decay_t<Functor>;
-            if constexpr (std::is_function_v<DecayedLambda>)
+            ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
+            object_size_ = sizeof(Functor);
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
             {
-                bind_static(std::forward<Functor>(functor));
+                auto *functor_ptr =
+                    std::launder(reinterpret_cast<std::remove_cvref_t<Functor> *>(&storage_.inline_buffer));
+                std::construct_at(functor_ptr, std::forward<Functor>(functor));
             }
             else
             {
-                delete_data();
-                auto *heap_object = new DecayedLambda(std::forward<Functor>(functor));
-                instance_ = heap_object;
-                invoker_ = &invoke_functor<DecayedLambda>;
-                deleter_ = &delete_functor<DecayedLambda>;
+                storage_.heap_object = new Functor(std::forward<Functor>(functor));
             }
+        }
+
+        template <auto Functor>
+            requires std::invocable<decltype(Functor), Args...> &&
+                     std::convertible_to<std::invoke_result_t<decltype(Functor), Args...>, Ret>
+        void bind() noexcept
+        {
+            bind([]<typename... A>(A &&...args) { return std::invoke(Functor, std::forward<A>(args)...); });
+        }
+
+        template <typename T, std::invocable<T, Args...> Member>
+            requires std::convertible_to<std::invoke_result_t<Member, T, Args...>, Ret> &&
+                     std::is_member_pointer_v<Member>
+        void bind(T &obj, Member member) noexcept
+        {
+            bind(std::bind_front(member, std::ref(obj)));
+        }
+
+        template <auto Member, typename T>
+            requires std::convertible_to<std::invoke_result_t<decltype(Member), T, Args...>, Ret> &&
+                     std::is_member_pointer_v<decltype(Member)>
+        void bind(T &obj) noexcept
+        {
+            bind([&obj]<typename... A>(A &&...args) { return std::invoke(Member, obj, std::forward<A>(args)...); });
         }
 
       private:
-        void delete_data() const
+        struct OpsTable
         {
-            if (deleter_ != nullptr && instance_ != nullptr)
+            Ret (*invoke)(DelegateStorage &storage, Args... args) = nullptr;
+            void (*copy)(DelegateStorage &dest, const DelegateStorage &src) = nullptr;
+            void (*destroy)(DelegateStorage &) = nullptr;
+        };
+
+        [[nodiscard]] constexpr bool is_inline() const noexcept
+        {
+            return object_size_ <= DELEGATE_INLINE_SIZE;
+        }
+
+        void copy_data(const Delegate &other)
+        {
+            if (ops_ == nullptr)
+                return;
+
+            if (ops_->copy != nullptr)
             {
-                deleter_(instance_);
+                ops_->copy(storage_, other.storage_);
+            }
+            else if (is_inline())
+            {
+                std::memcpy(storage_.inline_buffer, other.storage_.inline_buffer, sizeof(storage_.inline_buffer));
             }
         }
 
-        template <Ret (*Func)(Args...)>
-        static Ret invoke_static(void *, Args... args)
+        void move_data(Delegate &&other)
         {
-            return Func(std::forward<Args>(args)...);
+            if (ops_ == nullptr)
+                return;
+
+            if (is_inline())
+            {
+                std::memcpy(storage_.inline_buffer, other.storage_.inline_buffer, sizeof(storage_.inline_buffer));
+            }
+            else
+            {
+                storage_.heap_object = other.storage_.heap_object;
+                other.storage_.heap_object = nullptr;
+            }
+
+            other.ops_ = nullptr;
+            other.object_size_ = 0;
         }
 
-        static Ret invoke_static_runtime(void *data, Args... args)
+        void delete_data()
         {
-            auto *func_ptr = static_cast<Ret (*)(Args...)>(data);
-            return func_ptr(std::forward<Args>(args)...);
+            if (ops_ != nullptr && ops_->destroy != nullptr)
+            {
+                ops_->destroy(storage_);
+            }
         }
 
-        template <typename T, auto MemberPtr>
-        static Ret invoke_member(void *data, Args... args)
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static OpsTable *get_ops_table()
         {
-            auto *object = static_cast<T *>(data);
-            return std::invoke(MemberPtr, object, std::forward<Args>(args)...);
-        }
+            static constexpr bool requires_copy =
+                !std::is_trivially_copyable_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE;
+            static constexpr bool requires_destroy =
+                !std::is_trivially_destructible_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE;
 
-        template <typename T, typename Member>
-        static Ret invoke_member_raw(void *data, Args... args)
-        {
-            auto *invoker = static_cast<MemberFunctionStorage<T, Member> *>(data);
-            return std::invoke(invoker->member, invoker->object, std::forward<Args>(args)...);
-        }
-
-        template <typename T, typename Member>
-        static void delete_member_raw(void *data)
-        {
-            auto *invoker = static_cast<MemberFunctionStorage<T, Member> *>(data);
-            delete invoker;
+            if constexpr (requires_copy && requires_destroy)
+            {
+                static OpsTable ops_table{.invoke = invoke_functor<Functor>,
+                                          .copy = copy_functor<Functor>,
+                                          .destroy = delete_functor<Functor>};
+                return &ops_table;
+            }
+            else if constexpr (requires_copy)
+            {
+                static OpsTable ops_table{.invoke = invoke_functor<Functor>, .copy = copy_functor<Functor>};
+                return &ops_table;
+            }
+            else if constexpr (requires_destroy)
+            {
+                static OpsTable ops_table{.invoke = invoke_functor<Functor>, .destroy = delete_functor<Functor>};
+                return &ops_table;
+            }
+            else
+            {
+                static OpsTable ops_table{
+                    .invoke = invoke_functor<Functor>,
+                };
+                return &ops_table;
+            }
         }
 
         template <typename Functor>
-        static Ret invoke_functor(void *obj, Args... args)
+        static Ret invoke_functor(DelegateStorage &obj, Args... args)
         {
-            auto *functor = static_cast<Functor *>(obj);
-            return (*functor)(std::forward<Args>(args)...);
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                return std::invoke(*std::launder(reinterpret_cast<Functor *>(&obj.inline_buffer)),
+                                   std::forward<Args>(args)...);
+            }
+            else
+            {
+                return std::invoke(*static_cast<Functor *>(obj.heap_object), std::forward<Args>(args)...);
+            }
         }
 
         template <typename Functor>
-        static void delete_functor(void *obj)
+        static void copy_functor(DelegateStorage &dest, const DelegateStorage &source)
         {
-            auto *functor = static_cast<Functor *>(obj);
-            delete functor;
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                std::construct_at(reinterpret_cast<Functor *>(dest.inline_buffer),
+                                  *reinterpret_cast<const Functor *>(source.inline_buffer));
+            }
+            else
+            {
+                dest.heap_object = new Functor(*static_cast<const Functor *>(source.heap_object));
+            }
         }
 
-        void *instance_ = nullptr;
-        Ret (*invoker_)(void *, Args...) = nullptr;
-        void (*deleter_)(void *) = nullptr;
+        template <typename Functor>
+        static void delete_functor(DelegateStorage &obj)
+        {
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                std::destroy_at(reinterpret_cast<Functor *>(obj.inline_buffer));
+            }
+            else
+            {
+                delete static_cast<Functor *>(obj.heap_object);
+            }
+        }
+
+        DelegateStorage storage_;
+        const OpsTable *ops_ = nullptr;
+        usize object_size_ = 0;
     };
 } // namespace retro

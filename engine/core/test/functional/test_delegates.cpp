@@ -99,12 +99,12 @@ TEST_CASE("Delegate bind_static compile-time function pointer", "[Delegate]")
 {
     Delegate<int32(int32, int32)> d;
 
-    d.bind_static<free_function_add>();
+    d.bind<free_function_add>();
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(2, 3) == 5);
 
     // Rebinding to another static function should work
-    d.bind_static<free_function_mul>();
+    d.bind<free_function_mul>();
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(2, 3) == 6);
 }
@@ -113,11 +113,11 @@ TEST_CASE("Delegate bind_static runtime function pointer", "[Delegate]")
 {
     Delegate<int32(int32, int32)> d;
 
-    d.bind_static(&free_function_add);
+    d.bind(&free_function_add);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(10, 5) == 15);
 
-    d.bind_static(&free_function_mul);
+    d.bind(&free_function_mul);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(10, 5) == 50);
 }
@@ -130,13 +130,13 @@ TEST_CASE("Delegate bind_raw with compile-time member pointer", "[Delegate]")
 
     Delegate<int32(int32)> d;
 
-    d.bind_raw<&TestObject::member_add>(obj);
+    d.bind<&TestObject::member_add>(obj);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 3 * 5 + 4);
     REQUIRE(obj.call_count == 1);
 
     // Non-const member
-    d.bind_raw<&TestObject::member_mul>(obj);
+    d.bind<&TestObject::member_mul>(obj);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(7) == 3 * 7);
     REQUIRE(obj.call_count == 2);
@@ -150,13 +150,13 @@ TEST_CASE("Delegate bind_raw with runtime member type parameter", "[Delegate]")
 
     Delegate<int32(int32)> d;
 
-    d.bind_raw(obj, &TestObject::member_add);
+    d.bind(obj, &TestObject::member_add);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 3 * 5 + 4);
     REQUIRE(obj.call_count == 1);
 
     // Non-const member
-    d.bind_raw(obj, &TestObject::member_mul);
+    d.bind(obj, &TestObject::member_mul);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(7) == 3 * 7);
     REQUIRE(obj.call_count == 2);
@@ -167,13 +167,13 @@ TEST_CASE("Delegate bind_lambda with non-capturing and capturing lambdas", "[Del
     Delegate<int32(int32)> d;
 
     // Non-capturing lambda – still treated as a functor type here
-    d.bind_lambda([](int32 x) { return x * 2; });
+    d.bind([](int32 x) { return x * 2; });
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(4) == 8);
 
     // Capturing lambda (must be stored on heap and deleted on unbind / destruction)
     int32 base = 10;
-    d.bind_lambda([base](int32 x) { return base + x; });
+    d.bind([base](int32 x) { return base + x; });
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 15);
 }
@@ -183,7 +183,7 @@ TEST_CASE("Delegate bind_lambda with stateful functor", "[Delegate]")
     int32 call_counter = 0;
     Delegate<int32(int32)> d;
 
-    d.bind_lambda(TrackingFunctor{call_counter, 7});
+    d.bind(TrackingFunctor{call_counter, 7});
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(3) == 10);
     REQUIRE(call_counter == 1);
@@ -203,7 +203,7 @@ TEST_CASE("Delegate execute_if_bound for void return type", "[Delegate]")
     REQUIRE_FALSE(flag);
 
     // Bound
-    d.bind_static<&free_function_void_flag>();
+    d.bind<&free_function_void_flag>();
     REQUIRE(d.is_bound());
 
     REQUIRE(d.execute_if_bound(flag));
@@ -224,7 +224,7 @@ TEST_CASE("Delegate execute_if_bound for non-void return type", "[Delegate]")
     auto res_unbound = d.execute_if_bound(1, 2);
     REQUIRE_FALSE(res_unbound.has_value());
 
-    d.bind_static<free_function_add>();
+    d.bind<free_function_add>();
     auto res_bound = d.execute_if_bound(3, 4);
     REQUIRE(res_bound.has_value());
     REQUIRE(*res_bound == 7);
@@ -233,7 +233,7 @@ TEST_CASE("Delegate execute_if_bound for non-void return type", "[Delegate]")
 TEST_CASE("Delegate unbind releases state and makes delegate unusable", "[Delegate]")
 {
     Delegate<int32(int32, int32)> d;
-    d.bind_static<free_function_add>();
+    d.bind<free_function_add>();
 
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(1, 2) == 3);
@@ -246,11 +246,11 @@ TEST_CASE("Delegate unbind releases state and makes delegate unusable", "[Delega
 TEST_CASE("Delegate move construction transfers binding", "[Delegate]")
 {
     Delegate<int32(int32, int32)> source;
-    source.bind_static<free_function_mul>();
+    source.bind<free_function_mul>();
     REQUIRE(source.is_bound());
     REQUIRE(source.execute(3, 4) == 12);
 
-    Delegate<int32(int32, int32)> dest{std::move(source)};
+    Delegate dest{std::move(source)};
 
     // Source should be empty
     REQUIRE_FALSE(source.is_bound());
@@ -266,8 +266,8 @@ TEST_CASE("Delegate move assignment transfers binding and cleans up previous", "
     Delegate<int32(int32, int32)> d1;
     Delegate<int32(int32, int32)> d2;
 
-    d1.bind_static<free_function_add>();
-    d2.bind_static<free_function_mul>();
+    d1.bind<free_function_add>();
+    d2.bind<free_function_mul>();
 
     REQUIRE(d1.is_bound());
     REQUIRE(d2.is_bound());
@@ -291,12 +291,12 @@ TEST_CASE("Delegate properly deletes heap-stored functor on destruction", "[Dele
 
     {
         Delegate<void()> d;
-        d.bind_lambda(DeletionTracker{});
+        d.bind(DeletionTracker{});
         REQUIRE(DeletionTracker::instance_count == 1);
         REQUIRE(d.is_bound());
 
         // Move to another delegate to ensure deletion only happens once
-        Delegate<void()> d2{std::move(d)};
+        Delegate d2{std::move(d)};
         REQUIRE_FALSE(d.is_bound());
         REQUIRE(d2.is_bound());
         REQUIRE(DeletionTracker::instance_count == 1);
