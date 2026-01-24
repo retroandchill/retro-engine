@@ -11,6 +11,7 @@ import retro.core;
 import std;
 
 using retro::Delegate;
+using retro::MulticastDelegate;
 
 namespace
 {
@@ -30,13 +31,18 @@ namespace
         flag = true;
     }
 
+    void append_value(int32 value, std::vector<int32> &values)
+    {
+        values.push_back(value);
+    }
+
     struct TestObject
     {
         int32 factor = 2;
         int32 offset = 1;
         mutable int32 call_count = 0;
 
-        int32 member_add(int32 x) const
+        [[nodiscard]] int32 member_add(const int32 x) const
         {
             ++call_count;
             return factor * x + offset;
@@ -52,7 +58,7 @@ namespace
     struct TrackingFunctor
     {
         int32 &call_counter;
-        int32 value;
+        int32 value{};
 
         int32 operator()(int32 x) const
         {
@@ -136,7 +142,7 @@ namespace
     {
         int32 factor = 3;
 
-        int32 multiply(int32 x) const
+        [[nodiscard]] int32 multiply(const int32 x) const
         {
             return factor * x;
         }
@@ -149,6 +155,16 @@ namespace
         int32 add(int32 x) const
         {
             return add_base + x;
+        }
+    };
+
+    struct MulticastReceiver
+    {
+        int32 total = 0;
+
+        void add(int32 value)
+        {
+            total += value;
         }
     };
 } // namespace
@@ -168,9 +184,7 @@ TEST_CASE("Delegate default construction and null construction", "[Delegate]")
 
 TEST_CASE("Delegate bind_static compile-time function pointer", "[Delegate]")
 {
-    Delegate<int32(int32, int32)> d;
-
-    d.bind<free_function_add>();
+    auto d = Delegate<int32(int32, int32)>::create<free_function_add>();
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(2, 3) == 5);
 
@@ -182,9 +196,7 @@ TEST_CASE("Delegate bind_static compile-time function pointer", "[Delegate]")
 
 TEST_CASE("Delegate bind_static runtime function pointer", "[Delegate]")
 {
-    Delegate<int32(int32, int32)> d;
-
-    d.bind(&free_function_add);
+    auto d = Delegate<int32(int32, int32)>::create(&free_function_add);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(10, 5) == 15);
 
@@ -199,9 +211,7 @@ TEST_CASE("Delegate bind_raw with compile-time member pointer", "[Delegate]")
     obj.factor = 3;
     obj.offset = 4;
 
-    Delegate<int32(int32)> d;
-
-    d.bind<&TestObject::member_add>(obj);
+    auto d = Delegate<int32(int32)>::create<&TestObject::member_add>(obj);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 3 * 5 + 4);
     REQUIRE(obj.call_count == 1);
@@ -219,9 +229,7 @@ TEST_CASE("Delegate bind_raw with runtime member type parameter", "[Delegate]")
     obj.factor = 3;
     obj.offset = 4;
 
-    Delegate<int32(int32)> d;
-
-    d.bind(obj, &TestObject::member_add);
+    auto d = Delegate<int32(int32)>::create(obj, &TestObject::member_add);
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 3 * 5 + 4);
     REQUIRE(obj.call_count == 1);
@@ -235,16 +243,14 @@ TEST_CASE("Delegate bind_raw with runtime member type parameter", "[Delegate]")
 
 TEST_CASE("Delegate bind_lambda with non-capturing and capturing lambdas", "[Delegate]")
 {
-    Delegate<int32(int32)> d;
-
     // Non-capturing lambda – still treated as a functor type here
-    d.bind([](int32 x) { return x * 2; });
+    auto d = Delegate<int32(int32)>::create([](int32 x) { return x * 2; });
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(4) == 8);
 
     // Capturing lambda (must be stored on heap and deleted on unbind / destruction)
     int32 base = 10;
-    d.bind([base](int32 x) { return base + x; });
+    d = Delegate<int32(int32)>::create([base](int32 x) { return base + x; });
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(5) == 15);
 }
@@ -252,9 +258,7 @@ TEST_CASE("Delegate bind_lambda with non-capturing and capturing lambdas", "[Del
 TEST_CASE("Delegate bind_lambda with stateful functor", "[Delegate]")
 {
     int32 call_counter = 0;
-    Delegate<int32(int32)> d;
-
-    d.bind(TrackingFunctor{call_counter, 7});
+    auto d = Delegate<int32(int32)>::create(TrackingFunctor{call_counter, 7});
     REQUIRE(d.is_bound());
     REQUIRE(d.execute(3) == 10);
     REQUIRE(call_counter == 1);
@@ -472,26 +476,62 @@ TEST_CASE("Delegate weak binding with enable_shared_from_this", "[Delegate]")
 
 TEST_CASE("Delegate bind with additional arguments", "[Delegate]")
 {
-    Delegate<int32(int32)> d1;
-    d1.bind<free_function_add>(3);
+    auto d1 = Delegate<int32(int32)>::create<free_function_add>(3);
     REQUIRE(d1.is_bound());
     REQUIRE(d1.execute(5) == 8);
 
-    Delegate<int32(int32)> d2;
-    d2.bind(&free_function_mul, 4);
+    auto d2 = Delegate<int32(int32)>::create(&free_function_mul, 4);
     REQUIRE(d2.is_bound());
     REQUIRE(d2.execute(6) == 24);
 
     TestObject obj;
     obj.factor = 2;
     obj.offset = 0;
-    Delegate<int32()> d3;
-    d3.bind(obj, &TestObject::member_mul, 7);
+    auto d3 = Delegate<int32()>::create(obj, &TestObject::member_mul, 7);
     REQUIRE(d3.is_bound());
     REQUIRE(d3.execute() == 14);
 
-    Delegate<int32(int32)> d4;
-    d4.bind([](int32 x, int32 y) { return x - y; }, 9);
+    auto d4 = Delegate<int32(int32)>::create([](int32 x, int32 y) { return x - y; }, 9);
     REQUIRE(d4.is_bound());
     REQUIRE(d4.execute(20) == 11);
+}
+
+TEST_CASE("MulticastDelegate add and broadcast with different bindings", "[Delegate]")
+{
+    MulticastDelegate<void(int32)> multicast;
+    int32 total = 0;
+    std::vector<int32> values;
+    MulticastReceiver receiver;
+
+    auto handle_sum = multicast.add([&](int32 value) { total += value; });
+    auto handle_member = multicast.add<&MulticastReceiver::add>(receiver);
+    auto handle_append = multicast.add(&append_value, std::ref(values));
+
+    REQUIRE(handle_sum.is_valid());
+    REQUIRE(handle_member.is_valid());
+    REQUIRE(handle_append.is_valid());
+    REQUIRE(multicast.size() == 3);
+
+    multicast.broadcast(4);
+
+    REQUIRE(total == 4);
+    REQUIRE(receiver.total == 4);
+    REQUIRE(values == std::vector<int32>{4});
+}
+
+TEST_CASE("MulticastDelegate remove stops future calls", "[Delegate]")
+{
+    MulticastDelegate<void(int32)> multicast;
+    int32 total = 0;
+
+    const auto handle_first = multicast.add([&](const int32 value) { total += value; });
+    multicast.add([&](const int32 value) { total += value * 2; });
+
+    REQUIRE(multicast.size() == 2);
+
+    multicast.remove(handle_first);
+    REQUIRE(multicast.size() == 1);
+
+    multicast.broadcast(3);
+    REQUIRE(total == 6);
 }

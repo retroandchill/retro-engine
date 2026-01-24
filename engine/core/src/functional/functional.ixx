@@ -776,10 +776,10 @@ namespace retro
         RETRO_API static std::atomic<uint64> next_cookie_;
     };
 
-    template <typename, typename Policy = NoLockPolicy>
+    export template <typename, typename Policy = NoLockPolicy>
     class MulticastDelegate;
 
-    template <typename... Args, typename Policy>
+    export template <typename... Args, typename Policy>
     class MulticastDelegate<void(Args...), Policy> : private ThreadPolicyMixin<Policy>
     {
       public:
@@ -908,7 +908,7 @@ namespace retro
             auto lock = this->read_lock();
             for (const auto [i, slot] : slots_ | std::views::enumerate)
             {
-                if (!slot.occupied)
+                if (!slot.is_bound)
                 {
                     continue;
                 }
@@ -929,7 +929,7 @@ namespace retro
             usize count = 0;
             for (const auto &slot : slots_)
             {
-                if (slot.occupied)
+                if (slot.is_bound)
                 {
                     ++count;
                 }
@@ -966,7 +966,7 @@ namespace retro
             auto &slot = slots_[idx];
 
             slot.delegate.unbind();
-            slot.occupied = false;
+            slot.is_bound = false;
             ++slot.generation;
 
             free_list_.push_back(idx);
