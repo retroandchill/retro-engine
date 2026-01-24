@@ -235,6 +235,14 @@ namespace retro
         {
         }
 
+        template <typename Functor>
+            requires std::invocable<const std::remove_reference_t<Functor>, Args...> &&
+                     std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Functor>, Args...>, Ret>
+        constexpr explicit(false) Delegate(Functor &&functor) : ops_(get_ops_table<std::remove_cvref_t<Functor>>())
+        {
+            store_functor(std::forward<Functor>(functor));
+        }
+
         Delegate(const Delegate &other)
             requires std::same_as<NoLockPolicy, Policy>
             : ops_(other.ops_)
@@ -248,6 +256,26 @@ namespace retro
             auto lock = other.read_lock();
             ops_ = other.ops_;
             copy_data(other);
+        }
+
+        constexpr Delegate(Delegate &&other) noexcept
+            requires std::same_as<NoLockPolicy, Policy>
+            : ops_(other.ops_)
+        {
+            move_data(std::move(other));
+        }
+
+        constexpr Delegate(Delegate &&other) noexcept
+            requires(!std::same_as<NoLockPolicy, Policy>)
+        {
+            auto lock = other.write_lock();
+            ops_ = other.ops_;
+            move_data(std::move(other));
+        }
+
+        ~Delegate()
+        {
+            delete_data();
         }
 
         Delegate &operator=(const Delegate &other)
@@ -277,21 +305,6 @@ namespace retro
             }
         }
 
-        constexpr Delegate(Delegate &&other) noexcept
-            requires std::same_as<NoLockPolicy, Policy>
-            : ops_(other.ops_)
-        {
-            move_data(std::move(other));
-        }
-
-        constexpr Delegate(Delegate &&other) noexcept
-            requires(!std::same_as<NoLockPolicy, Policy>)
-        {
-            auto lock = other.write_lock();
-            ops_ = other.ops_;
-            move_data(std::move(other));
-        }
-
         constexpr Delegate &operator=(Delegate &&other) noexcept
         {
             if constexpr (!std::same_as<Policy, NoLockPolicy>)
@@ -316,9 +329,19 @@ namespace retro
             }
         }
 
-        ~Delegate()
+        constexpr Delegate &operator=(std::nullptr_t) noexcept
         {
-            delete_data();
+            unbind();
+            return *this;
+        }
+
+        template <typename Functor>
+            requires std::invocable<const std::remove_reference_t<Functor>, Args...> &&
+                     std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Functor>, Args...>, Ret>
+        constexpr Delegate &operator=(Functor &&functor)
+        {
+            bind(std::forward<Functor>(functor));
+            return *this;
         }
 
         [[nodiscard]] constexpr bool is_bound() const noexcept
@@ -370,8 +393,10 @@ namespace retro
         }
 
         template <typename Functor, typename... BindArgs>
-            requires std::invocable<Functor, Args..., BindArgs...> &&
-                     std::convertible_to<std::invoke_result_t<Functor, Args..., BindArgs...>, Ret>
+            requires std::invocable<const std::remove_reference_t<Functor>, Args..., BindArgs...> &&
+                     std::convertible_to<
+                         std::invoke_result_t<const std::remove_reference_t<Functor>, Args..., BindArgs...>,
+                         Ret>
         void bind(Functor &&functor, BindArgs &&...args) noexcept
         {
             if constexpr (sizeof...(BindArgs) > 0)
@@ -384,16 +409,7 @@ namespace retro
                 delete_data();
 
                 ops_ = get_ops_table<std::remove_cvref_t<Functor>>();
-                if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
-                {
-                    auto *functor_ptr =
-                        std::launder(reinterpret_cast<std::remove_cvref_t<Functor> *>(&storage_.inline_buffer));
-                    std::construct_at(functor_ptr, std::forward<Functor>(functor));
-                }
-                else
-                {
-                    storage_.heap_object = new Functor(std::forward<Functor>(functor));
-                }
+                store_functor(std::forward<Functor>(functor));
             }
         }
 
@@ -478,6 +494,52 @@ namespace retro
             }
         }
 
+        template <typename Functor, typename... BindArgs>
+            requires std::invocable<const std::remove_reference_t<Functor>, Args..., BindArgs...> &&
+                     std::convertible_to<
+                         std::invoke_result_t<const std::remove_reference_t<Functor>, Args..., BindArgs...>,
+                         Ret>
+        static Delegate create(Functor &&functor, BindArgs &&...args) noexcept
+        {
+            Delegate delegate;
+            delegate.bind(std::forward<Functor>(functor), std::forward<BindArgs>(args)...);
+            return delegate;
+        }
+
+        template <auto Functor, typename... BindArgs>
+            requires std::invocable<decltype(Functor), Args..., BindArgs...> &&
+                     std::convertible_to<std::invoke_result_t<decltype(Functor), Args..., BindArgs...>, Ret>
+        static Delegate create(BindArgs &&...args) noexcept
+        {
+            Delegate delegate;
+            delegate.template bind<Functor>(std::forward<BindArgs>(args)...);
+            return delegate;
+        }
+
+        template <MemberBindable T, typename Member, typename... BindArgs>
+            requires std::invocable<Member, MemberBindingT<T>, Args..., BindArgs...> &&
+                     std::convertible_to<std::invoke_result_t<Member, MemberBindingT<T>, Args..., BindArgs...>, Ret> &&
+                     std::is_member_pointer_v<Member>
+        static Delegate create(T &&obj, Member member, BindArgs &&...args) noexcept
+        {
+            Delegate delegate;
+            delegate.template bind<T, Member>(std::forward<T>(obj), member, std::forward<BindArgs>(args)...);
+            return delegate;
+        }
+
+        template <auto Member, MemberBindable T, typename... BindArgs>
+            requires std::invocable<decltype(Member), MemberBindingT<T>, Args..., BindArgs...> &&
+                     std::convertible_to<
+                         std::invoke_result_t<decltype(Member), MemberBindingT<T>, Args..., BindArgs...>,
+                         Ret> &&
+                     std::is_member_pointer_v<decltype(Member)>
+        static Delegate create(T &&obj, BindArgs &&...args) noexcept
+        {
+            Delegate delegate;
+            delegate.template bind<Member, T, BindArgs...>(std::forward<T>(obj), std::forward<BindArgs>(args)...);
+            return delegate;
+        }
+
       private:
         struct OpsTable
         {
@@ -536,6 +598,21 @@ namespace retro
             if (ops_ != nullptr && ops_->destroy != nullptr)
             {
                 ops_->destroy(storage_);
+            }
+        }
+
+        template <typename Functor>
+        void store_functor(Functor &&functor)
+        {
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                auto *functor_ptr =
+                    std::launder(reinterpret_cast<std::remove_cvref_t<Functor> *>(&storage_.inline_buffer));
+                std::construct_at(functor_ptr, std::forward<Functor>(functor));
+            }
+            else
+            {
+                storage_.heap_object = new Functor(std::forward<Functor>(functor));
             }
         }
 
@@ -661,17 +738,17 @@ namespace retro
         {
         }
 
-        constexpr uint64 owner_cookie() const noexcept
+        [[nodiscard]] constexpr uint64 owner_cookie() const noexcept
         {
             return owner_cookie_;
         }
 
-        constexpr uint32 index() const noexcept
+        [[nodiscard]] constexpr uint32 index() const noexcept
         {
             return index_;
         }
 
-        constexpr uint32 generation() const noexcept
+        [[nodiscard]] constexpr uint32 generation() const noexcept
         {
             return generation_;
         }
@@ -779,6 +856,37 @@ namespace retro
             return DelegateHandle{cookie_, static_cast<uint32>(index), slot.generation};
         }
 
+        template <typename Functor, typename... BindArgs>
+            requires std::invocable<const std::remove_reference_t<Functor>, Args..., BindArgs...>
+        DelegateHandle add(Functor &&functor, BindArgs &&...args) noexcept
+        {
+            return add(DelegateType::create(std::forward<Functor>(functor), std::forward<BindArgs>(args)...));
+        }
+
+        template <auto Functor, typename... BindArgs>
+            requires std::invocable<decltype(Functor), Args..., BindArgs...>
+        DelegateHandle add(BindArgs &&...args) noexcept
+        {
+            return add(DelegateType::template create<Functor>(std::forward<BindArgs>(args)...));
+        }
+
+        template <MemberBindable T, typename Member, typename... BindArgs>
+            requires std::invocable<Member, MemberBindingT<T>, Args..., BindArgs...> && std::is_member_pointer_v<Member>
+        DelegateHandle add(T &&obj, Member member, BindArgs &&...args) noexcept
+        {
+            return add(DelegateType::template create<T, Member>(std::forward<T>(obj),
+                                                                member,
+                                                                std::forward<BindArgs>(args)...));
+        }
+
+        template <auto Member, MemberBindable T, typename... BindArgs>
+            requires std::invocable<decltype(Member), MemberBindingT<T>, Args..., BindArgs...> &&
+                     std::is_member_pointer_v<decltype(Member)>
+        DelegateHandle add(T &&obj, BindArgs &&...args) noexcept
+        {
+            return add(DelegateType::template create<Member, T>(std::forward<T>(obj), std::forward<BindArgs>(args)...));
+        }
+
         void remove(const DelegateHandle handle)
         {
             if (!handle.is_valid() || handle.owner_cookie() != cookie_)
@@ -868,4 +976,6 @@ namespace retro
         mutable std::vector<Slot> slots_{};
         mutable std::vector<usize> free_list_{};
     };
+
+    export using SimpleMulticastDelegate = MulticastDelegate<void()>;
 } // namespace retro
