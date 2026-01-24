@@ -20,6 +20,31 @@ namespace retro
     export template <CallableObject... Ts>
     Overload(Ts...) -> Overload<Ts...>;
 
+    template <auto Functor>
+        requires CallableObject<decltype(Functor)>
+    struct ConstantBinding
+    {
+        template <typename... Args>
+            requires std::invocable<decltype(Functor), Args...>
+        constexpr decltype(auto) operator()(Args &&...args) const
+            noexcept(std::is_nothrow_invocable_v<decltype(Functor), Args...>)
+        {
+            return std::invoke(Functor, std::forward<Args>(args)...);
+        }
+    };
+
+    export template <auto Functor, typename... Args>
+    constexpr auto bind_front(Args &&...args)
+    {
+        return std::bind_front(ConstantBinding<Functor>{}, std::forward<Args>(args)...);
+    }
+
+    export template <auto Functor, typename... Args>
+    constexpr auto bind_back(Args &&...args)
+    {
+        return std::bind_back(ConstantBinding<Functor>{}, std::forward<Args>(args)...);
+    }
+
     static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
     static constexpr usize DELEGATE_INLINE_SIZE = 16;
 
@@ -147,7 +172,7 @@ namespace retro
                      std::convertible_to<std::invoke_result_t<decltype(Functor), Args...>, Ret>
         void bind() noexcept
         {
-            bind([]<typename... A>(A &&...args) { return std::invoke(Functor, std::forward<A>(args)...); });
+            bind(ConstantBinding<Functor>{});
         }
 
         template <typename T, std::invocable<T, Args...> Member>
@@ -163,7 +188,7 @@ namespace retro
                      std::is_member_pointer_v<decltype(Member)>
         void bind(T &obj) noexcept
         {
-            bind([&obj]<typename... A>(A &&...args) { return std::invoke(Member, obj, std::forward<A>(args)...); });
+            bind(bind_front<Member>(std::ref(obj)));
         }
 
       private:

@@ -84,6 +84,7 @@ namespace retro
         {
             void operator()();
         };
+
         struct Derived : T, Fallback
         {
         };
@@ -99,6 +100,18 @@ namespace retro
 
       public:
         static const bool value = sizeof(test<Derived>(nullptr)) == sizeof(yes);
+    };
+
+    template <typename T>
+        requires std::is_function_v<std::remove_pointer_t<T>>
+    struct IsCallable<T> : std::true_type
+    {
+    };
+
+    template <typename T>
+        requires std::is_member_pointer_v<T>
+    struct IsCallable<T> : std::true_type
+    {
     };
 
     export template <typename T>
