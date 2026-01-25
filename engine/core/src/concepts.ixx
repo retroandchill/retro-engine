@@ -213,4 +213,7 @@ namespace retro
 
     export template <WeakBindable T>
     using WeakBindableElementT = WeakBindableElement<T>::Type;
+
+    export template <typename T>
+    concept DecayCopyable = std::constructible_from<std::decay_t<T>, T>;
 } // namespace retro

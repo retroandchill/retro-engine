@@ -40,142 +40,247 @@ namespace retro
         std::deque<SimpleDelegate> queue_;
     };
 
+    export template <typename T>
+    concept Awaiter = requires(T &x) {
+        {
+            x.await_ready()
+        } -> std::convertible_to<bool>;
+        x.await_resume();
+    };
+
+    template <typename T>
+    concept MemberCoAwait = requires(T &&x) {
+        {
+            std::forward<T>(x).operator co_await()
+        } -> Awaiter;
+    };
+
+    template <typename T>
+    concept FreeCoAwait = requires(T &&x) {
+        {
+            operator co_await(std::forward<T>(x))
+        } -> Awaiter;
+    };
+
+    export template <typename T>
+    concept Awaitable = MemberCoAwait<T> || FreeCoAwait<T> || Awaiter<T>;
+
+    template <MemberCoAwait T>
+    decltype(auto) get_awaiter(T &&x) noexcept(noexcept(std::forward<T>(x).operator co_await()))
+    {
+        return std::forward<T>(x).operator co_await();
+    }
+
+    template <FreeCoAwait T>
+    decltype(auto) get_awaiter(T &&x) noexcept(noexcept(operator co_await(std::forward<T>(x))))
+    {
+        return operator co_await(std::forward<T>(x));
+    }
+
+    template <Awaiter T>
+        requires(!MemberCoAwait<T> && !FreeCoAwait<T>)
+    T &&get_awaiter(T &&x) noexcept
+    {
+        return std::forward<T>(x);
+    }
+
+    template <Awaitable T>
+    using AwaiterType = decltype(get_awaiter(std::declval<T>()));
+
+    template <Awaitable T>
+    using AwaitResult = decltype(std::declval<AwaiterType<T>>().await_resume());
+
     export template <typename T = void>
     class Task;
 
-    template <typename T>
-    struct TaskPromise;
+    using TaskInitialSuspendType = std::suspend_always;
 
     template <typename T>
-    class Task
+    struct TaskPromise
     {
-      public:
-        using promise_type = TaskPromise<T>;
+        static constexpr usize SUCCESS_STATE = 1;
+        static constexpr usize EXCEPTION_STATE = 2;
 
-        Task() = default;
+        std::coroutine_handle<> continuation;
+        std::variant<std::monostate, T, std::exception_ptr> result;
 
-        Task(const Task &) = delete;
-        Task(Task &&other) noexcept = default;
+        Task<T> get_return_object() noexcept;
 
-        ~Task() = default;
+        TaskInitialSuspendType initial_suspend() noexcept;
 
-        Task &operator=(const Task &) = delete;
-
-        Task &operator=(Task &&other) noexcept = default;
-
-      private:
-        using HandleType = std::coroutine_handle<promise_type>;
-        explicit Task(HandleType handle) noexcept : handle_{handle}
+        struct FinalAwaiter
         {
-        }
+            bool await_ready() noexcept
+            {
+                return false;
+            }
 
-        HandleType handle_{};
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
+            {
+                return handle.promise().continuation;
+            }
 
-        template <typename U>
-        friend struct TaskPromise;
-    };
-
-    struct FinalAwaiter
-    {
-        bool await_ready() noexcept
-        {
-            return false;
-        }
-
-        template <typename Promise>
-        void await_suspend(std::coroutine_handle<Promise> handle) noexcept
-        {
-            if (auto c = handle.promise().continuation_; c)
-                c.resume();
-        }
-
-        void await_resume() noexcept
-        {
-        }
-    };
-
-    struct TaskPromiseBase
-    {
-        template <typename Self>
-        Task<Self> get_return_object(Self &) noexcept
-        {
-            using HandleType = std::coroutine_handle<Self>;
-            return Task<Self>{HandleType::from_promise(*this)};
-        }
-
-        inline std::suspend_never initial_suspend() noexcept
-        {
-            return {};
-        }
-
-        inline FinalAwaiter final_suspend() noexcept
-        {
-            return {};
-        }
-    };
-
-    template <typename T>
-    struct TaskPromise : TaskPromiseBase
-    {
-        struct NotReady
-        {
+            [[noreturn]] void await_resume() noexcept
+            {
+                std::terminate();
+            }
         };
 
-        std::variant<NotReady, T, std::exception_ptr> result_{};
-        std::coroutine_handle<> continuation_{};
+        FinalAwaiter final_suspend() noexcept
+        {
+            return {};
+        }
+
+        template <std::convertible_to<T> U>
+        void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
+        {
+            result.template emplace<SUCCESS_STATE>(std::forward<U>(value));
+        }
 
         void unhandled_exception() noexcept
         {
-            result_.template emplace<std::exception_ptr>(std::current_exception());
-        }
-
-        template <typename U>
-            requires std::convertible_to<U, T>
-        void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
-        {
-            return result_.template emplace<T>(std::forward<U>(value));
-        }
-
-        T take_result()
-        {
-            if (const auto *ep = std::get_if<std::exception_ptr>(&result_); ep != nullptr)
-            {
-                std::rethrow_exception(ep);
-            }
-
-            return std::get<T>(std::move(result_));
+            result.template emplace<EXCEPTION_STATE>(std::current_exception());
         }
     };
 
     template <>
-    struct TaskPromise<void> : TaskPromiseBase
+    struct TaskPromise<void>
     {
-        struct NotReady
+        static constexpr usize SUCCESS_STATE = 1;
+        static constexpr usize EXCEPTION_STATE = 2;
+
+        struct Empty
         {
         };
-        struct Done
+
+        std::coroutine_handle<> continuation;
+        std::variant<std::monostate, Empty, std::exception_ptr> result;
+
+        Task<> get_return_object() noexcept;
+
+        inline TaskInitialSuspendType initial_suspend() noexcept
         {
+            return {};
+        }
+
+        struct FinalAwaiter
+        {
+            bool await_ready() noexcept
+            {
+                return false;
+            }
+
+            std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
+            {
+                return handle.promise().continuation;
+            }
+
+            [[noreturn]] void await_resume() noexcept
+            {
+                std::terminate();
+            }
         };
 
-        std::variant<NotReady, Done, std::exception_ptr> result_{};
-        std::coroutine_handle<> continuation_{};
-
-        inline void unhandled_exception() noexcept
+        FinalAwaiter final_suspend() noexcept
         {
-            result_.emplace<std::exception_ptr>(std::current_exception());
+            return {};
         }
 
-        inline void return_void() noexcept
+        void return_void() noexcept
         {
-            result_.emplace<Done>();
+            result.emplace<SUCCESS_STATE>();
         }
 
-        inline void rethrow_if_failed()
+        void unhandled_exception() noexcept
         {
-            if (const auto *ep = std::get_if<std::exception_ptr>(&result_); ep != nullptr)
-                std::rethrow_exception(*ep);
-
-            assert(std::holds_alternative<Done>(result_));
+            result.emplace<EXCEPTION_STATE>(std::current_exception());
         }
     };
+
+    template <typename T>
+    class [[nodiscard]] Task
+    {
+        using Handle = std::coroutine_handle<TaskPromise<T>>;
+
+        struct Awaiter
+        {
+            static constexpr auto SUCCESS_STATE = TaskPromise<T>::SUCCESS_STATE;
+            static constexpr auto EXCEPTION_STATE = TaskPromise<T>::EXCEPTION_STATE;
+
+            Handle coro;
+
+            bool await_ready() noexcept
+            {
+                return false;
+            }
+
+            Handle await_suspend(std::coroutine_handle<> handle) noexcept
+            {
+                coro.promise().continuation = handle;
+                return coro;
+            }
+
+            T await_resume()
+            {
+                if (coro.promise().result.index() == EXCEPTION_STATE)
+                {
+                    std::rethrow_exception(std::get<EXCEPTION_STATE>(coro.promise().result));
+                }
+
+                assert(coro.promise().result.index() == SUCCESS_STATE);
+
+                if constexpr (!std::is_void_v<T>)
+                {
+                    return std::get<SUCCESS_STATE>(std::move(coro.promise().result));
+                }
+            }
+        };
+
+        explicit Task(Handle coro) noexcept : coro_(coro)
+        {
+        }
+
+      public:
+        using promise_type = TaskPromise<T>;
+
+        Task(const Task &) = delete;
+        Task(Task &&other) noexcept : coro_{std::exchange(other.coro_, {})}
+        {
+        }
+
+        ~Task() noexcept
+        {
+            if (coro_)
+                coro_.destroy();
+        }
+
+        Task &operator=(const Task &) = delete;
+        Task &operator=(Task &&other) noexcept
+        {
+            if (coro_)
+                coro_.destroy();
+            coro_ = std::exchange(other.coro_, {});
+            return *this;
+        }
+
+        Awaiter operator co_await() &&
+        {
+            return Awaiter{coro_};
+        }
+
+      private:
+        friend class TaskPromise<T>;
+        Handle coro_;
+    };
+
+    template <typename T>
+    Task<T> TaskPromise<T>::get_return_object() noexcept
+    {
+        return Task<T>{std::coroutine_handle<TaskPromise>::from_promise(*this)};
+    }
+
+    inline Task<> TaskPromise<void>::get_return_object() noexcept
+    {
+        return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)};
+    }
 } // namespace retro
