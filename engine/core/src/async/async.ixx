@@ -18,13 +18,32 @@ import :defines;
 
 namespace retro
 {
-    export class TaskScheduler
+    export class RETRO_API TaskScheduler
     {
       public:
         virtual ~TaskScheduler() = default;
 
         virtual void enqueue(std::coroutine_handle<> coroutine) = 0;
         virtual void enqueue(SimpleDelegate delegate) = 0;
+
+        static void set_current(TaskScheduler *scheduler) noexcept;
+        static TaskScheduler *current() noexcept;
+
+        class Scope
+        {
+          public:
+            explicit Scope(TaskScheduler *scheduler) noexcept;
+            Scope(const Scope &) = delete;
+            Scope(Scope &&) noexcept = delete;
+
+            ~Scope() noexcept;
+
+            Scope &operator=(const Scope &) = delete;
+            Scope &operator=(Scope &&) noexcept = delete;
+
+          private:
+            TaskScheduler *prev_;
+        };
     };
 
     export class RETRO_API ManualTaskScheduler final : public TaskScheduler
@@ -117,7 +136,14 @@ namespace retro
 
             std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
             {
-                return handle.promise().continuation;
+                if (const auto continuation = handle.promise().continuation)
+                {
+                    return continuation;
+                }
+
+                // Detached / top-level task: self-destroy at completion.
+                handle.destroy();
+                return std::noop_coroutine();
             }
 
             [[noreturn]] void await_resume() noexcept
@@ -165,33 +191,40 @@ namespace retro
 
         struct FinalAwaiter
         {
-            bool await_ready() noexcept
+            inline bool await_ready() noexcept
             {
                 return false;
             }
 
-            std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
+            inline std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
             {
-                return handle.promise().continuation;
+                if (const auto continuation = handle.promise().continuation)
+                {
+                    return continuation;
+                }
+
+                // Detached / top-level task: self-destroy at completion.
+                handle.destroy();
+                return std::noop_coroutine();
             }
 
-            [[noreturn]] void await_resume() noexcept
+            [[noreturn]] inline void await_resume() noexcept
             {
                 std::terminate();
             }
         };
 
-        FinalAwaiter final_suspend() noexcept
+        inline FinalAwaiter final_suspend() noexcept
         {
             return {};
         }
 
-        void return_void() noexcept
+        inline void return_void() noexcept
         {
             result.emplace<SUCCESS_STATE>();
         }
 
-        void unhandled_exception() noexcept
+        inline void unhandled_exception() noexcept
         {
             result.emplace<EXCEPTION_STATE>(std::current_exception());
         }
@@ -231,7 +264,13 @@ namespace retro
 
                 if constexpr (!std::is_void_v<T>)
                 {
-                    return std::get<SUCCESS_STATE>(std::move(coro.promise().result));
+                    auto value = std::get<SUCCESS_STATE>(std::move(coro.promise().result));
+                    coro.destroy();
+                    return value;
+                }
+                else
+                {
+                    coro.destroy();
                 }
             }
         };
@@ -265,7 +304,7 @@ namespace retro
 
         Awaiter operator co_await() &&
         {
-            return Awaiter{coro_};
+            return Awaiter{std::exchange(coro_, {})};
         }
 
       private:

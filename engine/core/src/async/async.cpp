@@ -8,6 +8,31 @@ module retro.core;
 
 namespace retro
 {
+    namespace
+    {
+        thread_local TaskScheduler *current_scheduler = nullptr;
+    }
+
+    void TaskScheduler::set_current(TaskScheduler *scheduler) noexcept
+    {
+        current_scheduler = scheduler;
+    }
+
+    TaskScheduler *TaskScheduler::current() noexcept
+    {
+        return current_scheduler;
+    }
+
+    TaskScheduler::Scope::Scope(TaskScheduler *scheduler) noexcept : prev_{current_scheduler}
+    {
+        current_scheduler = scheduler;
+    }
+
+    TaskScheduler::Scope::~Scope() noexcept
+    {
+        current_scheduler = prev_;
+    }
+
     void ManualTaskScheduler::enqueue(std::coroutine_handle<> coroutine)
     {
         std::scoped_lock lock{mutex_};
