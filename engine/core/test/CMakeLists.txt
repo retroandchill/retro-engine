@@ -6,6 +6,7 @@ add_executable(retro_core_tests strings/test_name.cpp
         math/test_vector.cpp
         memory/test_ref_counted_ptr.cpp
         functional/test_delegates.cpp
+        async/test_tasks.cpp
 )
 
 retro_add_boilerplate(retro_core_tests)

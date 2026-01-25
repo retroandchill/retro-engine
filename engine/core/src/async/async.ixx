@@ -26,10 +26,15 @@ namespace retro
         virtual void enqueue(std::coroutine_handle<> coroutine) = 0;
         virtual void enqueue(SimpleDelegate delegate) = 0;
 
+        [[nodiscard]] virtual bool can_resume_inline() const noexcept
+        {
+            return current() == this;
+        }
+
         static void set_current(TaskScheduler *scheduler) noexcept;
         static TaskScheduler *current() noexcept;
 
-        class Scope
+        class RETRO_API Scope
         {
           public:
             explicit Scope(TaskScheduler *scheduler) noexcept;
@@ -120,12 +125,6 @@ namespace retro
         {
             promise.continuation
         } -> std::convertible_to<std::coroutine_handle<>>;
-        {
-            T::SUCCESS_STATE
-        } -> std::convertible_to<usize>;
-        {
-            promise.index() == T::SUCCESS_STATE
-        } -> std::convertible_to<bool>;
     };
 
     template <PromiseLike Promise>
@@ -139,28 +138,29 @@ namespace retro
         std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> handle) noexcept
         {
             auto &promise = handle.promise();
-            if (auto continuation = promise.continuation)
+            const auto continuation = promise.continuation;
+            if (!continuation)
+                return std::noop_coroutine();
+
+            if (promise.scheduler != nullptr)
             {
-                if (promise.scheduler != nullptr)
-                {
-                    promise.scheduler->enqueue(continuation);
-                }
-                else
-                {
+                if (promise.scheduler->can_resume_inline())
                     return continuation;
-                }
+
+                promise.scheduler->enqueue(continuation);
+                return std::noop_coroutine();
             }
 
-            return std::noop_coroutine();
+            return continuation;
         }
 
         [[noreturn]] void await_resume() noexcept
         {
-            std::terminate();
+            // No resume operation
         }
     };
 
-    template <typename T>
+    template <typename T, typename Result = T>
     struct TaskPromiseBase
     {
         static constexpr usize SUCCESS_STATE = 1;
@@ -172,7 +172,7 @@ namespace retro
         std::variant<std::monostate, T, std::exception_ptr> result;
 
         template <typename Self>
-        Task<T> get_return_object(this Self &) noexcept;
+        Task<Result> get_return_object(this Self &) noexcept;
 
         std::suspend_never initial_suspend() noexcept
         {
@@ -180,7 +180,7 @@ namespace retro
         }
 
         template <typename Self>
-        FinalAwaiter<Self> final_suspend(this const Self &) noexcept
+        FinalAwaiter<std::decay_t<Self>> final_suspend(this Self &&) noexcept
         {
             return {};
         }
@@ -206,7 +206,7 @@ namespace retro
     };
 
     template <>
-    struct TaskPromise<void> : TaskPromiseBase<Empty>
+    struct TaskPromise<void> : TaskPromiseBase<Empty, void>
     {
         inline void return_void() noexcept
         {
@@ -231,10 +231,9 @@ namespace retro
                 return !coro || coro.done();
             }
 
-            Handle await_suspend(std::coroutine_handle<> handle) noexcept
+            void await_suspend(std::coroutine_handle<> handle) noexcept
             {
                 coro.promise().continuation = handle;
-                return coro;
             }
 
             T await_resume()
@@ -292,14 +291,17 @@ namespace retro
         }
 
       private:
+        template <typename U, typename Result>
+        friend class TaskPromiseBase;
+
         friend class TaskPromise<T>;
         Handle coro_;
     };
 
-    template <typename T>
+    template <typename T, typename Result>
     template <typename Self>
-    Task<T> TaskPromiseBase<T>::get_return_object(this Self &) noexcept
+    Task<Result> TaskPromiseBase<T, Result>::get_return_object(this Self &self) noexcept
     {
-        return Task<T>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(*this)};
+        return Task<Result>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(self)};
     }
 } // namespace retro
