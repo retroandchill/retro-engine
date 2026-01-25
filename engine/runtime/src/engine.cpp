@@ -31,6 +31,7 @@ std::unique_ptr<Engine> Engine::instance_{};
 
 void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
 {
+    TaskScheduler::Scope task_scope{&scheduler_};
     using clock = std::chrono::steady_clock;
     constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
@@ -99,8 +100,9 @@ void Engine::request_shutdown(const int32 exit_code)
     running_.store(false);
 }
 
-void Engine::tick(const float delta_time) const
+void Engine::tick(const float delta_time)
 {
+    scheduler_.pump();
     script_runtime_->tick(delta_time);
     scene_->update_transforms();
 }

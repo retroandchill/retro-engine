@@ -121,7 +121,7 @@ namespace retro
         }
 
       private:
-        void tick(float delta_time) const;
+        void tick(float delta_time);
         void render();
 
         RETRO_API static std::unique_ptr<Engine> instance_;
@@ -132,6 +132,7 @@ namespace retro
         std::atomic<int32> exit_code_{0};
         std::atomic<bool> running_{false};
         Scene *scene_{};
+        ManualTaskScheduler scheduler_{};
     };
 
     export struct EngineLifecycle
