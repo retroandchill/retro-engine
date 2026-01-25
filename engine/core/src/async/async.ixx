@@ -168,8 +168,8 @@ namespace retro
 
         TaskScheduler *scheduler = TaskScheduler::current();
 
-        std::coroutine_handle<> continuation;
-        std::variant<std::monostate, T, std::exception_ptr> result;
+        std::coroutine_handle<> continuation{};
+        std::variant<std::monostate, T, std::exception_ptr> result{};
 
         template <typename Self>
         Task<Result> get_return_object(this Self &) noexcept;
@@ -215,33 +215,90 @@ namespace retro
     };
 
     template <typename T>
+    struct ImmediateState
+    {
+        using ResultType = std::variant<std::monostate, T, std::exception_ptr>;
+        ResultType result{};
+
+        template <typename... Args>
+            requires std::constructible_from<ResultType, Args...>
+        explicit constexpr ImmediateState(Args &&...args) : result(std::forward<Args>(args)...)
+        {
+        }
+
+        static constexpr usize SUCCESS_STATE = 1;
+        static constexpr usize EXCEPTION_STATE = 2;
+    };
+
+    template <>
+    struct ImmediateState<void>
+    {
+        using ResultType = std::variant<std::monostate, std::exception_ptr>;
+        ResultType result{};
+
+        template <typename... Args>
+            requires std::constructible_from<ResultType, Args...>
+        explicit constexpr ImmediateState(Args &&...args) : result(std::forward<Args>(args)...)
+        {
+        }
+
+        // monostate => success for void
+        static constexpr usize SUCCESS_STATE = 0;
+        static constexpr usize EXCEPTION_STATE = 1;
+    };
+
+    template <typename T>
     class [[nodiscard]] Task
     {
         using Handle = std::coroutine_handle<TaskPromise<T>>;
+        using State = std::variant<std::monostate, Handle, ImmediateState<T>>;
 
         struct Awaiter
         {
             static constexpr auto SUCCESS_STATE = TaskPromise<T>::SUCCESS_STATE;
             static constexpr auto EXCEPTION_STATE = TaskPromise<T>::EXCEPTION_STATE;
 
-            Handle coro;
+            State state{};
 
             bool await_ready() noexcept
             {
-                return !coro || coro.done();
+                if (std::holds_alternative<ImmediateState<T>>(state))
+                    return true;
+
+                if (auto *h = std::get_if<Handle>(&state))
+                    return !*h || h->done();
+
+                return true;
             }
 
             void await_suspend(std::coroutine_handle<> handle) noexcept
             {
-                coro.promise().continuation = handle;
+                auto *h = std::get_if<Handle>(&state);
+                if (!h || !*h)
+                    return;
+
+                h->promise().continuation = handle;
             }
 
             T await_resume()
             {
-                if (coro.promise().result.index() == EXCEPTION_STATE)
+                if (auto *imm = std::get_if<ImmediateState<T>>(&state))
                 {
-                    std::rethrow_exception(std::get<EXCEPTION_STATE>(coro.promise().result));
+                    if (imm->result.index() == ImmediateState<T>::EXCEPTION_STATE)
+                        std::rethrow_exception(std::get<ImmediateState<T>::EXCEPTION_STATE>(imm->result));
+
+                    assert(imm->result.index() == ImmediateState<T>::SUCCESS_STATE);
+
+                    if constexpr (!std::is_void_v<T>)
+                        return std::get<ImmediateState<T>::SUCCESS_STATE>(std::move(imm->result));
+                    else
+                        return;
                 }
+
+                auto &coro = std::get<Handle>(state);
+
+                if (coro.promise().result.index() == EXCEPTION_STATE)
+                    std::rethrow_exception(std::get<EXCEPTION_STATE>(coro.promise().result));
 
                 assert(coro.promise().result.index() == SUCCESS_STATE);
 
@@ -254,11 +311,16 @@ namespace retro
                 else
                 {
                     coro.destroy();
+                    return;
                 }
             }
         };
 
-        explicit Task(Handle coro) noexcept : coro_(coro)
+        explicit Task(Handle coro) noexcept : state_(coro)
+        {
+        }
+
+        explicit Task(ImmediateState<T> state) noexcept : state_(std::move(state))
         {
         }
 
@@ -266,36 +328,55 @@ namespace retro
         using promise_type = TaskPromise<T>;
 
         Task(const Task &) = delete;
-        Task(Task &&other) noexcept : coro_{std::exchange(other.coro_, {})}
+        Task(Task &&other) noexcept : state_{std::exchange(other.state_, {})}
         {
         }
 
         ~Task() noexcept
         {
-            if (coro_)
-                coro_.destroy();
+            if (auto *coro = std::get_if<Handle>(&state_); coro != nullptr && *coro)
+                coro->destroy();
         }
 
         Task &operator=(const Task &) = delete;
         Task &operator=(Task &&other) noexcept
         {
-            if (coro_)
-                coro_.destroy();
-            coro_ = std::exchange(other.coro_, {});
+            if (auto *coro = std::get_if<Handle>(&state_); coro != nullptr && *coro)
+                coro->destroy();
+            state_ = std::exchange(other.state_, {});
             return *this;
+        }
+
+        template <std::convertible_to<T> U>
+            requires(!std::is_void_v<T>)
+        [[nodiscard]] static Task from_result(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
+        {
+            return Task{
+                ImmediateState<T>{std::in_place_index<ImmediateState<T>::SUCCESS_STATE>, std::forward<U>(value)}};
+        }
+
+        [[nodiscard]] static Task completed() noexcept
+            requires std::is_void_v<T>
+        {
+            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::SUCCESS_STATE>}};
+        }
+
+        [[nodiscard]] static Task from_exception(std::exception_ptr ex) noexcept
+        {
+            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::EXCEPTION_STATE>, std::move(ex)}};
         }
 
         Awaiter operator co_await() &&
         {
-            return Awaiter{std::exchange(coro_, {})};
+            return Awaiter{std::exchange(state_, {})};
         }
 
       private:
         template <typename U, typename Result>
-        friend class TaskPromiseBase;
-
+        friend struct TaskPromiseBase;
         friend class TaskPromise<T>;
-        Handle coro_;
+
+        State state_{};
     };
 
     template <typename T, typename Result>

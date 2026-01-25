@@ -35,7 +35,7 @@ namespace
 
     retro::Task<int> make_ready_value(int v)
     {
-        co_return v;
+        return retro::Task<int>::from_result(v);
     }
 
     retro::Task<> yield_once_then_set(int &step)
