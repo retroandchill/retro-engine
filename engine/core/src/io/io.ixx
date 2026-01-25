@@ -63,4 +63,35 @@ namespace retro::filesystem
         [[nodiscard]] virtual StreamResult<int32> read_byte();
         [[nodiscard]] virtual StreamResult<void> write_byte(std::byte byte);
     };
+
+    export class RETRO_API FileStream final : public Stream
+    {
+      public:
+        [[nodiscard]] bool can_read() const override;
+
+        [[nodiscard]] bool can_write() const override;
+
+        [[nodiscard]] bool can_seek() const override;
+
+        [[nodiscard]] bool is_closed() const override;
+
+        void close() noexcept override;
+
+        [[nodiscard]] StreamResult<usize> length() const override;
+
+        [[nodiscard]] StreamResult<usize> position() const override;
+
+        [[nodiscard]] StreamResult<usize> seek(usize offset, SeekOrigin origin) override;
+
+        [[nodiscard]] StreamResult<void> set_position(usize pos) override;
+
+        [[nodiscard]] StreamResult<usize> read(std::span<std::byte> dest) override;
+
+        [[nodiscard]] StreamResult<usize> write(std::span<const std::byte> src) override;
+
+        [[nodiscard]] StreamResult<void> flush() override;
+
+      private:
+        std::fstream file_;
+    };
 } // namespace retro::filesystem

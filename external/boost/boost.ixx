@@ -229,4 +229,8 @@ export namespace boost
     // We need this so IntelliSense properly picks up the alias
     namespace di = di;
 #pragma endregion
+
+#pragma region asio
+
+#pragma endregion
 } // namespace boost
