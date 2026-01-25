@@ -36,7 +36,12 @@ namespace retro
     void ManualTaskScheduler::enqueue(std::coroutine_handle<> coroutine)
     {
         std::scoped_lock lock{mutex_};
-        queue_.push_back([h = std::move(coroutine)] { h.resume(); });
+        queue_.push_back(
+            [h = std::move(coroutine)]
+            {
+                if (h && !h.done())
+                    h.resume();
+            });
     }
 
     void ManualTaskScheduler::enqueue(SimpleDelegate delegate)

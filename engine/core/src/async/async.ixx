@@ -112,55 +112,77 @@ namespace retro
     export template <typename T = void>
     class Task;
 
-    using TaskInitialSuspendType = std::suspend_always;
+    template <typename T>
+    concept PromiseLike = requires(T &promise) {
+        {
+            promise.scheduler
+        } -> std::convertible_to<TaskScheduler *>;
+        {
+            promise.continuation
+        } -> std::convertible_to<std::coroutine_handle<>>;
+        {
+            T::SUCCESS_STATE
+        } -> std::convertible_to<usize>;
+        {
+            promise.index() == T::SUCCESS_STATE
+        } -> std::convertible_to<bool>;
+    };
+
+    template <PromiseLike Promise>
+    struct FinalAwaiter
+    {
+        bool await_ready() noexcept
+        {
+            return false;
+        }
+
+        std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> handle) noexcept
+        {
+            auto &promise = handle.promise();
+            if (auto continuation = promise.continuation)
+            {
+                if (promise.scheduler != nullptr)
+                {
+                    promise.scheduler->enqueue(continuation);
+                }
+                else
+                {
+                    return continuation;
+                }
+            }
+
+            return std::noop_coroutine();
+        }
+
+        [[noreturn]] void await_resume() noexcept
+        {
+            std::terminate();
+        }
+    };
 
     template <typename T>
-    struct TaskPromise
+    struct TaskPromiseBase
     {
         static constexpr usize SUCCESS_STATE = 1;
         static constexpr usize EXCEPTION_STATE = 2;
 
+        TaskScheduler *scheduler = TaskScheduler::current();
+
         std::coroutine_handle<> continuation;
         std::variant<std::monostate, T, std::exception_ptr> result;
 
-        Task<T> get_return_object() noexcept;
+        template <typename Self>
+        Task<T> get_return_object(this Self &) noexcept;
 
-        TaskInitialSuspendType initial_suspend() noexcept;
-
-        struct FinalAwaiter
-        {
-            bool await_ready() noexcept
-            {
-                return false;
-            }
-
-            std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
-            {
-                if (const auto continuation = handle.promise().continuation)
-                {
-                    return continuation;
-                }
-
-                // Detached / top-level task: self-destroy at completion.
-                handle.destroy();
-                return std::noop_coroutine();
-            }
-
-            [[noreturn]] void await_resume() noexcept
-            {
-                std::terminate();
-            }
-        };
-
-        FinalAwaiter final_suspend() noexcept
+        std::suspend_never initial_suspend() noexcept
         {
             return {};
         }
 
-        template <std::convertible_to<T> U>
-        void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
+        template <typename Self>
+        FinalAwaiter<Self> final_suspend(this const Self &) noexcept
         {
-            result.template emplace<SUCCESS_STATE>(std::forward<U>(value));
+            return {};
         }
 
         void unhandled_exception() noexcept
@@ -169,64 +191,26 @@ namespace retro
         }
     };
 
-    template <>
-    struct TaskPromise<void>
+    template <typename T>
+    struct TaskPromise : TaskPromiseBase<T>
     {
-        static constexpr usize SUCCESS_STATE = 1;
-        static constexpr usize EXCEPTION_STATE = 2;
-
-        struct Empty
+        template <std::convertible_to<T> U>
+        void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
-        };
-
-        std::coroutine_handle<> continuation;
-        std::variant<std::monostate, Empty, std::exception_ptr> result;
-
-        Task<> get_return_object() noexcept;
-
-        inline TaskInitialSuspendType initial_suspend() noexcept
-        {
-            return {};
+            this->result.template emplace<TaskPromiseBase<T>::SUCCESS_STATE>(std::forward<U>(value));
         }
+    };
 
-        struct FinalAwaiter
-        {
-            inline bool await_ready() noexcept
-            {
-                return false;
-            }
+    struct Empty
+    {
+    };
 
-            inline std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise> handle) noexcept
-            {
-                if (const auto continuation = handle.promise().continuation)
-                {
-                    return continuation;
-                }
-
-                // Detached / top-level task: self-destroy at completion.
-                handle.destroy();
-                return std::noop_coroutine();
-            }
-
-            [[noreturn]] inline void await_resume() noexcept
-            {
-                std::terminate();
-            }
-        };
-
-        inline FinalAwaiter final_suspend() noexcept
-        {
-            return {};
-        }
-
+    template <>
+    struct TaskPromise<void> : TaskPromiseBase<Empty>
+    {
         inline void return_void() noexcept
         {
             result.emplace<SUCCESS_STATE>();
-        }
-
-        inline void unhandled_exception() noexcept
-        {
-            result.emplace<EXCEPTION_STATE>(std::current_exception());
         }
     };
 
@@ -244,7 +228,7 @@ namespace retro
 
             bool await_ready() noexcept
             {
-                return false;
+                return !coro || coro.done();
             }
 
             Handle await_suspend(std::coroutine_handle<> handle) noexcept
@@ -313,13 +297,9 @@ namespace retro
     };
 
     template <typename T>
-    Task<T> TaskPromise<T>::get_return_object() noexcept
+    template <typename Self>
+    Task<T> TaskPromiseBase<T>::get_return_object(this Self &) noexcept
     {
-        return Task<T>{std::coroutine_handle<TaskPromise>::from_promise(*this)};
-    }
-
-    inline Task<> TaskPromise<void>::get_return_object() noexcept
-    {
-        return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)};
+        return Task<T>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(*this)};
     }
 } // namespace retro
