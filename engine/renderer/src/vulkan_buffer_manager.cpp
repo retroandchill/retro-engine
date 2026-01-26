@@ -7,7 +7,9 @@
 module;
 
 #include <cassert>
-#include <vulkan/vulkan.hpp> // We need this to get past an internal compiler error
+#if __JETBRAINS_IDE__
+#include <vulkan/vulkan.hpp>
+#endif
 
 module retro.renderer;
 
