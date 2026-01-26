@@ -10,7 +10,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/rendering/render_type_registry.cpp
         src/scene/rendering/registration.cpp
         src/scene/rendering/pipeline_manager.cpp
-        src/assets/asset_manager.cpp
+        src/assets/assets.cpp
 )
 
 set(RETRO_RUNTIME_MODULES

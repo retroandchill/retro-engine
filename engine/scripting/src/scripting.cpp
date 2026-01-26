@@ -61,7 +61,7 @@ namespace retro
         constexpr auto ENTRY_POINT_CLASS_NAME = "RetroEngine.Host.Main, RetroEngine.Host"_nc;
         constexpr auto ENTRY_POINT_METHOD_NAME = "InitializeScriptEngine"_nc;
 
-        const auto exe_path = filesystem::get_executable_path();
+        const auto exe_path = get_executable_path();
         const auto assembly_path = exe_path / "RetroEngine.Host.dll";
 
         InitializeRuntimeHostFn initialize_runtime_host{nullptr};
@@ -107,7 +107,7 @@ namespace retro
 
     load_assembly_and_get_function_pointer_fn DotnetManager::initialize_native_host() const
     {
-        const auto runtime_config_path = filesystem::get_executable_path() / "RetroEngine.runtimeconfig.json";
+        const auto runtime_config_path = get_executable_path() / "RetroEngine.runtimeconfig.json";
         const auto init_context = loader_.initialize_for_runtime_config(runtime_config_path);
 
         auto load_result = loader_.get_runtime_delegate<load_assembly_and_get_function_pointer_fn>(

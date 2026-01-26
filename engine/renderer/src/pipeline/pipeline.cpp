@@ -241,7 +241,7 @@ namespace retro
     vk::UniqueShaderModule VulkanRenderPipeline::create_shader_module(const vk::Device device,
                                                                       const std::filesystem::path &path)
     {
-        const auto bytes = filesystem::read_binary_file(path);
+        const auto bytes = read_binary_file(path);
         const auto *code = reinterpret_cast<const uint32 *>(bytes.data());
 
         if (bytes.size() % sizeof(uint32) != 0)

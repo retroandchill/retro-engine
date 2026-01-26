@@ -8,13 +8,15 @@ module;
 
 #include "retro/core/exports.h"
 
+#include <boost/asio.hpp>
+
 export module retro.core:io;
 
 import std;
 import boost;
 import :defines;
 
-namespace retro::filesystem
+namespace retro
 {
     export RETRO_API std::vector<std::byte> read_binary_file(const std::filesystem::path &path);
 
@@ -64,12 +66,25 @@ namespace retro::filesystem
         [[nodiscard]] virtual StreamResult<void> write_byte(std::byte byte);
     };
 
+    export enum class FileOpenMode
+    {
+        ReadOnly,
+        ReadWrite,
+        WriteOnly
+    };
+
     export class RETRO_API FileStream final : public Stream
     {
-        using FileHandle = boost::asio::stream_file;
+        using FileHandle = boost::asio::basic_stream_file<boost::asio::io_context::executor_type>;
+
+        struct PrivateInit
+        {
+        };
 
       public:
-        explicit FileStream(FileHandle handle);
+        explicit FileStream(PrivateInit, FileHandle handle);
+
+        static StreamResult<std::unique_ptr<FileStream>> open(const std::filesystem::path &path, FileOpenMode mode);
 
         [[nodiscard]] bool can_read() const override;
 
@@ -99,4 +114,4 @@ namespace retro::filesystem
         FileHandle file_;
         usize position_{0};
     };
-} // namespace retro::filesystem
+} // namespace retro

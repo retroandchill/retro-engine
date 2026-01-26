@@ -8,11 +8,13 @@ module;
 
 #include "retro/core/macros.hpp"
 
+#include <boost/asio.hpp>
+
 module retro.core;
 
 import std;
 
-namespace retro::filesystem
+namespace retro
 {
     std::vector<std::byte> read_binary_file(const std::filesystem::path &path)
     {
@@ -50,13 +52,28 @@ namespace retro::filesystem
         EXPECT(write(buffer));
         return {};
     }
-
-    FileStream::FileStream(FileHandle handle) : file_{std::move(handle)}
-    {
-    }
-
     namespace
     {
+        boost::asio::io_context &global_io_context()
+        {
+            static boost::asio::io_context ctx{};
+            return ctx;
+        }
+
+        boost::asio::file_base::flags to_open_flags(const FileOpenMode mode) noexcept
+        {
+            switch (mode)
+            {
+                case FileOpenMode::ReadOnly:
+                    return boost::asio::file_base::read_only;
+                case FileOpenMode::ReadWrite:
+                    return boost::asio::file_base::read_write;
+                case FileOpenMode::WriteOnly:
+                    return boost::asio::file_base::write_only;
+            }
+            return boost::asio::file_base::read_only;
+        }
+
         boost::asio::file_base::seek_basis to_seek_basis(const SeekOrigin origin) noexcept
         {
             switch (origin)
@@ -116,6 +133,24 @@ namespace retro::filesystem
             return std::move(result);
         }
     } // namespace
+
+    FileStream::FileStream(PrivateInit, FileHandle handle) : file_{std::move(handle)}
+    {
+    }
+
+    StreamResult<std::unique_ptr<FileStream>> FileStream::open(const std::filesystem::path &path, FileOpenMode mode)
+    {
+        boost::asio::basic_stream_file file{global_io_context().get_executor()};
+
+        boost::system::error_code ec;
+        file.open(path.string(), to_open_flags(mode), ec);
+        if (ec.failed())
+        {
+            return std::unexpected(to_stream_error(ec));
+        }
+
+        return std::make_unique<FileStream>(PrivateInit{}, std::move(file));
+    }
 
     bool FileStream::can_read() const
     {
@@ -235,4 +270,4 @@ namespace retro::filesystem
         // Since we're not using an internal buffer, we don't need to flush
         return {};
     }
-} // namespace retro::filesystem
+} // namespace retro

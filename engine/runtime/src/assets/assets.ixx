@@ -224,12 +224,56 @@ namespace retro
         Storage error_;
     };
 
-    export class AssetLoader
+    export template <typename T>
+    using AssetLoadResult = std::expected<T, AssetLoadError>;
+
+    export struct AssetOpenOptions
+    {
+        // TODO: Either remove or add options
+    };
+
+    export class AssetSource
+    {
+      public:
+        virtual ~AssetSource() = default;
+
+        virtual AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path,
+                                                                     const AssetOpenOptions &options = {}) = 0;
+    };
+
+    export class RETRO_API FileSystemAssetSource final : public AssetSource
+    {
+      public:
+        AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path,
+                                                             const AssetOpenOptions &options = {}) override;
+    };
+
+    export struct AssetDecodeContext
+    {
+        AssetPath path{};
+        // TODO: Add more information if needed
+    };
+
+    export class AssetDecoder
+    {
+      public:
+        virtual ~AssetDecoder() = default;
+
+        [[nodiscard]] virtual bool can_decode(const AssetDecodeContext &context) const = 0;
+
+        virtual AssetLoadResult<RefCountPtr<Asset>> decode(const AssetDecodeContext &context, Stream &stream) = 0;
+    };
+
+    export class RETRO_API AssetLoader
     {
       public:
         virtual ~AssetLoader() = default;
 
-        virtual std::expected<RefCountPtr<Asset>, AssetLoadError> load_asset_from_path(AssetPath path) = 0;
+        virtual AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path) = 0;
+
+        virtual AssetLoadResult<RefCountPtr<Asset>> load_asset_from_stream(AssetPath path, Stream &stream) = 0;
+
+        virtual AssetLoadResult<RefCountPtr<Asset>> load_asset_from_path(AssetPath path);
     };
 
     export class RETRO_API AssetManager
