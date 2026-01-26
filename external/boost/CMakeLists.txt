@@ -9,8 +9,8 @@ target_sources(retro_boost PUBLIC
         boost.ixx)
 
 
-find_package(Boost REQUIRED COMPONENTS pool unordered dll uuid optional intrusive)
-target_link_libraries(retro_boost PUBLIC Boost::pool Boost::unordered Boost::dll Boost::uuid Boost::optional Boost::intrusive)
+find_package(Boost REQUIRED COMPONENTS asio pool unordered dll uuid optional intrusive)
+target_link_libraries(retro_boost PUBLIC Boost::asio Boost::pool Boost::unordered Boost::dll Boost::uuid Boost::optional Boost::intrusive)
 
 set_target_properties(retro_boost PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

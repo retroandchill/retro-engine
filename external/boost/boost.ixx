@@ -10,6 +10,7 @@ module;
 #define BOOST_DLL_USE_BOOST_SHARED_PTR
 #include "intrusive.hpp"
 
+#include <boost/asio.hpp>
 #include <boost/di.hpp>
 #include <boost/dll.hpp>
 #include <boost/optional.hpp>
@@ -23,6 +24,97 @@ export namespace boost
 {
 #pragma region core
     using boost::noncopyable;
+
+    namespace system
+    {
+        using system::error_code;
+        using system::system_error;
+
+        namespace errc
+        {
+            using errc::address_family_not_supported;
+            using errc::address_in_use;
+            using errc::address_not_available;
+            using errc::already_connected;
+            using errc::argument_list_too_long;
+            using errc::argument_out_of_domain;
+            using errc::bad_address;
+            using errc::bad_file_descriptor;
+            using errc::bad_message;
+            using errc::broken_pipe;
+            using errc::connection_aborted;
+            using errc::connection_already_in_progress;
+            using errc::connection_refused;
+            using errc::connection_reset;
+            using errc::cross_device_link;
+            using errc::destination_address_required;
+            using errc::device_or_resource_busy;
+            using errc::directory_not_empty;
+            using errc::errc_t;
+            using errc::executable_format_error;
+            using errc::file_exists;
+            using errc::file_too_large;
+            using errc::filename_too_long;
+            using errc::function_not_supported;
+            using errc::host_unreachable;
+            using errc::identifier_removed;
+            using errc::illegal_byte_sequence;
+            using errc::inappropriate_io_control_operation;
+            using errc::interrupted;
+            using errc::invalid_argument;
+            using errc::invalid_seek;
+            using errc::io_error;
+            using errc::is_a_directory;
+            using errc::make_error_code;
+            using errc::message_size;
+            using errc::network_down;
+            using errc::network_reset;
+            using errc::network_unreachable;
+            using errc::no_buffer_space;
+            using errc::no_child_process;
+            using errc::no_link;
+            using errc::no_lock_available;
+            using errc::no_message;
+            using errc::no_message_available;
+            using errc::no_protocol_option;
+            using errc::no_space_on_device;
+            using errc::no_stream_resources;
+            using errc::no_such_device;
+            using errc::no_such_device_or_address;
+            using errc::no_such_file_or_directory;
+            using errc::no_such_process;
+            using errc::not_a_directory;
+            using errc::not_a_socket;
+            using errc::not_a_stream;
+            using errc::not_connected;
+            using errc::not_enough_memory;
+            using errc::not_supported;
+            using errc::operation_canceled;
+            using errc::operation_in_progress;
+            using errc::operation_not_permitted;
+            using errc::operation_not_supported;
+            using errc::operation_would_block;
+            using errc::owner_dead;
+            using errc::permission_denied;
+            using errc::protocol_error;
+            using errc::protocol_not_supported;
+            using errc::read_only_file_system;
+            using errc::resource_deadlock_would_occur;
+            using errc::resource_unavailable_try_again;
+            using errc::result_out_of_range;
+            using errc::state_not_recoverable;
+            using errc::stream_timeout;
+            using errc::success;
+            using errc::text_file_busy;
+            using errc::timed_out;
+            using errc::too_many_files_open;
+            using errc::too_many_files_open_in_system;
+            using errc::too_many_links;
+            using errc::too_many_symbolic_link_levels;
+            using errc::value_too_large;
+            using errc::wrong_protocol_type;
+        } // namespace errc
+    }     // namespace system
 #pragma endregion
 
 #pragma region pool
@@ -231,6 +323,23 @@ export namespace boost
 #pragma endregion
 
 #pragma region asio
+
+    namespace asio
+    {
+        using asio::any_io_executor;
+        using asio::basic_stream_file;
+        using asio::execution_context;
+        using asio::stream_file;
+        using asio::system_executor;
+
+        using asio::file_base;
+
+        namespace error
+        {
+            using error::bad_descriptor;
+            using error::make_error_code;
+        } // namespace error
+    }     // namespace asio
 
 #pragma endregion
 } // namespace boost

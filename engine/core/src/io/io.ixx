@@ -66,7 +66,11 @@ namespace retro::filesystem
 
     export class RETRO_API FileStream final : public Stream
     {
+        using FileHandle = boost::asio::stream_file;
+
       public:
+        explicit FileStream(FileHandle handle);
+
         [[nodiscard]] bool can_read() const override;
 
         [[nodiscard]] bool can_write() const override;
@@ -92,6 +96,7 @@ namespace retro::filesystem
         [[nodiscard]] StreamResult<void> flush() override;
 
       private:
-        std::fstream file_;
+        FileHandle file_;
+        usize position_{0};
     };
 } // namespace retro::filesystem

@@ -6,7 +6,8 @@ add_library(retro_vulkan STATIC)
 
 target_sources(retro_vulkan PUBLIC
         FILE_SET CXX_MODULES FILES
-        vulkan.cppm)
+        vulkan.cppm
+        vulkan_video.cppm)
 
 
 find_package(Vulkan REQUIRED)

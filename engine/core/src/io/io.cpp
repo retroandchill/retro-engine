@@ -10,6 +10,8 @@ module;
 
 module retro.core;
 
+import std;
+
 namespace retro::filesystem
 {
     std::vector<std::byte> read_binary_file(const std::filesystem::path &path)
@@ -49,38 +51,69 @@ namespace retro::filesystem
         return {};
     }
 
+    FileStream::FileStream(FileHandle handle) : file_{std::move(handle)}
+    {
+    }
+
     namespace
     {
-        std::ios_base::seekdir to_seekdir(const SeekOrigin origin) noexcept
+        boost::asio::file_base::seek_basis to_seek_basis(const SeekOrigin origin) noexcept
         {
             switch (origin)
             {
                 case SeekOrigin::Begin:
-                    return std::ios_base::beg;
+                    return boost::asio::file_base::seek_set;
                 case SeekOrigin::Current:
-                    return std::ios_base::cur;
+                    return boost::asio::file_base::seek_cur;
                 case SeekOrigin::End:
-                    return std::ios_base::end;
+                    return boost::asio::file_base::seek_end;
             }
 
-            return std::ios_base::beg;
+            return boost::asio::file_base::seek_set;
         }
 
-        StreamResult<usize> tell_any(std::fstream &f) noexcept
+        StreamError to_stream_error(const boost::system::error_code &ec) noexcept
         {
-            const auto g = f.tellg();
-            if (g != std::streampos(-1))
+            // Asio often reports file-handle issues as "bad_descriptor".
+            if (ec == boost::asio::error::bad_descriptor ||
+                ec == make_error_code(boost::system::errc::bad_file_descriptor))
             {
-                return g;
+                return StreamError::Closed;
             }
 
-            const auto p = f.tellp();
-            if (p != std::streampos(-1))
+            if (ec == make_error_code(boost::system::errc::not_supported) ||
+                ec == make_error_code(boost::system::errc::operation_not_supported))
             {
-                return p;
+                return StreamError::NotSupported;
             }
 
-            return std::unexpected(StreamError::IoError);
+            if (ec == make_error_code(boost::system::errc::invalid_argument))
+            {
+                return StreamError::InvalidArgument;
+            }
+
+            if (ec == make_error_code(boost::system::errc::result_out_of_range) ||
+                ec == make_error_code(boost::system::errc::value_too_large))
+            {
+                return StreamError::OutOfRange;
+            }
+
+            return StreamError::IoError;
+        }
+
+        template <auto Functor, typename... Args>
+            requires std::invocable<decltype(Functor), Args..., boost::system::error_code>
+        StreamResult<std::invoke_result_t<decltype(Functor), Args..., boost::system::error_code>> evaluate_result(
+            Args &&...args)
+        {
+            boost::system::error_code ec;
+            auto result = Functor(std::forward<Args>(args)..., ec);
+            if (ec.failed())
+            {
+                return std::unexpected(to_stream_error(ec));
+            }
+
+            return std::move(result);
         }
     } // namespace
 
@@ -116,38 +149,17 @@ namespace retro::filesystem
             return std::unexpected(StreamError::Closed);
         }
 
-        auto &f = const_cast<std::fstream &>(file_);
-
-        const auto saved_g = f.tellg();
-        const auto saved_p = f.tellp();
-
-        f.clear();
-        f.seekg(0, std::ios_base::end);
-        const auto end_g = f.tellg();
-
-        f.clear();
-        if (saved_g != std::streampos(-1))
-        {
-            f.seekg(saved_g);
-        }
-        if (saved_p != std::streampos(-1))
-        {
-            f.seekp(saved_p);
-        }
-
-        if (end_g == std::streampos(-1))
-        {
-            return std::unexpected(StreamError::IoError);
-        }
-
-        return end_g;
+        return file_.size();
     }
 
     StreamResult<usize> FileStream::position() const
     {
-        auto &f = const_cast<std::fstream &>(file_);
-        f.clear();
-        return tell_any(f);
+        if (is_closed())
+        {
+            return std::unexpected(StreamError::Closed);
+        }
+
+        return position_;
     }
 
     StreamResult<usize> FileStream::seek(const usize offset, const SeekOrigin origin)
@@ -157,20 +169,16 @@ namespace retro::filesystem
             return std::unexpected(StreamError::Closed);
         }
 
-        file_.clear();
-
-        const auto off = static_cast<std::streamoff>(offset);
-        const auto dir = to_seekdir(origin);
-
-        file_.seekg(off, dir);
-        file_.seekp(off, dir);
-
-        if (file_.fail() || file_.bad())
+        boost::system::error_code ec;
+        auto result = file_.seek(offset, to_seek_basis(origin), ec);
+        if (ec.failed())
         {
-            return std::unexpected(StreamError::IoError);
+            return std::unexpected(to_stream_error(ec));
         }
 
-        return tell_any(file_);
+        position_ = result;
+
+        return result;
     }
 
     StreamResult<void> FileStream::set_position(const usize pos)
@@ -186,23 +194,16 @@ namespace retro::filesystem
             return std::unexpected(StreamError::Closed);
         }
 
-        file_.clear();
-
-        if (dest.empty())
+        boost::system::error_code ec;
+        auto result = file_.read_some(dest, ec);
+        if (ec.failed())
         {
-            return 0;
+            return std::unexpected(to_stream_error(ec));
         }
 
-        file_.read(reinterpret_cast<char *>(dest.data()), static_cast<std::streamsize>(dest.size()));
+        position_ = result;
 
-        const auto got = file_.gcount();
-
-        if (file_.bad())
-        {
-            return std::unexpected(StreamError::IoError);
-        }
-
-        return static_cast<usize>(got);
+        return result;
     }
 
     StreamResult<usize> FileStream::write(std::span<const std::byte> src)
@@ -212,21 +213,16 @@ namespace retro::filesystem
             return std::unexpected(StreamError::Closed);
         }
 
-        file_.clear();
-
-        if (src.empty())
+        boost::system::error_code ec;
+        auto result = file_.write_some(src, ec);
+        if (ec.failed())
         {
-            return 0;
+            return std::unexpected(to_stream_error(ec));
         }
 
-        file_.write(reinterpret_cast<const char *>(src.data()), static_cast<std::streamsize>(src.size()));
+        position_ += result;
 
-        if (file_.fail() || file_.bad())
-        {
-            return std::unexpected(StreamError::IoError);
-        }
-
-        return src.size();
+        return result;
     }
 
     StreamResult<void> FileStream::flush()
@@ -236,12 +232,7 @@ namespace retro::filesystem
             return std::unexpected(StreamError::Closed);
         }
 
-        file_.flush();
-        if (file_.fail() || file_.bad())
-        {
-            return std::unexpected(StreamError::IoError);
-        }
-
+        // Since we're not using an internal buffer, we don't need to flush
         return {};
     }
 } // namespace retro::filesystem
