@@ -16,7 +16,6 @@ module;
 module retro.runtime;
 
 import retro.core;
-import entt;
 
 namespace retro
 {

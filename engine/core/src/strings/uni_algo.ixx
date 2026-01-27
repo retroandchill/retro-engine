@@ -8,8 +8,9 @@ module;
 
 #include <uni_algo/all.h>
 
-export module uni_algo;
+export module retro.core:uni_algo;
 
+// TODO: Wrap this or remove it
 export namespace una
 {
     namespace version

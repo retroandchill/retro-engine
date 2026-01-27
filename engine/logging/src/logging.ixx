@@ -12,8 +12,7 @@ export module retro.logging;
 
 import retro.core;
 import std;
-import spdlog;
-import boost;
+import :spdlog;
 
 namespace retro
 {

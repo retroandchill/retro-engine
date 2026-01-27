@@ -7,7 +7,6 @@
 
 import retro.runtime;
 import std;
-import entt;
 
 namespace retro
 {

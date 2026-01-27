@@ -16,7 +16,6 @@ export module retro.scripting;
 import std;
 import retro.core;
 import retro.runtime;
-import boost;
 
 namespace retro
 {

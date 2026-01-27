@@ -8,10 +8,11 @@ module;
 
 #include "retro/core/exports.h"
 
+// #include <boost/intrusive/set.hpp>
+
 export module retro.runtime:assets;
 
 import retro.core;
-import boost;
 import std;
 
 namespace retro
@@ -138,9 +139,10 @@ namespace retro
         }
 
       private:
-        using Hook = boost::intrusive::set_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>;
+        // using Hook = boost::intrusive::set_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>;
 
         AssetPath path_;
+        /*
         Hook hook_;
 
         struct AssetPathKey
@@ -153,6 +155,7 @@ namespace retro
             }
         };
 
+        /*
         friend class boost::intrusive::set<Asset,
                                            boost::intrusive::member_hook<Asset, Hook, &Asset::hook_>,
                                            boost::intrusive::constant_time_size<false>,
@@ -163,6 +166,7 @@ namespace retro
                                           boost::intrusive::member_hook<Asset, Hook, &Asset::hook_>,
                                           boost::intrusive::constant_time_size<false>,
                                           boost::intrusive::key_of_value<AssetPathKey>>;
+                                          */
     };
 
     export class BadAssetPathError
@@ -312,6 +316,6 @@ namespace retro
         std::expected<RefCountPtr<Asset>, AssetLoadError> load_asset_internal(const AssetPath &path);
 
         std::unique_ptr<AssetLoader> asset_loader_{};
-        Asset::Map asset_cache_{};
+        // Asset::Map asset_cache_{};
     };
 } // namespace retro

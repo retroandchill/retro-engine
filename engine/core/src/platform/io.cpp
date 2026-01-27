@@ -29,11 +29,6 @@ namespace retro
         return data;
     }
 
-    std::filesystem::path get_executable_path()
-    {
-        return boost::dll::program_location().parent_path();
-    }
-
     StreamResult<int32> Stream::read_byte()
     {
         std::array<std::byte, 1> buffer{};

@@ -9,7 +9,6 @@
 import retro.core;
 import retro.runtime;
 import std;
-import entt;
 
 namespace
 {

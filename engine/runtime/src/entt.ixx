@@ -10,7 +10,7 @@ module;
 #include <entt/entity/registry.hpp>
 #include <entt/entt.hpp>
 
-export module entt;
+export module retro.runtime:entt;
 
 export namespace entt
 {

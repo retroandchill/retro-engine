@@ -6,6 +6,7 @@ set(RETRO_LOGGING_SOURCES src/logging.cpp
         src/logger_c.cpp)
 
 set(RETRO_LOGGING_MODULES src/logging.ixx
+        src/spdlog.ixx
 )
 
 set(RETRO_LOGGING_HEADERS include/retro/logging/logger.h)
@@ -20,7 +21,8 @@ target_sources(retro_logging PUBLIC
 
 target_include_directories(retro_logging PUBLIC include)
 
-target_link_libraries(retro_logging PUBLIC retro_core retro_fmt retro_spdlog)
+find_package(spdlog REQUIRED)
+target_link_libraries(retro_logging PUBLIC retro_core spdlog::spdlog)
 
 set_target_properties(retro_logging PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

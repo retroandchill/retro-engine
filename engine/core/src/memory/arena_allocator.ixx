@@ -8,11 +8,11 @@ module;
 
 #include <cassert>
 
-export module retro.core:memory.arena_allocator;
+export module retro.core:arena_allocator;
 
+import :concepts;
 import :defines;
 import :memory;
-import boost;
 
 namespace retro
 {
@@ -103,7 +103,7 @@ namespace retro
         usize current_offset_{0};
     };
 
-    export class MultiArena : boost::noncopyable
+    export class MultiArena : NonCopyable
     {
       public:
         explicit constexpr MultiArena(const usize block_capacity,
@@ -163,7 +163,7 @@ namespace retro
     };
 
     export template <usize N>
-    class InlineArena : boost::noncopyable // NOLINT
+    class InlineArena : NonCopyable // NOLINT
     {
       public:
         constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t))

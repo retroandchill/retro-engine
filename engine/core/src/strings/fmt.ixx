@@ -18,8 +18,9 @@ module;
 #include "fmt/std.h"
 #include "fmt/xchar.h"
 
-export module fmt;
+export module retro.core:fmt;
 
+// TODO: Wrap this or remove it
 export namespace fmt
 {
     using fmt::dynamic_format_arg_store;

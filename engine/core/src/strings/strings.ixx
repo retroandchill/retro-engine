@@ -12,8 +12,9 @@ export module retro.core:strings;
 
 import std;
 import :concepts;
-import uni_algo;
+export import :uni_algo;
 import :defines;
+export import :fmt;
 
 namespace retro
 {

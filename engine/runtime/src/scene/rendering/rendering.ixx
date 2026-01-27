@@ -13,7 +13,7 @@ export module retro.runtime:scene.rendering;
 import retro.core;
 import retro.logging;
 import std;
-import entt;
+import :entt;
 
 namespace retro
 {

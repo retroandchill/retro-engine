@@ -16,7 +16,6 @@ import retro.core;
 import vulkan_hpp;
 import std;
 import sdl;
-import boost;
 
 namespace retro
 {

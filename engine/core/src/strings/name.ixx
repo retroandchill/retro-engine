@@ -10,13 +10,12 @@ module;
 
 #include <cstddef>
 
-export module retro.core:strings.name;
+export module retro.core:name;
 
 import :defines;
 import :algorithm;
 import :strings;
-import fmt;
-import :memory.arena_allocator;
+import :arena_allocator;
 
 namespace retro
 {

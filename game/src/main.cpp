@@ -11,7 +11,6 @@ import retro.renderer;
 import retro.logging;
 import std;
 import sdl;
-import boost;
 
 int main()
 {

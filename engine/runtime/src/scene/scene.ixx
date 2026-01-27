@@ -11,10 +11,9 @@ module;
 export module retro.runtime:scene;
 
 import std;
-import boost;
 import retro.core;
 import :scene.rendering;
-import entt;
+import :entt;
 
 namespace retro
 {

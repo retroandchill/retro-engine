@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file spdlog.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
@@ -36,7 +36,7 @@ module;
 #include <spdlog/sinks/win_eventlog_sink.h>
 #endif
 
-export module spdlog;
+export module retro.logging:spdlog;
 
 export namespace spdlog
 {

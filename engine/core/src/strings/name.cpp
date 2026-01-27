@@ -6,12 +6,10 @@
  */
 module;
 
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <cassert>
 
 module retro.core;
-
-import boost;
-import uni_algo;
 
 namespace retro
 {
@@ -65,7 +63,7 @@ namespace retro
       public:
         using Comparer = NameEntryComparer<CaseSensitivity>;
 
-        [[nodiscard]] boost::optional<NameEntryId> find(std::string_view str)
+        [[nodiscard]] std::optional<NameEntryId> find(std::string_view str)
         {
             const NameHash hash = Comparer::hash(str);
             if (const auto existing = entry_indexes_.find(hash); existing != entry_indexes_.end())
@@ -73,7 +71,7 @@ namespace retro
                 return existing->second;
             }
 
-            return boost::none;
+            return std::nullopt;
         }
 
         template <typename Factory>
@@ -230,7 +228,7 @@ namespace retro
 
             std::shared_lock lock{mutex_};
             return comparison_entries_.find(str)
-                .map(
+                .transform(
                     [&](NameEntryId comparison_index)
                     {
                         return NameIndices

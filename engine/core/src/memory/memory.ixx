@@ -11,7 +11,6 @@ module;
 export module retro.core:memory;
 
 import :defines;
-import boost;
 
 namespace retro
 {

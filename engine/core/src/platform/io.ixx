@@ -13,14 +13,12 @@ module;
 export module retro.core:io;
 
 import std;
-import boost;
+import :concepts;
 import :defines;
 
 namespace retro
 {
     export RETRO_API std::vector<std::byte> read_binary_file(const std::filesystem::path &path);
-
-    export [[nodiscard]] RETRO_API std::filesystem::path get_executable_path();
 
     export enum class SeekOrigin
     {
@@ -41,7 +39,7 @@ namespace retro
     export template <typename T>
     using StreamResult = std::expected<T, StreamError>;
 
-    export class RETRO_API Stream : boost::noncopyable
+    export class RETRO_API Stream : NonCopyable
     {
       public:
         virtual ~Stream() = default;

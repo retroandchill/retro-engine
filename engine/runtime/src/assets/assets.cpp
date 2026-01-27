@@ -29,10 +29,12 @@ namespace retro
 
     std::expected<RefCountPtr<Asset>, AssetLoadError> AssetManager::load_asset_internal(const AssetPath &path)
     {
+        /*
         if (const auto existing_asset = asset_cache_.find(path); existing_asset != asset_cache_.end())
         {
             return RefCountPtr{&*existing_asset};
         }
+        */
 
         return asset_loader_->load_asset_from_path(path);
     }
