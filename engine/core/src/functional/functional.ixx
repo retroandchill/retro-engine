@@ -11,6 +11,7 @@ module;
 export module retro.core:functional;
 
 import :concepts;
+import :optional;
 
 namespace retro
 {
@@ -379,7 +380,7 @@ namespace retro
             ops_->invoke(storage_, std::forward<Args>(args)...);
             return true;
         }
-        constexpr std::optional<Ret> execute_if_bound(Args... args) const
+        constexpr Optional<Ret> execute_if_bound(Args... args) const
             requires !std::same_as<Ret, void>
         {
             auto lock = this->read_lock();

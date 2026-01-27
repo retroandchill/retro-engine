@@ -63,7 +63,7 @@ namespace retro
       public:
         using Comparer = NameEntryComparer<CaseSensitivity>;
 
-        [[nodiscard]] std::optional<NameEntryId> find(std::string_view str)
+        [[nodiscard]] Optional<NameEntryId> find(std::string_view str)
         {
             const NameHash hash = Comparer::hash(str);
             if (const auto existing = entry_indexes_.find(hash); existing != entry_indexes_.end())

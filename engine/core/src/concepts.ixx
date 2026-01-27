@@ -17,6 +17,22 @@ namespace retro
 {
     export using NonCopyable = boost::noncopyable;
 
+    export template <typename T, typename U>
+    using ForwardLikeType =
+        std::conditional_t<std::is_const_v<std::remove_reference_t<T>>,
+                           std::conditional_t<std::is_lvalue_reference_v<T>,
+                                              std::add_const_t<U>,
+                                              std::add_const_t<std::remove_reference_t<U> &&>>,
+                           std::conditional_t<std::is_lvalue_reference_v<T>, U, std::remove_reference_t<U> &&>>;
+
+    template <typename To, typename From>
+    concept ReferenceConvertsFromTemporary =
+        std::is_reference_v<To> && ((!std::is_reference_v<From> &&
+                                     std::is_convertible_v<std::remove_cvref_t<From> *, std::remove_cvref_t<To> *>) ||
+                                    (std::is_lvalue_reference_v<To> && std::is_const_v<std::remove_reference_t<To>> &&
+                                     std::is_convertible_v<From, const std::remove_cvref_t<To> &&> &&
+                                     !std::is_convertible_v<From, std::remove_cvref_t<To> &>));
+
     export template <typename From, typename To>
     concept CanStaticCast = requires(From &&from) {
         {
@@ -222,4 +238,53 @@ namespace retro
 
     export template <typename T>
     concept DecayCopyable = std::constructible_from<std::decay_t<T>, T>;
+
+    export template <typename T, typename U>
+    concept EqualityComparableWith = requires(const T &t, const U &u) {
+        {
+            t == u
+        } -> std::convertible_to<bool>;
+    };
+
+    export template <typename T, typename U>
+    concept InequalityComparableWith = requires(const T &t, const U &u) {
+        {
+            t != u
+        } -> std::convertible_to<bool>;
+    };
+
+    export template <typename T, typename U>
+    concept LessThanComparableWith = requires(const T &t, const U &u) {
+        {
+            t < u
+        } -> std::convertible_to<bool>;
+    };
+
+    export template <typename T, typename U>
+    concept GreaterThanComparableWith = requires(const T &t, const U &u) {
+        {
+            t > u
+        } -> std::convertible_to<bool>;
+    };
+
+    export template <typename T, typename U>
+    concept LessThanOrEqualComparableWith = requires(const T &t, const U &u) {
+        {
+            t <= u
+        } -> std::convertible_to<bool>;
+    };
+
+    export template <typename T, typename U>
+    concept GreaterThanOrEqualComparableWith = requires(const T &t, const U &u) {
+        {
+            t >= u
+        } -> std::convertible_to<bool>;
+    };
+
+    template <typename T>
+    concept Hashable = requires(T a) {
+        {
+            std::hash<std::remove_const_t<T>>{}(a)
+        } -> std::convertible_to<usize>;
+    };
 } // namespace retro

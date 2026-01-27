@@ -34,6 +34,7 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/platform/platform.ixx
         src/strings/fmt.ixx
         src/strings/uni_algo.ixx
+        src/containers/optional.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

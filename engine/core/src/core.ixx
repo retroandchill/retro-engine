@@ -22,3 +22,4 @@ export import :arena_allocator;
 export import :ref_counted_ptr;
 export import :strings;
 export import :platform;
+export import :optional;
