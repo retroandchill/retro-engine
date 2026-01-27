@@ -7,14 +7,15 @@
 module;
 
 #include <cassert>
+#include <fmt/format.h>
+#include <fmt/xchar.h>
+#include <uni_algo/all.h>
 
 export module retro.core:strings;
 
 import std;
 import :concepts;
-export import :uni_algo;
 import :defines;
-export import :fmt;
 
 namespace retro
 {
@@ -256,6 +257,107 @@ namespace retro
         using From = std::ranges::range_value_t<Range>;
         return UnaConverter<ENCODING_OF<From>, ENCODING_OF<To>>::template convert<To>(std::forward<Range>(source),
                                                                                       std::move(allocator));
+    }
+
+    export template <Char CharType, SimpleAllocator Allocator = std::allocator<CharType>>
+        requires(ENCODING_OF<CharType> == Encoding::Utf8 || ENCODING_OF<CharType> == Encoding::Utf16)
+    constexpr auto to_lower(std::basic_string_view<CharType> view, Allocator allocator = Allocator{})
+    {
+        if constexpr (ENCODING_OF<CharType> == Encoding::Utf8)
+        {
+            return una::cases::to_lowercase_utf8(view, std::move(allocator));
+        }
+        else
+        {
+            static_assert(ENCODING_OF<CharType> == Encoding::Utf16);
+            return una::cases::to_lowercase_utf16(view, std::move(allocator));
+        }
+    }
+
+    export template <Char CharType, SimpleAllocator Allocator = std::allocator<CharType>>
+        requires(ENCODING_OF<CharType> == Encoding::Utf8 || ENCODING_OF<CharType> == Encoding::Utf16)
+    constexpr auto to_upper(std::basic_string_view<CharType> view, Allocator allocator = Allocator{})
+    {
+        if constexpr (ENCODING_OF<CharType> == Encoding::Utf8)
+        {
+            return una::cases::to_uppercase_utf8(view, std::move(allocator));
+        }
+        else
+        {
+            static_assert(ENCODING_OF<CharType> == Encoding::Utf16);
+            return una::cases::to_uppercase_utf16(view, std::move(allocator));
+        }
+    }
+
+    export template <Char CharType, SimpleAllocator Allocator = std::allocator<CharType>>
+        requires(ENCODING_OF<CharType> == Encoding::Utf8 || ENCODING_OF<CharType> == Encoding::Utf16)
+    constexpr auto to_titlecase(std::basic_string_view<CharType> view, Allocator allocator = Allocator{})
+    {
+        if constexpr (ENCODING_OF<CharType> == Encoding::Utf8)
+        {
+            return una::cases::to_titlecase_utf8(view, std::move(allocator));
+        }
+        else
+        {
+            static_assert(ENCODING_OF<CharType> == Encoding::Utf16);
+            return una::cases::to_titlecase_utf16(view, std::move(allocator));
+        }
+    }
+
+    export template <StringComparison Comparison = StringComparison::CaseSensitive, Char CharType>
+        requires(ENCODING_OF<CharType> == Encoding::Utf8 || ENCODING_OF<CharType> == Encoding::Utf16)
+    constexpr std::strong_ordering compare(std::basic_string_view<CharType> lhs, std::basic_string_view<CharType> rhs)
+    {
+        if constexpr (Comparison == StringComparison::CaseSensitive)
+        {
+            if constexpr (ENCODING_OF<CharType> == Encoding::Utf8)
+            {
+                return std::strong_ordering{static_cast<int8>(una::casesens::compare_utf8(lhs, rhs))};
+            }
+            else
+            {
+                static_asset(ENCODING_OF<CharType> == Encoding::Utf16);
+                return std::strong_ordering{static_cast<int8>(una::casesens::compare_utf16(lhs, rhs))};
+            }
+        }
+        else
+        {
+            static_assert(Comparison == StringComparison::CaseInsensitive);
+
+            if constexpr (ENCODING_OF<CharType> == Encoding::Utf8)
+            {
+                return std::strong_ordering{static_cast<int8>(una::caseless::compare_utf8(lhs, rhs))};
+            }
+            else
+            {
+                static_asset(ENCODING_OF<CharType> == Encoding::Utf16);
+                return std::strong_ordering{static_cast<int8>(una::caseless::compare_utf16(lhs, rhs))};
+            }
+        }
+    }
+
+    export template <Char CharType, typename... Args>
+    auto format(std::basic_format_string<CharType, Args...> fmt, Args &&...args)
+    {
+        return fmt::format(fmt, std::forward<Args>(args)...);
+    }
+
+    export template <Char CharType, typename... Args>
+    auto vformat(std::basic_string_view<CharType> fmt, Args &&...args)
+    {
+        return fmt::vformat(fmt, std::forward<Args>(args)...);
+    }
+
+    export template <typename Output, Char CharType, typename... Args>
+    auto format_to(Output &it, std::basic_format_string<CharType, Args...> fmt, Args &&...args)
+    {
+        return fmt::format_to(it, fmt, std::forward<Args>(args)...);
+    }
+
+    export template <typename Output, Char CharType, typename... Args>
+    auto vformat_to(Output &it, std::basic_string_view<CharType> fmt, Args &&...args)
+    {
+        return fmt::vformat_to(it, fmt, std::forward<Args>(args)...);
     }
 
     template <std::size_t N>

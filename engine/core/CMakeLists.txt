@@ -32,8 +32,6 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/concepts.ixx
         src/async/async.ixx
         src/platform/platform.ixx
-        src/strings/fmt.ixx
-        src/strings/uni_algo.ixx
         src/containers/optional.ixx
 )
 
@@ -50,8 +48,10 @@ target_sources(retro_core PUBLIC
 find_package(Boost REQUIRED COMPONENTS asio dll pool unordered)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
-target_link_libraries(retro_core PUBLIC Boost::dll uni-algo::uni-algo fmt::fmt
-                                 PRIVATE Boost::asio Boost::unordered Boost::pool)
+target_link_libraries(retro_core PUBLIC Boost::dll
+                                 PRIVATE Boost::asio Boost::unordered Boost::pool
+                                        uni-algo::uni-algo
+                                        fmt::fmt)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -304,7 +304,7 @@ namespace retro
             }
 
             std::basic_string<CharType, std::char_traits<CharType>, Allocator> result{std::move(allocator)};
-            fmt::format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
+            format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
             return result;
         }
 

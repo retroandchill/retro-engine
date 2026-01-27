@@ -13,6 +13,23 @@ module retro.core;
 
 namespace retro
 {
+    namespace
+    {
+        constexpr StringComparison to_string_comparison(const NameCase name_case)
+        {
+            switch (name_case)
+            {
+                using enum NameCase;
+                case CaseSensitive:
+                    return StringComparison::CaseSensitive;
+                case IgnoreCase:
+                    return StringComparison::CaseInsensitive;
+            }
+
+            return StringComparison::CaseInsensitive;
+        }
+    } // namespace
+
     struct NameHash
     {
         usize hash{};
@@ -39,21 +56,14 @@ namespace retro
             else
             {
                 InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
-                const auto as_lower = una::cases::to_lowercase_utf8(name, make_allocator<char>(arena));
+                const auto as_lower = to_lower(name, make_allocator<char>(arena));
                 return NameHash{std::hash<std::string_view>{}(as_lower), static_cast<uint32>(name.size())};
             }
         }
 
         static std::strong_ordering compare(const std::string_view a, const std::string_view b)
         {
-            if constexpr (CaseSensitivity == NameCase::CaseSensitive)
-            {
-                return std::strong_ordering{static_cast<int8>(una::casesens::compare_utf8(a, b))};
-            }
-            else
-            {
-                return std::strong_ordering{static_cast<int8>(una::caseless::compare_utf8(a, b))};
-            }
+            return retro::compare<to_string_comparison(CaseSensitivity)>(a, b);
         }
     };
 
@@ -143,7 +153,8 @@ namespace retro
 
         NameIndices get_or_add_entry(const std::string_view str, const FindType find_type)
         {
-            if (una::caseless::compare_utf8(str, NONE_STRING) == 0)
+
+            if (retro::compare<StringComparison::CaseInsensitive>(str, NONE_STRING) == std::strong_ordering::equal)
             {
                 return NameIndices
                 {
