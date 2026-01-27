@@ -21,6 +21,7 @@ set(RETRO_RUNTIME_MODULES
         src/assets/assets.ixx
         src/dependency_injection.ixx
         src/entt.ixx
+        src/intrusive_containers.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS
