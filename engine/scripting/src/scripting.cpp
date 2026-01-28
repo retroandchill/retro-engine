@@ -33,9 +33,8 @@ namespace retro
             throw std::runtime_error{"get_hostfxr_path failed to locate hostfxr.dll"};
         }
 
-        std::filesystem::path dll_path{path.data()};
-        lib_ = boost::dll::shared_library{dll_path};
-        if (!lib_.is_loaded())
+        const std::filesystem::path dll_path{path.data()};
+        if (const auto result = lib_.load(dll_path); !result.has_value())
         {
             throw std::runtime_error{"Failed to LoadLibraryW(hostfxr.dll)"};
         }

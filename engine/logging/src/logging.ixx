@@ -8,11 +8,12 @@ module;
 
 #include "retro/core/exports.h"
 
+#include <spdlog/spdlog.h>
+
 export module retro.logging;
 
 import retro.core;
 import std;
-import :spdlog;
 
 namespace retro
 {
@@ -50,7 +51,7 @@ namespace retro
         return "unknown";
     }
 
-    export constexpr LogLevel from_spd_level(spdlog::level::level_enum level)
+    constexpr LogLevel from_spd_level(spdlog::level::level_enum level)
     {
         switch (level)
         {

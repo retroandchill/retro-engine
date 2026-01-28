@@ -9,6 +9,7 @@ import retro.runtime;
 import retro.scripting;
 import retro.renderer;
 import retro.logging;
+import retro.platform;
 import std;
 import sdl;
 
@@ -18,8 +19,7 @@ int main()
 
     init_logger();
 
-    sdl::main::SetMainReady();
-    SdlRuntime sdl_runtime;
+    PlatformContext sdl_runtime{PlatformInitFlags::Video};
 
     try
     {

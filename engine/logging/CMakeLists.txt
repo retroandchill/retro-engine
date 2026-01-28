@@ -6,7 +6,6 @@ set(RETRO_LOGGING_SOURCES src/logging.cpp
         src/logger_c.cpp)
 
 set(RETRO_LOGGING_MODULES src/logging.ixx
-        src/spdlog.ixx
 )
 
 set(RETRO_LOGGING_HEADERS include/retro/logging/logger.h)

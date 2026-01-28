@@ -15,6 +15,7 @@ export module retro.scripting;
 
 import std;
 import retro.core;
+import retro.platform;
 import retro.runtime;
 
 namespace retro
@@ -87,7 +88,7 @@ namespace retro
         }
 
       private:
-        boost::dll::shared_library lib_;
+        SharedLibrary lib_;
         hostfxr_initialize_for_runtime_config_fn init_fptr_{nullptr};
         hostfxr_get_runtime_delegate_fn get_delegate_fptr_{nullptr};
         hostfxr_close_fn close_fptr_{nullptr};

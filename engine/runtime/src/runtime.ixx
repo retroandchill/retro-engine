@@ -23,29 +23,6 @@ import sdl;
 
 namespace retro
 {
-    export class SdlRuntime
-    {
-      public:
-        inline SdlRuntime()
-        {
-            if (!sdl::Init(sdl::InitFlags::VIDEO))
-            {
-                throw std::runtime_error{std::string{"SDL_Init failed: "} + sdl::GetError()};
-            }
-        }
-
-        SdlRuntime(const SdlRuntime &) = delete;
-        SdlRuntime(SdlRuntime &&) = delete;
-
-        inline ~SdlRuntime() noexcept
-        {
-            sdl::Quit();
-        }
-
-        SdlRuntime &operator=(const SdlRuntime &) = delete;
-        SdlRuntime &operator=(SdlRuntime &&) = delete;
-    };
-
     export class ScriptRuntime
     {
       public:

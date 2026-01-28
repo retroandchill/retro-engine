@@ -6,6 +6,8 @@
  */
 module retro.runtime;
 
+import retro.platform;
+
 namespace retro
 {
     AssetLoadResult<std::unique_ptr<Stream>> FileSystemAssetSource::open_stream(AssetPath path,

@@ -7,7 +7,6 @@ set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/strings/name_c.cpp
         src/functional/functional.cpp
         src/async/async.cpp
-        src/platform/platform.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
@@ -31,7 +30,6 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/memory/arena_allocator.ixx
         src/concepts.ixx
         src/async/async.ixx
-        src/platform/platform.ixx
         src/containers/optional.ixx
 )
 
@@ -45,11 +43,10 @@ target_sources(retro_core PUBLIC
     FILE_SET CXX_MODULES FILES
         ${RETRO_CORE_MODULES})
 
-find_package(Boost REQUIRED COMPONENTS asio dll pool unordered)
+find_package(Boost REQUIRED COMPONENTS asio pool unordered)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
-target_link_libraries(retro_core PUBLIC Boost::dll
-                                 PRIVATE Boost::asio Boost::unordered Boost::pool
+target_link_libraries(retro_core PRIVATE Boost::asio Boost::unordered Boost::pool
                                         uni-algo::uni-algo
                                         fmt::fmt)
 

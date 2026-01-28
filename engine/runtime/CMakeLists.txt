@@ -51,7 +51,7 @@ target_sources(retro_runtime PUBLIC
 
 find_package(Boost REQUIRED COMPONENTS intrusive)
 find_package(EnTT CONFIG REQUIRED)
-target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_sdl EnTT::EnTT
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform retro_sdl EnTT::EnTT
                                     PRIVATE Boost::intrusive)
 
 set_target_properties(retro_runtime PROPERTIES
