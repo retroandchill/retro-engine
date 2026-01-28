@@ -12,7 +12,6 @@ target_link_libraries(retro_game
         PRIVATE
             retro_scripting
             retro_renderer
-            retro_sdl
             retro_logging)
 
 set_target_properties(retro_game PROPERTIES

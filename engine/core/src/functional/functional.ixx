@@ -24,6 +24,20 @@ namespace retro
     export template <CallableObject... Ts>
     Overload(Ts...) -> Overload<Ts...>;
 
+    /**
+     * Thin wrapper around std::visit to flip the order of the arguments.
+     * @tparam Variant The variant type we're visiting
+     * @tparam Functor The functional callback type
+     * @param variant The variant type we're visiting
+     * @param functor The functional callback
+     * @return The result of the visit
+     */
+    export template <VariantSpecialization Variant, CanVisitVariant<Variant> Functor>
+    constexpr decltype(auto) visit(Variant &&variant, Functor &&functor)
+    {
+        return std::visit(std::forward<Functor>(functor), std::forward<Variant>(variant));
+    }
+
     template <auto Functor>
         requires CallableObject<decltype(Functor)>
     struct ConstantBinding

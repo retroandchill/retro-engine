@@ -11,7 +11,6 @@ import retro.renderer;
 import retro.logging;
 import retro.platform;
 import std;
-import sdl;
 
 int main()
 {
@@ -47,21 +46,19 @@ int main()
 
         while (!game_thread_exited.load())
         {
-            sdl::Event event;
-            while (sdl::WaitEventTimeout(&event, 10))
+            while (auto event = wait_for_event(std::chrono::milliseconds(10)))
             {
-                switch (static_cast<sdl::EventType>(event.type))
-                {
-                    case sdl::EventType::QUIT:
-                    case sdl::EventType::WINDOW_CLOSE_REQUESTED:
-                        if (!game_thread_exited.load())
-                        {
-                            Engine::instance().request_shutdown();
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                visit(*event,
+                      [&]<typename T>(const T &)
+                      {
+                          if constexpr (std::is_same_v<T, QuitEvent> || std::is_same_v<T, WindowCloseRequestedEvent>)
+                          {
+                              if (!game_thread_exited.load())
+                              {
+                                  Engine::instance().request_shutdown();
+                              }
+                          }
+                      });
 
                 if (game_thread_exited.load())
                 {

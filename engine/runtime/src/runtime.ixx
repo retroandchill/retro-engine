@@ -19,8 +19,6 @@ export import :scene.rendering.geometry_render_component;
 export import :dependency_injection;
 export import :entt;
 
-import sdl;
-
 namespace retro
 {
     export class ScriptRuntime

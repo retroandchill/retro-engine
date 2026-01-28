@@ -11,6 +11,7 @@ set(RETRO_PLATFORM_MODULES src/platform.ixx
         src/context.ixx
         src/display.ixx
         src/exceptions.ixx
+        src/events.ixx
 )
 
 set(RETRO_PLATFORM_HEADERS

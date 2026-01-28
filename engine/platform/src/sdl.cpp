@@ -61,6 +61,80 @@ namespace retro
 
             return out;
         }
+
+        constexpr MouseButton to_mouse_button(const Uint8 sdl_button) noexcept
+        {
+            switch (sdl_button)
+            {
+                case SDL_BUTTON_LEFT:
+                    return MouseButton::Left;
+                case SDL_BUTTON_MIDDLE:
+                    return MouseButton::Middle;
+                case SDL_BUTTON_RIGHT:
+                    return MouseButton::Right;
+                case SDL_BUTTON_X1:
+                    return MouseButton::X1;
+                case SDL_BUTTON_X2:
+                    return MouseButton::X2;
+                default:
+                    return MouseButton::Unknown;
+            }
+        }
+
+        constexpr Optional<Event> to_event(const SDL_Event &e)
+        {
+            switch (e.type)
+            {
+                case SDL_EVENT_QUIT:
+                    return Event{QuitEvent{}};
+
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                    return Event{WindowCloseRequestedEvent{
+                        .window_id = e.window.windowID,
+                    }};
+
+                case SDL_EVENT_WINDOW_RESIZED:
+                    return Event{WindowResizedEvent{
+                        .window_id = e.window.windowID,
+                        .width = e.window.data1,
+                        .height = e.window.data2,
+                    }};
+
+                case SDL_EVENT_MOUSE_MOTION:
+                    return Event{MouseMovedEvent{
+                        .window_id = e.motion.windowID,
+                        .x = e.motion.x,
+                        .y = e.motion.y,
+                        .dx = e.motion.xrel,
+                        .dy = e.motion.yrel,
+                    }};
+
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                case SDL_EVENT_MOUSE_BUTTON_UP:
+                    return Event{MouseButtonEvent{
+                        .window_id = e.button.windowID,
+                        .button = to_mouse_button(e.button.button),
+                        .down = (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN),
+                        .x = e.button.x,
+                        .y = e.button.y,
+                    }};
+
+                case SDL_EVENT_KEY_DOWN:
+                case SDL_EVENT_KEY_UP:
+                    return Event{KeyEvent{
+                        .window_id = e.key.windowID,
+                        .keycode = static_cast<int32>(e.key.key),
+                        .scancode = static_cast<int32>(e.key.scancode),
+                        .down = (e.type == SDL_EVENT_KEY_DOWN),
+                        .repeat = e.key.repeat,
+                    }};
+
+                default:
+                    // For now: ignore events you don't care about.
+                    // Later you can add more cases or a "Raw/UnknownEvent" if needed.
+                    return std::nullopt;
+            }
+        }
     } // namespace
 
     PlatformContext::PlatformContext(const PlatformInitFlags flags) : flags_(flags)
@@ -129,5 +203,38 @@ namespace retro
     std::shared_ptr<Window> create_shared_sdl_window(const WindowDesc &desc)
     {
         return std::make_unique<Sdl3Window>(desc);
+    }
+
+    Optional<Event> poll_event()
+    {
+        SDL_Event e{};
+        if (!SDL_PollEvent(&e))
+        {
+            return std::nullopt;
+        }
+
+        return to_event(e);
+    }
+
+    Optional<Event> wait_for_event()
+    {
+        SDL_Event e{};
+        if (!SDL_WaitEvent(&e))
+        {
+            return std::nullopt;
+        }
+
+        return to_event(e);
+    }
+
+    Optional<Event> wait_for_event(const std::chrono::milliseconds timeout)
+    {
+        SDL_Event e{};
+        if (!SDL_WaitEventTimeout(&e, timeout.count()))
+        {
+            return std::nullopt;
+        }
+
+        return to_event(e);
     }
 } // namespace retro
