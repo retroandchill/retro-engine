@@ -42,7 +42,7 @@ public static partial class Scene
         {
             buffer[i++] = new TransformUpdate
             {
-                Id = item.Id,
+                NativeObject = item.NativeObject,
                 Position = item.Position,
                 Rotation = item.Rotation,
                 Scale = item.Scale,
@@ -61,7 +61,7 @@ public static partial class Scene
         var i = 0;
         foreach (var item in DirtyViews)
         {
-            buffer[i++] = new ViewUpdate { Id = item.Id, Size = item.Size };
+            buffer[i++] = new ViewUpdate { NativeObject = item.NativeObject, Size = item.Size };
         }
         NativeSetViewportSizes(buffer, buffer.Length);
         DirtyTransforms.Clear();
@@ -72,7 +72,8 @@ public static partial class Scene
         foreach (var geometry in DirtyGeometry)
         {
             geometry.SyncGeometry(
-                (id, vertices, indices) => NativeSetDrawGeometry(id, vertices, vertices.Length, indices, indices.Length)
+                (nativeObject, vertices, indices) =>
+                    NativeSetDrawGeometry(nativeObject, vertices, vertices.Length, indices, indices.Length)
             );
         }
         DirtyGeometry.Clear();
@@ -88,7 +89,7 @@ public static partial class Scene
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_render_data")]
     private static unsafe partial void NativeSetDrawGeometry(
-        uint id,
+        IntPtr nativeObject,
         ReadOnlySpan<Vertex> vertices,
         int vertexCount,
         ReadOnlySpan<uint> indices,

@@ -41,7 +41,7 @@ namespace retro
         vk::UniquePipeline create_graphics_pipeline(vk::Device device,
                                                     vk::PipelineLayout layout,
                                                     const VulkanSwapchain &swapchain,
-                                                    vk::RenderPass render_pass);
+                                                    vk::RenderPass render_pass) const;
 
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 

@@ -13,7 +13,6 @@ export module retro.runtime:scene;
 import std;
 import retro.core;
 import :scene.rendering;
-import :entt;
 
 namespace retro
 {
@@ -79,59 +78,113 @@ namespace retro
         bool dirty_ = true;
     };
 
-    export struct Hierarchy
+    export class RETRO_API SceneNode : NonCopyable
     {
-        entt::entity parent = entt::null;
-        entt::entity first_child = entt::null;
-        entt::entity next_sibling = entt::null;
+      public:
+        virtual ~SceneNode() = default;
+
+        [[nodiscard]] SceneNode *parent() const noexcept;
+        [[nodiscard]] std::span<SceneNode *const> children() const noexcept;
+
+        [[nodiscard]] inline Transform &transform() noexcept
+        {
+            return transform_;
+        }
+
+        [[nodiscard]] inline const Transform &transform() const noexcept
+        {
+            return transform_;
+        }
+
+      protected:
+        friend class Scene;
+
+        explicit SceneNode(Scene &scene) : scene_{std::addressof(scene)}
+        {
+        }
+
+      private:
+        Scene *scene_{};
+        SceneNode *parent_ = nullptr;
+        std::vector<SceneNode *> children_;
+        Transform transform_{};
     };
 
-    class RETRO_API Scene
+    export class RETRO_API ViewportNode final : public SceneNode
+    {
+      public:
+        explicit ViewportNode(Scene &scene, const Vector2f view_size) : SceneNode(scene), viewport_{view_size}
+        {
+        }
+
+        [[nodiscard]] inline Viewport &viewport() noexcept
+        {
+            return viewport_;
+        }
+
+        [[nodiscard]] inline const Viewport &viewport() const noexcept
+        {
+            return viewport_;
+        }
+
+      private:
+        Viewport viewport_{};
+    };
+
+    class RETRO_API Scene final : NonCopyable
     {
       public:
         explicit Scene(PipelineManager &pipeline_manager);
 
-        ~Scene() = default;
-
-        Scene(const Scene &) = delete;
-        Scene(Scene &&) = default;
-        Scene &operator=(const Scene &) = delete;
-        Scene &operator=(Scene &&) = default;
-
-        entt::entity create_entity();
-
-        entt::entity create_viewport(Vector2f view_size);
-
-        void destroy_entity(entt::entity entity);
-
-        void attach_to_parent(entt::entity child, entt::entity parent);
-
-        void detach_from_parent(entt::entity entity);
-
-        template <typename T>
-        T &get_component(const entt::entity entity)
+        template <std::derived_from<SceneNode> T, typename... Args>
+            requires std::constructible_from<T, Scene &, Args...>
+        T &create_node(SceneNode *parent, Args &&...args)
         {
-            return registry_.get<T>(entity);
+            auto node = std::make_unique<T>(*this, std::forward<Args>(args)...);
+
+            T &ref = *node;
+
+            attach_to_parent(&ref, parent);
+            index_node(&ref);
+
+            storage_.emplace_back(std::move(node));
+            return ref;
         }
 
-        template <RenderComponent T, typename... Args>
-            requires std::constructible_from<T, Args...>
-        std::pair<entt::entity, T &> create_render_component(const entt::entity parent, Args &&...args)
+        inline ViewportNode &create_viewport(const Vector2f view_size)
         {
-            auto entity = create_entity();
-            registry_.emplace<T>(entity, std::forward<Args>(args)...);
-            attach_to_parent(entity, parent);
-            return {entity, registry_.get<T>(entity)};
+            return create_node<ViewportNode>(nullptr, view_size);
         }
+
+        void destroy_node(SceneNode &node);
+
+        void attach_to_parent(SceneNode *child, SceneNode *parent);
+        void detach_from_parent(SceneNode *node);
 
         void update_transforms();
 
         void collect_draw_calls(Vector2u viewport_size);
 
-      private:
-        void update_transform(entt::entity entity, const Matrix3x3f &parentWorld, bool parent_changed);
+        [[nodiscard]] std::span<SceneNode *const> nodes_of_type(std::type_index type) const noexcept;
 
-        entt::registry registry_{};
+        template <std::derived_from<SceneNode> T>
+            requires(!std::is_abstract_v<T>)
+        [[nodiscard]] std::span<T *const> nodes_of_type() const noexcept
+        {
+            auto of_types = nodes_of_type(std::type_index{typeid(T)});
+            auto *cast_data = reinterpret_cast<T *const *>(of_types.data());
+            return std::span{cast_data, of_types.size()};
+        }
+
+      private:
+        void index_node(SceneNode *node);
+        void unindex_node(SceneNode *node);
+
+        void update_transform(SceneNode &node, const Matrix3x3f &parent_world, bool parent_changed);
+
+        std::vector<std::unique_ptr<SceneNode>> storage_;
+        std::unordered_map<std::type_index, std::vector<SceneNode *>> nodes_by_type_{};
+
         PipelineManager *pipeline_manager_;
     };
 } // namespace retro

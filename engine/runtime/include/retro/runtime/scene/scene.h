@@ -19,7 +19,7 @@
 extern "C"
 {
 #endif
-    typedef uint32_t Retro_EntityId;
+    typedef uint64_t Retro_NodeHandle;
 
     typedef struct Retro_Vertex
     {
@@ -30,7 +30,7 @@ extern "C"
 
     typedef struct Retro_TransformUpdate
     {
-        Retro_EntityId entity_id;
+        Retro_NodeHandle node;
         Retro_Vector2f position;
         float rotation;
         Retro_Vector2f scale;
@@ -38,21 +38,21 @@ extern "C"
 
     typedef struct Retro_ViewUpdate
     {
-        Retro_EntityId entity_id;
+        Retro_NodeHandle node;
         Retro_Vector2f viewport_size;
     } Retro_ViewUpdate;
 
-    RETRO_API void retro_entity_dispose(Retro_EntityId entity_id);
+    RETRO_API void retro_node_dispose(Retro_NodeHandle node);
 
     RETRO_API void retro_scene_update_transforms(const Retro_TransformUpdate *updates, int32_t update_count);
 
-    RETRO_API Retro_EntityId retro_viewport_create(Retro_Vector2f viewport_size);
+    RETRO_API Retro_NodeHandle retro_viewport_create(Retro_Vector2f viewport_size);
 
     RETRO_API void retro_scene_update_viewports(const Retro_ViewUpdate *updates, int32_t update_count);
 
-    RETRO_API Retro_EntityId retro_geometry_create(Retro_EntityId entity_id);
+    RETRO_API Retro_NodeHandle retro_geometry_create(Retro_NodeHandle parent);
 
-    RETRO_API void retro_geometry_set_render_data(Retro_EntityId entity_id,
+    RETRO_API void retro_geometry_set_render_data(Retro_NodeHandle node,
                                                   const Retro_Vertex *vertices,
                                                   int32_t vertex_count,
                                                   uint32_t *indices,

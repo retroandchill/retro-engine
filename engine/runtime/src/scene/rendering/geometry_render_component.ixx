@@ -12,17 +12,33 @@ export module retro.runtime:scene.rendering.geometry_render_component;
 
 import std;
 import retro.core;
-import :scene.rendering;
+import :scene;
 
 namespace retro
 {
     export class GeometryRenderPipeline;
 
-    export struct GeometryRenderComponent
+    export class GeometryObject final : public SceneNode
     {
+      public:
         using PipelineType = GeometryRenderPipeline;
 
-        Geometry geometry{};
+        inline explicit GeometryObject(Scene &scene) : SceneNode(scene)
+        {
+        }
+
+        [[nodiscard]] inline Geometry &geometry() noexcept
+        {
+            return geometry_;
+        }
+
+        [[nodiscard]] inline const Geometry &geometry() const noexcept
+        {
+            return geometry_;
+        }
+
+      private:
+        Geometry geometry_{};
     };
 
     export struct GeometryRenderData
@@ -44,7 +60,7 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(entt::registry &registry, Vector2u viewport_size, SingleArena &arena) override;
+        void collect_draw_calls(Scene &registry, Vector2u viewport_size) override;
 
         void execute(RenderContext &context) override;
 

@@ -24,5 +24,5 @@ public sealed partial class Viewport(Vector2F viewportSize) : SceneObject(Native
     private const string LibraryName = "retro_runtime";
 
     [LibraryImport(LibraryName, EntryPoint = "retro_viewport_create")]
-    private static partial uint NativeCreate(Vector2F viewportSize);
+    private static partial IntPtr NativeCreate(Vector2F viewportSize);
 }

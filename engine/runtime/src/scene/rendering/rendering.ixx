@@ -13,7 +13,6 @@ export module retro.runtime:scene.rendering;
 import retro.core;
 import retro.logging;
 import std;
-import :entt;
 
 namespace retro
 {
@@ -24,82 +23,22 @@ namespace retro
         Color color{};
     };
 
-    export template <template <typename...> typename Alloc>
-        requires SimpleAllocator<Alloc<Vertex>> && SimpleAllocator<Alloc<uint32>>
-    struct BasicGeometry
+    export struct Geometry
     {
-        std::vector<Vertex, Alloc<Vertex>> vertices{};
-        std::vector<uint32, Alloc<uint32>> indices{};
-
-        constexpr explicit BasicGeometry(Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
-                                         Alloc<uint32> index_allocator = Alloc<uint32>{})
-            : vertices{std::move(vertex_allocator)}, indices{std::move(index_allocator)}
-        {
-        }
-
-        constexpr BasicGeometry(std::span<const Vertex> vertices,
-                                std::span<const uint32> indices,
-                                Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
-                                Alloc<uint32> index_allocator = Alloc<uint32>{}) noexcept
-            : vertices{std::from_range, vertices, std::move(vertex_allocator)},
-              indices{std::from_range, indices, std::move(index_allocator)}
-        {
-        }
-
-        constexpr BasicGeometry(const BasicGeometry &) = default;
-        constexpr BasicGeometry(BasicGeometry &&) noexcept = default;
-
-        template <template <typename...> typename OtherAlloc>
-            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
-        constexpr explicit BasicGeometry(const BasicGeometry<OtherAlloc> &other,
-                                         Alloc<Vertex> vertex_allocator = Alloc<Vertex>{},
-                                         Alloc<uint32> index_allocator = Alloc<uint32>{})
-            : vertices{std::from_range, other.vertices, std::move(vertex_allocator)},
-              indices{std::from_range, other.indices, std::move(index_allocator)}
-        {
-        }
-
-        ~BasicGeometry() = default;
-
-        constexpr BasicGeometry &operator=(const BasicGeometry &) = default;
-        constexpr BasicGeometry &operator=(BasicGeometry &&) noexcept = default;
+        std::vector<Vertex> vertices{};
+        std::vector<uint32> indices{};
     };
-
-    export template <template <typename...> typename Alloc>
-    BasicGeometry(std::span<Vertex>, std::span<uint32>, Alloc<Vertex>, Alloc<uint32>) -> BasicGeometry<Alloc>;
-
-    export template <template <typename...> typename Alloc, template <typename...> typename OtherAlloc>
-    BasicGeometry(const BasicGeometry<OtherAlloc> &, Alloc<Vertex>, Alloc<uint32>) -> BasicGeometry<Alloc>;
-
-    export using Geometry = BasicGeometry<std::allocator>;
 
     export struct GeometryDrawCall
     {
-        BasicGeometry<ArenaAllocator> geometry;
-        std::vector<std::byte, ArenaAllocator<std::byte>> push_constants;
-
-        template <template <typename...> typename OtherAlloc>
-            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
-        constexpr GeometryDrawCall(SingleArena &arena,
-                                   const BasicGeometry<OtherAlloc> &other,
-                                   const usize push_constants_size = 0)
-            : geometry{other, make_allocator<Vertex>(arena), make_allocator<uint32>(arena)},
-              push_constants{push_constants_size, make_allocator<std::byte>(arena)}
-        {
-        }
+        Geometry geometry{};
+        std::vector<std::byte> push_constants{};
     };
 
     export struct ProceduralDrawCall
     {
         uint32 vertex_count;
-        std::vector<std::byte, ArenaAllocator<std::byte>> push_constants;
-
-        template <template <typename...> typename OtherAlloc>
-            requires SimpleAllocator<OtherAlloc<Vertex>> && SimpleAllocator<OtherAlloc<uint32>>
-        constexpr ProceduralDrawCall(SingleArena &arena, const uint32 vertex_count, const usize push_constants_size = 0)
-            : vertex_count{vertex_count}, push_constants{push_constants_size, make_allocator<std::byte>(arena)}
-        {
-        }
+        std::vector<std::byte> push_constants;
     };
 
     export class RenderContext
@@ -131,7 +70,7 @@ namespace retro
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void collect_draw_calls(entt::registry &registry, Vector2u viewport_size, SingleArena &arena) = 0;
+        virtual void collect_draw_calls(class Scene &registry, Vector2u viewport_size) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };
@@ -166,62 +105,34 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
-
         explicit PipelineManager(Renderer2D &renderer) : renderer_{&renderer}
         {
         }
 
         template <RenderComponent Component>
-        void set_up_pipeline_listener(entt::registry &registry)
-        {
-            registry.on_construct<Component>().template connect<&PipelineManager::on_component_added<Component>>(this);
-            registry.on_destroy<Component>().template connect<&PipelineManager::on_component_removed<Component>>(this);
-        }
-
-        void reset_arena();
-
-        void collect_all_draw_calls(entt::registry &registry, Vector2u viewport_size);
-
-      private:
-        template <RenderComponent Component>
-        void on_component_added(entt::registry &, entt::entity)
+        void set_up_pipeline_listener()
         {
             using Pipeline = Component::PipelineType;
-            auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
-            if (existing_pipeline == pipelines_.end())
+            const std::type_index type_index{typeid(Component)};
+
+            auto it = pipelines_.find(type_index);
+            if (it == pipelines_.end())
             {
-                existing_pipeline =
-                    pipelines_
-                        .emplace(std::type_index{typeid(Component)}, PipelineUsage{std::make_shared<Pipeline>(), 0})
-                        .first;
+                it = pipelines_.emplace(type_index, PipelineUsage{std::make_shared<Pipeline>(), 0}).first;
             }
 
-            if (const std::type_index type_index{typeid(Component)}; existing_pipeline->second.usage_count++ == 0)
+            // For OO: keep pipelines around; the renderer needs them created once.
+            if (it->second.usage_count++ == 0)
             {
-                renderer_->add_new_render_pipeline(type_index, existing_pipeline->second.pipeline);
-            }
-        }
-
-        template <RenderComponent Component>
-        void on_component_removed(entt::registry &, entt::entity)
-        {
-            const auto existing_pipeline = pipelines_.find(std::type_index{typeid(Component)});
-            if (existing_pipeline == pipelines_.end())
-            {
-                get_logger().warn("No pipeline found for component type {}", typeid(Component).name());
-                return;
-            }
-
-            if (const std::type_index type_index{typeid(Component)}; --existing_pipeline->second.usage_count == 0)
-            {
-                renderer_->remove_render_pipeline(type_index);
+                renderer_->add_new_render_pipeline(type_index, it->second.pipeline);
             }
         }
 
+        void collect_all_draw_calls(Scene &registry, Vector2u viewport_size);
+
+      private:
         Renderer2D *renderer_{};
         std::map<std::type_index, PipelineUsage> pipelines_{};
-        SingleArena arena_{DEFAULT_POOL_SIZE};
     };
 
     export class RETRO_API RenderTypeRegistry
@@ -235,14 +146,14 @@ namespace retro
         template <RenderComponent T>
         void register_type()
         {
-            registrations_.emplace_back([this](entt::registry &registry, PipelineManager &pipeline_manager)
-                                        { pipeline_manager.set_up_pipeline_listener<T>(registry); });
+            registrations_.emplace_back([this](PipelineManager &pipeline_manager)
+                                        { pipeline_manager.set_up_pipeline_listener<T>(); });
         }
 
-        void register_listeners(entt::registry &registry, PipelineManager &pipeline_manager) const;
+        void register_listeners(PipelineManager &pipeline_manager) const;
 
       private:
-        std::vector<std::function<void(entt::registry &, PipelineManager &)>> registrations_{};
+        std::vector<std::function<void(PipelineManager &)>> registrations_{};
     };
 
     export template <RenderComponent T>

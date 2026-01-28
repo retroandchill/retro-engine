@@ -10,7 +10,7 @@ using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
-public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(parent.Id)), IGeometrySync
+public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(parent.NativeObject)), IGeometrySync
 {
     private static readonly Name Type = new("geometry");
 
@@ -34,10 +34,10 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
         }
     }
 
-    public void SyncGeometry(Action<uint, ReadOnlySpan<Vertex>, ReadOnlySpan<uint>> syncCallback)
+    public void SyncGeometry(Action<IntPtr, ReadOnlySpan<Vertex>, ReadOnlySpan<uint>> syncCallback)
     {
         syncCallback(
-            Id,
+            NativeObject,
             [
                 new Vertex(new Vector2F(0, 0), new Vector2F(0, 0), Color),
                 new Vertex(Size with { Y = 0 }, new Vector2F(1, 0), Color),
@@ -49,5 +49,5 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
     }
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_create")]
-    private static unsafe partial uint NativeCreate(uint id);
+    private static unsafe partial IntPtr NativeCreate(IntPtr id);
 }

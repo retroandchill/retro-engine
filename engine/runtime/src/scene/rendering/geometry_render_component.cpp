@@ -4,13 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-// Workaround for IntelliSense issues regarding entt
-#ifdef __JETBRAINS_IDE__
-#include <entt/entt.hpp>
-#endif
-
 module retro.runtime;
 
 import retro.logging;
@@ -19,7 +12,7 @@ namespace retro
 {
     std::type_index GeometryRenderPipeline::component_type() const
     {
-        return typeid(GeometryRenderComponent);
+        return typeid(GeometryObject);
     }
 
     usize GeometryRenderPipeline::push_constants_size() const
@@ -38,16 +31,14 @@ namespace retro
         pending_geometry_.clear();
     }
 
-    void GeometryRenderPipeline::collect_draw_calls(entt::registry &registry,
-                                                    const Vector2u viewport_size,
-                                                    SingleArena &arena)
+    void GeometryRenderPipeline::collect_draw_calls(Scene &registry, const Vector2u viewport_size)
     {
-        for (const auto view = registry.view<GeometryRenderComponent, Transform>();
-             auto [entity, geometry, transform] : view.each())
+        for (auto *node : registry.nodes_of_type<GeometryObject>())
         {
-            GeometryDrawCall draw_call{arena, geometry.geometry, sizeof(GeometryRenderData)};
+            GeometryDrawCall draw_call{.geometry = node->geometry(),
+                                       .push_constants = std::vector<std::byte>(push_constants_size())};
 
-            const auto &matrix = transform.world_matrix();
+            const auto &matrix = node->transform().world_matrix();
             write_to_buffer(
                 draw_call.push_constants,
                 GeometryRenderData{

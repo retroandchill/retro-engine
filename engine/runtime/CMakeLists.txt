@@ -20,7 +20,6 @@ set(RETRO_RUNTIME_MODULES
         src/scene/rendering/geometry_render_component.ixx
         src/assets/assets.ixx
         src/dependency_injection.ixx
-        src/entt.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -48,8 +47,7 @@ target_sources(retro_runtime PUBLIC
             ${RETRO_RUNTIME_MODULES}
         )
 
-find_package(EnTT CONFIG REQUIRED)
-target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform EnTT::EnTT)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

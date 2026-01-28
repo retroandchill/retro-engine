@@ -17,7 +17,6 @@ export import :scene;
 export import :scene.rendering;
 export import :scene.rendering.geometry_render_component;
 export import :dependency_injection;
-export import :entt;
 
 namespace retro
 {

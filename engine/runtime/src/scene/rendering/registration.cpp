@@ -10,5 +10,5 @@ import std;
 
 namespace retro
 {
-    const PipelineRegistration<GeometryRenderComponent> geometry_pipeline_registration{};
+    const PipelineRegistration<GeometryObject> geometry_pipeline_registration{};
 } // namespace retro

@@ -10,13 +10,13 @@ namespace RetroEngine.SceneView;
 
 public abstract partial class SceneObject : ITransformSync, IDisposable
 {
-    protected SceneObject(uint id)
+    protected SceneObject(IntPtr id)
     {
-        Id = id;
+        NativeObject = id;
         Scale = Vector2F.One;
     }
 
-    public uint Id { get; }
+    public IntPtr NativeObject { get; }
 
     protected bool Disposed { get; private set; }
 
@@ -63,13 +63,13 @@ public abstract partial class SceneObject : ITransformSync, IDisposable
         if (Disposed)
             return;
 
-        NativeDispose(Id);
+        NativeDispose(NativeObject);
         Disposed = true;
         GC.SuppressFinalize(this);
     }
 
     private const string LibraryName = "retro_runtime";
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_entity_dispose")]
-    private static partial void NativeDispose(uint id);
+    [LibraryImport(LibraryName, EntryPoint = "retro_node_dispose")]
+    private static partial void NativeDispose(IntPtr obj);
 }

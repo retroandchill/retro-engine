@@ -11,7 +11,7 @@ namespace RetroEngine.SceneView;
 
 public interface INativeSynchronizable
 {
-    uint Id { get; }
+    IntPtr NativeObject { get; }
 }
 
 public interface ITransformSync : INativeSynchronizable
@@ -24,7 +24,7 @@ public interface ITransformSync : INativeSynchronizable
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct TransformUpdate
 {
-    public uint Id { get; init; }
+    public IntPtr NativeObject { get; init; }
     public Vector2F Position { get; init; }
     public float Rotation { get; init; }
     public Vector2F Scale { get; init; }
@@ -38,11 +38,11 @@ public interface IViewSync : INativeSynchronizable
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct ViewUpdate
 {
-    public uint Id { get; init; }
+    public IntPtr NativeObject { get; init; }
     public Vector2F Size { get; init; }
 }
 
 public interface IGeometrySync : INativeSynchronizable
 {
-    void SyncGeometry(Action<uint, ReadOnlySpan<Vertex>, ReadOnlySpan<uint>> syncCallback);
+    void SyncGeometry(Action<IntPtr, ReadOnlySpan<Vertex>, ReadOnlySpan<uint>> syncCallback);
 }

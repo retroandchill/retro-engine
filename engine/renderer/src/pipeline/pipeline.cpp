@@ -74,7 +74,7 @@ namespace retro
         }
 
       private:
-        static PreparedGeometry prepare_geometry(const BasicGeometry<ArenaAllocator> &geometry)
+        static PreparedGeometry prepare_geometry(const Geometry &geometry)
         {
             const usize vertex_size = geometry.vertices.size() * sizeof(Vertex);
             const usize index_size = geometry.indices.size() * sizeof(uint32);
@@ -126,7 +126,7 @@ namespace retro
                                                               1,
                                                               vk::ShaderStageFlagBits::eFragment};
 
-        vk::DescriptorSetLayoutCreateInfo layout_info{{}, 1, &sampler_layout_binding};
+        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, 1, &sampler_layout_binding};
 
         auto descriptor_set_layout = device.createDescriptorSetLayoutUnique(layout_info);
 
@@ -143,7 +143,7 @@ namespace retro
     vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(vk::Device device,
                                                                       vk::PipelineLayout layout,
                                                                       const VulkanSwapchain &swapchain,
-                                                                      vk::RenderPass render_pass)
+                                                                      vk::RenderPass render_pass) const
     {
         vk::VertexInputBindingDescription binding_description{0, sizeof(Vertex), vk::VertexInputRate::eVertex};
 
