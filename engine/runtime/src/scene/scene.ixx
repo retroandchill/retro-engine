@@ -105,6 +105,8 @@ namespace retro
 
       private:
         Scene *scene_{};
+        usize master_index_ = std::dynamic_extent;
+        usize internal_index_ = std::dynamic_extent;
         SceneNode *parent_ = nullptr;
         std::vector<SceneNode *> children_;
         Transform transform_{};
@@ -147,6 +149,7 @@ namespace retro
             attach_to_parent(&ref, parent);
             index_node(&ref);
 
+            node->master_index_ = storage_.size();
             storage_.emplace_back(std::move(node));
             return ref;
         }

@@ -25,15 +25,12 @@ namespace retro
 
         unindex_node(&node);
 
-        if (const auto it =
-                std::ranges::find_if(storage_,
-                                     [&node](const std::unique_ptr<SceneNode> &p) { return p.get() == &node; });
-            it != storage_.end())
-        {
-            auto &back = storage_.back();
-            std::swap(*it, back);
-            storage_.pop_back();
-        }
+        assert(node.master_index_ < storage_.size());
+        auto &existing = storage_[node.master_index_];
+        auto &back = storage_.back();
+        std::swap(existing, back);
+        back->master_index_ = node.master_index_;
+        storage_.pop_back();
     }
 
     void Scene::attach_to_parent(SceneNode *child, SceneNode *parent)
@@ -103,24 +100,27 @@ namespace retro
 
     void Scene::index_node(SceneNode *node)
     {
-        nodes_by_type_[std::type_index{typeid(*node)}].push_back(node);
+        auto &nodes_list = nodes_by_type_[std::type_index{typeid(*node)}];
+        nodes_list.push_back(node);
+        node->internal_index_ = nodes_list.size() - 1;
     }
 
     void Scene::unindex_node(SceneNode *node)
     {
-        const auto key = std::type_index{typeid(*node)};
-        const auto it = nodes_by_type_.find(key);
+        const auto it = nodes_by_type_.find(std::type_index{typeid(*node)});
         if (it == nodes_by_type_.end())
         {
             return;
         }
 
         auto &vec = it->second;
-        if (const auto found = std::ranges::find(vec, node); found != vec.end())
-        {
-            *found = vec.back();
-            vec.pop_back();
-        }
+        assert(node->internal_index_ < vec.size());
+        auto &current = vec[node->internal_index_];
+        auto &back = vec.back();
+        std::swap(current, back);
+        back->internal_index_ = node->internal_index_;
+        vec.pop_back();
+        node->internal_index_ = std::dynamic_extent;
     }
 
     void Scene::update_transform(SceneNode &node, const Matrix3x3f &parent_world, const bool parent_changed)
