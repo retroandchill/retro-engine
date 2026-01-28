@@ -3,14 +3,18 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_PLATFORM_SOURCES
+        src/display.cpp
         src/sdl.cpp)
 
 set(RETRO_PLATFORM_MODULES src/platform.ixx
         src/dll.ixx
-        src/sdl.ixx
+        src/context.ixx
+        src/display.ixx
+        src/exceptions.ixx
 )
 
-set(RETRO_PLATFORM_HEADERS )
+set(RETRO_PLATFORM_HEADERS
+        src/sdl.cpp)
 
 add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_MODULES} ${RETRO_PLATFORM_HEADERS})
 

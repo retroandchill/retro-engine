@@ -23,7 +23,7 @@ int main()
 
     try
     {
-        const auto window = std::make_shared<Window>(1280, 720, "Retro Engine");
+        const auto window = Window::create_shared({.flags = WindowFlags::Resizable | WindowFlags::Vulkan});
         const auto injector = boost::di::make_injector(make_scripting_injector(),
                                                        make_rendering_injector(window),
                                                        make_runtime_injector());

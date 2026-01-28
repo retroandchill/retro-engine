@@ -1,5 +1,5 @@
 ﻿/**
- * @file vulkan_renderer2d.cpp
+ * @file renderer.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -10,6 +10,9 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
+#include <cassert>
+#include <SDL3/SDL_vulkan.h>
+
 module retro.renderer;
 
 import retro.core;
@@ -18,9 +21,88 @@ import vulkan_hpp;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport)
-        : viewport_{std::move(viewport)}, instance_{create_instance()},
-          surface_{viewport_->create_surface(instance_.get())}, device_{instance_.get(), surface_.get()},
+    std::unique_ptr<VulkanBufferManager> VulkanBufferManager::instance_{nullptr};
+
+    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, usize pool_size)
+        : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
+    {
+        const vk::BufferCreateInfo buffer_info{{},
+                                               pool_size_,
+                                               vk::BufferUsageFlagBits::eVertexBuffer |
+                                                   vk::BufferUsageFlagBits::eIndexBuffer};
+        buffer_ = device_.createBufferUnique(buffer_info);
+
+        const auto mem_reqs = device_.getBufferMemoryRequirements(buffer_.get());
+
+        const vk::MemoryAllocateInfo alloc_info{
+            mem_reqs.size,
+            find_memory_type(mem_reqs.memoryTypeBits,
+                             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+
+        memory_ = device_.allocateMemoryUnique(alloc_info);
+        device_.bindBufferMemory(buffer_.get(), memory_.get(), 0);
+        mapped_ptr_ = device_.mapMemory(memory_.get(), 0, pool_size_);
+    }
+
+    void VulkanBufferManager::initialize(const VulkanDevice &device, const usize pool_size)
+    {
+        assert(instance_ == nullptr);
+        instance_.reset(new VulkanBufferManager{device, pool_size});
+    }
+
+    void VulkanBufferManager::shutdown()
+    {
+        assert(instance_ != nullptr);
+        instance_.reset();
+    }
+
+    VulkanBufferManager &VulkanBufferManager::instance()
+    {
+        assert(instance_ != nullptr);
+        return *instance_;
+    }
+
+    TransientAllocation VulkanBufferManager::allocate_transient(const usize size, vk::BufferUsageFlags usage)
+    {
+        // Align offset (e.g., 16 bytes for safety)
+        current_offset_ = current_offset_ + 15 & ~15;
+
+        if (current_offset_ + size > pool_size_)
+        {
+            throw std::bad_alloc{};
+        }
+
+        const TransientAllocation allocation{.buffer = buffer_.get(),
+                                             .mapped_data = static_cast<std::byte *>(mapped_ptr_) + current_offset_,
+                                             .offset = current_offset_};
+
+        current_offset_ += size;
+        return allocation;
+    }
+
+    void VulkanBufferManager::reset()
+    {
+        current_offset_ = 0;
+    }
+
+    uint32 VulkanBufferManager::find_memory_type(const uint32 type_filter, vk::MemoryPropertyFlags properties) const
+    {
+        const auto mem_properties = physical_device_.getMemoryProperties();
+
+        for (uint32 i = 0; i < mem_properties.memoryTypeCount; ++i)
+        {
+            if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
+            {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
+    }
+
+    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> viewport)
+        : viewport_{std::move(viewport)}, instance_{create_instance(*viewport_)},
+          surface_{create_surface(*viewport_, instance_.get())}, device_{instance_.get(), surface_.get()},
           buffer_manager_{device_}, swapchain_(SwapchainConfig{
                                         .physical_device = device_.physical_device(),
                                         .device = device_.device(),
@@ -151,7 +233,7 @@ namespace retro
         pipeline_manager_.destroy_pipeline(type);
     }
 
-    vk::UniqueInstance VulkanRenderer2D::create_instance()
+    vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)
     {
         vk::ApplicationInfo app_info{"Retro Engine",
                                      vk::makeVersion(1, 0, 0),
@@ -177,7 +259,7 @@ namespace retro
         }
 #endif
 
-        const auto extensions = get_required_instance_extensions();
+        const auto extensions = get_required_instance_extensions(viewport);
 
         std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
 
@@ -195,17 +277,45 @@ namespace retro
         return vk::createInstanceUnique(create_info);
     }
 
-    std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions()
+    vk::UniqueSurfaceKHR VulkanRenderer2D::create_surface(const Window &viewport, vk::Instance instance)
     {
-        // Ask SDL what Vulkan instance extensions are required for this window
-        uint32 count = 0;
-        auto *names = sdl::vulkan::GetInstanceExtensions(&count);
-        if (names == nullptr)
+        switch (auto [backend, handle] = viewport.native_handle(); backend)
         {
-            throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
+            case WindowBackend::SDL3:
+                {
+                    vk::SurfaceKHR::CType surface;
+                    if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle), instance, nullptr, &surface))
+                    {
+                        throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
+                    }
+
+                    return vk::UniqueSurfaceKHR{surface, instance};
+                }
         }
 
-        return std::span{names, count};
+        throw std::runtime_error{"Unsupported window backend"};
+    }
+
+    std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions(const Window &viewport)
+    {
+        auto [backend, handle] = viewport.native_handle();
+        switch (backend)
+        {
+            case WindowBackend::SDL3:
+                {
+                    uint32 count = 0;
+                    auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
+                    if (names == nullptr)
+                    {
+                        throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
+                    }
+
+                    return std::span{names, count};
+                }
+        }
+
+        get_logger().error("Unsupported window backend:");
+        return {};
     }
 
     vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device,

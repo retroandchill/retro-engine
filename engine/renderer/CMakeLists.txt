@@ -39,14 +39,9 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
         COMMENT "Copying compiled shaders to runtime directory"
 )
 
-set(RETRO_RENDER_SOURCES src/vulkan_renderer2d.cpp
-        src/components/vulkan_device.cpp
-        src/components/vulkan_swapchain.cpp
-        src/components/vulkan_command_pool.cpp
-        src/components/vulkan_sync.cpp
-        src/window.cpp
+set(RETRO_RENDER_SOURCES src/renderer.cpp
+        src/components/components.cpp
         src/pipeline/pipeline.cpp
-        src/vulkan_buffer_manager.cpp
 )
 
 set(RETRO_RENDER_MODULES src/renderer.ixx

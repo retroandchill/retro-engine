@@ -13,91 +13,12 @@ export module retro.renderer;
 export import :components;
 export import :pipeline;
 import retro.core;
+import retro.platform;
 import vulkan_hpp;
 import std;
-import sdl;
 
 namespace retro
 {
-    export class VulkanViewport
-    {
-      public:
-        virtual ~VulkanViewport() = default;
-
-        virtual vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const = 0;
-
-        [[nodiscard]] virtual Vector2u size() const = 0;
-
-        [[nodiscard]] inline uint32 width() const
-        {
-            return size().x;
-        }
-
-        [[nodiscard]] inline uint32 height() const
-        {
-            return size().y;
-        }
-    };
-
-    struct WindowDeleter
-    {
-        inline void operator()(sdl::SDL_Window *window) const noexcept
-        {
-            sdl::DestroyWindow(window);
-        }
-    };
-
-    using WindowPtr = std::unique_ptr<sdl::SDL_Window, WindowDeleter>;
-
-    export class RETRO_API Window final : public VulkanViewport
-    {
-      public:
-        inline Window(const int32 width, const int32 height, const CStringView title)
-        {
-            window_ = WindowPtr{
-                sdl::CreateWindow(title.data(), width, height, sdl::WindowFlags::RESIZABLE | sdl::WindowFlags::VULKAN),
-            };
-
-            if (window_ == nullptr)
-            {
-                throw std::runtime_error{std::string{"SDL_CreateWindow failed: "} + sdl::GetError()};
-            }
-        }
-
-        [[nodiscard]] inline sdl::SDL_Window *native_handle() const
-        {
-            return window_.get();
-        }
-
-        // NOLINTNEXTLINE
-        inline void set_title(const CStringView title)
-        {
-            sdl::SetWindowTitle(window_.get(), title.data());
-        }
-
-        [[nodiscard]] vk::UniqueSurfaceKHR create_surface(vk::Instance instance) const override;
-
-        [[nodiscard]] inline Vector2u size() const override
-        {
-            int w = 0;
-            int h = 0;
-            sdl::GetWindowSizeInPixels(window_.get(), &w, &h);
-            return {static_cast<uint32>(w), static_cast<uint32>(h)};
-        }
-
-        [[nodiscard]] inline friend bool operator==(const Window &a, const Window &b) noexcept
-        {
-            return a.native_handle() == b.native_handle();
-        }
-
-        [[nodiscard]] inline friend bool operator==(const Window &a, std::nullptr_t) noexcept
-        {
-            return a.native_handle() == nullptr;
-        }
-
-      private:
-        WindowPtr window_;
-    };
 
     export struct TransientAllocation
     {
@@ -159,7 +80,7 @@ namespace retro
     export class RETRO_API VulkanRenderer2D final : public Renderer2D
     {
       public:
-        explicit VulkanRenderer2D(std::shared_ptr<VulkanViewport> viewport);
+        explicit VulkanRenderer2D(std::shared_ptr<Window> viewport);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -179,8 +100,9 @@ namespace retro
         void remove_render_pipeline(std::type_index type) override;
 
       private:
-        static vk::UniqueInstance create_instance();
-        static std::span<const char *const> get_required_instance_extensions();
+        static vk::UniqueInstance create_instance(const Window &viewport);
+        static vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance);
+        static std::span<const char *const> get_required_instance_extensions(const Window &viewport);
         static vk::UniqueRenderPass create_render_pass(vk::Device device,
                                                        vk::Format color_format,
                                                        vk::SampleCountFlagBits samples);
@@ -191,8 +113,7 @@ namespace retro
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
 
-      private:
-        std::shared_ptr<VulkanViewport> viewport_;
+        std::shared_ptr<Window> viewport_;
 
         vk::UniqueInstance instance_;
         vk::UniqueSurfaceKHR surface_;
@@ -211,9 +132,9 @@ namespace retro
         static constexpr uint32 MAX_FRAMES_IN_FLIGHT = 2;
     };
 
-    export inline auto make_rendering_injector(std::shared_ptr<VulkanViewport> viewport)
+    export inline auto make_rendering_injector(std::shared_ptr<Window> viewport)
     {
-        return boost::di::make_injector(boost::di::bind<VulkanViewport>().to(std::move(viewport)),
+        return boost::di::make_injector(boost::di::bind<Window>().to(std::move(viewport)),
                                         boost::di::bind<Renderer2D>().to<VulkanRenderer2D>());
     }
 } // namespace retro

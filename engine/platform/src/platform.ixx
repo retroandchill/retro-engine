@@ -10,4 +10,6 @@ import retro.core;
 import std;
 
 export import :dll;
-export import :sdl;
+export import :context;
+export import :exceptions;
+export import :display;
