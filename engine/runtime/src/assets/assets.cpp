@@ -33,7 +33,7 @@ namespace retro
     {
         if (const auto existing_asset = asset_cache_.find(path); existing_asset != asset_cache_.end())
         {
-            return RefCountPtr{&*existing_asset};
+            return RefCountPtr{existing_asset->second};
         }
 
         return asset_loader_->load_asset_from_path(path);

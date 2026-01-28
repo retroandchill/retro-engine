@@ -42,9 +42,6 @@
     "name" : "boost-pool",
     "version>=" : "1.90.0"
   }, {
-    "name" : "boost-intrusive",
-    "version>=" : "1.90.0#1"
-  }, {
     "name" : "entt",
     "version>=" : "3.16.0"
   }, {

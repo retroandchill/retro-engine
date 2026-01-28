@@ -21,7 +21,6 @@ set(RETRO_RUNTIME_MODULES
         src/assets/assets.ixx
         src/dependency_injection.ixx
         src/entt.ixx
-        src/intrusive_containers.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -49,10 +48,8 @@ target_sources(retro_runtime PUBLIC
             ${RETRO_RUNTIME_MODULES}
         )
 
-find_package(Boost REQUIRED COMPONENTS intrusive)
 find_package(EnTT CONFIG REQUIRED)
-target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform EnTT::EnTT
-                                    PRIVATE Boost::intrusive)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform EnTT::EnTT)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
