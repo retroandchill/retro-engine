@@ -104,7 +104,6 @@ void Engine::tick(const float delta_time)
 {
     scheduler_.pump();
     script_runtime_->tick(delta_time);
-    scene_.update_transforms();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

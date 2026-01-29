@@ -14,6 +14,29 @@ import retro.core;
 
 namespace retro
 {
+    void SceneNode::set_transform(const Transform2f &transform)
+    {
+        transform_ = transform;
+        update_world_transform();
+    }
+
+    void SceneNode::update_world_transform()
+    {
+        if (parent_ != nullptr)
+        {
+            world_transform_ = parent_->world_transform_.concatenate(transform_);
+        }
+        else
+        {
+            world_transform_ = transform_;
+        }
+
+        for (auto *child : children_)
+        {
+            child->world_transform_ = world_transform_.concatenate(child->transform_);
+        }
+    }
+
     Scene::Scene(PipelineManager &pipeline_manager) : pipeline_manager_{&pipeline_manager}
     {
     }
@@ -45,7 +68,7 @@ namespace retro
             parent->children_.push_back(child);
         }
 
-        child->transform_.dirty_ = true;
+        child->update_world_transform();
     }
 
     void Scene::detach_from_parent(SceneNode *node)
@@ -70,15 +93,7 @@ namespace retro
         }
 
         node->parent_ = nullptr;
-        node->transform_.dirty_ = true;
-    }
-
-    void Scene::update_transforms()
-    {
-        for (auto *viewport : nodes_of_type<ViewportNode>())
-        {
-            update_transform(*viewport, Matrix3x3f::identity(), false);
-        }
+        node->update_world_transform();
     }
 
     void Scene::collect_draw_calls(const Vector2u viewport_size)
@@ -120,22 +135,5 @@ namespace retro
         back->internal_index_ = node->internal_index_;
         vec.pop_back();
         node->internal_index_ = std::dynamic_extent;
-    }
-
-    void Scene::update_transform(SceneNode &node, const Matrix3x3f &parent_world, const bool parent_changed)
-    {
-        auto &transform = node.transform();
-
-        const bool should_update = transform.dirty_ || parent_changed;
-        if (should_update)
-        {
-            transform.world_matrix_ = parent_world * transform.local_matrix();
-            transform.dirty_ = false;
-        }
-
-        for (auto *child : node.children_)
-        {
-            update_transform(*child, transform.world_matrix_, should_update);
-        }
     }
 } // namespace retro

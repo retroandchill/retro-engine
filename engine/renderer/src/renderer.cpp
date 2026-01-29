@@ -26,10 +26,12 @@ namespace retro
     VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, usize pool_size)
         : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
     {
-        const vk::BufferCreateInfo buffer_info{{},
-                                               pool_size_,
-                                               vk::BufferUsageFlagBits::eVertexBuffer |
-                                                   vk::BufferUsageFlagBits::eIndexBuffer};
+        const vk::BufferCreateInfo buffer_info{
+            {},
+            pool_size_,
+            vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
+                vk::BufferUsageFlagBits::eStorageBuffer,
+        };
         buffer_ = device_.createBufferUnique(buffer_info);
 
         const auto mem_reqs = device_.getBufferMemoryRequirements(buffer_.get());
@@ -145,6 +147,8 @@ namespace retro
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
         }
+
+        dev.resetDescriptorPool(sync_.descriptor_pool(current_frame_));
 
         auto result = dev.acquireNextImageKHR(swapchain_.handle(),
                                               std::numeric_limits<uint64>::max(),
@@ -408,7 +412,7 @@ namespace retro
                                               &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, viewport_->size());
+        pipeline_manager_.bind_and_render(cmd, viewport_->size(), sync_.descriptor_pool(current_frame_));
         cmd.endRenderPass();
         cmd.end();
     }

@@ -28,13 +28,12 @@ extern "C"
         Retro_Color color{};
     } Retro_Vertex;
 
-    typedef struct Retro_TransformUpdate
+    typedef struct Retro_Transform2f
     {
-        Retro_NodeHandle node;
         Retro_Vector2f position;
         float rotation;
         Retro_Vector2f scale;
-    } Retro_TransformUpdate;
+    } Retro_Transform2f;
 
     typedef struct Retro_ViewUpdate
     {
@@ -44,11 +43,11 @@ extern "C"
 
     RETRO_API void retro_node_dispose(Retro_NodeHandle node);
 
-    RETRO_API void retro_scene_update_transforms(const Retro_TransformUpdate *updates, int32_t update_count);
+    RETRO_API void retro_node_set_transform(Retro_NodeHandle node, const Retro_Transform2f *transform);
 
     RETRO_API Retro_NodeHandle retro_viewport_create(Retro_Vector2f viewport_size);
 
-    RETRO_API void retro_scene_update_viewports(const Retro_ViewUpdate *updates, int32_t update_count);
+    RETRO_API void retro_scene_viewport_set_size(Retro_NodeHandle node, Retro_Vector2f viewport_size);
 
     RETRO_API Retro_NodeHandle retro_geometry_create(Retro_NodeHandle parent);
 

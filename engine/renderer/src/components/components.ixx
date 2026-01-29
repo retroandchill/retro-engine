@@ -177,6 +177,11 @@ namespace retro
             return in_flight_[frame].get();
         }
 
+        [[nodiscard]] inline vk::DescriptorPool descriptor_pool(const size_t frame) const noexcept
+        {
+            return descriptor_pools_[frame].get();
+        }
+
         [[nodiscard]] inline size_t frame_count() const noexcept
         {
             return image_available_.size();
@@ -186,5 +191,6 @@ namespace retro
         std::vector<vk::UniqueSemaphore> image_available_;
         std::vector<vk::UniqueSemaphore> render_finished_;
         std::vector<vk::UniqueFence> in_flight_;
+        std::vector<vk::UniqueDescriptorPool> descriptor_pools_;
     };
 } // namespace retro

@@ -50,9 +50,11 @@ target_sources(retro_core PUBLIC
 find_package(Boost REQUIRED COMPONENTS asio pool unordered)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
+find_package(gcem CONFIG REQUIRED)
 target_link_libraries(retro_core PRIVATE Boost::asio Boost::unordered Boost::pool
                                         uni-algo::uni-algo
-                                        fmt::fmt)
+                                        fmt::fmt
+                                        gcem)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

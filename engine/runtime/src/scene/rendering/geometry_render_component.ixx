@@ -44,8 +44,10 @@ namespace retro
     export struct GeometryRenderData
     {
         Vector2f viewport_size{};
-        std::array<float, 2> _padding{}; // Align columns to 16 bytes
-        std::array<Vector4f, 3> world_matrix{};
+        Vector2f translation{};
+        Matrix2x2f transform{};
+        Vector2f pivot{};
+        Vector2f size{1, 1};
         uint32 has_texture{};
     };
 
@@ -67,6 +69,6 @@ namespace retro
       private:
         friend struct GeometryType;
 
-        std::vector<GeometryDrawCall> pending_geometry_{};
+        std::unordered_map<const Geometry *, GeometryBatch> geometry_batches_{};
     };
 } // namespace retro

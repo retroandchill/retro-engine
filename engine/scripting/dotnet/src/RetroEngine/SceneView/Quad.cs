@@ -10,18 +10,14 @@ using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
-public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(parent.NativeObject)), IGeometrySync
+public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(parent.NativeObject))
 {
     private static readonly Name Type = new("geometry");
 
     public Vector2F Size
     {
         get;
-        set
-        {
-            field = value;
-            MarkAsDirty();
-        }
+        set { field = value; }
     }
 
     public Color Color
@@ -30,13 +26,13 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
         set
         {
             field = value;
-            MarkAsDirty();
+            SyncGeometry();
         }
     }
 
-    public void SyncGeometry(Action<IntPtr, ReadOnlySpan<Vertex>, ReadOnlySpan<uint>> syncCallback)
+    private void SyncGeometry()
     {
-        syncCallback(
+        NativeSetRenderData(
             NativeObject,
             [
                 new Vertex(new Vector2F(0, 0), new Vector2F(0, 0), Color),
@@ -50,4 +46,16 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_create")]
     private static unsafe partial IntPtr NativeCreate(IntPtr id);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_render_data")]
+    private static unsafe partial void NativeSetRenderData(
+        IntPtr id,
+        ReadOnlySpan<Vertex> vertices,
+        int vertexCount,
+        ReadOnlySpan<uint> indices,
+        int indexCount
+    );
+
+    private static void NativeSetRenderData(IntPtr id, ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices) =>
+        NativeSetRenderData(id, vertices, vertices.Length, indices, indices.Length);
 }

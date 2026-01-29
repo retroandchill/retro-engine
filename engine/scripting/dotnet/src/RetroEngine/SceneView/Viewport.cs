@@ -8,7 +8,7 @@ using RetroEngine.Core.Math;
 
 namespace RetroEngine.SceneView;
 
-public sealed partial class Viewport(Vector2F viewportSize) : SceneObject(NativeCreate(viewportSize)), IViewSync
+public sealed partial class Viewport(Vector2F viewportSize) : SceneObject(NativeCreate(viewportSize))
 {
     public Vector2F Size
     {
@@ -17,7 +17,7 @@ public sealed partial class Viewport(Vector2F viewportSize) : SceneObject(Native
         {
             ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            MarkAsDirty();
+            NativeSetSize(NativeObject, value);
         }
     } = viewportSize;
 
@@ -25,4 +25,7 @@ public sealed partial class Viewport(Vector2F viewportSize) : SceneObject(Native
 
     [LibraryImport(LibraryName, EntryPoint = "retro_viewport_create")]
     private static partial IntPtr NativeCreate(Vector2F viewportSize);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_scene_viewport_set_size")]
+    private static partial void NativeSetSize(IntPtr native, Vector2F viewportSize);
 }

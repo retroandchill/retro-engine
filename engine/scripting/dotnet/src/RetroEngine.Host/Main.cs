@@ -10,7 +10,6 @@ using System.Runtime.Loader;
 using RetroEngine.Core.Async;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
-using RetroEngine.SceneView;
 
 namespace RetroEngine.Host;
 
@@ -125,7 +124,6 @@ public static class Main
     public static int Tick(float deltaTime, int maxTasks)
     {
         var tasksCalled = _synchronizationContext?.Pump(maxTasks) ?? 0;
-        Scene.Sync();
         return tasksCalled;
     }
 

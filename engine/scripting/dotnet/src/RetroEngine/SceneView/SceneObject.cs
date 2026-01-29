@@ -8,7 +8,7 @@ using RetroEngine.Core.Math;
 
 namespace RetroEngine.SceneView;
 
-public abstract partial class SceneObject : ITransformSync, IDisposable
+public abstract partial class SceneObject : IDisposable
 {
     protected SceneObject(IntPtr id)
     {
@@ -20,42 +20,33 @@ public abstract partial class SceneObject : ITransformSync, IDisposable
 
     protected bool Disposed { get; private set; }
 
-    public Vector2F Position
+    public Transform Transform
     {
         get;
         set
         {
             ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            MarkAsDirty();
+            NativeSetTransform(NativeObject, value);
         }
+    }
+
+    public Vector2F Position
+    {
+        get => Transform.Position;
+        set => Transform = Transform with { Position = value };
     }
 
     public float Rotation
     {
-        get;
-        set
-        {
-            ObjectDisposedException.ThrowIf(Disposed, this);
-            field = value;
-            MarkAsDirty();
-        }
+        get => Transform.Rotation;
+        set => Transform = Transform with { Rotation = value };
     }
 
     public Vector2F Scale
     {
-        get;
-        set
-        {
-            ObjectDisposedException.ThrowIf(Disposed, this);
-            field = value;
-            MarkAsDirty();
-        }
-    }
-
-    protected void MarkAsDirty()
-    {
-        Scene.MarkAsDirty(this);
+        get => Transform.Scale;
+        set => Transform = Transform with { Scale = value };
     }
 
     public void Dispose()
@@ -69,6 +60,9 @@ public abstract partial class SceneObject : ITransformSync, IDisposable
     }
 
     private const string LibraryName = "retro_runtime";
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_node_set_transform")]
+    private static partial void NativeSetTransform(IntPtr obj, in Transform transform);
 
     [LibraryImport(LibraryName, EntryPoint = "retro_node_dispose")]
     private static partial void NativeDispose(IntPtr obj);

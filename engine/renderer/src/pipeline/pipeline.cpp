@@ -29,47 +29,78 @@ namespace retro
     class VulkanRenderContext final : public RenderContext
     {
       public:
-        inline VulkanRenderContext(vk::Pipeline pipeline,
+        inline VulkanRenderContext(vk::Device device,
+                                   vk::Pipeline pipeline,
                                    const vk::CommandBuffer cmd,
                                    vk::PipelineLayout pipeline_layout,
+                                   vk::DescriptorSetLayout descriptor_set_layout,
+                                   vk::DescriptorPool descriptor_pool,
                                    const Vector2u viewport_size)
-            : pipeline_{pipeline}, cmd_(cmd), pipeline_layout_{pipeline_layout}, viewport_size_(viewport_size)
+            : device_{device}, pipeline_{pipeline}, cmd_(cmd), pipeline_layout_{pipeline_layout},
+              descriptor_set_layout_{descriptor_set_layout}, descriptor_pool_{descriptor_pool},
+              viewport_size_(viewport_size)
         {
         }
 
-        void draw_geometry(const std::span<const GeometryDrawCall> geometry) override
+        void draw_geometry(const std::span<const GeometryBatch> geometry) override
         {
             cmd_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
 
-            for (auto &d : geometry)
+            for (auto &batch : geometry)
             {
+                // Upload instance data to transient buffer
+                const usize instance_size = batch.instances.size() * sizeof(InstanceData);
+                auto [buffer, mapped_data, offset] =
+                    VulkanBufferManager::instance().allocate_transient(instance_size,
+                                                                       vk::BufferUsageFlagBits::eStorageBuffer);
+
+                std::memcpy(mapped_data, batch.instances.data(), instance_size);
+
+                // Bind instance buffer to descriptor set
+                vk::DescriptorBufferInfo buffer_info{buffer, offset, instance_size};
+
+                vk::WriteDescriptorSet write_set{};
+                write_set.descriptorCount = 1;
+                write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
+                write_set.pBufferInfo = &buffer_info;
+                write_set.dstBinding = 0;
+
+                vk::DescriptorSetAllocateInfo alloc_info{};
+                alloc_info.descriptorPool = descriptor_pool_;
+                alloc_info.descriptorSetCount = 1;
+                alloc_info.pSetLayouts = &descriptor_set_layout_;
+
+                auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
+                auto descriptor_set = descriptor_sets.front();
+
+                // Update the descriptor set with the buffer info
+                write_set.dstSet = descriptor_set;
+                device_.updateDescriptorSets(1, &write_set, 0, nullptr);
+
+                // Bind the descriptor set to the graphics pipeline
+                cmd_.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                        pipeline_layout_,
+                                        0, // first set
+                                        1, // descriptor set count
+                                        &descriptor_set,
+                                        0, // dynamic offset count
+                                        nullptr);
 
                 cmd_.pushConstants(pipeline_layout_,
                                    vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                    0,
-                                   static_cast<uint32>(d.push_constants.size()),
-                                   d.push_constants.data());
+                                   sizeof(Vector2f),
+                                   &batch.viewport_size);
 
-                auto [vertex_buffer, index_buffer, vertex_offset, index_offset] = prepare_geometry(d.geometry);
+                auto [vertex_buffer, index_buffer, vertex_offset, index_offset] = prepare_geometry(*batch.geometry);
                 cmd_.bindVertexBuffers(0, {vertex_buffer}, {vertex_offset});
                 cmd_.bindIndexBuffer(index_buffer, index_offset, vk::IndexType::eUint32);
 
-                cmd_.drawIndexed(static_cast<uint32>(d.geometry.indices.size()), 1, 0, 0, 0);
-            }
-        }
-
-        void draw_procedural(const std::span<ProceduralDrawCall> vertex_count) override
-        {
-            cmd_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
-            for (auto &d : vertex_count)
-            {
-                cmd_.pushConstants(pipeline_layout_,
-                                   vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                                   0,
-                                   static_cast<uint32>(d.push_constants.size()),
-                                   d.push_constants.data());
-
-                cmd_.draw(d.vertex_count, 1, 0, 0);
+                cmd_.drawIndexed(static_cast<uint32>(batch.geometry->indices.size()),
+                                 static_cast<int32>(batch.instances.size()),
+                                 0,
+                                 0,
+                                 0);
             }
         }
 
@@ -93,9 +124,12 @@ namespace retro
                     static_cast<uint32>(i_allocation.offset)};
         }
 
+        vk::Device device_{};
         vk::Pipeline pipeline_;
         vk::CommandBuffer cmd_{};
         vk::PipelineLayout pipeline_layout_{};
+        vk::DescriptorSetLayout descriptor_set_layout_{};
+        vk::DescriptorPool descriptor_pool_{};
         Vector2u viewport_size_{};
     };
 
@@ -113,28 +147,45 @@ namespace retro
         pipeline_->clear_draw_queue();
     }
 
-    void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
+    void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
+                                               const Vector2u viewport_size,
+                                               const vk::DescriptorPool descriptor_pool)
     {
-        VulkanRenderContext context{graphics_pipeline_.get(), cmd, pipeline_layout_.get(), viewport_size};
+        VulkanRenderContext context{device_,
+                                    graphics_pipeline_.get(),
+                                    cmd,
+                                    pipeline_layout_.get(),
+                                    descriptor_set_layout_.get(),
+                                    descriptor_pool,
+                                    viewport_size};
         pipeline_->execute(context);
     }
 
-    vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device) const
+    vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device)
     {
+        /*
         vk::DescriptorSetLayoutBinding sampler_layout_binding{0,
                                                               vk::DescriptorType::eCombinedImageSampler,
                                                               1,
                                                               vk::ShaderStageFlagBits::eFragment};
+                                                              */
 
-        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, 1, &sampler_layout_binding};
+        vk::DescriptorSetLayoutBinding instance_buffer_binding{0,
+                                                               vk::DescriptorType::eStorageBuffer,
+                                                               1,
+                                                               vk::ShaderStageFlagBits::eVertex};
 
-        auto descriptor_set_layout = device.createDescriptorSetLayoutUnique(layout_info);
+        std::array bindings = {instance_buffer_binding};
+
+        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, bindings.size(), bindings.data()};
+
+        descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
 
         vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                     0,
                                     static_cast<uint32>(pipeline_->push_constants_size())};
 
-        std::array layouts = {descriptor_set_layout.get()};
+        std::array layouts = {descriptor_set_layout_.get()};
 
         const vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, layouts.size(), layouts.data(), 1, &range};
         return device.createPipelineLayoutUnique(pipeline_layout_info);
@@ -143,7 +194,7 @@ namespace retro
     vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(vk::Device device,
                                                                       vk::PipelineLayout layout,
                                                                       const VulkanSwapchain &swapchain,
-                                                                      vk::RenderPass render_pass) const
+                                                                      vk::RenderPass render_pass)
     {
         vk::VertexInputBindingDescription binding_description{0, sizeof(Vertex), vk::VertexInputRate::eVertex};
 
@@ -274,16 +325,18 @@ namespace retro
     {
         if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
         {
-            pipelines_.erase(pipelines_.begin() + it->second);
+            pipelines_.erase(std::next(pipelines_.begin(), static_cast<isize>(it->second)));
             pipeline_indices_.erase(type);
         }
     }
 
-    void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd, const Vector2u viewport_size)
+    void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd,
+                                                const Vector2u viewport_size,
+                                                vk::DescriptorPool descriptor_pool)
     {
         for (auto &pipeline : pipelines_)
         {
-            pipeline.bind_and_render(cmd, viewport_size);
+            pipeline.bind_and_render(cmd, viewport_size, descriptor_pool);
         }
     }
 

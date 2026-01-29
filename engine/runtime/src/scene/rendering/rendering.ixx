@@ -29,16 +29,22 @@ namespace retro
         std::vector<uint32> indices{};
     };
 
-    export struct GeometryDrawCall
+    export struct InstanceData
     {
-        Geometry geometry{};
-        std::vector<std::byte> push_constants{};
+        Vector2f translation{};
+        Matrix2x2f transform{};
+        Vector2f pivot{};
+        Vector2f size{1, 1};
+        uint32 has_texture{};
+        std::array<uint32, 3> padding{};
     };
 
-    export struct ProceduralDrawCall
+    export struct GeometryBatch
     {
-        uint32 vertex_count;
-        std::vector<std::byte> push_constants;
+        const Geometry *geometry{};
+        std::vector<InstanceData> instances{};
+        uint32 texture_handle{};
+        Vector2f viewport_size{};
     };
 
     export class RenderContext
@@ -46,9 +52,7 @@ namespace retro
       public:
         virtual ~RenderContext() = default;
 
-        virtual void draw_geometry(std::span<const GeometryDrawCall> geometry) = 0;
-
-        virtual void draw_procedural(std::span<ProceduralDrawCall> vertex_count) = 0;
+        virtual void draw_geometry(std::span<const GeometryBatch> geometry) = 0;
     };
 
     export struct PipelineShaders

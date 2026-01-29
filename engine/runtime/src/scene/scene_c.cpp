@@ -35,6 +35,15 @@ namespace
         static_assert(alignof(Retro_Vertex) == alignof(retro::Vertex));
         return reinterpret_cast<const retro::Vertex *>(vertices);
     }
+
+    retro::Transform2f from_c(const Retro_Transform2f &transform)
+    {
+        const retro::Scale2f scale{from_c(transform.scale)};
+        const retro::Quaternion2f rotation{transform.rotation};
+
+        const auto matrix = retro::Matrix2x2f{rotation} * retro::Matrix2x2f{scale};
+        return retro::Transform2f{matrix, from_c(transform.position)};
+    }
 } // namespace
 
 extern "C"
@@ -45,22 +54,10 @@ extern "C"
         retro::Engine::instance().scene().destroy_node(*from_c(node));
     }
 
-    void retro_scene_update_transforms(const Retro_TransformUpdate *updates, const int32_t update_count)
+    void retro_node_set_transform(const Retro_NodeHandle node, const Retro_Transform2f *transform)
     {
-        std::span update_span{updates, static_cast<usize>(update_count)};
-        for (const auto &[node, position, rotation, scale] : update_span)
-        {
-            auto *ptr = from_c(node);
-            if (ptr == nullptr)
-            {
-                continue;
-            }
-
-            auto &transform = ptr->transform();
-            transform.set_position(from_c(position));
-            transform.set_rotation(rotation);
-            transform.set_scale(from_c(scale));
-        }
+        auto *scene_node = from_c(node);
+        scene_node->set_transform(from_c(*transform));
     }
 
     Retro_NodeHandle retro_viewport_create(const Retro_Vector2f viewport_size)
@@ -69,25 +66,11 @@ extern "C"
         return to_c(&vp);
     }
 
-    void retro_scene_update_viewports(const Retro_ViewUpdate *updates, const int32_t update_count)
+    void retro_scene_viewport_set_size(const Retro_NodeHandle node, const Retro_Vector2f viewport_size)
     {
-        for (auto [node, viewport_size] : std::span{updates, static_cast<usize>(update_count)})
-        {
-            auto *base = from_c(node);
-            if (base == nullptr)
-            {
-                continue;
-            }
-
-            // Caller must pass a viewport node handle here.
-            auto *vp = dynamic_cast<retro::ViewportNode *>(base);
-            if (vp == nullptr)
-            {
-                continue;
-            }
-
-            vp->viewport().view_size = from_c(viewport_size);
-        }
+        auto *base = from_c(node);
+        auto *viewport = static_cast<retro::ViewportNode *>(base);
+        viewport->viewport().view_size = from_c(viewport_size);
     }
 
     Retro_NodeHandle retro_geometry_create(Retro_NodeHandle parent)

@@ -24,7 +24,7 @@ namespace retro
                                     vk::Device device,
                                     const VulkanSwapchain &swapchain,
                                     vk::RenderPass render_pass)
-            : pipeline_{std::move(pipeline)}
+            : device_{device}, pipeline_{std::move(pipeline)}
         {
             recreate(device, swapchain, render_pass);
         }
@@ -33,20 +33,22 @@ namespace retro
 
         void recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass);
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size);
+        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size, vk::DescriptorPool descriptor_pool);
 
       private:
-        [[nodiscard]] vk::UniquePipelineLayout create_pipeline_layout(vk::Device device) const;
+        [[nodiscard]] vk::UniquePipelineLayout create_pipeline_layout(vk::Device device);
 
         vk::UniquePipeline create_graphics_pipeline(vk::Device device,
                                                     vk::PipelineLayout layout,
                                                     const VulkanSwapchain &swapchain,
-                                                    vk::RenderPass render_pass) const;
+                                                    vk::RenderPass render_pass);
 
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
         std::shared_ptr<RenderPipeline> pipeline_;
+        vk::Device device_;
         vk::UniquePipelineLayout pipeline_layout_;
+        vk::UniqueDescriptorSetLayout descriptor_set_layout_;
         vk::UniquePipeline graphics_pipeline_;
     };
 
@@ -66,7 +68,7 @@ namespace retro
                              vk::RenderPass render_pass);
         void destroy_pipeline(std::type_index type);
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size);
+        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size, vk::DescriptorPool descriptor_pool);
         void clear_draw_queue();
 
       private:
