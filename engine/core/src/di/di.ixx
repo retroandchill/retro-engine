@@ -116,9 +116,9 @@ namespace retro
         template <typename T>
         decltype(auto) get()
         {
-            if constexpr (SharedPtr<T>)
+            if constexpr (SharedPtrLike<T>)
             {
-                return std::static_pointer_cast<SharedPtrElement<T>>(get_shared_impl(typeid(SharedPtrElement<T>)));
+                return std::static_pointer_cast<PointerElementT<T>>(get_shared_impl(typeid(PointerElementT<T>)));
             }
             else
             {
@@ -129,16 +129,14 @@ namespace retro
         template <typename T>
         auto create()
         {
-            if (UniquePtr<T>)
+            if (UniquePtrLike<T>)
             {
-                return std::unique_ptr<UniquePtrElement<T>>(
-                    create_raw<UniquePtrElement<T>>(typeid(UniquePtrElement<T>)));
+                return std::unique_ptr<PointerElementT<T>>(create_raw<PointerElementT<T>>(typeid(PointerElementT<T>)));
             }
             // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
-            else if constexpr (SharedPtr<T>)
+            else if constexpr (SharedPtrLike<T>)
             {
-                return std::shared_ptr<SharedPtrElement<T>>(
-                    create_raw<SharedPtrElement<T>>(typeid(SharedPtrElement<T>)));
+                return std::shared_ptr<PointerElementT<T>>(create_raw<PointerElementT<T>>(typeid(PointerElementT<T>)));
             }
             else
             {
