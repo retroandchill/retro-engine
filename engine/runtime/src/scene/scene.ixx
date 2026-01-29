@@ -136,8 +136,6 @@ namespace retro
     class RETRO_API Scene final : NonCopyable
     {
       public:
-        using Dependencies = TypeList<PipelineManager>;
-
         explicit Scene(PipelineManager &pipeline_manager);
 
         template <std::derived_from<SceneNode> T, typename... Args>

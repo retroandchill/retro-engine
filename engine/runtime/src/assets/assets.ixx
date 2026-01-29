@@ -228,8 +228,7 @@ namespace retro
     export class RETRO_API FileSystemAssetSource final : public AssetSource
     {
       public:
-        AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path,
-                                                             const AssetOpenOptions &options = {}) override;
+        AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path, const AssetOpenOptions &options) override;
     };
 
     export struct AssetDecodeContext
@@ -248,22 +247,13 @@ namespace retro
         virtual AssetLoadResult<RefCountPtr<Asset>> decode(const AssetDecodeContext &context, Stream &stream) = 0;
     };
 
-    export class RETRO_API AssetLoader
-    {
-      public:
-        virtual ~AssetLoader() = default;
-
-        virtual AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path) = 0;
-
-        virtual AssetLoadResult<RefCountPtr<Asset>> load_asset_from_stream(AssetPath path, Stream &stream) = 0;
-
-        virtual AssetLoadResult<RefCountPtr<Asset>> load_asset_from_path(AssetPath path);
-    };
-
     export class RETRO_API AssetManager
     {
       public:
-        explicit AssetManager(std::unique_ptr<AssetLoader> asset_loader) : asset_loader_{std::move(asset_loader)}
+        using Dependencies = TypeList<AssetSource, AssetDecoder>;
+
+        explicit inline AssetManager(AssetSource &asset_source, std::vector<std::shared_ptr<AssetDecoder>> decoders)
+            : asset_source_{std::addressof(asset_source)}, decoders_{std::move(decoders)}
         {
         }
 
@@ -293,9 +283,11 @@ namespace retro
         }
 
       private:
-        std::expected<RefCountPtr<Asset>, AssetLoadError> load_asset_internal(const AssetPath &path);
+        AssetLoadResult<RefCountPtr<Asset>> load_asset_internal(const AssetPath &path);
+        AssetLoadResult<RefCountPtr<Asset>> load_asset_from_stream(const AssetPath &path, Stream &stream);
 
-        std::unique_ptr<AssetLoader> asset_loader_{};
+        AssetSource *asset_source_{};
+        std::vector<std::shared_ptr<AssetDecoder>> decoders_;
         std::unordered_map<AssetPath, Asset *> asset_cache_{};
     };
 } // namespace retro

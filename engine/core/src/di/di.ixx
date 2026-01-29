@@ -286,7 +286,7 @@ namespace retro
 
         template <ServiceLifetime Lifetime, typename T, std::derived_from<T> Impl = T>
             requires Injectable<Impl>
-        void add()
+        ServiceCollection &add()
         {
             if constexpr (Lifetime == ServiceLifetime::Singleton)
             {
@@ -303,42 +303,48 @@ namespace retro
                     registrations_.emplace_back(typeid(T), &construct_transient<Impl>);
                 }
             }
+
+            return *this;
         }
 
         template <typename T, std::derived_from<T> Impl = T>
             requires Injectable<Impl>
-        void add_singleton()
+        ServiceCollection &add_singleton()
         {
             return add<ServiceLifetime::Singleton, T, Impl>();
         }
 
         template <typename T>
-        void add_singleton(std::shared_ptr<T> ptr)
+        ServiceCollection &add_singleton(std::shared_ptr<T> ptr)
         {
             registrations_.emplace_back(typeid(T), std::move(ptr));
+            return *this;
         }
 
         template <typename T, std::derived_from<T> Impl = T>
-        void add_singleton(std::shared_ptr<Impl> ptr)
+        ServiceCollection &add_singleton(std::shared_ptr<Impl> ptr)
         {
             registrations_.emplace_back(typeid(T), std::move(ptr));
+            return *this;
         }
 
         template <typename T>
-        void add_singleton(std::unique_ptr<T> ptr)
+        ServiceCollection &add_singleton(std::unique_ptr<T> ptr)
         {
             registrations_.emplace_back(typeid(T), std::shared_ptr<T>(ptr.release()));
+            return *this;
         }
 
         template <typename T, std::derived_from<T> Impl = T>
-        void add_singleton(std::unique_ptr<Impl> ptr)
+        ServiceCollection &add_singleton(std::unique_ptr<Impl> ptr)
         {
             registrations_.emplace_back(typeid(T), std::shared_ptr<Impl>(ptr.release()));
+            return *this;
         }
 
         template <typename T, std::derived_from<T> Impl = T>
             requires Injectable<Impl>
-        void add_transient()
+        ServiceCollection &add_transient()
         {
             return add<ServiceLifetime::Transient, T, Impl>();
         }

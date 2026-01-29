@@ -131,8 +131,10 @@ namespace retro
 
     export inline auto add_engine_services(ServiceCollection &services)
     {
-        services.add_transient<Engine>();
-        services.add_singleton<PipelineManager>();
-        services.add_singleton<RenderPipeline, GeometryRenderPipeline>();
+        services.add_transient<Engine>()
+            .add_singleton<PipelineManager>()
+            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
+            .add_singleton<AssetSource, FileSystemAssetSource>()
+            .add_singleton<AssetManager>();
     }
 } // namespace retro
