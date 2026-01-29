@@ -259,7 +259,7 @@ namespace retro
     };
 
     export template <typename T>
-    using PointerElementT = PointerElement<T>::Type;
+    using PointerElementT = PointerElement<std::remove_cvref_t<T>>::Type;
 
     template <WeakBindable T>
     struct WeakBindableElement
@@ -321,10 +321,22 @@ namespace retro
         } -> std::convertible_to<bool>;
     };
 
-    template <typename T>
+    export template <typename T>
     concept Hashable = requires(T a) {
         {
             std::hash<std::remove_const_t<T>>{}(a)
         } -> std::convertible_to<usize>;
     };
+
+    export template <typename Container, typename Reference>
+    concept ContainerAppendable = requires(Container &c, Reference &&ref) {
+        requires requires { c.emplace_back(std::forward<Reference>(ref)); } ||
+                     requires { c.push_back(std::forward<Reference>(ref)); } ||
+                     requires { c.emplace(c.end(), std::forward<Reference>(ref)); } ||
+                     requires { c.insert(c.end(), std::forward<Reference>(ref)); };
+    };
+
+    export template <typename R, typename T>
+    concept ContainerCompatibleRange =
+        std::ranges::input_range<R> && std::convertible_to<std::ranges::range_reference_t<R>, T>;
 } // namespace retro

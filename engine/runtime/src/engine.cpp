@@ -104,7 +104,7 @@ void Engine::tick(const float delta_time)
 {
     scheduler_.pump();
     script_runtime_->tick(delta_time);
-    scene_->update_transforms();
+    scene_.update_transforms();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -112,7 +112,7 @@ void Engine::render()
 {
     renderer_->begin_frame();
 
-    scene_->collect_draw_calls(renderer_->viewport_size());
+    scene_.collect_draw_calls(renderer_->viewport_size());
 
     renderer_->end_frame();
 }

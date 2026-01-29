@@ -69,7 +69,12 @@ namespace retro
     using DependenciesOf = T::Dependencies;
 
     template <typename D>
-    using ArgChoices = TypeList<D &, std::shared_ptr<D>, std::unique_ptr<D>, D>;
+    using ArgChoices = TypeList<D &,
+                                std::shared_ptr<D>,
+                                std::vector<std::shared_ptr<D>>,
+                                const std::vector<std::shared_ptr<D>> &,
+                                std::unique_ptr<D>,
+                                D>;
 
     template <typename T, typename ArgList>
     struct IsConstructibleFromList;

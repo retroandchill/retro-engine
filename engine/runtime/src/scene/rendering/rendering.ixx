@@ -91,11 +91,6 @@ namespace retro
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };
 
-    export template <typename T>
-    concept RenderComponent =
-        requires { typename T::PipelineType; } && std::is_default_constructible_v<typename T::PipelineType> &&
-        std::derived_from<typename T::PipelineType, RenderPipeline>;
-
     struct PipelineUsage
     {
         std::shared_ptr<RenderPipeline> pipeline;
@@ -105,67 +100,16 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        using Dependencies = TypeList<Renderer2D>;
+        using Dependencies = TypeList<Renderer2D, RenderPipeline>;
         static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
-        explicit PipelineManager(Renderer2D &renderer) : renderer_{&renderer}
-        {
-        }
-
-        template <RenderComponent Component>
-        void set_up_pipeline_listener()
-        {
-            using Pipeline = Component::PipelineType;
-            const std::type_index type_index{typeid(Component)};
-
-            auto it = pipelines_.find(type_index);
-            if (it == pipelines_.end())
-            {
-                it = pipelines_.emplace(type_index, PipelineUsage{std::make_shared<Pipeline>(), 0}).first;
-            }
-
-            // For OO: keep pipelines around; the renderer needs them created once.
-            if (it->second.usage_count++ == 0)
-            {
-                renderer_->add_new_render_pipeline(type_index, it->second.pipeline);
-            }
-        }
+        explicit PipelineManager(Renderer2D &renderer, const std::vector<std::shared_ptr<RenderPipeline>> &pipelines);
 
         void collect_all_draw_calls(Scene &registry, Vector2u viewport_size);
 
       private:
         Renderer2D *renderer_{};
         std::map<std::type_index, PipelineUsage> pipelines_{};
-    };
-
-    export class RETRO_API RenderTypeRegistry
-    {
-        RenderTypeRegistry() = default;
-        ~RenderTypeRegistry() = default;
-
-      public:
-        static RenderTypeRegistry &instance();
-
-        template <RenderComponent T>
-        void register_type()
-        {
-            registrations_.emplace_back([this](PipelineManager &pipeline_manager)
-                                        { pipeline_manager.set_up_pipeline_listener<T>(); });
-        }
-
-        void register_listeners(PipelineManager &pipeline_manager) const;
-
-      private:
-        std::vector<std::function<void(PipelineManager &)>> registrations_{};
-    };
-
-    export template <RenderComponent T>
-    struct PipelineRegistration
-    {
-        explicit PipelineRegistration()
-        {
-            RenderTypeRegistry::instance().register_type<T>();
-        }
     };
 
 } // namespace retro

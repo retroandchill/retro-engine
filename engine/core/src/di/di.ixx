@@ -41,6 +41,7 @@ namespace retro
         explicit inline ServiceIdentifier(const std::type_info &type) noexcept : type(type)
         {
         }
+
         explicit inline ServiceIdentifier(const std::type_index &type) noexcept : type(type)
         {
         }
@@ -77,7 +78,6 @@ struct std::hash<retro::ServiceCacheKey>
 
 namespace retro
 {
-
     using SingletonCreator = std::shared_ptr<void> (*)(ServiceProvider &);
     using TransientCreator = void *(*)(ServiceProvider &);
 
@@ -108,6 +108,10 @@ namespace retro
     template <Injectable T>
     T construct_transient_in_place(ServiceProvider &provider);
 
+    template <typename T>
+    concept ServiceCompatbleContainer = std::ranges::range<T> && SharedPtrLike<std::ranges::range_reference_t<T>> &&
+                                        ContainerAppendable<T, PointerElement<std::ranges::range_reference_t<T>>>;
+
     class RETRO_API ServiceProvider
     {
       public:
@@ -116,7 +120,15 @@ namespace retro
         template <typename T>
         decltype(auto) get()
         {
-            if constexpr (SharedPtrLike<T>)
+            if constexpr (ServiceCompatbleContainer<std::decay_t<T>>)
+            {
+                using DecayedT = std::decay_t<T>;
+                using ElementType = PointerElementT<std::ranges::range_reference_t<DecayedT>>;
+                return get_all(typeid(ElementType)) |
+                       std::views::transform([](auto ptr) { return std::static_pointer_cast<ElementType>(ptr); }) |
+                       std::ranges::to<DecayedT>();
+            }
+            else if constexpr (SharedPtrLike<T>)
             {
                 return std::static_pointer_cast<PointerElementT<T>>(get_shared_impl(typeid(PointerElementT<T>)));
             }
@@ -158,6 +170,7 @@ namespace retro
 
       private:
         void *get_raw(const std::type_info &type);
+
         std::shared_ptr<void> get_shared_impl(const std::type_info &type);
 
         template <typename T>
@@ -213,8 +226,11 @@ namespace retro
         ServiceCallSite registration;
 
         explicit ServiceRegistration(const std::type_info &type) noexcept;
+
         ServiceRegistration(const std::type_info &type, SingletonCreator factory) noexcept;
+
         ServiceRegistration(const std::type_info &type, TransientCreator factory) noexcept;
+
         ServiceRegistration(const std::type_info &type, std::shared_ptr<void> ptr) noexcept;
     };
 

@@ -7,9 +7,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/scene_c.cpp
         src/engine_c.cpp
         src/scene/rendering/geometry_render_component.cpp
-        src/scene/rendering/render_type_registry.cpp
-        src/scene/rendering/registration.cpp
-        src/scene/rendering/pipeline_manager.cpp
+        src/scene/rendering/rendering.cpp
         src/assets/assets.cpp
 )
 

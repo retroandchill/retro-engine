@@ -16,7 +16,6 @@ namespace retro
 {
     Scene::Scene(PipelineManager &pipeline_manager) : pipeline_manager_{&pipeline_manager}
     {
-        RenderTypeRegistry::instance().register_listeners(*pipeline_manager_);
     }
 
     void Scene::destroy_node(SceneNode &node)

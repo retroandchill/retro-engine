@@ -54,10 +54,10 @@ namespace retro
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ScriptRuntime, Renderer2D, Scene>;
+        using Dependencies = TypeList<ScriptRuntime, Renderer2D, PipelineManager>;
 
-        inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer, Scene &scene)
-            : script_runtime_(&script_runtime), renderer_(&renderer), scene_(&scene)
+        inline Engine(ScriptRuntime &script_runtime, Renderer2D &renderer, PipelineManager &pipeline_manager)
+            : script_runtime_(&script_runtime), renderer_(&renderer), scene_{pipeline_manager}
         {
         }
 
@@ -91,10 +91,9 @@ namespace retro
 
         RETRO_API void request_shutdown(int32 exit_code = 0);
 
-        [[nodiscard]] inline Scene &scene() const
+        [[nodiscard]] inline Scene &scene()
         {
-            assert(scene_ != nullptr);
-            return *scene_;
+            return scene_;
         }
 
       private:
@@ -108,7 +107,7 @@ namespace retro
 
         std::atomic<int32> exit_code_{0};
         std::atomic<bool> running_{false};
-        Scene *scene_{};
+        Scene scene_;
         ManualTaskScheduler scheduler_{};
     };
 
@@ -133,7 +132,7 @@ namespace retro
     export inline auto add_engine_services(ServiceCollection &services)
     {
         services.add_transient<Engine>();
-        services.add_singleton<Scene>();
         services.add_singleton<PipelineManager>();
+        services.add_singleton<RenderPipeline, GeometryRenderPipeline>();
     }
 } // namespace retro
