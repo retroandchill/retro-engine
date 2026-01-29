@@ -23,9 +23,12 @@ int main()
     try
     {
         const auto window = Window::create_shared({.flags = WindowFlags::Resizable | WindowFlags::Vulkan});
-        const auto injector = boost::di::make_injector(make_scripting_injector(),
-                                                       make_rendering_injector(window),
-                                                       make_runtime_injector());
+        ServiceCollection service_collection;
+        add_engine_services(service_collection);
+        add_rendering_services(service_collection, window);
+        add_scripting_services(service_collection);
+
+        ServiceProvider service_provider{service_collection};
 
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{
@@ -33,7 +36,7 @@ int main()
             {
                 try
                 {
-                    EngineLifecycle engine_lifecycle{injector.create<std::unique_ptr<Engine>>()};
+                    EngineLifecycle engine_lifecycle{service_provider.create<std::unique_ptr<Engine>>()};
                     auto &engine = Engine::instance();
                     engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
                 }

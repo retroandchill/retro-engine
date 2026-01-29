@@ -7,6 +7,7 @@ set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/strings/name_c.cpp
         src/functional/functional.cpp
         src/async/async.cpp
+        src/di/di.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
@@ -31,6 +32,8 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/concepts.ixx
         src/async/async.ixx
         src/containers/optional.ixx
+        src/di/di.ixx
+        src/di/metadata.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
