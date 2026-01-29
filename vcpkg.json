@@ -42,10 +42,6 @@
     "name" : "boost-pool",
     "version>=" : "1.90.0"
   }, {
-    "name" : "bext-di",
-    "version>=" : "1.3.2",
-    "features" : [ "extensions" ]
-  }, {
     "name" : "boost-asio",
     "version>=" : "1.90.0#1"
   } ],

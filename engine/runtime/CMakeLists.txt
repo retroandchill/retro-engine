@@ -19,7 +19,6 @@ set(RETRO_RUNTIME_MODULES
         src/scene/rendering/rendering.ixx
         src/scene/rendering/geometry_render_component.ixx
         src/assets/assets.ixx
-        src/dependency_injection.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS
