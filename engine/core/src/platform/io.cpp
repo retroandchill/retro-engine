@@ -265,4 +265,214 @@ namespace retro
         // Since we're not using an internal buffer, we don't need to flush
         return {};
     }
+
+    StreamResult<std::span<const std::byte>> BufferedStream::peek(usize count)
+    {
+        if (is_closed())
+        {
+            return std::unexpected(StreamError::Closed);
+        }
+
+        if (!can_read())
+        {
+            return std::unexpected(StreamError::NotSupported);
+        }
+
+        usize buffer_offset = position_ - buffer_start_;
+        usize available_in_buffer = buffer_end_ - buffer_start_;
+        usize data_available = available_in_buffer - buffer_offset;
+
+        if (data_available < count)
+        {
+            EXPECT(fill_buffer(count - data_available));
+            buffer_offset = position_ - buffer_start_;
+            available_in_buffer = buffer_end_ - buffer_start_;
+            data_available = available_in_buffer - buffer_offset;
+        }
+
+        const usize to_return = std::min(count, data_available);
+        return std::span<const std::byte>{std::next(buffer_.data(), buffer_offset), to_return};
+    }
+
+    bool BufferedStream::can_read() const
+    {
+        return inner_->can_read();
+    }
+
+    bool BufferedStream::can_write() const
+    {
+        return inner_->can_write();
+    }
+
+    bool BufferedStream::can_seek() const
+    {
+        return inner_->can_seek();
+    }
+
+    bool BufferedStream::is_closed() const
+    {
+        return inner_->is_closed();
+    }
+
+    void BufferedStream::close() noexcept
+    {
+        inner_->close();
+        buffer_.clear();
+    }
+
+    StreamResult<usize> BufferedStream::length() const
+    {
+        return inner_->length();
+    }
+
+    StreamResult<usize> BufferedStream::position() const
+    {
+        return position_;
+    }
+
+    StreamResult<usize> BufferedStream::seek(usize offset, SeekOrigin origin)
+    {
+        if (is_closed())
+        {
+            return std::unexpected(StreamError::Closed);
+        }
+
+        if (!can_seek())
+        {
+            return std::unexpected(StreamError::NotSupported);
+        }
+
+        EXPECT(inner_->seek(offset, origin));
+        EXPECT_ASSIGN(position_, inner_->position());
+        buffer_start_ = position_;
+        buffer_end_ = position_;
+
+        return position_;
+    }
+
+    StreamResult<void> BufferedStream::set_position(usize pos)
+    {
+        EXPECT(seek(pos, SeekOrigin::Begin));
+        return {};
+    }
+
+    StreamResult<usize> BufferedStream::read(std::span<std::byte> dest)
+    {
+        if (is_closed())
+        {
+            return std::unexpected(StreamError::Closed);
+        }
+
+        if (!can_read())
+        {
+            return std::unexpected(StreamError::NotSupported);
+        }
+
+        usize bytes_read = 0;
+
+        while (bytes_read < dest.size())
+        {
+            usize buffer_offset = position_ - buffer_start_;
+            usize available_in_buffer = buffer_end_ - buffer_start_;
+
+            if (buffer_offset >= available_in_buffer)
+            {
+                if (available_in_buffer == buffer_.size())
+                {
+                    buffer_start_ = position_;
+                    buffer_end_ = position_;
+                }
+
+                EXPECT(fill_buffer(dest.size() - bytes_read));
+
+                buffer_offset = position_ - buffer_start_;
+                available_in_buffer = buffer_end_ - buffer_start_;
+
+                if (buffer_offset >= available_in_buffer)
+                {
+                    break;
+                }
+            }
+
+            usize to_copy = std::min(dest.size() - bytes_read, available_in_buffer - buffer_offset);
+            std::memcpy(dest.data() + bytes_read, buffer_.data() + buffer_offset, to_copy);
+
+            bytes_read += to_copy;
+            position_ += to_copy;
+        }
+
+        return bytes_read;
+    }
+
+    StreamResult<usize> BufferedStream::write(std::span<const std::byte> src)
+    {
+        if (is_closed())
+        {
+            return std::unexpected(StreamError::Closed);
+        }
+
+        if (!can_write())
+        {
+            return std::unexpected(StreamError::NotSupported);
+        }
+
+        auto result = inner_->write(src);
+        if (result)
+        {
+            position_ += result.value();
+
+            buffer_start_ = position_;
+            buffer_end_ = position_;
+        }
+
+        return result;
+    }
+
+    StreamResult<void> BufferedStream::flush()
+    {
+        return inner_->flush();
+    }
+
+    StreamResult<void> BufferedStream::fill_buffer(const usize min_required)
+    {
+        if (buffer_start_ > 0 && buffer_end_ < buffer_.size())
+        {
+            const usize existing_data = buffer_end_ - buffer_start_;
+            std::memcpy(buffer_.data(), buffer_.data() + buffer_start_, existing_data);
+            buffer_start_ = 0;
+            buffer_end_ = existing_data;
+        }
+
+        while (true)
+        {
+            usize current_available = buffer_end_ - buffer_start_;
+            usize buffer_offset = position_ - buffer_start_;
+            usize data_available = current_available - buffer_offset;
+
+            // Check if we have enough data now
+            if (data_available >= min_required)
+            {
+                return {};
+            }
+
+            const usize space_available = buffer_.size() - buffer_end_;
+            if (space_available == 0)
+            {
+                return {};
+            }
+
+            auto result = inner_->read(std::span{buffer_.data() + buffer_end_, space_available});
+            if (!result)
+            {
+                return std::unexpected(result.error());
+            }
+
+            if (result.value() == 0)
+            {
+                return {};
+            }
+
+            buffer_end_ += result.value();
+        }
+    }
 } // namespace retro

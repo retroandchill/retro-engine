@@ -19,7 +19,7 @@ namespace retro
         content_root /= path.asset_name().to_string();
 
         return FileStream::open(content_root, FileOpenMode::ReadOnly)
-            .transform_error([](const auto &) { return AssetLoadError{std::in_place_type<AssetNotFound>}; })
+            .transform_error([](const auto &) { return AssetLoadError::AssetNotFound; })
             .transform([](auto &&file) { return std::unique_ptr<Stream>{std::move(file)}; });
     }
 
@@ -36,13 +36,15 @@ namespace retro
 
     AssetLoadResult<RefCountPtr<Asset>> AssetManager::load_asset_from_stream(const AssetPath &path, Stream &stream)
     {
-        const AssetDecodeContext context{.path = path};
-        for (const auto &decoder :
-             decoders_ | std::views::filter([&context](const auto &d) { return d->can_decode(context); }))
+        BufferedStream buffered_stream{stream};
+        for (const AssetDecodeContext context{.path = path};
+             const auto &decoder :
+             decoders_ | std::views::filter([&context, &buffered_stream](const std::shared_ptr<AssetDecoder> &d)
+                                            { return d->can_decode(context, buffered_stream); }))
         {
-            return decoder->decode(context, stream);
+            return decoder->decode(context, buffered_stream);
         }
 
-        return std::unexpected{AssetLoadError{std::in_place_type<InvalidAssetFormatError>}};
+        return std::unexpected{AssetLoadError::InvalidAssetFormat};
     }
 } // namespace retro

@@ -16,6 +16,7 @@ export import :assets;
 export import :scene;
 export import :scene.rendering;
 export import :scene.rendering.geometry_render_component;
+export import :texture;
 
 namespace retro
 {
@@ -135,6 +136,7 @@ namespace retro
             .add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<AssetSource, FileSystemAssetSource>()
-            .add_singleton<AssetManager>();
+            .add_singleton<AssetManager>()
+            .add_singleton<AssetDecoder, TextureDecoder>();
     }
 } // namespace retro

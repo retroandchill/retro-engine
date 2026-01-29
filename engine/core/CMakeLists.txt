@@ -34,6 +34,7 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/containers/optional.ixx
         src/di/di.ixx
         src/di/metadata.ixx
+        src/exceptions.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

@@ -17,11 +17,13 @@ set(RETRO_RUNTIME_MODULES
         src/scene/rendering/rendering.ixx
         src/scene/rendering/geometry_render_component.ixx
         src/assets/assets.ixx
+        src/assets/texture.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h
         include/retro/runtime/engine.h
+        src/assets/texture.cpp
 )
 
 

@@ -149,63 +149,13 @@ namespace retro
         };
     };
 
-    export class BadAssetPathError
+    export enum class AssetLoadError : uint8
     {
-        // TODO: Fill out
-    };
-
-    export class InvalidAssetFormatError
-    {
-        // TODO: Fill out
-    };
-
-    export class AmbiguousAssetPathError
-    {
-        // TODO: Fill out
-    };
-
-    export class AssetNotFound
-    {
-        // TODO: Fill out
-    };
-
-    export class AssetTypeMismatch
-    {
-      public:
-        AssetTypeMismatch(const std::type_info &expected, const std::type_info &actual)
-            : expected_type_(std::addressof(expected)), actual_type_(std::addressof(actual))
-        {
-        }
-
-      private:
-        const std::type_info *expected_type_{};
-        const std::type_info *actual_type_{};
-    };
-
-    export class AssetLoadError
-    {
-        using Storage = std::variant<BadAssetPathError,
-                                     InvalidAssetFormatError,
-                                     AmbiguousAssetPathError,
-                                     AssetNotFound,
-                                     AssetTypeMismatch>;
-
-      public:
-        template <typename T, typename... Args>
-            requires VariantMember<T, Storage> && std::constructible_from<T, Args...>
-        explicit constexpr AssetLoadError(std::in_place_type_t<T>, Args &&...args)
-            : error_{std::in_place_type<T>, std::forward<Args>(args)...}
-        {
-        }
-
-        template <CanVisitVariant<Storage> Functor>
-        constexpr decltype(auto) visit(Functor &&functor) const
-        {
-            return std::visit(std::forward<Functor>(functor), error_);
-        }
-
-      private:
-        Storage error_;
+        BadAssetPath,
+        InvalidAssetFormat,
+        AmbiguousAssetPath,
+        AssetNotFound,
+        AssetTypeMismatch
     };
 
     export template <typename T>
@@ -234,7 +184,6 @@ namespace retro
     export struct AssetDecodeContext
     {
         AssetPath path{};
-        // TODO: Add more information if needed
     };
 
     export class AssetDecoder
@@ -242,9 +191,10 @@ namespace retro
       public:
         virtual ~AssetDecoder() = default;
 
-        [[nodiscard]] virtual bool can_decode(const AssetDecodeContext &context) const = 0;
+        [[nodiscard]] virtual bool can_decode(const AssetDecodeContext &context, BufferedStream &stream) const = 0;
 
-        virtual AssetLoadResult<RefCountPtr<Asset>> decode(const AssetDecodeContext &context, Stream &stream) = 0;
+        virtual AssetLoadResult<RefCountPtr<Asset>> decode(const AssetDecodeContext &context,
+                                                           BufferedStream &stream) = 0;
     };
 
     export class RETRO_API AssetManager
@@ -273,8 +223,7 @@ namespace retro
                         auto cast_ptr = dynamic_pointer_cast<T>(std::move(asset));
                         if (cast_ptr == nullptr)
                         {
-                            return std::unexpected{
-                                AssetLoadError{std::in_place_type<AssetTypeMismatch>, typeid(T), typeid(*asset_ptr)}};
+                            return std::unexpected{AssetLoadError::AssetTypeMismatch};
                         }
 
                         return std::move(cast_ptr);

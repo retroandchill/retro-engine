@@ -39,7 +39,7 @@ namespace retro
     export template <typename T>
     using StreamResult = std::expected<T, StreamError>;
 
-    export class RETRO_API Stream : NonCopyable
+    export class RETRO_API Stream
     {
       public:
         virtual ~Stream() = default;
@@ -110,6 +110,57 @@ namespace retro
 
       private:
         FileHandle file_;
+        usize position_{0};
+    };
+
+    /**
+     * Stream that reads bytes into a buffer to enable peaking ahead without actually advacing the stream.
+     * @remarks This type does not own the underlying Stream, so it is up to the user to ensure that this type does not
+     * outlive the underlying stream.
+     */
+    export class RETRO_API BufferedStream final : public Stream
+    {
+        static constexpr usize DEFAULT_BUFFER_SIZE = 8192;
+
+      public:
+        explicit inline BufferedStream(Stream &underlying, usize buffer_size = DEFAULT_BUFFER_SIZE)
+            : inner_{&underlying}, buffer_{buffer_size}
+        {
+        }
+
+        StreamResult<std::span<const std::byte>> peek(usize count);
+
+        [[nodiscard]] bool can_read() const override;
+
+        [[nodiscard]] bool can_write() const override;
+
+        [[nodiscard]] bool can_seek() const override;
+
+        [[nodiscard]] bool is_closed() const override;
+
+        void close() noexcept override;
+
+        [[nodiscard]] StreamResult<usize> length() const override;
+
+        [[nodiscard]] StreamResult<usize> position() const override;
+
+        [[nodiscard]] StreamResult<usize> seek(usize offset, SeekOrigin origin) override;
+
+        [[nodiscard]] StreamResult<void> set_position(usize pos) override;
+
+        [[nodiscard]] StreamResult<usize> read(std::span<std::byte> dest) override;
+
+        [[nodiscard]] StreamResult<usize> write(std::span<const std::byte> src) override;
+
+        [[nodiscard]] StreamResult<void> flush() override;
+
+      private:
+        StreamResult<void> fill_buffer(usize min_required);
+
+        Stream *inner_;
+        std::vector<std::byte> buffer_;
+        usize buffer_start_{0};
+        usize buffer_end_{0};
         usize position_{0};
     };
 } // namespace retro

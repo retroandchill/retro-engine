@@ -14,6 +14,7 @@ export import :basic_types;
 export import :concepts;
 export import :defines;
 export import :di;
+export import :exceptions;
 export import :io;
 export import :functional;
 export import :name;
