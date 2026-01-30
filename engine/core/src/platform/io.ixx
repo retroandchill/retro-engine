@@ -62,6 +62,12 @@ namespace retro
 
         [[nodiscard]] virtual StreamResult<int32> read_byte();
         [[nodiscard]] virtual StreamResult<void> write_byte(std::byte byte);
+
+        [[nodiscard]] StreamResult<std::vector<std::byte>> read_all();
+
+      private:
+        [[nodiscard]] StreamResult<std::vector<std::byte>> read_all_with_length(usize len);
+        [[nodiscard]] StreamResult<std::vector<std::byte>> read_bytes_chunked();
     };
 
     export enum class FileOpenMode

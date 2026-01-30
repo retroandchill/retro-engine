@@ -129,7 +129,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
-        explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release())
+        explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release(RefCountInternal{}))
         {
             other.ptr_ = nullptr;
         }
@@ -290,6 +290,9 @@ namespace retro
         }
 
       private:
+        template <RefCounted U>
+        friend class RefCountPtr;
+
         T *ptr_{nullptr};
     };
 

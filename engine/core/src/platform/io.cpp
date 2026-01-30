@@ -47,6 +47,42 @@ namespace retro
         EXPECT(write(buffer));
         return {};
     }
+
+    StreamResult<std::vector<std::byte>> Stream::read_all()
+    {
+        if (!can_read())
+        {
+            return std::unexpected(StreamError::NotSupported);
+        }
+
+        return length()
+            .and_then([this](const usize num_bytes) -> StreamResult<std::vector<std::byte>>
+                      { return read_all_with_length(num_bytes); })
+            .or_else([this](StreamError) { return read_bytes_chunked(); });
+    }
+
+    StreamResult<std::vector<std::byte>> Stream::read_all_with_length(const usize len)
+    {
+        std::vector<std::byte> buffer(len);
+        EXPECT(read(buffer));
+        return std::move(buffer);
+    }
+
+    StreamResult<std::vector<std::byte>> Stream::read_bytes_chunked()
+    {
+        constexpr usize BUFFER_SIZE = 4096;
+        std::array<std::byte, BUFFER_SIZE> buffer{};
+        std::vector<std::byte> result;
+        usize bytes_read;
+        do
+        {
+            EXPECT_ASSIGN(bytes_read, read(buffer));
+            result.insert(result.end(), buffer.begin(), std::next(buffer.begin(), static_cast<isize>(bytes_read)));
+        } while (bytes_read > 0);
+
+        return std::move(result);
+    }
+
     namespace
     {
         boost::asio::io_context &global_io_context()
@@ -112,33 +148,19 @@ namespace retro
 
             return StreamError::IoError;
         }
-
-        template <auto Functor, typename... Args>
-            requires std::invocable<decltype(Functor), Args..., boost::system::error_code>
-        StreamResult<std::invoke_result_t<decltype(Functor), Args..., boost::system::error_code>> evaluate_result(
-            Args &&...args)
-        {
-            boost::system::error_code ec;
-            auto result = Functor(std::forward<Args>(args)..., ec);
-            if (ec.failed())
-            {
-                return std::unexpected(to_stream_error(ec));
-            }
-
-            return std::move(result);
-        }
     } // namespace
 
     FileStream::FileStream(PrivateInit, FileHandle handle) : file_{std::move(handle)}
     {
     }
 
-    StreamResult<std::unique_ptr<FileStream>> FileStream::open(const std::filesystem::path &path, FileOpenMode mode)
+    StreamResult<std::unique_ptr<FileStream>> FileStream::open(const std::filesystem::path &path,
+                                                               const FileOpenMode mode)
     {
         boost::asio::basic_stream_file file{global_io_context().get_executor()};
 
         boost::system::error_code ec;
-        file.open(path.string(), to_open_flags(mode), ec);
+        std::ignore = file.open(path.string(), to_open_flags(mode), ec);
         if (ec.failed())
         {
             return std::unexpected(to_stream_error(ec));
@@ -200,7 +222,7 @@ namespace retro
         }
 
         boost::system::error_code ec;
-        auto result = file_.seek(offset, to_seek_basis(origin), ec);
+        auto result = file_.seek(static_cast<int64>(offset), to_seek_basis(origin), ec);
         if (ec.failed())
         {
             return std::unexpected(to_stream_error(ec));
@@ -291,7 +313,7 @@ namespace retro
         }
 
         const usize to_return = std::min(count, data_available);
-        return std::span<const std::byte>{std::next(buffer_.data(), buffer_offset), to_return};
+        return std::span<const std::byte>{std::next(buffer_.data(), static_cast<isize>(buffer_offset)), to_return};
     }
 
     bool BufferedStream::can_read() const

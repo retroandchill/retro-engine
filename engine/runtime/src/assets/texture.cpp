@@ -4,6 +4,11 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 module retro.runtime;
 
 namespace retro
@@ -35,6 +40,33 @@ namespace retro
     AssetLoadResult<RefCountPtr<Asset>> TextureDecoder::decode(const AssetDecodeContext &context,
                                                                BufferedStream &stream)
     {
-        throw NotImplementedException{};
+        return stream.read_all()
+            .transform_error([](StreamError) { return AssetLoadError::InvalidAssetFormat; })
+            .and_then([](const std::vector<std::byte> &bytes) { return load_image_data(bytes); })
+            .transform([&context](ImageData &&image_data) -> RefCountPtr<Asset>
+                       { return make_ref_counted<Texture>(context.path, std::move(image_data)); });
+    }
+
+    AssetLoadResult<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept
+    {
+        ImageData result{};
+        auto image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
+                                                static_cast<int32>(bytes.size()),
+                                                &result.width,
+                                                &result.height,
+                                                &result.channels,
+                                                4);
+        if (image_data == nullptr)
+        {
+            return std::unexpected{AssetLoadError::InvalidAssetFormat};
+        }
+
+        result.image_data.reset(reinterpret_cast<std::byte *>(image_data));
+        return std::move(result);
+    }
+
+    void ImageDataDeleter::operator()(std::byte *bytes) const
+    {
+        stbi_image_free(bytes);
     }
 } // namespace retro

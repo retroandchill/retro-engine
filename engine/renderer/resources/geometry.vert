@@ -1,5 +1,4 @@
 #version 450
-#extension GL_EXT_debug_printf : enable
 
 // Vertex attributes from the buffer
 layout(location = 0) in vec2 inPosition;
@@ -31,7 +30,7 @@ layout(push_constant) uniform SceneData {
 void main() {
     InstanceData instance = instanceData.instances[gl_InstanceIndex];
 
-    vec2 localPos = inPosition * instance.size - instance.pivot;
+    vec2 localPos = (inPosition - instance.pivot) * instance.size;
     vec2 transformedPos = instance.transform * localPos + instance.translation;
 
     vec2 ndc = (transformedPos / uData.viewportSize) * 2.0 - 1.0;

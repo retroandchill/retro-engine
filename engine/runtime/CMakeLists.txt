@@ -48,6 +48,9 @@ target_sources(retro_runtime PUBLIC
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform)
 
+find_package(Stb REQUIRED)
+target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})
+
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
