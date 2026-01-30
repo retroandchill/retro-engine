@@ -18,7 +18,7 @@
 extern "C"
 {
 #endif
-    typedef uint64_t Retro_NodeHandle;
+    typedef uintptr_t Retro_NodeHandle;
 
     typedef struct Retro_Vertex
     {

@@ -50,12 +50,12 @@ namespace retro
     AssetLoadResult<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept
     {
         ImageData result{};
-        auto image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
-                                                static_cast<int32>(bytes.size()),
-                                                &result.width,
-                                                &result.height,
-                                                &result.channels,
-                                                4);
+        auto *image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
+                                                 static_cast<int32>(bytes.size()),
+                                                 &result.width,
+                                                 &result.height,
+                                                 &result.channels,
+                                                 4);
         if (image_data == nullptr)
         {
             return std::unexpected{AssetLoadError::InvalidAssetFormat};

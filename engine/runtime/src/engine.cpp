@@ -100,6 +100,11 @@ void Engine::request_shutdown(const int32 exit_code)
     running_.store(false);
 }
 
+bool Engine::remove_asset_from_cache(const AssetPath &path) const
+{
+    return asset_manager_->remove_asset_from_cache(path);
+}
+
 void Engine::tick(const float delta_time)
 {
     scheduler_.pump();

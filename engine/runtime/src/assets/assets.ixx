@@ -55,12 +55,12 @@ namespace retro
             }
         }
 
-        inline Name package_name() const noexcept
+        [[nodiscard]] inline Name package_name() const noexcept
         {
             return package_name_;
         }
 
-        inline Name asset_name() const noexcept
+        [[nodiscard]] inline Name asset_name() const noexcept
         {
             return asset_name_;
         }
@@ -100,11 +100,6 @@ namespace retro
         friend constexpr std::strong_ordering operator<=>(const AssetPath &lhs,
                                                           const AssetPath &rhs) noexcept = default;
 
-        friend constexpr usize hash_value(const AssetPath path)
-        {
-            return hash_combine(path.package_name_, path.asset_name_);
-        }
-
       private:
         Name package_name_{};
         Name asset_name_{};
@@ -116,37 +111,56 @@ struct std::hash<retro::AssetPath>
 {
     constexpr usize operator()(const retro::AssetPath &path) const noexcept
     {
-        return hash_value(path);
+        return hash_combine(path.package_name(), path.asset_name());
     }
 };
 
 namespace retro
 {
+    struct AssetPathHook
+    {
+        AssetPath path;
+
+        explicit inline AssetPathHook(const AssetPath &path) : path{path}
+        {
+        }
+
+        AssetPathHook(const AssetPathHook &other) = delete;
+        inline AssetPathHook(AssetPathHook &&other) noexcept : path{std::exchange(other.path, AssetPath::none())}
+        {
+        }
+
+        inline ~AssetPathHook() noexcept
+        {
+            reset();
+        }
+
+        AssetPathHook &operator=(const AssetPathHook &other) = delete;
+        inline AssetPathHook &operator=(AssetPathHook &&other) noexcept
+        {
+            reset();
+            path = std::exchange(other.path, AssetPath::none());
+            return *this;
+        }
+
+        RETRO_API void reset() noexcept;
+    };
+
     export class Asset : public IntrusiveRefCounted
     {
       protected:
-        explicit Asset(const AssetPath &path) : path_{path}
+        explicit Asset(const AssetPath &path) : hook_{path}
         {
         }
 
       public:
         [[nodiscard]] inline AssetPath path() const noexcept
         {
-            return path_;
+            return hook_.path;
         }
 
       private:
-        AssetPath path_;
-
-        struct AssetPathKey
-        {
-            using type = AssetPath;
-
-            inline const AssetPath &operator()(const Asset &asset) const noexcept
-            {
-                return asset.path_;
-            }
-        };
+        AssetPathHook hook_;
     };
 
     export enum class AssetLoadError : uint8
@@ -171,8 +185,13 @@ namespace retro
       public:
         virtual ~AssetSource() = default;
 
+        inline AssetLoadResult<std::unique_ptr<Stream>> open_stream(const AssetPath &path)
+        {
+            return open_stream(path, {});
+        }
+
         virtual AssetLoadResult<std::unique_ptr<Stream>> open_stream(AssetPath path,
-                                                                     const AssetOpenOptions &options = {}) = 0;
+                                                                     const AssetOpenOptions &options) = 0;
     };
 
     export class RETRO_API FileSystemAssetSource final : public AssetSource
@@ -207,7 +226,7 @@ namespace retro
         {
         }
 
-        template <std::derived_from<Asset> T>
+        template <std::derived_from<Asset> T = Asset>
         std::expected<RefCountPtr<T>, AssetLoadError> load_asset(const AssetPath &path)
         {
             if constexpr (std::is_same_v<T, Asset>)
@@ -219,7 +238,6 @@ namespace retro
                 return load_asset_internal(path).and_then(
                     [](RefCountPtr<Asset> &&asset) -> std::expected<RefCountPtr<T>, AssetLoadError>
                     {
-                        auto *asset_ptr = asset.get();
                         auto cast_ptr = dynamic_pointer_cast<T>(std::move(asset));
                         if (cast_ptr == nullptr)
                         {
@@ -231,12 +249,15 @@ namespace retro
             }
         }
 
+        bool remove_asset_from_cache(const AssetPath &path);
+
       private:
         AssetLoadResult<RefCountPtr<Asset>> load_asset_internal(const AssetPath &path);
         AssetLoadResult<RefCountPtr<Asset>> load_asset_from_stream(const AssetPath &path, Stream &stream);
 
         AssetSource *asset_source_{};
         std::vector<std::shared_ptr<AssetDecoder>> decoders_;
+        std::shared_mutex asset_cache_mutex_{};
         std::unordered_map<AssetPath, Asset *> asset_cache_{};
     };
 } // namespace retro
