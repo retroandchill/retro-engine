@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include <cstddef>
+
 module retro.runtime;
 
 import retro.logging;
@@ -51,10 +55,51 @@ namespace retro
         return typeid(GeometryObject);
     }
 
-    PipelineShaders GeometryRenderPipeline::shaders() const
+    const ShaderLayout &GeometryRenderPipeline::shaders() const
     {
+        static const ShaderLayout layout{
+            .vertex_shader = "shaders/geometry.vert.spv",
+            .fragment_shader = "shaders/geometry.frag.spv",
+            .vertex_bindings = {VertexInputBinding{.type = VertexInputType::Vertex,
+                                                   .stride = sizeof(Vertex),
+                                                   .attributes = {VertexAttribute{.type = ShaderDataType::Vec2,
+                                                                                  .size = sizeof(Vector2f),
+                                                                                  .offset = offsetof(Vertex, position)},
+                                                                  VertexAttribute{.type = ShaderDataType::Vec2,
+                                                                                  .size = sizeof(Vector2f),
+                                                                                  .offset = offsetof(Vertex, uv)}}},
+                                VertexInputBinding{
+                                    .type = VertexInputType::Instance,
+                                    .stride = sizeof(InstanceData),
+                                    .attributes =
+                                        {// Vulkan doesn't have matrix attributes, so the most compatible option is to
+                                         // just treat a matrix as an array of vectors
+                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                                         .size = sizeof(Vector2f),
+                                                         .offset = offsetof(InstanceData, transform)},
+                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                                         .size = sizeof(Vector2f),
+                                                         .offset = offsetof(InstanceData, transform) +
+                                                                   sizeof(Vector2f)},
+                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                                         .size = sizeof(Vector2f),
+                                                         .offset = offsetof(InstanceData, translation)},
+                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                                         .size = sizeof(Vector2f),
+                                                         .offset = offsetof(InstanceData, pivot)},
+                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                                         .size = sizeof(Vector2f),
+                                                         .offset = offsetof(InstanceData, size)},
+                                         VertexAttribute{.type = ShaderDataType::Vec4,
+                                                         .size = sizeof(Color),
+                                                         .offset = offsetof(InstanceData, color)},
+                                         VertexAttribute{.type = ShaderDataType::Uint32,
+                                                         .size = sizeof(uint32),
+                                                         .offset = offsetof(InstanceData, has_texture)}}}},
+            .push_constant_bindings = {
+                PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}}};
 
-        return {"shaders/geometry.vert.spv", "shaders/geometry.frag.spv"};
+        return layout;
     }
 
     void GeometryRenderPipeline::clear_draw_queue()

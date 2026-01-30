@@ -89,7 +89,7 @@ namespace retro
       public:
         [[nodiscard]] std::type_index component_type() const override;
 
-        [[nodiscard]] PipelineShaders shaders() const override;
+        [[nodiscard]] const ShaderLayout &shaders() const override;
 
         void clear_draw_queue() override;
 

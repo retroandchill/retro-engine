@@ -6,8 +6,6 @@
  */
 module;
 
-#include <cstddef>
-
 #if __JETBRAINS_IDE__
 #include <vulkan/vulkan.hpp>
 #endif
@@ -18,6 +16,76 @@ import vulkan_hpp;
 
 namespace retro
 {
+    namespace
+    {
+        constexpr vk::VertexInputRate to_vulkan_enum(const VertexInputType type)
+        {
+            switch (type)
+            {
+                case VertexInputType::Vertex:
+                    return vk::VertexInputRate::eVertex;
+                case VertexInputType::Instance:
+                    return vk::VertexInputRate::eInstance;
+                default:
+                    throw std::invalid_argument("Invalid vertex input type");
+            }
+        }
+
+        constexpr vk::Format to_vulkan_enum(const ShaderDataType type)
+        {
+            switch (type)
+            {
+                case ShaderDataType::Int32:
+                    return vk::Format::eR32Sint;
+                case ShaderDataType::Uint32:
+                    return vk::Format::eR32Uint;
+                case ShaderDataType::Float:
+                    return vk::Format::eR32Sfloat;
+                case ShaderDataType::Vec2:
+                    return vk::Format::eR32G32Sfloat;
+                case ShaderDataType::Vec3:
+                    return vk::Format::eR32G32B32Sfloat;
+                case ShaderDataType::Vec4:
+                    return vk::Format::eR32G32B32A32Sfloat;
+                default:
+                    throw std::invalid_argument("Invalid shader data type");
+            }
+        }
+
+        constexpr vk::DescriptorType to_vulkan_enum(const DescriptorType type)
+        {
+            switch (type)
+            {
+                case DescriptorType::Sampler:
+                    return vk::DescriptorType::eSampler;
+                case DescriptorType::CombinedImageSampler:
+                    return vk::DescriptorType::eCombinedImageSampler;
+                case DescriptorType::UniformBuffer:
+                    return vk::DescriptorType::eUniformBuffer;
+                case DescriptorType::StorageBuffer:
+                    return vk::DescriptorType::eStorageBuffer;
+                default:
+                    throw std::invalid_argument("Invalid descriptor type");
+            }
+        }
+
+        constexpr vk::Flags<vk::ShaderStageFlagBits> to_vulkan_enum(const ShaderStage stage)
+        {
+            vk::Flags<vk::ShaderStageFlagBits> result{};
+            if (has_flag(stage, ShaderStage::Vertex))
+            {
+                result |= vk::ShaderStageFlagBits::eVertex;
+            }
+
+            if (has_flag(stage, ShaderStage::Fragment))
+            {
+                result |= vk::ShaderStageFlagBits::eFragment;
+            }
+
+            return result;
+        }
+    } // namespace
+
     struct PreparedGeometry
     {
         vk::Buffer vertex_buffer{};
@@ -138,10 +206,10 @@ namespace retro
         pipeline_->clear_draw_queue();
     }
 
-    void VulkanRenderPipeline::recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass)
+    void VulkanRenderPipeline::recreate(vk::Device device,
+                                        const VulkanSwapchain &swapchain,
+                                        const vk::RenderPass render_pass)
     {
-        // Common configuration logic that uses the shader names and
-        // potentially other metadata to build the vk::Pipeline
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain, render_pass);
         pipeline_->clear_draw_queue();
@@ -163,29 +231,37 @@ namespace retro
 
     vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device)
     {
-        /*
-        vk::DescriptorSetLayoutBinding sampler_layout_binding{0,
-                                                              vk::DescriptorType::eCombinedImageSampler,
-                                                              1,
-                                                              vk::ShaderStageFlagBits::eFragment};
-                                                              */
+        auto &shader_layout = pipeline_->shaders();
 
-        vk::DescriptorSetLayoutBinding instance_buffer_binding{0,
-                                                               vk::DescriptorType::eStorageBuffer,
-                                                               1,
-                                                               vk::ShaderStageFlagBits::eVertex};
+        std::vector<vk::DescriptorSetLayoutBinding> bindings;
+        bindings.reserve(shader_layout.descriptor_bindings.size());
 
-        std::array bindings = {instance_buffer_binding};
+        for (const auto [index, binding] : shader_layout.descriptor_bindings | std::views::enumerate)
+        {
+            bindings.emplace_back(static_cast<uint32>(index),
+                                  to_vulkan_enum(binding.type),
+                                  static_cast<uint32>(binding.count),
+                                  to_vulkan_enum(binding.stages));
+        }
 
-        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, bindings.size(), bindings.data()};
-
+        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, static_cast<uint32>(bindings.size()), bindings.data()};
         descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
-
-        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex, 0, sizeof(Vector2f)};
-
         std::array layouts = {descriptor_set_layout_.get()};
 
-        const vk::PipelineLayoutCreateInfo pipeline_layout_info{{}, layouts.size(), layouts.data(), 1, &range};
+        std::vector<vk::PushConstantRange> push_constant_ranges;
+        push_constant_ranges.reserve(shader_layout.push_constant_bindings.size());
+        for (const auto [index, binding] : shader_layout.push_constant_bindings | std::views::enumerate)
+        {
+            push_constant_ranges.emplace_back(to_vulkan_enum(binding.stages),
+                                              static_cast<uint32>(binding.offset),
+                                              static_cast<uint32>(binding.size));
+        }
+
+        const vk::PipelineLayoutCreateInfo pipeline_layout_info{{},
+                                                                layouts.size(),
+                                                                layouts.data(),
+                                                                static_cast<uint32>(push_constant_ranges.size()),
+                                                                push_constant_ranges.data()};
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
@@ -194,22 +270,42 @@ namespace retro
                                                                       const VulkanSwapchain &swapchain,
                                                                       vk::RenderPass render_pass)
     {
-        vk::VertexInputBindingDescription binding_description{0, sizeof(Vertex), vk::VertexInputRate::eVertex};
+        auto &shader_layout = pipeline_->shaders();
 
-        std::array attribute_descriptions = {
+        std::vector<vk::VertexInputBindingDescription> binding_descriptions;
+        std::vector<vk::VertexInputAttributeDescription> attribute_descriptions;
 
-            vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32Sfloat, offsetof(retro::Vertex, position)},
-            vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32Sfloat, offsetof(retro::Vertex, uv)}};
+        binding_descriptions.reserve(shader_layout.vertex_bindings.size());
+        usize attribute_count = std::ranges::fold_left(
+            shader_layout.vertex_bindings |
+                std::views::transform([](const VertexInputBinding &b) { return b.attributes.size(); }),
+            0,
+            std::plus{});
+        attribute_descriptions.reserve(attribute_count);
+
+        for (const auto [bind_index, binding] : shader_layout.vertex_bindings | std::views::enumerate)
+        {
+            binding_descriptions.emplace_back(static_cast<uint32>(bind_index),
+                                              static_cast<uint32>(binding.stride),
+                                              to_vulkan_enum(binding.type));
+
+            for (const auto &attribute : binding.attributes)
+            {
+                attribute_descriptions.emplace_back(static_cast<uint32>(attribute_descriptions.size()),
+                                                    binding_descriptions.back().binding,
+                                                    to_vulkan_enum(attribute.type),
+                                                    attribute.offset);
+            }
+        }
 
         vk::PipelineVertexInputStateCreateInfo vertex_input_info{{},
-                                                                 1,
-                                                                 &binding_description,
+                                                                 static_cast<uint32>(binding_descriptions.size()),
+                                                                 binding_descriptions.data(),
                                                                  static_cast<uint32>(attribute_descriptions.size()),
                                                                  attribute_descriptions.data()};
 
-        auto [vertex_shader, fragment_shader] = pipeline_->shaders();
-        auto vert_module = create_shader_module(device, vertex_shader);
-        auto frag_module = create_shader_module(device, fragment_shader);
+        auto vert_module = create_shader_module(device, shader_layout.vertex_shader);
+        auto frag_module = create_shader_module(device, shader_layout.fragment_shader);
 
         vk::PipelineShaderStageCreateInfo vert_stage{{}, vk::ShaderStageFlagBits::eVertex, vert_module.get(), "main"};
 

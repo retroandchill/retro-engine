@@ -4,19 +4,12 @@
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec2 inUV;
 
-struct InstanceData {
-    mat2 transform;
-    vec2 translation;
-    vec2 pivot;
-    vec2 size;
-    vec4 color;
-    uint has_texture;
-    uint padding[3];
-};
-
-layout(std430, set = 0, binding = 0) readonly buffer InstanceBuffer {
-    InstanceData instances[];
-} instanceData;
+layout(location = 2) in mat2 inTransform;
+layout(location = 4) in vec2 inTranslation;
+layout(location = 5) in vec2 inPivot;
+layout(location = 6) in vec2 inSize;
+layout(location = 7) in vec4 inColor;
+layout(location = 8) in uint inHasTexture;
 
 layout(location = 0) out vec2 vUV;
 layout(location = 1) out vec4 vColor;
@@ -28,14 +21,12 @@ layout(push_constant) uniform SceneData {
 } uData;
 
 void main() {
-    InstanceData instance = instanceData.instances[gl_InstanceIndex];
-
-    vec2 localPos = (inPosition - instance.pivot) * instance.size;
-    vec2 transformedPos = instance.transform * localPos + instance.translation;
+    vec2 localPos = (inPosition - inPivot) * inSize;
+    vec2 transformedPos = inTransform * localPos + inTranslation;
 
     vec2 ndc = (transformedPos / uData.viewportSize) * 2.0 - 1.0;
     gl_Position = vec4(ndc, 0.0, 1.0);
     vUV = inUV;
-    vColor = instance.color;
-    vHasTexture = instance.has_texture;
+    vColor = inColor;
+    vHasTexture = inHasTexture;
 }

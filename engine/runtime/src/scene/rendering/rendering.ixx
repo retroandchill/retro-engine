@@ -16,6 +16,88 @@ import std;
 
 namespace retro
 {
+    export enum class ShaderDataType : uint8
+    {
+        Int32,
+        Uint32,
+        Float,
+        Vec2,
+        Vec3,
+        Vec4
+    };
+
+    export enum class ShaderStage : uint8
+    {
+        Vertex = 0x1,
+        Fragment = 0x2
+    };
+
+    export constexpr ShaderStage operator&(ShaderStage lhs, ShaderStage rhs) noexcept
+    {
+        return static_cast<ShaderStage>(static_cast<uint8>(lhs) & static_cast<uint8>(rhs));
+    }
+
+    export constexpr ShaderStage operator|(ShaderStage lhs, ShaderStage rhs) noexcept
+    {
+        return static_cast<ShaderStage>(static_cast<uint8>(lhs) | static_cast<uint8>(rhs));
+    }
+
+    export constexpr bool has_flag(const ShaderStage target, const ShaderStage flag) noexcept
+    {
+        return static_cast<uint8>(target & flag) != 0;
+    }
+
+    export enum class VertexInputType : uint8
+    {
+        Vertex,
+        Instance
+    };
+
+    export struct VertexAttribute
+    {
+        ShaderDataType type{};
+        usize size{};
+        usize offset{};
+    };
+
+    export struct VertexInputBinding
+    {
+        VertexInputType type{};
+        usize stride{};
+        std::vector<VertexAttribute> attributes{};
+    };
+
+    export enum class DescriptorType : uint8
+    {
+        Sampler,
+        CombinedImageSampler,
+        UniformBuffer,
+        StorageBuffer
+    };
+
+    export struct DescriptorBinding
+    {
+        DescriptorType type{};
+        ShaderStage stages{};
+        usize count{};
+    };
+
+    export struct PushConstantBinding
+    {
+        ShaderStage stages{};
+        usize size{};
+        usize offset{};
+    };
+
+    export struct ShaderLayout
+    {
+        std::filesystem::path vertex_shader{};
+        std::filesystem::path fragment_shader{};
+        std::vector<VertexInputBinding> vertex_bindings{};
+        std::vector<DescriptorBinding> descriptor_bindings{};
+        std::vector<PushConstantBinding> push_constant_bindings{};
+    };
+
     export struct Vertex
     {
         Vector2f position{};
@@ -36,7 +118,6 @@ namespace retro
         alignas(8) Vector2f size{1, 1};
         alignas(16) Color color{1, 1, 1, 1};
         uint32 has_texture{};
-        std::array<uint32, 3> padding{};
     };
 
     export struct GeometryBatch
@@ -55,12 +136,6 @@ namespace retro
         virtual void draw_geometry(std::span<const GeometryBatch> geometry) = 0;
     };
 
-    export struct PipelineShaders
-    {
-        std::filesystem::path vertex_shader{};
-        std::filesystem::path fragment_shader{};
-    };
-
     export class RenderPipeline
     {
       public:
@@ -68,7 +143,7 @@ namespace retro
 
         [[nodiscard]] virtual std::type_index component_type() const = 0;
 
-        [[nodiscard]] virtual PipelineShaders shaders() const = 0;
+        [[nodiscard]] virtual const ShaderLayout &shaders() const = 0;
 
         virtual void clear_draw_queue() = 0;
 
