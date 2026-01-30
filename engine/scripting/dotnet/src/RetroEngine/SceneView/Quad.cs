@@ -10,14 +10,33 @@ using RetroEngine.Strings;
 
 namespace RetroEngine.SceneView;
 
-public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(parent.NativeObject))
+public enum GeometryType : byte
 {
-    private static readonly Name Type = new("geometry");
+    None,
+    Rectangle,
+    Triangle,
+    Custom,
+}
+
+public sealed partial class Quad : SceneObject
+{
+    public Quad(SceneObject parent)
+        : base(NativeCreate(parent.NativeObject))
+    {
+        NativeSetRenderData(NativeObject, GeometryType.Rectangle);
+        Size = new Vector2F(100, 100);
+        Color = new Color(1, 1, 1);
+    }
 
     public Vector2F Size
     {
         get;
-        set { field = value; }
+        set
+        {
+            ObjectDisposedException.ThrowIf(Disposed, this);
+            field = value;
+            NativeSetSize(NativeObject, value);
+        }
     }
 
     public Color Color
@@ -25,30 +44,31 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
         get;
         set
         {
+            ObjectDisposedException.ThrowIf(Disposed, this);
             field = value;
-            SyncGeometry();
+            NativeSetColor(NativeObject, value);
         }
     }
 
-    private void SyncGeometry()
+    public Vector2F Pivot
     {
-        NativeSetRenderData(
-            NativeObject,
-            [
-                new Vertex(new Vector2F(0, 0), new Vector2F(0, 0), Color),
-                new Vertex(Size with { Y = 0 }, new Vector2F(1, 0), Color),
-                new Vertex(new Vector2F(Size.X, Size.Y), new Vector2F(1, 1), Color),
-                new Vertex(Size with { X = 0 }, new Vector2F(0, 1), Color),
-            ],
-            [0, 2, 1, 2, 0, 3]
-        );
+        get;
+        set
+        {
+            ObjectDisposedException.ThrowIf(Disposed, this);
+            field = value;
+            NativeSetPivot(NativeObject, value);
+        }
     }
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_create")]
-    private static unsafe partial IntPtr NativeCreate(IntPtr id);
+    private static partial IntPtr NativeCreate(IntPtr id);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_type")]
+    private static partial void NativeSetRenderData(IntPtr id, GeometryType type);
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_render_data")]
-    private static unsafe partial void NativeSetRenderData(
+    private static partial void NativeSetRenderData(
         IntPtr id,
         ReadOnlySpan<Vertex> vertices,
         int vertexCount,
@@ -58,4 +78,13 @@ public sealed partial class Quad(SceneObject parent) : SceneObject(NativeCreate(
 
     private static void NativeSetRenderData(IntPtr id, ReadOnlySpan<Vertex> vertices, ReadOnlySpan<uint> indices) =>
         NativeSetRenderData(id, vertices, vertices.Length, indices, indices.Length);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_color")]
+    private static partial void NativeSetColor(IntPtr id, Color color);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_pivot")]
+    private static partial void NativeSetPivot(IntPtr id, Vector2F pivot);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_geometry_set_size")]
+    private static partial void NativeSetSize(IntPtr id, Vector2F size);
 }

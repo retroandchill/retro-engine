@@ -181,9 +181,7 @@ namespace retro
 
         descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
 
-        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                                    0,
-                                    static_cast<uint32>(pipeline_->push_constants_size())};
+        vk::PushConstantRange range{vk::ShaderStageFlagBits::eVertex, 0, sizeof(Vector2f)};
 
         std::array layouts = {descriptor_set_layout_.get()};
 
@@ -201,8 +199,7 @@ namespace retro
         std::array attribute_descriptions = {
 
             vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32Sfloat, offsetof(retro::Vertex, position)},
-            vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32Sfloat, offsetof(retro::Vertex, uv)},
-            vk::VertexInputAttributeDescription{2, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(retro::Vertex, color)}};
+            vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32Sfloat, offsetof(retro::Vertex, uv)}};
 
         vk::PipelineVertexInputStateCreateInfo vertex_input_info{{},
                                                                  1,

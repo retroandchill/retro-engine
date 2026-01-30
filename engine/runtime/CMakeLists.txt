@@ -6,7 +6,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/scene.cpp
         src/scene/scene_c.cpp
         src/engine_c.cpp
-        src/scene/rendering/geometry_render_component.cpp
+        src/scene/rendering/geometry.cpp
         src/scene/rendering/rendering.cpp
         src/assets/assets.cpp
 )
@@ -15,7 +15,7 @@ set(RETRO_RUNTIME_MODULES
         src/runtime.ixx
         src/scene/scene.ixx
         src/scene/rendering/rendering.ixx
-        src/scene/rendering/geometry_render_component.ixx
+        src/scene/rendering/geometry.ixx
         src/assets/assets.ixx
         src/assets/texture.ixx
 )

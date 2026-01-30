@@ -20,7 +20,6 @@ namespace retro
     {
         Vector2f position{};
         Vector2f uv{};
-        Color color{};
     };
 
     export struct Geometry
@@ -31,10 +30,11 @@ namespace retro
 
     export struct InstanceData
     {
-        Vector2f translation{};
-        Matrix2x2f transform{};
-        Vector2f pivot{};
-        Vector2f size{1, 1};
+        alignas(16) Matrix2x2f transform{};
+        alignas(8) Vector2f translation{};
+        alignas(8) Vector2f pivot{};
+        alignas(8) Vector2f size{1, 1};
+        alignas(16) Color color{1, 1, 1, 1};
         uint32 has_texture{};
         std::array<uint32, 3> padding{};
     };
@@ -67,8 +67,6 @@ namespace retro
         virtual ~RenderPipeline() = default;
 
         [[nodiscard]] virtual std::type_index component_type() const = 0;
-
-        [[nodiscard]] virtual usize push_constants_size() const = 0;
 
         [[nodiscard]] virtual PipelineShaders shaders() const = 0;
 

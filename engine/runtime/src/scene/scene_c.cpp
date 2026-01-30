@@ -29,6 +29,12 @@ namespace
         return std::bit_cast<retro::Vector2f>(vector);
     }
 
+    retro::Color from_c(const Retro_Color vector)
+    {
+        static_assert(sizeof(retro::Color) == sizeof(Retro_Color) && alignof(retro::Color) == alignof(Retro_Color));
+        return std::bit_cast<retro::Color>(vector);
+    }
+
     const retro::Vertex *from_c(const Retro_Vertex *vertices)
     {
         static_assert(sizeof(Retro_Vertex) == sizeof(retro::Vertex));
@@ -43,6 +49,21 @@ namespace
 
         const auto matrix = retro::Matrix2x2f{rotation} * retro::Matrix2x2f{scale};
         return retro::Transform2f{matrix, from_c(transform.position)};
+    }
+
+    retro::GeometryType from_c(const Retro_GeometryType type) noexcept
+    {
+        switch (type)
+        {
+            case Retro_GeometryType_Rectangle:
+                return retro::GeometryType::Rectangle;
+            case Retro_GeometryType_Triangle:
+                return retro::GeometryType::Triangle;
+            case Retro_GeometryType_Custom:
+                return retro::GeometryType::Custom;
+            default:
+                return retro::GeometryType::None;
+        }
     }
 } // namespace
 
@@ -69,17 +90,24 @@ extern "C"
     void retro_scene_viewport_set_size(const Retro_NodeHandle node, const Retro_Vector2f viewport_size)
     {
         auto *base = from_c(node);
-        auto *viewport = static_cast<retro::ViewportNode *>(base);
-        viewport->viewport().view_size = from_c(viewport_size);
+        auto &viewport = dynamic_cast<retro::ViewportNode &>(*base);
+        viewport.viewport().view_size = from_c(viewport_size);
     }
 
-    Retro_NodeHandle retro_geometry_create(Retro_NodeHandle parent)
+    Retro_NodeHandle retro_geometry_create(const Retro_NodeHandle parent)
     {
         auto *parent_ptr = from_c(parent);
 
         auto &geo = retro::Engine::instance().scene().create_node<retro::GeometryObject>(parent_ptr);
 
         return to_c(&geo);
+    }
+
+    void retro_geometry_set_type(const Retro_NodeHandle node, const Retro_GeometryType type)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_geometry(from_c(type));
     }
 
     void retro_geometry_set_render_data(const Retro_NodeHandle node,
@@ -89,19 +117,30 @@ extern "C"
                                         const int32_t index_count)
     {
         auto *base = from_c(node);
-        if (base == nullptr)
-        {
-            return;
-        }
+        auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_geometry(std::make_shared<const retro::Geometry>(
+            std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
+            std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()));
+    }
 
-        auto *geo = dynamic_cast<retro::GeometryObject *>(base);
-        if (geo == nullptr)
-        {
-            return;
-        }
+    void retro_geometry_set_color(const Retro_NodeHandle node, const Retro_Color color)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_color(from_c(color));
+    }
 
-        geo->geometry() = retro::Geometry{
-            .vertices = std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
-            .indices = std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()};
+    void retro_geometry_set_pivot(const Retro_NodeHandle node, const Retro_Vector2f pivot)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_pivot(from_c(pivot));
+    }
+
+    void retro_geometry_set_size(const Retro_NodeHandle node, const Retro_Vector2f size)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_size(from_c(size));
     }
 }

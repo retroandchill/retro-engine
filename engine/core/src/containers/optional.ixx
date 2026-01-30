@@ -607,6 +607,10 @@ namespace retro
 
         constexpr Optional() noexcept = default;
 
+        constexpr explicit(false) Optional(T *value) noexcept : value_{value}
+        {
+        }
+
         constexpr explicit(false) Optional(T &value) noexcept : value_{std::addressof(value)}
         {
         }

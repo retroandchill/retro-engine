@@ -4,13 +4,13 @@
 // Vertex attributes from the buffer
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec2 inUV;
-layout(location = 2) in vec4 inColor;
 
 struct InstanceData {
-    vec2 translation;
     mat2 transform;
+    vec2 translation;
     vec2 pivot;
     vec2 size;
+    vec4 color;
     uint has_texture;
     uint padding[3];
 };
@@ -37,6 +37,6 @@ void main() {
     vec2 ndc = (transformedPos / uData.viewportSize) * 2.0 - 1.0;
     gl_Position = vec4(ndc, 0.0, 1.0);
     vUV = inUV;
-    vColor = inColor;
+    vColor = instance.color;
     vHasTexture = instance.has_texture;
 }

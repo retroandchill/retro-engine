@@ -15,7 +15,7 @@ export module retro.runtime;
 export import :assets;
 export import :scene;
 export import :scene.rendering;
-export import :scene.rendering.geometry_render_component;
+export import :scene.rendering.geometry;
 export import :texture;
 
 namespace retro
