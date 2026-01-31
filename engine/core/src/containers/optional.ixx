@@ -135,6 +135,10 @@ namespace retro
         !std::is_assignable_v<T &, const Optional<U> &> && !std::is_assignable_v<T &, Optional<U> &&> &&
         !std::is_assignable_v<T &, const Optional<U> &&>;
 
+    struct FromFunctionTag
+    {
+    };
+
     template <typename T>
     class Optional
     {
@@ -143,7 +147,9 @@ namespace retro
         using iterator = OptionalIterator<T, Optional>;
         using const_iterator = OptionalIterator<const T, Optional>;
 
-        constexpr Optional() noexcept = default;
+        constexpr Optional() noexcept
+        {
+        }
 
         constexpr explicit(false) Optional(std::nullopt_t) noexcept
         {
@@ -188,21 +194,21 @@ namespace retro
         template <typename U>
             requires std::is_constructible_v<T, const U &> && !std::same_as<T, U> && NotConstructibleFromOptional<T, U>
         constexpr explicit(!std::is_convertible_v<const U &, T>) Optional(const Optional<U> &value)
-            : has_value_{value.has_value_}
+            : has_value_{value.has_value()}
         {
             if (has_value_)
             {
-                std::construct_at(&value_, value.value_);
+                std::construct_at(std::addressof(value_), *value);
             }
         }
 
         template <typename U>
             requires std::is_constructible_v<T, U> && !std::same_as<T, U> && NotConstructibleFromOptional<T, U>
-        constexpr explicit(!std::is_convertible_v<U, T>) Optional(Optional<U> && other) : has_value_{value.has_value_}
+        constexpr explicit(!std::is_convertible_v<U, T>) Optional(Optional<U> && other) : has_value_{other.has_value()}
         {
             if (has_value_)
             {
-                std::construct_at(&value_, std::move(other.value_));
+                std::construct_at(std::addressof(value_), *std::move(other));
             }
         }
 
@@ -214,7 +220,7 @@ namespace retro
         }
 
         template <typename U, typename... Args>
-            requires std::constructible_from<T, std::initializer_list<U>, Args...>
+            requires std::constructible_from<T, std::initializer_list<U> &, Args...>
         constexpr explicit Optional(std::in_place_t, std::initializer_list<U> il, Args &&...args)
             : value_{il, std::forward<Args>(args)...}, has_value_{true}
         {
@@ -224,7 +230,7 @@ namespace retro
             requires(std::constructible_from<T, U> && !std::same_as<std::remove_cvref_t<U>, Optional> &&
                      !std::same_as<std::remove_cvref_t<U>, std::in_place_t>)
         constexpr explicit(!std::convertible_to<U, T>) Optional(U &&value)
-            : value_{std::forward<U>(value)}, has_value_{true}
+            : value_(std::forward<U>(value)), has_value_{true}
         {
         }
 
@@ -325,9 +331,9 @@ namespace retro
         {
             if (has_value_)
             {
-                if (other.has_value_)
+                if (other.has_value())
                 {
-                    value_ = other.value_;
+                    value_ = *other;
                 }
                 else
                 {
@@ -336,9 +342,9 @@ namespace retro
             }
             else
             {
-                if (other.has_value_)
+                if (other.has_value())
                 {
-                    std::construct_at(&value_, other.value_);
+                    std::construct_at(&value_, *other);
                     has_value_ = true;
                 }
             }
@@ -352,9 +358,9 @@ namespace retro
         {
             if (has_value_)
             {
-                if (other.has_value_)
+                if (other.has_value())
                 {
-                    value_ = std::move(other.value_);
+                    value_ = *std::move(other);
                 }
                 else
                 {
@@ -363,9 +369,9 @@ namespace retro
             }
             else
             {
-                if (other.has_value_)
+                if (other.has_value())
                 {
-                    std::construct_at(&value_, std::move(other.value_));
+                    std::construct_at(std::addressof(value_), *std::move(other));
                     has_value_ = true;
                 }
             }
@@ -374,7 +380,7 @@ namespace retro
         }
 
         template <typename U = std::remove_cv_t<T>>
-            requires !std::is_same_v<Optional, std::remove_cvref_t<U>> && std::is_constructible_v<T, U> &&
+            requires !std::is_same_v<Optional, std::remove_cvref_t<U>> && std::is_constructible_v<T &, U> &&
                      std::is_assignable_v<T &, U> &&
                      !(std::same_as<std::decay_t<U>, T> || std::is_scalar_v<T>)
                          constexpr Optional &
@@ -394,7 +400,7 @@ namespace retro
         }
 
         template <typename U, typename... Args>
-            requires std::constructible_from<T, std::initializer_list<U>, Args...>
+            requires std::constructible_from<T, std::initializer_list<U> &, Args...>
         constexpr T &emplace(std::initializer_list<U> il, Args &&...args)
         {
             if (has_value_)
@@ -431,6 +437,7 @@ namespace retro
                 if (other.has_value_)
                 {
                     std::construct_at(&value_, std::move(other.value_));
+                    has_value_ = true;
                     other.reset();
                 }
             }
@@ -438,22 +445,22 @@ namespace retro
 
         constexpr iterator begin() noexcept
         {
-            return iterator{std::addressof(value_)};
+            return iterator{has_value_ ? std::addressof(value_) : nullptr};
         }
 
         constexpr const_iterator begin() const noexcept
         {
-            return const_iterator{std::addressof(value_)};
+            return const_iterator{has_value_ ? std::addressof(value_) : nullptr};
         }
 
         constexpr iterator end() noexcept
         {
-            return iterator{std::next(std::addressof(value_), has_value_ ? 1 : 0)};
+            return std::next(begin(), has_value_ ? 1 : 0);
         }
 
         constexpr const_iterator end() const noexcept
         {
-            return const_iterator{std::next(std::addressof(value_), has_value_ ? 1 : 0)};
+            return std::next(begin(), has_value_ ? 1 : 0);
         }
 
         template <typename Self>
@@ -465,7 +472,14 @@ namespace retro
         template <typename Self>
         constexpr decltype(auto) operator*(this Self &&self)
         {
-            return self.value_;
+            if constexpr (!std::is_lvalue_reference_v<Self> && std::is_const_v<std::remove_reference_t<Self>>)
+            {
+                return static_cast<const T &>(self.value_);
+            }
+            else
+            {
+                return std::forward_like<Self>(self.value_);
+            }
         }
 
         constexpr explicit operator bool() const noexcept
@@ -481,12 +495,23 @@ namespace retro
         template <typename Self>
         constexpr decltype(auto) value(this Self &&self)
         {
-            if (!self.has_value_)
+
+            if !consteval
             {
-                throw std::bad_optional_access{};
+                if (!self.has_value_)
+                {
+                    throw std::bad_optional_access{};
+                }
             }
 
-            return self.value_;
+            if constexpr (!std::is_lvalue_reference_v<Self> && std::is_const_v<std::remove_reference_t<Self>>)
+            {
+                return static_cast<const T &>(self.value_);
+            }
+            else
+            {
+                return std::forward_like<Self>(self.value_);
+            }
         }
 
         template <typename U = std::remove_cv_t<T>>
@@ -532,7 +557,9 @@ namespace retro
             if (self.has_value_)
             {
                 return Optional<std::invoke_result_t<Functor, ForwardLikeType<Self, T>>>{
-                    std::invoke(std::forward<Functor>(functor), std::forward<Self>(self).value_)};
+                    FromFunctionTag{},
+                    std::forward<Functor>(functor),
+                    std::forward<Self>(self).value_};
             }
 
             return Optional<std::invoke_result_t<Functor, ForwardLikeType<Self, T>>>{};
@@ -585,6 +612,12 @@ namespace retro
         template <typename U>
         friend class Optional;
 
+        template <typename Functor, typename Value>
+        constexpr Optional(FromFunctionTag, Functor &&functor, Value &&value)
+            : value_{std::invoke(std::forward<Functor>(functor), std::forward<Value>(value))}, has_value_{true}
+        {
+        }
+
         union
         {
             std::monostate empty_{};
@@ -607,7 +640,13 @@ namespace retro
 
         constexpr Optional() noexcept = default;
 
-        constexpr explicit(false) Optional(T *value) noexcept : value_{value}
+        constexpr explicit(false) Optional(std::nullopt_t) noexcept
+        {
+        }
+
+        constexpr explicit(false) Optional(T *value) noexcept
+            requires(!std::is_function_v<T>)
+            : value_{value}
         {
         }
 
@@ -624,7 +663,7 @@ namespace retro
         template <typename U>
             requires(std::is_constructible_v<T &, U> && !std::is_same_v<std::remove_cvref_t<U>, std::in_place_t> &&
                      !std::is_same_v<std::remove_cvref_t<U>, Optional> && !ReferenceConvertsFromTemporary<T &, U>)
-        constexpr explicit(!std::is_convertible_v<T &, U>)
+        constexpr explicit(!std::is_convertible_v<U, T &>)
             Optional(U &&value) noexcept(std::is_nothrow_constructible_v<T &, U>)
             : value_{get_ref_from_value(value)}
         {
@@ -633,7 +672,7 @@ namespace retro
         template <typename U>
             requires(std::is_constructible_v<T &, U> && !std::is_same_v<std::remove_cvref_t<U>, std::in_place_t> &&
                      !std::is_same_v<std::remove_cvref_t<U>, Optional> && ReferenceConvertsFromTemporary<T &, U>)
-        constexpr explicit(!std::is_convertible_v<T &, U>)
+        constexpr explicit(!std::is_convertible_v<U, T &>)
             Optional(U &&value) noexcept(std::is_nothrow_constructible_v<T &, U>) = delete;
 
         template <class U>
@@ -648,7 +687,7 @@ namespace retro
         template <class U>
             requires(std::is_constructible_v<T &, const U &> && !std::is_same_v<std::remove_cv_t<T>, Optional<U>> &&
                      !std::is_same_v<T &, U> && !ReferenceConvertsFromTemporary<T &, const U &>)
-        constexpr explicit(!std::is_convertible_v<U &, T &>)
+        constexpr explicit(!std::is_convertible_v<const U &, T &>)
             Optional(const Optional<U> &rhs) noexcept(std::is_nothrow_constructible_v<T &, const U &>)
             : value_{rhs.has_value() ? get_ref_from_value(*rhs) : nullptr}
         {
@@ -657,7 +696,7 @@ namespace retro
         template <class U>
             requires(std::is_constructible_v<T &, U> && !std::is_same_v<std::remove_cv_t<T>, Optional<U>> &&
                      !std::is_same_v<T &, U> && !ReferenceConvertsFromTemporary<T &, U>)
-        constexpr explicit(!std::is_convertible_v<U &, T &>)
+        constexpr explicit(!std::is_convertible_v<U, T &>)
             Optional(Optional<U> &&rhs) noexcept(std::is_nothrow_constructible_v<T &, U>)
             : value_{rhs.has_value() ? get_ref_from_value(*std::move(rhs)) : nullptr}
         {
@@ -666,7 +705,7 @@ namespace retro
         template <class U>
             requires(std::is_constructible_v<T &, const U> && !std::is_same_v<std::remove_cv_t<T>, Optional<U>> &&
                      !std::is_same_v<T &, U> && !ReferenceConvertsFromTemporary<T &, const U>)
-        constexpr explicit(!std::is_convertible_v<U &, T &>)
+        constexpr explicit(!std::is_convertible_v<const U, T &>)
             Optional(const Optional<U> &&rhs) noexcept(std::is_nothrow_constructible_v<T &, const U>)
             : value_{rhs.has_value() ? get_ref_from_value(*std::move(rhs)) : nullptr}
         {
@@ -695,6 +734,12 @@ namespace retro
                      !std::is_same_v<T &, U> && ReferenceConvertsFromTemporary<T &, const U>)
         constexpr explicit(!std::is_convertible_v<U &, T &>)
             Optional(const Optional<U> &&rhs) noexcept(std::is_nothrow_constructible_v<T &, const U>) = delete;
+
+        constexpr Optional &operator=(std::nullopt_t) noexcept
+        {
+            reset();
+            return *this;
+        }
 
         template <typename U>
             requires std::is_constructible_v<T &, U> && !ReferenceConvertsFromTemporary<T &, U>
@@ -779,7 +824,9 @@ namespace retro
         {
             if (value_ != nullptr)
             {
-                return std::invoke(std::forward<Functor>(functor), *value_);
+                return Optional<std::invoke_result_t<Functor, T &>>{FromFunctionTag{},
+                                                                    std::forward<Functor>(functor),
+                                                                    *value_};
             }
 
             return std::nullopt;
@@ -806,10 +853,16 @@ namespace retro
         template <typename U>
         friend class Optional;
 
+        template <typename Functor, typename Value>
+        constexpr Optional(FromFunctionTag, Functor &&functor, Value &&value)
+            : value_{get_ref_from_value(std::invoke(std::forward<Functor>(functor), std::forward<Value>(value)))}
+        {
+        }
+
         template <typename U>
         static T *get_ref_from_value(U &&other)
         {
-            T &ref{other};
+            T &ref(std::forward<U>(other));
             return std::addressof(ref);
         }
 
@@ -830,8 +883,9 @@ namespace retro
     }
 
     export template <typename T, typename U, typename... Args>
-        requires std::constructible_from<T, std::initializer_list<U>, Args...>
-    constexpr Optional<T> make_optional(std::initializer_list<U> il, Args &&...args)
+        requires std::constructible_from<T, std::initializer_list<U> &, Args...>
+    constexpr Optional<T> make_optional(std::initializer_list<U> il, Args &&...args) noexcept(
+        std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args...>)
     {
         return Optional<T>{std::in_place, il, std::forward<Args>(args)...};
     }
@@ -861,7 +915,7 @@ namespace retro
         requires LessThanOrEqualComparableWith<T, U>
     constexpr bool operator<=(const Optional<T> &lhs, const Optional<U> &rhs)
     {
-        return !lhs.has_value() && (!rhs.has_value() || *lhs <= *rhs);
+        return !lhs.has_value() || (rhs.has_value() && *lhs <= *rhs);
     }
 
     export template <typename T, typename U>

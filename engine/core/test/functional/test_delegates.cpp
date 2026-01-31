@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include <catch2/catch_test_macros.hpp>
+#include <gtest/gtest.h>
 
 import retro.core;
 
@@ -169,174 +169,174 @@ namespace
     };
 } // namespace
 
-TEST_CASE("Delegate default construction and null construction", "[Delegate]")
+TEST(Delegate, DefaultConstructionAndNullConstruction)
 {
     Delegate<int32(int32, int32)> d1;
     Delegate<int32(int32, int32)> d2{nullptr};
 
-    REQUIRE_FALSE(d1.is_bound());
-    REQUIRE_FALSE(d2.is_bound());
+    EXPECT_FALSE(d1.is_bound());
+    EXPECT_FALSE(d2.is_bound());
 
     // execute() on unbound should throw
-    REQUIRE_THROWS_AS(d1.execute(1, 2), std::bad_function_call);
-    REQUIRE_THROWS_AS(d2.execute(1, 2), std::bad_function_call);
+    EXPECT_THROW(d1.execute(1, 2), std::bad_function_call);
+    EXPECT_THROW(d2.execute(1, 2), std::bad_function_call);
 }
 
-TEST_CASE("Delegate bind_static compile-time function pointer", "[Delegate]")
+TEST(Delegate, BindToCompileTimeFunction)
 {
     auto d = Delegate<int32(int32, int32)>::create<free_function_add>();
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(2, 3) == 5);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(2, 3), 5);
 
     // Rebinding to another static function should work
     d.bind<free_function_mul>();
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(2, 3) == 6);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(2, 3), 6);
 }
 
-TEST_CASE("Delegate bind_static runtime function pointer", "[Delegate]")
+TEST(Delegate, BindToRuntimeFunction)
 {
     auto d = Delegate<int32(int32, int32)>::create(&free_function_add);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(10, 5) == 15);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(10, 5), 15);
 
     d.bind(&free_function_mul);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(10, 5) == 50);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(10, 5), 50);
 }
 
-TEST_CASE("Delegate bind_raw with compile-time member pointer", "[Delegate]")
+TEST(Delegate, BindToCompileTimeMemberFunction)
 {
     TestObject obj;
     obj.factor = 3;
     obj.offset = 4;
 
     auto d = Delegate<int32(int32)>::create<&TestObject::member_add>(obj);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(5) == 3 * 5 + 4);
-    REQUIRE(obj.call_count == 1);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(5), 3 * 5 + 4);
+    EXPECT_EQ(obj.call_count, 1);
 
     // Non-const member
     d.bind<&TestObject::member_mul>(obj);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(7) == 3 * 7);
-    REQUIRE(obj.call_count == 2);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(7), 3 * 7);
+    EXPECT_EQ(obj.call_count, 2);
 }
 
-TEST_CASE("Delegate bind_raw with runtime member type parameter", "[Delegate]")
+TEST(Delegate, BindToRuntimeMemberFunction)
 {
     TestObject obj;
     obj.factor = 3;
     obj.offset = 4;
 
     auto d = Delegate<int32(int32)>::create(obj, &TestObject::member_add);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(5) == 3 * 5 + 4);
-    REQUIRE(obj.call_count == 1);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(5), 3 * 5 + 4);
+    EXPECT_EQ(obj.call_count, 1);
 
     // Non-const member
     d.bind(obj, &TestObject::member_mul);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(7) == 3 * 7);
-    REQUIRE(obj.call_count == 2);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(7), 3 * 7);
+    EXPECT_EQ(obj.call_count, 2);
 }
 
-TEST_CASE("Delegate bind_lambda with non-capturing and capturing lambdas", "[Delegate]")
+TEST(Delegate, BindToLambda)
 {
     // Non-capturing lambda – still treated as a functor type here
     auto d = Delegate<int32(int32)>::create([](int32 x) { return x * 2; });
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(4) == 8);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(4), 8);
 
     // Capturing lambda (must be stored on heap and deleted on unbind / destruction)
     int32 base = 10;
     d = Delegate<int32(int32)>::create([base](int32 x) { return base + x; });
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(5) == 15);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(5), 15);
 }
 
-TEST_CASE("Delegate bind_lambda with stateful functor", "[Delegate]")
+TEST(Delegate, BindToFunctorObject)
 {
     int32 call_counter = 0;
     auto d = Delegate<int32(int32)>::create(TrackingFunctor{call_counter, 7});
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(3) == 10);
-    REQUIRE(call_counter == 1);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(3), 10);
+    EXPECT_EQ(call_counter, 1);
 
     // Re-execute to ensure functor object persists while bound
-    REQUIRE(d.execute(1) == 8);
-    REQUIRE(call_counter == 2);
+    EXPECT_EQ(d.execute(1), 8);
+    EXPECT_EQ(call_counter, 2);
 }
 
-TEST_CASE("Delegate execute_if_bound for void return type", "[Delegate]")
+TEST(Delegate, ExecuteIfBoundVoid)
 {
     Delegate<void(bool &)> d;
     bool flag = false;
 
     // Unbound -> returns false, does not touch flag
-    REQUIRE_FALSE(d.execute_if_bound(flag));
-    REQUIRE_FALSE(flag);
+    EXPECT_FALSE(d.execute_if_bound(flag));
+    EXPECT_FALSE(flag);
 
     // Bound
     d.bind<&free_function_void_flag>();
-    REQUIRE(d.is_bound());
+    EXPECT_TRUE(d.is_bound());
 
-    REQUIRE(d.execute_if_bound(flag));
-    REQUIRE(flag);
+    EXPECT_TRUE(d.execute_if_bound(flag));
+    EXPECT_TRUE(flag);
 
     // Unbind and call again
     d.unbind();
     flag = false;
-    REQUIRE_FALSE(d.execute_if_bound(flag));
-    REQUIRE_FALSE(flag);
+    EXPECT_FALSE(d.execute_if_bound(flag));
+    EXPECT_FALSE(flag);
 }
 
-TEST_CASE("Delegate execute_if_bound for non-void return type", "[Delegate]")
+TEST(Delegate, ExecuteIfBoundNonVoid)
 {
     Delegate<int32(int32, int32)> d;
 
     // Unbound
     auto res_unbound = d.execute_if_bound(1, 2);
-    REQUIRE_FALSE(res_unbound.has_value());
+    EXPECT_FALSE(res_unbound.has_value());
 
     d.bind<free_function_add>();
     auto res_bound = d.execute_if_bound(3, 4);
-    REQUIRE(res_bound.has_value());
-    REQUIRE(*res_bound == 7);
+    EXPECT_TRUE(res_bound.has_value());
+    EXPECT_EQ(*res_bound, 7);
 }
 
-TEST_CASE("Delegate unbind releases state and makes delegate unusable", "[Delegate]")
+TEST(Delegate, Unbind)
 {
     Delegate<int32(int32, int32)> d;
     d.bind<free_function_add>();
 
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(1, 2) == 3);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(1, 2), 3);
 
     d.unbind();
-    REQUIRE_FALSE(d.is_bound());
-    REQUIRE_THROWS_AS(d.execute(1, 2), std::bad_function_call);
+    EXPECT_FALSE(d.is_bound());
+    EXPECT_THROW(d.execute(1, 2), std::bad_function_call);
 }
 
-TEST_CASE("Delegate move construction transfers binding", "[Delegate]")
+TEST(Delegate, MoveConstruction)
 {
     Delegate<int32(int32, int32)> source;
     source.bind<free_function_mul>();
-    REQUIRE(source.is_bound());
-    REQUIRE(source.execute(3, 4) == 12);
+    ASSERT_TRUE(source.is_bound());
+    EXPECT_EQ(source.execute(3, 4), 12);
 
     Delegate dest{std::move(source)};
 
     // Source should be empty
-    REQUIRE_FALSE(source.is_bound());
-    REQUIRE_THROWS_AS(source.execute(2, 2), std::bad_function_call);
+    EXPECT_FALSE(source.is_bound());
+    EXPECT_THROW(source.execute(2, 2), std::bad_function_call);
 
     // Destination should work
-    REQUIRE(dest.is_bound());
-    REQUIRE(dest.execute(3, 4) == 12);
+    ASSERT_TRUE(dest.is_bound());
+    EXPECT_EQ(dest.execute(3, 4), 12);
 }
 
-TEST_CASE("Delegate move assignment transfers binding and cleans up previous", "[Delegate]")
+TEST(Delegate, MoveAssignment)
 {
     Delegate<int32(int32, int32)> d1;
     Delegate<int32(int32, int32)> d2;
@@ -344,48 +344,48 @@ TEST_CASE("Delegate move assignment transfers binding and cleans up previous", "
     d1.bind<free_function_add>();
     d2.bind<free_function_mul>();
 
-    REQUIRE(d1.is_bound());
-    REQUIRE(d2.is_bound());
-    REQUIRE(d1.execute(1, 2) == 3);
-    REQUIRE(d2.execute(2, 3) == 6);
+    ASSERT_TRUE(d1.is_bound());
+    ASSERT_TRUE(d2.is_bound());
+    EXPECT_EQ(d1.execute(1, 2), 3);
+    EXPECT_EQ(d2.execute(2, 3), 6);
 
     d2 = std::move(d1);
 
     // d1 now empty
-    REQUIRE_FALSE(d1.is_bound());
-    REQUIRE_THROWS_AS(d1.execute(1, 2), std::bad_function_call);
+    EXPECT_FALSE(d1.is_bound());
+    EXPECT_THROW(d1.execute(1, 2), std::bad_function_call);
 
     // d2 now uses former d1 target
-    REQUIRE(d2.is_bound());
-    REQUIRE(d2.execute(1, 2) == 3);
+    ASSERT_TRUE(d2.is_bound());
+    EXPECT_EQ(d2.execute(1, 2), 3);
 }
 
-TEST_CASE("Delegate copy construction clones bound functor", "[Delegate]")
+TEST(Delegate, CopyConstruction)
 {
-    REQUIRE(CopyTrackingFunctor::instance_count == 0);
+    EXPECT_EQ(CopyTrackingFunctor::instance_count, 0);
 
     {
         Delegate<int32(int32)> source;
         source.bind(CopyTrackingFunctor{4});
 
-        REQUIRE(source.is_bound());
-        REQUIRE(CopyTrackingFunctor::instance_count == 1);
-        REQUIRE(source.execute(3) == 7);
+        ASSERT_TRUE(source.is_bound());
+        EXPECT_EQ(CopyTrackingFunctor::instance_count, 1);
+        EXPECT_EQ(source.execute(3), 7);
 
         Delegate copy{source};
 
-        REQUIRE(copy.is_bound());
-        REQUIRE(CopyTrackingFunctor::instance_count == 2);
-        REQUIRE(copy.execute(3) == 7);
-        REQUIRE(source.execute(1) == 5);
+        ASSERT_TRUE(copy.is_bound());
+        EXPECT_EQ(CopyTrackingFunctor::instance_count, 2);
+        EXPECT_EQ(copy.execute(3), 7);
+        EXPECT_EQ(source.execute(1), 5);
     }
 
-    REQUIRE(CopyTrackingFunctor::instance_count == 0);
+    EXPECT_EQ(CopyTrackingFunctor::instance_count, 0);
 }
 
-TEST_CASE("Delegate copy assignment replaces existing binding", "[Delegate]")
+TEST(Delegate, CopyAssignment)
 {
-    REQUIRE(LargeTrackingFunctor::instance_count == 0);
+    EXPECT_EQ(LargeTrackingFunctor::instance_count, 0);
 
     {
         Delegate<int32(int32)> d1;
@@ -394,109 +394,109 @@ TEST_CASE("Delegate copy assignment replaces existing binding", "[Delegate]")
         d1.bind(LargeTrackingFunctor{2});
         d2.bind(LargeTrackingFunctor{7});
 
-        REQUIRE(d1.is_bound());
-        REQUIRE(d2.is_bound());
-        REQUIRE(LargeTrackingFunctor::instance_count == 2);
-        REQUIRE(d1.execute(3) == 6);
-        REQUIRE(d2.execute(3) == 21);
+        ASSERT_TRUE(d1.is_bound());
+        ASSERT_TRUE(d2.is_bound());
+        EXPECT_EQ(LargeTrackingFunctor::instance_count, 2);
+        EXPECT_EQ(d1.execute(3), 6);
+        EXPECT_EQ(d2.execute(3), 21);
 
         d2 = d1;
 
-        REQUIRE(d2.is_bound());
-        REQUIRE(LargeTrackingFunctor::instance_count == 2);
-        REQUIRE(d2.execute(4) == 8);
+        ASSERT_TRUE(d2.is_bound());
+        EXPECT_EQ(LargeTrackingFunctor::instance_count, 2);
+        EXPECT_EQ(d2.execute(4), 8);
     }
 
-    REQUIRE(LargeTrackingFunctor::instance_count == 0);
+    EXPECT_EQ(LargeTrackingFunctor::instance_count, 0);
 }
 
-TEST_CASE("Delegate properly deletes heap-stored functor on destruction", "[Delegate]")
+TEST(Delegate, HeapAllocation)
 {
-    REQUIRE(DeletionTracker::instance_count == 0);
+    EXPECT_EQ(DeletionTracker::instance_count, 0);
 
     {
         Delegate<void()> d;
         d.bind(DeletionTracker{});
-        REQUIRE(DeletionTracker::instance_count == 1);
-        REQUIRE(d.is_bound());
+        EXPECT_EQ(DeletionTracker::instance_count, 1);
+        ASSERT_TRUE(d.is_bound());
 
         // Move to another delegate to ensure deletion only happens once
         Delegate d2{std::move(d)};
-        REQUIRE_FALSE(d.is_bound());
-        REQUIRE(d2.is_bound());
-        REQUIRE(DeletionTracker::instance_count == 1);
+        EXPECT_FALSE(d.is_bound());
+        EXPECT_TRUE(d2.is_bound());
+        EXPECT_EQ(DeletionTracker::instance_count, 1);
     }
 
     // After scope exit, both delegates are destroyed and functor should be deleted
-    REQUIRE(DeletionTracker::instance_count == 0);
+    EXPECT_EQ(DeletionTracker::instance_count, 0);
 }
 
-TEST_CASE("Delegate weak binding with std::shared_ptr", "[Delegate]")
+TEST(Delegate, WeakBindingSharedPtr)
 {
     Delegate<int32(int32)> d;
     auto object = std::make_shared<WeakBindingObject>();
 
     d.bind(object, &WeakBindingObject::multiply);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(4) == 12);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(4), 12);
 
     object.reset();
-    REQUIRE_FALSE(d.is_bound());
-    REQUIRE_THROWS_AS(d.execute(4), std::bad_function_call);
+    EXPECT_FALSE(d.is_bound());
+    EXPECT_THROW(d.execute(4), std::bad_function_call);
 }
 
-TEST_CASE("Delegate weak binding with std::weak_ptr", "[Delegate]")
+TEST(Delegate, WeakBindingWeakPtr)
 {
     Delegate<int32(int32)> d;
     auto object = std::make_shared<WeakBindingObject>();
     std::weak_ptr weak = object;
 
     d.bind(weak, &WeakBindingObject::multiply);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(2) == 6);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(2), 6);
 
     object.reset();
-    REQUIRE_FALSE(d.is_bound());
-    REQUIRE_THROWS_AS(d.execute(2), std::bad_function_call);
+    EXPECT_FALSE(d.is_bound());
+    EXPECT_THROW(d.execute(2), std::bad_function_call);
 }
 
-TEST_CASE("Delegate weak binding with enable_shared_from_this", "[Delegate]")
+TEST(Delegate, WeakBindingEnableSharedFromList)
 {
     Delegate<int32(int32)> d;
     auto object = std::make_shared<SharedFromThisObject>();
 
     d.bind(*object, &SharedFromThisObject::add);
-    REQUIRE(d.is_bound());
-    REQUIRE(d.execute(3) == 8);
+    ASSERT_TRUE(d.is_bound());
+    EXPECT_EQ(d.execute(3), 8);
 
     object.reset();
-    REQUIRE_FALSE(d.is_bound());
-    REQUIRE_THROWS_AS(d.execute(1), std::bad_function_call);
+    EXPECT_FALSE(d.is_bound());
+    EXPECT_THROW(d.execute(1), std::bad_function_call);
 }
 
-TEST_CASE("Delegate bind with additional arguments", "[Delegate]")
+TEST(Delegate, BindWithArgs)
 {
     auto d1 = Delegate<int32(int32)>::create<free_function_add>(3);
-    REQUIRE(d1.is_bound());
-    REQUIRE(d1.execute(5) == 8);
+    ASSERT_TRUE(d1.is_bound());
+    EXPECT_EQ(d1.execute(5), 8);
 
     auto d2 = Delegate<int32(int32)>::create(&free_function_mul, 4);
-    REQUIRE(d2.is_bound());
-    REQUIRE(d2.execute(6) == 24);
+    ASSERT_TRUE(d2.is_bound());
+    EXPECT_EQ(d2.execute(6), 24);
 
     TestObject obj;
     obj.factor = 2;
     obj.offset = 0;
     auto d3 = Delegate<int32()>::create(obj, &TestObject::member_mul, 7);
-    REQUIRE(d3.is_bound());
-    REQUIRE(d3.execute() == 14);
+    ASSERT_TRUE(d3.is_bound());
+    EXPECT_EQ(d3.execute(), 14);
 
     auto d4 = Delegate<int32(int32)>::create([](int32 x, int32 y) { return x - y; }, 9);
-    REQUIRE(d4.is_bound());
-    REQUIRE(d4.execute(20) == 11);
+    ASSERT_TRUE(d4.is_bound());
+    EXPECT_EQ(d4.execute(20), 11);
 }
 
-TEST_CASE("MulticastDelegate add and broadcast with different bindings", "[Delegate]")
+TEST(Delegate, MulticastReceiver)
 {
     MulticastDelegate<void(int32)> multicast;
     int32 total = 0;
@@ -507,19 +507,19 @@ TEST_CASE("MulticastDelegate add and broadcast with different bindings", "[Deleg
     auto handle_member = multicast.add<&MulticastReceiver::add>(receiver);
     auto handle_append = multicast.add(&append_value, std::ref(values));
 
-    REQUIRE(handle_sum.is_valid());
-    REQUIRE(handle_member.is_valid());
-    REQUIRE(handle_append.is_valid());
-    REQUIRE(multicast.size() == 3);
+    EXPECT_TRUE(handle_sum.is_valid());
+    EXPECT_TRUE(handle_member.is_valid());
+    EXPECT_TRUE(handle_append.is_valid());
+    EXPECT_EQ(multicast.size(), 3);
 
     multicast.broadcast(4);
 
-    REQUIRE(total == 4);
-    REQUIRE(receiver.total == 4);
-    REQUIRE(values == std::vector<int32>{4});
+    EXPECT_EQ(total, 4);
+    EXPECT_EQ(receiver.total, 4);
+    EXPECT_EQ(values, std::vector<int32>{4});
 }
 
-TEST_CASE("MulticastDelegate remove stops future calls", "[Delegate]")
+TEST(Delegate, MulticastRemove)
 {
     MulticastDelegate<void(int32)> multicast;
     int32 total = 0;
@@ -527,11 +527,11 @@ TEST_CASE("MulticastDelegate remove stops future calls", "[Delegate]")
     const auto handle_first = multicast.add([&](const int32 value) { total += value; });
     multicast.add([&](const int32 value) { total += value * 2; });
 
-    REQUIRE(multicast.size() == 2);
+    EXPECT_EQ(multicast.size(), 2);
 
     multicast.remove(handle_first);
-    REQUIRE(multicast.size() == 1);
+    EXPECT_EQ(multicast.size(), 1);
 
     multicast.broadcast(3);
-    REQUIRE(total == 6);
+    EXPECT_EQ(total, 6);
 }

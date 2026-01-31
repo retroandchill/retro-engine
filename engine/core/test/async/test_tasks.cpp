@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include <catch2/catch_test_macros.hpp>
+#include <gtest/gtest.h>
 
 import retro.core;
 import std;
@@ -24,7 +24,7 @@ namespace
 
         void await_suspend(std::coroutine_handle<> h) const
         {
-            REQUIRE(scheduler != nullptr);
+            ASSERT_NE(scheduler, nullptr);
             scheduler->enqueue(h);
         }
 
@@ -47,7 +47,7 @@ namespace
     }
 } // namespace
 
-TEST_CASE("Task: awaiting an already-completed task continues inline (no suspension)", "[async][task]")
+TEST(Task, AwaitingAlreadyCompletedTaskContinuesInlineNoSuspension)
 {
     retro::ManualTaskScheduler scheduler;
     retro::TaskScheduler::Scope scope{&scheduler};
@@ -61,19 +61,21 @@ TEST_CASE("Task: awaiting an already-completed task continues inline (no suspens
         // This task completes immediately; parent should not suspend here.
         const int v = co_await make_ready_value(42);
 
-        REQUIRE(v == 42);
+        EXPECT_EQ(v, 42);
         step = 2;
         co_return;
     }();
 
+    (void)parent;
+
     // If await_ready() short-circuits correctly, we should already be done without pumping.
-    REQUIRE(step == 2);
+    EXPECT_EQ(step, 2);
 
     // Pumping should not be required, but also should not break anything.
-    REQUIRE(scheduler.pump() == 0);
+    EXPECT_EQ(scheduler.pump(), 0);
 }
 
-TEST_CASE("Task: yielding to scheduler suspends and requires pump to resume", "[async][task][scheduler]")
+TEST(Task, YieldingToSchedulerSuspendsAndRequiresPumpToResume)
 {
     retro::ManualTaskScheduler scheduler;
     retro::TaskScheduler::Scope scope{&scheduler};
@@ -81,19 +83,20 @@ TEST_CASE("Task: yielding to scheduler suspends and requires pump to resume", "[
     int step = 0;
 
     auto t = yield_once_then_set(step);
+    (void)t;
 
     // The coroutine ran until the yield point and suspended.
-    REQUIRE(step == 1);
+    EXPECT_EQ(step, 1);
 
     // One pump should resume it and let it finish.
-    REQUIRE(scheduler.pump() == 1);
-    REQUIRE(step == 2);
+    EXPECT_EQ(scheduler.pump(), 1);
+    EXPECT_EQ(step, 2);
 
     // Further pumps should have nothing to do.
-    REQUIRE(scheduler.pump() == 0);
+    EXPECT_EQ(scheduler.pump(), 0);
 }
 
-TEST_CASE("Task: child completion resumes parent continuation", "[async][task][final_suspend]")
+TEST(Task, ChildCompletionResumesParentContinuation)
 {
     retro::ManualTaskScheduler scheduler;
     retro::TaskScheduler::Scope scope{&scheduler};
@@ -116,8 +119,10 @@ TEST_CASE("Task: child completion resumes parent continuation", "[async][task][f
         co_return;
     }();
 
+    (void)parent;
+
     // Parent starts and then should suspend awaiting child (child yields).
-    REQUIRE((step == 1 || step == 10)); // ordering depends on symmetric transfer; both are acceptable here.
+    EXPECT_TRUE((step == 1 || step == 10)); // ordering depends on symmetric transfer; both are acceptable here.
 
     // After one pump we expect:
     // - child resumed and completed (step becomes 2),
@@ -127,12 +132,12 @@ TEST_CASE("Task: child completion resumes parent continuation", "[async][task][f
     // If your final-await policy enqueues instead, step will be 2 here and will reach 20 on a second pump.
     (void)scheduler.pump();
 
-    REQUIRE((step == 20 || step == 2));
+    EXPECT_TRUE((step == 20 || step == 2));
 
     if (step == 2)
     {
         // Continuation was enqueued; one more pump should resume parent.
         (void)scheduler.pump();
-        REQUIRE(step == 20);
+        EXPECT_EQ(step, 20);
     }
 }

@@ -35,15 +35,18 @@ namespace retro
         NonCopyable &operator=(NonCopyable &&) = delete;
     };
 
-    export template <typename T, typename U>
-    using ForwardLikeType =
-        std::conditional_t<std::is_const_v<std::remove_reference_t<T>>,
-                           std::conditional_t<std::is_lvalue_reference_v<T>,
-                                              std::add_const_t<U>,
-                                              std::add_const_t<std::remove_reference_t<U> &&>>,
-                           std::conditional_t<std::is_lvalue_reference_v<T>, U, std::remove_reference_t<U> &&>>;
+    template <bool IsConst, class T>
+    using MaybeConst = std::conditional_t<IsConst, const T, T>;
 
-    template <typename To, typename From>
+    template <class T,
+              class U,
+              class Tmp = MaybeConst<std::is_const_v<std::remove_reference_t<T>>, std::remove_reference_t<U>>>
+    using ForwardLikeTypeHelper = std::conditional_t<std::is_rvalue_reference_v<T &&>, Tmp &&, Tmp &>;
+
+    export template <typename T, typename U>
+    using ForwardLikeType = ForwardLikeTypeHelper<T, U>;
+
+    export template <typename To, typename From>
     concept ReferenceConvertsFromTemporary =
         std::is_reference_v<To> && ((!std::is_reference_v<From> &&
                                      std::is_convertible_v<std::remove_cvref_t<From> *, std::remove_cvref_t<To> *>) ||

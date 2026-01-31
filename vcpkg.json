@@ -11,9 +11,6 @@
     "name" : "nethost",
     "version>=" : "8.0.3"
   }, {
-    "name" : "catch2",
-    "version>=" : "3.11.0"
-  }, {
     "name" : "fmt",
     "version>=" : "12.1.0"
   }, {
@@ -50,6 +47,9 @@
   }, {
     "name" : "stb",
     "version>=" : "2024-07-29#1"
+  }, {
+    "name" : "gtest",
+    "version>=" : "1.17.0#2"
   } ],
   "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
 }

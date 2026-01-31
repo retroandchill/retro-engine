@@ -4,9 +4,9 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include "test_helpers.h"
+#include "gtest_helpers.hpp"
 
-#include <catch2/catch_test_macros.hpp>
+#include <gtest/gtest.h>
 
 import retro.core;
 
@@ -14,122 +14,119 @@ using retro::FindType;
 using retro::Name;
 using retro::NAME_NO_NUMBER;
 
-TEST_CASE("Name default construction yields none and invalid", "[name]")
+TEST(Name, DefaultConstructionYieldsNoneAndValid)
 {
     constexpr Name n;
 
-    REQUIRE(n.is_none());
-    REQUIRE(n.is_valid());
-    REQUIRE(n.comparison_index() == 0u);
-    REQUIRE(n.display_index() == 0u);
-    REQUIRE(n.number() == NAME_NO_NUMBER);
+    EXPECT_TRUE(n.is_none());
+    EXPECT_TRUE(n.is_valid());
+    EXPECT_EQ(n.comparison_index(), 0u);
+    EXPECT_EQ(n.display_index(), 0u);
+    EXPECT_EQ(n.number(), NAME_NO_NUMBER);
 }
 
-TEST_CASE("Name created from same logical value shares comparison index", "[name]")
+TEST(Name, SameLogicalValueSharesComparisonIndex)
 {
     // Case-insensitive comparison index, but equality uses comparison_index + number.
     Name upper{std::u16string{u"Player"}};
     Name lower{std::u16string{u"player"}};
 
-    REQUIRE(upper.is_valid());
-    REQUIRE(lower.is_valid());
+    ASSERT_TRUE(upper.is_valid());
+    ASSERT_TRUE(lower.is_valid());
 
     // Same logical name => same comparison index
-    REQUIRE(upper.comparison_index() == lower.comparison_index());
+    EXPECT_EQ(upper.comparison_index(), lower.comparison_index());
 
     // Display strings are case-sensitive; they may differ
-    REQUIRE(upper.display_index() != 0u);
-    REQUIRE(lower.display_index() != 0u);
-    REQUIRE(upper.display_index() != lower.display_index());
+    EXPECT_NE(upper.display_index(), 0u);
+    EXPECT_NE(lower.display_index(), 0u);
+    EXPECT_NE(upper.display_index(), lower.display_index());
 
     // Equality operator only cares about comparison_index + number
-    REQUIRE(upper == lower);
+    EXPECT_TRUE(upper == lower);
 }
 
-TEST_CASE("Name with numeric suffix parses number and strips it from base", "[name]")
+TEST(Name, NumericSuffixParsesNumberAndKeepsBaseString)
 {
     Name n{std::u16string{u"Enemy_42"}};
 
-    REQUIRE(n.is_valid());
-    REQUIRE_FALSE(n.is_none());
+    ASSERT_TRUE(n.is_valid());
+    EXPECT_FALSE(n.is_none());
 
     // Number gets parsed out
-    REQUIRE(n.number() == 42);
+    EXPECT_EQ(n.number(), 42);
 
     // Stored base name should be with the _42 suffix
     const std::string base = n.to_string();
-    REQUIRE(base == std::string{"Enemy_42"});
+    EXPECT_EQ(base, (std::string{"Enemy_42"}));
 
     // Comparison is still against the base logical name
-    REQUIRE(n == std::string_view{"Enemy_42"});
+    EXPECT_TRUE(n == std::string_view{"Enemy_42"});
 }
 
-TEST_CASE("Name ignores invalid or malformed numeric suffixes", "[name]")
+TEST(Name, IgnoresInvalidOrMalformedNumericSuffixes)
 {
     // Leading zero after underscore should be rejected as a number
     Name with_leading_zero{std::u16string{u"Foo_01"}};
 
-    REQUIRE(with_leading_zero.is_valid());
-    REQUIRE(with_leading_zero.number() == NAME_NO_NUMBER);
-    REQUIRE(with_leading_zero.to_string() == std::string{"Foo_01"});
+    ASSERT_TRUE(with_leading_zero.is_valid());
+    EXPECT_EQ(with_leading_zero.number(), NAME_NO_NUMBER);
+    EXPECT_EQ(with_leading_zero.to_string(), (std::string{"Foo_01"}));
 
     // No underscore before digits -> treated as part of the name
     Name no_underscore{std::string{"Bar99"}};
-    REQUIRE(no_underscore.is_valid());
-    REQUIRE(no_underscore.number() == NAME_NO_NUMBER);
-    REQUIRE(no_underscore.to_string() == std::string{"Bar99"});
+    ASSERT_TRUE(no_underscore.is_valid());
+    EXPECT_EQ(no_underscore.number(), NAME_NO_NUMBER);
+    EXPECT_EQ(no_underscore.to_string(), (std::string{"Bar99"}));
 }
 
-TEST_CASE("FindType::Find does not create new entries", "[name]")
+TEST(Name, FindTypeFindDoesNotCreateNewEntries)
 {
     // First ensure there is one known entry
     Name existing{std::u16string{u"Knight"}};
-    REQUIRE(existing.is_valid());
-    // ReSharper disable once CppDFAUnreadVariable
-    // ReSharper disable once CppDFAUnusedValue
+    ASSERT_TRUE(existing.is_valid());
+
     const auto existing_comparison = existing.comparison_index();
-    // ReSharper disable once CppDFAUnreadVariable
-    // ReSharper disable once CppDFAUnusedValue
     const auto existing_display = existing.display_index();
 
     // Lookup again using FindType::Find -> should find the same indices
     Name found_existing{std::u16string{u"Knight"}, FindType::Find};
-    REQUIRE(found_existing.is_valid());
-    REQUIRE_FALSE(found_existing.is_none());
-    REQUIRE(found_existing.comparison_index() == existing_comparison);
-    REQUIRE(found_existing.display_index() == existing_display);
+    ASSERT_TRUE(found_existing.is_valid());
+    EXPECT_FALSE(found_existing.is_none());
+    EXPECT_EQ(found_existing.comparison_index(), existing_comparison);
+    EXPECT_EQ(found_existing.display_index(), existing_display);
 
     // Lookup unknown name with FindType::Find -> should yield a "none" name
     Name not_created{std::u16string{u"UnknownNameThatDoesNotExist"}, FindType::Find};
-    REQUIRE(not_created.is_none());
-    REQUIRE(not_created.is_valid());
-    REQUIRE(not_created.comparison_index() == 0u);
-    REQUIRE(not_created.display_index() == 0u);
+    EXPECT_TRUE(not_created.is_none());
+    EXPECT_TRUE(not_created.is_valid());
+    EXPECT_EQ(not_created.comparison_index(), 0u);
+    EXPECT_EQ(not_created.display_index(), 0u);
 }
 
-TEST_CASE("Name equals comparison uses case-insensitive semantic", "[name]")
+TEST(Name, EqualsComparisonIsCaseInsensitive)
 {
     Name n{std::u16string{u"Boss"}};
 
-    REQUIRE(n.is_valid());
+    ASSERT_TRUE(n.is_valid());
 
     // Comparison against std::u16string_view is case-insensitive
-    REQUIRE(n == std::u16string_view{u"boss"});
-    REQUIRE(n == std::u16string_view{u"BOSS"});
-    REQUIRE_FALSE(n == std::u16string_view{u"miniboss"});
+    EXPECT_TRUE(n == std::u16string_view{u"boss"});
+    EXPECT_TRUE(n == std::u16string_view{u"BOSS"});
+    EXPECT_FALSE(n == std::u16string_view{u"miniboss"});
 }
 
-TEST_CASE("Name none() creates a none name", "[name]")
+TEST(Name, NoneCreatesANoneName)
 {
     const Name none = Name::none();
 
-    REQUIRE(none.is_none());
-    REQUIRE(none.is_valid());
-    REQUIRE(none.comparison_index() == 0u);
-    REQUIRE(none.display_index() == 0u);
-    REQUIRE(none.number() == NAME_NO_NUMBER);
+    EXPECT_TRUE(none.is_none());
+    EXPECT_TRUE(none.is_valid());
+    EXPECT_EQ(none.comparison_index(), 0u);
+    EXPECT_EQ(none.display_index(), 0u);
+    EXPECT_EQ(none.number(), NAME_NO_NUMBER);
 
     // String representation for an invalid display index should be "None"
     const std::string display = none.to_string();
-    REQUIRE(display == std::string{"None"});
+    EXPECT_EQ(display, (std::string{"None"}));
 }

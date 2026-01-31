@@ -65,6 +65,7 @@ namespace retro
 
         static constexpr void unsafe_set_size(uint8) noexcept
         {
+            // No-op
         }
 
         static constexpr void unsafe_destroy(T *, T *) noexcept
@@ -109,11 +110,11 @@ namespace retro
     };
 
     export template <typename T, usize N>
-    class InlineList
+    class InlineList : private InlineListStorage<T, N>
     {
       public:
         using value_type = T;
-        using size_type = InlineListStorage<T, N>::Size;
+        using size_type = usize;
         using difference_type = isize;
         using reference = value_type &;
         using const_reference = const value_type &;
@@ -136,7 +137,7 @@ namespace retro
         }
 
         template <std::input_iterator InputIt>
-            requires std::convertible_to<std::iter_reference_t<T>, T>
+            requires std::convertible_to<std::iter_reference_t<InputIt>, T> && std::movable<T>
         constexpr InlineList(InputIt first, InputIt last)
         {
             insert(begin(), first, last);
@@ -184,7 +185,7 @@ namespace retro
         constexpr ~InlineList()
             requires(N > 0 && !std::is_trivially_destructible_v<T>)
         {
-            storage_.unsafe_destroy(begin(), end());
+            this->unsafe_destroy(begin(), end());
         }
         constexpr ~InlineList()
             requires(N == 0 || std::is_trivially_destructible_v<T>)
@@ -237,7 +238,7 @@ namespace retro
         }
 
         template <std::input_iterator InputIt>
-            requires std::convertible_to<std::iter_reference_t<T>, T> && std::movable<T>
+            requires std::convertible_to<std::iter_reference_t<InputIt>, T> && std::movable<T>
         constexpr void assign(InputIt first, InputIt last)
         {
             clear();
@@ -264,7 +265,7 @@ namespace retro
                 throw std::out_of_range{"InlineList::at"};
             } // NOLINT
 
-            return storage_.storage_data()[pos];
+            return this->storage_data()[pos];
         }
         constexpr const T &at(size_type pos) const
         {
@@ -273,76 +274,76 @@ namespace retro
                 throw std::out_of_range{"InlineList::at"};
             } // NOLINT
 
-            return storage_.storage_data()[pos];
+            return this->storage_data()[pos];
         }
 
         constexpr T &operator[](size_type pos)
         {
-            return storage_.storage_data()[pos];
+            return this->storage_data()[pos];
         }
 
         constexpr const T &operator[](size_type pos) const
         {
-            return storage_.storage_data()[pos];
+            return this->storage_data()[pos];
         }
 
         constexpr T &front()
         {
-            return storage_.storage_data()[0];
+            return this->storage_data()[0];
         }
         constexpr const T &front() const
         {
-            return storage_.storage_data()[0];
+            return this->storage_data()[0];
         }
 
         constexpr T &back()
         {
-            return storage_.storage_data()[size() - 1];
+            return this->storage_data()[size() - 1];
         }
 
         constexpr const T &back() const
         {
-            return storage_.storage_data()[size() - 1];
+            return this->storage_data()[size() - 1];
         }
 
         constexpr T *data()
         {
             if (size() == 0)
                 return nullptr;
-            return storage_.storage_data();
+            return this->storage_data();
         }
         constexpr const T *data() const
         {
             if (size() == 0)
                 return nullptr;
-            return storage_.storage_data();
+            return this->storage_data();
         }
 
         constexpr iterator begin()
         {
-            return storage_.storage_data();
+            return this->storage_data();
         }
         constexpr const_iterator begin() const
         {
-            return storage_.storage_data();
+            return this->storage_data();
         }
         constexpr const_iterator cbegin() const
         {
-            return storage_.storage_data();
+            return this->storage_data();
         }
 
         constexpr iterator end()
         {
-            return std::next(storage_.storage_data(), storage_.storage_size());
+            return std::next(this->storage_data(), this->storage_size());
         }
         constexpr const_iterator end() const
         {
-            return std::next(storage_.storage_data(), storage_.storage_size());
+            return std::next(this->storage_data(), this->storage_size());
         }
 
         constexpr const_iterator cend() const
         {
-            return std::next(storage_.storage_data(), storage_.storage_size());
+            return std::next(this->storage_data(), this->storage_size());
         }
 
         constexpr reverse_iterator rbegin()
@@ -378,7 +379,7 @@ namespace retro
 
         [[nodiscard]] constexpr size_type size() const noexcept
         {
-            return storage_.storage_size();
+            return this->storage_size();
         }
 
         static constexpr size_type max_size() noexcept
@@ -397,7 +398,7 @@ namespace retro
             if (count == size())
                 return;
 
-            if (size > N) [[unlikely]]
+            if (count > N) [[unlikely]]
             {
                 throw std::bad_alloc{}; // NOLINT
             }
@@ -411,8 +412,8 @@ namespace retro
             }
             else
             {
-                unsafe_destroy(std::next(begin(), count), end());
-                storage_.unsafe_set_size(count);
+                this->unsafe_destroy(std::next(begin(), count), end());
+                this->unsafe_set_size(count);
             }
         }
         constexpr void resize(size_type count, const T &value)
@@ -421,7 +422,7 @@ namespace retro
             if (count == size())
                 return;
 
-            if (size > N) [[unlikely]]
+            if (count > N) [[unlikely]]
             {
                 throw std::bad_alloc{}; // NOLINT
             }
@@ -432,8 +433,8 @@ namespace retro
             }
             else
             {
-                storage_.unsafe_destroy(std::next(begin(), count), end());
-                storage_.unsafe_set_size(count);
+                this->unsafe_destroy(std::next(begin(), count), end());
+                this->unsafe_set_size(count);
             }
         }
         static constexpr void reserve(size_type new_capacity)
@@ -474,7 +475,8 @@ namespace retro
             return position;
         }
 
-        template <typename InputIt>
+        template <std::input_iterator InputIt>
+            requires std::convertible_to<std::iter_reference_t<InputIt>, T> && std::movable<T>
         constexpr iterator insert(const_iterator pos, InputIt first, InputIt last)
         {
             if constexpr (std::random_access_iterator<InputIt>)
@@ -519,7 +521,7 @@ namespace retro
             emplace_back(std::forward<Args>(args)...);
             auto pos = begin() + (position - begin());
             std::rotate(pos, original_end, end());
-            return original_end;
+            return pos;
         }
 
         template <typename... Args>
@@ -551,8 +553,8 @@ namespace retro
             requires std::constructible_from<T, Args...>
         constexpr T &unchecked_emplace_back(Args &&...args)
         {
-            std::construct_at(std::next(storage_.storage_data(), size()), std::forward<Args>(args)...);
-            storage_.unsafe_set_size(size() + 1);
+            std::construct_at(std::next(this->storage_data(), size()), std::forward<Args>(args)...);
+            this->unsafe_set_size(size() + 1);
             return back();
         }
 
@@ -596,8 +598,8 @@ namespace retro
         {
             if (!empty())
             {
-                storage_.unsafe_destroy(std::prev(end()), end());
-                storage_.unsafe_set_size(size() - 1);
+                this->unsafe_destroy(std::prev(end()), end());
+                this->unsafe_set_size(size() - 1);
             }
         }
 
@@ -630,7 +632,7 @@ namespace retro
         {
             auto it = std::ranges::begin(range);
             const auto end = std::ranges::end(range);
-            for (; size != capacity() && it != end; ++it)
+            for (; size() != capacity() && it != end; ++it)
             {
                 unchecked_emplace_back(*it);
             }
@@ -640,8 +642,8 @@ namespace retro
 
         constexpr void clear() noexcept
         {
-            storage_.unsafe_destroy(begin(), end());
-            storage_.unsafe_set_size(0);
+            this->unsafe_destroy(begin(), end());
+            this->unsafe_set_size(0);
         }
 
         constexpr iterator erase(const_iterator position)
@@ -656,8 +658,8 @@ namespace retro
             auto start = begin() + (first - begin());
             if (first != last)
             {
-                storage_.unsafe_destroy(std::move(start + (last - first), end(), start), end());
-                storage_.unsafe_set_size(size() - static_cast<usize>(std::distance(first, last)));
+                this->unsafe_destroy(std::move(start + (last - first), end(), start), end());
+                this->unsafe_set_size(size() - static_cast<usize>(std::distance(first, last)));
             }
             return start;
         }
@@ -677,26 +679,7 @@ namespace retro
             lhs.swap(rhs);
         }
 
-        template <typename U = T>
-        friend constexpr size_type erase(InlineList &list, const U &value)
-        {
-            auto it = std::remove(list.begin(), list.end(), value);
-            auto r = std::distance(it, list.end());
-            list.erase(it, list.end());
-            return r;
-        }
-
-        template <typename Pred>
-        friend constexpr size_type erase_if(InlineList &list, Pred pred)
-        {
-            auto it = std::remove_if(list.begin(), list.end(), pred);
-            auto r = std::distance(it, list.end());
-            list.erase(it, list.end());
-            return r;
-        }
-
         constexpr friend bool operator==(const InlineList &lhs, const InlineList &rhs)
-            requires(std::equality_comparable<T>)
         {
             return lhs.size() == rhs.size() && std::ranges::equal(lhs, rhs);
         }
@@ -727,8 +710,26 @@ namespace retro
                 return lhs.size() <=> rhs.size();
             }
         }
-
-      private:
-        InlineListStorage<T, N> storage_;
     };
+
+    export template <typename T, usize N, typename U = T>
+    constexpr usize erase(InlineList<T, N> &list, const U &value)
+    {
+        auto it = std::remove(list.begin(), list.end(), value);
+        auto r = std::distance(it, list.end());
+        list.erase(it, list.end());
+        return r;
+    }
+
+    export template <typename T, usize N, typename Pred>
+        requires std::invocable<Pred, std::ranges::range_reference_t<InlineList<T, N> &>> &&
+                 std::convertible_to<std::invoke_result_t<Pred, std::ranges::range_reference_t<InlineList<T, N> &>>,
+                                     bool>
+    constexpr usize erase_if(InlineList<T, N> &list, Pred pred)
+    {
+        auto it = std::remove_if(list.begin(), list.end(), pred);
+        auto r = std::distance(it, list.end());
+        list.erase(it, list.end());
+        return r;
+    }
 } // namespace retro

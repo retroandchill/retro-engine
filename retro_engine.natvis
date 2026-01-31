@@ -11,4 +11,49 @@
         <DisplayString Condition="number_ > 0">{display_index_}_{(number_ - 1),d}</DisplayString>
         <DisplayString Condition="number_ == 0">{display_index_}</DisplayString>
     </Type>
+
+    <Type Name="retro::Optional&lt;*&gt;">
+        <DisplayString Condition="!has_value_">nullopt</DisplayString>
+        <DisplayString Condition="has_value_">{value_}</DisplayString>
+        <Expand>
+            <Item Condition="has_value_" Name="[value]">value_</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="retro::Optional&lt;*&gt;" Priority="Low">
+        <DisplayString Condition="value_ == nullptr">nullopt</DisplayString>
+        <DisplayString Condition="value_ != nullptr">{*value_}</DisplayString>
+        <Expand>
+            <Item Condition="value_ != nullptr" Name="[value]">*value_</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="retro::InlineList&lt;*,*&gt;"  Priority="High">
+        <DisplayString>{{ size = {(unsigned long long)storage_.size_} }}</DisplayString>
+        <Expand>
+            <Item Name="[size]">(unsigned long long)storage_.size_</Item>
+            <ArrayItems>
+                <Size>storage_.size_</Size>
+                <ValuePointer>storage_.data_.data()</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="retro::InlineList&lt;*,*&gt;" Priority="MediumHigh">
+        <DisplayString>{{ size = {(unsigned long long)storage_.size_} }}</DisplayString>
+        <Expand>
+            <Item Name="[size]">(unsigned long long)storage_.size_</Item>
+            <ArrayItems>
+                <Size>storage_.size_</Size>
+                <ValuePointer>($T1*)storage_.data_</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="retro::InlineList&lt;*,*&gt;" Priority="Low">
+        <DisplayString>{{ size = 0 }}</DisplayString>
+        <Expand>
+            <Item Name="[size]">0</Item>
+        </Expand>
+    </Type>
 </AutoVisualizer>
