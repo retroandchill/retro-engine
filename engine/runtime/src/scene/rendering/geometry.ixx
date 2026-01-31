@@ -38,7 +38,7 @@ namespace retro
         std::vector<uint32> indices{};
     };
 
-    export struct InstanceData
+    export struct GeometryInstanceData
     {
         alignas(16) Matrix2x2f transform{};
         alignas(8) Vector2f translation{};
@@ -51,7 +51,7 @@ namespace retro
     export struct GeometryBatch
     {
         const Geometry *geometry{};
-        std::vector<InstanceData> instances{};
+        std::vector<GeometryInstanceData> instances{};
         uint32 texture_handle{};
         Vector2f viewport_size{};
 

@@ -17,6 +17,7 @@ import retro.core;
 import :scene;
 import :scene.rendering;
 import :scene.rendering.geometry;
+import :scene.rendering.sprite;
 import :assets;
 import :texture;
 
@@ -133,6 +134,7 @@ namespace retro
         services.add_transient<Engine>()
             .add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
+            .add_singleton<RenderPipeline, SpriteRenderPipeline>()
             .add_singleton<AssetSource, FileSystemAssetSource>()
             .add_singleton<AssetManager>()
             .add_singleton<AssetDecoder, TextureDecoder>();

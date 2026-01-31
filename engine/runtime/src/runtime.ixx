@@ -10,5 +10,6 @@ export import :assets;
 export import :scene;
 export import :scene.rendering;
 export import :scene.rendering.geometry;
+export import :scene.rendering.sprite;
 export import :texture;
 export import :engine;

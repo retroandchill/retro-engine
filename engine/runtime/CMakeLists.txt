@@ -10,6 +10,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/scene/rendering/rendering.cpp
         src/assets/assets.cpp
         src/assets/assets_c.cpp
+        src/scene/rendering/sprite.cpp
 )
 
 set(RETRO_RUNTIME_MODULES
@@ -20,6 +21,7 @@ set(RETRO_RUNTIME_MODULES
         src/assets/assets.ixx
         src/assets/texture.ixx
         src/engine.ixx
+        src/scene/rendering/sprite.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS

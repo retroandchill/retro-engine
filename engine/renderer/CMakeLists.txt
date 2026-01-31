@@ -8,6 +8,8 @@ set(RENDERER_SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 set(RENDERER_SHADERS
         "${RENDERER_SHADER_DIR}/geometry.vert"
         "${RENDERER_SHADER_DIR}/geometry.frag"
+        "${RENDERER_SHADER_DIR}/sprite.vert"
+        "${RENDERER_SHADER_DIR}/sprite.frag"
 )
 
 set(COMPILED_SHADERS "")

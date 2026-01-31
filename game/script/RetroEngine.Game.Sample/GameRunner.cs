@@ -22,12 +22,12 @@ public sealed class GameRunner : IGameSession
         Logger.Info("Starting game runner.");
         _viewport = new Viewport(new Vector2F(1280, 720));
 
-        _ = new Quad(_viewport)
+        _ = new Sprite(_viewport)
         {
             Position = new Vector2F(640f, 360f),
             Size = new Vector2F(100.0f, 100.0f),
             Pivot = new Vector2F(0.5f, 0.5f),
-            Color = new Color(1, 0, 0),
+            Tint = new Color(1, 0, 0),
         };
     }
 

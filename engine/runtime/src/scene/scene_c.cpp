@@ -97,9 +97,7 @@ extern "C"
     Retro_NodeHandle retro_geometry_create(const Retro_NodeHandle parent)
     {
         auto *parent_ptr = from_c(parent);
-
         auto &geo = retro::Engine::instance().scene().create_node<retro::GeometryObject>(parent_ptr);
-
         return to_c(&geo);
     }
 
@@ -141,6 +139,34 @@ extern "C"
     {
         auto *base = from_c(node);
         auto &geo = dynamic_cast<retro::GeometryObject &>(*base);
+        geo.set_size(from_c(size));
+    }
+
+    Retro_NodeHandle retro_sprite_create(const Retro_NodeHandle parent)
+    {
+        auto *parent_ptr = from_c(parent);
+        auto &sprite = retro::Engine::instance().scene().create_node<retro::Sprite>(parent_ptr);
+        return to_c(&sprite);
+    }
+
+    void retro_sprite_set_tint(const Retro_NodeHandle node, const Retro_Color tint)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::Sprite &>(*base);
+        geo.set_tint(from_c(tint));
+    }
+
+    void retro_sprite_set_pivot(const Retro_NodeHandle node, const Retro_Vector2f pivot)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::Sprite &>(*base);
+        geo.set_pivot(from_c(pivot));
+    }
+
+    void retro_sprite_set_size(const Retro_NodeHandle node, const Retro_Vector2f size)
+    {
+        auto *base = from_c(node);
+        auto &geo = dynamic_cast<retro::Sprite &>(*base);
         geo.set_size(from_c(size));
     }
 }

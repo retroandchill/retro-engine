@@ -42,8 +42,8 @@ namespace retro
             .instance_buffers = {as_bytes(std::span{instances})},
             .index_buffer = as_bytes(std::span{geometry->indices}),
             .push_constants = as_bytes(std::span{&viewport_size, 1}),
-            .index_count = static_cast<uint32>(geometry->indices.size()),
-            .instance_count = static_cast<uint32>(instances.size()),
+            .index_count = geometry->indices.size(),
+            .instance_count = instances.size(),
         };
     }
 
@@ -85,34 +85,34 @@ namespace retro
                                                                                   .offset = offsetof(Vertex, uv)}}},
                                 VertexInputBinding{
                                     .type = VertexInputType::Instance,
-                                    .stride = sizeof(InstanceData),
+                                    .stride = sizeof(GeometryInstanceData),
                                     .attributes =
                                         {// Vulkan doesn't have matrix attributes, so the most compatible option is to
                                          // just treat a matrix as an array of vectors
                                          VertexAttribute{.type = ShaderDataType::Vec2,
                                                          .size = sizeof(Vector2f),
-                                                         .offset = offsetof(InstanceData, transform)},
+                                                         .offset = offsetof(GeometryInstanceData, transform)},
                                          VertexAttribute{.type = ShaderDataType::Vec2,
                                                          .size = sizeof(Vector2f),
-                                                         .offset = offsetof(InstanceData, transform) +
+                                                         .offset = offsetof(GeometryInstanceData, transform) +
                                                                    sizeof(Vector2f)},
                                          VertexAttribute{.type = ShaderDataType::Vec2,
                                                          .size = sizeof(Vector2f),
-                                                         .offset = offsetof(InstanceData, translation)},
+                                                         .offset = offsetof(GeometryInstanceData, translation)},
                                          VertexAttribute{.type = ShaderDataType::Vec2,
                                                          .size = sizeof(Vector2f),
-                                                         .offset = offsetof(InstanceData, pivot)},
+                                                         .offset = offsetof(GeometryInstanceData, pivot)},
                                          VertexAttribute{.type = ShaderDataType::Vec2,
                                                          .size = sizeof(Vector2f),
-                                                         .offset = offsetof(InstanceData, size)},
+                                                         .offset = offsetof(GeometryInstanceData, size)},
                                          VertexAttribute{.type = ShaderDataType::Vec4,
                                                          .size = sizeof(Color),
-                                                         .offset = offsetof(InstanceData, color)},
+                                                         .offset = offsetof(GeometryInstanceData, color)},
                                          VertexAttribute{.type = ShaderDataType::Uint32,
                                                          .size = sizeof(uint32),
-                                                         .offset = offsetof(InstanceData, has_texture)}}}},
-            .push_constant_bindings = {
-                PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}}};
+                                                         .offset = offsetof(GeometryInstanceData, has_texture)}}}},
+            .push_constant_bindings =
+                PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}};
 
         return layout;
     }
@@ -124,9 +124,7 @@ namespace retro
 
     void GeometryRenderPipeline::collect_draw_calls(Scene &registry, const Vector2u viewport_size)
     {
-        geometry_batches_.clear();
-
-        for (auto *node : registry.nodes_of_type<GeometryObject>())
+        for (const auto *node : registry.nodes_of_type<GeometryObject>())
         {
             auto *geometry = node->geometry().get();
             if (geometry == nullptr)
@@ -134,12 +132,12 @@ namespace retro
 
             const auto &transform = node->transform();
 
-            InstanceData instance{.transform = transform.matrix(),
-                                  .translation = transform.translation(),
-                                  .pivot = node->pivot(),
-                                  .size = node->size(),
-                                  .color = node->color(),
-                                  .has_texture = 0};
+            GeometryInstanceData instance{.transform = transform.matrix(),
+                                          .translation = transform.translation(),
+                                          .pivot = node->pivot(),
+                                          .size = node->size(),
+                                          .color = node->color(),
+                                          .has_texture = 0};
 
             auto &batch = geometry_batches_[geometry];
             batch.geometry = geometry;

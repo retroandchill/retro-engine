@@ -67,6 +67,14 @@ extern "C"
 
     RETRO_API void retro_geometry_set_size(Retro_NodeHandle node, Retro_Vector2f size);
 
+    RETRO_API Retro_NodeHandle retro_sprite_create(Retro_NodeHandle parent);
+
+    RETRO_API void retro_sprite_set_tint(Retro_NodeHandle node, Retro_Color tint);
+
+    RETRO_API void retro_sprite_set_pivot(Retro_NodeHandle node, Retro_Vector2f pivot);
+
+    RETRO_API void retro_sprite_set_size(Retro_NodeHandle node, Retro_Vector2f size);
+
 #ifdef __cplusplus
 }
 #endif

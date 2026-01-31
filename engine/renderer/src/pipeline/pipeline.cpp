@@ -131,11 +131,18 @@ namespace retro
             bind_descriptor_sets(buffer_manager, command, layout);
             bind_push_constants(command, layout);
 
-            cmd_.drawIndexed(static_cast<uint32>(command.index_count),
-                             static_cast<int32>(command.instance_count),
-                             0,
-                             0,
-                             0);
+            if (command.index_buffer.empty())
+            {
+                cmd_.draw(static_cast<uint32>(command.index_count), static_cast<int32>(command.instance_count), 0, 0);
+            }
+            else
+            {
+                cmd_.drawIndexed(static_cast<uint32>(command.index_count),
+                                 static_cast<int32>(command.instance_count),
+                                 0,
+                                 0,
+                                 0);
+            }
         }
 
         void bind_vertex_buffers(VulkanBufferManager &buffer_manager,
@@ -247,25 +254,6 @@ namespace retro
                                0,
                                static_cast<uint32>(command.push_constants.size()),
                                command.push_constants.data());
-        }
-
-        static PreparedGeometry prepare_geometry(const Geometry &geometry)
-        {
-            const usize vertex_size = geometry.vertices.size() * sizeof(Vertex);
-            const usize index_size = geometry.indices.size() * sizeof(uint32);
-
-            auto &buffer_manager = VulkanBufferManager::instance();
-
-            auto v_allocation = buffer_manager.allocate_transient(vertex_size, vk::BufferUsageFlagBits::eVertexBuffer);
-            auto i_allocation = buffer_manager.allocate_transient(index_size, vk::BufferUsageFlagBits::eIndexBuffer);
-
-            std::memcpy(v_allocation.mapped_data, geometry.vertices.data(), vertex_size);
-            std::memcpy(i_allocation.mapped_data, geometry.indices.data(), index_size);
-
-            return {v_allocation.buffer,
-                    i_allocation.buffer,
-                    static_cast<uint32>(v_allocation.offset),
-                    static_cast<uint32>(i_allocation.offset)};
         }
 
         vk::Device device_{};
