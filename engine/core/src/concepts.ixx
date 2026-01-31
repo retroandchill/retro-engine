@@ -339,4 +339,15 @@ namespace retro
     export template <typename R, typename T>
     concept ContainerCompatibleRange =
         std::ranges::input_range<R> && std::convertible_to<std::ranges::range_reference_t<R>, T>;
+
+    export template <usize N>
+    using SmallestSize = std::conditional_t < N < std::numeric_limits<uint8>::max(),
+          uint8, std::conditional_t < N < std::numeric_limits<uint16>::max(), uint16,
+          std::conditional_t<N<std::numeric_limits<uint32>::max(),
+                               uint32,
+                               std::conditional_t<N<std::numeric_limits<uint64>::max(), uint64, usize>>>>;
+
+    export template <typename T>
+    concept FullyTrivial = std::is_trivially_copyable_v<T> && std::is_trivially_default_constructible_v<T> &&
+                           std::is_trivially_destructible_v<T>;
 } // namespace retro

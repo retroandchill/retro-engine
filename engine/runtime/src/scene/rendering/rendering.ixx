@@ -98,6 +98,19 @@ namespace retro
         std::vector<PushConstantBinding> push_constant_bindings{};
     };
 
+    constexpr usize DRAW_ARRAY_SIZE = 8;
+
+    export struct DrawCommand
+    {
+        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> vertex_buffers{};
+        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> index_buffers{};
+        std::span<const std::byte> index_buffer;
+        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> descriptor_sets{};
+        std::span<const std::byte> push_constants;
+        usize vertex_count{};
+        usize index_count{};
+    };
+
     export struct Vertex
     {
         Vector2f position{};
