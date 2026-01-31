@@ -45,17 +45,25 @@ namespace
                 return static_cast<Retro_AssetLoadError>(error);
         }
     }
+
+    Retro_Name to_c(const retro::Name name)
+    {
+        return std::bit_cast<Retro_Name>(name);
+    }
 } // namespace
 
-Retro_AssetHandle retro_load_asset(const Retro_AssetPath *path, Retro_AssetLoadError *error)
+Retro_AssetHandle retro_load_asset(const Retro_AssetPath *path,
+                                   Retro_Name *out_asset_type,
+                                   Retro_AssetLoadError *out_error)
 {
     auto result = retro::Engine::instance().load_asset(from_c(path));
     if (!result.has_value())
     {
-        *error = to_c(result.error());
+        *out_error = to_c(result.error());
         return to_c(nullptr);
     }
 
+    *out_asset_type = to_c((*result)->asset_type());
     (*result)->retain();
     return to_c(result->get());
 }

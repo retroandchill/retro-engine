@@ -159,6 +159,8 @@ namespace retro
             return hook_.path;
         }
 
+        [[nodiscard]] virtual Name asset_type() const noexcept = 0;
+
       private:
         AssetPathHook hook_;
     };

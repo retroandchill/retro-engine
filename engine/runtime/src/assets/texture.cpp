@@ -65,6 +65,12 @@ namespace retro
         return std::move(result);
     }
 
+    Name Texture::asset_type() const noexcept
+    {
+        static Name type{"Texture"};
+        return type;
+    }
+
     void ImageDataDeleter::operator()(std::byte *bytes) const
     {
         stbi_image_free(bytes);

@@ -47,6 +47,8 @@ namespace retro
         {
         }
 
+        [[nodiscard]] Name asset_type() const noexcept override;
+
       private:
         friend class TextureDecoder;
 

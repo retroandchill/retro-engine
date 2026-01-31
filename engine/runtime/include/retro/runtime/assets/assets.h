@@ -35,7 +35,9 @@ extern "C"
 
     typedef uint8_t Retro_AssetLoadError;
 
-    RETRO_API Retro_AssetHandle retro_load_asset(const Retro_AssetPath *path, Retro_AssetLoadError *error);
+    RETRO_API Retro_AssetHandle retro_load_asset(const Retro_AssetPath *path,
+                                                 Retro_Name *out_asset_type,
+                                                 Retro_AssetLoadError *out_error);
 
     RETRO_API void retro_release_asset(Retro_AssetHandle asset);
 
