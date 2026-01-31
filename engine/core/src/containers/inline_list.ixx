@@ -15,18 +15,14 @@ namespace retro
     template <typename T, usize N>
     struct InlineListStorage // NOLINT We want the buffer uninitialized
     {
+        using Size = SmallestSize<N>;
+
         T *storage_data() noexcept
         {
-            if (size_ == 0)
-                return nullptr;
-
             return reinterpret_cast<T *>(data_);
         }
         const T *storage_data() const noexcept
         {
-            if (size_ == 0)
-                return nullptr;
-
             return reinterpret_cast<const T *>(data_);
         }
 
@@ -42,14 +38,13 @@ namespace retro
 
         static void unsafe_destroy(T *first, T *last) noexcept
         {
-            for (auto *elem : std::span<T *>{first, last})
+            for (; first != last; ++first)
             {
-                std::destroy_at(elem);
+                std::destroy_at(first);
             }
         }
 
       private:
-        using Size = SmallestSize<N>;
         alignas(T) std::byte data_[sizeof(T) * N]; // NOLINT We want this data uninitialized
         Size size_ = 0;
     };
@@ -57,6 +52,8 @@ namespace retro
     template <typename T>
     struct InlineListStorage<T, 0>
     {
+        using Size = uint8;
+
         static constexpr T *storage_data() noexcept
         {
             return nullptr;
@@ -80,6 +77,8 @@ namespace retro
         requires(N > 0 && FullyTrivial<T>)
     struct InlineListStorage<T, N>
     {
+        using Size = SmallestSize<N>;
+
         constexpr T *storage_data() noexcept
         {
             return data_.data();
@@ -105,7 +104,6 @@ namespace retro
         }
 
       private:
-        using Size = SmallestSize<N>;
         alignas(alignof(T)) std::array<std::remove_const_t<T>, N> data_{};
         Size size_ = 0;
     };
@@ -115,7 +113,7 @@ namespace retro
     {
       public:
         using value_type = T;
-        using size_type = usize;
+        using size_type = InlineListStorage<T, N>::Size;
         using difference_type = isize;
         using reference = value_type &;
         using const_reference = const value_type &;
@@ -127,12 +125,12 @@ namespace retro
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
         constexpr InlineList() noexcept = default;
-        constexpr explicit InlineList(const usize count)
+        constexpr explicit InlineList(const size_type count)
             requires(std::is_default_constructible_v<T>)
         {
             resize(count);
         }
-        constexpr InlineList(const usize count, const T &value)
+        constexpr InlineList(const size_type count, const T &value)
         {
             resize(count, value);
         }
@@ -232,7 +230,7 @@ namespace retro
             return *this;
         }
 
-        constexpr void assign(const usize count, const T &value)
+        constexpr void assign(const size_type count, const T &value)
         {
             clear();
             resize(count, value);
@@ -259,7 +257,7 @@ namespace retro
             insert_range(begin(), std::forward<R>(range));
         }
 
-        constexpr T &at(usize pos)
+        constexpr T &at(size_type pos)
         {
             if (pos >= size()) [[unlikely]]
             {
@@ -268,7 +266,7 @@ namespace retro
 
             return storage_.storage_data()[pos];
         }
-        constexpr const T &at(usize pos) const
+        constexpr const T &at(size_type pos) const
         {
             if (pos >= size()) [[unlikely]]
             {
@@ -278,12 +276,12 @@ namespace retro
             return storage_.storage_data()[pos];
         }
 
-        constexpr T &operator[](usize pos)
+        constexpr T &operator[](size_type pos)
         {
             return storage_.storage_data()[pos];
         }
 
-        constexpr const T &operator[](usize pos) const
+        constexpr const T &operator[](size_type pos) const
         {
             return storage_.storage_data()[pos];
         }
@@ -309,10 +307,14 @@ namespace retro
 
         constexpr T *data()
         {
+            if (size() == 0)
+                return nullptr;
             return storage_.storage_data();
         }
         constexpr const T *data() const
         {
+            if (size() == 0)
+                return nullptr;
             return storage_.storage_data();
         }
 
@@ -374,22 +376,22 @@ namespace retro
             return size() == 0;
         }
 
-        [[nodiscard]] constexpr usize size() const noexcept
+        [[nodiscard]] constexpr size_type size() const noexcept
         {
             return storage_.storage_size();
         }
 
-        static constexpr usize max_size() noexcept
+        static constexpr size_type max_size() noexcept
         {
             return N;
         }
 
-        static constexpr usize capacity() noexcept
+        static constexpr size_type capacity() noexcept
         {
             return N;
         }
 
-        constexpr void resize(usize count)
+        constexpr void resize(size_type count)
             requires std::constructible_from<T, T &&> && std::default_initializable<T>
         {
             if (count == size())
@@ -413,7 +415,7 @@ namespace retro
                 storage_.unsafe_set_size(count);
             }
         }
-        constexpr void resize(usize count, const T &value)
+        constexpr void resize(size_type count, const T &value)
             requires(std::constructible_from<T, const T &> && std::copyable<T>)
         {
             if (count == size())
@@ -434,7 +436,7 @@ namespace retro
                 storage_.unsafe_set_size(count);
             }
         }
-        static constexpr void reserve(usize new_capacity)
+        static constexpr void reserve(size_type new_capacity)
         {
             if (new_capacity > capacity()) [[unlikely]]
             {
@@ -458,11 +460,11 @@ namespace retro
             return emplace(pos, std::move(value));
         }
 
-        constexpr iterator insert(const_iterator pos, const usize count, const T &value)
+        constexpr iterator insert(const_iterator pos, const size_type count, const T &value)
             requires std::constructible_from<T, const T &> && std::copyable<T>
         {
             auto last = end();
-            for (usize i = 0; i < count; ++i)
+            for (size_type i = 0; i < count; ++i)
             {
                 emplace_back(value);
             }
@@ -676,7 +678,7 @@ namespace retro
         }
 
         template <typename U = T>
-        friend constexpr usize erase(InlineList &list, const U &value)
+        friend constexpr size_type erase(InlineList &list, const U &value)
         {
             auto it = std::remove(list.begin(), list.end(), value);
             auto r = std::distance(it, list.end());
@@ -685,7 +687,7 @@ namespace retro
         }
 
         template <typename Pred>
-        friend constexpr usize erase_if(InlineList &list, Pred pred)
+        friend constexpr size_type erase_if(InlineList &list, Pred pred)
         {
             auto it = std::remove_if(list.begin(), list.end(), pred);
             auto r = std::distance(it, list.end());
@@ -709,7 +711,7 @@ namespace retro
             else
             {
                 const auto sz = std::min(lhs.size(), rhs.size());
-                for (usize i = 0; i < sz; ++i)
+                for (size_type i = 0; i < sz; ++i)
                 {
                     if (lhs[i] < rhs[i])
                     {

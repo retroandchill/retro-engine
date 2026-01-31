@@ -26,6 +26,38 @@ namespace retro
         Custom
     };
 
+    export struct Vertex
+    {
+        Vector2f position{};
+        Vector2f uv{};
+    };
+
+    export struct Geometry
+    {
+        std::vector<Vertex> vertices{};
+        std::vector<uint32> indices{};
+    };
+
+    export struct InstanceData
+    {
+        alignas(16) Matrix2x2f transform{};
+        alignas(8) Vector2f translation{};
+        alignas(8) Vector2f pivot{};
+        alignas(8) Vector2f size{1, 1};
+        alignas(16) Color color{1, 1, 1, 1};
+        uint32 has_texture{};
+    };
+
+    export struct GeometryBatch
+    {
+        const Geometry *geometry{};
+        std::vector<InstanceData> instances{};
+        uint32 texture_handle{};
+        Vector2f viewport_size{};
+
+        DrawCommand create_draw_command() const;
+    };
+
     export class GeometryObject final : public SceneNode
     {
       public:

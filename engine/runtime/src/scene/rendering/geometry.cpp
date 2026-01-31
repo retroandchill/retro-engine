@@ -32,6 +32,21 @@ namespace retro
                                              std::vector<uint32>{0, 1, 2});
     } // namespace
 
+    DrawCommand GeometryBatch::create_draw_command() const
+    {
+        return DrawCommand{
+            .vertex_buffers =
+                {
+                    as_bytes(std::span{geometry->vertices}),
+                },
+            .instance_buffers = {as_bytes(std::span{instances})},
+            .index_buffer = as_bytes(std::span{geometry->indices}),
+            .push_constants = as_bytes(std::span{&viewport_size, 1}),
+            .index_count = static_cast<uint32>(geometry->indices.size()),
+            .instance_count = static_cast<uint32>(instances.size()),
+        };
+    }
+
     void GeometryObject::set_geometry(GeometryType type)
     {
         switch (type)
@@ -136,10 +151,15 @@ namespace retro
     void GeometryRenderPipeline::execute(RenderContext &context)
     {
         std::vector<GeometryBatch> batches;
+        std::vector<DrawCommand> draw_calls;
+        batches.reserve(geometry_batches_.size());
+        draw_calls.reserve(geometry_batches_.size());
         for (auto &batch : geometry_batches_ | std::views::values)
         {
-            batches.push_back(std::move(batch));
+            auto &moved_batch = batches.emplace_back(std::move(batch));
+            draw_calls.emplace_back(moved_batch.create_draw_command());
         }
-        context.draw_geometry(batches);
+
+        context.draw(draw_calls, shaders());
     }
 } // namespace retro

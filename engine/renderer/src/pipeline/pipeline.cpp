@@ -110,69 +110,145 @@ namespace retro
         {
         }
 
-        void draw_geometry(const std::span<const GeometryBatch> geometry) override
+        void draw(const std::span<const DrawCommand> draw_commands, const ShaderLayout &layout) override
         {
             cmd_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
+            auto &buffer_manager = VulkanBufferManager::instance();
 
-            for (auto &batch : geometry)
+            for (auto &batch : draw_commands)
             {
-                // Upload instance data to transient buffer
-                const usize instance_size = batch.instances.size() * sizeof(InstanceData);
-                auto [buffer, mapped_data, offset] =
-                    VulkanBufferManager::instance().allocate_transient(instance_size,
-                                                                       vk::BufferUsageFlagBits::eStorageBuffer);
-
-                std::memcpy(mapped_data, batch.instances.data(), instance_size);
-
-                // Bind instance buffer to descriptor set
-                vk::DescriptorBufferInfo buffer_info{buffer, offset, instance_size};
-
-                vk::WriteDescriptorSet write_set{};
-                write_set.descriptorCount = 1;
-                write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
-                write_set.pBufferInfo = &buffer_info;
-                write_set.dstBinding = 0;
-
-                vk::DescriptorSetAllocateInfo alloc_info{};
-                alloc_info.descriptorPool = descriptor_pool_;
-                alloc_info.descriptorSetCount = 1;
-                alloc_info.pSetLayouts = &descriptor_set_layout_;
-
-                auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
-                auto descriptor_set = descriptor_sets.front();
-
-                // Update the descriptor set with the buffer info
-                write_set.dstSet = descriptor_set;
-                device_.updateDescriptorSets(1, &write_set, 0, nullptr);
-
-                // Bind the descriptor set to the graphics pipeline
-                cmd_.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                        pipeline_layout_,
-                                        0, // first set
-                                        1, // descriptor set count
-                                        &descriptor_set,
-                                        0, // dynamic offset count
-                                        nullptr);
-
-                cmd_.pushConstants(pipeline_layout_,
-                                   vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                                   0,
-                                   sizeof(Vector2f),
-                                   &batch.viewport_size);
-
-                auto [vertex_buffer, index_buffer, vertex_offset, index_offset] = prepare_geometry(*batch.geometry);
-                cmd_.bindVertexBuffers(0, {vertex_buffer}, {vertex_offset});
-                cmd_.bindIndexBuffer(index_buffer, index_offset, vk::IndexType::eUint32);
-
-                cmd_.drawIndexed(static_cast<uint32>(batch.geometry->indices.size()),
-                                 static_cast<int32>(batch.instances.size()),
-                                 0,
-                                 0,
-                                 0);
+                queue_draw_command(buffer_manager, batch, layout);
             }
         }
 
       private:
+        void queue_draw_command(VulkanBufferManager &buffer_manager,
+                                const DrawCommand &command,
+                                const ShaderLayout &layout) const
+        {
+            bind_vertex_buffers(buffer_manager, command, layout);
+            bind_index_buffer(buffer_manager, command);
+            bind_descriptor_sets(buffer_manager, command, layout);
+            bind_push_constants(command, layout);
+
+            cmd_.drawIndexed(static_cast<uint32>(command.index_count),
+                             static_cast<int32>(command.instance_count),
+                             0,
+                             0,
+                             0);
+        }
+
+        void bind_vertex_buffers(VulkanBufferManager &buffer_manager,
+                                 const DrawCommand &command,
+                                 const ShaderLayout &layout) const
+        {
+            if (layout.vertex_bindings.empty())
+                return;
+
+            InlineList<vk::Buffer, DRAW_ARRAY_SIZE> vertex_buffers;
+            InlineList<usize, DRAW_ARRAY_SIZE> offsets;
+            usize vertex_binding = 0;
+            usize instance_binding = 0;
+            for (auto &binding : layout.vertex_bindings)
+            {
+                if (binding.type == VertexInputType::Vertex)
+                {
+                    auto &vertex_buffer = command.vertex_buffers[vertex_binding];
+                    auto [buffer, mapped_data, offset] =
+                        buffer_manager.allocate_transient(static_cast<uint32>(vertex_buffer.size()),
+                                                          vk::BufferUsageFlagBits::eVertexBuffer);
+                    std::memcpy(mapped_data, vertex_buffer.data(), vertex_buffer.size());
+                    vertex_buffers.push_back(buffer);
+                    offsets.push_back(offset);
+                    vertex_binding++;
+                }
+                else if (binding.type == VertexInputType::Instance)
+                {
+                    auto &instance_buffer = command.instance_buffers[instance_binding];
+                    auto [buffer, mapped_data, offset] =
+                        buffer_manager.allocate_transient(static_cast<uint32>(instance_buffer.size()),
+                                                          vk::BufferUsageFlagBits::eVertexBuffer);
+                    std::memcpy(mapped_data, instance_buffer.data(), instance_buffer.size());
+                    vertex_buffers.push_back(buffer);
+                    offsets.push_back(offset);
+                    instance_binding++;
+                }
+            }
+
+            cmd_.bindVertexBuffers(0, vertex_buffers, offsets);
+        }
+
+        void bind_descriptor_sets(VulkanBufferManager &buffer_manager,
+                                  const DrawCommand &command,
+                                  const ShaderLayout &layout) const
+        {
+            if (layout.descriptor_bindings.empty())
+                return;
+
+            vk::DescriptorSetAllocateInfo alloc_info{};
+            alloc_info.descriptorPool = descriptor_pool_;
+            alloc_info.descriptorSetCount = static_cast<uint32>(layout.descriptor_bindings.size());
+            alloc_info.pSetLayouts = &descriptor_set_layout_;
+
+            auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
+
+            InlineList<vk::WriteDescriptorSet, DRAW_ARRAY_SIZE> writes;
+            for (auto &&[i, binding] : layout.descriptor_bindings | std::views::enumerate)
+            {
+                auto &descriptor_data = command.descriptor_sets[i];
+                auto [buffer, mapped_data, offset] =
+                    buffer_manager.allocate_transient(static_cast<uint32>(descriptor_data.size()),
+                                                      vk::BufferUsageFlagBits::eStorageBuffer);
+
+                std::memcpy(mapped_data, descriptor_data.data(), static_cast<uint32>(descriptor_data.size()));
+
+                // Bind instance buffer to descriptor set
+                vk::DescriptorBufferInfo buffer_info{buffer, offset, static_cast<uint32>(descriptor_data.size())};
+
+                auto &write_set = writes.emplace_back();
+                write_set.descriptorCount = 1;
+                write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
+                write_set.pBufferInfo = &buffer_info;
+                write_set.dstBinding = 0;
+                write_set.dstSet = descriptor_sets[i];
+            }
+
+            device_.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+
+            // Bind the descriptor set to the graphics pipeline
+            cmd_.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                    pipeline_layout_,
+                                    0,                                           // first set
+                                    static_cast<uint32>(descriptor_sets.size()), // descriptor set count
+                                    descriptor_sets.data(),
+                                    0, // dynamic offset count
+                                    nullptr);
+        }
+
+        void bind_index_buffer(VulkanBufferManager &buffer_manager, const DrawCommand &command) const
+        {
+            auto &index_buffer = command.index_buffer;
+            if (index_buffer.empty())
+                return;
+            auto [buffer, mapped_data, offset] =
+                buffer_manager.allocate_transient(static_cast<uint32>(index_buffer.size()),
+                                                  vk::BufferUsageFlagBits::eIndexBuffer);
+            std::memcpy(mapped_data, index_buffer.data(), index_buffer.size());
+            cmd_.bindIndexBuffer(buffer, offset, vk::IndexType::eUint32);
+        }
+
+        void bind_push_constants(const DrawCommand &command, const ShaderLayout &layout) const
+        {
+            if (!layout.push_constant_bindings.has_value())
+                return;
+
+            cmd_.pushConstants(pipeline_layout_,
+                               to_vulkan_enum(layout.push_constant_bindings->stages),
+                               0,
+                               static_cast<uint32>(command.push_constants.size()),
+                               command.push_constants.data());
+        }
+
         static PreparedGeometry prepare_geometry(const Geometry &geometry)
         {
             const usize vertex_size = geometry.vertices.size() * sizeof(Vertex);
@@ -248,13 +324,12 @@ namespace retro
         descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
         std::array layouts = {descriptor_set_layout_.get()};
 
-        std::vector<vk::PushConstantRange> push_constant_ranges;
-        push_constant_ranges.reserve(shader_layout.push_constant_bindings.size());
-        for (const auto [index, binding] : shader_layout.push_constant_bindings | std::views::enumerate)
+        InlineList<vk::PushConstantRange, 1> push_constant_ranges;
+        for (const auto [stages, size, offset] : shader_layout.push_constant_bindings)
         {
-            push_constant_ranges.emplace_back(to_vulkan_enum(binding.stages),
-                                              static_cast<uint32>(binding.offset),
-                                              static_cast<uint32>(binding.size));
+            push_constant_ranges.emplace_back(to_vulkan_enum(stages),
+                                              static_cast<uint32>(offset),
+                                              static_cast<uint32>(size));
         }
 
         const vk::PipelineLayoutCreateInfo pipeline_layout_info{{},

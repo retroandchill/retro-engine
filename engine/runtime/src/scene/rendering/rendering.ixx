@@ -95,50 +95,20 @@ namespace retro
         std::filesystem::path fragment_shader{};
         std::vector<VertexInputBinding> vertex_bindings{};
         std::vector<DescriptorBinding> descriptor_bindings{};
-        std::vector<PushConstantBinding> push_constant_bindings{};
+        Optional<PushConstantBinding> push_constant_bindings{};
     };
 
-    constexpr usize DRAW_ARRAY_SIZE = 8;
+    export constexpr usize DRAW_ARRAY_SIZE = 8;
 
     export struct DrawCommand
     {
         InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> vertex_buffers{};
-        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> index_buffers{};
+        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> instance_buffers{};
         std::span<const std::byte> index_buffer;
         InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> descriptor_sets{};
         std::span<const std::byte> push_constants;
-        usize vertex_count{};
         usize index_count{};
-    };
-
-    export struct Vertex
-    {
-        Vector2f position{};
-        Vector2f uv{};
-    };
-
-    export struct Geometry
-    {
-        std::vector<Vertex> vertices{};
-        std::vector<uint32> indices{};
-    };
-
-    export struct InstanceData
-    {
-        alignas(16) Matrix2x2f transform{};
-        alignas(8) Vector2f translation{};
-        alignas(8) Vector2f pivot{};
-        alignas(8) Vector2f size{1, 1};
-        alignas(16) Color color{1, 1, 1, 1};
-        uint32 has_texture{};
-    };
-
-    export struct GeometryBatch
-    {
-        const Geometry *geometry{};
-        std::vector<InstanceData> instances{};
-        uint32 texture_handle{};
-        Vector2f viewport_size{};
+        usize instance_count{};
     };
 
     export class RenderContext
@@ -146,7 +116,7 @@ namespace retro
       public:
         virtual ~RenderContext() = default;
 
-        virtual void draw_geometry(std::span<const GeometryBatch> geometry) = 0;
+        virtual void draw(std::span<const DrawCommand> command, const ShaderLayout &layout) = 0;
     };
 
     export class RenderPipeline
