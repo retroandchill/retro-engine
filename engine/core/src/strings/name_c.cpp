@@ -4,35 +4,22 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+#include "retro/core/macros.hpp"
 #include "retro/core/strings/name.h"
 
 #include <boost/pool/pool_alloc.hpp>
-#include <uni_algo/conv.h>
 
 import std;
 import retro.core;
 
-static_assert(sizeof(retro::Name) == sizeof(Retro_Name) && alignof(retro::Name) == alignof(Retro_Name));
-static_assert(sizeof(retro::NameEntryId) == sizeof(Retro_NameId) &&
-              alignof(retro::NameEntryId) == alignof(Retro_NameId));
+DECLARE_DEFINED_C_HANDLE(Retro_Name, retro::Name);
+DECLARE_DEFINED_C_HANDLE(Retro_NameId, retro::NameEntryId);
+
+using retro::from_c;
+using retro::to_c;
 
 namespace
 {
-    constexpr retro::Name from_c(const Retro_Name name)
-    {
-        return std::bit_cast<retro::Name>(name);
-    }
-
-    constexpr Retro_Name to_c(const retro::Name name)
-    {
-        return std::bit_cast<Retro_Name>(name);
-    }
-
-    constexpr retro::NameEntryId from_c(const Retro_NameId id)
-    {
-        return retro::NameEntryId{id.id};
-    }
-
     constexpr int32 strong_ordering_to_int(const std::strong_ordering ord)
     {
         if (ord < 0)

@@ -36,6 +36,7 @@ set(RETRO_CORE_MODULES src/core.ixx
         src/di/metadata.ixx
         src/exceptions.ixx
         src/containers/inline_list.ixx
+        src/c_api.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

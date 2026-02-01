@@ -25,3 +25,4 @@ export import :ref_counted_ptr;
 export import :strings;
 export import :optional;
 export import :inline_list;
+export import :c_api;
