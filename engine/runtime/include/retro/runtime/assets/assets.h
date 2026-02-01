@@ -17,6 +17,7 @@ extern "C"
 #endif
 
     typedef struct Retro_Asset Retro_Asset;
+    typedef struct Retro_Texture Retro_Texture;
 
     typedef struct Retro_AssetPath
     {
@@ -34,6 +35,12 @@ extern "C"
     };
 
     typedef uint8_t Retro_AssetLoadError;
+
+    RETRO_API uint8_t retro_asset_path_from_string(const char16_t *path, int32_t length, Retro_AssetPath *out_path);
+
+    RETRO_API uint8_t retro_asset_path_is_valid(const Retro_AssetPath *path);
+
+    RETRO_API int32_t retro_asset_path_to_string(const Retro_AssetPath *path, char16_t *buffer, int32_t length);
 
     RETRO_API Retro_Asset *retro_load_asset(const Retro_AssetPath *path,
                                             Retro_Name *out_asset_type,

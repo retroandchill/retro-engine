@@ -107,6 +107,12 @@ namespace retro
         }
 
         template <Char T>
+        void log(const LogLevel level, const T *message)
+        {
+            log(level, std::basic_string_view<T>(message));
+        }
+
+        template <Char T>
         void log(const LogLevel level, std::basic_string_view<T> message)
         {
             const auto file_name = location_.file_name();
@@ -135,10 +141,34 @@ namespace retro
             logger_->log(loc, to_spd_level(level), message);
         }
 
+        template <Char T>
+        void trace(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Trace, message);
+        }
+
+        template <Char T>
+        void trace(const T *message)
+        {
+            log(LogLevel::Trace, message);
+        }
+
         template <typename... Args>
         void trace(const std::format_string<Args...> fmt, Args &&...args)
         {
             log(LogLevel::Trace, fmt, std::forward<Args>(args)...);
+        }
+
+        template <Char T>
+        void debug(const T *message)
+        {
+            log(LogLevel::Debug, message);
+        }
+
+        template <Char T>
+        void debug(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Debug, message);
         }
 
         template <typename... Args>
@@ -147,10 +177,34 @@ namespace retro
             log(LogLevel::Debug, fmt, std::forward<Args>(args)...);
         }
 
+        template <Char T>
+        void info(const T *message)
+        {
+            log(LogLevel::Info, message);
+        }
+
+        template <Char T>
+        void info(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Info, message);
+        }
+
         template <typename... Args>
         void info(const std::format_string<Args...> fmt, Args &&...args)
         {
             log(LogLevel::Info, fmt, std::forward<Args>(args)...);
+        }
+
+        template <Char T>
+        void warn(const T *message)
+        {
+            log(LogLevel::Warn, message);
+        }
+
+        template <Char T>
+        void warn(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Warn, message);
         }
 
         template <typename... Args>
@@ -159,10 +213,34 @@ namespace retro
             log(LogLevel::Warn, fmt, std::forward<Args>(args)...);
         }
 
+        template <Char T>
+        void error(const T *message)
+        {
+            log(LogLevel::Error, message);
+        }
+
+        template <Char T>
+        void error(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Error, message);
+        }
+
         template <typename... Args>
         void error(const std::format_string<Args...> fmt, Args &&...args)
         {
             log(LogLevel::Error, fmt, std::forward<Args>(args)...);
+        }
+
+        template <Char T>
+        void critical(const T *message)
+        {
+            log(LogLevel::Critical, message);
+        }
+
+        template <Char T>
+        void critical(const std::basic_string_view<T> message)
+        {
+            log(LogLevel::Critical, message);
         }
 
         template <typename... Args>

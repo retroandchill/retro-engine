@@ -18,3 +18,13 @@ set_target_properties(retro_game PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
+
+set(SRC_GRAPHICS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/graphics)
+set(DEST_GRAPHICS_DIR ${RETRO_BIN_DIR}/graphics)
+
+add_custom_target(retro_game_copy_assets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${SRC_GRAPHICS_DIR}" "${DEST_GRAPHICS_DIR}"
+        COMMENT "Copying data from ${SRC_GRAPHICS_DIR} to ${DEST_GRAPHICS_DIR}"
+)
+
+add_dependencies(retro_game retro_game_copy_assets)

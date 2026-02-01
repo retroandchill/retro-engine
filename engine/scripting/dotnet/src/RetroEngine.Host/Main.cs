@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
@@ -32,7 +33,7 @@ public static class Main
                 new ReadOnlySpan<char>(workingDirectoryPath, workingDirectoryPathLength).ToString()
             );
 
-            *callbacks = new ScriptingCallbacks()
+            *callbacks = new ScriptingCallbacks
             {
                 Start = &StartGame,
                 Tick = &Tick,
@@ -43,6 +44,8 @@ public static class Main
             _synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
 
             SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+
+            AssetRegistry.RegisterDefaultAssetFactories();
 
             var currentAssembly = Assembly.GetExecutingAssembly();
             var loadContext = AssemblyLoadContext.GetLoadContext(currentAssembly);

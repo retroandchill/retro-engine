@@ -31,17 +31,17 @@ namespace retro
         explicit AssetPath(Range &&range)
         {
             usize segments = 0;
-            for (auto &&inner_view : range | std::views::lazy_split(PACKAGE_SEPARATOR))
+            for (auto &&inner_view : std::forward<Range>(range) | std::views::lazy_split(PACKAGE_SEPARATOR))
             {
                 segments++;
 
                 if (segments == 1)
                 {
-                    package_name_ = Name{inner_view};
+                    package_name_ = Name{std::forward<decltype(inner_view)>(inner_view)};
                 }
                 else if (segments == 2)
                 {
-                    asset_name_ = Name{inner_view};
+                    asset_name_ = Name{std::forward<decltype(inner_view)>(inner_view)};
                 }
                 else
                 {

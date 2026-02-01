@@ -15,6 +15,7 @@ DECLARE_OPAQUE_C_HANDLE(Retro_Node, retro::SceneNode);
 DECLARE_OPAQUE_C_HANDLE(Retro_Sprite, retro::Sprite);
 DECLARE_OPAQUE_C_HANDLE(Retro_Geometry, retro::GeometryObject);
 DECLARE_OPAQUE_C_HANDLE(Retro_Viewport, retro::ViewportNode);
+DECLARE_OPAQUE_C_HANDLE(Retro_Texture, retro::Texture);
 DECLARE_DEFINED_C_HANDLE(Retro_Vector2f, retro::Vector2f);
 DECLARE_DEFINED_C_HANDLE(Retro_Color, retro::Color);
 DECLARE_DEFINED_C_HANDLE(Retro_Vertex, retro::Vertex);
@@ -123,6 +124,12 @@ extern "C"
         auto *parent_ptr = from_c(parent);
         auto &sprite = retro::Engine::instance().scene().create_node<retro::Sprite>(parent_ptr);
         return to_c(&sprite);
+    }
+
+    void retro_sprite_set_texture(Retro_Sprite *node, Retro_Texture *texture)
+    {
+        auto &sprite = *from_c(node);
+        sprite.set_texture(retro::RefCountPtr(from_c(texture)));
     }
 
     void retro_sprite_set_tint(Retro_Sprite *node, const Retro_Color tint)

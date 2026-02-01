@@ -248,12 +248,12 @@ namespace retro
 
         boost::system::error_code ec;
         auto result = file_.read_some(dest, ec);
-        if (ec.failed())
+        if (ec.failed() && ec != boost::asio::error::eof)
         {
             return std::unexpected(to_stream_error(ec));
         }
 
-        position_ = result;
+        position_ += result;
 
         return result;
     }
@@ -457,12 +457,15 @@ namespace retro
 
     StreamResult<void> BufferedStream::fill_buffer(const usize min_required)
     {
-        if (buffer_start_ > 0 && buffer_end_ < buffer_.size())
+        if (buffer_start_ > 0)
         {
             const usize existing_data = buffer_end_ - buffer_start_;
-            std::memcpy(buffer_.data(), buffer_.data() + buffer_start_, existing_data);
-            buffer_start_ = 0;
-            buffer_end_ = existing_data;
+            if (existing_data > 0)
+            {
+                std::memmove(buffer_.data(), buffer_.data() + buffer_start_, existing_data);
+            }
+            buffer_start_ += existing_data;
+            buffer_end_ = buffer_start_;
         }
 
         while (true)
@@ -477,13 +480,13 @@ namespace retro
                 return {};
             }
 
-            const usize space_available = buffer_.size() - buffer_end_;
+            const usize space_available = buffer_.size() - (buffer_end_ - buffer_start_);
             if (space_available == 0)
             {
                 return {};
             }
 
-            auto result = inner_->read(std::span{buffer_.data() + buffer_end_, space_available});
+            auto result = inner_->read(std::span{buffer_.data() + (buffer_end_ - buffer_start_), space_available});
             if (!result)
             {
                 return std::unexpected(result.error());

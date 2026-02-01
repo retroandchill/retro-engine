@@ -120,9 +120,9 @@ namespace retro
             }
             else
             {
-                return std::forward<Range>(source) | una::views::utf8 |
-                       una::ranges::to_utf16<std::basic_string<To, std::char_traits<To>, Allocator>>(
-                           std::move(allocator));
+                return una::ranges::to_utf16<std::basic_string<To, std::char_traits<To>, Allocator>>(
+                    una::views::utf8(std::forward<Range>(source)),
+                    std::move(allocator));
             }
         }
     };
@@ -148,9 +148,9 @@ namespace retro
             }
             else
             {
-                return std::forward<Range>(source) | una::views::utf16 |
-                       una::ranges::to_utf8<std::basic_string<To, std::char_traits<To>, Allocator>>(
-                           std::move(allocator));
+                return una::ranges::to_utf8<std::basic_string<To, std::char_traits<To>, Allocator>>(
+                    una::views::utf16(std::forward<Range>(source)),
+                    std::move(allocator));
             }
         }
     };

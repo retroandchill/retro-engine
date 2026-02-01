@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 
@@ -16,6 +17,16 @@ public partial class Sprite : SceneObject
     {
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);
+    }
+
+    public Texture? Texture
+    {
+        get;
+        set
+        {
+            field = value;
+            NativeSetTexture(NativeObject, value?.NativeObject ?? IntPtr.Zero);
+        }
     }
 
     public Vector2F Size
@@ -53,6 +64,9 @@ public partial class Sprite : SceneObject
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(IntPtr id);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_texture")]
+    private static partial void NativeSetTexture(IntPtr id, IntPtr texture);
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_tint")]
     private static partial void NativeSetTint(IntPtr id, Color color);

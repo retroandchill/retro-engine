@@ -6,6 +6,9 @@
  */
 module;
 
+#ifdef _DEBUG
+#define STBI_FAILURE_USERMSG
+#endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -55,9 +58,10 @@ namespace retro
                                                  &result.width,
                                                  &result.height,
                                                  &result.channels,
-                                                 4);
+                                                 0);
         if (image_data == nullptr)
         {
+            get_logger().error(stbi_failure_reason());
             return std::unexpected{AssetLoadError::InvalidAssetFormat};
         }
 

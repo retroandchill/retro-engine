@@ -11,6 +11,7 @@
 #include "retro/core/exports.h"
 #include "retro/core/math/color.h"
 #include "retro/core/math/vector.h"
+#include "retro/runtime/assets/assets.h"
 
 #include <stdint.h> // NOLINT We want to use a C header here
 
@@ -71,6 +72,8 @@ extern "C"
     RETRO_API void retro_geometry_set_size(Retro_Geometry *node, Retro_Vector2f size);
 
     RETRO_API Retro_Sprite *retro_sprite_create(Retro_Node *parent);
+
+    RETRO_API void retro_sprite_set_texture(Retro_Sprite *node, Retro_Texture *texture);
 
     RETRO_API void retro_sprite_set_tint(Retro_Sprite *node, Retro_Color tint);
 

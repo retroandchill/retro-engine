@@ -66,6 +66,6 @@ extern "C"
         const auto utf16_string = from_c(name).to_string<char16_t>(boost::pool_allocator<char16_t>{});
         const usize string_length = std::min(utf16_string.size(), static_cast<usize>(length));
         std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
-        return string_length;
+        return static_cast<int32>(string_length);
     }
 }
