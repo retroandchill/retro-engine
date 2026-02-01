@@ -45,8 +45,6 @@ namespace retro
         void reset();
 
       private:
-        [[nodiscard]] uint32 find_memory_type(uint32 type_filter, vk::MemoryPropertyFlags properties) const;
-
         vk::PhysicalDevice physical_device_;
         vk::Device device_;
         vk::UniqueBuffer buffer_;
@@ -103,7 +101,7 @@ namespace retro
 
         void remove_render_pipeline(std::type_index type) override;
 
-        TextureRenderData upload_texture(const ImageData &image_data) override;
+        std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
 
       private:
         static vk::UniqueInstance create_instance(const Window &viewport);
@@ -131,6 +129,7 @@ namespace retro
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool command_pool_;
         VulkanSyncObjects sync_;
+        vk::UniqueSampler linear_sampler_;
         VulkanPipelineManager pipeline_manager_;
 
         uint32 current_frame_ = 0;

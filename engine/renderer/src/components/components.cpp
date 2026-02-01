@@ -34,6 +34,15 @@ namespace retro
         buffers_ = cfg.device.allocateCommandBuffersUnique(alloc_info);
     }
 
+    vk::CommandBuffer VulkanCommandPool::begin_single_time_commands()
+    {
+        return vk::CommandBuffer{};
+    }
+
+    void VulkanCommandPool::end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue)
+    {
+    }
+
     VulkanDevice::VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface)
         : physical_device_{pick_physical_device(instance, surface, graphics_family_index_, present_family_index_)},
           device_{create_device(physical_device_, graphics_family_index_, present_family_index_)},

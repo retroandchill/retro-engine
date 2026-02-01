@@ -13,28 +13,10 @@ export module retro.runtime:scene.rendering;
 import retro.core;
 import retro.logging;
 import std;
+import :texture;
 
 namespace retro
 {
-    struct ImageDataDeleter
-    {
-        RETRO_API void operator()(std::byte *bytes) const;
-    };
-
-    using ImageDataPtr = std::unique_ptr<std::byte[], ImageDataDeleter>;
-
-    export struct ImageData
-    {
-        ImageDataPtr image_data;
-        int32 width;
-        int32 height;
-        int32 channels;
-    };
-
-    export struct TextureRenderData
-    {
-    };
-
     export enum class ShaderDataType : uint8
     {
         Int32,
@@ -167,7 +149,7 @@ namespace retro
 
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
-        virtual TextureRenderData upload_texture(const ImageData &image_data) = 0;
+        virtual std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) = 0;
 
         [[nodiscard]] virtual Vector2u viewport_size() const = 0;
     };

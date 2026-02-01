@@ -11,14 +11,52 @@ module;
 export module retro.runtime:texture;
 
 import :assets;
-import :scene.rendering;
 
 namespace retro
 {
+    struct ImageDataDeleter
+    {
+        RETRO_API void operator()(std::byte *bytes) const;
+    };
+
+    using ImageDataPtr = std::unique_ptr<std::byte[], ImageDataDeleter>;
+
+    export struct ImageData
+    {
+        ImageDataPtr image_data;
+        int32 width;
+        int32 height;
+        int32 channels;
+    };
+
+    export class TextureRenderData
+    {
+      protected:
+        inline TextureRenderData(int32 width, int32 height) noexcept : width_(width), height_(height)
+        {
+        }
+
+      public:
+        virtual ~TextureRenderData() = default;
+
+        [[nodiscard]] inline int32 width() const noexcept
+        {
+            return width_;
+        }
+        [[nodiscard]] inline int32 height() const noexcept
+        {
+            return height_;
+        }
+
+      private:
+        int32 width_{};
+        int32 height_{};
+    };
+
     export class RETRO_API TextureDecoder final : public AssetDecoder
     {
       public:
-        using Dependencies = TypeList<Renderer2D>;
+        using Dependencies = TypeList<class Renderer2D>;
 
         explicit inline TextureDecoder(Renderer2D &renderer) : renderer_{&renderer}
         {
@@ -37,7 +75,7 @@ namespace retro
     export class RETRO_API Texture final : public Asset
     {
       public:
-        explicit Texture(const AssetPath &path, TextureRenderData render_data)
+        explicit Texture(const AssetPath &path, std::unique_ptr<TextureRenderData> render_data)
             : Asset(path), render_data_{std::move(render_data_)}
         {
         }
@@ -47,6 +85,6 @@ namespace retro
       private:
         friend class TextureDecoder;
 
-        TextureRenderData render_data_;
+        std::unique_ptr<TextureRenderData> render_data_;
     };
 } // namespace retro

@@ -21,6 +21,55 @@ import vulkan_hpp;
 
 namespace retro
 {
+    namespace
+    {
+        uint32 find_memory_type(vk::PhysicalDevice physical_device,
+                                const uint32 type_filter,
+                                vk::MemoryPropertyFlags properties)
+        {
+            const auto mem_properties = physical_device.getMemoryProperties();
+
+            for (uint32 i = 0; i < mem_properties.memoryTypeCount; ++i)
+            {
+                if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
+                {
+                    return i;
+                }
+            }
+
+            throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
+        }
+    } // namespace
+
+    class VulkanTextureRenderData final : public TextureRenderData
+    {
+      public:
+        VulkanTextureRenderData(vk::UniqueImage image,
+                                vk::UniqueDeviceMemory memory,
+                                vk::UniqueImageView view,
+                                vk::Sampler sampler,
+                                int32 width,
+                                int32 height) noexcept
+            : TextureRenderData{width, height}, image_{std::move(image)}, view_{std::move(view)}, sampler_{sampler}
+        {
+        }
+
+        vk::ImageView view() const noexcept
+        {
+            return view_.get();
+        }
+        vk::Sampler sampler() const noexcept
+        {
+            return sampler_;
+        }
+
+      private:
+        vk::UniqueImage image_;
+        vk::UniqueDeviceMemory memory_;
+        vk::UniqueImageView view_;
+        vk::Sampler sampler_;
+    };
+
     std::unique_ptr<VulkanBufferManager> VulkanBufferManager::instance_{nullptr};
 
     VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, usize pool_size)
@@ -38,7 +87,8 @@ namespace retro
 
         const vk::MemoryAllocateInfo alloc_info{
             mem_reqs.size,
-            find_memory_type(mem_reqs.memoryTypeBits,
+            find_memory_type(physical_device_,
+                             mem_reqs.memoryTypeBits,
                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
 
         memory_ = device_.allocateMemoryUnique(alloc_info);
@@ -85,21 +135,6 @@ namespace retro
     void VulkanBufferManager::reset()
     {
         current_offset_ = 0;
-    }
-
-    uint32 VulkanBufferManager::find_memory_type(const uint32 type_filter, vk::MemoryPropertyFlags properties) const
-    {
-        const auto mem_properties = physical_device_.getMemoryProperties();
-
-        for (uint32 i = 0; i < mem_properties.memoryTypeCount; ++i)
-        {
-            if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
     }
 
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> viewport)
@@ -237,9 +272,132 @@ namespace retro
         pipeline_manager_.destroy_pipeline(type);
     }
 
-    TextureRenderData VulkanRenderer2D::upload_texture(const ImageData &image_data)
+    std::unique_ptr<TextureRenderData> VulkanRenderer2D::upload_texture(const ImageData &image_data)
     {
-        return {};
+        auto device = device_.device();
+        auto image_size = static_cast<vk::DeviceSize>(image_data.width * image_data.height * image_data.channels);
+        auto image_format = vk::Format::eR8G8B8A8Srgb;
+
+        vk::BufferCreateInfo staging_info{{},
+                                          image_size,
+                                          vk::BufferUsageFlagBits::eTransferSrc,
+                                          vk::SharingMode::eExclusive};
+
+        auto staging_buffer = device.createBufferUnique(staging_info);
+
+        auto mem_req = device.getBufferMemoryRequirements(staging_buffer.get());
+
+        vk::MemoryAllocateInfo alloc_info{
+            mem_req.size,
+            find_memory_type(device_.physical_device(),
+                             mem_req.memoryTypeBits,
+                             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+
+        auto staging_memory = device.allocateMemoryUnique(alloc_info);
+        device.bindBufferMemory(staging_buffer.get(), staging_memory.get(), 0);
+
+        auto *data = device.mapMemory(staging_memory.get(), 0, mem_req.size);
+        std::memcpy(data, image_data.image_data.get(), static_cast<size_t>(image_size));
+        device.unmapMemory(staging_memory.get());
+
+        vk::ImageCreateInfo image_info{
+            {},
+            vk::ImageType::e2D,
+            image_format,
+            vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
+            1,
+            1,
+            vk::SampleCountFlagBits::e1,
+            vk::ImageTiling::eOptimal,
+            vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+            vk::SharingMode::eExclusive,
+            0,
+            nullptr,
+            vk::ImageLayout::eUndefined};
+
+        auto image = device.createImageUnique(image_info);
+        auto img_mem_req = device.getImageMemoryRequirements(image.get());
+
+        vk::MemoryAllocateInfo img_alloc_info{img_mem_req.size,
+                                              find_memory_type(device_.physical_device(),
+                                                               img_mem_req.memoryTypeBits,
+                                                               vk::MemoryPropertyFlagBits::eDeviceLocal)};
+
+        auto img_memory = device.allocateMemoryUnique(img_alloc_info);
+        device.bindImageMemory(image.get(), img_memory.get(), 0);
+
+        auto cmd = command_pool_.begin_single_time_commands();
+
+        // (a) Layout: Undefined -> TransferDstOptimal
+        vk::ImageMemoryBarrier barrier_to_transfer{
+            {},
+            vk::AccessFlagBits::eTransferWrite,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::QueueFamilyIgnored,
+            vk::QueueFamilyIgnored,
+            image.get(),
+            vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+
+        cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe,
+                            vk::PipelineStageFlagBits::eTransfer,
+                            {},
+                            0,
+                            nullptr,
+                            0,
+                            nullptr,
+                            1,
+                            &barrier_to_transfer);
+
+        // (b) Copy buffer -> image
+        vk::BufferImageCopy region{
+            0,
+            0,
+            0,
+            vk::ImageSubresourceLayers{vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+            {0, 0, 0},
+            vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1}};
+
+        cmd.copyBufferToImage(staging_buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, 1, &region);
+
+        // (c) Layout: TransferDstOptimal -> ShaderReadOnlyOptimal
+        vk::ImageMemoryBarrier barrier_to_shader_read{
+            vk::AccessFlagBits::eTransferWrite,
+            vk::AccessFlagBits::eShaderRead,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::QueueFamilyIgnored,
+            vk::QueueFamilyIgnored,
+            image.get(),
+            vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+
+        cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+                            vk::PipelineStageFlagBits::eFragmentShader,
+                            {},
+                            0,
+                            nullptr,
+                            0,
+                            nullptr,
+                            1,
+                            &barrier_to_shader_read);
+
+        command_pool_.end_single_time_commands(cmd, device_.graphics_queue());
+
+        vk::ImageViewCreateInfo view_info{{},
+                                          image.get(),
+                                          vk::ImageViewType::e2D,
+                                          image_format,
+                                          vk::ComponentMapping{},
+                                          vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+
+        vk::UniqueImageView image_view = device.createImageViewUnique(view_info);
+
+        return std::make_unique<VulkanTextureRenderData>(std::move(image),
+                                                         std::move(img_memory),
+                                                         std::move(image_view),
+                                                         linear_sampler_.get(),
+                                                         image_data.width,
+                                                         image_data.height);
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)
