@@ -4,13 +4,13 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include "test_types.hpp"
 #include "test_utilities.hpp"
 
 #include <gtest/gtest.h>
 
 import retro.core;
 import std;
+import retro.core.test.optional;
 
 #define CONSTEXPR_EXPECT_TRUE(val)                                                                                     \
     if (::std::is_constant_evaluated())                                                                                \

@@ -3,8 +3,9 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 SET(RETRO_CORE_TEST_HEADERS gtest_helpers.hpp containers/inline_list/gtest_setup.hpp
-        containers/optional/test_types.hpp
         containers/optional/test_utilities.hpp)
+
+SET(RETRO_CORE_TEST_MODULES containers/optional/test_types.ixx)
 
 SET(RETRO_CORE_TEST_SOURCES strings/test_name.cpp
         math/test_vector.cpp
@@ -32,6 +33,10 @@ add_executable(retro_core_tests ${RETRO_CORE_TEST_SOURCES} ${RETRO_CORE_TEST_HEA
 retro_add_boilerplate(retro_core_tests)
 
 target_include_directories(retro_core_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_sources(retro_core_tests PUBLIC
+        FILE_SET CXX_MODULES FILES
+        ${RETRO_CORE_TEST_MODULES})
 
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(retro_core_tests PRIVATE
