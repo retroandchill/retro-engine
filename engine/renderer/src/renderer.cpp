@@ -237,6 +237,11 @@ namespace retro
         pipeline_manager_.destroy_pipeline(type);
     }
 
+    TextureRenderData VulkanRenderer2D::upload_texture(const ImageData &image_data)
+    {
+        return {};
+    }
+
     vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)
     {
         vk::ApplicationInfo app_info{"Retro Engine",

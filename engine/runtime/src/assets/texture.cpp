@@ -46,8 +46,9 @@ namespace retro
         return stream.read_all()
             .transform_error([](StreamError) { return AssetLoadError::InvalidAssetFormat; })
             .and_then([](const std::vector<std::byte> &bytes) { return load_image_data(bytes); })
-            .transform([&context](ImageData &&image_data) -> RefCountPtr<Asset>
-                       { return make_ref_counted<Texture>(context.path, std::move(image_data)); });
+            .transform([this](const ImageData &image_data) { return renderer_->upload_texture(image_data); })
+            .transform([&context](TextureRenderData &&render_data)
+                       { return make_ref_counted<Texture>(context.path, std::move(render_data)); });
     }
 
     AssetLoadResult<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept

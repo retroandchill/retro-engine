@@ -103,6 +103,8 @@ namespace retro
 
         void remove_render_pipeline(std::type_index type) override;
 
+        TextureRenderData upload_texture(const ImageData &image_data) override;
+
       private:
         static vk::UniqueInstance create_instance(const Window &viewport);
         static vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance);
@@ -117,6 +119,7 @@ namespace retro
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
 
+      private:
         std::shared_ptr<Window> viewport_;
 
         vk::UniqueInstance instance_;
