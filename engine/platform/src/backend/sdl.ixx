@@ -8,7 +8,7 @@ module;
 
 #include <SDL3/SDL.h>
 
-export module retro.platform.backend.sdl;
+export module retro.platform.backend:sdl;
 
 import std;
 import retro.core.containers.optional;

@@ -7,7 +7,7 @@
 module retro.platform.backend;
 
 import retro.platform.exceptions;
-import retro.platform.backend.sdl;
+import :sdl;
 
 namespace retro
 {

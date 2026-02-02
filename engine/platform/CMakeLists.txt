@@ -6,33 +6,28 @@ set(RETRO_PLATFORM_SOURCES
         src/backend.cpp
 )
 
-set(RETRO_PLATFORM_HEADERS src/backend/sdl.ixx)
+set(RETRO_PLATFORM_HEADERS )
 
-set (RETRO_PLATFORM_PRIVATE_MODULES src/backend/sdl.ixx)
+set (RETRO_PLATFORM_PRIVATE_MODULES )
 
-set(RETRO_PLATFORM_PUBLIC_MODULES
+set(RETRO_PLATFORM_MODULES
         src/dll.ixx
         src/window.ixx
         src/exceptions.ixx
         src/event.ixx
         src/backend.ixx
+        src/backend/sdl.ixx
 )
 
 
 
-add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_PUBLIC_MODULES} ${RETRO_PLATFORM_HEADERS} ${RETRO_PLATFORM_PRIVATE_MODULES})
+add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_MODULES} ${RETRO_PLATFORM_HEADERS})
 
 retro_add_boilerplate(retro_platform)
 
 target_sources(retro_platform PUBLIC
-        FILE_SET retro_platform_public
-        TYPE CXX_MODULES FILES
-        ${RETRO_PLATFORM_PUBLIC_MODULES})
-
-target_sources(retro_platform PRIVATE
-        FILE_SET retro_platform_private
-        TYPE CXX_MODULES FILES
-        ${RETRO_PLATFORM_PRIVATE_MODULES})
+        FILE_SET CXX_MODULES FILES
+        ${RETRO_PLATFORM_MODULES})
 
 find_package(SDL3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS dll)
