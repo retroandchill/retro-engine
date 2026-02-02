@@ -13,6 +13,9 @@ module;
 module retro.renderer;
 
 import vulkan_hpp;
+import retro.core.io.file_stream;
+import retro.core.containers.inline_list;
+import retro.core.functional.overload;
 
 namespace retro
 {
@@ -90,8 +93,8 @@ namespace retro
     {
         vk::Buffer vertex_buffer{};
         vk::Buffer index_buffer{};
-        uint32 vertex_offset{};
-        uint32 index_offset{};
+        std::uint32_t vertex_offset{};
+        std::uint32_t index_offset{};
     };
 
     class VulkanRenderContext final : public RenderContext
@@ -133,12 +136,15 @@ namespace retro
 
             if (command.index_buffer.empty())
             {
-                cmd_.draw(static_cast<uint32>(command.index_count), static_cast<int32>(command.instance_count), 0, 0);
+                cmd_.draw(static_cast<std::uint32_t>(command.index_count),
+                          static_cast<std::int32_t>(command.instance_count),
+                          0,
+                          0);
             }
             else
             {
-                cmd_.drawIndexed(static_cast<uint32>(command.index_count),
-                                 static_cast<int32>(command.instance_count),
+                cmd_.drawIndexed(static_cast<std::uint32_t>(command.index_count),
+                                 static_cast<std::int32_t>(command.instance_count),
                                  0,
                                  0,
                                  0);
@@ -153,16 +159,16 @@ namespace retro
                 return;
 
             InlineList<vk::Buffer, DRAW_ARRAY_SIZE> vertex_buffers;
-            InlineList<usize, DRAW_ARRAY_SIZE> offsets;
-            usize vertex_binding = 0;
-            usize instance_binding = 0;
+            InlineList<std::size_t, DRAW_ARRAY_SIZE> offsets;
+            std::size_t vertex_binding = 0;
+            std::size_t instance_binding = 0;
             for (auto &binding : layout.vertex_bindings)
             {
                 if (binding.type == VertexInputType::Vertex)
                 {
                     auto &vertex_buffer = command.vertex_buffers[vertex_binding];
                     auto [buffer, mapped_data, offset] =
-                        buffer_manager.allocate_transient(static_cast<uint32>(vertex_buffer.size()),
+                        buffer_manager.allocate_transient(static_cast<std::uint32_t>(vertex_buffer.size()),
                                                           vk::BufferUsageFlagBits::eVertexBuffer);
                     std::memcpy(mapped_data, vertex_buffer.data(), vertex_buffer.size());
                     vertex_buffers.push_back(buffer);
@@ -173,7 +179,7 @@ namespace retro
                 {
                     auto &instance_buffer = command.instance_buffers[instance_binding];
                     auto [buffer, mapped_data, offset] =
-                        buffer_manager.allocate_transient(static_cast<uint32>(instance_buffer.size()),
+                        buffer_manager.allocate_transient(static_cast<std::uint32_t>(instance_buffer.size()),
                                                           vk::BufferUsageFlagBits::eVertexBuffer);
                     std::memcpy(mapped_data, instance_buffer.data(), instance_buffer.size());
                     vertex_buffers.push_back(buffer);
@@ -194,7 +200,7 @@ namespace retro
 
             vk::DescriptorSetAllocateInfo alloc_info{};
             alloc_info.descriptorPool = descriptor_pool_;
-            alloc_info.descriptorSetCount = static_cast<uint32>(layout.descriptor_bindings.size());
+            alloc_info.descriptorSetCount = static_cast<std::uint32_t>(layout.descriptor_bindings.size());
             alloc_info.pSetLayouts = &descriptor_set_layout_;
 
             auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
@@ -210,36 +216,37 @@ namespace retro
                 write_set.dstBinding = 0;
                 write_set.dstSet = descriptor_sets[i];
 
-                std::visit(
-                    Overload{
-                        [&](const std::span<const std::byte> descriptor_data)
-                        {
-                            auto [buffer, mapped_data, offset] =
-                                buffer_manager.allocate_transient(static_cast<uint32>(descriptor_data.size()),
-                                                                  vk::BufferUsageFlagBits::eStorageBuffer);
-                            write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
+                std::visit(Overload{[&](const std::span<const std::byte> descriptor_data)
+                                    {
+                                        auto [buffer, mapped_data, offset] = buffer_manager.allocate_transient(
+                                            static_cast<std::uint32_t>(descriptor_data.size()),
+                                            vk::BufferUsageFlagBits::eStorageBuffer);
+                                        write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
 
-                            std::memcpy(mapped_data,
-                                        descriptor_data.data(),
-                                        static_cast<uint32>(descriptor_data.size()));
+                                        std::memcpy(mapped_data,
+                                                    descriptor_data.data(),
+                                                    static_cast<std::uint32_t>(descriptor_data.size()));
 
-                            // Bind instance buffer to descriptor set
-                            const auto &buffer_info =
-                                buffer_infos.emplace_back(buffer, offset, static_cast<uint32>(descriptor_data.size()));
-                            write_set.pBufferInfo = &buffer_info;
-                        },
-                        [&](const TextureRenderData *render_data)
-                        {
-                            auto &textureData = dynamic_cast<const VulkanTextureRenderData &>(*render_data);
-                            write_set.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+                                        // Bind instance buffer to descriptor set
+                                        const auto &buffer_info = buffer_infos.emplace_back(
+                                            buffer,
+                                            offset,
+                                            static_cast<std::uint32_t>(descriptor_data.size()));
+                                        write_set.pBufferInfo = &buffer_info;
+                                    },
+                                    [&](const TextureRenderData *render_data)
+                                    {
+                                        auto &textureData = dynamic_cast<const VulkanTextureRenderData &>(*render_data);
+                                        write_set.descriptorType = vk::DescriptorType::eCombinedImageSampler;
 
-                            const auto &img_info = image_infos.emplace_back(textureData.sampler(),
-                                                                            textureData.view(),
-                                                                            vk::ImageLayout::eShaderReadOnlyOptimal);
+                                        const auto &img_info =
+                                            image_infos.emplace_back(textureData.sampler(),
+                                                                     textureData.view(),
+                                                                     vk::ImageLayout::eShaderReadOnlyOptimal);
 
-                            write_set.pImageInfo = &img_info;
-                        }},
-                    command.descriptor_sets[i]);
+                                        write_set.pImageInfo = &img_info;
+                                    }},
+                           command.descriptor_sets[i]);
             }
 
             device_.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
@@ -247,8 +254,8 @@ namespace retro
             // Bind the descriptor set to the graphics pipeline
             cmd_.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                     pipeline_layout_,
-                                    0,                                           // first set
-                                    static_cast<uint32>(descriptor_sets.size()), // descriptor set count
+                                    0,                                                  // first set
+                                    static_cast<std::uint32_t>(descriptor_sets.size()), // descriptor set count
                                     descriptor_sets.data(),
                                     0, // dynamic offset count
                                     nullptr);
@@ -260,7 +267,7 @@ namespace retro
             if (index_buffer.empty())
                 return;
             auto [buffer, mapped_data, offset] =
-                buffer_manager.allocate_transient(static_cast<uint32>(index_buffer.size()),
+                buffer_manager.allocate_transient(static_cast<std::uint32_t>(index_buffer.size()),
                                                   vk::BufferUsageFlagBits::eIndexBuffer);
             std::memcpy(mapped_data, index_buffer.data(), index_buffer.size());
             cmd_.bindIndexBuffer(buffer, offset, vk::IndexType::eUint32);
@@ -274,7 +281,7 @@ namespace retro
             cmd_.pushConstants(pipeline_layout_,
                                to_vulkan_enum(layout.push_constant_bindings->stages),
                                0,
-                               static_cast<uint32>(command.push_constants.size()),
+                               static_cast<std::uint32_t>(command.push_constants.size()),
                                command.push_constants.data());
         }
 
@@ -324,13 +331,13 @@ namespace retro
 
         for (const auto [index, binding] : shader_layout.descriptor_bindings | std::views::enumerate)
         {
-            bindings.emplace_back(static_cast<uint32>(index),
+            bindings.emplace_back(static_cast<std::uint32_t>(index),
                                   to_vulkan_enum(binding.type),
-                                  static_cast<uint32>(binding.count),
+                                  static_cast<std::uint32_t>(binding.count),
                                   to_vulkan_enum(binding.stages));
         }
 
-        const vk::DescriptorSetLayoutCreateInfo layout_info{.bindingCount = static_cast<uint32>(bindings.size()),
+        const vk::DescriptorSetLayoutCreateInfo layout_info{.bindingCount = static_cast<std::uint32_t>(bindings.size()),
                                                             .pBindings = bindings.data()};
         descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
         std::array layouts = {descriptor_set_layout_.get()};
@@ -339,15 +346,15 @@ namespace retro
         for (const auto [stages, size, offset] : shader_layout.push_constant_bindings)
         {
             push_constant_ranges.emplace_back(to_vulkan_enum(stages),
-                                              static_cast<uint32>(offset),
-                                              static_cast<uint32>(size));
+                                              static_cast<std::uint32_t>(offset),
+                                              static_cast<std::uint32_t>(size));
         }
 
-        const vk::PipelineLayoutCreateInfo pipeline_layout_info{.setLayoutCount = layouts.size(),
-                                                                .pSetLayouts = layouts.data(),
-                                                                .pushConstantRangeCount =
-                                                                    static_cast<uint32>(push_constant_ranges.size()),
-                                                                .pPushConstantRanges = push_constant_ranges.data()};
+        const vk::PipelineLayoutCreateInfo pipeline_layout_info{
+            .setLayoutCount = layouts.size(),
+            .pSetLayouts = layouts.data(),
+            .pushConstantRangeCount = static_cast<std::uint32_t>(push_constant_ranges.size()),
+            .pPushConstantRanges = push_constant_ranges.data()};
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
@@ -362,7 +369,7 @@ namespace retro
         std::vector<vk::VertexInputAttributeDescription> attribute_descriptions;
 
         binding_descriptions.reserve(shader_layout.vertex_bindings.size());
-        usize attribute_count = std::ranges::fold_left(
+        std::size_t attribute_count = std::ranges::fold_left(
             shader_layout.vertex_bindings |
                 std::views::transform([](const VertexInputBinding &b) { return b.attributes.size(); }),
             0,
@@ -371,13 +378,13 @@ namespace retro
 
         for (const auto [bind_index, binding] : shader_layout.vertex_bindings | std::views::enumerate)
         {
-            binding_descriptions.emplace_back(static_cast<uint32>(bind_index),
-                                              static_cast<uint32>(binding.stride),
+            binding_descriptions.emplace_back(static_cast<std::uint32_t>(bind_index),
+                                              static_cast<std::uint32_t>(binding.stride),
                                               to_vulkan_enum(binding.type));
 
             for (const auto &attribute : binding.attributes)
             {
-                attribute_descriptions.emplace_back(static_cast<uint32>(attribute_descriptions.size()),
+                attribute_descriptions.emplace_back(static_cast<std::uint32_t>(attribute_descriptions.size()),
                                                     binding_descriptions.back().binding,
                                                     to_vulkan_enum(attribute.type),
                                                     attribute.offset);
@@ -385,9 +392,9 @@ namespace retro
         }
 
         vk::PipelineVertexInputStateCreateInfo vertex_input_info{
-            .vertexBindingDescriptionCount = static_cast<uint32>(binding_descriptions.size()),
+            .vertexBindingDescriptionCount = static_cast<std::uint32_t>(binding_descriptions.size()),
             .pVertexBindingDescriptions = binding_descriptions.data(),
-            .vertexAttributeDescriptionCount = static_cast<uint32>(attribute_descriptions.size()),
+            .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_descriptions.size()),
             .pVertexAttributeDescriptions = attribute_descriptions.data()};
 
         auto vert_module = create_shader_module(device, shader_layout.vertex_shader);
@@ -450,7 +457,7 @@ namespace retro
                                                              .attachmentCount = 1,
                                                              .pAttachments = &color_blend_attachment};
 
-        vk::GraphicsPipelineCreateInfo pipeline_info{.stageCount = static_cast<uint32>(shader_stages.size()),
+        vk::GraphicsPipelineCreateInfo pipeline_info{.stageCount = static_cast<std::uint32_t>(shader_stages.size()),
                                                      .pStages = shader_stages.data(),
                                                      .pVertexInputState = &vertex_input_info,
                                                      .pInputAssemblyState = &input_assembly,
@@ -475,9 +482,9 @@ namespace retro
                                                                       const std::filesystem::path &path)
     {
         const auto bytes = read_binary_file(path);
-        const auto *code = reinterpret_cast<const uint32 *>(bytes.data());
+        const auto *code = reinterpret_cast<const std::uint32_t *>(bytes.data());
 
-        if (bytes.size() % sizeof(uint32) != 0)
+        if (bytes.size() % sizeof(std::uint32_t) != 0)
         {
             throw std::runtime_error{"SPIR-V file size is not a multiple of 4 bytes"};
         }
@@ -507,7 +514,7 @@ namespace retro
     {
         if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
         {
-            pipelines_.erase(std::next(pipelines_.begin(), static_cast<isize>(it->second)));
+            pipelines_.erase(std::next(pipelines_.begin(), static_cast<std::ptrdiff_t>(it->second)));
             pipeline_indices_.erase(type);
         }
     }

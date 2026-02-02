@@ -8,22 +8,23 @@ module;
 
 #include <cassert>
 
-export module retro.core:arena_allocator;
+export module retro.core.memory.arena_allocator;
 
-import :concepts;
-import :defines;
-import :memory;
+import std;
+import retro.core.util.noncopyable;
+import retro.core.memory.align;
+import retro.core.memory.buffers;
 
 namespace retro
 {
     export template <typename T>
-    concept Arena = requires(T arena, usize size, usize alignment) {
+    concept Arena = requires(T arena, std::size_t size, std::size_t alignment) {
         {
             arena.allocate(size, alignment)
         } -> std::same_as<void *>;
         {
             arena.capacity()
-        } -> std::same_as<usize>;
+        } -> std::same_as<std::size_t>;
         {
             arena.can_allocate(size, alignment)
         } -> std::convertible_to<bool>;
@@ -36,25 +37,27 @@ namespace retro
         } -> std::same_as<void *>;
         {
             arena.used_capacity()
-        } -> std::same_as<usize>;
+        } -> std::same_as<std::size_t>;
     };
 
     export class SingleArena
     {
       public:
-        explicit constexpr SingleArena(const usize size) : data_(std::make_unique<std::byte[]>(size)), capacity_{size}
+        explicit constexpr SingleArena(const std::size_t size)
+            : data_(std::make_unique<std::byte[]>(size)), capacity_{size}
         {
         }
 
-        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
+        constexpr void *allocate(const std::size_t size,
+                                 const std::size_t alignment = alignof(std::max_align_t)) // NOLINT
         {
             void *next = data_.get() + current_offset_;
-            usize remaining = capacity_ - current_offset_;
+            std::size_t remaining = capacity_ - current_offset_;
             auto *res = align(alignment, size, next, remaining);
             if (res != nullptr)
             {
                 auto *new_pos = static_cast<std::byte *>(res) + size;
-                current_offset_ = static_cast<usize>(new_pos - data_.get());
+                current_offset_ = static_cast<std::size_t>(new_pos - data_.get());
                 return res;
             }
 
@@ -71,19 +74,20 @@ namespace retro
             current_offset_ = 0;
         }
 
-        [[nodiscard]] constexpr usize capacity() const noexcept
+        [[nodiscard]] constexpr std::size_t capacity() const noexcept
         {
             return capacity_;
         }
 
-        [[nodiscard]] constexpr usize used_capacity() const noexcept
+        [[nodiscard]] constexpr std::size_t used_capacity() const noexcept
         {
             return current_offset_;
         }
 
         // NOLINTNEXTLINE
-        [[nodiscard]] constexpr bool can_allocate(const usize size,
-                                                  const usize alignment = alignof(std::max_align_t)) const noexcept
+        [[nodiscard]] constexpr bool can_allocate(
+            const std::size_t size,
+            const std::size_t alignment = alignof(std::max_align_t)) const noexcept
         {
             if (size == 0)
             {
@@ -91,7 +95,7 @@ namespace retro
             }
 
             void *next = data_.get() + current_offset_;
-            usize remaining = capacity_ - current_offset_;
+            std::size_t remaining = capacity_ - current_offset_;
 
             const void *res = align(alignment, size, next, remaining);
             return res != nullptr;
@@ -99,16 +103,16 @@ namespace retro
 
       private:
         std::unique_ptr<std::byte[]> data_{};
-        usize capacity_{};
-        usize current_offset_{0};
+        std::size_t capacity_{};
+        std::size_t current_offset_{0};
     };
 
     export class MultiArena : NonCopyable
     {
       public:
-        explicit constexpr MultiArena(const usize block_capacity,
-                                      const usize initial_blocks = 10,
-                                      const usize max_blocks = std::numeric_limits<usize>::max())
+        explicit constexpr MultiArena(const std::size_t block_capacity,
+                                      const std::size_t initial_blocks = 10,
+                                      const std::size_t max_blocks = std::numeric_limits<std::size_t>::max())
             : block_capacity_{block_capacity}, max_blocks_{max_blocks}
         {
             assert(block_capacity > alignof(std::max_align_t));
@@ -118,7 +122,8 @@ namespace retro
             blocks_.emplace_back(block_capacity);
         }
 
-        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t)) // NOLINT
+        constexpr void *allocate(const std::size_t size,
+                                 const std::size_t alignment = alignof(std::max_align_t)) // NOLINT
         {
             auto *block = &blocks_.back();
 
@@ -142,13 +147,14 @@ namespace retro
             blocks_.back().reset();
         }
 
-        [[nodiscard]] constexpr usize capacity() const noexcept
+        [[nodiscard]] constexpr std::size_t capacity() const noexcept
         {
             return block_capacity_ * max_blocks_;
         }
 
-        [[nodiscard]] constexpr bool can_allocate(const usize size,
-                                                  const usize alignment = alignof(std::max_align_t)) const noexcept
+        [[nodiscard]] constexpr bool can_allocate(
+            const std::size_t size,
+            const std::size_t alignment = alignof(std::max_align_t)) const noexcept
         {
             if (blocks_.size() < max_blocks_)
                 return size <= block_capacity_;
@@ -158,22 +164,22 @@ namespace retro
 
       private:
         std::vector<SingleArena> blocks_{};
-        usize block_capacity_{};
-        usize max_blocks_{};
+        std::size_t block_capacity_{};
+        std::size_t max_blocks_{};
     };
 
-    export template <usize N>
+    export template <std::size_t N>
     class InlineArena : NonCopyable // NOLINT
     {
       public:
-        constexpr void *allocate(const usize size, const usize alignment = alignof(std::max_align_t))
+        constexpr void *allocate(const std::size_t size, const std::size_t alignment = alignof(std::max_align_t))
         {
             void *next = data_.data() + current_offset_;
-            usize remaining = N - current_offset_;
+            std::size_t remaining = N - current_offset_;
             if (auto *res = align(alignment, size, next, remaining); res != nullptr)
             {
                 auto *new_pos = static_cast<std::byte *>(res) + size;
-                current_offset_ = static_cast<usize>(new_pos - data_.data());
+                current_offset_ = static_cast<std::size_t>(new_pos - data_.data());
                 return res;
             }
 
@@ -190,18 +196,19 @@ namespace retro
             return data_.data();
         }
 
-        [[nodiscard]] constexpr usize capacity() const noexcept
+        [[nodiscard]] constexpr std::size_t capacity() const noexcept
         {
             return N;
         }
 
-        [[nodiscard]] constexpr usize used_capacity() const noexcept
+        [[nodiscard]] constexpr std::size_t used_capacity() const noexcept
         {
             return current_offset_;
         }
 
-        [[nodiscard]] constexpr bool can_allocate(const usize size,
-                                                  const usize alignment = alignof(std::max_align_t)) const noexcept
+        [[nodiscard]] constexpr bool can_allocate(
+            const std::size_t size,
+            const std::size_t alignment = alignof(std::max_align_t)) const noexcept
         {
             if (size == 0)
             {
@@ -209,7 +216,7 @@ namespace retro
             }
 
             void *next = data_.get() + current_offset_;
-            usize remaining = N - current_offset_;
+            std::size_t remaining = N - current_offset_;
 
             const void *res = align(alignment, size, next, remaining);
             return res != nullptr;
@@ -217,7 +224,7 @@ namespace retro
 
       private:
         std::array<std::byte, N> data_;
-        usize current_offset_{0};
+        std::size_t current_offset_{0};
     };
 
     export template <typename T, Arena Allocator = SingleArena>
@@ -235,7 +242,7 @@ namespace retro
         {
         }
 
-        T *allocate(const usize size)
+        T *allocate(const std::size_t size)
         {
             auto *allocated = arena_->allocate(size * sizeof(T), alignof(T));
             if (allocated == nullptr)
@@ -243,9 +250,9 @@ namespace retro
             return static_cast<T *>(allocated);
         }
 
-        std::allocation_result<T *> allocate_at_least(const usize size)
+        std::allocation_result<T *> allocate_at_least(const std::size_t size)
         {
-            usize allocated_size = std::bit_ceil(size);
+            std::size_t allocated_size = std::bit_ceil(size);
             auto *allocated = arena_->allocate(allocated_size * sizeof(T), alignof(T));
             if (allocated == nullptr)
             {
@@ -259,12 +266,12 @@ namespace retro
             return {static_cast<T *>(allocated), allocated_size};
         }
 
-        void deallocate(T *, const usize) noexcept
+        void deallocate(T *, const std::size_t) noexcept
         {
             // No manual deallocate, the entire arena is deallocated when it goes out of scope
         }
 
-        usize max_size() const noexcept
+        std::size_t max_size() const noexcept
         {
             return arena_->capacity();
         }

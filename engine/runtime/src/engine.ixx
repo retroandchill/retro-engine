@@ -13,13 +13,14 @@ module;
 export module retro.runtime:engine;
 
 import std;
-import retro.core;
+import retro.core.di;
 import :scene;
 import :scene.rendering;
 import :scene.rendering.geometry;
 import :scene.rendering.sprite;
 import :assets;
 import :texture;
+import retro.core.async.manual_task_scheduler;
 
 namespace retro
 {
@@ -28,8 +29,8 @@ namespace retro
       public:
         virtual ~ScriptRuntime() = default;
 
-        [[nodiscard]] virtual int32 start_scripts(std::u16string_view assembly_path,
-                                                  std::u16string_view class_name) const = 0;
+        [[nodiscard]] virtual std::int32_t start_scripts(std::u16string_view assembly_path,
+                                                         std::u16string_view class_name) const = 0;
 
         virtual void tick(float delta_time) = 0;
 
@@ -78,7 +79,7 @@ namespace retro
                            std::u16string_view class_name,
                            std::u16string_view entry_point);
 
-        RETRO_API void request_shutdown(int32 exit_code = 0);
+        RETRO_API void request_shutdown(std::int32_t exit_code = 0);
 
         [[nodiscard]] inline Scene &scene()
         {
@@ -105,7 +106,7 @@ namespace retro
         Renderer2D *renderer_{};
         AssetManager *asset_manager_{};
 
-        std::atomic<int32> exit_code_{0};
+        std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
         Scene scene_;
         ManualTaskScheduler scheduler_{};

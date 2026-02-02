@@ -9,7 +9,9 @@ module;
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <cassert>
 
-module retro.core;
+module retro.core.strings.name;
+
+import retro.core.containers.optional;
 
 namespace retro
 {
@@ -32,13 +34,13 @@ namespace retro
 
     struct NameHash
     {
-        usize hash{};
-        uint32 length{};
+        std::size_t hash{};
+        std::uint32_t length{};
 
         friend bool operator==(NameHash lhs, NameHash rhs) = default;
     };
 
-    constexpr usize hash_value(const NameHash &name) noexcept
+    constexpr std::size_t hash_value(const NameHash &name) noexcept
     {
         return hash_combine(name.hash, name.length);
     }
@@ -51,13 +53,13 @@ namespace retro
         {
             if constexpr (CaseSensitivity == NameCase::CaseSensitive)
             {
-                return NameHash{std::hash<std::string_view>{}(name), static_cast<uint32>(name.size())};
+                return NameHash{std::hash<std::string_view>{}(name), static_cast<std::uint32_t>(name.size())};
             }
             else
             {
                 InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
                 const auto as_lower = to_lower(name, make_allocator<char>(arena));
-                return NameHash{std::hash<std::string_view>{}(as_lower), static_cast<uint32>(name.size())};
+                return NameHash{std::hash<std::string_view>{}(as_lower), static_cast<std::uint32_t>(name.size())};
             }
         }
 
@@ -118,10 +120,10 @@ namespace retro
       public:
         template <typename T, typename... Args>
             requires std::constructible_from<T, Args...> && std::is_trivially_destructible_v<T>
-        constexpr decltype(auto) allocate_with_tail(const usize tail_size, Args &&...args)
+        constexpr decltype(auto) allocate_with_tail(const std::size_t tail_size, Args &&...args)
         {
-            const usize total_size = sizeof(T) + tail_size;
-            constexpr usize alignment = alignof(T);
+            const std::size_t total_size = sizeof(T) + tail_size;
+            constexpr std::size_t alignment = alignof(T);
 
             auto *ptr = static_cast<T *>(arena_.allocate(total_size, alignment));
             std::construct_at(ptr, std::forward<Args>(args)...);
@@ -130,9 +132,9 @@ namespace retro
         }
 
       private:
-        static constexpr usize BLOCK_SIZE = 1024 * 64;
-        static constexpr usize INITIAL_BLOCKS = 16;
-        static constexpr usize MAX_BLOCKS = 1024;
+        static constexpr std::size_t BLOCK_SIZE = 1024 * 64;
+        static constexpr std::size_t INITIAL_BLOCKS = 16;
+        static constexpr std::size_t MAX_BLOCKS = 1024;
 
         MultiArena arena_{BLOCK_SIZE, INITIAL_BLOCKS, MAX_BLOCKS};
     };
@@ -212,7 +214,7 @@ namespace retro
             if (find_type == FindType::Add)
             {
                 std::unique_lock lock{mutex_};
-                const auto next_index = static_cast<uint32>(entries_.size());
+                const auto next_index = static_cast<std::uint32_t>(entries_.size());
                 const auto comparison_index =
                     comparison_entries_.find_or_add(str, std::bind_front(&NameTable::create_new_entry, this));
 #if RETRO_WITH_CASE_PRESERVING_NAME
@@ -263,12 +265,12 @@ namespace retro
             if (str.size() > MAX_NAME_LENGTH)
                 throw std::runtime_error{"Name too long"};
 
-            const usize byte_size = (str.size() + 1) * sizeof(char);
+            const std::size_t byte_size = (str.size() + 1) * sizeof(char);
             auto &header = allocator_.allocate_with_tail<NameEntryHeader>(byte_size, str.size());
             auto &entry = *std::launder(reinterpret_cast<NameEntry *>(&header));
             std::memcpy(entry.characters_, str.data(), byte_size);
             entry.characters_[str.size()] = '\0';
-            const auto entry_id = NameEntryId{static_cast<uint32>(entries_.size())};
+            const auto entry_id = NameEntryId{static_cast<std::uint32_t>(entries_.size())};
             entries_.push_back(&entry);
             return entry_id;
         }

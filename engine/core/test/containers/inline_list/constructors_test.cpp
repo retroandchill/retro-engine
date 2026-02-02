@@ -6,7 +6,7 @@
  */
 #include "gtest_setup.hpp"
 
-import retro.core;
+import retro.core.di;
 import std;
 
 namespace

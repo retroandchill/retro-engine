@@ -24,33 +24,33 @@ namespace retro
     export struct ImageData
     {
         ImageDataPtr image_data;
-        int32 width;
-        int32 height;
-        int32 channels;
+        std::int32_t width;
+        std::int32_t height;
+        std::int32_t channels;
     };
 
     export class TextureRenderData
     {
       protected:
-        inline TextureRenderData(int32 width, int32 height) noexcept : width_(width), height_(height)
+        inline TextureRenderData(std::int32_t width, std::int32_t height) noexcept : width_(width), height_(height)
         {
         }
 
       public:
         virtual ~TextureRenderData() = default;
 
-        [[nodiscard]] inline int32 width() const noexcept
+        [[nodiscard]] inline std::int32_t width() const noexcept
         {
             return width_;
         }
-        [[nodiscard]] inline int32 height() const noexcept
+        [[nodiscard]] inline std::int32_t height() const noexcept
         {
             return height_;
         }
 
       private:
-        int32 width_{};
-        int32 height_{};
+        std::int32_t width_{};
+        std::int32_t height_{};
     };
 
     export class RETRO_API TextureDecoder final : public AssetDecoder
@@ -87,12 +87,12 @@ namespace retro
             return render_data_.get();
         }
 
-        [[nodiscard]] inline int32 width() const noexcept
+        [[nodiscard]] inline std::int32_t width() const noexcept
         {
             return render_data_->width();
         }
 
-        [[nodiscard]] inline int32 height() const noexcept
+        [[nodiscard]] inline std::int32_t height() const noexcept
         {
             return render_data_->height();
         }

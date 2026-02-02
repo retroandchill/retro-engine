@@ -4,10 +4,12 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.core:optional;
+export module retro.core.containers.optional;
 
 import std;
-import :concepts;
+import retro.core.type_traits.basic;
+import retro.core.algorithm.hashing;
+import retro.core.type_traits.comparison;
 
 namespace retro
 {
@@ -28,7 +30,7 @@ namespace retro
     struct OptionalIterator
     {
         using value_type = std::remove_cv_t<T>;
-        using difference_type = isize;
+        using difference_type = std::ptrdiff_t;
 
         using iterator_concept = std::contiguous_iterator_tag;
 
@@ -53,7 +55,7 @@ namespace retro
             return ptr_;
         }
 
-        constexpr T &operator[](isize n) const noexcept
+        constexpr T &operator[](std::ptrdiff_t n) const noexcept
         {
             return ptr_[n];
         }
@@ -1061,7 +1063,7 @@ export template <retro::Hashable T>
     requires(!std::is_reference_v<T>)
 struct std::hash<retro::Optional<T>>
 {
-    usize operator()(const retro::Optional<T> &optional) const
+    std::size_t operator()(const retro::Optional<T> &optional) const
         noexcept(noexcept(hash<std::remove_const_t<T>>{}(*optional)))
     {
         if (optional.has_value())

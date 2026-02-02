@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.functional.delegate;
 
 import std;
 
@@ -16,12 +16,12 @@ using retro::MulticastDelegate;
 namespace
 {
     // Helpers for tests
-    int32 free_function_add(int32 a, int32 b)
+    std::int32_t free_function_add(std::int32_t a, std::int32_t b)
     {
         return a + b;
     }
 
-    int32 free_function_mul(int32 a, int32 b)
+    std::int32_t free_function_mul(std::int32_t a, std::int32_t b)
     {
         return a * b;
     }
@@ -31,24 +31,24 @@ namespace
         flag = true;
     }
 
-    void append_value(int32 value, std::vector<int32> &values)
+    void append_value(std::int32_t value, std::vector<std::int32_t> &values)
     {
         values.push_back(value);
     }
 
     struct TestObject
     {
-        int32 factor = 2;
-        int32 offset = 1;
-        mutable int32 call_count = 0;
+        std::int32_t factor = 2;
+        std::int32_t offset = 1;
+        mutable std::int32_t call_count = 0;
 
-        [[nodiscard]] int32 member_add(const int32 x) const
+        [[nodiscard]] std::int32_t member_add(const std::int32_t x) const
         {
             ++call_count;
             return factor * x + offset;
         }
 
-        int32 member_mul(int32 x)
+        std::int32_t member_mul(std::int32_t x)
         {
             ++call_count;
             return factor * x;
@@ -57,10 +57,10 @@ namespace
 
     struct TrackingFunctor
     {
-        int32 &call_counter;
-        int32 value{};
+        std::int32_t &call_counter;
+        std::int32_t value{};
 
-        int32 operator()(int32 x) const
+        std::int32_t operator()(std::int32_t x) const
         {
             ++call_counter;
             return value + x;
@@ -69,7 +69,7 @@ namespace
 
     struct DeletionTracker
     {
-        static inline int32 instance_count = 0;
+        static inline std::int32_t instance_count = 0;
 
         DeletionTracker()
         {
@@ -91,10 +91,10 @@ namespace
 
     struct CopyTrackingFunctor
     {
-        static inline int32 instance_count = 0;
-        int32 value = 0;
+        static inline std::int32_t instance_count = 0;
+        std::int32_t value = 0;
 
-        CopyTrackingFunctor(int32 value = 0) : value(value)
+        CopyTrackingFunctor(std::int32_t value = 0) : value(value)
         {
             ++instance_count;
         }
@@ -107,7 +107,7 @@ namespace
             --instance_count;
         }
 
-        int32 operator()(int32 x) const
+        std::int32_t operator()(std::int32_t x) const
         {
             return value + x;
         }
@@ -115,11 +115,11 @@ namespace
 
     struct LargeTrackingFunctor
     {
-        static inline int32 instance_count = 0;
-        int32 value = 0;
+        static inline std::int32_t instance_count = 0;
+        std::int32_t value = 0;
         std::array<char, 64> padding{};
 
-        explicit LargeTrackingFunctor(int32 value = 0) : value(value)
+        explicit LargeTrackingFunctor(std::int32_t value = 0) : value(value)
         {
             ++instance_count;
         }
@@ -132,7 +132,7 @@ namespace
             --instance_count;
         }
 
-        int32 operator()(int32 x) const
+        std::int32_t operator()(std::int32_t x) const
         {
             return value * x;
         }
@@ -140,9 +140,9 @@ namespace
 
     struct WeakBindingObject
     {
-        int32 factor = 3;
+        std::int32_t factor = 3;
 
-        [[nodiscard]] int32 multiply(const int32 x) const
+        [[nodiscard]] std::int32_t multiply(const std::int32_t x) const
         {
             return factor * x;
         }
@@ -150,9 +150,9 @@ namespace
 
     struct SharedFromThisObject : std::enable_shared_from_this<SharedFromThisObject>
     {
-        int32 add_base = 5;
+        std::int32_t add_base = 5;
 
-        int32 add(int32 x) const
+        std::int32_t add(std::int32_t x) const
         {
             return add_base + x;
         }
@@ -160,9 +160,9 @@ namespace
 
     struct MulticastReceiver
     {
-        int32 total = 0;
+        std::int32_t total = 0;
 
-        void add(int32 value)
+        void add(std::int32_t value)
         {
             total += value;
         }
@@ -171,8 +171,8 @@ namespace
 
 TEST(Delegate, DefaultConstructionAndNullConstruction)
 {
-    Delegate<int32(int32, int32)> d1;
-    Delegate<int32(int32, int32)> d2{nullptr};
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d1;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d2{nullptr};
 
     EXPECT_FALSE(d1.is_bound());
     EXPECT_FALSE(d2.is_bound());
@@ -184,7 +184,7 @@ TEST(Delegate, DefaultConstructionAndNullConstruction)
 
 TEST(Delegate, BindToCompileTimeFunction)
 {
-    auto d = Delegate<int32(int32, int32)>::create<free_function_add>();
+    auto d = Delegate<std::int32_t(std::int32_t, std::int32_t)>::create<free_function_add>();
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(2, 3), 5);
 
@@ -196,7 +196,7 @@ TEST(Delegate, BindToCompileTimeFunction)
 
 TEST(Delegate, BindToRuntimeFunction)
 {
-    auto d = Delegate<int32(int32, int32)>::create(&free_function_add);
+    auto d = Delegate<std::int32_t(std::int32_t, std::int32_t)>::create(&free_function_add);
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(10, 5), 15);
 
@@ -211,7 +211,7 @@ TEST(Delegate, BindToCompileTimeMemberFunction)
     obj.factor = 3;
     obj.offset = 4;
 
-    auto d = Delegate<int32(int32)>::create<&TestObject::member_add>(obj);
+    auto d = Delegate<std::int32_t(std::int32_t)>::create<&TestObject::member_add>(obj);
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(5), 3 * 5 + 4);
     EXPECT_EQ(obj.call_count, 1);
@@ -229,7 +229,7 @@ TEST(Delegate, BindToRuntimeMemberFunction)
     obj.factor = 3;
     obj.offset = 4;
 
-    auto d = Delegate<int32(int32)>::create(obj, &TestObject::member_add);
+    auto d = Delegate<std::int32_t(std::int32_t)>::create(obj, &TestObject::member_add);
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(5), 3 * 5 + 4);
     EXPECT_EQ(obj.call_count, 1);
@@ -244,21 +244,21 @@ TEST(Delegate, BindToRuntimeMemberFunction)
 TEST(Delegate, BindToLambda)
 {
     // Non-capturing lambda – still treated as a functor type here
-    auto d = Delegate<int32(int32)>::create([](int32 x) { return x * 2; });
+    auto d = Delegate<std::int32_t(std::int32_t)>::create([](std::int32_t x) { return x * 2; });
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(4), 8);
 
     // Capturing lambda (must be stored on heap and deleted on unbind / destruction)
-    int32 base = 10;
-    d = Delegate<int32(int32)>::create([base](int32 x) { return base + x; });
+    std::int32_t base = 10;
+    d = Delegate<std::int32_t(std::int32_t)>::create([base](std::int32_t x) { return base + x; });
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(5), 15);
 }
 
 TEST(Delegate, BindToFunctorObject)
 {
-    int32 call_counter = 0;
-    auto d = Delegate<int32(int32)>::create(TrackingFunctor{call_counter, 7});
+    std::int32_t call_counter = 0;
+    auto d = Delegate<std::int32_t(std::int32_t)>::create(TrackingFunctor{call_counter, 7});
     ASSERT_TRUE(d.is_bound());
     EXPECT_EQ(d.execute(3), 10);
     EXPECT_EQ(call_counter, 1);
@@ -293,7 +293,7 @@ TEST(Delegate, ExecuteIfBoundVoid)
 
 TEST(Delegate, ExecuteIfBoundNonVoid)
 {
-    Delegate<int32(int32, int32)> d;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d;
 
     // Unbound
     auto res_unbound = d.execute_if_bound(1, 2);
@@ -307,7 +307,7 @@ TEST(Delegate, ExecuteIfBoundNonVoid)
 
 TEST(Delegate, Unbind)
 {
-    Delegate<int32(int32, int32)> d;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d;
     d.bind<free_function_add>();
 
     ASSERT_TRUE(d.is_bound());
@@ -320,7 +320,7 @@ TEST(Delegate, Unbind)
 
 TEST(Delegate, MoveConstruction)
 {
-    Delegate<int32(int32, int32)> source;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> source;
     source.bind<free_function_mul>();
     ASSERT_TRUE(source.is_bound());
     EXPECT_EQ(source.execute(3, 4), 12);
@@ -338,8 +338,8 @@ TEST(Delegate, MoveConstruction)
 
 TEST(Delegate, MoveAssignment)
 {
-    Delegate<int32(int32, int32)> d1;
-    Delegate<int32(int32, int32)> d2;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d1;
+    Delegate<std::int32_t(std::int32_t, std::int32_t)> d2;
 
     d1.bind<free_function_add>();
     d2.bind<free_function_mul>();
@@ -365,7 +365,7 @@ TEST(Delegate, CopyConstruction)
     EXPECT_EQ(CopyTrackingFunctor::instance_count, 0);
 
     {
-        Delegate<int32(int32)> source;
+        Delegate<std::int32_t(std::int32_t)> source;
         source.bind(CopyTrackingFunctor{4});
 
         ASSERT_TRUE(source.is_bound());
@@ -388,8 +388,8 @@ TEST(Delegate, CopyAssignment)
     EXPECT_EQ(LargeTrackingFunctor::instance_count, 0);
 
     {
-        Delegate<int32(int32)> d1;
-        Delegate<int32(int32)> d2;
+        Delegate<std::int32_t(std::int32_t)> d1;
+        Delegate<std::int32_t(std::int32_t)> d2;
 
         d1.bind(LargeTrackingFunctor{2});
         d2.bind(LargeTrackingFunctor{7});
@@ -433,7 +433,7 @@ TEST(Delegate, HeapAllocation)
 
 TEST(Delegate, WeakBindingSharedPtr)
 {
-    Delegate<int32(int32)> d;
+    Delegate<std::int32_t(std::int32_t)> d;
     auto object = std::make_shared<WeakBindingObject>();
 
     d.bind(object, &WeakBindingObject::multiply);
@@ -447,7 +447,7 @@ TEST(Delegate, WeakBindingSharedPtr)
 
 TEST(Delegate, WeakBindingWeakPtr)
 {
-    Delegate<int32(int32)> d;
+    Delegate<std::int32_t(std::int32_t)> d;
     auto object = std::make_shared<WeakBindingObject>();
     std::weak_ptr weak = object;
 
@@ -462,7 +462,7 @@ TEST(Delegate, WeakBindingWeakPtr)
 
 TEST(Delegate, WeakBindingEnableSharedFromList)
 {
-    Delegate<int32(int32)> d;
+    Delegate<std::int32_t(std::int32_t)> d;
     auto object = std::make_shared<SharedFromThisObject>();
 
     d.bind(*object, &SharedFromThisObject::add);
@@ -476,34 +476,34 @@ TEST(Delegate, WeakBindingEnableSharedFromList)
 
 TEST(Delegate, BindWithArgs)
 {
-    auto d1 = Delegate<int32(int32)>::create<free_function_add>(3);
+    auto d1 = Delegate<std::int32_t(std::int32_t)>::create<free_function_add>(3);
     ASSERT_TRUE(d1.is_bound());
     EXPECT_EQ(d1.execute(5), 8);
 
-    auto d2 = Delegate<int32(int32)>::create(&free_function_mul, 4);
+    auto d2 = Delegate<std::int32_t(std::int32_t)>::create(&free_function_mul, 4);
     ASSERT_TRUE(d2.is_bound());
     EXPECT_EQ(d2.execute(6), 24);
 
     TestObject obj;
     obj.factor = 2;
     obj.offset = 0;
-    auto d3 = Delegate<int32()>::create(obj, &TestObject::member_mul, 7);
+    auto d3 = Delegate<std::int32_t()>::create(obj, &TestObject::member_mul, 7);
     ASSERT_TRUE(d3.is_bound());
     EXPECT_EQ(d3.execute(), 14);
 
-    auto d4 = Delegate<int32(int32)>::create([](int32 x, int32 y) { return x - y; }, 9);
+    auto d4 = Delegate<std::int32_t(std::int32_t)>::create([](std::int32_t x, std::int32_t y) { return x - y; }, 9);
     ASSERT_TRUE(d4.is_bound());
     EXPECT_EQ(d4.execute(20), 11);
 }
 
 TEST(Delegate, MulticastReceiver)
 {
-    MulticastDelegate<void(int32)> multicast;
-    int32 total = 0;
-    std::vector<int32> values;
+    MulticastDelegate<void(std::int32_t)> multicast;
+    std::int32_t total = 0;
+    std::vector<std::int32_t> values;
     MulticastReceiver receiver;
 
-    auto handle_sum = multicast.add([&](int32 value) { total += value; });
+    auto handle_sum = multicast.add([&](std::int32_t value) { total += value; });
     auto handle_member = multicast.add<&MulticastReceiver::add>(receiver);
     auto handle_append = multicast.add(&append_value, std::ref(values));
 
@@ -516,16 +516,16 @@ TEST(Delegate, MulticastReceiver)
 
     EXPECT_EQ(total, 4);
     EXPECT_EQ(receiver.total, 4);
-    EXPECT_EQ(values, std::vector<int32>{4});
+    EXPECT_EQ(values, std::vector<std::int32_t>{4});
 }
 
 TEST(Delegate, MulticastRemove)
 {
-    MulticastDelegate<void(int32)> multicast;
-    int32 total = 0;
+    MulticastDelegate<void(std::int32_t)> multicast;
+    std::int32_t total = 0;
 
-    const auto handle_first = multicast.add([&](const int32 value) { total += value; });
-    multicast.add([&](const int32 value) { total += value * 2; });
+    const auto handle_first = multicast.add([&](const std::int32_t value) { total += value; });
+    multicast.add([&](const std::int32_t value) { total += value * 2; });
 
     EXPECT_EQ(multicast.size(), 2);
 

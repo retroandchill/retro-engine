@@ -10,7 +10,7 @@ module;
 
 export module retro.platform:events;
 
-import retro.core;
+import retro.core.containers.optional;
 import std;
 
 namespace retro
@@ -21,17 +21,17 @@ namespace retro
 
     export struct WindowCloseRequestedEvent
     {
-        uint32 window_id = 0;
+        std::uint32_t window_id = 0;
     };
 
     export struct WindowResizedEvent
     {
-        uint32 window_id = 0;
-        int32 width = 0;
-        int32 height = 0;
+        std::uint32_t window_id = 0;
+        std::int32_t width = 0;
+        std::int32_t height = 0;
     };
 
-    export enum class MouseButton : uint8
+    export enum class MouseButton : std::uint8_t
     {
         Left,
         Middle,
@@ -43,7 +43,7 @@ namespace retro
 
     export struct MouseMovedEvent
     {
-        uint32 window_id = 0;
+        std::uint32_t window_id = 0;
         float x = 0.0f;
         float y = 0.0f;
         float dx = 0.0f;
@@ -52,7 +52,7 @@ namespace retro
 
     export struct MouseButtonEvent
     {
-        uint32 window_id = 0;
+        std::uint32_t window_id = 0;
         MouseButton button = MouseButton::Unknown;
         bool down = false;
         float x = 0.0f;
@@ -61,9 +61,9 @@ namespace retro
 
     export struct KeyEvent
     {
-        uint32 window_id = 0;
-        int32 keycode = 0;
-        int32 scancode = 0;
+        std::uint32_t window_id = 0;
+        std::int32_t keycode = 0;
+        std::int32_t scancode = 0;
         bool down = false;
         bool repeat = false;
     };

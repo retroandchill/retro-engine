@@ -10,8 +10,6 @@ module;
 
 module retro.runtime;
 
-import retro.core;
-
 namespace retro
 {
     void SceneNode::set_transform(const Transform2f &transform)

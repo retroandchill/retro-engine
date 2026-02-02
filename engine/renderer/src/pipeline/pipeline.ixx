@@ -12,6 +12,7 @@ export module retro.renderer:pipeline;
 
 import std;
 import retro.runtime;
+import retro.core.math.vector;
 import vulkan_hpp;
 import :components;
 
@@ -76,6 +77,6 @@ namespace retro
         vk::UniquePipelineCache cache_;
 
         std::vector<VulkanRenderPipeline> pipelines_;
-        std::map<std::type_index, usize> pipeline_indices_;
+        std::map<std::type_index, std::size_t> pipeline_indices_;
     };
 } // namespace retro

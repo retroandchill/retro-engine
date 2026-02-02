@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.math.vector;
 
 using retro::Vector2f;
 using retro::Vector2i;

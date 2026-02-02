@@ -10,7 +10,13 @@ module;
 
 export module retro.runtime:assets;
 
-import retro.core;
+import retro.core.di;
+import retro.core.strings.name;
+import retro.core.algorithm.hashing;
+import retro.core.type_traits.basic;
+import retro.core.memory.ref_counted_ptr;
+import retro.core.io.stream;
+import retro.core.io.buffered_stream;
 import std;
 
 namespace retro
@@ -30,7 +36,7 @@ namespace retro
             requires Char<std::ranges::range_value_t<Range>>
         explicit AssetPath(Range &&range)
         {
-            usize segments = 0;
+            std::size_t segments = 0;
             for (auto &&inner_view : std::forward<Range>(range) | std::views::lazy_split(PACKAGE_SEPARATOR))
             {
                 segments++;
@@ -109,7 +115,7 @@ namespace retro
 template <>
 struct std::hash<retro::AssetPath>
 {
-    constexpr usize operator()(const retro::AssetPath &path) const noexcept
+    constexpr std::size_t operator()(const retro::AssetPath &path) const noexcept
     {
         return hash_combine(path.package_name(), path.asset_name());
     }
@@ -174,7 +180,7 @@ namespace retro
         AssetPathHook hook_;
     };
 
-    export enum class AssetLoadError : uint8
+    export enum class AssetLoadError : std::uint8_t
     {
         BadAssetPath,
         InvalidAssetFormat,

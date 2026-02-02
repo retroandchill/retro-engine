@@ -4,15 +4,16 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.core:inline_list;
+export module retro.core.containers.inline_list;
 
-import :defines;
 import std;
-import :concepts;
+import retro.core.type_traits.basic;
+import retro.core.type_traits.comparison;
+import retro.core.type_traits.range;
 
 namespace retro
 {
-    template <typename T, usize N>
+    template <typename T, std::size_t N>
     struct InlineListStorage // NOLINT We want the buffer uninitialized
     {
         using Size = SmallestSize<N>;
@@ -26,12 +27,12 @@ namespace retro
             return reinterpret_cast<const T *>(data_);
         }
 
-        [[nodiscard]] usize storage_size() const noexcept
+        [[nodiscard]] std::size_t storage_size() const noexcept
         {
             return size_;
         }
 
-        constexpr void unsafe_set_size(usize new_size) noexcept
+        constexpr void unsafe_set_size(std::size_t new_size) noexcept
         {
             size_ = static_cast<Size>(new_size);
         }
@@ -52,18 +53,18 @@ namespace retro
     template <typename T>
     struct InlineListStorage<T, 0>
     {
-        using Size = uint8;
+        using Size = std::uint8_t;
 
         static constexpr T *storage_data() noexcept
         {
             return nullptr;
         }
-        static constexpr usize storage_size() noexcept
+        static constexpr std::size_t storage_size() noexcept
         {
             return 0;
         }
 
-        static constexpr void unsafe_set_size(uint8) noexcept
+        static constexpr void unsafe_set_size(std::uint8_t) noexcept
         {
             // No-op
         }
@@ -74,7 +75,7 @@ namespace retro
         }
     };
 
-    template <typename T, usize N>
+    template <typename T, std::size_t N>
         requires(N > 0 && FullyTrivial<T>)
     struct InlineListStorage<T, N>
     {
@@ -89,12 +90,12 @@ namespace retro
             return data_.data();
         }
 
-        [[nodiscard]] constexpr usize storage_size() const noexcept
+        [[nodiscard]] constexpr std::size_t storage_size() const noexcept
         {
             return size_;
         }
 
-        constexpr void unsafe_set_size(usize new_size) noexcept
+        constexpr void unsafe_set_size(std::size_t new_size) noexcept
         {
             size_ = static_cast<Size>(new_size);
         }
@@ -109,13 +110,13 @@ namespace retro
         Size size_ = 0;
     };
 
-    export template <typename T, usize N>
+    export template <typename T, std::size_t N>
     class InlineList : private InlineListStorage<T, N>
     {
       public:
         using value_type = T;
-        using size_type = usize;
-        using difference_type = isize;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
         using reference = value_type &;
         using const_reference = const value_type &;
         using pointer = value_type *;
@@ -481,7 +482,7 @@ namespace retro
         {
             if constexpr (std::random_access_iterator<InputIt>)
             {
-                if (size() + static_cast<usize>(std::distance(first, last)) > capacity()) [[unlikely]]
+                if (size() + static_cast<std::size_t>(std::distance(first, last)) > capacity()) [[unlikely]]
                 {
                     throw std::bad_alloc{}; // NOLINT
                 }
@@ -659,7 +660,7 @@ namespace retro
             if (first != last)
             {
                 this->unsafe_destroy(std::move(start + (last - first), end(), start), end());
-                this->unsafe_set_size(size() - static_cast<usize>(std::distance(first, last)));
+                this->unsafe_set_size(size() - static_cast<std::size_t>(std::distance(first, last)));
             }
             return start;
         }
@@ -712,8 +713,8 @@ namespace retro
         }
     };
 
-    export template <typename T, usize N, typename U = T>
-    constexpr usize erase(InlineList<T, N> &list, const U &value)
+    export template <typename T, std::size_t N, typename U = T>
+    constexpr std::size_t erase(InlineList<T, N> &list, const U &value)
     {
         auto it = std::remove(list.begin(), list.end(), value);
         auto r = std::distance(it, list.end());
@@ -721,11 +722,11 @@ namespace retro
         return r;
     }
 
-    export template <typename T, usize N, typename Pred>
+    export template <typename T, std::size_t N, typename Pred>
         requires std::invocable<Pred, std::ranges::range_reference_t<InlineList<T, N> &>> &&
                  std::convertible_to<std::invoke_result_t<Pred, std::ranges::range_reference_t<InlineList<T, N> &>>,
                                      bool>
-    constexpr usize erase_if(InlineList<T, N> &list, Pred pred)
+    constexpr std::size_t erase_if(InlineList<T, N> &list, Pred pred)
     {
         auto it = std::remove_if(list.begin(), list.end(), pred);
         auto r = std::distance(it, list.end());

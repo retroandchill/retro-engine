@@ -8,8 +8,6 @@
 
 #include <gtest/gtest.h>
 
-import retro.core;
-
 using retro::FindType;
 using retro::Name;
 using retro::NAME_NO_NUMBER;

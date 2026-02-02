@@ -7,8 +7,13 @@
 #include "retro/core/macros.hpp"
 #include "retro/runtime/scene/scene.h"
 
-import retro.core;
+import retro.core.util.color;
+import retro.core.math.vector;
+import retro.core.math.matrix;
+import retro.core.math.transform;
+import retro.core.memory.ref_counted_ptr;
 import retro.runtime;
+import retro.core.c_api;
 import std;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Node, retro::SceneNode);
@@ -97,8 +102,8 @@ extern "C"
     {
         auto &geo = *from_c(node);
         geo.set_geometry(std::make_shared<const retro::Geometry>(
-            std::span{from_c(vertices), static_cast<usize>(vertex_count)} | std::ranges::to<std::vector>(),
-            std::span{indices, static_cast<usize>(index_count)} | std::ranges::to<std::vector>()));
+            std::span{from_c(vertices), static_cast<std::size_t>(vertex_count)} | std::ranges::to<std::vector>(),
+            std::span{indices, static_cast<std::size_t>(index_count)} | std::ranges::to<std::vector>()));
     }
 
     void retro_geometry_set_color(Retro_Geometry *node, const Retro_Color color)

@@ -11,7 +11,8 @@ module;
 export module retro.runtime:scene;
 
 import std;
-import retro.core;
+import retro.core.util.noncopyable;
+import retro.core.math.transform;
 import :scene.rendering;
 
 namespace retro
@@ -54,8 +55,8 @@ namespace retro
         void update_world_transform();
 
         Scene *scene_{};
-        usize master_index_ = std::dynamic_extent;
-        usize internal_index_ = std::dynamic_extent;
+        std::size_t master_index_ = std::dynamic_extent;
+        std::size_t internal_index_ = std::dynamic_extent;
         SceneNode *parent_ = nullptr;
         std::vector<SceneNode *> children_;
         Transform2f transform_{};

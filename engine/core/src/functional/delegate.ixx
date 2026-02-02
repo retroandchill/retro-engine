@@ -1,5 +1,5 @@
 /**
- * @file functional.ixx
+ * @file delegate.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,61 +8,17 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core:functional;
+export module retro.core.functional.delegate;
 
-import :concepts;
-import :optional;
+import std;
+import retro.core.functional.binding;
+import retro.core.type_traits.variant;
+import retro.core.containers.optional;
+import retro.core.type_traits.callable;
+import retro.core.type_traits.pointer;
 
 namespace retro
 {
-    export template <CallableObject... Ts>
-    struct Overload : Ts...
-    {
-        using Ts::operator()...;
-    };
-
-    export template <CallableObject... Ts>
-    Overload(Ts...) -> Overload<Ts...>;
-
-    /**
-     * Thin wrapper around std::visit to flip the order of the arguments.
-     * @tparam Variant The variant type we're visiting
-     * @tparam Functor The functional callback type
-     * @param variant The variant type we're visiting
-     * @param functor The functional callback
-     * @return The result of the visit
-     */
-    export template <VariantSpecialization Variant, CanVisitVariant<Variant> Functor>
-    constexpr decltype(auto) visit(Variant &&variant, Functor &&functor)
-    {
-        return std::visit(std::forward<Functor>(functor), std::forward<Variant>(variant));
-    }
-
-    template <auto Functor>
-        requires CallableObject<decltype(Functor)>
-    struct ConstantBinding
-    {
-        template <typename... Args>
-            requires std::invocable<decltype(Functor), Args...>
-        constexpr decltype(auto) operator()(Args &&...args) const
-            noexcept(std::is_nothrow_invocable_v<decltype(Functor), Args...>)
-        {
-            return std::invoke(Functor, std::forward<Args>(args)...);
-        }
-    };
-
-    export template <auto Functor, typename... Args>
-    constexpr auto bind_front(Args &&...args)
-    {
-        return std::bind_front(ConstantBinding<Functor>{}, std::forward<Args>(args)...);
-    }
-
-    export template <auto Functor, typename... Args>
-    constexpr auto bind_back(Args &&...args)
-    {
-        return std::bind_back(ConstantBinding<Functor>{}, std::forward<Args>(args)...);
-    }
-
     template <typename T>
     concept DirectMemberBindable = std::is_object_v<std::remove_cvref_t<T>> && std::is_lvalue_reference_v<T> &&
                                    !(SharedPtrLike<T> || WeakPtrLike<T>);
@@ -157,8 +113,8 @@ namespace retro
     template <typename T>
     concept WeakFunctionBindingLike = IsWeakFunctionBinding<std::remove_cvref_t<T>>::value;
 
-    static constexpr usize DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
-    static constexpr usize DELEGATE_INLINE_SIZE = 16;
+    static constexpr std::size_t DELEGATE_INLINE_ALIGN = alignof(std::max_align_t);
+    static constexpr std::size_t DELEGATE_INLINE_SIZE = 16;
 
     export struct NoLockPolicy
     {
@@ -438,7 +394,7 @@ namespace retro
             }
             else
             {
-                bind(ConstantBinding<Functor>{});
+                bind([]<typename... T>(T &&...a) { return std::invoke(Functor, std::forward<T>(a)...); });
             }
         }
 
@@ -557,7 +513,7 @@ namespace retro
       private:
         struct OpsTable
         {
-            usize object_size{};
+            std::size_t object_size{};
             Ret (*invoke)(const DelegateStorage &storage, Args... args) = nullptr;
             void (*copy)(DelegateStorage &dest, const DelegateStorage &src) = nullptr;
             void (*destroy)(DelegateStorage &) = nullptr;
@@ -747,22 +703,24 @@ namespace retro
     export struct DelegateHandle
     {
         constexpr DelegateHandle() noexcept = default;
-        constexpr DelegateHandle(const uint64 owner_cookie, const uint32 index, const uint32 generation) noexcept
+        constexpr DelegateHandle(const std::uint64_t owner_cookie,
+                                 const std::uint32_t index,
+                                 const std::uint32_t generation) noexcept
             : owner_cookie_(owner_cookie), index_(index), generation_(generation)
         {
         }
 
-        [[nodiscard]] constexpr uint64 owner_cookie() const noexcept
+        [[nodiscard]] constexpr std::uint64_t owner_cookie() const noexcept
         {
             return owner_cookie_;
         }
 
-        [[nodiscard]] constexpr uint32 index() const noexcept
+        [[nodiscard]] constexpr std::uint32_t index() const noexcept
         {
             return index_;
         }
 
-        [[nodiscard]] constexpr uint32 generation() const noexcept
+        [[nodiscard]] constexpr std::uint32_t generation() const noexcept
         {
             return generation_;
         }
@@ -777,17 +735,17 @@ namespace retro
             return DelegateHandle{};
         }
 
-        [[nodiscard]] static inline uint64 generate_new_cookie() noexcept
+        [[nodiscard]] static inline std::uint64_t generate_new_cookie() noexcept
         {
             return next_cookie_.fetch_add(1, std::memory_order_relaxed);
         }
 
       private:
-        uint64 owner_cookie_{};
-        uint32 index_{};
-        uint32 generation_{};
+        std::uint64_t owner_cookie_{};
+        std::uint32_t index_{};
+        std::uint32_t generation_{};
 
-        RETRO_API static std::atomic<uint64> next_cookie_;
+        RETRO_API static std::atomic<std::uint64_t> next_cookie_;
     };
 
     export template <typename, typename Policy = NoLockPolicy>
@@ -867,7 +825,7 @@ namespace retro
         {
             auto lock = this->write_lock();
             auto [index, slot] = allocate_slot(std::move(delegate));
-            return DelegateHandle{cookie_, static_cast<uint32>(index), slot.generation};
+            return DelegateHandle{cookie_, static_cast<std::uint32_t>(index), slot.generation};
         }
 
         template <typename Functor, typename... BindArgs>
@@ -937,10 +895,10 @@ namespace retro
             }
         }
 
-        [[nodiscard]] usize size() const noexcept
+        [[nodiscard]] std::size_t size() const noexcept
         {
             auto lock = this->read_lock();
-            usize count = 0;
+            std::size_t count = 0;
             for (const auto &slot : slots_)
             {
                 if (slot.is_bound)
@@ -955,15 +913,15 @@ namespace retro
         struct Slot
         {
             DelegateType delegate{};
-            uint32 generation{};
+            std::uint32_t generation{};
             bool is_bound{false};
         };
 
-        std::pair<usize, Slot &> allocate_slot(DelegateType delegate)
+        std::pair<std::size_t, Slot &> allocate_slot(DelegateType delegate)
         {
             if (!free_list_.empty())
             {
-                const usize idx = free_list_.back();
+                const std::size_t idx = free_list_.back();
                 free_list_.pop_back();
                 auto &slot = slots_[idx];
                 slot.delegate = std::move(delegate);
@@ -975,7 +933,7 @@ namespace retro
             return {slots_.size() - 1, slot};
         }
 
-        void free_slot(usize idx) const
+        void free_slot(std::size_t idx) const
         {
             auto &slot = slots_[idx];
 
@@ -986,9 +944,9 @@ namespace retro
             free_list_.push_back(idx);
         }
 
-        uint64 cookie_{DelegateHandle::generate_new_cookie()};
+        std::uint64_t cookie_{DelegateHandle::generate_new_cookie()};
         mutable std::vector<Slot> slots_{};
-        mutable std::vector<usize> free_list_{};
+        mutable std::vector<std::size_t> free_list_{};
     };
 
     export using SimpleMulticastDelegate = MulticastDelegate<void()>;

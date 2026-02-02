@@ -1,38 +1,13 @@
 /**
- * @file async.cpp
+ * @file manual_task_scheduler.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module retro.core;
+module retro.core.async.manual_task_scheduler;
 
 namespace retro
 {
-    namespace
-    {
-        thread_local TaskScheduler *current_scheduler = nullptr;
-    }
-
-    void TaskScheduler::set_current(TaskScheduler *scheduler) noexcept
-    {
-        current_scheduler = scheduler;
-    }
-
-    TaskScheduler *TaskScheduler::current() noexcept
-    {
-        return current_scheduler;
-    }
-
-    TaskScheduler::Scope::Scope(TaskScheduler *scheduler) noexcept : prev_{current_scheduler}
-    {
-        current_scheduler = scheduler;
-    }
-
-    TaskScheduler::Scope::~Scope() noexcept
-    {
-        current_scheduler = prev_;
-    }
-
     void ManualTaskScheduler::enqueue(std::coroutine_handle<> coroutine)
     {
         std::scoped_lock lock{mutex_};
@@ -50,7 +25,7 @@ namespace retro
         queue_.push_back(std::move(delegate));
     }
 
-    usize ManualTaskScheduler::pump(usize max)
+    std::size_t ManualTaskScheduler::pump(const std::size_t max)
     {
         std::deque<SimpleDelegate> local;
         {
@@ -58,7 +33,7 @@ namespace retro
             local.swap(queue_);
         }
 
-        usize ran = 0;
+        std::size_t ran = 0;
         while (!local.empty() && ran < max)
         {
             auto delegate = std::move(local.front());

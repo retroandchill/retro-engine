@@ -4,10 +4,9 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.core:ref_counted_ptr;
+export module retro.core.memory.ref_counted_ptr;
 
-import :defines;
-import :concepts;
+import retro.core.type_traits.basic;
 import std;
 
 namespace retro
@@ -73,13 +72,13 @@ namespace retro
             }
         }
 
-        [[nodiscard]] inline uint32 ref_count() const noexcept
+        [[nodiscard]] inline std::uint32_t ref_count() const noexcept
         {
             return ref_count_.load(std::memory_order_relaxed);
         }
 
       private:
-        std::atomic<uint32> ref_count_{0};
+        std::atomic<std::uint32_t> ref_count_{0};
     };
 
     struct RefCountInternal
@@ -284,7 +283,7 @@ namespace retro
             return stream << ptr.get();
         }
 
-        friend constexpr usize hash_value(const RefCountPtr path)
+        friend constexpr std::size_t hash_value(const RefCountPtr path)
         {
             return std::hash<T *>{}(path.ptr_);
         }

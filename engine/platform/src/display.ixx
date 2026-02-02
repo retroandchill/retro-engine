@@ -11,7 +11,8 @@ module;
 export module retro.platform:display;
 
 import std;
-import retro.core;
+import retro.core.strings.cstring_view;
+import retro.core.math.vector;
 
 namespace retro
 {
@@ -26,36 +27,36 @@ namespace retro
         void *handle;
     };
 
-    export enum class WindowFlags : uint64
+    export enum class WindowFlags : std::uint64_t
     {
         None = 0,
-        Resizable = 1ull << 0,
-        Borderless = 1ull << 1,
-        Hidden = 1ull << 2,
-        Vulkan = 1ull << 3,
-        HighDpi = 1ull << 4,
-        AlwaysOnTop = 1ull << 5,
+        Resizable = 1uLL << 0,
+        Borderless = 1uLL << 1,
+        Hidden = 1uLL << 2,
+        Vulkan = 1uLL << 3,
+        HighDpi = 1uLL << 4,
+        AlwaysOnTop = 1uLL << 5,
     };
 
     export constexpr WindowFlags operator|(WindowFlags a, WindowFlags b) noexcept
     {
-        return static_cast<WindowFlags>(static_cast<uint64>(a) | static_cast<uint64>(b));
+        return static_cast<WindowFlags>(static_cast<std::uint64_t>(a) | static_cast<std::uint64_t>(b));
     }
 
     export constexpr WindowFlags operator&(WindowFlags a, WindowFlags b) noexcept
     {
-        return static_cast<WindowFlags>(static_cast<uint64>(a) & static_cast<uint64>(b));
+        return static_cast<WindowFlags>(static_cast<std::uint64_t>(a) & static_cast<std::uint64_t>(b));
     }
 
     export constexpr bool any(WindowFlags f) noexcept
     {
-        return static_cast<uint64>(f) != 0;
+        return static_cast<std::uint64_t>(f) != 0;
     }
 
     export struct WindowDesc
     {
-        int32 width = 1280;
-        int32 height = 720;
+        std::int32_t width = 1280;
+        std::int32_t height = 720;
         CStringView title{"Game"};
         WindowFlags flags = WindowFlags::Resizable;
         WindowBackend backend = WindowBackend::SDL3;
@@ -76,12 +77,12 @@ namespace retro
 
         [[nodiscard]] virtual Vector2u size() const = 0;
 
-        [[nodiscard]] inline uint32 width() const noexcept
+        [[nodiscard]] inline std::uint32_t width() const noexcept
         {
             return size().x;
         }
 
-        [[nodiscard]] inline uint32 height() const noexcept
+        [[nodiscard]] inline std::uint32_t height() const noexcept
         {
             return size().y;
         }

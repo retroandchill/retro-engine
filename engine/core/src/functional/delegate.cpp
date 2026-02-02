@@ -1,12 +1,12 @@
 /**
- * @file functional.cpp
+ * @file delegate.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module retro.core;
+module retro.core.functional.delegate;
 
 namespace retro
 {
-    std::atomic<uint64> DelegateHandle::next_cookie_{1};
+    std::atomic<std::uint64_t> DelegateHandle::next_cookie_{1};
 }

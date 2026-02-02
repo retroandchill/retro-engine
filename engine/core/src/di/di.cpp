@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module retro.core;
+module retro.core.di;
 
 namespace retro
 {
@@ -15,7 +15,7 @@ namespace retro
 
     ServiceProvider::ServiceProvider(ServiceCollection &service_collection)
     {
-        std::unordered_map<ServiceIdentifier, uint32> service_count;
+        std::unordered_map<ServiceIdentifier, std::uint32_t> service_count;
         for (auto &registration : service_collection.registrations_)
         {
             ServiceIdentifier id{registration.type};

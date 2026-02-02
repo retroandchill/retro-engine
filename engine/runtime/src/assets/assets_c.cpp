@@ -9,8 +9,9 @@
 
 #include <boost/pool/pool_alloc.hpp>
 
-import retro.core;
 import retro.runtime;
+import retro.core.c_api;
+import retro.core.strings.name;
 import std;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Asset, retro::Asset)
@@ -47,7 +48,7 @@ uint8_t retro_asset_path_from_string(const char16_t *path, const int32_t length,
 {
     try
     {
-        *out_path = to_c(retro::AssetPath{std::u16string_view{path, static_cast<usize>(length)}});
+        *out_path = to_c(retro::AssetPath{std::u16string_view{path, static_cast<std::size_t>(length)}});
         return true;
     }
     catch (const std::invalid_argument &)
@@ -64,9 +65,9 @@ uint8_t retro_asset_path_is_valid(const Retro_AssetPath *path)
 int32_t retro_asset_path_to_string(const Retro_AssetPath *path, char16_t *buffer, const int32_t length)
 {
     const auto utf16_string = from_c(*path).to_string<char16_t>(boost::pool_allocator<char16_t>{});
-    const usize string_length = std::min(utf16_string.size(), static_cast<usize>(length));
+    const std::size_t string_length = std::min(utf16_string.size(), static_cast<std::size_t>(length));
     std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
-    return static_cast<int32>(string_length);
+    return static_cast<std::int32_t>(string_length);
 }
 
 Retro_Asset *retro_load_asset(const Retro_AssetPath *path, Retro_Name *out_asset_type, Retro_AssetLoadError *out_error)

@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 import std;
-import retro.core;
+import retro.core.strings.name;
 
 inline void PrintTo(std::u16string_view value, std::ostream *os)
 {

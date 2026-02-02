@@ -1,10 +1,10 @@
 ﻿/**
- * @file basic_types.ixx
+ * @file color.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.core:basic_types;
+export module retro.core.util.color;
 
 import std;
 

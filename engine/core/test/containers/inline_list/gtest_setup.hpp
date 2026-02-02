@@ -9,7 +9,8 @@
 #include <gtest/gtest.h>
 
 import std;
-import retro.core;
+import retro.core.type_traits.basic;
+import retro.core.containers.inline_list;
 
 // We run the tests on various element types with the help of GoogleTest's
 // typed tests. Which types shall we use?

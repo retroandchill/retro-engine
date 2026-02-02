@@ -4,9 +4,8 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.core:c_api;
+export module retro.core.c_api;
 
-import :defines;
 import std;
 
 namespace retro
@@ -14,7 +13,7 @@ namespace retro
     /**
      * Defines what type of C-compatible handle we are creating.
      */
-    export enum class CHandleType : uint8
+    export enum class CHandleType : std::uint8_t
     {
         /**
          * The handle is defined as an opaque struct and thus has no implementation and is safe to reinterpret_cast to

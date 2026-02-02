@@ -10,6 +10,8 @@ module;
 
 module retro.platform;
 
+import retro.platform.exceptions;
+
 namespace retro
 {
     namespace
@@ -18,23 +20,23 @@ namespace retro
         {
             Uint32 out = 0;
 
-            const auto f = static_cast<uint32>(flags);
+            const auto f = static_cast<std::uint32_t>(flags);
 
-            if (f & static_cast<uint32>(PlatformInitFlags::Audio))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Audio))
                 out |= SDL_INIT_AUDIO;
-            if (f & static_cast<uint32>(PlatformInitFlags::Video))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Video))
                 out |= SDL_INIT_VIDEO;
-            if (f & static_cast<uint32>(PlatformInitFlags::Joystick))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Joystick))
                 out |= SDL_INIT_JOYSTICK;
-            if (f & static_cast<uint32>(PlatformInitFlags::Haptic))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Haptic))
                 out |= SDL_INIT_HAPTIC;
-            if (f & static_cast<uint32>(PlatformInitFlags::Gamepad))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Gamepad))
                 out |= SDL_INIT_GAMEPAD;
-            if (f & static_cast<uint32>(PlatformInitFlags::Events))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Events))
                 out |= SDL_INIT_EVENTS;
-            if (f & static_cast<uint32>(PlatformInitFlags::Sensor))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Sensor))
                 out |= SDL_INIT_SENSOR;
-            if (f & static_cast<uint32>(PlatformInitFlags::Camera))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Camera))
                 out |= SDL_INIT_CAMERA;
 
             return out;
@@ -44,19 +46,19 @@ namespace retro
         {
             SDL_WindowFlags out = 0;
 
-            const auto f = static_cast<uint64>(flags);
+            const auto f = static_cast<std::uint64_t>(flags);
 
-            if (f & static_cast<uint64>(WindowFlags::Resizable))
+            if (f & static_cast<std::uint64_t>(WindowFlags::Resizable))
                 out |= SDL_WINDOW_RESIZABLE;
-            if (f & static_cast<uint64>(WindowFlags::Borderless))
+            if (f & static_cast<std::uint64_t>(WindowFlags::Borderless))
                 out |= SDL_WINDOW_BORDERLESS;
-            if (f & static_cast<uint64>(WindowFlags::Hidden))
+            if (f & static_cast<std::uint64_t>(WindowFlags::Hidden))
                 out |= SDL_WINDOW_HIDDEN;
-            if (f & static_cast<uint64>(WindowFlags::Vulkan))
+            if (f & static_cast<std::uint64_t>(WindowFlags::Vulkan))
                 out |= SDL_WINDOW_VULKAN;
-            if (f & static_cast<uint64>(WindowFlags::HighDpi))
+            if (f & static_cast<std::uint64_t>(WindowFlags::HighDpi))
                 out |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-            if (f & static_cast<uint64>(WindowFlags::AlwaysOnTop))
+            if (f & static_cast<std::uint64_t>(WindowFlags::AlwaysOnTop))
                 out |= SDL_WINDOW_ALWAYS_ON_TOP;
 
             return out;
@@ -123,8 +125,8 @@ namespace retro
                 case SDL_EVENT_KEY_UP:
                     return Event{KeyEvent{
                         .window_id = e.key.windowID,
-                        .keycode = static_cast<int32>(e.key.key),
-                        .scancode = static_cast<int32>(e.key.scancode),
+                        .keycode = static_cast<std::int32_t>(e.key.key),
+                        .scancode = static_cast<std::int32_t>(e.key.scancode),
                         .down = (e.type == SDL_EVENT_KEY_DOWN),
                         .repeat = e.key.repeat,
                     }};
@@ -188,7 +190,7 @@ namespace retro
             int w = 0;
             int h = 0;
             SDL_GetWindowSize(window_.get(), &w, &h);
-            return {static_cast<uint32>(w), static_cast<uint32>(h)};
+            return {static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h)};
         }
 
       private:

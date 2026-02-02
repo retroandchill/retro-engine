@@ -10,12 +10,14 @@ module;
 
 #include <cstddef>
 
-export module retro.core:name;
+export module retro.core.strings.name;
 
-import :defines;
-import :algorithm;
-import :strings;
-import :arena_allocator;
+import std;
+import retro.core.type_traits.basic;
+import retro.core.algorithm.hashing;
+import retro.core.strings.format;
+import retro.core.strings.encoding;
+import retro.core.memory.arena_allocator;
 
 namespace retro
 {
@@ -25,11 +27,11 @@ namespace retro
     {
       public:
         constexpr NameEntryId() = default;
-        explicit constexpr NameEntryId(const uint32 value) : value_(value)
+        explicit constexpr NameEntryId(const std::uint32_t value) : value_(value)
         {
         }
 
-        [[nodiscard]] constexpr uint32 value() const noexcept
+        [[nodiscard]] constexpr std::uint32_t value() const noexcept
         {
             return value_;
         }
@@ -51,17 +53,17 @@ namespace retro
         friend constexpr std::strong_ordering operator<=>(const NameEntryId &lhs,
                                                           const NameEntryId &rhs) noexcept = default;
 
-        friend constexpr bool operator==(const NameEntryId &lhs, const uint32 rhs) noexcept
+        friend constexpr bool operator==(const NameEntryId &lhs, const std::uint32_t rhs) noexcept
         {
             return lhs.value_ == rhs;
         }
-        friend constexpr std::strong_ordering operator<=>(const NameEntryId &lhs, const uint32 rhs) noexcept
+        friend constexpr std::strong_ordering operator<=>(const NameEntryId &lhs, const std::uint32_t rhs) noexcept
         {
             return lhs.value_ <=> rhs;
         }
 
       private:
-        uint32 value_ = 0;
+        std::uint32_t value_ = 0;
     };
 } // namespace retro
 
@@ -70,7 +72,7 @@ struct std::hash<retro::NameEntryId>
 {
     hash() = default;
 
-    [[nodiscard]] constexpr usize operator()(const retro::NameEntryId id) const noexcept
+    [[nodiscard]] constexpr std::size_t operator()(const retro::NameEntryId id) const noexcept
     {
         return id.value();
     }
@@ -78,39 +80,39 @@ struct std::hash<retro::NameEntryId>
 
 namespace retro
 {
-    export enum class NameCase : uint8
+    export enum class NameCase : std::uint8_t
     {
         CaseSensitive,
         IgnoreCase
     };
 
-    export enum class FindType : uint8
+    export enum class FindType : std::uint8_t
     {
         Find,
         Add
     };
 
-    export RETRO_API constexpr usize MAX_NAME_LENGTH = 1024;
-    constexpr usize NAME_MAX_DIGITS = 10;
+    export RETRO_API constexpr std::size_t MAX_NAME_LENGTH = 1024;
+    constexpr std::size_t NAME_MAX_DIGITS = 10;
 
-    export constexpr int32 NAME_NO_NUMBER_INTERNAL = 0;
+    export constexpr std::int32_t NAME_NO_NUMBER_INTERNAL = 0;
 
-    constexpr int32 name_internal_to_external(const int32 x)
+    constexpr std::int32_t name_internal_to_external(const std::int32_t x)
     {
         return x - 1;
     }
 
-    constexpr int32 name_external_to_internal(const int32 x)
+    constexpr std::int32_t name_external_to_internal(const std::int32_t x)
     {
         return x + 1;
     }
 
-    export constexpr RETRO_API int32 NAME_NO_NUMBER = name_internal_to_external(NAME_NO_NUMBER_INTERNAL);
+    export constexpr RETRO_API std::int32_t NAME_NO_NUMBER = name_internal_to_external(NAME_NO_NUMBER_INTERNAL);
 
     template <Char CharType>
-    constexpr std::pair<int32, usize> parse_number_from_name(std::basic_string_view<CharType> name)
+    constexpr std::pair<std::int32_t, std::size_t> parse_number_from_name(std::basic_string_view<CharType> name)
     {
-        int32 digits = 0;
+        std::int32_t digits = 0;
         for (auto *c = name.data() + name.size() - 1; c >= name.data() && *c >= '0' && *c <= '9'; --c)
         {
             digits++;
@@ -120,12 +122,12 @@ namespace retro
         if (digits > 0 && digits < name.size() && first_digit[-1] == '_' && digits <= NAME_MAX_DIGITS &&
             (digits == 1 || *first_digit != '0'))
         {
-            int64 Number = 0;
-            for (int32 Index = 0; Index < digits; ++Index)
+            std::int64_t Number = 0;
+            for (std::int32_t Index = 0; Index < digits; ++Index)
             {
                 Number = 10 * Number + (first_digit[Index] - '0');
             }
-            if (Number < std::numeric_limits<int32>::max())
+            if (Number < std::numeric_limits<std::int32_t>::max())
             {
                 return std::make_pair(name_external_to_internal(Number), name.size() - (1 + digits));
             }
@@ -136,13 +138,13 @@ namespace retro
 
     struct NameEntryHeader
     {
-        usize length;
+        std::size_t length;
     };
 
     class alignas(alignof(std::max_align_t)) NameEntry
     {
       public:
-        [[nodiscard]] constexpr usize length() const noexcept
+        [[nodiscard]] constexpr std::size_t length() const noexcept
         {
             return header_.length;
         }
@@ -152,9 +154,9 @@ namespace retro
             return std::string_view{characters_, header_.length};
         }
 
-        [[nodiscard]] usize size_in_bytes() const noexcept;
+        [[nodiscard]] std::size_t size_in_bytes() const noexcept;
 
-        static consteval usize data_offset()
+        static consteval std::size_t data_offset()
         {
             return offsetof(NameEntry, data_);
         }
@@ -180,7 +182,7 @@ namespace retro
      * Assuming sizeof(char) is 1 byte, this should allocate about 8KB of stack space, which should be support
      * multiple dynamic string resizes.
      */
-    constexpr usize NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
+    constexpr std::size_t NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
 
     export RETRO_API constexpr std::string_view NONE_STRING = "None";
 
@@ -197,7 +199,7 @@ namespace retro
         struct LookupResult
         {
             NameIndices indices;
-            int32 number;
+            std::int32_t number;
         };
 
         template <EncodableRange<char>>
@@ -228,7 +230,7 @@ namespace retro
         }
 
         constexpr Name(const NameEntryId comparison_index,
-                       const int32 number
+                       const std::int32_t number
 #if RETRO_WITH_CASE_PRESERVING_NAME
                        ,
                        const NameEntryId display_index
@@ -267,12 +269,12 @@ namespace retro
 #endif
         }
 
-        [[nodiscard]] constexpr int32 number() const
+        [[nodiscard]] constexpr std::int32_t number() const
         {
             return name_internal_to_external(number_);
         }
 
-        constexpr void set_number(const int32 number)
+        constexpr void set_number(const std::int32_t number)
         {
             number_ = name_external_to_internal(number);
         }
@@ -364,7 +366,7 @@ namespace retro
         }
 
         NameEntryId comparison_index_;
-        int32 number_ = NAME_NO_NUMBER_INTERNAL;
+        std::int32_t number_ = NAME_NO_NUMBER_INTERNAL;
 #if RETRO_WITH_CASE_PRESERVING_NAME
         NameEntryId display_index_;
 #endif
@@ -372,7 +374,7 @@ namespace retro
 
     export const RETRO_API std::vector<const NameEntry *> &debug_get_name_entries();
 
-    export inline Name operator"" _name(const char *name, const usize length)
+    export inline Name operator"" _name(const char *name, const std::size_t length)
     {
         return Name{std::string_view{name, length}};
     }

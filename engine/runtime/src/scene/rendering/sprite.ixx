@@ -10,6 +10,8 @@ module;
 
 export module retro.runtime:scene.rendering.sprite;
 
+import retro.core.util.color;
+import retro.core.math.matrix;
 import :texture;
 import :scene;
 import :scene.rendering;

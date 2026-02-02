@@ -8,14 +8,16 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core:di;
+export module retro.core.di;
 
 import std;
-import :defines;
-import :algorithm;
-export import :di.metadata;
-import :concepts;
-import :functional;
+
+import retro.core.algorithm.hashing;
+import retro.core.type_traits.pointer;
+import retro.core.type_traits.range;
+import retro.core.functional.overload;
+export import :metadata;
+import retro.core.functional.delegate;
 
 namespace retro
 {
@@ -28,7 +30,7 @@ namespace retro
     export class ServiceCollection;
     export class ServiceProvider;
 
-    export enum class ServiceLifetime : uint8
+    export enum class ServiceLifetime : std::uint8_t
     {
         Singleton,
         Transient
@@ -52,7 +54,7 @@ namespace retro
     struct ServiceCacheKey
     {
         ServiceIdentifier id;
-        uint32 slot{};
+        std::uint32_t slot{};
 
         friend bool operator==(const ServiceCacheKey &lhs, const ServiceCacheKey &rhs) noexcept = default;
     };

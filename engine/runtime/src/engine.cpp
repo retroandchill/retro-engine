@@ -42,7 +42,7 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
 
     // FPS tracking state
     float fps_timer = 0.0f;
-    uint64 fps_frames = 0;
+    std::uint64_t fps_frames = 0;
 
     auto last_frame_start = clock::now();
 
@@ -96,7 +96,7 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     asset_manager_->on_engine_shutdown();
 }
 
-void Engine::request_shutdown(const int32 exit_code)
+void Engine::request_shutdown(const std::int32_t exit_code)
 {
     exit_code_.store(exit_code);
     running_.store(false);

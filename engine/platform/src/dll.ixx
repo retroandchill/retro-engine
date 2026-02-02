@@ -13,7 +13,8 @@ module;
 export module retro.platform:dll;
 
 import std;
-import retro.core;
+
+import retro.core.strings.cstring_view;
 
 namespace retro
 {

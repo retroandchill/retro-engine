@@ -6,7 +6,9 @@
  */
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.async.task_scheduler;
+import retro.core.async.manual_task_scheduler;
+import retro.core.async.task;
 import std;
 
 namespace

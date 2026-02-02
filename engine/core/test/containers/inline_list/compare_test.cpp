@@ -6,7 +6,8 @@
  */
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.containers.inline_list;
+import retro.core.type_traits.comparison;
 import std;
 
 template <class T>

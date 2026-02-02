@@ -47,15 +47,15 @@ namespace retro
 
     vk::PhysicalDevice VulkanDevice::pick_physical_device(vk::Instance instance,
                                                           vk::SurfaceKHR surface,
-                                                          uint32 &out_graphics_family,
-                                                          uint32 &out_present_family)
+                                                          std::uint32_t &out_graphics_family,
+                                                          std::uint32_t &out_present_family)
     {
         auto devices = instance.enumeratePhysicalDevices();
 
         for (auto dev : devices)
         {
-            uint32 graphics_family = std::numeric_limits<uint32>::max();
-            uint32 present_family = std::numeric_limits<uint32>::max();
+            std::uint32_t graphics_family = std::numeric_limits<std::uint32_t>::max();
+            std::uint32_t present_family = std::numeric_limits<std::uint32_t>::max();
 
             if (is_device_suitable(dev, surface, graphics_family, present_family))
             {
@@ -70,15 +70,15 @@ namespace retro
 
     bool VulkanDevice::is_device_suitable(const vk::PhysicalDevice device,
                                           const vk::SurfaceKHR surface,
-                                          uint32 &out_graphics_family,
-                                          uint32 &out_present_family)
+                                          std::uint32_t &out_graphics_family,
+                                          std::uint32_t &out_present_family)
     {
         auto families = device.getQueueFamilyProperties();
 
-        out_graphics_family = std::numeric_limits<uint32>::max();
-        out_present_family = std::numeric_limits<uint32>::max();
+        out_graphics_family = std::numeric_limits<std::uint32_t>::max();
+        out_present_family = std::numeric_limits<std::uint32_t>::max();
 
-        for (uint32 i = 0; i < families.size(); ++i)
+        for (std::uint32_t i = 0; i < families.size(); ++i)
         {
             if (families[i].queueFlags & vk::QueueFlagBits::eGraphics)
             {
@@ -92,28 +92,28 @@ namespace retro
                 out_present_family = i;
             }
 
-            if (out_graphics_family != std::numeric_limits<uint32>::max() &&
-                out_present_family != std::numeric_limits<uint32>::max())
+            if (out_graphics_family != std::numeric_limits<std::uint32_t>::max() &&
+                out_present_family != std::numeric_limits<std::uint32_t>::max())
             {
                 break;
             }
         }
 
-        if (out_graphics_family == std::numeric_limits<uint32>::max() ||
-            out_present_family == std::numeric_limits<uint32>::max())
+        if (out_graphics_family == std::numeric_limits<std::uint32_t>::max() ||
+            out_present_family == std::numeric_limits<std::uint32_t>::max())
         {
             return false;
         }
 
         // Check swapchain support (at least one format & present mode)
-        uint32 format_count = 0;
+        std::uint32_t format_count = 0;
         auto res = device.getSurfaceFormatsKHR(surface, &format_count, nullptr);
         if (res != vk::Result::eSuccess || format_count == 0)
         {
             return false;
         }
 
-        uint32 present_mode_count = 0;
+        std::uint32_t present_mode_count = 0;
         res = device.getSurfacePresentModesKHR(surface, &present_mode_count, nullptr);
         if (res != vk::Result::eSuccess || present_mode_count == 0)
         {
@@ -124,8 +124,8 @@ namespace retro
     }
 
     vk::UniqueDevice VulkanDevice::create_device(const vk::PhysicalDevice physical_device,
-                                                 const uint32 graphics_family,
-                                                 const uint32 present_family)
+                                                 const std::uint32_t graphics_family,
+                                                 const std::uint32_t present_family)
     {
         // Required device extensions
         constexpr std::array DEVICE_EXTENSIONS = {vk::KHRSwapchainExtensionName};
@@ -136,7 +136,7 @@ namespace retro
         std::vector<vk::DeviceQueueCreateInfo> queue_infos;
         queue_infos.reserve(unique_families.size());
 
-        for (uint32 family : unique_families)
+        for (std::uint32_t family : unique_families)
         {
             queue_infos.emplace_back(vk::DeviceQueueCreateInfo{.queueFamilyIndex = family,
                                                                .queueCount = 1,
@@ -145,7 +145,7 @@ namespace retro
 
         vk::PhysicalDeviceFeatures device_features{}; // enable specific features as needed
 
-        vk::DeviceCreateInfo create_info{.queueCreateInfoCount = static_cast<uint32>(queue_infos.size()),
+        vk::DeviceCreateInfo create_info{.queueCreateInfoCount = static_cast<std::uint32_t>(queue_infos.size()),
                                          .pQueueCreateInfos = queue_infos.data(),
                                          .enabledExtensionCount = DEVICE_EXTENSIONS.size(),
                                          .ppEnabledExtensionNames = DEVICE_EXTENSIONS.data(),
@@ -161,12 +161,12 @@ namespace retro
 
         vk::Extent2D desired_extent{config.width, config.height};
 
-        vk::Extent2D actual_extent{std::clamp<uint32>(desired_extent.width,
-                                                      capabilities.minImageExtent.width,
-                                                      capabilities.maxImageExtent.width),
-                                   std::clamp<uint32>(desired_extent.height,
-                                                      capabilities.minImageExtent.height,
-                                                      capabilities.maxImageExtent.height)};
+        vk::Extent2D actual_extent{std::clamp<std::uint32_t>(desired_extent.width,
+                                                             capabilities.minImageExtent.width,
+                                                             capabilities.maxImageExtent.width),
+                                   std::clamp<std::uint32_t>(desired_extent.height,
+                                                             capabilities.minImageExtent.height,
+                                                             capabilities.maxImageExtent.height)};
 
         auto formats = config.physical_device.getSurfaceFormatsKHR(config.surface);
         if (formats.size() == 0)
@@ -194,7 +194,7 @@ namespace retro
         auto chosen_present_mode = vk::PresentModeKHR::eFifo; // always available
 
         // 4) Choose image count
-        uint32 image_count = capabilities.minImageCount + 1;
+        std::uint32_t image_count = capabilities.minImageCount + 1;
         if (capabilities.maxImageCount > 0 && image_count > capabilities.maxImageCount)
         {
             image_count = capabilities.maxImageCount;
@@ -233,7 +233,7 @@ namespace retro
         swapchain_ = config.device.createSwapchainKHRUnique(ci);
 
         // 6) Get images
-        uint32 actual_image_count = 0;
+        std::uint32_t actual_image_count = 0;
         images_ = config.device.getSwapchainImagesKHR(swapchain_.get());
 
         format_ = chosen_format.format;

@@ -12,7 +12,7 @@ export module retro.renderer;
 
 export import :components;
 export import :pipeline;
-import retro.core;
+import retro.core.di;
 import retro.platform;
 import vulkan_hpp;
 import std;
@@ -29,18 +29,18 @@ namespace retro
 
     export class RETRO_API VulkanBufferManager
     {
-        explicit VulkanBufferManager(const VulkanDevice &device, usize pool_size);
+        explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size);
 
       public:
-        constexpr static usize DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
+        constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
 
-        static void initialize(const VulkanDevice &device, usize pool_size = DEFAULT_POOL_SIZE);
+        static void initialize(const VulkanDevice &device, std::size_t pool_size = DEFAULT_POOL_SIZE);
 
         static void shutdown();
 
         static VulkanBufferManager &instance();
 
-        TransientAllocation allocate_transient(usize size, vk::BufferUsageFlags usage);
+        TransientAllocation allocate_transient(std::size_t size, vk::BufferUsageFlags usage);
 
         void reset();
 
@@ -50,8 +50,8 @@ namespace retro
         vk::UniqueBuffer buffer_;
         vk::UniqueDeviceMemory memory_;
         void *mapped_ptr_ = nullptr;
-        usize pool_size_{DEFAULT_POOL_SIZE};
-        usize current_offset_ = 0;
+        std::size_t pool_size_{DEFAULT_POOL_SIZE};
+        std::size_t current_offset_ = 0;
 
         static std::unique_ptr<VulkanBufferManager> instance_;
     };
@@ -60,7 +60,7 @@ namespace retro
     {
       public:
         explicit inline VulkanBufferManagerScope(const VulkanDevice &device,
-                                                 const usize pool_size = VulkanBufferManager::DEFAULT_POOL_SIZE)
+                                                 const std::size_t pool_size = VulkanBufferManager::DEFAULT_POOL_SIZE)
         {
             VulkanBufferManager::initialize(device, pool_size);
         }
@@ -84,8 +84,8 @@ namespace retro
                                        vk::UniqueDeviceMemory memory,
                                        vk::UniqueImageView view,
                                        vk::Sampler sampler,
-                                       int32 width,
-                                       int32 height) noexcept
+                                       std::int32_t width,
+                                       std::int32_t height) noexcept
             : TextureRenderData{width, height}, memory_{std::move(memory)}, image_{std::move(image)},
               view_{std::move(view)}, sampler_{sampler}
         {
@@ -148,7 +148,7 @@ namespace retro
         vk::UniqueSampler create_linear_sampler() const;
 
         void recreate_swapchain();
-        void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
+        void record_command_buffer(vk::CommandBuffer cmd, std::uint32_t image_index);
 
         vk::UniqueCommandBuffer begin_one_shot_commands() const;
         void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
@@ -173,10 +173,10 @@ namespace retro
         vk::UniqueSampler linear_sampler_;
         VulkanPipelineManager pipeline_manager_;
 
-        uint32 current_frame_ = 0;
-        uint32 image_index_ = 0;
+        std::uint32_t current_frame_ = 0;
+        std::uint32_t image_index_ = 0;
 
-        static constexpr uint32 MAX_FRAMES_IN_FLIGHT = 2;
+        static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     };
 
     export inline void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport)

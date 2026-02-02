@@ -10,7 +10,8 @@
 #include <boost/pool/pool_alloc.hpp>
 
 import std;
-import retro.core;
+import retro.core.strings.name;
+import retro.core.c_api;
 
 DECLARE_DEFINED_C_HANDLE(Retro_Name, retro::Name);
 DECLARE_DEFINED_C_HANDLE(Retro_NameId, retro::NameEntryId);
@@ -20,7 +21,7 @@ using retro::to_c;
 
 namespace
 {
-    constexpr int32 strong_ordering_to_int(const std::strong_ordering ord)
+    constexpr std::int32_t strong_ordering_to_int(const std::strong_ordering ord)
     {
         if (ord < 0)
             return -1;
@@ -32,9 +33,9 @@ namespace
 
 extern "C"
 {
-    Retro_Name retro_name_lookup(const char16_t *name, const int32 length, const Retro_FindType find_type)
+    Retro_Name retro_name_lookup(const char16_t *name, const std::int32_t length, const Retro_FindType find_type)
     {
-        const retro::Name name_value{std::u16string_view{name, static_cast<usize>(length)},
+        const retro::Name name_value{std::u16string_view{name, static_cast<std::size_t>(length)},
                                      static_cast<retro::FindType>(find_type)};
         return to_c(name_value);
     }
@@ -44,14 +45,14 @@ extern "C"
         return from_c(name).is_valid();
     }
 
-    int32 retro_name_compare(const Retro_Name lhs, const char16_t *rhs, const int32 length)
+    std::int32_t retro_name_compare(const Retro_Name lhs, const char16_t *rhs, const std::int32_t length)
     {
-        return strong_ordering_to_int(from_c(lhs) <=> std::u16string_view{rhs, static_cast<usize>(length)});
+        return strong_ordering_to_int(from_c(lhs) <=> std::u16string_view{rhs, static_cast<std::size_t>(length)});
     }
 
-    int32 retro_name_compare_lexical(const Retro_NameId lhs_id,
-                                     const Retro_NameId rhs_id,
-                                     const Retro_NameCase nameCase)
+    std::int32_t retro_name_compare_lexical(const Retro_NameId lhs_id,
+                                            const Retro_NameId rhs_id,
+                                            const Retro_NameCase nameCase)
     {
         if (static_cast<retro::NameCase>(nameCase) == retro::NameCase::CaseSensitive)
         {
@@ -61,11 +62,11 @@ extern "C"
         return strong_ordering_to_int(from_c(lhs_id).compare_lexical(from_c(rhs_id)));
     }
 
-    int32 retro_name_to_string(const Retro_Name name, char16_t *buffer, const int32 length)
+    std::int32_t retro_name_to_string(const Retro_Name name, char16_t *buffer, const std::int32_t length)
     {
         const auto utf16_string = from_c(name).to_string<char16_t>(boost::pool_allocator<char16_t>{});
-        const usize string_length = std::min(utf16_string.size(), static_cast<usize>(length));
+        const std::size_t string_length = std::min(utf16_string.size(), static_cast<std::size_t>(length));
         std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
-        return static_cast<int32>(string_length);
+        return static_cast<std::int32_t>(string_length);
     }
 }

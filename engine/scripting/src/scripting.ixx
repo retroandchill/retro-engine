@@ -14,7 +14,7 @@ module;
 export module retro.scripting;
 
 import std;
-import retro.core;
+import retro.core.di;
 import retro.platform;
 import retro.runtime;
 
@@ -59,7 +59,7 @@ namespace retro
 
     class RETRO_API DotnetLoader
     {
-        constexpr static usize MAX_PATH = 260;
+        constexpr static std::size_t MAX_PATH = 260;
 
       public:
         explicit DotnetLoader();
@@ -68,12 +68,12 @@ namespace retro
 
         template <typename Fn>
             requires std::is_function_v<std::remove_pointer_t<Fn>> && std::is_pointer_v<Fn>
-        std::expected<Fn, int32> get_runtime_delegate(const hostfxr_handle handle,
-                                                      const hostfxr_delegate_type type) const
+        std::expected<Fn, std::int32_t> get_runtime_delegate(const hostfxr_handle handle,
+                                                             const hostfxr_delegate_type type) const
         {
             void *function_pointer{nullptr};
 
-            if (const int32 error_code = get_delegate_fptr_(handle, type, &function_pointer); error_code != 0)
+            if (const std::int32_t error_code = get_delegate_fptr_(handle, type, &function_pointer); error_code != 0)
             {
                 return std::unexpected{error_code};
             }
@@ -82,7 +82,7 @@ namespace retro
         }
 
         // ReSharper disable once CppParameterMayBeConst
-        inline int32 close(hostfxr_handle handle) const
+        inline std::int32_t close(hostfxr_handle handle) const
         {
             return close_fptr_(handle);
         }
@@ -94,11 +94,11 @@ namespace retro
         hostfxr_close_fn close_fptr_{nullptr};
     };
 
-    using StartFn = int32(_cdecl *)(const char16_t *assembly_path,
-                                    int32 assembly_path_length,
-                                    const char16_t *class_name,
-                                    int32 class_name_length);
-    using TickFn = int32(_cdecl *)(float delta_time, int32 max_tasks);
+    using StartFn = std::int32_t(_cdecl *)(const char16_t *assembly_path,
+                                           std::int32_t assembly_path_length,
+                                           const char16_t *class_name,
+                                           std::int32_t class_name_length);
+    using TickFn = std::int32_t(_cdecl *)(float delta_time, std::int32_t max_tasks);
     using ExitFn = void(_cdecl *)();
 
     export struct ScriptingCallbacks
@@ -114,8 +114,8 @@ namespace retro
       public:
         DotnetManager();
 
-        [[nodiscard]] int32 start_scripts(std::u16string_view assembly_path,
-                                          std::u16string_view class_name) const override;
+        [[nodiscard]] std::int32_t start_scripts(std::u16string_view assembly_path,
+                                                 std::u16string_view class_name) const override;
 
         void tick(float delta_time) override;
 

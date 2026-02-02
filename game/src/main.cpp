@@ -4,7 +4,8 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-import retro.core;
+
+import retro.core.di;
 import retro.runtime;
 import retro.scripting;
 import retro.renderer;
@@ -51,17 +52,18 @@ int main()
         {
             while (auto event = wait_for_event(std::chrono::milliseconds(10)))
             {
-                visit(*event,
-                      [&]<typename T>(const T &)
-                      {
-                          if constexpr (std::is_same_v<T, QuitEvent> || std::is_same_v<T, WindowCloseRequestedEvent>)
-                          {
-                              if (!game_thread_exited.load())
-                              {
-                                  Engine::instance().request_shutdown();
-                              }
-                          }
-                      });
+                std::visit(
+                    [&]<typename T>(const T &)
+                    {
+                        if constexpr (std::is_same_v<T, QuitEvent> || std::is_same_v<T, WindowCloseRequestedEvent>)
+                        {
+                            if (!game_thread_exited.load())
+                            {
+                                Engine::instance().request_shutdown();
+                            }
+                        }
+                    },
+                    *event);
 
                 if (game_thread_exited.load())
                 {

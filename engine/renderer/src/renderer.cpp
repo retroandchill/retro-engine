@@ -15,7 +15,6 @@ module;
 
 module retro.renderer;
 
-import retro.core;
 import retro.logging;
 import vulkan_hpp;
 
@@ -23,13 +22,13 @@ namespace retro
 {
     namespace
     {
-        uint32 find_memory_type(vk::PhysicalDevice physical_device,
-                                const uint32 type_filter,
-                                vk::MemoryPropertyFlags properties)
+        std::uint32_t find_memory_type(vk::PhysicalDevice physical_device,
+                                       const std::uint32_t type_filter,
+                                       vk::MemoryPropertyFlags properties)
         {
             const auto mem_properties = physical_device.getMemoryProperties();
 
-            for (uint32 i = 0; i < mem_properties.memoryTypeCount; ++i)
+            for (std::uint32_t i = 0; i < mem_properties.memoryTypeCount; ++i)
             {
                 if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
                 {
@@ -43,7 +42,7 @@ namespace retro
 
     std::unique_ptr<VulkanBufferManager> VulkanBufferManager::instance_{nullptr};
 
-    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, usize pool_size)
+    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size)
         : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
     {
         const vk::BufferCreateInfo buffer_info{
@@ -67,7 +66,7 @@ namespace retro
         mapped_ptr_ = device_.mapMemory(memory_.get(), 0, pool_size_);
     }
 
-    void VulkanBufferManager::initialize(const VulkanDevice &device, const usize pool_size)
+    void VulkanBufferManager::initialize(const VulkanDevice &device, const std::size_t pool_size)
     {
         assert(instance_ == nullptr);
         instance_.reset(new VulkanBufferManager{device, pool_size});
@@ -85,7 +84,7 @@ namespace retro
         return *instance_;
     }
 
-    TransientAllocation VulkanBufferManager::allocate_transient(const usize size, vk::BufferUsageFlags usage)
+    TransientAllocation VulkanBufferManager::allocate_transient(const std::size_t size, vk::BufferUsageFlags usage)
     {
         // Align offset (e.g., 16 bytes for safety)
         current_offset_ = current_offset_ + 15 & ~15;
@@ -130,7 +129,7 @@ namespace retro
           sync_(SyncConfig{
               .device = device_.device(),
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
-              .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
+              .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
           }),
           pipeline_manager_{device_.device()}, linear_sampler_{create_linear_sampler()}
     {
@@ -149,7 +148,8 @@ namespace retro
         auto dev = device_.device();
 
         auto in_flight = sync_.in_flight(current_frame_);
-        if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<uint64>::max()) == vk::Result::eTimeout)
+        if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<std::uint64_t>::max()) ==
+            vk::Result::eTimeout)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
         }
@@ -157,7 +157,7 @@ namespace retro
         dev.resetDescriptorPool(sync_.descriptor_pool(current_frame_));
 
         auto result = dev.acquireNextImageKHR(swapchain_.handle(),
-                                              std::numeric_limits<uint64>::max(),
+                                              std::numeric_limits<std::uint64_t>::max(),
                                               sync_.image_available(current_frame_),
                                               nullptr,
                                               &image_index_);
@@ -271,17 +271,18 @@ namespace retro
         std::memcpy(data, image_data.image_data.get(), static_cast<size_t>(image_size));
         device.unmapMemory(staging_memory.get());
 
-        vk::ImageCreateInfo image_info{
-            .imageType = vk::ImageType::e2D,
-            .format = image_format,
-            .extent = vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = vk::SampleCountFlagBits::e1,
-            .tiling = vk::ImageTiling::eOptimal,
-            .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-            .sharingMode = vk::SharingMode::eExclusive,
-            .initialLayout = vk::ImageLayout::eUndefined};
+        vk::ImageCreateInfo image_info{.imageType = vk::ImageType::e2D,
+                                       .format = image_format,
+                                       .extent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width),
+                                                              static_cast<std::uint32_t>(image_data.height),
+                                                              1},
+                                       .mipLevels = 1,
+                                       .arrayLayers = 1,
+                                       .samples = vk::SampleCountFlagBits::e1,
+                                       .tiling = vk::ImageTiling::eOptimal,
+                                       .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+                                       .sharingMode = vk::SharingMode::eExclusive,
+                                       .initialLayout = vk::ImageLayout::eUndefined};
 
         auto image = device.createImageUnique(image_info);
         auto img_mem_req = device.getImageMemoryRequirements(image.get());
@@ -316,8 +317,9 @@ namespace retro
                         .layerCount = 1,
                     },
                 .imageOffset = vk::Offset3D{0, 0, 0},
-                .imageExtent =
-                    vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
+                .imageExtent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width),
+                                            static_cast<std::uint32_t>(image_data.height),
+                                            1},
             };
 
             cmd->copyBufferToImage(staging_buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, 1, &region);
@@ -378,14 +380,14 @@ namespace retro
         std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
 
         vk::ValidationFeaturesEXT validation_features{.enabledValidationFeatureCount =
-                                                          static_cast<uint32>(validation_feature_enables.size()),
+                                                          static_cast<std::uint32_t>(validation_feature_enables.size()),
                                                       .pEnabledValidationFeatures = validation_feature_enables.data()};
 
         const vk::InstanceCreateInfo create_info{.pNext = &validation_features,
                                                  .pApplicationInfo = &app_info,
-                                                 .enabledLayerCount = static_cast<uint32>(enabled_layers.size()),
+                                                 .enabledLayerCount = static_cast<std::uint32_t>(enabled_layers.size()),
                                                  .ppEnabledLayerNames = enabled_layers.data(),
-                                                 .enabledExtensionCount = static_cast<uint32>(extensions.size()),
+                                                 .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
                                                  .ppEnabledExtensionNames = extensions.data()};
 
         return vk::createInstanceUnique(create_info);
@@ -417,7 +419,7 @@ namespace retro
         {
             case WindowBackend::SDL3:
                 {
-                    uint32 count = 0;
+                    std::uint32_t count = 0;
                     auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
                     if (names == nullptr)
                     {
@@ -535,7 +537,7 @@ namespace retro
         pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
     }
 
-    void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const uint32 image_index)
+    void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const std::uint32_t image_index)
     {
         constexpr vk::CommandBufferBeginInfo begin_info{};
 
@@ -596,7 +598,8 @@ namespace retro
         }
 
         // Simple and safe for asset loading. If you later want async streaming, swap this for a timeline semaphore.
-        if (device.waitForFences(1, &fence.get(), vk::True, std::numeric_limits<uint64>::max()) != vk::Result::eSuccess)
+        if (device.waitForFences(1, &fence.get(), vk::True, std::numeric_limits<std::uint64_t>::max()) !=
+            vk::Result::eSuccess)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed waiting for one-shot fence"};
         }

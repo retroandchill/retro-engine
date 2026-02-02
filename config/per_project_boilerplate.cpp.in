@@ -4,6 +4,6 @@
  */
 #include <retro/core/per_project_boilerplate.hpp>
 
-import retro.core;
+import retro.core.strings.name;
 
 RETRO_PER_PROJECT_BOILERPLATE

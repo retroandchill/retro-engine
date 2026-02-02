@@ -10,14 +10,16 @@ module;
 
 export module retro.runtime:scene.rendering;
 
-import retro.core;
+import retro.core.containers.inline_list;
+import retro.core.containers.optional;
+import retro.core.math.vector;
 import retro.logging;
 import std;
 import :texture;
 
 namespace retro
 {
-    export enum class ShaderDataType : uint8
+    export enum class ShaderDataType : std::uint8_t
     {
         Int32,
         Uint32,
@@ -27,7 +29,7 @@ namespace retro
         Vec4
     };
 
-    export enum class ShaderStage : uint8
+    export enum class ShaderStage : std::uint8_t
     {
         Vertex = 0x1,
         Fragment = 0x2
@@ -35,20 +37,20 @@ namespace retro
 
     export constexpr ShaderStage operator&(ShaderStage lhs, ShaderStage rhs) noexcept
     {
-        return static_cast<ShaderStage>(static_cast<uint8>(lhs) & static_cast<uint8>(rhs));
+        return static_cast<ShaderStage>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs));
     }
 
     export constexpr ShaderStage operator|(ShaderStage lhs, ShaderStage rhs) noexcept
     {
-        return static_cast<ShaderStage>(static_cast<uint8>(lhs) | static_cast<uint8>(rhs));
+        return static_cast<ShaderStage>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
     }
 
     export constexpr bool has_flag(const ShaderStage target, const ShaderStage flag) noexcept
     {
-        return static_cast<uint8>(target & flag) != 0;
+        return static_cast<std::uint8_t>(target & flag) != 0;
     }
 
-    export enum class VertexInputType : uint8
+    export enum class VertexInputType : std::uint8_t
     {
         Vertex,
         Instance
@@ -57,18 +59,18 @@ namespace retro
     export struct VertexAttribute
     {
         ShaderDataType type{};
-        usize size{};
-        usize offset{};
+        std::size_t size{};
+        std::size_t offset{};
     };
 
     export struct VertexInputBinding
     {
         VertexInputType type{};
-        usize stride{};
+        std::size_t stride{};
         std::vector<VertexAttribute> attributes{};
     };
 
-    export enum class DescriptorType : uint8
+    export enum class DescriptorType : std::uint8_t
     {
         Sampler,
         CombinedImageSampler,
@@ -80,14 +82,14 @@ namespace retro
     {
         DescriptorType type{};
         ShaderStage stages{};
-        usize count{};
+        std::size_t count{};
     };
 
     export struct PushConstantBinding
     {
         ShaderStage stages{};
-        usize size{};
-        usize offset{};
+        std::size_t size{};
+        std::size_t offset{};
     };
 
     export struct ShaderLayout
@@ -99,7 +101,7 @@ namespace retro
         Optional<PushConstantBinding> push_constant_bindings{};
     };
 
-    export constexpr usize DRAW_ARRAY_SIZE = 8;
+    export constexpr std::size_t DRAW_ARRAY_SIZE = 8;
 
     export using DescriptorSetData = std::variant<std::span<const std::byte>, const TextureRenderData *>;
 
@@ -110,8 +112,8 @@ namespace retro
         std::span<const std::byte> index_buffer;
         InlineList<DescriptorSetData, DRAW_ARRAY_SIZE> descriptor_sets{};
         std::span<const std::byte> push_constants;
-        usize index_count{};
-        usize instance_count{};
+        std::size_t index_count{};
+        std::size_t instance_count{};
     };
 
     export class RenderContext
@@ -161,14 +163,14 @@ namespace retro
     struct PipelineUsage
     {
         std::shared_ptr<RenderPipeline> pipeline;
-        usize usage_count;
+        std::size_t usage_count;
     };
 
     export class RETRO_API PipelineManager
     {
       public:
         using Dependencies = TypeList<Renderer2D, RenderPipeline>;
-        static constexpr usize DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
+        static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
         explicit PipelineManager(Renderer2D &renderer, const std::vector<std::shared_ptr<RenderPipeline>> &pipelines);
 

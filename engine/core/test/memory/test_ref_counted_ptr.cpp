@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.memory.ref_counted_ptr;
 import std;
 
 using retro::IntrusiveRefCounted;
@@ -17,7 +17,7 @@ using retro::RefCountPtr;
 class TestObject : public IntrusiveRefCounted
 {
   public:
-    explicit TestObject(const int32 value) noexcept : value_{value}
+    explicit TestObject(const std::int32_t value) noexcept : value_{value}
     {
         ++live_count_;
     }
@@ -33,18 +33,18 @@ class TestObject : public IntrusiveRefCounted
         return value_;
     }
 
-    void set_value(int32 v) noexcept
+    void set_value(std::int32_t v) noexcept
     {
         value_ = v;
     }
 
     // testing helpers
-    [[nodiscard]] static int32 live_count() noexcept
+    [[nodiscard]] static std::int32_t live_count() noexcept
     {
         return live_count_;
     }
 
-    [[nodiscard]] static int32 destruction_count() noexcept
+    [[nodiscard]] static std::int32_t destruction_count() noexcept
     {
         return destruction_count_;
     }
@@ -56,10 +56,10 @@ class TestObject : public IntrusiveRefCounted
     }
 
   private:
-    int32 value_{};
+    std::int32_t value_{};
 
-    inline static int32 live_count_{0};
-    inline static int32 destruction_count_{0};
+    inline static std::int32_t live_count_{0};
+    inline static std::int32_t destruction_count_{0};
 };
 
 // A derived type to test cross-type RefCountPtr operations

@@ -11,14 +11,15 @@ module;
 export module retro.runtime:scene.rendering.geometry;
 
 import std;
-import retro.core;
+import retro.core.util.color;
+import retro.core.math.matrix;
 import :scene;
 
 namespace retro
 {
     export class GeometryRenderPipeline;
 
-    export enum class GeometryType : uint8
+    export enum class GeometryType : std::uint8_t
     {
         None,
         Rectangle,
@@ -35,7 +36,7 @@ namespace retro
     export struct Geometry
     {
         std::vector<Vertex> vertices{};
-        std::vector<uint32> indices{};
+        std::vector<std::uint32_t> indices{};
     };
 
     export struct GeometryInstanceData
@@ -45,14 +46,14 @@ namespace retro
         alignas(8) Vector2f pivot{};
         alignas(8) Vector2f size{1, 1};
         alignas(16) Color color{1, 1, 1, 1};
-        uint32 has_texture{};
+        std::uint32_t has_texture{};
     };
 
     export struct GeometryBatch
     {
         const Geometry *geometry{};
         std::vector<GeometryInstanceData> instances{};
-        uint32 texture_handle{};
+        std::uint32_t texture_handle{};
         Vector2f viewport_size{};
 
         DrawCommand create_draw_command() const;

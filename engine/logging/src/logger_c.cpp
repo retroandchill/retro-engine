@@ -7,12 +7,11 @@
 #include "retro/logging/logger.h"
 
 import std;
-import retro.core;
 import retro.logging;
 
 extern "C"
 {
-    void retro_log(const Retro_LogLevel level, const char16_t *message, const int32 length)
+    void retro_log(const Retro_LogLevel level, const char16_t *message, const std::int32_t length)
     {
         retro::get_logger().log(static_cast<retro::LogLevel>(level), std::u16string_view(message, length));
     }

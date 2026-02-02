@@ -11,6 +11,7 @@ module;
 module retro.runtime;
 
 import retro.platform;
+import retro.core.io.file_stream;
 
 namespace retro
 {

@@ -10,7 +10,6 @@ module;
 
 export module retro.renderer:components;
 
-import retro.core;
 import vulkan_hpp;
 import std;
 
@@ -19,8 +18,8 @@ namespace retro
     export struct CommandPoolConfig
     {
         vk::Device device = nullptr;
-        uint32 queue_family_idx = vk::QueueFamilyIgnored;
-        uint32 buffer_count = 0; // typically MAX_FRAMES_IN_FLIGHT
+        std::uint32_t queue_family_idx = vk::QueueFamilyIgnored;
+        std::uint32_t buffer_count = 0; // typically MAX_FRAMES_IN_FLIGHT
     };
 
     export class RETRO_API VulkanCommandPool
@@ -67,18 +66,18 @@ namespace retro
         {
             return present_queue_;
         }
-        [[nodiscard]] inline uint32 graphics_family_index() const noexcept
+        [[nodiscard]] inline std::uint32_t graphics_family_index() const noexcept
         {
             return graphics_family_index_;
         }
-        [[nodiscard]] inline uint32 present_family_index() const noexcept
+        [[nodiscard]] inline std::uint32_t present_family_index() const noexcept
         {
             return present_family_index_;
         }
 
       private:
-        uint32 graphics_family_index_{std::numeric_limits<uint32>::max()};
-        uint32 present_family_index_{std::numeric_limits<uint32>::max()};
+        std::uint32_t graphics_family_index_{std::numeric_limits<std::uint32_t>::max()};
+        std::uint32_t present_family_index_{std::numeric_limits<std::uint32_t>::max()};
         vk::PhysicalDevice physical_device_{};
         vk::UniqueDevice device_{};
         vk::Queue graphics_queue_{};
@@ -86,17 +85,17 @@ namespace retro
 
         static vk::PhysicalDevice pick_physical_device(vk::Instance instance,
                                                        vk::SurfaceKHR surface,
-                                                       uint32 &out_graphics_family,
-                                                       uint32 &out_present_family);
+                                                       std::uint32_t &out_graphics_family,
+                                                       std::uint32_t &out_present_family);
 
         static bool is_device_suitable(vk::PhysicalDevice device,
                                        vk::SurfaceKHR surface,
-                                       uint32 &out_graphics_family,
-                                       uint32 &out_present_family);
+                                       std::uint32_t &out_graphics_family,
+                                       std::uint32_t &out_present_family);
 
         static vk::UniqueDevice create_device(vk::PhysicalDevice physical_device,
-                                              uint32 graphics_family,
-                                              uint32 present_family);
+                                              std::uint32_t graphics_family,
+                                              std::uint32_t present_family);
     };
 
     export struct SwapchainConfig
@@ -104,10 +103,10 @@ namespace retro
         vk::PhysicalDevice physical_device = nullptr;
         vk::Device device = nullptr;
         vk::SurfaceKHR surface = nullptr;
-        uint32 graphics_family = vk::QueueFamilyIgnored;
-        uint32 present_family = vk::QueueFamilyIgnored;
-        uint32 width = 0;
-        uint32 height = 0;
+        std::uint32_t graphics_family = vk::QueueFamilyIgnored;
+        std::uint32_t present_family = vk::QueueFamilyIgnored;
+        std::uint32_t width = 0;
+        std::uint32_t height = 0;
         vk::SwapchainKHR old_swapchain = nullptr;
     };
 
@@ -146,8 +145,8 @@ namespace retro
     export struct SyncConfig
     {
         vk::Device device = nullptr;
-        uint32 frames_in_flight = 0;
-        uint32 swapchain_image_count = 0;
+        std::uint32_t frames_in_flight = 0;
+        std::uint32_t swapchain_image_count = 0;
     };
 
     export class RETRO_API VulkanSyncObjects

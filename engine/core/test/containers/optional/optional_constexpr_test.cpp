@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-import retro.core;
+import retro.core.containers.optional;
 import std;
 import retro.core.test.optional;
 

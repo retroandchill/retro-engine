@@ -6,6 +6,8 @@ set(RETRO_PLATFORM_SOURCES
         src/display.cpp
         src/sdl.cpp)
 
+set(RETRO_PLATFORM_HEADERS )
+
 set(RETRO_PLATFORM_MODULES src/platform.ixx
         src/dll.ixx
         src/context.ixx
@@ -14,8 +16,7 @@ set(RETRO_PLATFORM_MODULES src/platform.ixx
         src/events.ixx
 )
 
-set(RETRO_PLATFORM_HEADERS
-        src/sdl.cpp)
+
 
 add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_MODULES} ${RETRO_PLATFORM_HEADERS})
 

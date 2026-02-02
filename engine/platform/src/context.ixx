@@ -11,13 +11,12 @@ module;
 export module retro.platform:context;
 
 import std;
-import retro.core;
 import :display;
 import :exceptions;
 
 namespace retro
 {
-    export enum class PlatformInitFlags : uint32
+    export enum class PlatformInitFlags : std::uint32_t
     {
         None = 0,
         Audio = 1u << 0,
@@ -32,12 +31,12 @@ namespace retro
 
     export constexpr PlatformInitFlags operator|(PlatformInitFlags a, PlatformInitFlags b) noexcept
     {
-        return static_cast<PlatformInitFlags>(static_cast<uint32>(a) | static_cast<uint32>(b));
+        return static_cast<PlatformInitFlags>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
     }
 
     export constexpr bool any(PlatformInitFlags f) noexcept
     {
-        return static_cast<uint32>(f) != 0;
+        return static_cast<std::uint32_t>(f) != 0;
     }
 
     export class RETRO_API PlatformContext

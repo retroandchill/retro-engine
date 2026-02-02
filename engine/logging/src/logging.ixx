@@ -12,12 +12,13 @@ module;
 
 export module retro.logging;
 
-import retro.core;
+import retro.core.strings.encoding;
+import retro.core.type_traits.basic;
 import std;
 
 namespace retro
 {
-    export enum class LogLevel : uint8
+    export enum class LogLevel : std::uint8_t
     {
         Trace,
         Debug,
@@ -51,26 +52,27 @@ namespace retro
         return "unknown";
     }
 
-    constexpr LogLevel from_spd_level(spdlog::level::level_enum level)
+    constexpr LogLevel from_spd_level(const spdlog::level::level_enum level)
     {
         switch (level)
         {
+            using enum LogLevel;
             using enum spdlog::level::level_enum;
             case trace:
-                return LogLevel::Trace;
+                return Trace;
             case debug:
-                return LogLevel::Debug;
+                return Debug;
             case info:
-                return LogLevel::Info;
+                return Info;
             case warn:
-                return LogLevel::Warn;
+                return Warn;
             case err:
-                return LogLevel::Error;
+                return Error;
             case critical:
-                return LogLevel::Critical;
+                return Critical;
             case off:
             default:
-                return LogLevel::Off;
+                return Off;
         }
     }
 
@@ -102,7 +104,7 @@ namespace retro
       public:
         explicit inline Logger(spdlog::logger *logger = spdlog::default_logger_raw(),
                                std::source_location location = std::source_location::current())
-            : logger_(logger), location_(std::move(location))
+            : logger_(logger), location_(location)
         {
         }
 
@@ -118,7 +120,7 @@ namespace retro
             const auto file_name = location_.file_name();
             const auto line = location_.line();
             const auto function_name = location_.function_name();
-            spdlog::source_loc loc(file_name, line, function_name);
+            spdlog::source_loc loc(file_name, static_cast<std::int32_t>(line), function_name);
             if constexpr (std::is_same_v<T, char>)
             {
                 logger_->log(loc, to_spd_level(level), message);
@@ -137,7 +139,7 @@ namespace retro
             const auto file_name = location_.file_name();
             const auto line = location_.line();
             const auto function_name = location_.function_name();
-            spdlog::source_loc loc(file_name, line, function_name);
+            spdlog::source_loc loc(file_name, static_cast<std::int32_t>(line), function_name);
             logger_->log(loc, to_spd_level(level), message);
         }
 
@@ -259,6 +261,6 @@ namespace retro
     export inline Logger get_logger(spdlog::logger *logger = spdlog::default_logger_raw(),
                                     std::source_location location = std::source_location::current())
     {
-        return Logger(logger, std::move(location));
+        return Logger(logger, location);
     }
 } // namespace retro

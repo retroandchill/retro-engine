@@ -10,61 +10,15 @@ module;
 
 #include <cassert>
 
-export module retro.core:async;
+export module retro.core.async.task;
 
 import std;
-import :functional;
-import :defines;
+import retro.core.functional.delegate;
+import retro.core.async.task_scheduler;
 
 namespace retro
 {
-    export class RETRO_API TaskScheduler
-    {
-      public:
-        virtual ~TaskScheduler() = default;
-
-        virtual void enqueue(std::coroutine_handle<> coroutine) = 0;
-        virtual void enqueue(SimpleDelegate delegate) = 0;
-
-        [[nodiscard]] virtual bool can_resume_inline() const noexcept
-        {
-            return current() == this;
-        }
-
-        static void set_current(TaskScheduler *scheduler) noexcept;
-        static TaskScheduler *current() noexcept;
-
-        class RETRO_API Scope
-        {
-          public:
-            explicit Scope(TaskScheduler *scheduler) noexcept;
-            Scope(const Scope &) = delete;
-            Scope(Scope &&) noexcept = delete;
-
-            ~Scope() noexcept;
-
-            Scope &operator=(const Scope &) = delete;
-            Scope &operator=(Scope &&) noexcept = delete;
-
-          private:
-            TaskScheduler *prev_;
-        };
-    };
-
-    export class RETRO_API ManualTaskScheduler final : public TaskScheduler
-    {
-      public:
-        void enqueue(std::coroutine_handle<> coroutine) override;
-        void enqueue(SimpleDelegate delegate) override;
-
-        usize pump(usize max = std::dynamic_extent);
-
-      private:
-        std::mutex mutex_;
-        std::deque<SimpleDelegate> queue_;
-    };
-
-    export template <typename T>
+    template <typename T>
     concept Awaiter = requires(T &x) {
         {
             x.await_ready()
@@ -163,8 +117,8 @@ namespace retro
     template <typename T, typename Result = T>
     struct TaskPromiseBase
     {
-        static constexpr usize SUCCESS_STATE = 1;
-        static constexpr usize EXCEPTION_STATE = 2;
+        static constexpr std::size_t SUCCESS_STATE = 1;
+        static constexpr std::size_t EXCEPTION_STATE = 2;
 
         TaskScheduler *scheduler = TaskScheduler::current();
 
@@ -226,8 +180,8 @@ namespace retro
         {
         }
 
-        static constexpr usize SUCCESS_STATE = 1;
-        static constexpr usize EXCEPTION_STATE = 2;
+        static constexpr std::size_t SUCCESS_STATE = 1;
+        static constexpr std::size_t EXCEPTION_STATE = 2;
     };
 
     template <>
@@ -243,8 +197,8 @@ namespace retro
         }
 
         // monostate => success for void
-        static constexpr usize SUCCESS_STATE = 0;
-        static constexpr usize EXCEPTION_STATE = 1;
+        static constexpr std::size_t SUCCESS_STATE = 0;
+        static constexpr std::size_t EXCEPTION_STATE = 1;
     };
 
     template <typename T>

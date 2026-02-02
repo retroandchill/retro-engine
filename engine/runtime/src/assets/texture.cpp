@@ -55,7 +55,7 @@ namespace retro
     {
         ImageData result{};
         auto *image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
-                                                 static_cast<int32>(bytes.size()),
+                                                 static_cast<std::int32_t>(bytes.size()),
                                                  &result.width,
                                                  &result.height,
                                                  &result.channels,

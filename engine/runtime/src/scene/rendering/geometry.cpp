@@ -23,13 +23,13 @@ namespace retro
                 Vertex{Vector2f{1, 1}, Vector2f{1, 1}},
                 Vertex{Vector2f{0, 1}, Vector2f{0, 1}},
             },
-            std::vector<uint32>{0, 2, 1, 2, 0, 3});
+            std::vector<std::uint32_t>{0, 2, 1, 2, 0, 3});
 
         const auto TRIANGLE =
             std::make_shared<const Geometry>(std::vector{Vertex{Vector2f{0.5f, 0.5f}, Vector2f{0.5f, 0.5f}},
                                                          Vertex{Vector2f{1, 0}, Vector2f{1, 0}},
                                                          Vertex{Vector2f{0, 1}, Vector2f{0, 1}}},
-                                             std::vector<uint32>{0, 1, 2});
+                                             std::vector<std::uint32_t>{0, 1, 2});
     } // namespace
 
     DrawCommand GeometryBatch::create_draw_command() const
@@ -109,7 +109,7 @@ namespace retro
                                                          .size = sizeof(Color),
                                                          .offset = offsetof(GeometryInstanceData, color)},
                                          VertexAttribute{.type = ShaderDataType::Uint32,
-                                                         .size = sizeof(uint32),
+                                                         .size = sizeof(std::uint32_t),
                                                          .offset = offsetof(GeometryInstanceData, has_texture)}}}},
             .push_constant_bindings =
                 PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}};
