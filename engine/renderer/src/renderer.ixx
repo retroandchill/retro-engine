@@ -13,7 +13,7 @@ export module retro.renderer;
 export import :components;
 export import :pipeline;
 import retro.core.di;
-import retro.platform;
+import retro.platform.window;
 import vulkan_hpp;
 import std;
 

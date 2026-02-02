@@ -10,7 +10,7 @@ module;
 #include <boost/dll.hpp>
 #include <boost/system/error_code.hpp>
 
-export module retro.platform:dll;
+export module retro.platform.dll;
 
 import std;
 

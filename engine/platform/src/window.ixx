@@ -1,5 +1,5 @@
 /**
- * @file display.ixx
+ * @file window.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.platform:display;
+export module retro.platform.window;
 
 import std;
 import retro.core.strings.cstring_view;
@@ -66,10 +66,6 @@ namespace retro
     {
       public:
         virtual ~Window() = default;
-
-        static RETRO_API std::unique_ptr<Window> create(const WindowDesc &desc);
-
-        static RETRO_API std::shared_ptr<Window> create_shared(const WindowDesc &desc);
 
         [[nodiscard]] virtual NativeWindowHandle native_handle() const noexcept = 0;
 

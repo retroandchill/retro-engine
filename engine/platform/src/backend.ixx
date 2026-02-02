@@ -1,5 +1,5 @@
 /**
- * @file context.ixx
+ * @file backend.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,14 +8,20 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.platform:context;
+export module retro.platform.backend;
 
 import std;
-import :display;
-import :exceptions;
+import retro.core.containers.optional;
+import retro.platform.event;
+import retro.platform.window;
 
 namespace retro
 {
+    export enum class PlatformBackendKind : std::uint8_t
+    {
+        SDL3
+    };
+
     export enum class PlatformInitFlags : std::uint32_t
     {
         None = 0,
@@ -39,20 +45,25 @@ namespace retro
         return static_cast<std::uint32_t>(f) != 0;
     }
 
-    export class RETRO_API PlatformContext
+    export struct PlatformBackendInfo
+    {
+        PlatformBackendKind kind = PlatformBackendKind::SDL3;
+        PlatformInitFlags flags = PlatformInitFlags::None;
+    };
+
+    export class PlatformBackend
     {
       public:
-        explicit PlatformContext(PlatformInitFlags flags);
+        RETRO_API static std::unique_ptr<PlatformBackend> create(const PlatformBackendInfo &info);
 
-        PlatformContext(const PlatformContext &) = delete;
-        PlatformContext(PlatformContext &&) = delete;
+        virtual ~PlatformBackend() = default;
 
-        ~PlatformContext() noexcept;
+        virtual std::shared_ptr<Window> create_window(const WindowDesc &desc) = 0;
 
-        PlatformContext &operator=(const PlatformContext &) = delete;
-        PlatformContext &operator=(PlatformContext &&) = delete;
+        virtual Optional<Event> poll_event() = 0;
 
-      private:
-        PlatformInitFlags flags_{PlatformInitFlags::None};
+        virtual Optional<Event> wait_for_event() = 0;
+
+        virtual Optional<Event> wait_for_event(std::chrono::milliseconds timeout) = 0;
     };
 } // namespace retro

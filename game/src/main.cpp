@@ -10,7 +10,9 @@ import retro.runtime;
 import retro.scripting;
 import retro.renderer;
 import retro.logging;
-import retro.platform;
+import retro.platform.backend;
+import retro.platform.event;
+import retro.platform.window;
 import std;
 
 int main()
@@ -19,11 +21,12 @@ int main()
 
     init_logger();
 
-    PlatformContext sdl_runtime{PlatformInitFlags::Video};
+    auto platform_backend =
+        PlatformBackend::create({.kind = PlatformBackendKind::SDL3, .flags = PlatformInitFlags::Video});
 
     try
     {
-        const auto window = Window::create_shared({.flags = WindowFlags::Resizable | WindowFlags::Vulkan});
+        const auto window = platform_backend->create_window({.flags = WindowFlags::Resizable | WindowFlags::Vulkan});
         ServiceCollection service_collection;
         add_engine_services(service_collection);
         add_rendering_services(service_collection, window);
@@ -50,7 +53,7 @@ int main()
 
         while (!game_thread_exited.load())
         {
-            while (auto event = wait_for_event(std::chrono::milliseconds(10)))
+            while (auto event = platform_backend->wait_for_event(std::chrono::milliseconds(10)))
             {
                 std::visit(
                     [&]<typename T>(const T &)

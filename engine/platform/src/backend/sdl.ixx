@@ -8,9 +8,16 @@ module;
 
 #include <SDL3/SDL.h>
 
-module retro.platform;
+export module retro.platform.backend.sdl;
 
+import std;
+import retro.core.containers.optional;
+import retro.core.math.vector;
+import retro.core.strings.cstring_view;
+import retro.platform.backend;
 import retro.platform.exceptions;
+import retro.platform.window;
+import retro.platform.event;
 
 namespace retro
 {
@@ -139,20 +146,6 @@ namespace retro
         }
     } // namespace
 
-    PlatformContext::PlatformContext(const PlatformInitFlags flags) : flags_(flags)
-    {
-        if (const Uint32 sdl_flags = to_sdl_flags(flags_); !SDL_Init(sdl_flags))
-        {
-            // Use whatever your platform exception type is; keeping it generic here.
-            throw PlatformException(SDL_GetError());
-        }
-    }
-
-    PlatformContext::~PlatformContext() noexcept
-    {
-        SDL_Quit();
-    }
-
     struct SdlWindowDeleter
     {
         inline void operator()(SDL_Window *window) const noexcept
@@ -197,46 +190,65 @@ namespace retro
         SdlWindowPtr window_;
     };
 
-    std::unique_ptr<Window> create_sdl_window(const WindowDesc &desc)
+    export class Sdl3PlatformBackend final : public PlatformBackend
     {
-        return std::make_unique<Sdl3Window>(desc);
-    }
-
-    std::shared_ptr<Window> create_shared_sdl_window(const WindowDesc &desc)
-    {
-        return std::make_unique<Sdl3Window>(desc);
-    }
-
-    Optional<Event> poll_event()
-    {
-        SDL_Event e{};
-        if (!SDL_PollEvent(&e))
+      public:
+        explicit Sdl3PlatformBackend(const PlatformInitFlags flags)
         {
-            return std::nullopt;
+            if (const Uint32 sdl_flags = to_sdl_flags(flags); !SDL_Init(sdl_flags))
+            {
+                // Use whatever your platform exception type is; keeping it generic here.
+                throw PlatformException(SDL_GetError());
+            }
         }
 
-        return to_event(e);
-    }
+        Sdl3PlatformBackend(const Sdl3PlatformBackend &) = delete;
+        Sdl3PlatformBackend(Sdl3PlatformBackend &&) noexcept = delete;
 
-    Optional<Event> wait_for_event()
-    {
-        SDL_Event e{};
-        if (!SDL_WaitEvent(&e))
+        ~Sdl3PlatformBackend() noexcept override
         {
-            return std::nullopt;
+            SDL_Quit();
         }
 
-        return to_event(e);
-    }
+        Sdl3PlatformBackend &operator=(const Sdl3PlatformBackend &) = delete;
+        Sdl3PlatformBackend &operator=(Sdl3PlatformBackend &&) noexcept = delete;
 
-    Optional<Event> wait_for_event(const std::chrono::milliseconds timeout)
-    {
-        SDL_Event e{};
-        if (!SDL_WaitEventTimeout(&e, timeout.count()))
+        std::shared_ptr<Window> create_window(const WindowDesc &desc) override
         {
-            return std::nullopt;
+            return std::make_shared<Sdl3Window>(desc);
         }
 
-        return to_event(e);
-    }
+        Optional<Event> poll_event() override
+        {
+            SDL_Event e{};
+            if (!SDL_PollEvent(&e))
+            {
+                return std::nullopt;
+            }
+
+            return to_event(e);
+        }
+
+        Optional<Event> wait_for_event() override
+        {
+            SDL_Event e{};
+            if (!SDL_WaitEvent(&e))
+            {
+                return std::nullopt;
+            }
+
+            return to_event(e);
+        }
+
+        Optional<Event> wait_for_event(std::chrono::milliseconds timeout) override
+        {
+            SDL_Event e{};
+            if (!SDL_WaitEventTimeout(&e, timeout.count()))
+            {
+                return std::nullopt;
+            }
+
+            return to_event(e);
+        }
+    };
 } // namespace retro

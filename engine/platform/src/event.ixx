@@ -1,14 +1,10 @@
 /**
- * @file events.ixx
+ * @file event.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/exports.h"
-
-export module retro.platform:events;
+export module retro.platform.event;
 
 import retro.core.containers.optional;
 import std;
@@ -70,10 +66,4 @@ namespace retro
 
     export using Event = std::
         variant<QuitEvent, WindowCloseRequestedEvent, WindowResizedEvent, MouseMovedEvent, MouseButtonEvent, KeyEvent>;
-
-    export RETRO_API Optional<Event> poll_event();
-
-    export RETRO_API Optional<Event> wait_for_event();
-
-    export RETRO_API Optional<Event> wait_for_event(std::chrono::milliseconds timeout);
 } // namespace retro
