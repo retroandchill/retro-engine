@@ -118,10 +118,11 @@ namespace retro
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
 
-        ~VulkanRenderer2D() override;
-
         VulkanRenderer2D &operator=(VulkanRenderer2D &&) = delete;
         VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
+
+        void wait_idle() override;
+
         void begin_frame() override;
 
         void end_frame() override;
@@ -157,6 +158,7 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
+      private:
         std::shared_ptr<Window> viewport_;
 
         vk::UniqueInstance instance_;

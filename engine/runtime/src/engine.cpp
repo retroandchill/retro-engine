@@ -92,6 +92,8 @@ void Engine::run(std::u16string_view assembly_path, std::u16string_view class_na
     }
 
     script_runtime_->tear_down();
+    renderer_->wait_idle();
+    asset_manager_->on_engine_shutdown();
 }
 
 void Engine::request_shutdown(const int32 exit_code)

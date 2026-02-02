@@ -76,6 +76,12 @@ namespace retro
         return type;
     }
 
+    void Texture::on_engine_shutdown()
+    {
+        Asset::on_engine_shutdown();
+        render_data_.reset();
+    }
+
     void ImageDataDeleter::operator()(std::byte *bytes) const
     {
         stbi_image_free(bytes);

@@ -117,6 +117,8 @@ struct std::hash<retro::AssetPath>
 
 namespace retro
 {
+    export class Asset;
+
     struct AssetPathHook
     {
         AssetPath path;
@@ -144,9 +146,14 @@ namespace retro
         }
 
         RETRO_API void reset() noexcept;
+
+      private:
+        friend class Asset;
+
+        RETRO_API void release() noexcept;
     };
 
-    export class Asset : public IntrusiveRefCounted
+    class Asset : public IntrusiveRefCounted
     {
       protected:
         explicit Asset(const AssetPath &path) : hook_{path}
@@ -160,6 +167,8 @@ namespace retro
         }
 
         [[nodiscard]] virtual Name asset_type() const noexcept = 0;
+
+        virtual void on_engine_shutdown();
 
       private:
         AssetPathHook hook_;
@@ -252,6 +261,8 @@ namespace retro
         }
 
         bool remove_asset_from_cache(const AssetPath &path);
+
+        void on_engine_shutdown();
 
       private:
         AssetLoadResult<RefCountPtr<Asset>> load_asset_internal(const AssetPath &path);

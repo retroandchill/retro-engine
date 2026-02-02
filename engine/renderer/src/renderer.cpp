@@ -136,7 +136,7 @@ namespace retro
     {
     }
 
-    VulkanRenderer2D::~VulkanRenderer2D()
+    void VulkanRenderer2D::wait_idle()
     {
         if (device_.device() != nullptr)
         {
@@ -502,8 +502,8 @@ namespace retro
             .addressModeV = vk::SamplerAddressMode::eClampToEdge,
             .addressModeW = vk::SamplerAddressMode::eClampToEdge,
             .mipLodBias = 0.0f,
-            .anisotropyEnable = features.samplerAnisotropy,
-            .maxAnisotropy = features.samplerAnisotropy ? std::min(16.0f, props.limits.maxSamplerAnisotropy) : 1.0f,
+            .anisotropyEnable = vk::False,
+            .maxAnisotropy = 1.0f,
             .compareEnable = vk::False,
             .compareOp = vk::CompareOp::eAlways,
             .minLod = 0.0f,

@@ -97,6 +97,8 @@ namespace retro
             return render_data_->height();
         }
 
+        void on_engine_shutdown() override;
+
       private:
         friend class TextureDecoder;
 

@@ -22,6 +22,16 @@ namespace retro
         path = AssetPath::none();
     }
 
+    void AssetPathHook::release() noexcept
+    {
+        path = AssetPath::none();
+    }
+
+    void Asset::on_engine_shutdown()
+    {
+        hook_.release();
+    }
+
     AssetLoadResult<std::unique_ptr<Stream>> FileSystemAssetSource::open_stream(const AssetPath path,
                                                                                 const AssetOpenOptions &options)
     {
@@ -70,5 +80,15 @@ namespace retro
     {
         std::unique_lock lock{asset_cache_mutex_};
         return asset_cache_.erase(path) == 1;
+    }
+
+    void AssetManager::on_engine_shutdown()
+    {
+        for (auto *asset : asset_cache_ | std::views::values)
+        {
+            asset->on_engine_shutdown();
+        }
+
+        asset_cache_.clear();
     }
 } // namespace retro
