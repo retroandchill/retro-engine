@@ -88,6 +88,9 @@ namespace retro
         for (const auto *node : registry.nodes_of_type<Sprite>())
         {
             auto *texture = node->texture().get();
+            if (texture == nullptr)
+                continue;
+
             const auto &transform = node->transform();
 
             SpriteInstanceData instance{.transform = transform.matrix(),

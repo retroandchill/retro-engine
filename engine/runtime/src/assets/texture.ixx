@@ -89,12 +89,12 @@ namespace retro
 
         [[nodiscard]] inline int32 width() const noexcept
         {
-            return render_data_ != nullptr ? render_data_->width() : 0;
+            return render_data_->width();
         }
 
         [[nodiscard]] inline int32 height() const noexcept
         {
-            return render_data_ != nullptr ? render_data_->height() : 0;
+            return render_data_->height();
         }
 
       private:
