@@ -13,7 +13,8 @@ import retro.core;
 import retro.runtime;
 import std;
 
-DECLARE_OPAQUE_C_HANDLE(Retro_Asset, retro::Asset);
+DECLARE_OPAQUE_C_HANDLE(Retro_Asset, retro::Asset)
+DECLARE_OPAQUE_C_HANDLE(Retro_Texture, retro::Texture);
 DECLARE_DEFINED_C_HANDLE(Retro_AssetPath, retro::AssetPath);
 DECLARE_DEFINED_C_HANDLE(Retro_Name, retro::Name);
 
@@ -85,4 +86,13 @@ Retro_Asset *retro_load_asset(const Retro_AssetPath *path, Retro_Name *out_asset
 void retro_release_asset(Retro_Asset *asset)
 {
     from_c(asset)->release();
+}
+
+Retro_Vector2i retro_texture_get_size(const Retro_Texture *texture)
+{
+    auto &texture_ref = *from_c(texture);
+    return Retro_Vector2i{
+        .x = texture_ref.width(),
+        .y = texture_ref.height(),
+    };
 }

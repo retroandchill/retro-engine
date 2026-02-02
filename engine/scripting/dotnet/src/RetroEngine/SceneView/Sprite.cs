@@ -26,6 +26,10 @@ public partial class Sprite : SceneObject
         {
             field = value;
             NativeSetTexture(NativeObject, value?.NativeObject ?? IntPtr.Zero);
+            if (value is not null)
+            {
+                Size = new Vector2F(value.Width, value.Height);
+            }
         }
     }
 

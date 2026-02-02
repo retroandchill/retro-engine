@@ -77,6 +77,37 @@ namespace retro
         VulkanBufferManagerScope &operator=(VulkanBufferManagerScope &&) noexcept = delete;
     };
 
+    class VulkanTextureRenderData final : public TextureRenderData
+    {
+      public:
+        inline VulkanTextureRenderData(vk::UniqueImage image,
+                                       vk::UniqueDeviceMemory memory,
+                                       vk::UniqueImageView view,
+                                       vk::Sampler sampler,
+                                       int32 width,
+                                       int32 height) noexcept
+            : TextureRenderData{width, height}, memory_{std::move(memory)}, image_{std::move(image)},
+              view_{std::move(view)}, sampler_{sampler}
+        {
+        }
+
+        inline vk::ImageView view() const noexcept
+        {
+            return view_.get();
+        }
+
+        inline vk::Sampler sampler() const noexcept
+        {
+            return sampler_;
+        }
+
+      private:
+        vk::UniqueImage image_;
+        vk::UniqueDeviceMemory memory_;
+        vk::UniqueImageView view_;
+        vk::Sampler sampler_;
+    };
+
     export class RETRO_API VulkanRenderer2D final : public Renderer2D
     {
       public:
@@ -118,7 +149,14 @@ namespace retro
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);
 
-      private:
+        vk::UniqueCommandBuffer begin_one_shot_commands() const;
+        void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
+
+        static void transition_image_layout(vk::CommandBuffer cmd,
+                                            vk::Image image,
+                                            vk::ImageLayout old_layout,
+                                            vk::ImageLayout new_layout);
+
         std::shared_ptr<Window> viewport_;
 
         vk::UniqueInstance instance_;

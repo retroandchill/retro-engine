@@ -101,12 +101,14 @@ namespace retro
 
     export constexpr usize DRAW_ARRAY_SIZE = 8;
 
+    export using DescriptorSetData = std::variant<std::span<const std::byte>, const TextureRenderData *>;
+
     export struct DrawCommand
     {
         InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> vertex_buffers{};
         InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> instance_buffers{};
         std::span<const std::byte> index_buffer;
-        InlineList<std::span<const std::byte>, DRAW_ARRAY_SIZE> descriptor_sets{};
+        InlineList<DescriptorSetData, DRAW_ARRAY_SIZE> descriptor_sets{};
         std::span<const std::byte> push_constants;
         usize index_count{};
         usize instance_count{};

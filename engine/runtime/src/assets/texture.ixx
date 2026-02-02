@@ -76,11 +76,26 @@ namespace retro
     {
       public:
         explicit Texture(const AssetPath &path, std::unique_ptr<TextureRenderData> render_data)
-            : Asset(path), render_data_{std::move(render_data_)}
+            : Asset(path), render_data_{std::move(render_data)}
         {
         }
 
         [[nodiscard]] Name asset_type() const noexcept override;
+
+        [[nodiscard]] inline const TextureRenderData *render_data() const noexcept
+        {
+            return render_data_.get();
+        }
+
+        [[nodiscard]] inline int32 width() const noexcept
+        {
+            return render_data_ != nullptr ? render_data_->width() : 0;
+        }
+
+        [[nodiscard]] inline int32 height() const noexcept
+        {
+            return render_data_ != nullptr ? render_data_->height() : 0;
+        }
 
       private:
         friend class TextureDecoder;

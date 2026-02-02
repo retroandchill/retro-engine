@@ -280,8 +280,13 @@ namespace retro
 
         constexpr vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
 
-        vk::DescriptorPoolSize pool_size{vk::DescriptorType::eStorageBuffer, 256};
-        const vk::DescriptorPoolCreateInfo pool_info{.maxSets = 256, .poolSizeCount = 1, .pPoolSizes = &pool_size};
+        std::array pool_sizes = {
+            vk::DescriptorPoolSize{vk::DescriptorType::eStorageBuffer, 256},
+            vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 256},
+        };
+        const vk::DescriptorPoolCreateInfo pool_info{.maxSets = 256,
+                                                     .poolSizeCount = pool_sizes.size(),
+                                                     .pPoolSizes = pool_sizes.data()};
 
         for (size_t i = 0; i < cfg.frames_in_flight; ++i)
         {

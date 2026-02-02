@@ -17,6 +17,7 @@ namespace retro
         constexpr usize INDICES_PER_SPRITE = 6;
         return DrawCommand{
             .instance_buffers = {as_bytes(std::span{instances})},
+            .descriptor_sets = {texture->render_data()},
             .push_constants = as_bytes(std::span{&viewport_size, 1}),
             .index_count = INDICES_PER_SPRITE,
             .instance_count = instances.size(),
@@ -66,6 +67,12 @@ namespace retro
                                         .offset = offsetof(SpriteInstanceData, tint)},
                     },
             }},
+            .descriptor_bindings =
+                {
+                    DescriptorBinding{.type = DescriptorType::CombinedImageSampler,
+                                      .stages = ShaderStage::Fragment,
+                                      .count = 1},
+                },
             .push_constant_bindings =
                 PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}};
         return layout;

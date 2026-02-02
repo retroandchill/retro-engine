@@ -41,35 +41,6 @@ namespace retro
         }
     } // namespace
 
-    class VulkanTextureRenderData final : public TextureRenderData
-    {
-      public:
-        VulkanTextureRenderData(vk::UniqueImage image,
-                                vk::UniqueDeviceMemory memory,
-                                vk::UniqueImageView view,
-                                vk::Sampler sampler,
-                                int32 width,
-                                int32 height) noexcept
-            : TextureRenderData{width, height}, image_{std::move(image)}, view_{std::move(view)}, sampler_{sampler}
-        {
-        }
-
-        vk::ImageView view() const noexcept
-        {
-            return view_.get();
-        }
-        vk::Sampler sampler() const noexcept
-        {
-            return sampler_;
-        }
-
-      private:
-        vk::UniqueImage image_;
-        vk::UniqueDeviceMemory memory_;
-        vk::UniqueImageView view_;
-        vk::Sampler sampler_;
-    };
-
     std::unique_ptr<VulkanBufferManager> VulkanBufferManager::instance_{nullptr};
 
     VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, usize pool_size)
@@ -161,7 +132,7 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<uint32>(swapchain_.image_views().size()),
           }),
-          pipeline_manager_{device_.device()}
+          pipeline_manager_{device_.device()}, linear_sampler_{create_linear_sampler()}
     {
     }
 
@@ -323,6 +294,41 @@ namespace retro
 
         auto img_memory = device.allocateMemoryUnique(img_alloc_info);
         device.bindImageMemory(image.get(), img_memory.get(), 0);
+
+        // Perform the copy + transitions
+        {
+            vk::UniqueCommandBuffer cmd = begin_one_shot_commands();
+
+            transition_image_layout(cmd.get(),
+                                    image.get(),
+                                    vk::ImageLayout::eUndefined,
+                                    vk::ImageLayout::eTransferDstOptimal);
+
+            vk::BufferImageCopy region{
+                .bufferOffset = 0,
+                .bufferRowLength = 0,
+                .bufferImageHeight = 0,
+                .imageSubresource =
+                    vk::ImageSubresourceLayers{
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1,
+                    },
+                .imageOffset = vk::Offset3D{0, 0, 0},
+                .imageExtent =
+                    vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
+            };
+
+            cmd->copyBufferToImage(staging_buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, 1, &region);
+
+            transition_image_layout(cmd.get(),
+                                    image.get(),
+                                    vk::ImageLayout::eTransferDstOptimal,
+                                    vk::ImageLayout::eShaderReadOnlyOptimal);
+
+            end_one_shot_commands(std::move(cmd));
+        }
 
         vk::ImageViewCreateInfo view_info{.image = image.get(),
                                           .viewType = vk::ImageViewType::e2D,
@@ -548,5 +554,97 @@ namespace retro
         pipeline_manager_.bind_and_render(cmd, viewport_->size(), sync_.descriptor_pool(current_frame_));
         cmd.endRenderPass();
         cmd.end();
+    }
+
+    vk::UniqueCommandBuffer VulkanRenderer2D::begin_one_shot_commands() const
+    {
+        const auto device = device_.device();
+
+        const vk::CommandBufferAllocateInfo alloc_info{
+            .commandPool = command_pool_.pool(),
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        };
+
+        auto buffers = device.allocateCommandBuffersUnique(alloc_info);
+        vk::UniqueCommandBuffer cmd = std::move(buffers.front());
+
+        const vk::CommandBufferBeginInfo begin_info{
+            .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+        };
+
+        cmd->begin(begin_info);
+        return cmd;
+    }
+
+    void VulkanRenderer2D::end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const
+    {
+        cmd->end();
+
+        auto device = device_.device();
+
+        vk::FenceCreateInfo fence_info{};
+        vk::UniqueFence fence = device.createFenceUnique(fence_info);
+
+        vk::CommandBuffer raw_cmd = cmd.get();
+        vk::SubmitInfo submit_info{
+            .commandBufferCount = 1,
+            .pCommandBuffers = &raw_cmd,
+        };
+
+        if (device_.graphics_queue().submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to submit one-shot command buffer"};
+        }
+
+        // Simple and safe for asset loading. If you later want async streaming, swap this for a timeline semaphore.
+        if (device.waitForFences(1, &fence.get(), vk::True, std::numeric_limits<uint64>::max()) != vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed waiting for one-shot fence"};
+        }
+    }
+
+    void VulkanRenderer2D::transition_image_layout(vk::CommandBuffer cmd,
+                                                   vk::Image image,
+                                                   vk::ImageLayout old_layout,
+                                                   vk::ImageLayout new_layout)
+    {
+        vk::AccessFlags src_access{};
+        vk::AccessFlags dst_access{};
+        vk::PipelineStageFlags src_stage{};
+        vk::PipelineStageFlags dst_stage{};
+
+        if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal)
+        {
+            src_access = vk::AccessFlagBits::eNone;
+            dst_access = vk::AccessFlagBits::eTransferWrite;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        }
+        else if (old_layout == vk::ImageLayout::eTransferDstOptimal &&
+                 new_layout == vk::ImageLayout::eShaderReadOnlyOptimal)
+        {
+            src_access = vk::AccessFlagBits::eTransferWrite;
+            dst_access = vk::AccessFlagBits::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        }
+        else
+        {
+            throw std::runtime_error{"VulkanRenderer2D: unsupported image layout transition"};
+        }
+
+        vk::ImageMemoryBarrier barrier{
+            .srcAccessMask = src_access,
+            .dstAccessMask = dst_access,
+            .oldLayout = old_layout,
+            .newLayout = new_layout,
+            .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+            .image = image,
+            .subresourceRange = vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
+        };
+
+        cmd.pipelineBarrier(src_stage, dst_stage, {}, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 } // namespace retro

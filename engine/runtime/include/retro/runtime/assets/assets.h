@@ -7,6 +7,7 @@
 #pragma once
 
 #include "retro/core/exports.h"
+#include "retro/core/math/vector.h"
 #include "retro/core/strings/name.h"
 
 #include <stdint.h> // NOLINT We want to use a C header here
@@ -47,6 +48,8 @@ extern "C"
                                             Retro_AssetLoadError *out_error);
 
     RETRO_API void retro_release_asset(Retro_Asset *asset);
+
+    RETRO_API Retro_Vector2i retro_texture_get_size(const Retro_Texture *texture);
 
 #ifdef __cplusplus
 }

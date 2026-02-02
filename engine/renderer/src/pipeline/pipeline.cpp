@@ -199,25 +199,47 @@ namespace retro
 
             auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
 
+            InlineList<vk::DescriptorBufferInfo, DRAW_ARRAY_SIZE> buffer_infos;
+            InlineList<vk::DescriptorImageInfo, DRAW_ARRAY_SIZE> image_infos;
+
             InlineList<vk::WriteDescriptorSet, DRAW_ARRAY_SIZE> writes;
             for (auto &&[i, binding] : layout.descriptor_bindings | std::views::enumerate)
             {
-                auto &descriptor_data = command.descriptor_sets[i];
-                auto [buffer, mapped_data, offset] =
-                    buffer_manager.allocate_transient(static_cast<uint32>(descriptor_data.size()),
-                                                      vk::BufferUsageFlagBits::eStorageBuffer);
-
-                std::memcpy(mapped_data, descriptor_data.data(), static_cast<uint32>(descriptor_data.size()));
-
-                // Bind instance buffer to descriptor set
-                vk::DescriptorBufferInfo buffer_info{buffer, offset, static_cast<uint32>(descriptor_data.size())};
-
                 auto &write_set = writes.emplace_back();
                 write_set.descriptorCount = 1;
-                write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
-                write_set.pBufferInfo = &buffer_info;
                 write_set.dstBinding = 0;
                 write_set.dstSet = descriptor_sets[i];
+
+                std::visit(
+                    Overload{
+                        [&](const std::span<const std::byte> descriptor_data)
+                        {
+                            auto [buffer, mapped_data, offset] =
+                                buffer_manager.allocate_transient(static_cast<uint32>(descriptor_data.size()),
+                                                                  vk::BufferUsageFlagBits::eStorageBuffer);
+                            write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
+
+                            std::memcpy(mapped_data,
+                                        descriptor_data.data(),
+                                        static_cast<uint32>(descriptor_data.size()));
+
+                            // Bind instance buffer to descriptor set
+                            const auto &buffer_info =
+                                buffer_infos.emplace_back(buffer, offset, static_cast<uint32>(descriptor_data.size()));
+                            write_set.pBufferInfo = &buffer_info;
+                        },
+                        [&](const TextureRenderData *render_data)
+                        {
+                            auto &textureData = dynamic_cast<const VulkanTextureRenderData &>(*render_data);
+                            write_set.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+
+                            const auto &img_info = image_infos.emplace_back(textureData.sampler(),
+                                                                            textureData.view(),
+                                                                            vk::ImageLayout::eShaderReadOnlyOptimal);
+
+                            write_set.pImageInfo = &img_info;
+                        }},
+                    command.descriptor_sets[i]);
             }
 
             device_.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
@@ -413,12 +435,12 @@ namespace retro
                                                              .sampleShadingEnable = vk::False};
 
         vk::PipelineColorBlendAttachmentState color_blend_attachment{
-            .blendEnable = vk::False,
-            .srcColorBlendFactor = vk::BlendFactor::eOne,
-            .dstColorBlendFactor = vk::BlendFactor::eZero,
+            .blendEnable = vk::True,
+            .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+            .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
             .colorBlendOp = vk::BlendOp::eAdd,
             .srcAlphaBlendFactor = vk::BlendFactor::eOne,
-            .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+            .dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
             .alphaBlendOp = vk::BlendOp::eAdd,
             .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
