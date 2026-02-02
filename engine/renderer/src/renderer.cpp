@@ -76,20 +76,20 @@ namespace retro
         : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
     {
         const vk::BufferCreateInfo buffer_info{
-            {},
-            pool_size_,
-            vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
-                vk::BufferUsageFlagBits::eStorageBuffer,
+            .size = pool_size_,
+            .usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
+                     vk::BufferUsageFlagBits::eStorageBuffer,
         };
         buffer_ = device_.createBufferUnique(buffer_info);
 
         const auto mem_reqs = device_.getBufferMemoryRequirements(buffer_.get());
 
         const vk::MemoryAllocateInfo alloc_info{
-            mem_reqs.size,
-            find_memory_type(physical_device_,
-                             mem_reqs.memoryTypeBits,
-                             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+            .allocationSize = mem_reqs.size,
+            .memoryTypeIndex =
+                find_memory_type(physical_device_,
+                                 mem_reqs.memoryTypeBits,
+                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
 
         memory_ = device_.allocateMemoryUnique(alloc_info);
         device_.bindBufferMemory(buffer_.get(), memory_.get(), 0);
@@ -221,13 +221,13 @@ namespace retro
         const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index_);
         std::array signal_semaphores = {render_finished_semaphore};
 
-        const vk::SubmitInfo submit_info{wait_semaphores.size(),
-                                         wait_semaphores.data(),
-                                         wait_stages.data(),
-                                         1,
-                                         &cmd,
-                                         signal_semaphores.size(),
-                                         signal_semaphores.data()};
+        const vk::SubmitInfo submit_info{.waitSemaphoreCount = wait_semaphores.size(),
+                                         .pWaitSemaphores = wait_semaphores.data(),
+                                         .pWaitDstStageMask = wait_stages.data(),
+                                         .commandBufferCount = 1,
+                                         .pCommandBuffers = &cmd,
+                                         .signalSemaphoreCount = signal_semaphores.size(),
+                                         .pSignalSemaphores = signal_semaphores.data()};
 
         if (device_.graphics_queue().submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
         {
@@ -236,11 +236,11 @@ namespace retro
 
         std::array swapchains = {swapchain_.handle()};
 
-        vk::PresentInfoKHR present_info{signal_semaphores.size(),
-                                        signal_semaphores.data(),
-                                        swapchains.size(),
-                                        swapchains.data(),
-                                        &image_index_};
+        vk::PresentInfoKHR present_info{.waitSemaphoreCount = signal_semaphores.size(),
+                                        .pWaitSemaphores = signal_semaphores.data(),
+                                        .swapchainCount = swapchains.size(),
+                                        .pSwapchains = swapchains.data(),
+                                        .pImageIndices = &image_index_};
 
         if (const auto result = device_.present_queue().presentKHR(&present_info);
             result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
@@ -278,20 +278,20 @@ namespace retro
         auto image_size = static_cast<vk::DeviceSize>(image_data.width * image_data.height * image_data.channels);
         auto image_format = vk::Format::eR8G8B8A8Srgb;
 
-        vk::BufferCreateInfo staging_info{{},
-                                          image_size,
-                                          vk::BufferUsageFlagBits::eTransferSrc,
-                                          vk::SharingMode::eExclusive};
+        vk::BufferCreateInfo staging_info{.size = image_size,
+                                          .usage = vk::BufferUsageFlagBits::eTransferSrc,
+                                          .sharingMode = vk::SharingMode::eExclusive};
 
         auto staging_buffer = device.createBufferUnique(staging_info);
 
         auto mem_req = device.getBufferMemoryRequirements(staging_buffer.get());
 
         vk::MemoryAllocateInfo alloc_info{
-            mem_req.size,
-            find_memory_type(device_.physical_device(),
-                             mem_req.memoryTypeBits,
-                             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+            .allocationSize = mem_req.size,
+            .memoryTypeIndex =
+                find_memory_type(device_.physical_device(),
+                                 mem_req.memoryTypeBits,
+                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
 
         auto staging_memory = device.allocateMemoryUnique(alloc_info);
         device.bindBufferMemory(staging_buffer.get(), staging_memory.get(), 0);
@@ -301,94 +301,35 @@ namespace retro
         device.unmapMemory(staging_memory.get());
 
         vk::ImageCreateInfo image_info{
-            {},
-            vk::ImageType::e2D,
-            image_format,
-            vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
-            1,
-            1,
-            vk::SampleCountFlagBits::e1,
-            vk::ImageTiling::eOptimal,
-            vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-            vk::SharingMode::eExclusive,
-            0,
-            nullptr,
-            vk::ImageLayout::eUndefined};
+            .imageType = vk::ImageType::e2D,
+            .format = image_format,
+            .extent = vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1},
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = vk::SampleCountFlagBits::e1,
+            .tiling = vk::ImageTiling::eOptimal,
+            .usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+            .sharingMode = vk::SharingMode::eExclusive,
+            .initialLayout = vk::ImageLayout::eUndefined};
 
         auto image = device.createImageUnique(image_info);
         auto img_mem_req = device.getImageMemoryRequirements(image.get());
 
-        vk::MemoryAllocateInfo img_alloc_info{img_mem_req.size,
-                                              find_memory_type(device_.physical_device(),
-                                                               img_mem_req.memoryTypeBits,
-                                                               vk::MemoryPropertyFlagBits::eDeviceLocal)};
+        vk::MemoryAllocateInfo img_alloc_info{.allocationSize = img_mem_req.size,
+                                              .memoryTypeIndex =
+                                                  find_memory_type(device_.physical_device(),
+                                                                   img_mem_req.memoryTypeBits,
+                                                                   vk::MemoryPropertyFlagBits::eDeviceLocal)};
 
         auto img_memory = device.allocateMemoryUnique(img_alloc_info);
         device.bindImageMemory(image.get(), img_memory.get(), 0);
 
-        auto cmd = command_pool_.begin_single_time_commands();
-
-        // (a) Layout: Undefined -> TransferDstOptimal
-        vk::ImageMemoryBarrier barrier_to_transfer{
-            {},
-            vk::AccessFlagBits::eTransferWrite,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::QueueFamilyIgnored,
-            vk::QueueFamilyIgnored,
-            image.get(),
-            vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
-
-        cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe,
-                            vk::PipelineStageFlagBits::eTransfer,
-                            {},
-                            0,
-                            nullptr,
-                            0,
-                            nullptr,
-                            1,
-                            &barrier_to_transfer);
-
-        // (b) Copy buffer -> image
-        vk::BufferImageCopy region{
-            0,
-            0,
-            0,
-            vk::ImageSubresourceLayers{vk::ImageAspectFlagBits::eColor, 0, 0, 1},
-            {0, 0, 0},
-            vk::Extent3D{static_cast<uint32>(image_data.width), static_cast<uint32>(image_data.height), 1}};
-
-        cmd.copyBufferToImage(staging_buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, 1, &region);
-
-        // (c) Layout: TransferDstOptimal -> ShaderReadOnlyOptimal
-        vk::ImageMemoryBarrier barrier_to_shader_read{
-            vk::AccessFlagBits::eTransferWrite,
-            vk::AccessFlagBits::eShaderRead,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            vk::QueueFamilyIgnored,
-            vk::QueueFamilyIgnored,
-            image.get(),
-            vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
-
-        cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-                            vk::PipelineStageFlagBits::eFragmentShader,
-                            {},
-                            0,
-                            nullptr,
-                            0,
-                            nullptr,
-                            1,
-                            &barrier_to_shader_read);
-
-        command_pool_.end_single_time_commands(cmd, device_.graphics_queue());
-
-        vk::ImageViewCreateInfo view_info{{},
-                                          image.get(),
-                                          vk::ImageViewType::e2D,
-                                          image_format,
-                                          vk::ComponentMapping{},
-                                          vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+        vk::ImageViewCreateInfo view_info{.image = image.get(),
+                                          .viewType = vk::ImageViewType::e2D,
+                                          .format = image_format,
+                                          .components = vk::ComponentMapping{},
+                                          .subresourceRange =
+                                              vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
 
         vk::UniqueImageView image_view = device.createImageViewUnique(view_info);
 
@@ -402,11 +343,11 @@ namespace retro
 
     vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)
     {
-        vk::ApplicationInfo app_info{"Retro Engine",
-                                     vk::makeVersion(1, 0, 0),
-                                     "Retro Engine",
-                                     vk::makeVersion(1, 0, 0),
-                                     vk::makeApiVersion(0, 1, 2, 0)};
+        vk::ApplicationInfo app_info{.pApplicationName = "Retro Engine",
+                                     .applicationVersion = vk::makeVersion(1, 0, 0),
+                                     .pEngineName = "Retro Engine",
+                                     .engineVersion = vk::makeVersion(1, 0, 0),
+                                     .apiVersion = vk::makeApiVersion(0, 1, 2, 0)};
 
         std::vector<const char *> enabled_layers;
 #ifndef NDEBUG
@@ -430,16 +371,16 @@ namespace retro
 
         std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
 
-        vk::ValidationFeaturesEXT validation_features{static_cast<uint32>(validation_feature_enables.size()),
-                                                      validation_feature_enables.data()};
+        vk::ValidationFeaturesEXT validation_features{.enabledValidationFeatureCount =
+                                                          static_cast<uint32>(validation_feature_enables.size()),
+                                                      .pEnabledValidationFeatures = validation_feature_enables.data()};
 
-        vk::InstanceCreateInfo create_info{{},
-                                           &app_info,
-                                           static_cast<uint32>(enabled_layers.size()),
-                                           enabled_layers.data(),
-                                           static_cast<uint32>(extensions.size()),
-                                           extensions.data(),
-                                           &validation_features};
+        const vk::InstanceCreateInfo create_info{.pNext = &validation_features,
+                                                 .pApplicationInfo = &app_info,
+                                                 .enabledLayerCount = static_cast<uint32>(enabled_layers.size()),
+                                                 .ppEnabledLayerNames = enabled_layers.data(),
+                                                 .enabledExtensionCount = static_cast<uint32>(extensions.size()),
+                                                 .ppEnabledExtensionNames = extensions.data()};
 
         return vk::createInstanceUnique(create_info);
     }
@@ -511,7 +452,12 @@ namespace retro
                                          vk::AccessFlagBits::eColorAttachmentWrite,
                                          vk::DependencyFlagBits::eByRegion};
 
-        vk::RenderPassCreateInfo rp_info{{}, 1, &color_attachment, 1, &subpass, 1, &dependency};
+        vk::RenderPassCreateInfo rp_info{.attachmentCount = 1,
+                                         .pAttachments = &color_attachment,
+                                         .subpassCount = 1,
+                                         .pSubpasses = &subpass,
+                                         .dependencyCount = 1,
+                                         .pDependencies = &dependency};
 
         return device.createRenderPassUnique(rp_info);
     }
@@ -526,17 +472,41 @@ namespace retro
                    {
                        std::array attachments = {image.get()};
 
-                       vk::FramebufferCreateInfo fb_info{{},
-                                                         render_pass,
-                                                         attachments.size(),
-                                                         attachments.data(),
-                                                         swapchain.extent().width,
-                                                         swapchain.extent().height,
-                                                         1};
+                       vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
+                                                         .attachmentCount = attachments.size(),
+                                                         .pAttachments = attachments.data(),
+                                                         .width = swapchain.extent().width,
+                                                         .height = swapchain.extent().height,
+                                                         .layers = 1};
 
                        return device.createFramebufferUnique(fb_info);
                    }) |
                std::ranges::to<std::vector>();
+    }
+
+    vk::UniqueSampler VulkanRenderer2D::create_linear_sampler() const
+    {
+        const auto features = device_.physical_device().getFeatures();
+        const auto props = device_.physical_device().getProperties();
+        const vk::SamplerCreateInfo sampler_info{
+            .magFilter = vk::Filter::eLinear,
+            .minFilter = vk::Filter::eLinear,
+            .mipmapMode = vk::SamplerMipmapMode::eLinear,
+            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+            .mipLodBias = 0.0f,
+            .anisotropyEnable = features.samplerAnisotropy,
+            .maxAnisotropy = features.samplerAnisotropy ? std::min(16.0f, props.limits.maxSamplerAnisotropy) : 1.0f,
+            .compareEnable = vk::False,
+            .compareOp = vk::CompareOp::eAlways,
+            .minLod = 0.0f,
+            .maxLod = 0.0f,
+            .borderColor = vk::BorderColor::eIntOpaqueBlack,
+            .unnormalizedCoordinates = vk::False,
+        };
+
+        return device_.device().createSamplerUnique(sampler_info);
     }
 
     void VulkanRenderer2D::recreate_swapchain()
@@ -566,13 +536,13 @@ namespace retro
         constexpr vk::CommandBufferBeginInfo begin_info{};
 
         cmd.begin(begin_info);
-        vk::ClearValue clear{{0.0f, 0.0f, 0.0f, 1.0f}};
+        vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
 
-        const vk::RenderPassBeginInfo rp_info{render_pass_.get(),
-                                              framebuffers_.at(image_index).get(),
-                                              vk::Rect2D{vk::Offset2D{0, 0}, swapchain_.extent()},
-                                              1,
-                                              &clear};
+        const vk::RenderPassBeginInfo rp_info{.renderPass = render_pass_.get(),
+                                              .framebuffer = framebuffers_.at(image_index).get(),
+                                              .renderArea = vk::Rect2D{vk::Offset2D{0, 0}, swapchain_.extent()},
+                                              .clearValueCount = 1,
+                                              .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
         pipeline_manager_.bind_and_render(cmd, viewport_->size(), sync_.descriptor_pool(current_frame_));

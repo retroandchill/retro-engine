@@ -41,10 +41,6 @@ namespace retro
             return buffers_[index].get();
         }
 
-        vk::CommandBuffer begin_single_time_commands();
-
-        void end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue);
-
       private:
         vk::UniqueCommandPool pool_{nullptr};
         std::vector<vk::UniqueCommandBuffer> buffers_{};

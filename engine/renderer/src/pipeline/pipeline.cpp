@@ -308,7 +308,8 @@ namespace retro
                                   to_vulkan_enum(binding.stages));
         }
 
-        const vk::DescriptorSetLayoutCreateInfo layout_info{{}, static_cast<uint32>(bindings.size()), bindings.data()};
+        const vk::DescriptorSetLayoutCreateInfo layout_info{.bindingCount = static_cast<uint32>(bindings.size()),
+                                                            .pBindings = bindings.data()};
         descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
         std::array layouts = {descriptor_set_layout_.get()};
 
@@ -320,11 +321,11 @@ namespace retro
                                               static_cast<uint32>(size));
         }
 
-        const vk::PipelineLayoutCreateInfo pipeline_layout_info{{},
-                                                                layouts.size(),
-                                                                layouts.data(),
-                                                                static_cast<uint32>(push_constant_ranges.size()),
-                                                                push_constant_ranges.data()};
+        const vk::PipelineLayoutCreateInfo pipeline_layout_info{.setLayoutCount = layouts.size(),
+                                                                .pSetLayouts = layouts.data(),
+                                                                .pushConstantRangeCount =
+                                                                    static_cast<uint32>(push_constant_ranges.size()),
+                                                                .pPushConstantRanges = push_constant_ranges.data()};
         return device.createPipelineLayoutUnique(pipeline_layout_info);
     }
 
@@ -361,80 +362,83 @@ namespace retro
             }
         }
 
-        vk::PipelineVertexInputStateCreateInfo vertex_input_info{{},
-                                                                 static_cast<uint32>(binding_descriptions.size()),
-                                                                 binding_descriptions.data(),
-                                                                 static_cast<uint32>(attribute_descriptions.size()),
-                                                                 attribute_descriptions.data()};
+        vk::PipelineVertexInputStateCreateInfo vertex_input_info{
+            .vertexBindingDescriptionCount = static_cast<uint32>(binding_descriptions.size()),
+            .pVertexBindingDescriptions = binding_descriptions.data(),
+            .vertexAttributeDescriptionCount = static_cast<uint32>(attribute_descriptions.size()),
+            .pVertexAttributeDescriptions = attribute_descriptions.data()};
 
         auto vert_module = create_shader_module(device, shader_layout.vertex_shader);
         auto frag_module = create_shader_module(device, shader_layout.fragment_shader);
 
-        vk::PipelineShaderStageCreateInfo vert_stage{{}, vk::ShaderStageFlagBits::eVertex, vert_module.get(), "main"};
+        vk::PipelineShaderStageCreateInfo vert_stage{.stage = vk::ShaderStageFlagBits::eVertex,
+                                                     .module = vert_module.get(),
+                                                     .pName = "main"};
 
-        vk::PipelineShaderStageCreateInfo frag_stage{{}, vk::ShaderStageFlagBits::eFragment, frag_module.get(), "main"};
+        vk::PipelineShaderStageCreateInfo frag_stage{.stage = vk::ShaderStageFlagBits::eFragment,
+                                                     .module = frag_module.get(),
+                                                     .pName = "main"};
 
         std::array shader_stages = {vert_stage, frag_stage};
 
-        vk::PipelineInputAssemblyStateCreateInfo input_assembly{{}, vk::PrimitiveTopology::eTriangleList, vk::False};
+        vk::PipelineInputAssemblyStateCreateInfo input_assembly{.topology = vk::PrimitiveTopology::eTriangleList,
+                                                                .primitiveRestartEnable = vk::False};
 
-        vk::Viewport viewport{0.0f,
-                              0.0f,
-                              static_cast<float>(swapchain.extent().width),
-                              static_cast<float>(swapchain.extent().height),
-                              0.0f,
-                              1.0f};
+        vk::Viewport viewport{.x = 0.0f,
+                              .y = 0.0f,
+                              .width = static_cast<float>(swapchain.extent().width),
+                              .height = static_cast<float>(swapchain.extent().height),
+                              .minDepth = 0.0f,
+                              .maxDepth = 1.0f};
 
-        vk::Rect2D scissor{{0, 0}, swapchain.extent()};
+        vk::Rect2D scissor{.offset = {.x = 0, .y = 0}, .extent = swapchain.extent()};
 
-        vk::PipelineViewportStateCreateInfo viewport_state{{}, 1, &viewport, 1, &scissor};
+        vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1,
+                                                           .pViewports = &viewport,
+                                                           .scissorCount = 1,
+                                                           .pScissors = &scissor};
 
-        vk::PipelineRasterizationStateCreateInfo rasterizer{{},
-                                                            vk::False,
-                                                            vk::False,
-                                                            vk::PolygonMode::eFill,
-                                                            vk::CullModeFlagBits::eBack,
-                                                            vk::FrontFace::eCounterClockwise,
-                                                            vk::False,
-                                                            0.0f,
-                                                            0.0f,
-                                                            0.0f,
-                                                            1.0f};
+        vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False,
+                                                            .rasterizerDiscardEnable = vk::False,
+                                                            .polygonMode = vk::PolygonMode::eFill,
+                                                            .cullMode = vk::CullModeFlagBits::eBack,
+                                                            .frontFace = vk::FrontFace::eCounterClockwise,
+                                                            .depthBiasEnable = vk::False,
+                                                            .depthBiasConstantFactor = 0.0f,
+                                                            .depthBiasClamp = 0.0f,
+                                                            .depthBiasSlopeFactor = 0.0f,
+                                                            .lineWidth = 1.0f};
 
-        vk::PipelineMultisampleStateCreateInfo multisampling{{}, vk::SampleCountFlagBits::e1, vk::False};
+        vk::PipelineMultisampleStateCreateInfo multisampling{.rasterizationSamples = vk::SampleCountFlagBits::e1,
+                                                             .sampleShadingEnable = vk::False};
 
         vk::PipelineColorBlendAttachmentState color_blend_attachment{
-            vk::False,
-            vk::BlendFactor::eOne,
-            vk::BlendFactor::eZero,
-            vk::BlendOp::eAdd,
-            vk::BlendFactor::eOne,
-            vk::BlendFactor::eZero,
-            vk::BlendOp::eAdd,
-            vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
-                vk::ColorComponentFlagBits::eA};
+            .blendEnable = vk::False,
+            .srcColorBlendFactor = vk::BlendFactor::eOne,
+            .dstColorBlendFactor = vk::BlendFactor::eZero,
+            .colorBlendOp = vk::BlendOp::eAdd,
+            .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+            .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+            .alphaBlendOp = vk::BlendOp::eAdd,
+            .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+                              vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
-        vk::PipelineColorBlendStateCreateInfo color_blending{{},
-                                                             vk::False,
-                                                             vk::LogicOp::eCopy,
-                                                             1,
-                                                             &color_blend_attachment};
+        vk::PipelineColorBlendStateCreateInfo color_blending{.logicOpEnable = vk::False,
+                                                             .logicOp = vk::LogicOp::eCopy,
+                                                             .attachmentCount = 1,
+                                                             .pAttachments = &color_blend_attachment};
 
-        vk::GraphicsPipelineCreateInfo pipeline_info{{},
-                                                     static_cast<uint32>(shader_stages.size()),
-                                                     shader_stages.data(),
-                                                     &vertex_input_info,
-                                                     &input_assembly,
-                                                     nullptr,
-                                                     &viewport_state,
-                                                     &rasterizer,
-                                                     &multisampling,
-                                                     nullptr,
-                                                     &color_blending,
-                                                     nullptr,
-                                                     layout,
-                                                     render_pass,
-                                                     0};
+        vk::GraphicsPipelineCreateInfo pipeline_info{.stageCount = static_cast<uint32>(shader_stages.size()),
+                                                     .pStages = shader_stages.data(),
+                                                     .pVertexInputState = &vertex_input_info,
+                                                     .pInputAssemblyState = &input_assembly,
+                                                     .pViewportState = &viewport_state,
+                                                     .pRasterizationState = &rasterizer,
+                                                     .pMultisampleState = &multisampling,
+                                                     .pColorBlendState = &color_blending,
+                                                     .layout = layout,
+                                                     .renderPass = render_pass,
+                                                     .subpass = 0};
 
         auto [result, pipeline] = device.createGraphicsPipelineUnique(nullptr, pipeline_info);
         if (result != vk::Result::eSuccess)
@@ -456,7 +460,7 @@ namespace retro
             throw std::runtime_error{"SPIR-V file size is not a multiple of 4 bytes"};
         }
 
-        const vk::ShaderModuleCreateInfo info{{}, bytes.size(), code};
+        const vk::ShaderModuleCreateInfo info{.codeSize = bytes.size(), .pCode = code};
         return device.createShaderModuleUnique(info);
     }
 

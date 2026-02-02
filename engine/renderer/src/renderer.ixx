@@ -113,6 +113,7 @@ namespace retro
         static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
                                                                       vk::RenderPass render_pass,
                                                                       const VulkanSwapchain &swapchain);
+        vk::UniqueSampler create_linear_sampler() const;
 
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, uint32 image_index);

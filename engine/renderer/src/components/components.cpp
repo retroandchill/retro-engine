@@ -23,24 +23,18 @@ namespace retro
             throw std::runtime_error{"VulkanCommandPool: invalid config"};
         }
 
-        vk::CommandPoolCreateInfo pool_info{vk::CommandPoolCreateFlagBits::eResetCommandBuffer, cfg.queue_family_idx};
+        vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                            .queueFamilyIndex = cfg.queue_family_idx};
 
         pool_ = cfg.device.createCommandPoolUnique(pool_info);
 
         buffers_.resize(cfg.buffer_count);
 
-        vk::CommandBufferAllocateInfo alloc_info{pool_.get(), vk::CommandBufferLevel::ePrimary, cfg.buffer_count};
+        vk::CommandBufferAllocateInfo alloc_info{.commandPool = pool_.get(),
+                                                 .level = vk::CommandBufferLevel::ePrimary,
+                                                 .commandBufferCount = cfg.buffer_count};
 
         buffers_ = cfg.device.allocateCommandBuffersUnique(alloc_info);
-    }
-
-    vk::CommandBuffer VulkanCommandPool::begin_single_time_commands()
-    {
-        return vk::CommandBuffer{};
-    }
-
-    void VulkanCommandPool::end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue)
-    {
     }
 
     VulkanDevice::VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface)
@@ -144,19 +138,18 @@ namespace retro
 
         for (uint32 family : unique_families)
         {
-            queue_infos.emplace_back(vk::DeviceQueueCreateFlags{}, family, 1, &queue_priority);
+            queue_infos.emplace_back(vk::DeviceQueueCreateInfo{.queueFamilyIndex = family,
+                                                               .queueCount = 1,
+                                                               .pQueuePriorities = &queue_priority});
         }
 
         vk::PhysicalDeviceFeatures device_features{}; // enable specific features as needed
 
-        vk::DeviceCreateInfo create_info{{},
-                                         static_cast<uint32>(queue_infos.size()),
-                                         queue_infos.data(),
-                                         0,
-                                         nullptr,
-                                         DEVICE_EXTENSIONS.size(),
-                                         DEVICE_EXTENSIONS.data(),
-                                         &device_features};
+        vk::DeviceCreateInfo create_info{.queueCreateInfoCount = static_cast<uint32>(queue_infos.size()),
+                                         .pQueueCreateInfos = queue_infos.data(),
+                                         .enabledExtensionCount = DEVICE_EXTENSIONS.size(),
+                                         .ppEnabledExtensionNames = DEVICE_EXTENSIONS.data(),
+                                         .pEnabledFeatures = &device_features};
 
         return physical_device.createDeviceUnique(create_info, nullptr);
     }
@@ -175,10 +168,7 @@ namespace retro
                                                       capabilities.minImageExtent.height,
                                                       capabilities.maxImageExtent.height)};
 
-        // 2) Choose surface format
-        uint32 format_count = 0;
         auto formats = config.physical_device.getSurfaceFormatsKHR(config.surface);
-        ;
         if (formats.size() == 0)
         {
             throw std::runtime_error{"VulkanSwapchain: no surface formats"};
@@ -212,14 +202,13 @@ namespace retro
 
         // 5) Create swapchain
         vk::SwapchainCreateInfoKHR ci{
-            {},
-            config.surface,
-            image_count,
-            chosen_format.format,
-            chosen_format.colorSpace,
-            actual_extent,
-            1,
-            vk::ImageUsageFlagBits::eColorAttachment,
+            .surface = config.surface,
+            .minImageCount = image_count,
+            .imageFormat = chosen_format.format,
+            .imageColorSpace = chosen_format.colorSpace,
+            .imageExtent = actual_extent,
+            .imageArrayLayers = 1,
+            .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         };
 
         std::array queue_family_indices = {config.graphics_family, config.present_family};
@@ -256,23 +245,23 @@ namespace retro
 
     void VulkanSwapchain::create_image_views(const vk::Device device)
     {
-        image_views_ = images_ |
-                       std::views::transform(
-                           [device, this](const vk::Image image)
-                           {
-                               return device.createImageViewUnique(vk::ImageViewCreateInfo{
-                                   {},
-                                   image,
-                                   vk::ImageViewType::e2D,
-                                   format_,
-                                   vk::ComponentMapping{vk::ComponentSwizzle::eIdentity,
-                                                        vk::ComponentSwizzle::eIdentity,
-                                                        vk::ComponentSwizzle::eIdentity,
-                                                        vk::ComponentSwizzle::eIdentity},
-                                   vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
-                               });
-                           }) |
-                       std::ranges::to<std::vector>();
+        image_views_ =
+            images_ |
+            std::views::transform(
+                [device, this](const vk::Image image)
+                {
+                    return device.createImageViewUnique(vk::ImageViewCreateInfo{
+                        .image = image,
+                        .viewType = vk::ImageViewType::e2D,
+                        .format = format_,
+                        .components = vk::ComponentMapping{vk::ComponentSwizzle::eIdentity,
+                                                           vk::ComponentSwizzle::eIdentity,
+                                                           vk::ComponentSwizzle::eIdentity,
+                                                           vk::ComponentSwizzle::eIdentity},
+                        .subresourceRange = vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
+                    });
+                }) |
+            std::ranges::to<std::vector>();
     }
 
     VulkanSyncObjects::VulkanSyncObjects(const SyncConfig &cfg)
@@ -289,10 +278,10 @@ namespace retro
 
         constexpr vk::SemaphoreCreateInfo sem_info{};
 
-        constexpr vk::FenceCreateInfo fence_info{vk::FenceCreateFlagBits::eSignaled};
+        constexpr vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
 
         vk::DescriptorPoolSize pool_size{vk::DescriptorType::eStorageBuffer, 256};
-        const vk::DescriptorPoolCreateInfo pool_info{{}, 256, 1, &pool_size};
+        const vk::DescriptorPoolCreateInfo pool_info{.maxSets = 256, .poolSizeCount = 1, .pPoolSizes = &pool_size};
 
         for (size_t i = 0; i < cfg.frames_in_flight; ++i)
         {
