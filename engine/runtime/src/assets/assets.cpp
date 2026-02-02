@@ -84,6 +84,7 @@ namespace retro
 
     void AssetManager::on_engine_shutdown()
     {
+        std::unique_lock lock{asset_cache_mutex_};
         for (auto *asset : asset_cache_ | std::views::values)
         {
             asset->on_engine_shutdown();

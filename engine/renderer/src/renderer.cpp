@@ -492,8 +492,6 @@ namespace retro
 
     vk::UniqueSampler VulkanRenderer2D::create_linear_sampler() const
     {
-        const auto features = device_.physical_device().getFeatures();
-        const auto props = device_.physical_device().getProperties();
         const vk::SamplerCreateInfo sampler_info{
             .magFilter = vk::Filter::eLinear,
             .minFilter = vk::Filter::eLinear,
