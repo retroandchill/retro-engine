@@ -17,96 +17,10 @@ module retro.renderer;
 
 import retro.logging;
 import vulkan_hpp;
+import :data.texture_render_data;
 
 namespace retro
 {
-    namespace
-    {
-        std::uint32_t find_memory_type(vk::PhysicalDevice physical_device,
-                                       const std::uint32_t type_filter,
-                                       vk::MemoryPropertyFlags properties)
-        {
-            const auto mem_properties = physical_device.getMemoryProperties();
-
-            for (std::uint32_t i = 0; i < mem_properties.memoryTypeCount; ++i)
-            {
-                if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
-                {
-                    return i;
-                }
-            }
-
-            throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
-        }
-    } // namespace
-
-    std::unique_ptr<VulkanBufferManager> VulkanBufferManager::instance_{nullptr};
-
-    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size)
-        : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
-    {
-        const vk::BufferCreateInfo buffer_info{
-            .size = pool_size_,
-            .usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
-                     vk::BufferUsageFlagBits::eStorageBuffer,
-        };
-        buffer_ = device_.createBufferUnique(buffer_info);
-
-        const auto mem_reqs = device_.getBufferMemoryRequirements(buffer_.get());
-
-        const vk::MemoryAllocateInfo alloc_info{
-            .allocationSize = mem_reqs.size,
-            .memoryTypeIndex =
-                find_memory_type(physical_device_,
-                                 mem_reqs.memoryTypeBits,
-                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
-
-        memory_ = device_.allocateMemoryUnique(alloc_info);
-        device_.bindBufferMemory(buffer_.get(), memory_.get(), 0);
-        mapped_ptr_ = device_.mapMemory(memory_.get(), 0, pool_size_);
-    }
-
-    void VulkanBufferManager::initialize(const VulkanDevice &device, const std::size_t pool_size)
-    {
-        assert(instance_ == nullptr);
-        instance_.reset(new VulkanBufferManager{device, pool_size});
-    }
-
-    void VulkanBufferManager::shutdown()
-    {
-        assert(instance_ != nullptr);
-        instance_.reset();
-    }
-
-    VulkanBufferManager &VulkanBufferManager::instance()
-    {
-        assert(instance_ != nullptr);
-        return *instance_;
-    }
-
-    TransientAllocation VulkanBufferManager::allocate_transient(const std::size_t size, vk::BufferUsageFlags usage)
-    {
-        // Align offset (e.g., 16 bytes for safety)
-        current_offset_ = current_offset_ + 15 & ~15;
-
-        if (current_offset_ + size > pool_size_)
-        {
-            throw std::bad_alloc{};
-        }
-
-        const TransientAllocation allocation{.buffer = buffer_.get(),
-                                             .mapped_data = static_cast<std::byte *>(mapped_ptr_) + current_offset_,
-                                             .offset = current_offset_};
-
-        current_offset_ += size;
-        return allocation;
-    }
-
-    void VulkanBufferManager::reset()
-    {
-        current_offset_ = 0;
-    }
-
     VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> viewport)
         : viewport_{std::move(viewport)}, instance_{create_instance(*viewport_)},
           surface_{create_surface(*viewport_, instance_.get())}, device_{instance_.get(), surface_.get()},
@@ -225,7 +139,7 @@ namespace retro
 
         current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
         pipeline_manager_.clear_draw_queue();
-        VulkanBufferManager::instance().reset();
+        buffer_manager_.reset();
     }
 
     Vector2u VulkanRenderer2D::viewport_size() const
@@ -551,7 +465,10 @@ namespace retro
                                               .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, viewport_->size(), sync_.descriptor_pool(current_frame_));
+        pipeline_manager_.bind_and_render(cmd,
+                                          viewport_->size(),
+                                          sync_.descriptor_pool(current_frame_),
+                                          buffer_manager_);
         cmd.endRenderPass();
         cmd.end();
     }

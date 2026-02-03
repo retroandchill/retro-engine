@@ -16,6 +16,7 @@ import :components.sync;
 import :components.command_pool;
 import :components.device;
 import :components.swapchain;
+import :components.buffer_manager;
 import :components.pipeline;
 import retro.core.di;
 import retro.platform.window;
@@ -24,95 +25,6 @@ import std;
 
 namespace retro
 {
-
-    export struct TransientAllocation
-    {
-        vk::Buffer buffer;
-        void *mapped_data;
-        size_t offset;
-    };
-
-    class RETRO_API VulkanBufferManager
-    {
-        explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size);
-
-      public:
-        constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
-
-        static void initialize(const VulkanDevice &device, std::size_t pool_size = DEFAULT_POOL_SIZE);
-
-        static void shutdown();
-
-        static VulkanBufferManager &instance();
-
-        TransientAllocation allocate_transient(std::size_t size, vk::BufferUsageFlags usage);
-
-        void reset();
-
-      private:
-        vk::PhysicalDevice physical_device_;
-        vk::Device device_;
-        vk::UniqueBuffer buffer_;
-        vk::UniqueDeviceMemory memory_;
-        void *mapped_ptr_ = nullptr;
-        std::size_t pool_size_{DEFAULT_POOL_SIZE};
-        std::size_t current_offset_ = 0;
-
-        static std::unique_ptr<VulkanBufferManager> instance_;
-    };
-
-    class VulkanBufferManagerScope
-    {
-      public:
-        explicit inline VulkanBufferManagerScope(const VulkanDevice &device,
-                                                 const std::size_t pool_size = VulkanBufferManager::DEFAULT_POOL_SIZE)
-        {
-            VulkanBufferManager::initialize(device, pool_size);
-        }
-
-        VulkanBufferManagerScope(const VulkanBufferManagerScope &) = delete;
-        VulkanBufferManagerScope(VulkanBufferManagerScope &&) noexcept = delete;
-
-        inline ~VulkanBufferManagerScope()
-        {
-            VulkanBufferManager::shutdown();
-        }
-
-        VulkanBufferManagerScope &operator=(const VulkanBufferManagerScope &) = delete;
-        VulkanBufferManagerScope &operator=(VulkanBufferManagerScope &&) noexcept = delete;
-    };
-
-    class VulkanTextureRenderData final : public TextureRenderData
-    {
-      public:
-        inline VulkanTextureRenderData(vk::UniqueImage image,
-                                       vk::UniqueDeviceMemory memory,
-                                       vk::UniqueImageView view,
-                                       vk::Sampler sampler,
-                                       std::int32_t width,
-                                       std::int32_t height) noexcept
-            : TextureRenderData{width, height}, memory_{std::move(memory)}, image_{std::move(image)},
-              view_{std::move(view)}, sampler_{sampler}
-        {
-        }
-
-        [[nodiscard]] inline vk::ImageView view() const noexcept
-        {
-            return view_.get();
-        }
-
-        [[nodiscard]] inline vk::Sampler sampler() const noexcept
-        {
-            return sampler_;
-        }
-
-      private:
-        vk::UniqueImage image_;
-        vk::UniqueDeviceMemory memory_;
-        vk::UniqueImageView view_;
-        vk::Sampler sampler_;
-    };
-
     export class RETRO_API VulkanRenderer2D final : public Renderer2D
     {
       public:
@@ -168,7 +80,7 @@ namespace retro
         vk::UniqueInstance instance_;
         vk::UniqueSurfaceKHR surface_;
         VulkanDevice device_;
-        VulkanBufferManagerScope buffer_manager_;
+        VulkanBufferManager buffer_manager_;
         VulkanSwapchain swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;

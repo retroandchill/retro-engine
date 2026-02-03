@@ -10,6 +10,7 @@ import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
 import vulkan_hpp;
 import :components.swapchain;
+import :components.buffer_manager;
 
 namespace retro
 {
@@ -29,7 +30,10 @@ namespace retro
 
         void recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass);
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size, vk::DescriptorPool descriptor_pool);
+        void bind_and_render(vk::CommandBuffer cmd,
+                             Vector2u viewport_size,
+                             vk::DescriptorPool descriptor_pool,
+                             VulkanBufferManager &buffer_manager);
 
       private:
         [[nodiscard]] vk::UniquePipelineLayout create_pipeline_layout(vk::Device device);
@@ -64,7 +68,10 @@ namespace retro
                              vk::RenderPass render_pass);
         void destroy_pipeline(std::type_index type);
 
-        void bind_and_render(vk::CommandBuffer cmd, Vector2u viewport_size, vk::DescriptorPool descriptor_pool);
+        void bind_and_render(vk::CommandBuffer cmd,
+                             Vector2u viewport_size,
+                             vk::DescriptorPool descriptor_pool,
+                             VulkanBufferManager &buffer_manager);
         void clear_draw_queue();
 
       private:

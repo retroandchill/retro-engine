@@ -18,6 +18,7 @@ import retro.core.containers.inline_list;
 import retro.core.functional.overload;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
+import :data.texture_render_data;
 
 namespace retro
 {
@@ -108,32 +109,30 @@ namespace retro
                                    vk::PipelineLayout pipeline_layout,
                                    vk::DescriptorSetLayout descriptor_set_layout,
                                    vk::DescriptorPool descriptor_pool,
+                                   VulkanBufferManager &buffer_manager,
                                    const Vector2u viewport_size)
             : device_{device}, pipeline_{pipeline}, cmd_(cmd), pipeline_layout_{pipeline_layout},
               descriptor_set_layout_{descriptor_set_layout}, descriptor_pool_{descriptor_pool},
-              viewport_size_(viewport_size)
+              buffer_manager_(buffer_manager), viewport_size_(viewport_size)
         {
         }
 
         void draw(const std::span<const DrawCommand> draw_commands, const ShaderLayout &layout) override
         {
             cmd_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
-            auto &buffer_manager = VulkanBufferManager::instance();
 
             for (auto &batch : draw_commands)
             {
-                queue_draw_command(buffer_manager, batch, layout);
+                queue_draw_command(batch, layout);
             }
         }
 
       private:
-        void queue_draw_command(VulkanBufferManager &buffer_manager,
-                                const DrawCommand &command,
-                                const ShaderLayout &layout) const
+        void queue_draw_command(const DrawCommand &command, const ShaderLayout &layout) const
         {
-            bind_vertex_buffers(buffer_manager, command, layout);
-            bind_index_buffer(buffer_manager, command);
-            bind_descriptor_sets(buffer_manager, command, layout);
+            bind_vertex_buffers(command, layout);
+            bind_index_buffer(command);
+            bind_descriptor_sets(command, layout);
             bind_push_constants(command, layout);
 
             if (command.index_buffer.empty())
@@ -153,9 +152,7 @@ namespace retro
             }
         }
 
-        void bind_vertex_buffers(VulkanBufferManager &buffer_manager,
-                                 const DrawCommand &command,
-                                 const ShaderLayout &layout) const
+        void bind_vertex_buffers(const DrawCommand &command, const ShaderLayout &layout) const
         {
             if (layout.vertex_bindings.empty())
                 return;
@@ -170,8 +167,8 @@ namespace retro
                 {
                     auto &vertex_buffer = command.vertex_buffers[vertex_binding];
                     auto [buffer, mapped_data, offset] =
-                        buffer_manager.allocate_transient(static_cast<std::uint32_t>(vertex_buffer.size()),
-                                                          vk::BufferUsageFlagBits::eVertexBuffer);
+                        buffer_manager_.allocate_transient(static_cast<std::uint32_t>(vertex_buffer.size()),
+                                                           vk::BufferUsageFlagBits::eVertexBuffer);
                     std::memcpy(mapped_data, vertex_buffer.data(), vertex_buffer.size());
                     vertex_buffers.push_back(buffer);
                     offsets.push_back(offset);
@@ -181,8 +178,8 @@ namespace retro
                 {
                     auto &instance_buffer = command.instance_buffers[instance_binding];
                     auto [buffer, mapped_data, offset] =
-                        buffer_manager.allocate_transient(static_cast<std::uint32_t>(instance_buffer.size()),
-                                                          vk::BufferUsageFlagBits::eVertexBuffer);
+                        buffer_manager_.allocate_transient(static_cast<std::uint32_t>(instance_buffer.size()),
+                                                           vk::BufferUsageFlagBits::eVertexBuffer);
                     std::memcpy(mapped_data, instance_buffer.data(), instance_buffer.size());
                     vertex_buffers.push_back(buffer);
                     offsets.push_back(offset);
@@ -193,9 +190,7 @@ namespace retro
             cmd_.bindVertexBuffers(0, vertex_buffers, offsets);
         }
 
-        void bind_descriptor_sets(VulkanBufferManager &buffer_manager,
-                                  const DrawCommand &command,
-                                  const ShaderLayout &layout) const
+        void bind_descriptor_sets(const DrawCommand &command, const ShaderLayout &layout) const
         {
             if (layout.descriptor_bindings.empty())
                 return;
@@ -220,7 +215,7 @@ namespace retro
 
                 std::visit(Overload{[&](const std::span<const std::byte> descriptor_data)
                                     {
-                                        auto [buffer, mapped_data, offset] = buffer_manager.allocate_transient(
+                                        auto [buffer, mapped_data, offset] = buffer_manager_.allocate_transient(
                                             static_cast<std::uint32_t>(descriptor_data.size()),
                                             vk::BufferUsageFlagBits::eStorageBuffer);
                                         write_set.descriptorType = vk::DescriptorType::eStorageBuffer;
@@ -263,14 +258,14 @@ namespace retro
                                     nullptr);
         }
 
-        void bind_index_buffer(VulkanBufferManager &buffer_manager, const DrawCommand &command) const
+        void bind_index_buffer(const DrawCommand &command) const
         {
             auto &index_buffer = command.index_buffer;
             if (index_buffer.empty())
                 return;
             auto [buffer, mapped_data, offset] =
-                buffer_manager.allocate_transient(static_cast<std::uint32_t>(index_buffer.size()),
-                                                  vk::BufferUsageFlagBits::eIndexBuffer);
+                buffer_manager_.allocate_transient(static_cast<std::uint32_t>(index_buffer.size()),
+                                                   vk::BufferUsageFlagBits::eIndexBuffer);
             std::memcpy(mapped_data, index_buffer.data(), index_buffer.size());
             cmd_.bindIndexBuffer(buffer, offset, vk::IndexType::eUint32);
         }
@@ -293,6 +288,7 @@ namespace retro
         vk::PipelineLayout pipeline_layout_{};
         vk::DescriptorSetLayout descriptor_set_layout_{};
         vk::DescriptorPool descriptor_pool_{};
+        VulkanBufferManager &buffer_manager_;
         Vector2u viewport_size_{};
     };
 
@@ -312,7 +308,8 @@ namespace retro
 
     void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
                                                const Vector2u viewport_size,
-                                               const vk::DescriptorPool descriptor_pool)
+                                               const vk::DescriptorPool descriptor_pool,
+                                               VulkanBufferManager &buffer_manager)
     {
         VulkanRenderContext context{device_,
                                     graphics_pipeline_.get(),
@@ -320,6 +317,7 @@ namespace retro
                                     pipeline_layout_.get(),
                                     descriptor_set_layout_.get(),
                                     descriptor_pool,
+                                    buffer_manager,
                                     viewport_size};
         pipeline_->execute(context);
     }
@@ -523,11 +521,12 @@ namespace retro
 
     void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd,
                                                 const Vector2u viewport_size,
-                                                vk::DescriptorPool descriptor_pool)
+                                                vk::DescriptorPool descriptor_pool,
+                                                VulkanBufferManager &buffer_manager)
     {
         for (auto &pipeline : pipelines_)
         {
-            pipeline.bind_and_render(cmd, viewport_size, descriptor_pool);
+            pipeline.bind_and_render(cmd, viewport_size, descriptor_pool, buffer_manager);
         }
     }
 

@@ -41,28 +41,31 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
         COMMENT "Copying compiled shaders to runtime directory"
 )
 
-set(RETRO_RENDER_SOURCES src/renderer.cpp
+set(RETRO_RENDERER_SOURCES src/renderer.cpp
         src/components/sync.cpp
         src/components/pipeline.cpp
         src/components/command_pool.cpp
         src/components/device.cpp
         src/components/swapchain.cpp
+        src/components/buffer_manager.cpp
 )
 
-set(RETRO_RENDER_HEADERS )
+set(RETRO_RENDERER_HEADERS )
 
-set(RETRO_RENDER_MODULES src/renderer.ixx
+set(RETRO_RENDERER_MODULES src/renderer.ixx
         src/components/sync.ixx
         src/components/pipeline.ixx
         src/components/command_pool.ixx
         src/components/device.ixx
         src/components/swapchain.ixx
+        src/components/buffer_manager.ixx
+        src/data/texture_render_data.ixx
 )
 
 add_library(retro_renderer
-        ${RETRO_RENDER_SOURCES}
-        ${RETRO_RENDER_MODULES}
-        ${RETRO_RENDER_HEADERS}
+        ${RETRO_RENDERER_SOURCES}
+        ${RETRO_RENDERER_MODULES}
+        ${RETRO_RENDERER_HEADERS}
 )
 
 target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -75,7 +78,7 @@ endif()
 
 target_sources(retro_renderer PUBLIC
         FILE_SET CXX_MODULES FILES
-        ${RETRO_RENDER_MODULES}
+        ${RETRO_RENDERER_MODULES}
         )
 
 target_link_libraries(retro_renderer
