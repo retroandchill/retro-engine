@@ -10,14 +10,13 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-#include <cassert>
 #include <SDL3/SDL_vulkan.h>
 
-module retro.renderer;
+module retro.renderer.vulkan.renderer;
 
 import retro.logging;
 import vulkan_hpp;
-import :data.texture_render_data;
+import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {
@@ -566,9 +565,4 @@ namespace retro
         cmd.pipelineBarrier(src_stage, dst_stage, {}, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport)
-    {
-        services.add_singleton(std::move(viewport));
-        services.add_singleton<Renderer2D, VulkanRenderer2D>();
-    }
 } // namespace retro

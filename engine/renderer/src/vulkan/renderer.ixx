@@ -4,20 +4,17 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
+export module retro.renderer.vulkan.renderer;
 
-#include "retro/core/exports.h"
-
-export module retro.renderer;
-
+import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
-import :components.sync;
-import :components.command_pool;
-import :components.device;
-import :components.swapchain;
-import :components.buffer_manager;
-import :components.pipeline;
+import retro.renderer.vulkan.components.sync;
+import retro.renderer.vulkan.components.command_pool;
+import retro.renderer.vulkan.components.device;
+import retro.renderer.vulkan.components.swapchain;
+import retro.renderer.vulkan.components.buffer_manager;
+import retro.renderer.vulkan.components.pipeline;
 import retro.core.di;
 import retro.platform.window;
 import vulkan_hpp;
@@ -25,7 +22,7 @@ import std;
 
 namespace retro
 {
-    export class RETRO_API VulkanRenderer2D final : public Renderer2D
+    export class VulkanRenderer2D final : public Renderer2D
     {
       public:
         using Dependencies = TypeList<Window>;
@@ -94,6 +91,4 @@ namespace retro
 
         static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     };
-
-    export RETRO_API void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport);
 } // namespace retro

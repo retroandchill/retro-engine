@@ -4,13 +4,13 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer:components.device;
+export module retro.renderer.vulkan.components.device;
 
 import vulkan_hpp;
 
 namespace retro
 {
-    class VulkanDevice
+    export class VulkanDevice
     {
       public:
         VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface);

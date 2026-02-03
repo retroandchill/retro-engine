@@ -4,17 +4,17 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer:components.pipeline;
+export module retro.renderer.vulkan.components.pipeline;
 
 import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
 import vulkan_hpp;
-import :components.swapchain;
-import :components.buffer_manager;
+import retro.renderer.vulkan.components.swapchain;
+import retro.renderer.vulkan.components.buffer_manager;
 
 namespace retro
 {
-    class VulkanRenderPipeline
+    export class VulkanRenderPipeline
     {
       public:
         inline VulkanRenderPipeline(std::shared_ptr<RenderPipeline> pipeline,
@@ -52,7 +52,7 @@ namespace retro
         vk::UniquePipeline graphics_pipeline_;
     };
 
-    class VulkanPipelineManager
+    export class VulkanPipelineManager
     {
       public:
         explicit inline VulkanPipelineManager(const vk::Device device)

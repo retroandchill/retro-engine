@@ -41,31 +41,37 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
         COMMENT "Copying compiled shaders to runtime directory"
 )
 
-set(RETRO_RENDERER_SOURCES src/renderer.cpp
-        src/components/sync.cpp
-        src/components/pipeline.cpp
-        src/components/command_pool.cpp
-        src/components/device.cpp
-        src/components/swapchain.cpp
-        src/components/buffer_manager.cpp
+set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
+        src/vulkan/components/sync.cpp
+        src/vulkan/components/pipeline.cpp
+        src/vulkan/components/command_pool.cpp
+        src/vulkan/components/device.cpp
+        src/vulkan/components/swapchain.cpp
+        src/vulkan/components/buffer_manager.cpp
+        src/services.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
 
-set(RETRO_RENDERER_MODULES src/renderer.ixx
-        src/components/sync.ixx
-        src/components/pipeline.ixx
-        src/components/command_pool.ixx
-        src/components/device.ixx
-        src/components/swapchain.ixx
-        src/components/buffer_manager.ixx
-        src/data/texture_render_data.ixx
+set(RETRO_RENDERER_PUBLIC_MODULES
+        src/services.ixx
 )
+
+set(RETRO_RENDERER_PRIVATE_MODULES
+        src/vulkan/renderer.ixx
+        src/vulkan/components/sync.ixx
+        src/vulkan/components/pipeline.ixx
+        src/vulkan/components/command_pool.ixx
+        src/vulkan/components/device.ixx
+        src/vulkan/components/swapchain.ixx
+        src/vulkan/components/buffer_manager.ixx
+        src/vulkan/data/texture_render_data.ixx)
 
 add_library(retro_renderer
         ${RETRO_RENDERER_SOURCES}
-        ${RETRO_RENDERER_MODULES}
         ${RETRO_RENDERER_HEADERS}
+        ${RETRO_RENDERER_PUBLIC_MODULES}
+        ${RETRO_RENDERER_PRIVATE_MODULES}
 )
 
 target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -77,9 +83,16 @@ if(NOT RETRO_BUILD_SHARED)
 endif()
 
 target_sources(retro_renderer PUBLIC
-        FILE_SET CXX_MODULES FILES
-        ${RETRO_RENDERER_MODULES}
+        FILE_SET retro_renderer_public
+        TYPE CXX_MODULES FILES
+        ${RETRO_RENDERER_PUBLIC_MODULES}
         )
+
+target_sources(retro_renderer PRIVATE
+        FILE_SET retro_renderer_private
+        TYPE CXX_MODULES FILES
+        ${RETRO_RENDERER_PRIVATE_MODULES}
+)
 
 target_link_libraries(retro_renderer
         PUBLIC

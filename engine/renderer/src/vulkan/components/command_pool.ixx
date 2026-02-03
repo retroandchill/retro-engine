@@ -4,20 +4,20 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer:components.command_pool;
+export module retro.renderer.vulkan.components.command_pool;
 
 import vulkan_hpp;
 
 namespace retro
 {
-    struct CommandPoolConfig
+    export struct CommandPoolConfig
     {
         vk::Device device = nullptr;
         std::uint32_t queue_family_idx = vk::QueueFamilyIgnored;
         std::uint32_t buffer_count = 0; // typically MAX_FRAMES_IN_FLIGHT
     };
 
-    class VulkanCommandPool
+    export class VulkanCommandPool
     {
       public:
         explicit VulkanCommandPool(const CommandPoolConfig &cfg);

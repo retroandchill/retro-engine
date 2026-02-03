@@ -10,7 +10,7 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-module retro.renderer;
+module retro.renderer.vulkan.components.buffer_manager;
 
 namespace retro
 {

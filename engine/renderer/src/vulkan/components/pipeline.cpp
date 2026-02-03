@@ -10,7 +10,7 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-module retro.renderer;
+module retro.renderer.vulkan.components.pipeline;
 
 import vulkan_hpp;
 import retro.core.io.file_stream;
@@ -18,7 +18,8 @@ import retro.core.containers.inline_list;
 import retro.core.functional.overload;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
-import :data.texture_render_data;
+import retro.runtime.rendering.texture_render_data;
+import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {

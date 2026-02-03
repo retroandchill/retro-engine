@@ -4,14 +4,14 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer:data.texture_render_data;
+export module retro.renderer.vulkan.data.texture_render_data;
 
 import vulkan_hpp;
 import retro.runtime.rendering.texture_render_data;
 
 namespace retro
 {
-    class VulkanTextureRenderData final : public TextureRenderData
+    export class VulkanTextureRenderData final : public TextureRenderData
     {
       public:
         inline VulkanTextureRenderData(vk::UniqueImage image,

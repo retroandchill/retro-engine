@@ -4,21 +4,21 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer:components.buffer_manager;
+export module retro.renderer.vulkan.components.buffer_manager;
 
-import :components.device;
+import retro.renderer.vulkan.components.device;
 import vulkan_hpp;
 
 namespace retro
 {
-    struct TransientAllocation
+    export struct TransientAllocation
     {
         vk::Buffer buffer;
         void *mapped_data;
         size_t offset;
     };
 
-    class VulkanBufferManager
+    export class VulkanBufferManager
     {
       public:
         constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
@@ -39,7 +39,7 @@ namespace retro
         std::size_t current_offset_ = 0;
     };
 
-    std::uint32_t find_memory_type(vk::PhysicalDevice physical_device,
-                                   const std::uint32_t type_filter,
-                                   vk::MemoryPropertyFlags properties);
+    export std::uint32_t find_memory_type(vk::PhysicalDevice physical_device,
+                                          const std::uint32_t type_filter,
+                                          vk::MemoryPropertyFlags properties);
 } // namespace retro

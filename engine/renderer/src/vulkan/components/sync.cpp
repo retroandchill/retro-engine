@@ -10,7 +10,7 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-module retro.renderer;
+module retro.renderer.vulkan.components.sync;
 
 import vulkan_hpp;
 
