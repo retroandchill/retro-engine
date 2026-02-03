@@ -42,15 +42,21 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
 )
 
 set(RETRO_RENDER_SOURCES src/renderer.cpp
-        src/components/components.cpp
-        src/pipeline/pipeline.cpp
+        src/components/sync.cpp
+        src/components/pipeline.cpp
+        src/components/command_pool.cpp
+        src/components/device.cpp
+        src/components/swapchain.cpp
 )
 
 set(RETRO_RENDER_HEADERS )
 
 set(RETRO_RENDER_MODULES src/renderer.ixx
-        src/components/components.ixx
-        src/pipeline/pipeline.ixx
+        src/components/sync.ixx
+        src/components/pipeline.ixx
+        src/components/command_pool.ixx
+        src/components/device.ixx
+        src/components/swapchain.ixx
 )
 
 add_library(retro_renderer

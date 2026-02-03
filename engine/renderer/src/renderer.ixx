@@ -12,8 +12,11 @@ export module retro.renderer;
 
 import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
-import :components;
-import :pipeline;
+import :components.sync;
+import :components.command_pool;
+import :components.device;
+import :components.swapchain;
+import :components.pipeline;
 import retro.core.di;
 import retro.platform.window;
 import vulkan_hpp;
@@ -160,7 +163,6 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-      private:
         std::shared_ptr<Window> viewport_;
 
         vk::UniqueInstance instance_;
