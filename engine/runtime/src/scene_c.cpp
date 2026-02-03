@@ -12,7 +12,11 @@ import retro.core.math.vector;
 import retro.core.math.matrix;
 import retro.core.math.transform;
 import retro.core.memory.ref_counted_ptr;
-import retro.runtime;
+import retro.runtime.scene;
+import retro.runtime.assets.textures.texture;
+import retro.runtime.rendering.objects.geometry;
+import retro.runtime.rendering.objects.sprite;
+import retro.runtime.engine;
 import retro.core.c_api;
 import std;
 

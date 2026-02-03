@@ -8,7 +8,7 @@ module;
 
 #include <cassert>
 
-module retro.runtime;
+module retro.runtime.scene;
 
 namespace retro
 {
@@ -35,7 +35,7 @@ namespace retro
         }
     }
 
-    Scene::Scene(PipelineManager &pipeline_manager) : pipeline_manager_{&pipeline_manager}
+    Scene::Scene(SceneDrawProxy &draw_proxy) : draw_proxy_{&draw_proxy}
     {
     }
 
@@ -96,7 +96,7 @@ namespace retro
 
     void Scene::collect_draw_calls(const Vector2u viewport_size)
     {
-        pipeline_manager_->collect_all_draw_calls(*this, viewport_size);
+        draw_proxy_->collect_all_draw_calls(*this, viewport_size);
     }
 
     std::span<SceneNode *const> Scene::nodes_of_type(const std::type_index type) const noexcept

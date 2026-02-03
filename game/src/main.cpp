@@ -6,7 +6,7 @@
  */
 
 import retro.core.di;
-import retro.runtime;
+import retro.runtime.engine;
 import retro.scripting;
 import retro.renderer;
 import retro.logging;

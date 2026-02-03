@@ -16,6 +16,8 @@ import vulkan_hpp;
 import retro.core.io.file_stream;
 import retro.core.containers.inline_list;
 import retro.core.functional.overload;
+import retro.runtime.rendering.shader_layout;
+import retro.runtime.rendering.draw_command;
 
 namespace retro
 {

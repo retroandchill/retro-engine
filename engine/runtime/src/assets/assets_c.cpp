@@ -9,9 +9,13 @@
 
 #include <boost/pool/pool_alloc.hpp>
 
-import retro.runtime;
+import retro.runtime.assets.asset;
+import retro.runtime.assets.asset_load_result;
+import retro.runtime.assets.textures.texture;
+import retro.runtime.engine;
 import retro.core.c_api;
 import retro.core.strings.name;
+import retro.runtime.assets.asset_path;
 import std;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Asset, retro::Asset)

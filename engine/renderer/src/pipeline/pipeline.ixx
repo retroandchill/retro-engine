@@ -11,7 +11,7 @@ module;
 export module retro.renderer:pipeline;
 
 import std;
-import retro.runtime;
+import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
 import vulkan_hpp;
 import :components;

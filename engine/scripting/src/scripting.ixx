@@ -16,7 +16,7 @@ export module retro.scripting;
 import std;
 import retro.core.di;
 import retro.platform.dll;
-import retro.runtime;
+import retro.runtime.script_runtime;
 
 namespace retro
 {

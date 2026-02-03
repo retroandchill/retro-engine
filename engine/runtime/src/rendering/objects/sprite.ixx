@@ -8,13 +8,18 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime:scene.rendering.sprite;
+export module retro.runtime.rendering.objects.sprite;
 
+import std;
 import retro.core.util.color;
 import retro.core.math.matrix;
-import :texture;
-import :scene;
-import :scene.rendering;
+import retro.core.math.vector;
+import retro.core.memory.ref_counted_ptr;
+import retro.runtime.rendering.draw_command;
+import retro.runtime.rendering.render_pipeline;
+import retro.runtime.rendering.shader_layout;
+import retro.runtime.scene;
+import retro.runtime.assets.textures.texture;
 
 namespace retro
 {

@@ -7,7 +7,7 @@
 
 #include "retro/runtime/engine.h"
 
-import retro.runtime;
+import retro.runtime.engine;
 
 extern "C"
 {

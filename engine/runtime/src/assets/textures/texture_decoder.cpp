@@ -1,18 +1,15 @@
 /**
- * @file texture.cpp
+ * @file texture_decoder.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
+module retro.runtime.assets.textures.texture_decoder;
 
-#ifdef _DEBUG
-#define STBI_FAILURE_USERMSG
-#endif
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-module retro.runtime;
+import retro.core.io.stream;
+import retro.runtime.assets.textures.texture;
+import retro.runtime.rendering.texture_render_data;
+import retro.logging;
 
 namespace retro
 {
@@ -53,37 +50,11 @@ namespace retro
 
     AssetLoadResult<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept
     {
-        ImageData result{};
-        auto *image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
-                                                 static_cast<std::int32_t>(bytes.size()),
-                                                 &result.width,
-                                                 &result.height,
-                                                 &result.channels,
-                                                 0);
-        if (image_data == nullptr)
-        {
-            get_logger().error(stbi_failure_reason());
-            return std::unexpected{AssetLoadError::InvalidAssetFormat};
-        }
-
-        result.image_data.reset(reinterpret_cast<std::byte *>(image_data));
-        return std::move(result);
-    }
-
-    Name Texture::asset_type() const noexcept
-    {
-        static Name type{"Texture"};
-        return type;
-    }
-
-    void Texture::on_engine_shutdown()
-    {
-        Asset::on_engine_shutdown();
-        render_data_.reset();
-    }
-
-    void ImageDataDeleter::operator()(std::byte *bytes) const
-    {
-        stbi_image_free(bytes);
+        return ImageData::create_from_memory(bytes).transform_error(
+            [](const std::string_view &error)
+            {
+                get_logger().error(error);
+                return AssetLoadError::InvalidAssetFormat;
+            });
     }
 } // namespace retro

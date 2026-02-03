@@ -246,7 +246,7 @@ namespace retro
     std::unique_ptr<TextureRenderData> VulkanRenderer2D::upload_texture(const ImageData &image_data)
     {
         auto device = device_.device();
-        auto image_size = static_cast<vk::DeviceSize>(image_data.width * image_data.height * image_data.channels);
+        auto image_size = image_data.bytes().size();
         auto image_format = vk::Format::eR8G8B8A8Srgb;
 
         vk::BufferCreateInfo staging_info{.size = image_size,
@@ -268,13 +268,13 @@ namespace retro
         device.bindBufferMemory(staging_buffer.get(), staging_memory.get(), 0);
 
         auto *data = device.mapMemory(staging_memory.get(), 0, mem_req.size);
-        std::memcpy(data, image_data.image_data.get(), static_cast<size_t>(image_size));
+        std::memcpy(data, image_data.bytes().data(), image_size);
         device.unmapMemory(staging_memory.get());
 
         vk::ImageCreateInfo image_info{.imageType = vk::ImageType::e2D,
                                        .format = image_format,
-                                       .extent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width),
-                                                              static_cast<std::uint32_t>(image_data.height),
+                                       .extent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width()),
+                                                              static_cast<std::uint32_t>(image_data.height()),
                                                               1},
                                        .mipLevels = 1,
                                        .arrayLayers = 1,
@@ -317,8 +317,8 @@ namespace retro
                         .layerCount = 1,
                     },
                 .imageOffset = vk::Offset3D{0, 0, 0},
-                .imageExtent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width),
-                                            static_cast<std::uint32_t>(image_data.height),
+                .imageExtent = vk::Extent3D{static_cast<std::uint32_t>(image_data.width()),
+                                            static_cast<std::uint32_t>(image_data.height()),
                                             1},
             };
 
@@ -345,8 +345,8 @@ namespace retro
                                                          std::move(img_memory),
                                                          std::move(image_view),
                                                          linear_sampler_.get(),
-                                                         image_data.width,
-                                                         image_data.height);
+                                                         image_data.width(),
+                                                         image_data.height());
     }
 
     vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)

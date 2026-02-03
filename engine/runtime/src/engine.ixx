@@ -10,44 +10,40 @@ module;
 
 #include <cassert>
 
-export module retro.runtime:engine;
+export module retro.runtime.engine;
 
 import std;
 import retro.core.di;
-import :scene;
-import :scene.rendering;
-import :scene.rendering.geometry;
-import :scene.rendering.sprite;
-import :assets;
-import :texture;
 import retro.core.async.manual_task_scheduler;
+import retro.runtime.script_runtime;
+import retro.runtime.rendering.renderer2d;
+import retro.runtime.rendering.pipeline_manager;
+import retro.runtime.assets.asset_manager;
+import retro.runtime.assets.asset_source;
+import retro.runtime.assets.asset_decoder;
+import retro.runtime.assets.asset_path;
+import retro.runtime.assets.asset_load_result;
+import retro.runtime.assets.filesystem_asset_source;
+import retro.runtime.assets.textures.texture_decoder;
+import retro.runtime.rendering.render_pipeline;
+import retro.runtime.rendering.objects.geometry;
+import retro.runtime.rendering.objects.sprite;
+import retro.core.memory.ref_counted_ptr;
+import retro.runtime.assets.asset;
+import retro.runtime.scene;
 
 namespace retro
 {
-    export class ScriptRuntime
-    {
-      public:
-        virtual ~ScriptRuntime() = default;
-
-        [[nodiscard]] virtual std::int32_t start_scripts(std::u16string_view assembly_path,
-                                                         std::u16string_view class_name) const = 0;
-
-        virtual void tick(float delta_time) = 0;
-
-        virtual void tear_down() = 0;
-    };
-
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ScriptRuntime, Renderer2D, PipelineManager, AssetManager>;
+        using Dependencies = TypeList<ScriptRuntime, Renderer2D, SceneDrawProxy, AssetManager>;
 
         inline Engine(ScriptRuntime &script_runtime,
                       Renderer2D &renderer,
-                      PipelineManager &pipeline_manager,
+                      SceneDrawProxy &draw_proxy,
                       AssetManager &asset_manager)
-            : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager},
-              scene_{pipeline_manager}
+            : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager}, scene_{draw_proxy}
         {
         }
 
@@ -133,7 +129,7 @@ namespace retro
     export inline auto add_engine_services(ServiceCollection &services)
     {
         services.add_transient<Engine>()
-            .add_singleton<PipelineManager>()
+            .add_singleton<SceneDrawProxy, PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline>()
             .add_singleton<AssetSource, FileSystemAssetSource>()

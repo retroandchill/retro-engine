@@ -1,5 +1,5 @@
 /**
- * @file assets.cpp
+ * @file asset_manager.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,44 +8,12 @@ module;
 
 #include "retro/core/macros.hpp"
 
-module retro.runtime;
+module retro.runtime.assets.asset_manager;
 
-import retro.platform.dll;
-import retro.core.io.file_stream;
+import retro.core.io.buffered_stream;
 
 namespace retro
 {
-    void AssetPathHook::reset() noexcept
-    {
-        if (path.is_valid())
-            (void)Engine::instance().remove_asset_from_cache(path);
-
-        path = AssetPath::none();
-    }
-
-    void AssetPathHook::release() noexcept
-    {
-        path = AssetPath::none();
-    }
-
-    void Asset::on_engine_shutdown()
-    {
-        hook_.release();
-    }
-
-    AssetLoadResult<std::unique_ptr<Stream>> FileSystemAssetSource::open_stream(const AssetPath path,
-                                                                                const AssetOpenOptions &options)
-    {
-        auto content_root = get_executable_path();
-        // TODO: For now just assume the first part of the path is a folder relative to the content root
-        content_root /= path.package_name().to_string();
-        content_root /= path.asset_name().to_string();
-
-        return FileStream::open(content_root, FileOpenMode::ReadOnly)
-            .transform_error([](const auto &) { return AssetLoadError::AssetNotFound; })
-            .transform([](auto &&file) { return std::unique_ptr<Stream>{std::move(file)}; });
-    }
-
     AssetLoadResult<RefCountPtr<Asset>> AssetManager::load_asset_internal(const AssetPath &path)
     {
         {

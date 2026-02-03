@@ -8,12 +8,12 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime:scene;
+export module retro.runtime.scene;
 
 import std;
 import retro.core.util.noncopyable;
 import retro.core.math.transform;
-import :scene.rendering;
+import retro.core.math.vector;
 
 namespace retro
 {
@@ -84,10 +84,18 @@ namespace retro
         Viewport viewport_{};
     };
 
+    export class SceneDrawProxy
+    {
+      public:
+        virtual ~SceneDrawProxy() = default;
+
+        virtual void collect_all_draw_calls(Scene &scene, Vector2u viewport_size) = 0;
+    };
+
     class RETRO_API Scene final : NonCopyable
     {
       public:
-        explicit Scene(PipelineManager &pipeline_manager);
+        explicit Scene(SceneDrawProxy &draw_proxy);
 
         template <std::derived_from<SceneNode> T, typename... Args>
             requires std::constructible_from<T, Scene &, Args...>
@@ -135,6 +143,6 @@ namespace retro
         std::vector<std::unique_ptr<SceneNode>> storage_;
         std::unordered_map<std::type_index, std::vector<SceneNode *>> nodes_by_type_{};
 
-        PipelineManager *pipeline_manager_;
+        SceneDrawProxy *draw_proxy_;
     };
 } // namespace retro

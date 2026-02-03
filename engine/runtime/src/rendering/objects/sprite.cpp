@@ -8,7 +8,7 @@ module;
 
 #include <cstddef>
 
-module retro.runtime;
+module retro.runtime.rendering.objects.sprite;
 
 namespace retro
 {

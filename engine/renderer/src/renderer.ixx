@@ -10,6 +10,8 @@ module;
 
 export module retro.renderer;
 
+import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.renderer2d;
 export import :components;
 export import :pipeline;
 import retro.core.di;

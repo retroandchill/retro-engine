@@ -3,32 +3,48 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_RUNTIME_SOURCES src/engine.cpp
-        src/scene/scene.cpp
-        src/scene/scene_c.cpp
+        src/scene.cpp
+        src/scene_c.cpp
         src/engine_c.cpp
-        src/scene/rendering/geometry.cpp
-        src/scene/rendering/rendering.cpp
-        src/assets/assets.cpp
+        src/rendering/objects/geometry.cpp
+        src/rendering/pipeline_manager.cpp
+        src/assets/asset_manager.cpp
         src/assets/assets_c.cpp
-        src/scene/rendering/sprite.cpp
-)
-
-set(RETRO_RUNTIME_MODULES
-        src/runtime.ixx
-        src/scene/scene.ixx
-        src/scene/rendering/rendering.ixx
-        src/scene/rendering/geometry.ixx
-        src/assets/assets.ixx
-        src/assets/texture.ixx
-        src/engine.ixx
-        src/scene/rendering/sprite.ixx
+        src/rendering/objects/sprite.cpp
+        src/assets/asset.cpp
+        src/assets/filesystem_asset_source.cpp
+        src/assets/textures/texture_decoder.cpp
+        src/rendering/texture_render_data.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
         include/retro/runtime/scene/scene.h
         include/retro/runtime/engine.h
-        src/assets/texture.cpp
+        src/assets/textures/texture.cpp
         include/retro/runtime/assets/assets.h
+)
+
+set(RETRO_RUNTIME_MODULES
+        src/scene.ixx
+        src/rendering/renderer2d.ixx
+        src/rendering/objects/geometry.ixx
+        src/assets/asset_manager.ixx
+        src/assets/textures/texture.ixx
+        src/engine.ixx
+        src/rendering/objects/sprite.ixx
+        src/script_runtime.ixx
+        src/assets/asset_path.ixx
+        src/assets/asset.ixx
+        src/assets/filesystem_asset_source.ixx
+        src/rendering/texture_render_data.ixx
+        src/assets/asset_source.ixx
+        src/assets/asset_decoder.ixx
+        src/assets/asset_load_result.ixx
+        src/assets/textures/texture_decoder.ixx
+        src/rendering/shader_layout.ixx
+        src/rendering/draw_command.ixx
+        src/rendering/render_pipeline.ixx
+        src/rendering/pipeline_manager.ixx
 )
 
 
