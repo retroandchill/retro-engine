@@ -12,8 +12,8 @@ export module retro.renderer;
 
 import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
-export import :components;
-export import :pipeline;
+import :components;
+import :pipeline;
 import retro.core.di;
 import retro.platform.window;
 import vulkan_hpp;
@@ -29,7 +29,7 @@ namespace retro
         size_t offset;
     };
 
-    export class RETRO_API VulkanBufferManager
+    class RETRO_API VulkanBufferManager
     {
         explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size);
 
@@ -58,7 +58,7 @@ namespace retro
         static std::unique_ptr<VulkanBufferManager> instance_;
     };
 
-    export class RETRO_API VulkanBufferManagerScope
+    class VulkanBufferManagerScope
     {
       public:
         explicit inline VulkanBufferManagerScope(const VulkanDevice &device,
@@ -93,12 +93,12 @@ namespace retro
         {
         }
 
-        inline vk::ImageView view() const noexcept
+        [[nodiscard]] inline vk::ImageView view() const noexcept
         {
             return view_.get();
         }
 
-        inline vk::Sampler sampler() const noexcept
+        [[nodiscard]] inline vk::Sampler sampler() const noexcept
         {
             return sampler_;
         }
@@ -147,12 +147,12 @@ namespace retro
         static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
                                                                       vk::RenderPass render_pass,
                                                                       const VulkanSwapchain &swapchain);
-        vk::UniqueSampler create_linear_sampler() const;
+        [[nodiscard]] vk::UniqueSampler create_linear_sampler() const;
 
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, std::uint32_t image_index);
 
-        vk::UniqueCommandBuffer begin_one_shot_commands() const;
+        [[nodiscard]] vk::UniqueCommandBuffer begin_one_shot_commands() const;
         void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
 
         static void transition_image_layout(vk::CommandBuffer cmd,

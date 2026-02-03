@@ -46,12 +46,12 @@ set(RETRO_RENDER_SOURCES src/renderer.cpp
         src/pipeline/pipeline.cpp
 )
 
+set(RETRO_RENDER_HEADERS )
+
 set(RETRO_RENDER_MODULES src/renderer.ixx
         src/components/components.ixx
         src/pipeline/pipeline.ixx
 )
-
-set(RETRO_RENDER_HEADERS )
 
 add_library(retro_renderer
         ${RETRO_RENDER_SOURCES}
