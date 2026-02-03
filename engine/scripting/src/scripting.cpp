@@ -123,4 +123,8 @@ namespace retro
         return load_result.value();
     }
 
+    void add_scripting_services(ServiceCollection &services)
+    {
+        services.add_singleton<ScriptRuntime, DotnetManager>();
+    }
 } // namespace retro

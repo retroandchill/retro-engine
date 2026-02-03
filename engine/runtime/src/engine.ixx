@@ -17,17 +17,9 @@ import retro.core.di;
 import retro.core.async.manual_task_scheduler;
 import retro.runtime.script_runtime;
 import retro.runtime.rendering.renderer2d;
-import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.assets.asset_manager;
-import retro.runtime.assets.asset_source;
-import retro.runtime.assets.asset_decoder;
 import retro.runtime.assets.asset_path;
 import retro.runtime.assets.asset_load_result;
-import retro.runtime.assets.filesystem_asset_source;
-import retro.runtime.assets.textures.texture_decoder;
-import retro.runtime.rendering.render_pipeline;
-import retro.runtime.rendering.objects.geometry;
-import retro.runtime.rendering.objects.sprite;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.assets.asset;
 import retro.runtime.scene;
@@ -126,14 +118,5 @@ namespace retro
         EngineLifecycle &operator=(EngineLifecycle &&) noexcept = delete;
     };
 
-    export inline auto add_engine_services(ServiceCollection &services)
-    {
-        services.add_transient<Engine>()
-            .add_singleton<SceneDrawProxy, PipelineManager>()
-            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
-            .add_singleton<RenderPipeline, SpriteRenderPipeline>()
-            .add_singleton<AssetSource, FileSystemAssetSource>()
-            .add_singleton<AssetManager>()
-            .add_singleton<AssetDecoder, TextureDecoder>();
-    }
+    export RETRO_API void add_engine_services(ServiceCollection &services);
 } // namespace retro

@@ -128,8 +128,5 @@ namespace retro
         ScriptingCallbacks callbacks_;
     };
 
-    export inline auto add_scripting_services(ServiceCollection &services)
-    {
-        services.add_singleton<ScriptRuntime, DotnetManager>();
-    }
+    export RETRO_API void add_scripting_services(ServiceCollection &services);
 } // namespace retro

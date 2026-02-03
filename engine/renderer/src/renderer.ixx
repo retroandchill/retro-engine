@@ -181,9 +181,5 @@ namespace retro
         static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     };
 
-    export inline void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport)
-    {
-        services.add_singleton(std::move(viewport));
-        services.add_singleton<Renderer2D, VulkanRenderer2D>();
-    }
+    export RETRO_API void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport);
 } // namespace retro

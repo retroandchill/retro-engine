@@ -8,6 +8,14 @@ module retro.runtime.engine;
 
 import retro.logging;
 import retro.core.async.task_scheduler;
+import retro.runtime.rendering.pipeline_manager;
+import retro.runtime.assets.asset_source;
+import retro.runtime.assets.asset_decoder;
+import retro.runtime.assets.filesystem_asset_source;
+import retro.runtime.assets.textures.texture_decoder;
+import retro.runtime.rendering.render_pipeline;
+import retro.runtime.rendering.objects.geometry;
+import retro.runtime.rendering.objects.sprite;
 
 namespace retro
 {
@@ -29,6 +37,17 @@ namespace retro
     }
 
     std::unique_ptr<Engine> Engine::instance_{};
+
+    void add_engine_services(ServiceCollection &services)
+    {
+        services.add_transient<Engine>()
+            .add_singleton<SceneDrawProxy, PipelineManager>()
+            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
+            .add_singleton<RenderPipeline, SpriteRenderPipeline>()
+            .add_singleton<AssetSource, FileSystemAssetSource>()
+            .add_singleton<AssetManager>()
+            .add_singleton<AssetDecoder, TextureDecoder>();
+    }
 
     void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
     {

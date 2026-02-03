@@ -648,4 +648,10 @@ namespace retro
 
         cmd.pipelineBarrier(src_stage, dst_stage, {}, 0, nullptr, 0, nullptr, 1, &barrier);
     }
+
+    void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport)
+    {
+        services.add_singleton(std::move(viewport));
+        services.add_singleton<Renderer2D, VulkanRenderer2D>();
+    }
 } // namespace retro
