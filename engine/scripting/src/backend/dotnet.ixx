@@ -1,17 +1,15 @@
 ﻿/**
- * @file scripting.ixx
+ * @file dotnet.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
 module;
 
-#include "retro/core/exports.h"
-
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
 
-export module retro.scripting;
+export module retro.scripting.backend.dotnet;
 
 import std;
 import retro.core.di;
@@ -57,7 +55,7 @@ namespace retro
         hostfxr_close_fn close_fptr_;
     };
 
-    class RETRO_API DotnetLoader
+    class DotnetLoader
     {
         constexpr static std::size_t MAX_PATH = 260;
 
@@ -108,7 +106,7 @@ namespace retro
         ExitFn exit = nullptr;
     };
 
-    export class RETRO_API DotnetManager final : public ScriptRuntime
+    export class DotnetManager final : public ScriptRuntime
     {
 
       public:
@@ -128,5 +126,4 @@ namespace retro
         ScriptingCallbacks callbacks_;
     };
 
-    export RETRO_API void add_scripting_services(ServiceCollection &services);
 } // namespace retro

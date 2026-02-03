@@ -1,5 +1,5 @@
 /**
- * @file scripting.cpp
+ * @file dotnet.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -9,7 +9,9 @@ module;
 #include <coreclr_delegates.h>
 #include <nethost.h>
 
-module retro.scripting;
+module retro.scripting.backend.dotnet;
+
+import retro.core.strings.cstring_view;
 
 namespace retro
 {
@@ -121,10 +123,5 @@ namespace retro
         }
 
         return load_result.value();
-    }
-
-    void add_scripting_services(ServiceCollection &services)
-    {
-        services.add_singleton<ScriptRuntime, DotnetManager>();
     }
 } // namespace retro

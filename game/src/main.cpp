@@ -7,7 +7,7 @@
 
 import retro.core.di;
 import retro.runtime.engine;
-import retro.scripting;
+import retro.scripting.services;
 import retro.renderer.services;
 import retro.logging;
 import retro.platform.backend;
