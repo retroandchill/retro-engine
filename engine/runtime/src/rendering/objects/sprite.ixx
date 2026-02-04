@@ -107,7 +107,7 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(Scene &registry, Vector2u viewport_size) override;
+        void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size) override;
 
         void execute(RenderContext &context) override;
 

@@ -52,6 +52,14 @@ namespace retro
             return it->second;
         }
 
+        template <std::derived_from<T> U>
+        [[nodiscard]] constexpr std::span<U *const> nodes_of_type() const noexcept
+        {
+            auto of_types = nodes_of_type(std::type_index{typeid(T)});
+            auto *cast_data = reinterpret_cast<U *const *>(of_types.data());
+            return std::span{cast_data, of_types.size()};
+        }
+
         constexpr void add(std::unique_ptr<T> node) noexcept
         {
             index_node(node.get());

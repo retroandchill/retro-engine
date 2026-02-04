@@ -41,7 +41,7 @@ namespace retro
     void add_engine_services(ServiceCollection &services)
     {
         services.add_transient<Engine>()
-            .add_singleton<SceneDrawProxy, PipelineManager>()
+            .add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline>()
             .add_singleton<AssetSource, FileSystemAssetSource>()

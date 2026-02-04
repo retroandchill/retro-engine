@@ -14,7 +14,7 @@ import retro.core.di;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;
-import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 import std;
 
 namespace retro
@@ -25,7 +25,7 @@ namespace retro
         std::size_t usage_count;
     };
 
-    export class RETRO_API PipelineManager final : public SceneDrawProxy
+    export class RETRO_API PipelineManager
     {
       public:
         using Dependencies = TypeList<Renderer2D, RenderPipeline>;
@@ -33,7 +33,7 @@ namespace retro
 
         explicit PipelineManager(Renderer2D &renderer, const std::vector<std::shared_ptr<RenderPipeline>> &pipelines);
 
-        void collect_all_draw_calls(Scene &registry, Vector2u viewport_size) override;
+        void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size);
 
       private:
         Renderer2D *renderer_{};

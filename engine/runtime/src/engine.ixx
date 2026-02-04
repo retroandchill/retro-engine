@@ -23,19 +23,21 @@ import retro.runtime.assets.asset_load_result;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.assets.asset;
 import retro.runtime.world.scene;
+import retro.runtime.rendering.pipeline_manager;
 
 namespace retro
 {
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ScriptRuntime, Renderer2D, SceneDrawProxy, AssetManager>;
+        using Dependencies = TypeList<ScriptRuntime, Renderer2D, PipelineManager, AssetManager>;
 
         inline Engine(ScriptRuntime &script_runtime,
                       Renderer2D &renderer,
-                      SceneDrawProxy &draw_proxy,
+                      PipelineManager &pipeline_manager,
                       AssetManager &asset_manager)
-            : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager}, scene_{draw_proxy}
+            : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager},
+              scene_{pipeline_manager}
         {
         }
 

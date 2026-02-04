@@ -15,23 +15,14 @@ import retro.core.util.noncopyable;
 import retro.core.math.transform;
 import retro.core.math.vector;
 import retro.runtime.world.scene_node;
+import retro.runtime.rendering.pipeline_manager;
 
 namespace retro
 {
-    export class Scene;
-
-    export class SceneDrawProxy
+    export class RETRO_API Scene final : NonCopyable
     {
       public:
-        virtual ~SceneDrawProxy() = default;
-
-        virtual void collect_all_draw_calls(Scene &scene, Vector2u viewport_size) = 0;
-    };
-
-    class RETRO_API Scene final : NonCopyable
-    {
-      public:
-        explicit Scene(SceneDrawProxy &draw_proxy);
+        explicit Scene(PipelineManager &pipeline_manager);
 
         template <std::derived_from<SceneNode> T, typename... Args>
             requires std::constructible_from<T, Args...>
@@ -48,7 +39,7 @@ namespace retro
 
         void destroy_node(SceneNode &node);
 
-        void collect_draw_calls(Vector2u viewport_size);
+        void collect_draw_calls(Vector2u viewport_size) const;
 
         [[nodiscard]] std::span<SceneNode *const> nodes_of_type(std::type_index type) const noexcept;
 
@@ -56,14 +47,12 @@ namespace retro
             requires(!std::is_abstract_v<T>)
         [[nodiscard]] std::span<T *const> nodes_of_type() const noexcept
         {
-            auto of_types = nodes_of_type(std::type_index{typeid(T)});
-            auto *cast_data = reinterpret_cast<T *const *>(of_types.data());
-            return std::span{cast_data, of_types.size()};
+            return nodes_.nodes_of_type<T>();
         }
 
       private:
         SceneNodeList nodes_;
 
-        SceneDrawProxy *draw_proxy_;
+        PipelineManager *pipeline_manager_;
     };
 } // namespace retro

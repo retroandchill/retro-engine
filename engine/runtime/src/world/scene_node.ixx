@@ -62,10 +62,5 @@ namespace retro
         using List = NodeList<SceneNode, &SceneNode::hook_>;
     };
 
-    decltype(auto) test(const std::unique_ptr<SceneNode> &node, NodeHook SceneNode::*member)
-    {
-        return ((*node).*member).master_index;
-    }
-
     export using SceneNodeList = SceneNode::List;
 } // namespace retro

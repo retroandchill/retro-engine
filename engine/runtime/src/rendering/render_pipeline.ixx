@@ -9,7 +9,7 @@ export module retro.runtime.rendering.render_pipeline;
 import std;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
-import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 import retro.core.math.vector;
 import retro.core.di;
 
@@ -34,7 +34,7 @@ namespace retro
 
         virtual void clear_draw_queue() = 0;
 
-        virtual void collect_draw_calls(Scene &registry, Vector2u viewport_size) = 0;
+        virtual void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size) = 0;
 
         virtual void execute(RenderContext &context) = 0;
     };

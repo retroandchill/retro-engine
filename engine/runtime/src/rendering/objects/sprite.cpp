@@ -83,9 +83,9 @@ namespace retro
         batches_.clear();
     }
 
-    void SpriteRenderPipeline::collect_draw_calls(Scene &registry, const Vector2u viewport_size)
+    void SpriteRenderPipeline::collect_draw_calls(const SceneNodeList &nodes, const Vector2u viewport_size)
     {
-        for (const auto *node : registry.nodes_of_type<Sprite>())
+        for (const auto *node : nodes.nodes_of_type<Sprite>())
         {
             auto *texture = node->texture().get();
             if (texture == nullptr)

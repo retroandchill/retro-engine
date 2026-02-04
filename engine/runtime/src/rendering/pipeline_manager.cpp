@@ -20,14 +20,14 @@ namespace retro
         }
     }
 
-    void PipelineManager::collect_all_draw_calls(Scene &registry, const Vector2u viewport_size)
+    void PipelineManager::collect_all_draw_calls(const SceneNodeList &nodes, const Vector2u viewport_size)
     {
         for (const auto &pipeline :
              pipelines_ | std::views::values |
                  std::views::filter([](const PipelineUsage &usage) { return usage.usage_count > 0; }) |
                  std::views::transform(&PipelineUsage::pipeline))
         {
-            pipeline->collect_draw_calls(registry, viewport_size);
+            pipeline->collect_draw_calls(nodes, viewport_size);
         }
     }
 } // namespace retro

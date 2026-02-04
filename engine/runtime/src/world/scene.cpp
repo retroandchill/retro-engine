@@ -12,7 +12,7 @@ module retro.runtime.world.scene;
 
 namespace retro
 {
-    Scene::Scene(SceneDrawProxy &draw_proxy) : draw_proxy_{&draw_proxy}
+    Scene::Scene(PipelineManager &pipeline_manager) : pipeline_manager_{&pipeline_manager}
     {
     }
 
@@ -22,9 +22,9 @@ namespace retro
         nodes_.remove(node);
     }
 
-    void Scene::collect_draw_calls(const Vector2u viewport_size)
+    void Scene::collect_draw_calls(const Vector2u viewport_size) const
     {
-        draw_proxy_->collect_all_draw_calls(*this, viewport_size);
+        pipeline_manager_->collect_all_draw_calls(nodes_, viewport_size);
     }
 
     std::span<SceneNode *const> Scene::nodes_of_type(const std::type_index type) const noexcept
