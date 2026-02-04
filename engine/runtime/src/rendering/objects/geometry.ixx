@@ -17,8 +17,8 @@ import retro.core.math.vector;
 import retro.runtime.rendering.draw_command;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.shader_layout;
-import retro.runtime.scene;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 
 namespace retro
 {
@@ -68,10 +68,6 @@ namespace retro
     {
       public:
         using PipelineType = GeometryRenderPipeline;
-
-        inline explicit GeometryObject(Scene &scene) : SceneNode(scene)
-        {
-        }
 
         [[nodiscard]] inline const std::shared_ptr<const Geometry> &geometry() const noexcept
         {

@@ -22,7 +22,6 @@ extern "C"
     typedef struct Retro_Node Retro_Node;
     typedef struct Retro_Sprite Retro_Sprite;
     typedef struct Retro_Geometry Retro_Geometry;
-    typedef struct Retro_Viewport Retro_Viewport;
 
     typedef struct Retro_Vertex
     {
@@ -50,10 +49,6 @@ extern "C"
     RETRO_API void retro_node_dispose(Retro_Node *node);
 
     RETRO_API void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform);
-
-    RETRO_API Retro_Viewport *retro_viewport_create(Retro_Vector2f viewport_size);
-
-    RETRO_API void retro_scene_viewport_set_size(Retro_Viewport *node, Retro_Vector2f viewport_size);
 
     RETRO_API Retro_Geometry *retro_geometry_create(Retro_Node *parent);
 
@@ -89,11 +84,6 @@ extern "C"
     static inline Retro_Node *retro_geometry_as_node(Retro_Geometry *geometry)
     {
         return (Retro_Node *)geometry;
-    }
-
-    static inline Retro_Node *retro_viewport_as_node(Retro_Viewport *viewport)
-    {
-        return (Retro_Node *)viewport;
     }
 
 #ifdef __cplusplus

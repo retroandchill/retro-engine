@@ -14,7 +14,7 @@ import retro.core.di;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
 import std;
 
 namespace retro

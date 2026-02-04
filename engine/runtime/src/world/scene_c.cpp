@@ -12,7 +12,8 @@ import retro.core.math.vector;
 import retro.core.math.matrix;
 import retro.core.math.transform;
 import retro.core.memory.ref_counted_ptr;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 import retro.runtime.assets.textures.texture;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
@@ -23,7 +24,6 @@ import std;
 DECLARE_OPAQUE_C_HANDLE(Retro_Node, retro::SceneNode);
 DECLARE_OPAQUE_C_HANDLE(Retro_Sprite, retro::Sprite);
 DECLARE_OPAQUE_C_HANDLE(Retro_Geometry, retro::GeometryObject);
-DECLARE_OPAQUE_C_HANDLE(Retro_Viewport, retro::ViewportNode);
 DECLARE_OPAQUE_C_HANDLE(Retro_Texture, retro::Texture);
 DECLARE_DEFINED_C_HANDLE(Retro_Vector2f, retro::Vector2f);
 DECLARE_DEFINED_C_HANDLE(Retro_Color, retro::Color);
@@ -71,18 +71,6 @@ extern "C"
     {
         auto *scene_node = from_c(node);
         scene_node->set_transform(from_c(*transform));
-    }
-
-    Retro_Viewport *retro_viewport_create(const Retro_Vector2f viewport_size)
-    {
-        auto &vp = retro::Engine::instance().scene().create_viewport(from_c(viewport_size));
-        return to_c(&vp);
-    }
-
-    void retro_scene_viewport_set_size(Retro_Viewport *node, const Retro_Vector2f viewport_size)
-    {
-        auto &viewport = *from_c(node);
-        viewport.viewport().view_size = from_c(viewport_size);
     }
 
     Retro_Geometry *retro_geometry_create(Retro_Node *parent)

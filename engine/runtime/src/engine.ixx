@@ -22,7 +22,7 @@ import retro.runtime.assets.asset_path;
 import retro.runtime.assets.asset_load_result;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.assets.asset;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
 
 namespace retro
 {

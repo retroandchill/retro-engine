@@ -3,8 +3,8 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_RUNTIME_SOURCES src/engine.cpp
-        src/scene.cpp
-        src/scene_c.cpp
+        src/world/scene.cpp
+        src/world/scene_c.cpp
         src/engine_c.cpp
         src/rendering/objects/geometry.cpp
         src/rendering/pipeline_manager.cpp
@@ -15,6 +15,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/assets/filesystem_asset_source.cpp
         src/assets/textures/texture_decoder.cpp
         src/rendering/texture_render_data.cpp
+        src/world/scene_node.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -25,7 +26,7 @@ set(RETRO_RUNTIME_HEADERS
 )
 
 set(RETRO_RUNTIME_MODULES
-        src/scene.ixx
+        src/world/scene.ixx
         src/rendering/renderer2d.ixx
         src/rendering/objects/geometry.ixx
         src/assets/asset_manager.ixx
@@ -45,6 +46,7 @@ set(RETRO_RUNTIME_MODULES
         src/rendering/draw_command.ixx
         src/rendering/render_pipeline.ixx
         src/rendering/pipeline_manager.ixx
+        src/world/scene_node.ixx
 )
 
 

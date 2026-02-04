@@ -58,6 +58,7 @@ set(RETRO_CORE_MODULES
         src/strings/cstring_view.ixx
         src/strings/encoding.ixx
         src/strings/deps/uni_algo.ixx
+        src/containers/node_list.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

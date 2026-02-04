@@ -18,7 +18,8 @@ import retro.core.memory.ref_counted_ptr;
 import retro.runtime.rendering.draw_command;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.shader_layout;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 import retro.runtime.assets.textures.texture;
 
 namespace retro
@@ -49,10 +50,6 @@ namespace retro
     {
       public:
         using PipelineType = SpriteRenderPipeline;
-
-        inline explicit Sprite(Scene &scene) : SceneNode(scene)
-        {
-        }
 
         [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
         {

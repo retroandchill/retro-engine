@@ -9,7 +9,7 @@ export module retro.runtime.rendering.render_pipeline;
 import std;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
-import retro.runtime.scene;
+import retro.runtime.world.scene;
 import retro.core.math.vector;
 import retro.core.di;
 
