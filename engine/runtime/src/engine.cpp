@@ -16,6 +16,7 @@ import retro.runtime.assets.textures.texture_decoder;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
+import retro.core.containers.optional;
 import retro.core.math.vector;
 
 namespace retro
@@ -150,14 +151,20 @@ namespace retro
     {
         renderer_->begin_frame();
 
-        if (const auto primary = viewports_.primary(); primary.has_value())
-        {
-            if (const auto scene = primary->scene(); scene.has_value())
+        const auto result = viewports_.primary().and_then(
+            [](Viewport &primary)
             {
-                const auto vp_size =
-                    (primary->size().x == 0 || primary->size().y == 0) ? renderer_->viewport_size() : primary->size();
-                scene->collect_draw_calls(vp_size);
-            }
+                return primary.scene().transform(
+                    [&primary](Scene &scene) -> std::tuple<Viewport &, Scene &> {
+                        return {primary, scene};
+                    });
+            });
+        if (result.has_value())
+        {
+            auto [primary, scene] = result.value();
+            const auto vp_size =
+                (primary.size().x == 0 || primary.size().y == 0) ? renderer_->viewport_size() : primary.size();
+            scene.collect_draw_calls(vp_size);
         }
 
         renderer_->end_frame();
