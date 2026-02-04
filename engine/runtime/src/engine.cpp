@@ -49,6 +49,17 @@ namespace retro
             .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
+    Engine::Engine(ScriptRuntime &script_runtime,
+                   Renderer2D &renderer,
+                   PipelineManager &pipeline_manager,
+                   AssetManager &asset_manager)
+        : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager},
+          scene_{pipeline_manager}
+    {
+        auto &viewport = viewports_.create_viewport();
+        viewport.set_scene(std::addressof(scene_));
+    }
+
     void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
     {
         TaskScheduler::Scope task_scope{&scheduler_};

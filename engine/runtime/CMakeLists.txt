@@ -16,6 +16,7 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/assets/textures/texture_decoder.cpp
         src/rendering/texture_render_data.cpp
         src/world/scene_node.cpp
+        src/world/viewport.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -47,6 +48,7 @@ set(RETRO_RUNTIME_MODULES
         src/rendering/render_pipeline.ixx
         src/rendering/pipeline_manager.ixx
         src/world/scene_node.ixx
+        src/world/viewport.ixx
 )
 
 

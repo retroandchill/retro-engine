@@ -8,12 +8,12 @@ using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 
-namespace RetroEngine.SceneView;
+namespace RetroEngine.World;
 
 public partial class Sprite : SceneObject
 {
-    public Sprite(SceneObject parent)
-        : base(NativeCreate(parent.NativeObject))
+    public Sprite(SceneObject? parent = null)
+        : base(NativeCreate(parent?.NativeObject ?? IntPtr.Zero))
     {
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);

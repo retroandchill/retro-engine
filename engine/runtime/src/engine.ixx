@@ -24,6 +24,7 @@ import retro.core.memory.ref_counted_ptr;
 import retro.runtime.assets.asset;
 import retro.runtime.world.scene;
 import retro.runtime.rendering.pipeline_manager;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
@@ -32,14 +33,10 @@ namespace retro
       public:
         using Dependencies = TypeList<ScriptRuntime, Renderer2D, PipelineManager, AssetManager>;
 
-        inline Engine(ScriptRuntime &script_runtime,
-                      Renderer2D &renderer,
-                      PipelineManager &pipeline_manager,
-                      AssetManager &asset_manager)
-            : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager},
-              scene_{pipeline_manager}
-        {
-        }
+        RETRO_API Engine(ScriptRuntime &script_runtime,
+                         Renderer2D &renderer,
+                         PipelineManager &pipeline_manager,
+                         AssetManager &asset_manager);
 
         ~Engine() = default;
 
@@ -99,6 +96,7 @@ namespace retro
         std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
         Scene scene_;
+        ViewportManager viewports_;
         ManualTaskScheduler scheduler_{};
     };
 

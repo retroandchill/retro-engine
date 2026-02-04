@@ -7,35 +7,36 @@ using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Logging;
-using RetroEngine.SceneView;
+using RetroEngine.World;
 
 namespace RetroEngine.Game.Sample;
 
 public sealed class GameRunner : IGameSession
 {
-    private Viewport? _viewport;
+    private readonly List<SceneObject> _sceneObjects = [];
 
     public void Start()
     {
-        if (_viewport is not null)
-            throw new InvalidOperationException("Game session is already running.");
-
         Logger.Info("Starting game runner.");
-        _viewport = new Viewport(new Vector2F(1280, 720));
 
         var texture = Asset.Load<Texture>(new AssetPath("graphics", "eevee.png"));
 
-        _ = new Sprite(_viewport)
-        {
-            Texture = texture,
-            Position = new Vector2F(640f, 360f),
-            Pivot = new Vector2F(0.5f, 0.5f),
-            Tint = new Color(1, 1, 1),
-        };
+        _sceneObjects.Add(
+            new Sprite
+            {
+                Texture = texture,
+                Position = new Vector2F(640f, 360f),
+                Pivot = new Vector2F(0.5f, 0.5f),
+                Tint = new Color(1, 1, 1),
+            }
+        );
     }
 
     public void Stop()
     {
-        _viewport?.Dispose();
+        foreach (var sceneObject in _sceneObjects)
+        {
+            sceneObject.Dispose();
+        }
     }
 }
