@@ -73,6 +73,11 @@ namespace retro
             return scene_;
         }
 
+        [[nodiscard]] inline ViewportManager &viewports()
+        {
+            return viewports_;
+        }
+
         template <std::derived_from<Asset> T = Asset>
         AssetLoadResult<RefCountPtr<T>> load_asset(const AssetPath &path)
         {

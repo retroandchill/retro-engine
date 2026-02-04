@@ -11,9 +11,10 @@ module;
 export module retro.runtime.world.viewport;
 
 import std;
-import retro.core.math.rect;
+import retro.core.math.vector;
 import retro.runtime.world.scene;
 import retro.core.util.noncopyable;
+import retro.core.containers.optional;
 
 namespace retro
 {
@@ -21,27 +22,27 @@ namespace retro
 
     export struct ViewportDescriptor
     {
-        RectU bounds{};
+        Vector2u size{};
     };
 
     export class RETRO_API Viewport final
     {
       public:
-        inline explicit Viewport(const ViewportDescriptor &descriptor) : bounds_{descriptor.bounds}
+        inline explicit Viewport(const ViewportDescriptor &descriptor) : size_{descriptor.size}
         {
         }
 
-        [[nodiscard]] inline const RectU &bounds() const noexcept
+        [[nodiscard]] inline Vector2u size() const noexcept
         {
-            return bounds_;
+            return size_;
         }
 
-        inline void set_bounds(const RectU &bounds) noexcept
+        inline void set_size(const Vector2u size) noexcept
         {
-            bounds_ = bounds;
+            size_ = size;
         }
 
-        [[nodiscard]] inline Scene *scene() const noexcept
+        [[nodiscard]] inline Optional<Scene &> scene() const noexcept
         {
             return scene_;
         }
@@ -54,7 +55,7 @@ namespace retro
       private:
         friend class ViewportManager;
 
-        RectU bounds_;
+        Vector2u size_;
         Scene *scene_ = nullptr;
     };
 
@@ -70,7 +71,7 @@ namespace retro
             primary_ = std::addressof(viewport);
         }
 
-        [[nodiscard]] inline Viewport *primary() const noexcept
+        [[nodiscard]] inline Optional<Viewport &> primary() const noexcept
         {
             return primary_;
         }
