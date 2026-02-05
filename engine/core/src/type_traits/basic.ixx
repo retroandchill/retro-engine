@@ -78,4 +78,22 @@ namespace retro
     export template <typename T>
     concept FullyTrivial = std::is_trivially_copyable_v<T> && std::is_trivially_default_constructible_v<T> &&
                            std::is_trivially_destructible_v<T>;
+
+    export template <typename T, typename U>
+    concept SameUnqualifed = std::same_as<std::remove_cv_t<T>, std::remove_cv_t<U>>;
+
+    template <typename T>
+    struct CvQualRank : std::integral_constant<std::size_t, std::is_const_v<T> + std::is_volatile_v<T>>
+    {
+    };
+
+    export template <typename T>
+    constexpr std::size_t cv_qual_rank = CvQualRank<T>::value;
+
+    export template <typename T, typename U>
+    concept LessCvQualified = cv_qual_rank<T> < cv_qual_rank<U>;
+
+    export template <typename Base, typename Derived>
+    concept ProperBaseOf =
+        std::derived_from<std::remove_cv_t<Derived>, std::remove_cv_t<Base>> && !SameUnqualifed<Base, Derived>;
 } // namespace retro

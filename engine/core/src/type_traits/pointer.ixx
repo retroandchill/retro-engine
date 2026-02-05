@@ -7,9 +7,13 @@
 export module retro.core.type_traits.pointer;
 
 import std;
+import retro.core.type_traits.basic;
 
 namespace retro
 {
+    export template <typename T>
+    concept NothrowDereferenceable = noexcept(*std::declval<T>());
+
     template <typename>
     struct IsStdUniquePtr : std::false_type
     {
@@ -104,4 +108,9 @@ namespace retro
 
     export template <typename T>
     using PointerElementT = PointerElement<std::remove_cvref_t<T>>::Type;
+
+    export template <typename From, typename To>
+    concept PointerConvertible =
+        (ProperBaseOf<To, From> && std::has_virtual_destructor_v<To> && !LessCvQualified<To, From>) ||
+        (SameUnqualifed<From, To> && !LessCvQualified<To, From>);
 } // namespace retro

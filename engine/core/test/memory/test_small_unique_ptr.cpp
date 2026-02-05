@@ -8,6 +8,8 @@
 
 import retro.core.memory.small_unique_ptr;
 import std;
+import retro.core.type_traits.basic;
+import retro.core.type_traits.pointer;
 
 namespace
 {

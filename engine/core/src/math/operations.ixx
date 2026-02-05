@@ -65,4 +65,10 @@ namespace retro
     {
         return gcem::tan(value);
     }
+
+    export template <std::integral T>
+    constexpr T max_pow2_factor(T n) noexcept
+    {
+        return n & (~n + 1);
+    }
 } // namespace retro
