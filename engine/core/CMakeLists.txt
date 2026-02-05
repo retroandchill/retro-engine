@@ -65,6 +65,8 @@ set(RETRO_CORE_MODULES
         src/di/service_identifier.ixx
         src/di/service_collection.ixx
         src/di.ixx
+        src/util/deferred.ixx
+        src/memory/small_unique_ptr.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})

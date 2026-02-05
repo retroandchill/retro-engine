@@ -26,6 +26,7 @@ SET(RETRO_CORE_TEST_SOURCES strings/test_name.cpp
         containers/optional/optional_range_support_test.cpp
         containers/optional/optional_ref_test.cpp
         containers/optional/optional_ref_monadic_test.cpp
+        memory/test_small_unique_ptr.cpp
 )
 
 add_executable(retro_core_tests ${RETRO_CORE_TEST_SOURCES} ${RETRO_CORE_TEST_HEADERS} ${RETRO_CORE_TEST_MODULES})

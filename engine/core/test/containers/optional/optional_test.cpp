@@ -809,13 +809,16 @@ TEST(OptionalTest, Emplace)
     EXPECT_TRUE(i->second.second == 4);
 }
 
-struct A
+namespace
 {
-    A()
+    struct A
     {
-        throw std::exception();
-    }
-};
+        A()
+        {
+            throw std::exception();
+        }
+    };
+} // namespace
 
 TEST(OptionalTest, EmplaceWithExceptionThrown)
 {
