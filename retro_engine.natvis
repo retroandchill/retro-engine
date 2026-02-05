@@ -56,4 +56,13 @@
             <Item Name="[size]">0</Item>
         </Expand>
     </Type>
+
+    <Type Name="retro::SmallUniquePtr&lt;*,*&gt;">
+        <SmartPointer Usage="Minimal">data_</SmartPointer>
+        <DisplayString Condition="data_ == 0">empty</DisplayString>
+        <DisplayString Condition="data_ != 0">{{ SmallUniquePtr { *data_ } }}</DisplayString>
+        <Expand>
+            <Item Name="[ptr]">data_, view(synthetic)</Item>
+        </Expand>
+    </Type>
 </AutoVisualizer>
