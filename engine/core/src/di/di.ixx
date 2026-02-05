@@ -83,9 +83,14 @@ namespace retro
     using SingletonCreator = std::shared_ptr<void> (*)(ServiceProvider &);
     using TransientCreator = void *(*)(ServiceProvider &);
 
-    struct RealizedSingleton
+    struct ExternalSingleton
     {
         std::shared_ptr<void> ptr{};
+    };
+
+    struct RealizedSingleton
+    {
+        std::weak_ptr<void> ptr{};
     };
 
     struct UnrealizedSingleton
@@ -102,7 +107,8 @@ namespace retro
         TransientCreator registration{};
     };
 
-    using ServiceCallSite = std::variant<RealizedSingleton, UnrealizedSingleton, DirectTransient, DerivedTransient>;
+    using ServiceCallSite =
+        std::variant<ExternalSingleton, RealizedSingleton, UnrealizedSingleton, DirectTransient, DerivedTransient>;
 
     template <Injectable T>
     void *construct_transient(ServiceProvider &provider);
@@ -118,6 +124,14 @@ namespace retro
     {
       public:
         explicit ServiceProvider(ServiceCollection &service_collection);
+
+        ServiceProvider(const ServiceProvider &) = default;
+        ServiceProvider(ServiceProvider &&) noexcept = default;
+
+        ~ServiceProvider() noexcept;
+
+        ServiceProvider &operator=(const ServiceProvider &) = default;
+        ServiceProvider &operator=(ServiceProvider &&) noexcept = default;
 
         template <typename T>
         decltype(auto) get()
@@ -182,7 +196,8 @@ namespace retro
             if (existing != services_.end())
             {
                 auto *created =
-                    std::visit(Overload{[](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
+                    std::visit(Overload{[](const ExternalSingleton &) -> void * { throw ServiceNotFoundException{}; },
+                                        [](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
                                         [](const UnrealizedSingleton) -> void * { throw ServiceNotFoundException{}; },
                                         [&](const DerivedTransient transient) { return transient.registration(*this); },
                                         [&](const DirectTransient) -> void *
@@ -219,6 +234,7 @@ namespace retro
             return static_cast<T *>(get_raw(typeid(T)));
         }
 
+        std::vector<std::shared_ptr<void>> instantiated_singletons_;
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
     };
 

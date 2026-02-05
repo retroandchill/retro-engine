@@ -24,6 +24,14 @@ namespace retro
         }
     }
 
+    ServiceProvider::~ServiceProvider() noexcept
+    {
+        for (auto &singleton : instantiated_singletons_ | std::views::reverse)
+        {
+            singleton.reset();
+        }
+    }
+
     void *ServiceProvider::get_raw(const std::type_info &type)
     {
         return get_shared_impl(type).get();
@@ -42,11 +50,13 @@ namespace retro
 
     std::shared_ptr<void> ServiceProvider::get_or_create(ServiceCallSite &call_site)
     {
-        return std::visit(Overload{[](const RealizedSingleton &singleton) { return singleton.ptr; },
+        return std::visit(Overload{[](const ExternalSingleton &singleton) { return singleton.ptr; },
+                                   [](const RealizedSingleton &singleton) { return singleton.ptr.lock(); },
                                    [&](const UnrealizedSingleton service)
                                    {
                                        auto created = service.registration(*this);
                                        call_site.emplace<RealizedSingleton>(created);
+                                       instantiated_singletons_.push_back(created);
                                        return created;
                                    },
                                    [](DerivedTransient) -> std::shared_ptr<void> { throw ServiceNotFoundException{}; },
@@ -73,7 +83,7 @@ namespace retro
     }
 
     ServiceRegistration::ServiceRegistration(const std::type_info &type, std::shared_ptr<void> ptr) noexcept
-        : type(type), registration(std::in_place_type<RealizedSingleton>, std::move(ptr))
+        : type(type), registration(std::in_place_type<ExternalSingleton>, std::move(ptr))
     {
     }
 
