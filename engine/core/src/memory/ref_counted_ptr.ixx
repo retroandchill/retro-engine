@@ -37,7 +37,7 @@ namespace retro
         p->release();
     }
 
-    template <typename T>
+    export template <typename T>
     concept RefCounted = requires(T *p) {
         {
             intrusive_retain(p)

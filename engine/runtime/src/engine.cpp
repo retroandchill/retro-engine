@@ -44,11 +44,11 @@ namespace retro
     {
         services.add_transient<Engine>()
             .add_singleton<PipelineManager>()
-            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
-            .add_singleton<RenderPipeline, SpriteRenderPipeline>()
-            .add_singleton<AssetSource, FileSystemAssetSource>()
+            .add_singleton<RenderPipeline, GeometryRenderPipeline, StoragePolicy::SharedOwned>()
+            .add_singleton<RenderPipeline, SpriteRenderPipeline, StoragePolicy::SharedOwned>()
+            .add_singleton<AssetSource, FileSystemAssetSource, StoragePolicy::SharedOwned>()
             .add_singleton<AssetManager>()
-            .add_singleton<AssetDecoder, TextureDecoder>();
+            .add_singleton<AssetDecoder, TextureDecoder, StoragePolicy::SharedOwned>();
     }
 
     Engine::Engine(ScriptRuntime &script_runtime,

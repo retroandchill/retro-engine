@@ -6,11 +6,12 @@ set(RETRO_CORE_SOURCES src/strings/name.cpp
         src/io/file_stream.cpp
         src/strings/name_c.cpp
         src/functional/delegate.cpp
-        src/di/di.cpp
+        src/di/service_provider.cpp
         src/io/stream.cpp
         src/io/buffered_stream.cpp
         src/async/task_scheduler.cpp
         src/async/manual_task_scheduler.cpp
+        src/di/service_collection.cpp
 )
 
 set(RETRO_CORE_HEADERS include/retro/core/exports.h
@@ -32,7 +33,7 @@ set(RETRO_CORE_MODULES
         src/memory/arena_allocator.ixx
         src/async/task.ixx
         src/containers/optional.ixx
-        src/di/di.ixx
+        src/di/service_provider.ixx
         src/di/metadata.ixx
         src/util/exceptions.ixx
         src/containers/inline_list.ixx
@@ -59,6 +60,11 @@ set(RETRO_CORE_MODULES
         src/strings/encoding.ixx
         src/strings/deps/uni_algo.ixx
         src/math/rect.ixx
+        src/di/service_instance.ixx
+        src/di/service_call_site.ixx
+        src/di/service_identifier.ixx
+        src/di/service_collection.ixx
+        src/di.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
