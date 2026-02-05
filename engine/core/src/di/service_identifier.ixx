@@ -28,7 +28,7 @@ namespace retro
 
     struct ServiceCacheKey
     {
-        ServiceIdentifier id;
+        ServiceIdentifier id = ServiceIdentifier{typeid(void)};
         std::uint32_t slot{};
 
         friend bool operator==(const ServiceCacheKey &lhs, const ServiceCacheKey &rhs) noexcept = default;

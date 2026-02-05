@@ -1,5 +1,5 @@
 /**
- * @file di.cpp
+ * @file service_provider.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -45,8 +45,8 @@ namespace retro
 
     std::shared_ptr<void> ServiceProvider::get_shared_impl(const std::type_info &type)
     {
-        auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
-        if (existing != services_.end())
+        if (const auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
+            existing != services_.end())
         {
             auto &created = get_or_create(existing->second);
             if (!created.has_shared_storage())
