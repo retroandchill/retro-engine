@@ -10,6 +10,7 @@ import std;
 import retro.core.functional.delegate;
 import retro.core.memory.ref_counted_ptr;
 import retro.core.memory.small_unique_ptr;
+import :metadata;
 
 namespace retro
 {
@@ -136,6 +137,17 @@ namespace retro
             instance.type_ = typeid(T);
             instance.ptr_ = p;
             instance.storage_ = make_unique_small<StorageImpl<RefCountPtr<T>>, storage_size>(RefCountPtr<T>{p});
+            return instance;
+        }
+
+        template <SmartHandle T>
+        static ServiceInstance from_smart_handle(T handle)
+        {
+            ServiceInstance instance;
+            using ElementType = HandleElementType<T>;
+            instance.type_ = typeid(ElementType);
+            instance.ptr_ = static_cast<HandleType<ElementType>>(handle.get());
+            instance.storage_ = make_unique_small<StorageImpl<T>, storage_size>(std::move(handle));
             return instance;
         }
 

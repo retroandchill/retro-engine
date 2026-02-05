@@ -93,6 +93,11 @@ namespace retro
             {
                 return std::static_pointer_cast<PointerElementT<T>>(get_shared_impl(typeid(PointerElementT<T>)));
             }
+            else if constexpr (HandleWrapper<T>)
+            {
+                using PtrType = HandleType<T>;
+                return PtrType{static_cast<PtrType>(get_raw(typeid(T)))};
+            }
             else
             {
                 return *get_ptr<T>();

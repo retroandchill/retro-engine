@@ -131,4 +131,37 @@ namespace retro
 
     export template <typename T>
     concept Injectable = ConstructorDependenciesValid<T> || std::is_default_constructible_v<T>;
+
+    template <typename T>
+    concept HasCType = requires() { typename T::CType; };
+
+    export template <typename T>
+    struct HandleTraits;
+
+    export template <HasCType T>
+    struct HandleTraits<T>
+    {
+        using HandleType = T::CType;
+    };
+
+    template <typename T>
+    concept HasHandleType = requires { typename HandleTraits<std::remove_cvref_t<T>>::HandleType; };
+
+    export template <HasHandleType T>
+    using HandleType = HandleTraits<std::remove_cvref_t<T>>::HandleType;
+
+    export template <typename T>
+    concept HandleWrapper = HasHandleType<T> && std::is_pointer_v<HandleType<T>> &&
+                            std::convertible_to<HandleType<T>, std::remove_cvref_t<T>> &&
+                            std::convertible_to<std::remove_cvref_t<T>, HandleType<T>>;
+
+    export template <typename T>
+    concept SmartHandle = requires(T ptr) {
+        {
+            ptr.get()
+        } -> HandleWrapper;
+    };
+
+    export template <SmartHandle T>
+    using HandleElementType = std::remove_cvref_t<decltype(std::declval<T>().get())>;
 } // namespace retro

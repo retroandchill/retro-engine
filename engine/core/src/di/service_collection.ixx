@@ -150,6 +150,9 @@ namespace retro
     concept InjectablePolicy = Injectable<T> && Policy != StoragePolicy::External &&
                                (Policy != StoragePolicy::IntrusiveOwned || RefCounted<T>);
 
+    template <typename T>
+    concept ValidSingletonResult = UniquePtrLike<T> || SharedPtrLike<T> || SmartHandle<T>;
+
     export class RETRO_API ServiceCollection
     {
       public:
@@ -230,6 +233,40 @@ namespace retro
         ServiceCollection &add_singleton(std::unique_ptr<Impl> ptr)
         {
             registrations_.emplace_back(typeid(T), std::shared_ptr<Impl>(ptr.release()));
+            return *this;
+        }
+
+        template <std::invocable<ServiceProvider &> Functor>
+            requires ValidSingletonResult<std::invoke_result_t<Functor, ServiceProvider &>>
+        ServiceCollection &add_singleton(Functor &&functor)
+        {
+            using Result = std::invoke_result_t<Functor, ServiceProvider &>;
+            if constexpr (UniquePtrLike<Result>)
+            {
+                using InnerType = PointerElementT<Result>;
+                registrations_.emplace_back(
+                    typeid(InnerType),
+                    SingletonFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                                             { return ServiceInstance::from_unique(std::invoke(factory, provider)); }));
+            }
+            else if constexpr (SharedPtrLike<Result>)
+            {
+                using InnerType = PointerElementT<Result>;
+                registrations_.emplace_back(
+                    typeid(InnerType),
+                    SingletonFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                                             { return ServiceInstance::from_shared(std::invoke(factory, provider)); }));
+            }
+            else if constexpr (SmartHandle<Result>)
+            {
+                using InnerType = HandleElementType<Result>;
+                registrations_.emplace_back(
+                    typeid(InnerType),
+                    SingletonFactory::create(
+                        [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                        { return ServiceInstance::from_smart_handle(std::invoke(factory, provider)); }));
+            }
+
             return *this;
         }
 
