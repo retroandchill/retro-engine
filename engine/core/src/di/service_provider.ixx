@@ -32,18 +32,6 @@ namespace retro
 
     export class ServiceProvider;
 
-    export enum class ServiceLifetime : std::uint8_t
-    {
-        Singleton,
-        Transient
-    };
-
-    template <Injectable T>
-    void *construct_transient(ServiceProvider &provider);
-
-    template <Injectable T>
-    T construct_transient_in_place(ServiceProvider &provider);
-
     template <typename T>
     concept ServiceCompatibleContainer =
         std::ranges::range<T> && ContainerAppendable<T, PointerElement<std::ranges::range_reference_t<T>>> &&
@@ -104,79 +92,10 @@ namespace retro
             }
         }
 
-        template <typename T>
-        auto create()
-        {
-            if (UniquePtrLike<T>)
-            {
-                return std::unique_ptr<PointerElementT<T>>(create_raw<PointerElementT<T>>(typeid(PointerElementT<T>)));
-            }
-            // ReSharper disable once CppRedundantElseKeywordInsideCompoundStatement
-            else if constexpr (SharedPtrLike<T>)
-            {
-                return std::shared_ptr<PointerElementT<T>>(create_raw<PointerElementT<T>>(typeid(PointerElementT<T>)));
-            }
-            else
-            {
-                auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{typeid(T)}});
-                if (existing != services_.end())
-                {
-                    std::visit(Overload{[&](const DirectTransient &service) -> T
-                                        {
-                                            auto created = construct_transient_in_place<T>(*this);
-                                            service.configure.broadcast(std::addressof(created), *this);
-                                            return created;
-                                        },
-                                        [](auto &&) -> T
-                                        {
-                                            throw ServiceNotFoundException{};
-                                        }},
-                               existing->second);
-                }
-
-                throw ServiceNotFoundException{};
-            }
-        }
-
       private:
         void *get_raw(const std::type_info &type);
 
         std::shared_ptr<void> get_shared_impl(const std::type_info &type);
-
-        template <typename T>
-        T *create_raw(const std::type_info &type)
-        {
-            auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
-            if (existing != services_.end())
-            {
-                auto *created =
-                    std::visit(Overload{[](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
-                                        [](const UnrealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
-                                        [&](const DerivedTransient &transient)
-                                        {
-                                            auto *s = transient.registration.execute(*this);
-                                            transient.configure.broadcast(s, *this);
-                                            return s;
-                                        },
-                                        [&](const DirectTransient &transient) -> void *
-                                        {
-                                            if constexpr (Injectable<T>)
-                                            {
-                                                auto s = construct_transient<T>(*this);
-                                                transient.configure.broadcast(std::addressof(s), *this);
-                                                return s;
-                                            }
-                                            else
-                                            {
-                                                throw ServiceNotFoundException{};
-                                            }
-                                        }},
-                               existing->second);
-                return static_cast<T *>(created);
-            }
-
-            throw ServiceNotFoundException{};
-        }
 
         auto get_all(const std::type_info &type)
         {
@@ -195,7 +114,7 @@ namespace retro
             return static_cast<T *>(get_raw(typeid(T)));
         }
 
-        std::vector<ServiceInstance> singletons_;
+        std::vector<ServiceInstance> created_services_;
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
     };
 

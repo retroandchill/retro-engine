@@ -17,6 +17,7 @@ namespace retro
     export enum class StoragePolicy : std::uint8_t
     {
         External,
+        Direct,
         UniqueOwned,
         SharedOwned,
         IntrusiveOwned
@@ -101,6 +102,18 @@ namespace retro
         }
 
         template <typename T>
+            requires std::constructible_from<std::remove_cvref_t<T>, T>
+        static ServiceInstance from_direct(T &&value)
+        {
+            ServiceInstance instance;
+            instance.type_ = typeid(T);
+            instance.storage_ =
+                make_unique_small<StorageImpl<std::remove_cvref_t<T>>, storage_size>(std::forward<T>(value));
+            instance.ptr_ = instance.storage_->get_raw_storage();
+            return instance;
+        }
+
+        template <typename T>
         static ServiceInstance from_unique(std::unique_ptr<T> p)
         {
             ServiceInstance instance;
@@ -180,6 +193,8 @@ namespace retro
 
             [[nodiscard]] virtual bool is_shared_ptr() const noexcept = 0;
 
+            [[nodiscard]] virtual void *get_raw_storage() noexcept = 0;
+
             [[nodiscard]] virtual std::shared_ptr<void> as_shared() const noexcept = 0;
 
             virtual void small_unique_ptr_move(void *dst) noexcept = 0;
@@ -196,6 +211,11 @@ namespace retro
             [[nodiscard]] bool is_shared_ptr() const noexcept override
             {
                 return std::convertible_to<const T &, std::shared_ptr<void>>;
+            }
+
+            [[nodiscard]] void *get_raw_storage() noexcept override
+            {
+                return std::addressof(value_);
             }
 
             [[nodiscard]] std::shared_ptr<void> as_shared() const noexcept override

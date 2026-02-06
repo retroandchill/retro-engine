@@ -26,7 +26,7 @@ namespace retro
 
     ServiceProvider::~ServiceProvider() noexcept
     {
-        for (auto &singleton : singletons_ | std::views::reverse)
+        for (auto &singleton : created_services_ | std::views::reverse)
         {
             singleton.dispose();
         }
@@ -62,20 +62,18 @@ namespace retro
 
     const ServiceInstance &ServiceProvider::get_or_create(ServiceCallSite &call_site)
     {
-        return std::visit(Overload{[&](const RealizedSingleton &singleton) -> auto &
-                                   { return singletons_[singleton.instance_index]; },
-                                   [&](const UnrealizedSingleton &service) -> auto &
+        return std::visit(Overload{[&](const RealizedService &singleton) -> auto &
+                                   { return created_services_[singleton.instance_index]; },
+                                   [&](const UnrealizedService &service) -> auto &
                                    {
-                                       auto &created = singletons_.emplace_back(service.registration.execute(*this));
-                                       call_site.emplace<RealizedSingleton>(singletons_.size() - 1);
+                                       auto &created =
+                                           created_services_.emplace_back(service.registration.execute(*this));
+                                       if (service.lifetime != ServiceLifetime::Transient)
+                                       {
+                                           call_site.emplace<RealizedService>(created_services_.size() - 1);
+                                       }
                                        service.configure.broadcast(created.ptr(), *this);
                                        return created;
-                                   },
-                                   [](const DerivedTransient &) -> ServiceInstance &
-                                   { throw ServiceNotFoundException{}; },
-                                   [](const DirectTransient &) -> ServiceInstance &
-                                   {
-                                       throw ServiceNotFoundException{};
                                    }},
                           call_site);
     }

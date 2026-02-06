@@ -40,7 +40,7 @@ int main()
             {
                 try
                 {
-                    EngineLifecycle engine_lifecycle{service_provider.create<std::unique_ptr<Engine>>()};
+                    EngineLifecycle engine_lifecycle{service_provider.get<Engine>()};
                     auto &engine = Engine::instance();
                     engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
                 }

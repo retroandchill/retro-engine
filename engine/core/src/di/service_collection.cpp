@@ -8,18 +8,10 @@ module retro.core.di;
 
 namespace retro
 {
-    ServiceRegistration::ServiceRegistration(const std::type_info &type) noexcept
-        : type{type}, registration{std::in_place_type<DirectTransient>}
-    {
-    }
-
-    ServiceRegistration::ServiceRegistration(const std::type_info &type, SingletonFactory factory) noexcept
-        : type{type}, registration{std::in_place_type<UnrealizedSingleton>, factory}
-    {
-    }
-
-    ServiceRegistration::ServiceRegistration(const std::type_info &type, TransientFactory factory) noexcept
-        : type{type}, registration{std::in_place_type<DerivedTransient>, factory}
+    ServiceRegistration::ServiceRegistration(const std::type_info &type,
+                                             ServiceLifetime lifetime,
+                                             ServiceFactory factory) noexcept
+        : type{type}, registration{std::in_place_type<UnrealizedService>, lifetime, factory}
     {
     }
 

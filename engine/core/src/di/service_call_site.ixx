@@ -11,32 +11,27 @@ import :service_instance;
 
 namespace retro
 {
-    using SingletonFactory = Delegate<ServiceInstance(class ServiceProvider &)>;
-    using TransientFactory = Delegate<void *(ServiceProvider &)>;
+    export enum class ServiceLifetime : std::uint8_t
+    {
+        Singleton,
+        Transient
+    };
+
+    using ServiceFactory = Delegate<ServiceInstance(class ServiceProvider &)>;
 
     using ConfigureService = MulticastDelegate<void(void *, ServiceProvider &)>;
 
-    struct RealizedSingleton
+    struct RealizedService
     {
         std::size_t instance_index = static_cast<std::size_t>(-1);
     };
 
-    struct UnrealizedSingleton
+    struct UnrealizedService
     {
-        SingletonFactory registration{};
+        ServiceLifetime lifetime{};
+        ServiceFactory registration{};
         ConfigureService configure{};
     };
 
-    struct DirectTransient
-    {
-        ConfigureService configure{};
-    };
-
-    struct DerivedTransient
-    {
-        TransientFactory registration{};
-        ConfigureService configure{};
-    };
-
-    using ServiceCallSite = std::variant<UnrealizedSingleton, RealizedSingleton, DirectTransient, DerivedTransient>;
+    using ServiceCallSite = std::variant<UnrealizedService, RealizedService>;
 } // namespace retro

@@ -8,6 +8,7 @@ export module retro.core.type_traits.pointer;
 
 import std;
 import retro.core.type_traits.basic;
+import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -79,6 +80,19 @@ namespace retro
         return obj.weak_from_this();
     }
 
+    template <typename>
+    struct IsRefCountPtr : std::false_type
+    {
+    };
+
+    template <typename T>
+    struct IsRefCountPtr<RefCountPtr<T>> : std::true_type
+    {
+    };
+
+    export template <typename T>
+    concept RefCountPtrLike = IsRefCountPtr<std::remove_cvref_t<T>>::value;
+
     export template <typename T>
     struct PointerElement;
 
@@ -102,6 +116,12 @@ namespace retro
 
     template <typename T>
     struct PointerElement<std::weak_ptr<T>>
+    {
+        using Type = T;
+    };
+
+    template <typename T>
+    struct PointerElement<RefCountPtr<T>>
     {
         using Type = T;
     };

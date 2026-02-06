@@ -38,11 +38,11 @@ namespace retro
         }
     }
 
-    std::unique_ptr<Engine> Engine::instance_{};
+    Engine *Engine::instance_{};
 
     void add_engine_services(ServiceCollection &services)
     {
-        services.add_transient<Engine>()
+        services.add_singleton<Engine>()
             .add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline, StoragePolicy::SharedOwned>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline, StoragePolicy::SharedOwned>()

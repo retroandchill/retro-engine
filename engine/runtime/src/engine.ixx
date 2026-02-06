@@ -51,15 +51,15 @@ namespace retro
             return *instance_;
         }
 
-        inline static void initialize(std::unique_ptr<Engine> engine)
+        inline static void initialize(Engine &engine)
         {
             assert(instance_ == nullptr);
-            instance_ = std::move(engine);
+            instance_ = std::addressof(engine);
         }
 
         inline static void shutdown()
         {
-            instance_.reset();
+            instance_ = nullptr;
         }
 
         RETRO_API void run(std::u16string_view assembly_path,
@@ -90,7 +90,7 @@ namespace retro
         void tick(float delta_time);
         void render();
 
-        RETRO_API static std::unique_ptr<Engine> instance_;
+        RETRO_API static Engine *instance_;
 
         friend struct AssetPathHook;
 
@@ -107,9 +107,9 @@ namespace retro
 
     export struct EngineLifecycle
     {
-        explicit inline EngineLifecycle(std::unique_ptr<Engine> engine)
+        explicit inline EngineLifecycle(Engine &engine)
         {
-            Engine::initialize(std::move(engine));
+            Engine::initialize(engine);
         }
 
         inline ~EngineLifecycle()
