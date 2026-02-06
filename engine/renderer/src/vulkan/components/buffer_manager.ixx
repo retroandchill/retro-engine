@@ -7,6 +7,7 @@
 export module retro.renderer.vulkan.components.buffer_manager;
 
 import retro.renderer.vulkan.components.device;
+import retro.core.di;
 import vulkan_hpp;
 
 namespace retro
@@ -22,6 +23,8 @@ namespace retro
     {
       public:
         constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
+
+        using Dependencies = TypeList<VulkanDevice>;
 
         explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size = DEFAULT_POOL_SIZE);
 

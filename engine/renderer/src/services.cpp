@@ -6,8 +6,7 @@
  */
 module retro.renderer.services;
 
-import retro.runtime.rendering.renderer2d;
-import retro.renderer.vulkan.renderer;
+import retro.renderer.vulkan.services;
 
 namespace retro
 {
@@ -17,7 +16,7 @@ namespace retro
         switch (backend)
         {
             case RenderBackend::Vulkan:
-                services.add_singleton<Renderer2D, VulkanRenderer2D>();
+                add_vulkan_services(services);
                 break;
             default:
                 throw std::invalid_argument("Invalid render backend");

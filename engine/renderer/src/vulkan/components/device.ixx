@@ -7,12 +7,15 @@
 export module retro.renderer.vulkan.components.device;
 
 import vulkan_hpp;
+import retro.core.di;
 
 namespace retro
 {
     export class VulkanDevice
     {
       public:
+        using Dependencies = TypeList<vk::Instance, vk::SurfaceKHR>;
+
         VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface);
 
         [[nodiscard]] inline vk::PhysicalDevice physical_device() const noexcept

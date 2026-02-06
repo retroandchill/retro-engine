@@ -12,6 +12,7 @@ export module retro.core.di:service_collection;
 
 import std;
 import :service_provider;
+import retro.core.type_traits.callable;
 
 namespace retro
 {
@@ -98,6 +99,18 @@ namespace retro
         {
             return make_ref_counted<T>();
         }
+    }
+
+    template <typename T, std::size_t... Is>
+    T get_tuple_from_provider(ServiceProvider &provider, std::index_sequence<Is...>)
+    {
+        return {provider.get<std::decay_t<std::tuple_element_t<Is, T>>>()...};
+    }
+
+    template <typename T>
+    T get_tuple_from_provider(ServiceProvider &provider)
+    {
+        return get_tuple_from_provider<T>(provider, std::make_index_sequence<std::tuple_size_v<std::decay_t<T>>>());
     }
 
     template <Injectable T, StoragePolicy Policy>
@@ -268,6 +281,36 @@ namespace retro
             }
 
             return *this;
+        }
+
+        template <auto Functor>
+            requires std::invocable<decltype(Functor), ServiceProvider &> &&
+                     ValidSingletonResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>
+        ServiceCollection &add_singleton()
+        {
+            return add_singleton([](ServiceProvider &provider) { return std::invoke(Functor, provider); });
+        }
+
+        template <NonGenericLambda Functor>
+            requires ValidSingletonResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>
+                                                                              ServiceCollection &
+                     add_singleton(Functor && functor)
+        {
+            return add_singleton(
+                [functor = std::forward<Functor>(functor)](ServiceProvider &provider)
+                { return std::apply(functor, get_tuple_from_provider<FunctionArgsTuple<Functor>>(provider)); });
+        }
+
+        template <auto Functor>
+            requires FreeFunction<decltype(Functor)> && ValidSingletonResult<FunctionReturnType<decltype(Functor)>> &&
+                     !std::invocable<decltype(Functor), ServiceProvider &>
+                         ServiceCollection &
+                     add_singleton()
+        {
+            return add_singleton(
+                [](ServiceProvider &provider) {
+                    return std::apply(Functor, get_tuple_from_provider<FunctionArgsTuple<decltype(Functor)>>(provider));
+                });
         }
 
         template <typename T, std::derived_from<T> Impl = T>

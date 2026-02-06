@@ -16,6 +16,7 @@ import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
 import retro.core.di;
+import retro.core.math.vector;
 import retro.platform.window;
 import vulkan_hpp;
 import std;
@@ -25,9 +26,13 @@ namespace retro
     export class VulkanRenderer2D final : public Renderer2D
     {
       public:
-        using Dependencies = TypeList<Window>;
+        using Dependencies = TypeList<Window, vk::Instance, vk::SurfaceKHR, VulkanDevice, VulkanBufferManager>;
 
-        explicit VulkanRenderer2D(std::shared_ptr<Window> viewport);
+        explicit VulkanRenderer2D(std::shared_ptr<Window> window,
+                                  vk::Instance instance,
+                                  vk::SurfaceKHR surface,
+                                  VulkanDevice &device,
+                                  VulkanBufferManager &buffer_manager);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -50,9 +55,6 @@ namespace retro
         std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
 
       private:
-        static vk::UniqueInstance create_instance(const Window &viewport);
-        static vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance);
-        static std::span<const char *const> get_required_instance_extensions(const Window &viewport);
         static vk::UniqueRenderPass create_render_pass(vk::Device device,
                                                        vk::Format color_format,
                                                        vk::SampleCountFlagBits samples);
@@ -72,12 +74,12 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-        std::shared_ptr<Window> viewport_;
+        std::shared_ptr<Window> window_;
 
-        vk::UniqueInstance instance_;
-        vk::UniqueSurfaceKHR surface_;
-        VulkanDevice device_;
-        VulkanBufferManager buffer_manager_;
+        vk::Instance instance_;
+        vk::SurfaceKHR surface_;
+        VulkanDevice &device_;
+        VulkanBufferManager &buffer_manager_;
         VulkanSwapchain swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;

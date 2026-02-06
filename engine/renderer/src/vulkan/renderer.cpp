@@ -10,8 +10,6 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-#include <SDL3/SDL_vulkan.h>
-
 module retro.renderer.vulkan.renderer;
 
 import retro.logging;
@@ -20,18 +18,21 @@ import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> viewport)
-        : viewport_{std::move(viewport)}, instance_{create_instance(*viewport_)},
-          surface_{create_surface(*viewport_, instance_.get())}, device_{instance_.get(), surface_.get()},
-          buffer_manager_{device_}, swapchain_(SwapchainConfig{
-                                        .physical_device = device_.physical_device(),
-                                        .device = device_.device(),
-                                        .surface = surface_.get(),
-                                        .graphics_family = device_.graphics_family_index(),
-                                        .present_family = device_.present_family_index(),
-                                        .width = viewport_->width(),
-                                        .height = viewport_->height(),
-                                    }),
+    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> window,
+                                       const vk::Instance instance,
+                                       const vk::SurfaceKHR surface,
+                                       VulkanDevice &device,
+                                       VulkanBufferManager &buffer_manager)
+        : window_{std::move(window)}, instance_{instance}, surface_{surface}, device_{device},
+          buffer_manager_{buffer_manager}, swapchain_(SwapchainConfig{
+                                               .physical_device = device_.physical_device(),
+                                               .device = device_.device(),
+                                               .surface = surface_,
+                                               .graphics_family = device_.graphics_family_index(),
+                                               .present_family = device_.present_family_index(),
+                                               .width = window_->width(),
+                                               .height = window_->height(),
+                                           }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
           command_pool_(CommandPoolConfig{
@@ -143,7 +144,7 @@ namespace retro
 
     Vector2u VulkanRenderer2D::viewport_size() const
     {
-        return viewport_->size();
+        return window_->size();
     }
 
     void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, std::shared_ptr<RenderPipeline> pipeline)
@@ -262,91 +263,6 @@ namespace retro
                                                          image_data.height());
     }
 
-    vk::UniqueInstance VulkanRenderer2D::create_instance(const Window &viewport)
-    {
-        vk::ApplicationInfo app_info{.pApplicationName = "Retro Engine",
-                                     .applicationVersion = vk::makeVersion(1, 0, 0),
-                                     .pEngineName = "Retro Engine",
-                                     .engineVersion = vk::makeVersion(1, 0, 0),
-                                     .apiVersion = vk::makeApiVersion(0, 1, 2, 0)};
-
-        std::vector<const char *> enabled_layers;
-#ifndef NDEBUG
-        auto available_layers = vk::enumerateInstanceLayerProperties();
-        const bool has_validation =
-            std::ranges::any_of(available_layers,
-                                [](const vk::LayerProperties &lp)
-                                { return std::string_view{lp.layerName} == "VK_LAYER_KHRONOS_validation"; });
-
-        if (has_validation)
-        {
-            enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
-        }
-        else
-        {
-            get_logger().warn("Vulkan validation layers requested, but not available!");
-        }
-#endif
-
-        const auto extensions = get_required_instance_extensions(viewport);
-
-        std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
-
-        vk::ValidationFeaturesEXT validation_features{.enabledValidationFeatureCount =
-                                                          static_cast<std::uint32_t>(validation_feature_enables.size()),
-                                                      .pEnabledValidationFeatures = validation_feature_enables.data()};
-
-        const vk::InstanceCreateInfo create_info{.pNext = &validation_features,
-                                                 .pApplicationInfo = &app_info,
-                                                 .enabledLayerCount = static_cast<std::uint32_t>(enabled_layers.size()),
-                                                 .ppEnabledLayerNames = enabled_layers.data(),
-                                                 .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
-                                                 .ppEnabledExtensionNames = extensions.data()};
-
-        return vk::createInstanceUnique(create_info);
-    }
-
-    vk::UniqueSurfaceKHR VulkanRenderer2D::create_surface(const Window &viewport, vk::Instance instance)
-    {
-        switch (auto [backend, handle] = viewport.native_handle(); backend)
-        {
-            case WindowBackend::SDL3:
-                {
-                    vk::SurfaceKHR::CType surface;
-                    if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle), instance, nullptr, &surface))
-                    {
-                        throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
-                    }
-
-                    return vk::UniqueSurfaceKHR{surface, instance};
-                }
-        }
-
-        throw std::runtime_error{"Unsupported window backend"};
-    }
-
-    std::span<const char *const> VulkanRenderer2D::get_required_instance_extensions(const Window &viewport)
-    {
-        auto [backend, handle] = viewport.native_handle();
-        switch (backend)
-        {
-            case WindowBackend::SDL3:
-                {
-                    std::uint32_t count = 0;
-                    auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
-                    if (names == nullptr)
-                    {
-                        throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
-                    }
-
-                    return std::span{names, count};
-                }
-        }
-
-        get_logger().error("Unsupported window backend:");
-        return {};
-    }
-
     vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device,
                                                               vk::Format color_format,
                                                               vk::SampleCountFlagBits samples)
@@ -431,20 +347,20 @@ namespace retro
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
-        const auto [w, h] = viewport_->size();
+        const auto [w, h] = window_->size();
         if (w == 0 || h == 0)
             return;
 
         device_.device().waitIdle();
 
-        swapchain_ = VulkanSwapchain{SwapchainConfig{SwapchainConfig{.physical_device = device_.physical_device(),
-                                                                     .device = device_.device(),
-                                                                     .surface = surface_.get(),
-                                                                     .graphics_family = device_.graphics_family_index(),
-                                                                     .present_family = device_.present_family_index(),
-                                                                     .width = w,
-                                                                     .height = h,
-                                                                     .old_swapchain = swapchain_.handle()}}};
+        swapchain_ = VulkanSwapchain{SwapchainConfig{.physical_device = device_.physical_device(),
+                                                     .device = device_.device(),
+                                                     .surface = surface_,
+                                                     .graphics_family = device_.graphics_family_index(),
+                                                     .present_family = device_.present_family_index(),
+                                                     .width = w,
+                                                     .height = h,
+                                                     .old_swapchain = swapchain_.handle()}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
         pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
@@ -464,10 +380,7 @@ namespace retro
                                               .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd,
-                                          viewport_->size(),
-                                          sync_.descriptor_pool(current_frame_),
-                                          buffer_manager_);
+        pipeline_manager_.bind_and_render(cmd, window_->size(), sync_.descriptor_pool(current_frame_), buffer_manager_);
         cmd.endRenderPass();
         cmd.end();
     }
