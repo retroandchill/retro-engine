@@ -24,8 +24,8 @@ namespace retro
             }
         }
 
-        return asset_source_->open_stream(path).and_then([this, path](const std::unique_ptr<Stream> &stream)
-                                                         { return load_asset_from_stream(path, *stream); });
+        return asset_source_.open_stream(path).and_then([this, path](const std::unique_ptr<Stream> &stream)
+                                                        { return load_asset_from_stream(path, *stream); });
     }
 
     AssetLoadResult<RefCountPtr<Asset>> AssetManager::load_asset_from_stream(const AssetPath &path, Stream &stream)

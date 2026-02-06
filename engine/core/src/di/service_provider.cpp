@@ -34,8 +34,8 @@ namespace retro
 
     void *ServiceProvider::get_raw(const std::type_info &type)
     {
-        auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
-        if (existing != services_.end())
+        if (const auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
+            existing != services_.end())
         {
             return get_or_create(existing->second).ptr();
         }

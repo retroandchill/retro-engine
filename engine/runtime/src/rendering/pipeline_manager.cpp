@@ -9,13 +9,13 @@ module retro.runtime.rendering.pipeline_manager;
 namespace retro
 {
     PipelineManager::PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines)
-        : renderer_{&renderer}
+        : renderer_{renderer}
     {
         for (auto &pipeline : pipelines)
         {
             std::type_index type = pipeline->component_type();
             pipelines_[type] = PipelineUsage{.pipeline = pipeline, .usage_count = 1};
-            renderer_->add_new_render_pipeline(type, *pipeline);
+            renderer_.add_new_render_pipeline(type, *pipeline);
         }
     }
 

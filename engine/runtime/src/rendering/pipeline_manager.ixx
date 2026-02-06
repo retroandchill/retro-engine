@@ -36,7 +36,7 @@ namespace retro
         void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size);
 
       private:
-        Renderer2D *renderer_{};
+        Renderer2D &renderer_;
         std::map<std::type_index, PipelineUsage> pipelines_{};
     };
 } // namespace retro

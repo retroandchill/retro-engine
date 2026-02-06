@@ -55,8 +55,7 @@ namespace retro
                    Renderer2D &renderer,
                    PipelineManager &pipeline_manager,
                    AssetManager &asset_manager)
-        : script_runtime_(&script_runtime), renderer_(&renderer), asset_manager_{&asset_manager},
-          scene_{pipeline_manager}
+        : script_runtime_(script_runtime), renderer_(renderer), asset_manager_{asset_manager}, scene_{pipeline_manager}
     {
         auto &viewport = viewports_.create_viewport();
         viewport.set_scene(std::addressof(scene_));
@@ -70,7 +69,7 @@ namespace retro
 
         running_.store(true);
 
-        if (script_runtime_->start_scripts(assembly_path, class_name) != 0)
+        if (script_runtime_.start_scripts(assembly_path, class_name) != 0)
             return;
 
         // FPS tracking state
@@ -124,9 +123,9 @@ namespace retro
             }
         }
 
-        script_runtime_->tear_down();
-        renderer_->wait_idle();
-        asset_manager_->on_engine_shutdown();
+        script_runtime_.tear_down();
+        renderer_.wait_idle();
+        asset_manager_.on_engine_shutdown();
     }
 
     void Engine::request_shutdown(const std::int32_t exit_code)
@@ -137,19 +136,19 @@ namespace retro
 
     bool Engine::remove_asset_from_cache(const AssetPath &path) const
     {
-        return asset_manager_->remove_asset_from_cache(path);
+        return asset_manager_.remove_asset_from_cache(path);
     }
 
     void Engine::tick(const float delta_time)
     {
         scheduler_.pump();
-        script_runtime_->tick(delta_time);
+        script_runtime_.tick(delta_time);
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
     void Engine::render()
     {
-        renderer_->begin_frame();
+        renderer_.begin_frame();
 
         const auto result = viewports_.primary().and_then(
             [](Viewport &primary)
@@ -163,10 +162,10 @@ namespace retro
         {
             auto [primary, scene] = result.value();
             const auto vp_size =
-                (primary.size().x == 0 || primary.size().y == 0) ? renderer_->viewport_size() : primary.size();
+                (primary.size().x == 0 || primary.size().y == 0) ? renderer_.viewport_size() : primary.size();
             scene.collect_draw_calls(vp_size);
         }
 
-        renderer_->end_frame();
+        renderer_.end_frame();
     }
 } // namespace retro

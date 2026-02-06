@@ -81,7 +81,7 @@ namespace retro
         template <std::derived_from<Asset> T = Asset>
         AssetLoadResult<RefCountPtr<T>> load_asset(const AssetPath &path)
         {
-            return asset_manager_->load_asset<T>(path);
+            return asset_manager_.load_asset<T>(path);
         }
 
         RETRO_API bool remove_asset_from_cache(const AssetPath &path) const;
@@ -94,9 +94,9 @@ namespace retro
 
         friend struct AssetPathHook;
 
-        ScriptRuntime *script_runtime_{};
-        Renderer2D *renderer_{};
-        AssetManager *asset_manager_{};
+        ScriptRuntime &script_runtime_;
+        Renderer2D &renderer_;
+        AssetManager &asset_manager_;
 
         std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
