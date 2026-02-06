@@ -166,6 +166,10 @@ namespace retro
     template <typename T>
     concept ValidSingletonResult = UniquePtrLike<T> || SharedPtrLike<T> || SmartHandle<T>;
 
+    template <typename T, ServiceLifetime Lifetime>
+    concept ValidServiceFactoryResult =
+        (Lifetime == ServiceLifetime::Singleton && ValidSingletonResult<T>) || Lifetime == ServiceLifetime::Transient;
+
     export class RETRO_API ServiceCollection
     {
       public:
@@ -205,6 +209,79 @@ namespace retro
             }
 
             return *this;
+        }
+
+        template <ServiceLifetime Lifetime, std::invocable<ServiceProvider &> Functor>
+            requires ValidServiceFactoryResult<std::invoke_result_t<Functor, ServiceProvider &>, Lifetime>
+        ServiceCollection &add(Functor &&functor)
+        {
+            if constexpr (Lifetime == ServiceLifetime::Singleton)
+            {
+                using Result = std::invoke_result_t<Functor, ServiceProvider &>;
+                if constexpr (UniquePtrLike<Result>)
+                {
+                    using InnerType = PointerElementT<Result>;
+                    registrations_.emplace_back(
+                        typeid(InnerType),
+                        SingletonFactory::create(
+                            [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                            { return ServiceInstance::from_unique(std::invoke(factory, provider)); }));
+                }
+                else if constexpr (SharedPtrLike<Result>)
+                {
+                    using InnerType = PointerElementT<Result>;
+                    registrations_.emplace_back(
+                        typeid(InnerType),
+                        SingletonFactory::create(
+                            [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                            { return ServiceInstance::from_shared(std::invoke(factory, provider)); }));
+                }
+                else if constexpr (SmartHandle<Result>)
+                {
+                    using InnerType = HandleElementType<Result>;
+                    registrations_.emplace_back(
+                        typeid(InnerType),
+                        SingletonFactory::create(
+                            [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
+                            { return ServiceInstance::from_smart_handle(std::invoke(factory, provider)); }));
+                }
+            }
+            else if constexpr (Lifetime == ServiceLifetime::Transient)
+            {
+            }
+
+            return *this;
+        }
+
+        template <ServiceLifetime Lifetime, auto Functor>
+            requires(std::invocable<decltype(Functor), ServiceProvider &> &&
+                     ValidServiceFactoryResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>, Lifetime>)
+        ServiceCollection &add()
+        {
+            return add<Lifetime>([](ServiceProvider &provider) { return std::invoke(Functor, provider); });
+        }
+
+        template <ServiceLifetime Lifetime, NonGenericLambda Functor>
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>, Lifetime> &&
+                     !std::invocable<Functor, ServiceProvider &>)
+        ServiceCollection &add(Functor &&functor)
+        {
+            return add<Lifetime>(
+                [functor = std::forward<Functor>(functor)](ServiceProvider &provider)
+                { return std::apply(functor, get_tuple_from_provider<FunctionArgsTuple<Functor>>(provider)); });
+        }
+
+        template <ServiceLifetime Lifetime, auto Functor>
+            requires FreeFunction<decltype(Functor)> &&
+                     ValidServiceFactoryResult<FunctionReturnType<decltype(Functor)>, Lifetime> &&
+                     !std::invocable<decltype(Functor), ServiceProvider &>
+                         ServiceCollection &
+                     add()
+        {
+            return add<Lifetime>(
+                [](ServiceProvider &provider) {
+                    return std::apply(Functor, get_tuple_from_provider<FunctionArgsTuple<decltype(Functor)>>(provider));
+                });
         }
 
         template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
@@ -253,34 +330,7 @@ namespace retro
             requires ValidSingletonResult<std::invoke_result_t<Functor, ServiceProvider &>>
         ServiceCollection &add_singleton(Functor &&functor)
         {
-            using Result = std::invoke_result_t<Functor, ServiceProvider &>;
-            if constexpr (UniquePtrLike<Result>)
-            {
-                using InnerType = PointerElementT<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    SingletonFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                                             { return ServiceInstance::from_unique(std::invoke(factory, provider)); }));
-            }
-            else if constexpr (SharedPtrLike<Result>)
-            {
-                using InnerType = PointerElementT<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    SingletonFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                                             { return ServiceInstance::from_shared(std::invoke(factory, provider)); }));
-            }
-            else if constexpr (SmartHandle<Result>)
-            {
-                using InnerType = HandleElementType<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    SingletonFactory::create(
-                        [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                        { return ServiceInstance::from_smart_handle(std::invoke(factory, provider)); }));
-            }
-
-            return *this;
+            return add<ServiceLifetime::Singleton>(std::forward<Functor>(functor));
         }
 
         template <auto Functor>
@@ -288,29 +338,22 @@ namespace retro
                      ValidSingletonResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>
         ServiceCollection &add_singleton()
         {
-            return add_singleton([](ServiceProvider &provider) { return std::invoke(Functor, provider); });
+            return add<ServiceLifetime::Singleton, Functor>();
         }
 
         template <NonGenericLambda Functor>
-            requires ValidSingletonResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>
-                                                                              ServiceCollection &
-                     add_singleton(Functor && functor)
+            requires(ValidSingletonResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>)
+        ServiceCollection &add_singleton(Functor &&functor)
         {
-            return add_singleton(
-                [functor = std::forward<Functor>(functor)](ServiceProvider &provider)
-                { return std::apply(functor, get_tuple_from_provider<FunctionArgsTuple<Functor>>(provider)); });
+            return add<ServiceLifetime::Singleton>(std::forward<Functor>(functor));
         }
 
         template <auto Functor>
-            requires FreeFunction<decltype(Functor)> && ValidSingletonResult<FunctionReturnType<decltype(Functor)>> &&
-                     !std::invocable<decltype(Functor), ServiceProvider &>
-                         ServiceCollection &
-                     add_singleton()
+            requires(FreeFunction<decltype(Functor)> && ValidSingletonResult<FunctionReturnType<decltype(Functor)>> &&
+                     !std::invocable<decltype(Functor), ServiceProvider &>)
+        ServiceCollection &add_singleton()
         {
-            return add_singleton(
-                [](ServiceProvider &provider) {
-                    return std::apply(Functor, get_tuple_from_provider<FunctionArgsTuple<decltype(Functor)>>(provider));
-                });
+            return add<ServiceLifetime::Singleton, Functor>();
         }
 
         template <typename T, std::derived_from<T> Impl = T>

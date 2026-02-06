@@ -68,11 +68,12 @@ namespace retro
                                    {
                                        auto &created = singletons_.emplace_back(service.registration.execute(*this));
                                        call_site.emplace<RealizedSingleton>(singletons_.size() - 1);
+                                       service.configure.broadcast(created.ptr(), *this);
                                        return created;
                                    },
                                    [](const DerivedTransient &) -> ServiceInstance &
                                    { throw ServiceNotFoundException{}; },
-                                   [](const DirectTransient) -> ServiceInstance &
+                                   [](const DirectTransient &) -> ServiceInstance &
                                    {
                                        throw ServiceNotFoundException{};
                                    }},

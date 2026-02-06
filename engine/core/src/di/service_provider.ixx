@@ -121,8 +121,12 @@ namespace retro
                 auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{typeid(T)}});
                 if (existing != services_.end())
                 {
-                    std::visit(Overload{[&](const DirectTransient) -> T
-                                        { return construct_transient_in_place<T>(*this); },
+                    std::visit(Overload{[&](const DirectTransient &service) -> T
+                                        {
+                                            auto created = construct_transient_in_place<T>(*this);
+                                            service.configure.broadcast(std::addressof(created), *this);
+                                            return created;
+                                        },
                                         [](auto &&) -> T
                                         {
                                             throw ServiceNotFoundException{};
@@ -145,22 +149,29 @@ namespace retro
             auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
             if (existing != services_.end())
             {
-                auto *created = std::visit(
-                    Overload{[](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
-                             [](const UnrealizedSingleton) -> void * { throw ServiceNotFoundException{}; },
-                             [&](const DerivedTransient &transient) { return transient.registration.execute(*this); },
-                             [&](const DirectTransient) -> void *
-                             {
-                                 if constexpr (Injectable<T>)
-                                 {
-                                     return construct_transient<T>(*this);
-                                 }
-                                 else
-                                 {
-                                     throw ServiceNotFoundException{};
-                                 }
-                             }},
-                    existing->second);
+                auto *created =
+                    std::visit(Overload{[](const RealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
+                                        [](const UnrealizedSingleton &) -> void * { throw ServiceNotFoundException{}; },
+                                        [&](const DerivedTransient &transient)
+                                        {
+                                            auto *s = transient.registration.execute(*this);
+                                            transient.configure.broadcast(s, *this);
+                                            return s;
+                                        },
+                                        [&](const DirectTransient &transient) -> void *
+                                        {
+                                            if constexpr (Injectable<T>)
+                                            {
+                                                auto s = construct_transient<T>(*this);
+                                                transient.configure.broadcast(std::addressof(s), *this);
+                                                return s;
+                                            }
+                                            else
+                                            {
+                                                throw ServiceNotFoundException{};
+                                            }
+                                        }},
+                               existing->second);
                 return static_cast<T *>(created);
             }
 

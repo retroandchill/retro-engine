@@ -14,6 +14,8 @@ namespace retro
     using SingletonFactory = Delegate<ServiceInstance(class ServiceProvider &)>;
     using TransientFactory = Delegate<void *(ServiceProvider &)>;
 
+    using ConfigureService = MulticastDelegate<void(void *, ServiceProvider &)>;
+
     struct RealizedSingleton
     {
         std::size_t instance_index = static_cast<std::size_t>(-1);
@@ -22,15 +24,18 @@ namespace retro
     struct UnrealizedSingleton
     {
         SingletonFactory registration{};
+        ConfigureService configure{};
     };
 
     struct DirectTransient
     {
+        ConfigureService configure{};
     };
 
     struct DerivedTransient
     {
         TransientFactory registration{};
+        ConfigureService configure{};
     };
 
     using ServiceCallSite = std::variant<UnrealizedSingleton, RealizedSingleton, DirectTransient, DerivedTransient>;
