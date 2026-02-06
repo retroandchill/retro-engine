@@ -37,13 +37,13 @@ namespace retro
         if (const auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
             existing != services_.end())
         {
-            return get_or_create(existing->second).ptr();
+            return get_or_create(type, existing->second).ptr();
         }
 
         throw ServiceNotFoundException{};
     }
 
-    const ServiceInstance &ServiceProvider::get_or_create(ServiceCallSite &call_site)
+    const ServiceInstance &ServiceProvider::get_or_create(std::type_index type, ServiceCallSite &call_site)
     {
         return std::visit(Overload{[&](const RealizedService &singleton) -> auto &
                                    { return created_services_[singleton.instance_index]; },
@@ -55,7 +55,11 @@ namespace retro
                                        {
                                            call_site.emplace<RealizedService>(created_services_.size() - 1);
                                        }
-                                       service.configure.broadcast(created.ptr(), *this);
+                                       if (const auto configuration = configurations_.find(type);
+                                           configuration != configurations_.end())
+                                       {
+                                           configuration->second.broadcast(created.ptr(), *this);
+                                       }
                                        return created;
                                    }},
                           call_site);

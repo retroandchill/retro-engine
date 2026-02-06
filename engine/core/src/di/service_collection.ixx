@@ -365,9 +365,37 @@ namespace retro
             return add<ServiceLifetime::Transient, Functor>();
         }
 
+        template <typename T, typename Functor>
+            requires(std::invocable<Functor, T &> || std::invocable<Functor, T &, ServiceProvider &>)
+        ServiceCollection &configure(Functor &&functor)
+        {
+            auto &configuration = configurations_[typeid(T)];
+            if constexpr (std::invocable<Functor, T &, ServiceProvider &>)
+            {
+                configuration.add([functor = std::forward<Functor>(functor)](void *object, ServiceProvider &provider)
+                                  { std::invoke(functor, *static_cast<T *>(object), provider); });
+            }
+            else
+            {
+                configuration.add([functor = std::forward<Functor>(functor)](void *object, ServiceProvider &)
+                                  { std::invoke(functor, *static_cast<T *>(object)); });
+            }
+            return *this;
+        }
+
+        template <typename T, auto Functor>
+            requires(std::invocable<decltype(Functor), T &> ||
+                     std::invocable<decltype(Functor), T &, ServiceProvider &>)
+        ServiceCollection &configure()
+        {
+            return configure<T>([]<typename... Args>(Args &&...args)
+                                { std::invoke(Functor, std::forward<Args>(args)...); });
+        }
+
       private:
         friend class ServiceProvider;
 
         std::vector<ServiceRegistration> registrations_;
+        std::unordered_map<std::type_index, ConfigureService> configurations_;
     };
 } // namespace retro

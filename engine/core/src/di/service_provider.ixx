@@ -81,11 +81,11 @@ namespace retro
             using Pair = decltype(services_)::value_type;
             return services_ | std::views::filter([&type](const Pair &pair) { return pair.first.id.type == type; }) |
                    std::views::values |
-                   std::views::transform([this](ServiceCallSite &call_site) -> auto &
-                                         { return get_or_create(call_site); });
+                   std::views::transform([this, &type](ServiceCallSite &call_site) -> auto &
+                                         { return get_or_create(type, call_site); });
         }
 
-        const ServiceInstance &get_or_create(ServiceCallSite &call_site);
+        const ServiceInstance &get_or_create(std::type_index type, ServiceCallSite &call_site);
 
         template <typename T>
         T *get_ptr()
@@ -95,6 +95,7 @@ namespace retro
 
         std::vector<ServiceInstance> created_services_;
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
+        std::unordered_map<std::type_index, ConfigureService> configurations_;
     };
 
 } // namespace retro

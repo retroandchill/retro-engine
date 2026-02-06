@@ -30,7 +30,6 @@ namespace retro
     {
         ServiceLifetime lifetime{};
         ServiceFactory registration{};
-        ConfigureService configure{};
     };
 
     using ServiceCallSite = std::variant<UnrealizedService, RealizedService>;
