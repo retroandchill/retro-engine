@@ -18,21 +18,21 @@ import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(std::shared_ptr<Window> window,
+    VulkanRenderer2D::VulkanRenderer2D(Window &window,
                                        const vk::Instance instance,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
                                        VulkanBufferManager &buffer_manager)
-        : window_{std::move(window)}, instance_{instance}, surface_{surface}, device_{device},
-          buffer_manager_{buffer_manager}, swapchain_(SwapchainConfig{
-                                               .physical_device = device_.physical_device(),
-                                               .device = device_.device(),
-                                               .surface = surface_,
-                                               .graphics_family = device_.graphics_family_index(),
-                                               .present_family = device_.present_family_index(),
-                                               .width = window_->width(),
-                                               .height = window_->height(),
-                                           }),
+        : window_{window}, instance_{instance}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
+          swapchain_(SwapchainConfig{
+              .physical_device = device_.physical_device(),
+              .device = device_.device(),
+              .surface = surface_,
+              .graphics_family = device_.graphics_family_index(),
+              .present_family = device_.present_family_index(),
+              .width = window_.width(),
+              .height = window_.height(),
+          }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
           command_pool_(CommandPoolConfig{
@@ -144,12 +144,12 @@ namespace retro
 
     Vector2u VulkanRenderer2D::viewport_size() const
     {
-        return window_->size();
+        return window_.size();
     }
 
-    void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, std::shared_ptr<RenderPipeline> pipeline)
+    void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)
     {
-        pipeline_manager_.create_pipeline(type, std::move(pipeline), swapchain_, render_pass_.get());
+        pipeline_manager_.create_pipeline(type, pipeline, swapchain_, render_pass_.get());
     }
 
     void VulkanRenderer2D::remove_render_pipeline(const std::type_index type)
@@ -347,7 +347,7 @@ namespace retro
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
-        const auto [w, h] = window_->size();
+        const auto [w, h] = window_.size();
         if (w == 0 || h == 0)
             return;
 
@@ -380,7 +380,7 @@ namespace retro
                                               .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, window_->size(), sync_.descriptor_pool(current_frame_), buffer_manager_);
+        pipeline_manager_.bind_and_render(cmd, window_.size(), sync_.descriptor_pool(current_frame_), buffer_manager_);
         cmd.endRenderPass();
         cmd.end();
     }

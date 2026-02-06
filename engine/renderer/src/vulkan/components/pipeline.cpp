@@ -503,11 +503,11 @@ namespace retro
     }
 
     void VulkanPipelineManager::create_pipeline(std::type_index type,
-                                                std::shared_ptr<RenderPipeline> pipeline,
+                                                RenderPipeline &pipeline,
                                                 const VulkanSwapchain &swapchain,
                                                 vk::RenderPass render_pass)
     {
-        pipelines_.emplace_back(std::move(pipeline), device_, swapchain, render_pass);
+        pipelines_.emplace_back(pipeline, device_, swapchain, render_pass);
         pipeline_indices_.emplace(type, pipelines_.size() - 1);
     }
 

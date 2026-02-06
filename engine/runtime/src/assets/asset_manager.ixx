@@ -31,7 +31,7 @@ namespace retro
       public:
         using Dependencies = TypeList<AssetSource, AssetDecoder>;
 
-        explicit inline AssetManager(AssetSource &asset_source, std::vector<std::shared_ptr<AssetDecoder>> decoders)
+        explicit inline AssetManager(AssetSource &asset_source, std::vector<AssetDecoder *> decoders)
             : asset_source_{std::addressof(asset_source)}, decoders_{std::move(decoders)}
         {
         }
@@ -68,7 +68,7 @@ namespace retro
         AssetLoadResult<RefCountPtr<Asset>> load_asset_from_stream(const AssetPath &path, Stream &stream);
 
         AssetSource *asset_source_{};
-        std::vector<std::shared_ptr<AssetDecoder>> decoders_;
+        std::vector<AssetDecoder *> decoders_;
         std::shared_mutex asset_cache_mutex_{};
         std::unordered_map<AssetPath, Asset *> asset_cache_{};
     };

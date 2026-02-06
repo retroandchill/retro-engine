@@ -43,23 +43,6 @@ namespace retro
         throw ServiceNotFoundException{};
     }
 
-    std::shared_ptr<void> ServiceProvider::get_shared_impl(const std::type_info &type)
-    {
-        if (const auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
-            existing != services_.end())
-        {
-            auto &created = get_or_create(existing->second);
-            if (!created.has_shared_storage())
-            {
-                throw ServiceNotFoundException{};
-            }
-
-            return created.shared_ptr();
-        }
-
-        throw ServiceNotFoundException{};
-    }
-
     const ServiceInstance &ServiceProvider::get_or_create(ServiceCallSite &call_site)
     {
         return std::visit(Overload{[&](const RealizedService &singleton) -> auto &

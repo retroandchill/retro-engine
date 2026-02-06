@@ -35,7 +35,7 @@ namespace retro
     template <typename T>
     concept ServiceCompatibleContainer =
         std::ranges::range<T> && ContainerAppendable<T, PointerElement<std::ranges::range_reference_t<T>>> &&
-        (SharedPtrLike<std::ranges::range_reference_t<T>> || std::is_pointer_v<std::ranges::range_value_t<T>>);
+        std::is_pointer_v<std::ranges::range_value_t<T>>;
 
     class RETRO_API ServiceProvider
     {
@@ -57,29 +57,10 @@ namespace retro
             {
                 using DecayedT = std::decay_t<T>;
                 using ElementType = PointerElementT<std::ranges::range_reference_t<DecayedT>>;
-                if constexpr (SharedPtrLike<std::ranges::range_reference_t<DecayedT>>)
-                {
-                    return get_all(typeid(ElementType)) |
-                           std::views::filter([](const ServiceInstance &instance)
-                                              { return instance.has_shared_storage(); }) |
-                           std::views::transform(
-                               [](const ServiceInstance &instance)
-                               { return std::static_pointer_cast<ElementType>(instance.shared_ptr()); }) |
-                           std::ranges::to<DecayedT>();
-                }
-                else
-                {
-                    return get_all(typeid(ElementType)) |
-                           std::views::filter([](const ServiceInstance &instance)
-                                              { return instance.has_shared_storage(); }) |
-                           std::views::transform([](const ServiceInstance &instance)
-                                                 { return instance.get<ElementType>(); }) |
-                           std::ranges::to<DecayedT>();
-                }
-            }
-            else if constexpr (SharedPtrLike<T>)
-            {
-                return std::static_pointer_cast<PointerElementT<T>>(get_shared_impl(typeid(PointerElementT<T>)));
+                return get_all(typeid(ElementType)) |
+                       std::views::transform([](const ServiceInstance &instance)
+                                             { return instance.get<ElementType>(); }) |
+                       std::ranges::to<DecayedT>();
             }
             else if constexpr (HandleWrapper<T>)
             {
@@ -94,8 +75,6 @@ namespace retro
 
       private:
         void *get_raw(const std::type_info &type);
-
-        std::shared_ptr<void> get_shared_impl(const std::type_info &type);
 
         auto get_all(const std::type_info &type)
         {

@@ -32,9 +32,8 @@ namespace retro
     {
         BufferedStream buffered_stream{stream};
         for (const AssetDecodeContext context{.path = path};
-             const auto &decoder :
-             decoders_ | std::views::filter([&context, &buffered_stream](const std::shared_ptr<AssetDecoder> &d)
-                                            { return d->can_decode(context, buffered_stream); }))
+             const auto &decoder : decoders_ | std::views::filter([&context, &buffered_stream](const AssetDecoder *d)
+                                                                  { return d->can_decode(context, buffered_stream); }))
         {
             EXPECT_ASSIGN(auto decoded, decoder->decode(context, buffered_stream));
             std::unique_lock lock{asset_cache_mutex_};

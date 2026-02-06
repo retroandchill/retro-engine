@@ -239,10 +239,9 @@ namespace retro
         }
 
         template <ServiceLifetime Lifetime, auto Functor>
-            requires FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
-                     !std::invocable<decltype(Functor), ServiceProvider &>
-                         ServiceCollection &
-                     add()
+            requires(FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
+                     !std::invocable<decltype(Functor), ServiceProvider &>)
+        ServiceCollection &add()
         {
             return add<Lifetime>(
                 [](ServiceProvider &provider) {
@@ -322,11 +321,48 @@ namespace retro
             return add<ServiceLifetime::Singleton, Functor>();
         }
 
-        template <typename T, std::derived_from<T> Impl = T>
-            requires Injectable<Impl>
+        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+            requires InjectablePolicy<T, Policy>
         ServiceCollection &add_transient()
         {
-            return add<ServiceLifetime::Transient, T, Impl>();
+            return add<ServiceLifetime::Transient, T, T, Policy>();
+        }
+
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+            requires InjectablePolicy<Impl, Policy>
+        ServiceCollection &add_transient()
+        {
+            return add<ServiceLifetime::Transient, T, Impl, Policy>();
+        }
+
+        template <std::invocable<ServiceProvider &> Functor>
+            requires ValidServiceResult<std::invoke_result_t<Functor, ServiceProvider &>>
+        ServiceCollection &add_transient(Functor &&functor)
+        {
+            return add<ServiceLifetime::Transient>(std::forward<Functor>(functor));
+        }
+
+        template <auto Functor>
+            requires std::invocable<decltype(Functor), ServiceProvider &> &&
+                     ValidServiceResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>
+        ServiceCollection &add_transient()
+        {
+            return add<ServiceLifetime::Transient, Functor>();
+        }
+
+        template <NonGenericLambda Functor>
+            requires(ValidServiceResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>)
+        ServiceCollection &add_transient(Functor &&functor)
+        {
+            return add<ServiceLifetime::Transient>(std::forward<Functor>(functor));
+        }
+
+        template <auto Functor>
+            requires(FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
+                     !std::invocable<decltype(Functor), ServiceProvider &>)
+        ServiceCollection &add_transient()
+        {
+            return add<ServiceLifetime::Transient, Functor>();
         }
 
       private:

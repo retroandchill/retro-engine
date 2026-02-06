@@ -17,11 +17,11 @@ namespace retro
     export class VulkanRenderPipeline
     {
       public:
-        inline VulkanRenderPipeline(std::shared_ptr<RenderPipeline> pipeline,
+        inline VulkanRenderPipeline(RenderPipeline &pipeline,
                                     vk::Device device,
                                     const VulkanSwapchain &swapchain,
                                     vk::RenderPass render_pass)
-            : device_{device}, pipeline_{std::move(pipeline)}
+            : device_{device}, pipeline_{std::addressof(pipeline)}
         {
             recreate(device, swapchain, render_pass);
         }
@@ -45,7 +45,7 @@ namespace retro
 
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
-        std::shared_ptr<RenderPipeline> pipeline_;
+        RenderPipeline *pipeline_;
         vk::Device device_;
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniqueDescriptorSetLayout descriptor_set_layout_;
@@ -63,7 +63,7 @@ namespace retro
         void recreate_pipelines(const VulkanSwapchain &swapchain, vk::RenderPass render_pass);
 
         void create_pipeline(std::type_index type,
-                             std::shared_ptr<RenderPipeline> pipeline,
+                             RenderPipeline &pipeline,
                              const VulkanSwapchain &swapchain,
                              vk::RenderPass render_pass);
         void destroy_pipeline(std::type_index type);

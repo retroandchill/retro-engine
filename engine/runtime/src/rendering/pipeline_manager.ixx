@@ -21,7 +21,7 @@ namespace retro
 {
     struct PipelineUsage
     {
-        std::shared_ptr<RenderPipeline> pipeline;
+        RenderPipeline *pipeline;
         std::size_t usage_count;
     };
 
@@ -31,7 +31,7 @@ namespace retro
         using Dependencies = TypeList<Renderer2D, RenderPipeline>;
         static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
-        explicit PipelineManager(Renderer2D &renderer, const std::vector<std::shared_ptr<RenderPipeline>> &pipelines);
+        explicit PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines);
 
         void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size);
 

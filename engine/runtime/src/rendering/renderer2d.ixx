@@ -30,7 +30,7 @@ namespace retro
 
         virtual void end_frame() = 0;
 
-        virtual void add_new_render_pipeline(std::type_index type, std::shared_ptr<RenderPipeline> pipeline) = 0;
+        virtual void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) = 0;
 
         virtual void remove_render_pipeline(std::type_index type) = 0;
 

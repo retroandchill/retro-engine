@@ -28,7 +28,7 @@ namespace retro
       public:
         using Dependencies = TypeList<Window, vk::Instance, vk::SurfaceKHR, VulkanDevice, VulkanBufferManager>;
 
-        explicit VulkanRenderer2D(std::shared_ptr<Window> window,
+        explicit VulkanRenderer2D(Window &window,
                                   vk::Instance instance,
                                   vk::SurfaceKHR surface,
                                   VulkanDevice &device,
@@ -48,7 +48,7 @@ namespace retro
 
         [[nodiscard]] Vector2u viewport_size() const override;
 
-        void add_new_render_pipeline(std::type_index type, std::shared_ptr<RenderPipeline> pipeline) override;
+        void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 
         void remove_render_pipeline(std::type_index type) override;
 
@@ -74,7 +74,7 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-        std::shared_ptr<Window> window_;
+        Window &window_;
 
         vk::Instance instance_;
         vk::SurfaceKHR surface_;

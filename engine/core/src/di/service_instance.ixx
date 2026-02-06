@@ -79,16 +79,6 @@ namespace retro
             return static_cast<T *>(ptr_);
         }
 
-        [[nodiscard]] inline bool has_shared_storage() const noexcept
-        {
-            return storage_->is_shared_ptr();
-        }
-
-        [[nodiscard]] inline std::shared_ptr<void> shared_ptr() const noexcept
-        {
-            return storage_->as_shared();
-        }
-
         [[nodiscard]] inline bool is_valid() const noexcept
         {
             return ptr_ != nullptr;
@@ -191,11 +181,7 @@ namespace retro
           public:
             virtual ~Storage() = default;
 
-            [[nodiscard]] virtual bool is_shared_ptr() const noexcept = 0;
-
             [[nodiscard]] virtual void *get_raw_storage() noexcept = 0;
-
-            [[nodiscard]] virtual std::shared_ptr<void> as_shared() const noexcept = 0;
 
             virtual void small_unique_ptr_move(void *dst) noexcept = 0;
         };
@@ -208,26 +194,9 @@ namespace retro
             {
             }
 
-            [[nodiscard]] bool is_shared_ptr() const noexcept override
-            {
-                return std::convertible_to<const T &, std::shared_ptr<void>>;
-            }
-
             [[nodiscard]] void *get_raw_storage() noexcept override
             {
                 return std::addressof(value_);
-            }
-
-            [[nodiscard]] std::shared_ptr<void> as_shared() const noexcept override
-            {
-                if constexpr (std::convertible_to<const T &, std::shared_ptr<void>>)
-                {
-                    return value_;
-                }
-                else
-                {
-                    return std::shared_ptr<void>{};
-                }
             }
 
             void small_unique_ptr_move(void *dst) noexcept override
