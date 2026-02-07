@@ -12,6 +12,7 @@ import retro.core.di;
 import vulkan_hpp;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
+import retro.renderer.vulkan.scope.device;
 
 namespace retro
 {
@@ -56,10 +57,10 @@ namespace retro
     export class VulkanPipelineManager
     {
       public:
-        using Dependencies = TypeList<vk::Device>;
+        using Dependencies = TypeList<VulkanDevice>;
 
-        explicit inline VulkanPipelineManager(const vk::Device device)
-            : device_{device}, cache_{device.createPipelineCacheUnique(vk::PipelineCacheCreateInfo{})}
+        explicit inline VulkanPipelineManager(const VulkanDevice &device)
+            : device_{device.device()}, cache_{device_.createPipelineCacheUnique(vk::PipelineCacheCreateInfo{})}
         {
         }
 

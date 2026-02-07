@@ -4,26 +4,27 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.renderer.vulkan.components.device;
+export module retro.renderer.vulkan.scope.device;
 
 import vulkan_hpp;
 import retro.core.di;
 
 namespace retro
 {
-    export struct VulkanDeviceConfig
+    export struct VulkanDeviceCreateInfo
     {
-        vk::PhysicalDevice physical_device = nullptr;
-        std::uint32_t graphics_family = vk::QueueFamilyIgnored;
-        std::uint32_t present_family = vk::QueueFamilyIgnored;
+        vk::Instance instance = nullptr;
+        bool require_swapchain = true;
     };
 
     export class VulkanDevice
     {
-      public:
-        using Dependencies = TypeList<VulkanDeviceConfig, vk::Device>;
+        explicit VulkanDevice(vk::PhysicalDevice physical_device,
+                              vk::UniqueDevice device,
+                              std::uint32_t graphics_family_index);
 
-        VulkanDevice(const VulkanDeviceConfig &config, vk::Device device);
+      public:
+        static VulkanDevice create(const VulkanDeviceCreateInfo &create_info);
 
         [[nodiscard]] inline vk::PhysicalDevice physical_device() const noexcept
         {
@@ -31,7 +32,7 @@ namespace retro
         }
         [[nodiscard]] inline vk::Device device() const noexcept
         {
-            return device_;
+            return device_.get();
         }
         [[nodiscard]] inline vk::Queue graphics_queue() const noexcept
         {
@@ -54,7 +55,7 @@ namespace retro
         vk::PhysicalDevice physical_device_{};
         std::uint32_t graphics_family_index_{std::numeric_limits<std::uint32_t>::max()};
         std::uint32_t present_family_index_{std::numeric_limits<std::uint32_t>::max()};
-        vk::Device device_{};
+        vk::UniqueDevice device_{};
         vk::Queue graphics_queue_{};
         vk::Queue present_queue_{};
     };

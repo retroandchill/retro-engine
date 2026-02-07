@@ -86,6 +86,14 @@ namespace retro
         }
     } // namespace
 
+    VulkanInstance::VulkanInstance(
+        vk::UniqueInstance instance,
+        std::unique_ptr<vk::detail::DispatchLoaderDynamic> dldi,
+        vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::detail::DispatchLoaderDynamic> debug_messenger)
+        : instance_{std::move(instance)}, dldi_{std::move(dldi)}, debug_messenger_{std::move(debug_messenger)}
+    {
+    }
+
     VulkanInstance VulkanInstance::create(const WindowBackend backend)
     {
         vk::ApplicationInfo app_info{.pApplicationName = "Retro Engine",
@@ -147,14 +155,13 @@ namespace retro
 
         auto instance = vk::createInstanceUnique(create_info);
 
-        vk::detail::DispatchLoaderDynamic dldi{instance.get(),
-                                               [](const vk::Instance::CType native_instance, const char *name)
-                                               {
-                                                   return vk::Instance{native_instance}.getProcAddr(name);
-                                               }};
+        auto dldi = std::make_unique<vk::detail::DispatchLoaderDynamic>(
+            instance.get(),
+            [](const vk::Instance::CType native_instance, const char *name)
+            { return vk::Instance{native_instance}.getProcAddr(name); });
 
 #ifndef NDEBUG
-        auto messenger = instance->createDebugUtilsMessengerEXTUnique(messenger_ci, nullptr, dldi);
+        auto messenger = instance->createDebugUtilsMessengerEXTUnique(messenger_ci, nullptr, *dldi);
 #else
         vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::detail::DispatchLoaderDynamic> messenger{};
 #endif

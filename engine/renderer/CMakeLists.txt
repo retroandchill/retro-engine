@@ -45,7 +45,7 @@ set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
         src/vulkan/components/sync.cpp
         src/vulkan/components/pipeline.cpp
         src/vulkan/components/command_pool.cpp
-        src/vulkan/components/device.cpp
+        src/vulkan/scopes/device.cpp
         src/vulkan/components/swapchain.cpp
         src/vulkan/components/buffer_manager.cpp
         src/services.cpp
@@ -64,7 +64,7 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         src/vulkan/components/sync.ixx
         src/vulkan/components/pipeline.ixx
         src/vulkan/components/command_pool.ixx
-        src/vulkan/components/device.ixx
+        src/vulkan/scopes/device.ixx
         src/vulkan/components/swapchain.ixx
         src/vulkan/components/buffer_manager.ixx
         src/vulkan/data/texture_render_data.ixx

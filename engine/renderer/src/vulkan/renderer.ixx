@@ -11,7 +11,7 @@ import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
 import retro.renderer.vulkan.components.sync;
 import retro.renderer.vulkan.components.command_pool;
-import retro.renderer.vulkan.components.device;
+import retro.renderer.vulkan.scope.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
