@@ -15,8 +15,8 @@ namespace retro
     {
     }
 
-    ServiceProvider create_service_provider(ServiceCollection &services)
+    std::shared_ptr<ServiceProvider> create_service_provider(ServiceCollection &services)
     {
-        return ServiceProvider{services};
+        return std::make_shared<ServiceProviderImpl>(services);
     }
 } // namespace retro

@@ -393,9 +393,11 @@ namespace retro
         }
 
       private:
-        friend class ServiceProvider;
+        friend class ServiceProviderImpl;
 
         std::vector<ServiceRegistration> registrations_;
         std::unordered_map<std::type_index, ConfigureService> configurations_;
     };
+
+    export RETRO_API std::shared_ptr<ServiceProvider> create_service_provider(ServiceCollection &services);
 } // namespace retro

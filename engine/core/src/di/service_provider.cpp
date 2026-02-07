@@ -13,7 +13,7 @@ namespace retro
         return "The requested service was not found";
     }
 
-    ServiceProvider::ServiceProvider(ServiceCollection &service_collection)
+    ServiceProviderImpl::ServiceProviderImpl(ServiceCollection &service_collection)
     {
         std::unordered_map<ServiceIdentifier, std::uint32_t> service_count;
         for (auto &registration : service_collection.registrations_)
@@ -24,7 +24,7 @@ namespace retro
         }
     }
 
-    ServiceProvider::~ServiceProvider() noexcept
+    ServiceProviderImpl::~ServiceProviderImpl() noexcept
     {
         for (auto &singleton : created_services_ | std::views::reverse)
         {
@@ -32,7 +32,7 @@ namespace retro
         }
     }
 
-    void *ServiceProvider::get_raw(const std::type_info &type)
+    void *ServiceProviderImpl::get_raw(const std::type_info &type)
     {
         if (const auto existing = services_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
             existing != services_.end())
@@ -43,7 +43,17 @@ namespace retro
         throw ServiceNotFoundException{};
     }
 
-    const ServiceInstance &ServiceProvider::get_or_create(std::type_index type, ServiceCallSite &call_site)
+    std::generator<void *> ServiceProviderImpl::get_all(const std::type_info &type)
+    {
+        using Pair = decltype(services_)::value_type;
+        co_yield std::ranges::elements_of(
+            services_ | std::views::filter([&type](const Pair &pair) { return pair.first.id.type == type; }) |
+            std::views::values |
+            std::views::transform([this, &type](ServiceCallSite &call_site)
+                                  { return get_or_create(type, call_site).ptr(); }));
+    }
+
+    const ServiceInstance &ServiceProviderImpl::get_or_create(std::type_index type, ServiceCallSite &call_site)
     {
         return std::visit(Overload{[&](const RealizedService &singleton) -> auto &
                                    { return created_services_[singleton.instance_index]; },

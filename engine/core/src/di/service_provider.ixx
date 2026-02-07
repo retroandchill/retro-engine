@@ -21,6 +21,7 @@ import :service_instance;
 import :service_call_site;
 import :service_identifier;
 import retro.core.functional.delegate;
+import retro.core.containers.optional;
 
 namespace retro
 {
@@ -37,18 +38,10 @@ namespace retro
         std::ranges::range<T> && ContainerAppendable<T, PointerElement<std::ranges::range_reference_t<T>>> &&
         std::is_pointer_v<std::ranges::range_value_t<T>>;
 
-    class RETRO_API ServiceProvider
+    class ServiceProvider
     {
       public:
-        explicit ServiceProvider(class ServiceCollection &service_collection);
-
-        ServiceProvider(const ServiceProvider &) = delete;
-        ServiceProvider(ServiceProvider &&) noexcept = default;
-
-        ~ServiceProvider() noexcept;
-
-        ServiceProvider &operator=(const ServiceProvider &) = delete;
-        ServiceProvider &operator=(ServiceProvider &&) noexcept = default;
+        virtual ~ServiceProvider() = default;
 
         template <typename T>
         decltype(auto) get()
@@ -58,8 +51,7 @@ namespace retro
                 using DecayedT = std::decay_t<T>;
                 using ElementType = PointerElementT<std::ranges::range_reference_t<DecayedT>>;
                 return get_all(typeid(ElementType)) |
-                       std::views::transform([](const ServiceInstance &instance)
-                                             { return instance.get<ElementType>(); }) |
+                       std::views::transform([](void *value) { return static_cast<DecayedT>(value); }) |
                        std::ranges::to<DecayedT>();
             }
             else if constexpr (HandleWrapper<T>)
@@ -69,29 +61,35 @@ namespace retro
             }
             else
             {
-                return *get_ptr<T>();
+                return *static_cast<T *>(get_raw(typeid(T)));
             }
         }
 
+      protected:
+        virtual void *get_raw(const std::type_info &type) = 0;
+        virtual std::generator<void *> get_all(const std::type_info &type) = 0;
+    };
+
+    class RETRO_API ServiceProviderImpl final : public ServiceProvider
+    {
+      public:
+        explicit ServiceProviderImpl(class ServiceCollection &service_collection);
+
+        ServiceProviderImpl(const ServiceProviderImpl &) = delete;
+        ServiceProviderImpl(ServiceProviderImpl &&) noexcept = default;
+
+        ~ServiceProviderImpl() noexcept override;
+
+        ServiceProviderImpl &operator=(const ServiceProviderImpl &) = delete;
+        ServiceProviderImpl &operator=(ServiceProviderImpl &&) noexcept = default;
+
+      protected:
+        void *get_raw(const std::type_info &type) override;
+
+        std::generator<void *> get_all(const std::type_info &type) override;
+
       private:
-        void *get_raw(const std::type_info &type);
-
-        auto get_all(const std::type_info &type)
-        {
-            using Pair = decltype(services_)::value_type;
-            return services_ | std::views::filter([&type](const Pair &pair) { return pair.first.id.type == type; }) |
-                   std::views::values |
-                   std::views::transform([this, &type](ServiceCallSite &call_site) -> auto &
-                                         { return get_or_create(type, call_site); });
-        }
-
         const ServiceInstance &get_or_create(std::type_index type, ServiceCallSite &call_site);
-
-        template <typename T>
-        T *get_ptr()
-        {
-            return static_cast<T *>(get_raw(typeid(T)));
-        }
 
         std::vector<ServiceInstance> created_services_;
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
