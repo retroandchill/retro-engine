@@ -112,6 +112,105 @@ namespace retro
 
             throw std::runtime_error{"Unsupported window backend"};
         }
+
+        bool is_device_suitable(const vk::PhysicalDevice device,
+                                const vk::SurfaceKHR surface,
+                                std::uint32_t &out_graphics_family,
+                                std::uint32_t &out_present_family)
+        {
+            auto families = device.getQueueFamilyProperties();
+
+            out_graphics_family = std::numeric_limits<std::uint32_t>::max();
+            out_present_family = std::numeric_limits<std::uint32_t>::max();
+
+            for (std::uint32_t i = 0; i < families.size(); ++i)
+            {
+                if (families[i].queueFlags & vk::QueueFlagBits::eGraphics)
+                {
+                    out_graphics_family = i;
+                }
+
+                vk::Bool32 present_support = vk::False;
+                auto res = device.getSurfaceSupportKHR(i, surface, &present_support);
+                if (res == vk::Result::eSuccess && present_support == vk::True)
+                {
+                    out_present_family = i;
+                }
+
+                if (out_graphics_family != std::numeric_limits<std::uint32_t>::max() &&
+                    out_present_family != std::numeric_limits<std::uint32_t>::max())
+                {
+                    break;
+                }
+            }
+
+            if (out_graphics_family == std::numeric_limits<std::uint32_t>::max() ||
+                out_present_family == std::numeric_limits<std::uint32_t>::max())
+            {
+                return false;
+            }
+
+            // Check swapchain support (at least one format & present mode)
+            std::uint32_t format_count = 0;
+            auto res = device.getSurfaceFormatsKHR(surface, &format_count, nullptr);
+            if (res != vk::Result::eSuccess || format_count == 0)
+            {
+                return false;
+            }
+
+            std::uint32_t present_mode_count = 0;
+            res = device.getSurfacePresentModesKHR(surface, &present_mode_count, nullptr);
+            if (res != vk::Result::eSuccess || present_mode_count == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        VulkanDeviceConfig pick_physical_device(const vk::Instance instance, const vk::SurfaceKHR surface)
+        {
+            for (const auto devices = instance.enumeratePhysicalDevices(); const auto dev : devices)
+            {
+                if (VulkanDeviceConfig result{.physical_device = dev};
+                    is_device_suitable(dev, surface, result.graphics_family, result.present_family))
+                {
+                    return result;
+                }
+            }
+
+            throw std::runtime_error{"VulkanDevice: failed to find a suitable GPU"};
+        }
+
+        vk::UniqueDevice create_device(const VulkanDeviceConfig &config)
+        {
+            // Required device extensions
+            constexpr std::array DEVICE_EXTENSIONS = {vk::KHRSwapchainExtensionName};
+
+            const std::set unique_families{config.graphics_family, config.present_family};
+
+            constexpr float queue_priority = 1.0f;
+            std::vector<vk::DeviceQueueCreateInfo> queue_infos;
+            queue_infos.reserve(unique_families.size());
+
+            for (const std::uint32_t family : unique_families)
+            {
+                queue_infos.emplace_back(vk::DeviceQueueCreateInfo{.queueFamilyIndex = family,
+                                                                   .queueCount = 1,
+                                                                   .pQueuePriorities = &queue_priority});
+            }
+
+            vk::PhysicalDeviceFeatures device_features{}; // enable specific features as needed
+
+            const vk::DeviceCreateInfo create_info{.queueCreateInfoCount =
+                                                       static_cast<std::uint32_t>(queue_infos.size()),
+                                                   .pQueueCreateInfos = queue_infos.data(),
+                                                   .enabledExtensionCount = DEVICE_EXTENSIONS.size(),
+                                                   .ppEnabledExtensionNames = DEVICE_EXTENSIONS.data(),
+                                                   .pEnabledFeatures = &device_features};
+
+            return config.physical_device.createDeviceUnique(create_info, nullptr);
+        }
     } // namespace
 
     void add_vulkan_services(ServiceCollection &services)
@@ -119,6 +218,8 @@ namespace retro
         services.add_singleton<Renderer2D, VulkanRenderer2D>()
             .add_singleton<&create_instance>()
             .add_singleton<&create_surface>()
+            .add_singleton<&pick_physical_device>()
+            .add_singleton<&create_device>()
             .add_singleton<VulkanDevice>()
             .add_singleton<VulkanBufferManager>();
     }

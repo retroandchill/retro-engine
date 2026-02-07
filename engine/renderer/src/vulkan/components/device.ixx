@@ -11,12 +11,19 @@ import retro.core.di;
 
 namespace retro
 {
+    export struct VulkanDeviceConfig
+    {
+        vk::PhysicalDevice physical_device = nullptr;
+        std::uint32_t graphics_family = vk::QueueFamilyIgnored;
+        std::uint32_t present_family = vk::QueueFamilyIgnored;
+    };
+
     export class VulkanDevice
     {
       public:
-        using Dependencies = TypeList<vk::Instance, vk::SurfaceKHR>;
+        using Dependencies = TypeList<VulkanDeviceConfig, vk::Device>;
 
-        VulkanDevice(vk::Instance instance, vk::SurfaceKHR surface);
+        VulkanDevice(const VulkanDeviceConfig &config, vk::Device device);
 
         [[nodiscard]] inline vk::PhysicalDevice physical_device() const noexcept
         {
@@ -24,7 +31,7 @@ namespace retro
         }
         [[nodiscard]] inline vk::Device device() const noexcept
         {
-            return device_.get();
+            return device_;
         }
         [[nodiscard]] inline vk::Queue graphics_queue() const noexcept
         {
@@ -44,10 +51,10 @@ namespace retro
         }
 
       private:
+        vk::PhysicalDevice physical_device_{};
         std::uint32_t graphics_family_index_{std::numeric_limits<std::uint32_t>::max()};
         std::uint32_t present_family_index_{std::numeric_limits<std::uint32_t>::max()};
-        vk::PhysicalDevice physical_device_{};
-        vk::UniqueDevice device_{};
+        vk::Device device_{};
         vk::Queue graphics_queue_{};
         vk::Queue present_queue_{};
     };

@@ -31,8 +31,10 @@ namespace retro
         throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
     }
 
-    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size)
-        : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
+    VulkanBufferManager::VulkanBufferManager(const VulkanDeviceConfig &device_config,
+                                             const vk::Device device,
+                                             const std::size_t pool_size)
+        : physical_device_(device_config.physical_device), device_{device}, pool_size_{pool_size}
     {
         const vk::BufferCreateInfo buffer_info{
             .size = pool_size_,
