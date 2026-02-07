@@ -25,6 +25,7 @@ import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.command_pool;
 import retro.renderer.vulkan.components.pipeline;
+import retro.renderer.vulkan.scopes.instance;
 
 namespace retro
 {
@@ -49,51 +50,6 @@ namespace retro
 
             get_logger().error("Unsupported window backend:");
             return {};
-        }
-
-        vk::UniqueInstance create_instance(const Window &viewport)
-        {
-            vk::ApplicationInfo app_info{.pApplicationName = "Retro Engine",
-                                         .applicationVersion = vk::makeVersion(1, 0, 0),
-                                         .pEngineName = "Retro Engine",
-                                         .engineVersion = vk::makeVersion(1, 0, 0),
-                                         .apiVersion = vk::makeApiVersion(0, 1, 2, 0)};
-
-            std::vector<const char *> enabled_layers;
-#ifndef NDEBUG
-            auto available_layers = vk::enumerateInstanceLayerProperties();
-            const bool has_validation =
-                std::ranges::any_of(available_layers,
-                                    [](const vk::LayerProperties &lp)
-                                    { return std::string_view{lp.layerName} == "VK_LAYER_KHRONOS_validation"; });
-
-            if (has_validation)
-            {
-                enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
-            }
-            else
-            {
-                get_logger().warn("Vulkan validation layers requested, but not available!");
-            }
-#endif
-
-            const auto extensions = get_required_instance_extensions(viewport);
-
-            std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
-
-            vk::ValidationFeaturesEXT validation_features{
-                .enabledValidationFeatureCount = static_cast<std::uint32_t>(validation_feature_enables.size()),
-                .pEnabledValidationFeatures = validation_feature_enables.data()};
-
-            const vk::InstanceCreateInfo create_info{
-                .pNext = &validation_features,
-                .pApplicationInfo = &app_info,
-                .enabledLayerCount = static_cast<std::uint32_t>(enabled_layers.size()),
-                .ppEnabledLayerNames = enabled_layers.data(),
-                .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
-                .ppEnabledExtensionNames = extensions.data()};
-
-            return vk::createInstanceUnique(create_info);
         }
 
         vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance)
@@ -215,10 +171,10 @@ namespace retro
         }
     } // namespace
 
-    void add_vulkan_services(ServiceCollection &services)
+    void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
     {
         services.add_singleton<Renderer2D, VulkanRenderer2D>()
-            .add_singleton<&create_instance>()
+            .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
             .add_singleton<&create_surface>()
             .add_singleton<&pick_physical_device>()
             .add_singleton<&create_device>()

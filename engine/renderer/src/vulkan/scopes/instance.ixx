@@ -20,6 +20,11 @@ namespace retro
       public:
         static VulkanInstance create(WindowBackend backend);
 
+        [[nodiscard]] vk::Instance get() const noexcept
+        {
+            return instance_.get();
+        }
+
       private:
         vk::UniqueInstance instance_;
     };

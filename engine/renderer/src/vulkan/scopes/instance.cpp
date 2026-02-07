@@ -84,6 +84,8 @@ namespace retro
                                                  .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
                                                  .ppEnabledExtensionNames = extensions.data()};
 
-        return VulkanInstance{vk::createInstanceUnique(create_info)};
+        auto instance = vk::createInstanceUnique(create_info);
+
+        return VulkanInstance{std::move(instance)};
     }
 } // namespace retro
