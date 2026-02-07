@@ -6,6 +6,8 @@
  */
 module retro.core.di;
 
+import :service_provider;
+
 namespace retro
 {
     const char *ServiceNotFoundException::what() const noexcept

@@ -18,7 +18,7 @@ namespace retro
       public:
         virtual ~ServiceScope() = default;
 
-        virtual Name &name() = 0;
+        virtual Name name() = 0;
 
         virtual ServiceProvider &service_provider() = 0;
     };

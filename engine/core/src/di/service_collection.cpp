@@ -6,6 +6,8 @@
  */
 module retro.core.di;
 
+import :service_collection;
+
 namespace retro
 {
     ServiceRegistration::ServiceRegistration(const std::type_info &type,

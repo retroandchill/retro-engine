@@ -72,7 +72,6 @@ namespace retro
             }
         }
 
-      protected:
         virtual void *get_raw(const std::type_info &type) = 0;
         virtual std::generator<void *> get_all(const std::type_info &type) = 0;
     };
@@ -90,11 +89,11 @@ namespace retro
         ServiceProviderImpl &operator=(const ServiceProviderImpl &) = delete;
         ServiceProviderImpl &operator=(ServiceProviderImpl &&) noexcept = default;
 
-      private:
         void *get_raw(const std::type_info &type) override;
 
         std::generator<void *> get_all(const std::type_info &type) override;
 
+      private:
         const ServiceInstance &get_or_create(std::type_index type, ServiceCallSite &call_site);
 
         std::vector<ServiceInstance> created_services_;

@@ -69,6 +69,8 @@ set(RETRO_CORE_MODULES
         src/memory/small_unique_ptr.ixx
         src/di/service_scope.ixx
         src/di/service_registration.ixx
+        src/di/scoped_service_provider.ixx
+        src/di/scoped_service_provider.cpp
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
