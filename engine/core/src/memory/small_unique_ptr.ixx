@@ -212,7 +212,7 @@ namespace retro
         template <HasVirtualMove U>
         void move_buffer_to(SmallUniquePtrBase<U, Size> &dest) noexcept
         {
-            const pointer data = const_cast<pointer>(data_);
+            const auto data = const_cast<pointer>(data_);
             data->small_unique_ptr_move(dest.buffer());
         }
 
