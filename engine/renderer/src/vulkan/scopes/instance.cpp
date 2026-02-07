@@ -11,6 +11,7 @@ module;
 #endif
 
 #include <SDL3/SDL_vulkan.h>
+#include <vulkan/vk_platform.h>
 
 module retro.renderer.vulkan.scopes.instance;
 
@@ -39,6 +40,49 @@ namespace retro
 
             get_logger().error("Unsupported window backend:");
             return {};
+        }
+
+        void add_if_missing(std::vector<const char *> &exts, const char *name)
+        {
+            const bool exists =
+                std::ranges::any_of(exts, [&](const char *e) { return std::string_view{e} == std::string_view{name}; });
+            if (!exists)
+            {
+                exts.push_back(name);
+            }
+        }
+
+        VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
+                                                        vk::DebugUtilsMessageTypeFlagsEXT,
+                                                        const vk::DebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                        void *)
+        {
+            auto logger = get_logger();
+
+            LogLevel level = LogLevel::Info;
+            if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
+            {
+                level = LogLevel::Error;
+            }
+            else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+            {
+                level = LogLevel::Warn;
+            }
+            else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo)
+            {
+                level = LogLevel::Info;
+            }
+            else
+            {
+                level = LogLevel::Debug;
+            }
+
+            const char *msg = (callback_data && callback_data->pMessage) ? callback_data->pMessage : "";
+
+            logger.log(level, msg);
+
+            // VK_FALSE = don't abort the call.
+            return vk::False;
         }
     } // namespace
 
@@ -69,7 +113,10 @@ namespace retro
         }
 #endif
 
-        const auto extensions = get_required_instance_extensions(backend);
+        auto extensions = get_required_instance_extensions(backend) | std::ranges::to<std::vector>();
+#ifndef NDEBUG
+        add_if_missing(extensions, vk::EXTDebugUtilsExtensionName);
+#endif
 
         std::vector validation_feature_enables = {vk::ValidationFeatureEnableEXT::eDebugPrintf};
 
@@ -77,15 +124,41 @@ namespace retro
                                                           static_cast<std::uint32_t>(validation_feature_enables.size()),
                                                       .pEnabledValidationFeatures = validation_feature_enables.data()};
 
-        const vk::InstanceCreateInfo create_info{.pNext = &validation_features,
-                                                 .pApplicationInfo = &app_info,
-                                                 .enabledLayerCount = static_cast<std::uint32_t>(enabled_layers.size()),
-                                                 .ppEnabledLayerNames = enabled_layers.data(),
-                                                 .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
-                                                 .ppEnabledExtensionNames = extensions.data()};
+        vk::InstanceCreateInfo create_info{.pNext = &validation_features,
+                                           .pApplicationInfo = &app_info,
+                                           .enabledLayerCount = static_cast<std::uint32_t>(enabled_layers.size()),
+                                           .ppEnabledLayerNames = enabled_layers.data(),
+                                           .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
+                                           .ppEnabledExtensionNames = extensions.data()};
+
+#ifndef NDEBUG
+        vk::DebugUtilsMessengerCreateInfoEXT messenger_ci{
+            .pNext = create_info.pNext,
+            .messageSeverity =
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+            .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                           vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                           vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+            .pfnUserCallback = debug_callback,
+            .pUserData = nullptr};
+        create_info.pNext = &messenger_ci;
+#endif
 
         auto instance = vk::createInstanceUnique(create_info);
 
-        return VulkanInstance{std::move(instance)};
+        vk::detail::DispatchLoaderDynamic dldi{instance.get(),
+                                               [](const vk::Instance::CType native_instance, const char *name)
+                                               {
+                                                   return vk::Instance{native_instance}.getProcAddr(name);
+                                               }};
+
+#ifndef NDEBUG
+        auto messenger = instance->createDebugUtilsMessengerEXTUnique(messenger_ci, nullptr, dldi);
+#else
+        vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::detail::DispatchLoaderDynamic> messenger{};
+#endif
+
+        return VulkanInstance{std::move(instance), std::move(dldi), std::move(messenger)};
     }
 } // namespace retro
