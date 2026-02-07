@@ -10,7 +10,7 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-module retro.renderer.vulkan.scope.device;
+module retro.renderer.vulkan.scopes.device;
 
 import retro.core.containers.optional;
 
@@ -38,26 +38,66 @@ namespace retro
             return std::ranges::all_of(required_exts, has_ext);
         }
 
-        Optional<std::uint32_t> pick_graphics_queue_family(vk::PhysicalDevice physical_device)
+        Optional<std::pair<std::uint32_t, std::uint32_t>> pick_queue_families(vk::PhysicalDevice device,
+                                                                              vk::SurfaceKHR surface)
         {
-            for (const auto [i, family] : physical_device.getQueueFamilyProperties() | std::views::enumerate)
+            auto families = device.getQueueFamilyProperties();
+
+            std::uint32_t out_graphics_family = vk::QueueFamilyIgnored;
+            std::uint32_t out_present_family = vk::QueueFamilyIgnored;
+            ;
+
+            for (std::uint32_t i = 0; i < families.size(); ++i)
             {
-                if (family.queueFlags & vk::QueueFlagBits::eGraphics)
+                if (families[i].queueFlags & vk::QueueFlagBits::eGraphics)
                 {
-                    return i;
+                    out_graphics_family = i;
+                }
+
+                vk::Bool32 present_support = vk::False;
+                auto res = device.getSurfaceSupportKHR(i, surface, &present_support);
+                if (res == vk::Result::eSuccess && present_support == vk::True)
+                {
+                    out_present_family = i;
+                }
+
+                if (out_graphics_family != vk::QueueFamilyIgnored && out_present_family != vk::QueueFamilyIgnored)
+                {
+                    break;
                 }
             }
 
-            return std::nullopt;
+            if (out_graphics_family == vk::QueueFamilyIgnored || out_present_family == vk::QueueFamilyIgnored)
+            {
+                return std::nullopt;
+            }
+
+            // Check swapchain support (at least one format & present mode)
+            std::uint32_t format_count = 0;
+            auto res = device.getSurfaceFormatsKHR(surface, &format_count, nullptr);
+            if (res != vk::Result::eSuccess || format_count == 0)
+            {
+                return std::nullopt;
+            }
+
+            std::uint32_t present_mode_count = 0;
+            res = device.getSurfacePresentModesKHR(surface, &present_mode_count, nullptr);
+            if (res != vk::Result::eSuccess || present_mode_count == 0)
+            {
+                return std::nullopt;
+            }
+
+            return std::make_pair(out_graphics_family, out_present_family);
         }
 
-        std::pair<vk::PhysicalDevice, std::uint32_t> pick_physical_device(const vk::Instance instance,
-                                                                          bool require_swapchain)
+        std::tuple<vk::PhysicalDevice, std::uint32_t, std::uint32_t> pick_physical_device(const vk::Instance instance,
+                                                                                          const vk::SurfaceKHR surface,
+                                                                                          bool require_swapchain)
         {
             for (const auto devices = instance.enumeratePhysicalDevices(); const auto dev : devices)
             {
-                auto graphics_queue_family = pick_graphics_queue_family(dev);
-                if (!graphics_queue_family.has_value())
+                auto queue_families = pick_queue_families(dev, surface);
+                if (!queue_families.has_value())
                 {
                     continue;
                 }
@@ -67,7 +107,8 @@ namespace retro
                     continue;
                 }
 
-                return std::make_pair(dev, *graphics_queue_family);
+                auto [graphics_family, present_family] = queue_families.value();
+                return std::make_tuple(dev, graphics_family, present_family);
             }
 
             throw std::runtime_error{"VulkanDevice: failed to find a suitable GPU"};
@@ -102,31 +143,57 @@ namespace retro
 
             return physical_device.createDeviceUnique(create_info, nullptr);
         }
+
+        vk::UniqueSampler create_linear_sampler(const vk::Device device)
+        {
+            constexpr vk::SamplerCreateInfo sampler_info{
+                .magFilter = vk::Filter::eLinear,
+                .minFilter = vk::Filter::eLinear,
+                .mipmapMode = vk::SamplerMipmapMode::eLinear,
+                .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+                .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+                .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+                .mipLodBias = 0.0f,
+                .anisotropyEnable = vk::False,
+                .maxAnisotropy = 1.0f,
+                .compareEnable = vk::False,
+                .compareOp = vk::CompareOp::eAlways,
+                .minLod = 0.0f,
+                .maxLod = 0.0f,
+                .borderColor = vk::BorderColor::eIntOpaqueBlack,
+                .unnormalizedCoordinates = vk::False,
+            };
+
+            return device.createSamplerUnique(sampler_info);
+        }
     } // namespace
 
     VulkanDevice::VulkanDevice(const vk::PhysicalDevice physical_device,
                                vk::UniqueDevice device,
                                const std::uint32_t graphics_family_index,
-                               vk::UniqueCommandPool command_pool)
+                               const std::uint32_t present_family_index,
+                               vk::UniqueCommandPool command_pool,
+                               vk::UniqueSampler linear_sampler)
         : physical_device_(physical_device), graphics_family_index_(graphics_family_index),
-          present_family_index_{graphics_family_index_}, device_(std::move(device)),
+          present_family_index_(present_family_index), device_(std::move(device)),
           graphics_queue_{device_.get().getQueue(graphics_family_index_, 0)},
           present_queue_{device_.get().getQueue(present_family_index_, 0)},
           buffer_manager_{VulkanBufferManager::create(device_.get(), physical_device_)},
-          pipeline_manager_{device_.get()}, command_pool_{std::move(command_pool)}
+          pipeline_manager_{device_.get()}, command_pool_{std::move(command_pool)},
+          linear_sampler_{std::move(linear_sampler)}
 
     {
     }
 
-    VulkanDevice VulkanDevice::create(const VulkanDeviceCreateInfo &create_info)
+    std::unique_ptr<VulkanDevice> VulkanDevice::create(const VulkanDeviceCreateInfo &create_info)
     {
         if (create_info.instance == nullptr)
         {
             throw std::runtime_error{"VulkanDevice: instance is null"};
         }
 
-        auto [physical_device, graphics_family] =
-            pick_physical_device(create_info.instance, create_info.require_swapchain);
+        auto [physical_device, graphics_family, present_family] =
+            pick_physical_device(create_info.instance, create_info.surface, create_info.require_swapchain);
 
         auto device = create_logical_device(physical_device, graphics_family, create_info.require_swapchain);
 
@@ -134,7 +201,15 @@ namespace retro
                                                   .queueFamilyIndex = graphics_family};
 
         auto command_pool = device->createCommandPoolUnique(pool_info);
-        return VulkanDevice{physical_device, std::move(device), graphics_family, std::move(command_pool)};
+
+        auto linear_sampler = create_linear_sampler(device.get());
+
+        return std::make_unique<VulkanDevice>(physical_device,
+                                              std::move(device),
+                                              graphics_family,
+                                              present_family,
+                                              std::move(command_pool),
+                                              std::move(linear_sampler));
     }
 
     vk::UniqueCommandBuffer VulkanDevice::begin_one_shot_commands() const
@@ -180,13 +255,5 @@ namespace retro
         {
             throw std::runtime_error{"VulkanRenderer2D: failed waiting for one-shot fence"};
         }
-    }
-
-    std::vector<vk::UniqueCommandBuffer> VulkanDevice::create_command_buffers(const std::uint32_t count) const
-    {
-        return device_->allocateCommandBuffersUnique(
-            vk::CommandBufferAllocateInfo{.commandPool = command_pool_.get(),
-                                          .level = vk::CommandBufferLevel::ePrimary,
-                                          .commandBufferCount = count});
     }
 } // namespace retro

@@ -18,31 +18,8 @@ import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(Window &window,
-                                       const vk::SurfaceKHR surface,
-                                       VulkanDevice &device,
-                                       VulkanBufferManager &buffer_manager,
-                                       VulkanCommandPool &command_pool,
-                                       VulkanPipelineManager &pipeline_manager)
-        : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
-          swapchain_(SwapchainConfig{
-              .physical_device = device_.physical_device(),
-              .device = device_.device(),
-              .surface = surface_,
-              .graphics_family = device_.graphics_family_index(),
-              .present_family = device_.present_family_index(),
-              .width = window_.width(),
-              .height = window_.height(),
-          }),
-          render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
-          framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
-          command_pool_(command_pool),
-          sync_(SyncConfig{
-              .device = device_.device(),
-              .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
-              .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
-          }),
-          pipeline_manager_{pipeline_manager}, linear_sampler_{create_linear_sampler()}
+    VulkanRenderer2D::VulkanRenderer2D(Window &window)
+        : instance_{VulkanInstance::create(window.native_handle().backend)}
     {
     }
 
@@ -56,85 +33,11 @@ namespace retro
 
     void VulkanRenderer2D::begin_frame()
     {
-        auto dev = device_.device();
-
-        auto in_flight = sync_.in_flight(current_frame_);
-        if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<std::uint64_t>::max()) ==
-            vk::Result::eTimeout)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
-        }
-
-        dev.resetDescriptorPool(sync_.descriptor_pool(current_frame_));
-
-        auto result = dev.acquireNextImageKHR(swapchain_.handle(),
-                                              std::numeric_limits<std::uint64_t>::max(),
-                                              sync_.image_available(current_frame_),
-                                              nullptr,
-                                              &image_index_);
-
-        if (result == vk::Result::eErrorOutOfDateKHR)
-        {
-            recreate_swapchain();
-            return;
-        }
-
-        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
-        }
-
-        dev.resetFences({in_flight});
     }
 
     void VulkanRenderer2D::end_frame()
     {
-        const auto in_flight = sync_.in_flight(current_frame_);
-        auto cmd = command_pool_.buffer_at(current_frame_);
 
-        cmd.reset();
-        record_command_buffer(cmd, image_index_);
-
-        std::array wait_semaphores = {sync_.image_available(current_frame_)};
-        std::array wait_stages = {
-            static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
-
-        // Signal semaphore is now per-image
-        const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index_);
-        std::array signal_semaphores = {render_finished_semaphore};
-
-        const vk::SubmitInfo submit_info{.waitSemaphoreCount = wait_semaphores.size(),
-                                         .pWaitSemaphores = wait_semaphores.data(),
-                                         .pWaitDstStageMask = wait_stages.data(),
-                                         .commandBufferCount = 1,
-                                         .pCommandBuffers = &cmd,
-                                         .signalSemaphoreCount = signal_semaphores.size(),
-                                         .pSignalSemaphores = signal_semaphores.data()};
-
-        if (device_.graphics_queue().submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
-        }
-
-        std::array swapchains = {swapchain_.handle()};
-
-        vk::PresentInfoKHR present_info{.waitSemaphoreCount = signal_semaphores.size(),
-                                        .pWaitSemaphores = signal_semaphores.data(),
-                                        .swapchainCount = swapchains.size(),
-                                        .pSwapchains = swapchains.data(),
-                                        .pImageIndices = &image_index_};
-
-        if (const auto result = device_.present_queue().presentKHR(&present_info);
-            result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
-        {
-            recreate_swapchain();
-        }
-        else if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
-        }
-
-        current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
         pipeline_manager_.clear_draw_queue();
         buffer_manager_.reset();
     }

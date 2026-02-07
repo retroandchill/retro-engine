@@ -34,7 +34,8 @@ namespace retro
     VulkanBufferManager::VulkanBufferManager(vk::UniqueBuffer buffer,
                                              vk::UniqueDeviceMemory memory,
                                              void *mapped_ptr,
-                                             std::size_t pool_size)
+                                             const std::size_t pool_size)
+        : buffer_{std::move(buffer)}, memory_{std::move(memory)}, mapped_ptr_{mapped_ptr}, pool_size_{pool_size}
     {
     }
 

@@ -11,13 +11,15 @@ import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
 import retro.renderer.vulkan.components.sync;
 import retro.renderer.vulkan.components.command_pool;
-import retro.renderer.vulkan.scope.device;
+import retro.renderer.vulkan.scopes.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
 import retro.core.di;
 import retro.core.math.vector;
 import retro.platform.window;
+
+import retro.renderer.vulkan.scopes.instance;
 import vulkan_hpp;
 import std;
 
@@ -28,19 +30,9 @@ namespace retro
       public:
         static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
-        using Dependencies = TypeList<Window,
-                                      vk::SurfaceKHR,
-                                      VulkanDevice,
-                                      VulkanBufferManager,
-                                      VulkanCommandPool,
-                                      VulkanPipelineManager>;
+        using Dependencies = TypeList<Window>;
 
-        explicit VulkanRenderer2D(Window &window,
-                                  vk::SurfaceKHR surface,
-                                  VulkanDevice &device,
-                                  VulkanBufferManager &buffer_manager,
-                                  VulkanCommandPool &command_pool,
-                                  VulkanPipelineManager &pipeline_manager);
+        explicit VulkanRenderer2D(Window &window);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -82,20 +74,6 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-        Window &window_;
-
-        vk::SurfaceKHR surface_;
-        VulkanDevice &device_;
-        VulkanBufferManager &buffer_manager_;
-        VulkanSwapchain swapchain_;
-        vk::UniqueRenderPass render_pass_;
-        std::vector<vk::UniqueFramebuffer> framebuffers_;
-        VulkanCommandPool &command_pool_;
-        VulkanSyncObjects sync_;
-        vk::UniqueSampler linear_sampler_;
-        VulkanPipelineManager &pipeline_manager_;
-
-        std::uint32_t current_frame_ = 0;
-        std::uint32_t image_index_ = 0;
+        VulkanInstance instance_;
     };
 } // namespace retro

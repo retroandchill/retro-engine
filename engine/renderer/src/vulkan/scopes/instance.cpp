@@ -10,12 +10,12 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-#include <SDL3/SDL_vulkan.h>
 #include <vulkan/vk_platform.h>
 
 module retro.renderer.vulkan.scopes.instance;
 
 import retro.logging;
+import retro.renderer.vulkan.backends.sdl;
 
 namespace retro
 {
@@ -26,16 +26,7 @@ namespace retro
             switch (backend)
             {
                 case WindowBackend::SDL3:
-                    {
-                        std::uint32_t count = 0;
-                        auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
-                        if (names == nullptr)
-                        {
-                            throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
-                        }
-
-                        return std::span{names, count};
-                    }
+                    return sdl::get_required_instance_extensions();
             }
 
             get_logger().error("Unsupported window backend:");

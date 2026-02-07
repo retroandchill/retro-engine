@@ -51,6 +51,9 @@ set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
         src/services.cpp
         src/vulkan/services.cpp
         src/vulkan/scopes/instance.cpp
+        src/vulkan/scopes/presenter.cpp
+        src/vulkan/backends/sdl.cpp
+        src/vulkan/scopes/surface.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
@@ -70,6 +73,10 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         src/vulkan/data/texture_render_data.ixx
         src/vulkan/services.ixx
         src/vulkan/scopes/instance.ixx
+        src/vulkan/scopes/presenter.ixx
+        src/vulkan/backends/sdl.ixx
+        src/vulkan/data/device_handles_data.ixx
+        src/vulkan/scopes/surface.ixx
 )
 
 add_library(retro_renderer
