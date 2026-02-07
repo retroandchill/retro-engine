@@ -26,13 +26,17 @@ namespace retro
     export class VulkanRenderer2D final : public Renderer2D
     {
       public:
-        using Dependencies = TypeList<Window, vk::Instance, vk::SurfaceKHR, VulkanDevice, VulkanBufferManager>;
+        static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
+        using Dependencies =
+            TypeList<Window, vk::Instance, vk::SurfaceKHR, VulkanDevice, VulkanBufferManager, VulkanCommandPool>;
 
         explicit VulkanRenderer2D(Window &window,
                                   vk::Instance instance,
                                   vk::SurfaceKHR surface,
                                   VulkanDevice &device,
-                                  VulkanBufferManager &buffer_manager);
+                                  VulkanBufferManager &buffer_manager,
+                                  VulkanCommandPool &command_pool);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -83,14 +87,12 @@ namespace retro
         VulkanSwapchain swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;
-        VulkanCommandPool command_pool_;
+        VulkanCommandPool &command_pool_;
         VulkanSyncObjects sync_;
         vk::UniqueSampler linear_sampler_;
         VulkanPipelineManager pipeline_manager_;
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;
-
-        static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     };
 } // namespace retro

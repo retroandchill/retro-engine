@@ -23,6 +23,7 @@ import retro.renderer.vulkan.renderer;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
+import retro.renderer.vulkan.components.command_pool;
 
 namespace retro
 {
@@ -221,6 +222,14 @@ namespace retro
             .add_singleton<&pick_physical_device>()
             .add_singleton<&create_device>()
             .add_singleton<VulkanDevice>()
-            .add_singleton<VulkanBufferManager>();
+            .add_singleton<VulkanBufferManager>()
+            .add_singleton(
+                [](const VulkanDevice &device)
+                {
+                    return std::make_shared<VulkanCommandPool>(
+                        CommandPoolConfig{.device = device.device(),
+                                          .queue_family_idx = device.graphics_family_index(),
+                                          .buffer_count = VulkanRenderer2D::MAX_FRAMES_IN_FLIGHT});
+                });
     }
 } // namespace retro

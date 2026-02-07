@@ -22,7 +22,8 @@ namespace retro
                                        const vk::Instance instance,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
-                                       VulkanBufferManager &buffer_manager)
+                                       VulkanBufferManager &buffer_manager,
+                                       VulkanCommandPool &command_pool)
         : window_{window}, instance_{instance}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
           swapchain_(SwapchainConfig{
               .physical_device = device_.physical_device(),
@@ -35,11 +36,7 @@ namespace retro
           }),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
-          command_pool_(CommandPoolConfig{
-              .device = device_.device(),
-              .queue_family_idx = device_.graphics_family_index(),
-              .buffer_count = MAX_FRAMES_IN_FLIGHT,
-          }),
+          command_pool_(command_pool),
           sync_(SyncConfig{
               .device = device_.device(),
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,

@@ -24,11 +24,9 @@ namespace retro
       public:
         constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
 
-        using Dependencies = TypeList<VulkanDeviceConfig, vk::Device>;
+        using Dependencies = TypeList<VulkanDevice>;
 
-        explicit VulkanBufferManager(const VulkanDeviceConfig &device_config,
-                                     vk::Device device,
-                                     std::size_t pool_size = DEFAULT_POOL_SIZE);
+        explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size = DEFAULT_POOL_SIZE);
 
         TransientAllocation allocate_transient(std::size_t size, vk::BufferUsageFlags usage);
 
