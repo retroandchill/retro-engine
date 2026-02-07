@@ -19,8 +19,10 @@ namespace retro
 
     export class VulkanCommandPool
     {
+        explicit VulkanCommandPool(vk::UniqueCommandPool pool, std::vector<vk::UniqueCommandBuffer> buffers);
+
       public:
-        explicit VulkanCommandPool(const CommandPoolConfig &cfg);
+        static VulkanCommandPool create(const CommandPoolConfig &cfg);
 
         [[nodiscard]] inline vk::CommandPool pool() const noexcept
         {

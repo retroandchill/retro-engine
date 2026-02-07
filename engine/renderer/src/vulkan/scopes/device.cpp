@@ -35,15 +35,7 @@ namespace retro
                                            { return std::string_view{ep.extensionName} == name; });
             };
 
-            for (const char *ext : required_exts)
-            {
-                if (!has_ext(ext))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return std::ranges::all_of(required_exts, has_ext);
         }
 
         Optional<std::uint32_t> pick_graphics_queue_family(vk::PhysicalDevice physical_device)
@@ -59,7 +51,8 @@ namespace retro
             return std::nullopt;
         }
 
-        std::pair<vk::PhysicalDevice, std::uint32_t> pick_physical_device(vk::Instance instance, bool require_swapchain)
+        std::pair<vk::PhysicalDevice, std::uint32_t> pick_physical_device(const vk::Instance instance,
+                                                                          bool require_swapchain)
         {
             for (const auto devices = instance.enumeratePhysicalDevices(); const auto dev : devices)
             {
@@ -113,11 +106,14 @@ namespace retro
 
     VulkanDevice::VulkanDevice(const vk::PhysicalDevice physical_device,
                                vk::UniqueDevice device,
-                               const std::uint32_t graphics_family_index)
+                               const std::uint32_t graphics_family_index,
+                               vk::UniqueCommandPool command_pool)
         : physical_device_(physical_device), graphics_family_index_(graphics_family_index),
           present_family_index_{graphics_family_index_}, device_(std::move(device)),
           graphics_queue_{device_.get().getQueue(graphics_family_index_, 0)},
-          present_queue_{device_.get().getQueue(present_family_index_, 0)}
+          present_queue_{device_.get().getQueue(present_family_index_, 0)},
+          buffer_manager_{VulkanBufferManager::create(device_.get(), physical_device_)},
+          pipeline_manager_{device_.get()}, command_pool_{std::move(command_pool)}
 
     {
     }
@@ -134,6 +130,63 @@ namespace retro
 
         auto device = create_logical_device(physical_device, graphics_family, create_info.require_swapchain);
 
-        return VulkanDevice{physical_device, std::move(device), graphics_family};
+        const vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                  .queueFamilyIndex = graphics_family};
+
+        auto command_pool = device->createCommandPoolUnique(pool_info);
+        return VulkanDevice{physical_device, std::move(device), graphics_family, std::move(command_pool)};
+    }
+
+    vk::UniqueCommandBuffer VulkanDevice::begin_one_shot_commands() const
+    {
+        const vk::CommandBufferAllocateInfo alloc_info{
+            .commandPool = command_pool_.get(),
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        };
+
+        auto buffers = device_->allocateCommandBuffersUnique(alloc_info);
+        vk::UniqueCommandBuffer cmd = std::move(buffers.front());
+
+        constexpr vk::CommandBufferBeginInfo begin_info{
+            .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+        };
+
+        cmd->begin(begin_info);
+        return cmd;
+    }
+
+    void VulkanDevice::end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const
+    {
+        cmd->end();
+
+        constexpr vk::FenceCreateInfo fence_info{};
+        vk::UniqueFence fence = device_->createFenceUnique(fence_info);
+
+        vk::CommandBuffer raw_cmd = cmd.get();
+        const vk::SubmitInfo submit_info{
+            .commandBufferCount = 1,
+            .pCommandBuffers = &raw_cmd,
+        };
+
+        if (graphics_queue_.submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to submit one-shot command buffer"};
+        }
+
+        // Simple and safe for asset loading. If you later want async streaming, swap this for a timeline semaphore.
+        if (device_->waitForFences(1, &fence.get(), vk::True, std::numeric_limits<std::uint64_t>::max()) !=
+            vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed waiting for one-shot fence"};
+        }
+    }
+
+    std::vector<vk::UniqueCommandBuffer> VulkanDevice::create_command_buffers(const std::uint32_t count) const
+    {
+        return device_->allocateCommandBuffersUnique(
+            vk::CommandBufferAllocateInfo{.commandPool = command_pool_.get(),
+                                          .level = vk::CommandBufferLevel::ePrimary,
+                                          .commandBufferCount = count});
     }
 } // namespace retro

@@ -31,28 +31,37 @@ namespace retro
         throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
     }
 
-    VulkanBufferManager::VulkanBufferManager(const VulkanDevice &device, const std::size_t pool_size)
-        : physical_device_(device.physical_device()), device_{device.device()}, pool_size_{pool_size}
+    VulkanBufferManager::VulkanBufferManager(vk::UniqueBuffer buffer,
+                                             vk::UniqueDeviceMemory memory,
+                                             void *mapped_ptr,
+                                             std::size_t pool_size)
+    {
+    }
+
+    VulkanBufferManager VulkanBufferManager::create(const vk::Device device,
+                                                    const vk::PhysicalDevice physical_device,
+                                                    const std::size_t pool_size)
     {
         const vk::BufferCreateInfo buffer_info{
-            .size = pool_size_,
+            .size = pool_size,
             .usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
                      vk::BufferUsageFlagBits::eStorageBuffer,
         };
-        buffer_ = device_.createBufferUnique(buffer_info);
+        auto buffer = device.createBufferUnique(buffer_info);
 
-        const auto mem_reqs = device_.getBufferMemoryRequirements(buffer_.get());
+        const auto mem_reqs = device.getBufferMemoryRequirements(buffer.get());
 
         const vk::MemoryAllocateInfo alloc_info{
             .allocationSize = mem_reqs.size,
             .memoryTypeIndex =
-                find_memory_type(physical_device_,
+                find_memory_type(physical_device,
                                  mem_reqs.memoryTypeBits,
                                  vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
 
-        memory_ = device_.allocateMemoryUnique(alloc_info);
-        device_.bindBufferMemory(buffer_.get(), memory_.get(), 0);
-        mapped_ptr_ = device_.mapMemory(memory_.get(), 0, pool_size_);
+        auto memory = device.allocateMemoryUnique(alloc_info);
+        device.bindBufferMemory(buffer.get(), memory.get(), 0);
+        const auto mapped_ptr = device.mapMemory(memory.get(), 0, pool_size);
+        return VulkanBufferManager{std::move(buffer), std::move(memory), mapped_ptr, pool_size};
     }
 
     TransientAllocation VulkanBufferManager::allocate_transient(const std::size_t size, vk::BufferUsageFlags usage)

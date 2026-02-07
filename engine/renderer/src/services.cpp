@@ -17,7 +17,7 @@ namespace retro
         switch (backend)
         {
             case RenderBackend::Vulkan:
-                add_vulkan_services(services, window_backend);
+                add_vulkan_services(services);
                 break;
             default:
                 throw std::invalid_argument("Invalid render backend");

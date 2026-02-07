@@ -14,7 +14,12 @@ module retro.renderer.vulkan.components.command_pool;
 
 namespace retro
 {
-    VulkanCommandPool::VulkanCommandPool(const CommandPoolConfig &cfg)
+    VulkanCommandPool::VulkanCommandPool(vk::UniqueCommandPool pool, std::vector<vk::UniqueCommandBuffer> buffers)
+        : pool_{std::move(pool)}, buffers_{std::move(buffers)}
+    {
+    }
+
+    VulkanCommandPool VulkanCommandPool::create(const CommandPoolConfig &cfg)
     {
         if (!cfg.device || cfg.queue_family_idx == vk::QueueFamilyIgnored || cfg.buffer_count == 0)
         {
@@ -24,14 +29,12 @@ namespace retro
         vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
                                             .queueFamilyIndex = cfg.queue_family_idx};
 
-        pool_ = cfg.device.createCommandPoolUnique(pool_info);
+        auto pool = cfg.device.createCommandPoolUnique(pool_info);
 
-        buffers_.resize(cfg.buffer_count);
-
-        vk::CommandBufferAllocateInfo alloc_info{.commandPool = pool_.get(),
+        vk::CommandBufferAllocateInfo alloc_info{.commandPool = pool.get(),
                                                  .level = vk::CommandBufferLevel::ePrimary,
                                                  .commandBufferCount = cfg.buffer_count};
 
-        buffers_ = cfg.device.allocateCommandBuffersUnique(alloc_info);
+        auto buffers = cfg.device.allocateCommandBuffersUnique(alloc_info);
     }
 } // namespace retro

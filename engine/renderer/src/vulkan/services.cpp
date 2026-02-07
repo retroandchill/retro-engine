@@ -54,22 +54,8 @@ namespace retro
         }
     } // namespace
 
-    void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
+    void add_vulkan_services(ServiceCollection &services)
     {
-        services.add_singleton<Renderer2D, VulkanRenderer2D>()
-            .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
-            .add_singleton<&create_surface>()
-            .add_singleton([](const VulkanInstance &instance)
-                           { return VulkanDevice::create(VulkanDeviceCreateInfo{.instance = instance.handle()}); })
-            .add_singleton<VulkanBufferManager>()
-            .add_singleton<VulkanPipelineManager>()
-            .add_singleton(
-                [](const VulkanDevice &device)
-                {
-                    return std::make_shared<VulkanCommandPool>(
-                        CommandPoolConfig{.device = device.device(),
-                                          .queue_family_idx = device.graphics_family_index(),
-                                          .buffer_count = VulkanRenderer2D::MAX_FRAMES_IN_FLIGHT});
-                });
+        services.add_singleton<Renderer2D, VulkanRenderer2D>();
     }
 } // namespace retro
