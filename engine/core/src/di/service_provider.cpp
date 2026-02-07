@@ -13,10 +13,10 @@ namespace retro
         return "The requested service was not found";
     }
 
-    ServiceProviderImpl::ServiceProviderImpl(ServiceCollection &service_collection)
+    ServiceProviderImpl::ServiceProviderImpl(const std::span<const ServiceRegistration> registrations)
     {
         std::unordered_map<ServiceIdentifier, std::uint32_t> service_count;
-        for (auto &registration : service_collection.registrations_)
+        for (auto &registration : registrations)
         {
             ServiceIdentifier id{registration.type};
             ServiceCacheKey key{.id = id, .slot = service_count[id]++};
@@ -40,7 +40,7 @@ namespace retro
             return get_or_create(type, existing->second).ptr();
         }
 
-        throw ServiceNotFoundException{};
+        return nullptr;
     }
 
     std::generator<void *> ServiceProviderImpl::get_all(const std::type_info &type)
@@ -64,11 +64,6 @@ namespace retro
                                        if (service.lifetime != ServiceLifetime::Transient)
                                        {
                                            call_site.emplace<RealizedService>(created_services_.size() - 1);
-                                       }
-                                       if (const auto configuration = configurations_.find(type);
-                                           configuration != configurations_.end())
-                                       {
-                                           configuration->second.broadcast(created.ptr(), *this);
                                        }
                                        return created;
                                    }},

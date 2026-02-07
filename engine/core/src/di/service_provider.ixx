@@ -17,6 +17,7 @@ import retro.core.type_traits.pointer;
 import retro.core.type_traits.range;
 import retro.core.functional.overload;
 import :metadata;
+import :service_registration;
 import :service_instance;
 import :service_call_site;
 import :service_identifier;
@@ -44,7 +45,7 @@ namespace retro
         virtual ~ServiceProvider() = default;
 
         template <typename T>
-        decltype(auto) get()
+        auto get()
         {
             if constexpr (ServiceCompatibleContainer<std::decay_t<T>>)
             {
@@ -57,11 +58,17 @@ namespace retro
             else if constexpr (HandleWrapper<T>)
             {
                 using PtrType = HandleType<T>;
-                return PtrType{static_cast<PtrType>(get_raw(typeid(T)))};
+                PtrType ptr{static_cast<PtrType>(get_raw(typeid(T)))};
+                if (ptr == nullptr)
+                {
+                    return Optional<PtrType>{};
+                }
+
+                return Optional<PtrType>{std::move(ptr)};
             }
             else
             {
-                return *static_cast<T *>(get_raw(typeid(T)));
+                return Optional<T &>{static_cast<T *>(get_raw(typeid(T)))};
             }
         }
 
@@ -73,7 +80,7 @@ namespace retro
     class RETRO_API ServiceProviderImpl final : public ServiceProvider
     {
       public:
-        explicit ServiceProviderImpl(class ServiceCollection &service_collection);
+        explicit ServiceProviderImpl(std::span<const ServiceRegistration> registrations);
 
         ServiceProviderImpl(const ServiceProviderImpl &) = delete;
         ServiceProviderImpl(ServiceProviderImpl &&) noexcept = default;
@@ -83,17 +90,15 @@ namespace retro
         ServiceProviderImpl &operator=(const ServiceProviderImpl &) = delete;
         ServiceProviderImpl &operator=(ServiceProviderImpl &&) noexcept = default;
 
-      protected:
+      private:
         void *get_raw(const std::type_info &type) override;
 
         std::generator<void *> get_all(const std::type_info &type) override;
 
-      private:
         const ServiceInstance &get_or_create(std::type_index type, ServiceCallSite &call_site);
 
         std::vector<ServiceInstance> created_services_;
         std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
-        std::unordered_map<std::type_index, ConfigureService> configurations_;
     };
 
 } // namespace retro

@@ -16,49 +16,6 @@ import retro.core.type_traits.callable;
 
 namespace retro
 {
-    struct RETRO_API ServiceRegistration
-    {
-        std::type_index type;
-        ServiceCallSite registration;
-
-        explicit ServiceRegistration(const std::type_info &type) noexcept;
-
-        ServiceRegistration(const std::type_info &type, ServiceLifetime lifetime, ServiceFactory factory) noexcept;
-
-        template <typename T>
-        ServiceRegistration(const std::type_info &type, std::shared_ptr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_shared(std::move(p));
-                                       }}
-        {
-        }
-
-        template <typename T>
-        ServiceRegistration(const std::type_info &type, std::unique_ptr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_unique(std::move(p));
-                                       }}
-        {
-        }
-
-        template <typename T>
-        ServiceRegistration(const std::type_info &type, RefCountPtr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_intrusive(std::move(p));
-                                       }}
-        {
-        }
-    };
-
     template <Injectable T>
     std::unique_ptr<T> construct_unique_singleton(ServiceProvider &provider)
     {
@@ -365,39 +322,9 @@ namespace retro
             return add<ServiceLifetime::Transient, Functor>();
         }
 
-        template <typename T, typename Functor>
-            requires(std::invocable<Functor, T &> || std::invocable<Functor, T &, ServiceProvider &>)
-        ServiceCollection &configure(Functor &&functor)
-        {
-            auto &configuration = configurations_[typeid(T)];
-            if constexpr (std::invocable<Functor, T &, ServiceProvider &>)
-            {
-                configuration.add([functor = std::forward<Functor>(functor)](void *object, ServiceProvider &provider)
-                                  { std::invoke(functor, *static_cast<T *>(object), provider); });
-            }
-            else
-            {
-                configuration.add([functor = std::forward<Functor>(functor)](void *object, ServiceProvider &)
-                                  { std::invoke(functor, *static_cast<T *>(object)); });
-            }
-            return *this;
-        }
-
-        template <typename T, auto Functor>
-            requires(std::invocable<decltype(Functor), T &> ||
-                     std::invocable<decltype(Functor), T &, ServiceProvider &>)
-        ServiceCollection &configure()
-        {
-            return configure<T>([]<typename... Args>(Args &&...args)
-                                { std::invoke(Functor, std::forward<Args>(args)...); });
-        }
+        std::shared_ptr<ServiceProvider> create_service_provider() const;
 
       private:
-        friend class ServiceProviderImpl;
-
         std::vector<ServiceRegistration> registrations_;
-        std::unordered_map<std::type_index, ConfigureService> configurations_;
     };
-
-    export RETRO_API std::shared_ptr<ServiceProvider> create_service_provider(ServiceCollection &services);
 } // namespace retro

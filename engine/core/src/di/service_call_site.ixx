@@ -19,8 +19,6 @@ namespace retro
 
     using ServiceFactory = Delegate<ServiceInstance(class ServiceProvider &)>;
 
-    using ConfigureService = MulticastDelegate<void(void *, ServiceProvider &)>;
-
     struct RealizedService
     {
         std::size_t instance_index = static_cast<std::size_t>(-1);
