@@ -24,6 +24,7 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.command_pool;
+import retro.renderer.vulkan.components.pipeline;
 
 namespace retro
 {
@@ -223,6 +224,7 @@ namespace retro
             .add_singleton<&create_device>()
             .add_singleton<VulkanDevice>()
             .add_singleton<VulkanBufferManager>()
+            .add_singleton<VulkanPipelineManager>()
             .add_singleton(
                 [](const VulkanDevice &device)
                 {

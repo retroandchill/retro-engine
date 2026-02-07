@@ -19,12 +19,12 @@ import retro.renderer.vulkan.data.texture_render_data;
 namespace retro
 {
     VulkanRenderer2D::VulkanRenderer2D(Window &window,
-                                       const vk::Instance instance,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
                                        VulkanBufferManager &buffer_manager,
-                                       VulkanCommandPool &command_pool)
-        : window_{window}, instance_{instance}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
+                                       VulkanCommandPool &command_pool,
+                                       VulkanPipelineManager &pipeline_manager)
+        : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
           swapchain_(SwapchainConfig{
               .physical_device = device_.physical_device(),
               .device = device_.device(),
@@ -42,7 +42,7 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
           }),
-          pipeline_manager_{device_.device()}, linear_sampler_{create_linear_sampler()}
+          pipeline_manager_{pipeline_manager}, linear_sampler_{create_linear_sampler()}
     {
     }
 

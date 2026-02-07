@@ -28,15 +28,19 @@ namespace retro
       public:
         static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
-        using Dependencies =
-            TypeList<Window, vk::Instance, vk::SurfaceKHR, VulkanDevice, VulkanBufferManager, VulkanCommandPool>;
+        using Dependencies = TypeList<Window,
+                                      vk::SurfaceKHR,
+                                      VulkanDevice,
+                                      VulkanBufferManager,
+                                      VulkanCommandPool,
+                                      VulkanPipelineManager>;
 
         explicit VulkanRenderer2D(Window &window,
-                                  vk::Instance instance,
                                   vk::SurfaceKHR surface,
                                   VulkanDevice &device,
                                   VulkanBufferManager &buffer_manager,
-                                  VulkanCommandPool &command_pool);
+                                  VulkanCommandPool &command_pool,
+                                  VulkanPipelineManager &pipeline_manager);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -80,7 +84,6 @@ namespace retro
 
         Window &window_;
 
-        vk::Instance instance_;
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
@@ -90,7 +93,7 @@ namespace retro
         VulkanCommandPool &command_pool_;
         VulkanSyncObjects sync_;
         vk::UniqueSampler linear_sampler_;
-        VulkanPipelineManager pipeline_manager_;
+        VulkanPipelineManager &pipeline_manager_;
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;
