@@ -22,8 +22,6 @@ namespace retro
 
         virtual ServiceProvider &service_provider() = 0;
 
-        virtual const ScopingRules &scoping_rules() const = 0;
-
         virtual std::uint32_t scope_level() const = 0;
 
         virtual bool is_root_scope() const = 0;
@@ -43,17 +41,6 @@ namespace retro
         virtual std::shared_ptr<ServiceScope> create_scope(const Delegate<void(ServiceCollection &)> &configure) = 0;
 
         virtual std::shared_ptr<ServiceScope> create_scope(Name name,
-                                                           const Delegate<void(ServiceCollection &)> &configure) = 0;
-
-        virtual std::shared_ptr<ServiceScope> create_scope(const ScopingRules &rules) = 0;
-
-        virtual std::shared_ptr<ServiceScope> create_scope(Name name, const ScopingRules &rules) = 0;
-
-        virtual std::shared_ptr<ServiceScope> create_scope(const ScopingRules &rules,
-                                                           const Delegate<void(ServiceCollection &)> &configure) = 0;
-
-        virtual std::shared_ptr<ServiceScope> create_scope(Name name,
-                                                           const ScopingRules &rules,
                                                            const Delegate<void(ServiceCollection &)> &configure) = 0;
     };
 } // namespace retro

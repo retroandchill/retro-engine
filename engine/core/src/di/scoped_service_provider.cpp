@@ -11,15 +11,14 @@ import :scoped_service_provider;
 namespace retro
 {
     ScopedServiceProvider::ScopedServiceProvider(const std::span<const ServiceRegistration> registrations)
-        : ScopedServiceProvider{registrations, Name::none(), nullptr, ScopingRules::root_scope()}
+        : ScopedServiceProvider{registrations, Name::none(), nullptr}
     {
     }
 
     ScopedServiceProvider::ScopedServiceProvider(const std::span<const ServiceRegistration> registrations,
                                                  const Name tag,
-                                                 std::shared_ptr<ServiceScope> parent_scope,
-                                                 const ScopingRules rules)
-        : tag_{tag}, parent_scope_{std::move(parent_scope)}, rules_{rules},
+                                                 std::shared_ptr<ServiceScope> parent_scope)
+        : tag_{tag}, parent_scope_{std::move(parent_scope)},
           scope_level_{parent_scope_ != nullptr ? parent_scope_->scope_level() + 1 : 0},
           service_registrations_{std::from_range, registrations}
     {
@@ -27,8 +26,7 @@ namespace retro
         for (auto &registration : service_registrations_)
         {
             const auto &call_site = registration.registration;
-            if (!rules_.can_resolve(call_site->lifetime) ||
-                (!call_site->scope_tag.is_none() && call_site->scope_tag != tag_))
+            if (!can_resolve(call_site->lifetime) || (!call_site->scope_tag.is_none() && call_site->scope_tag != tag_))
             {
                 continue;
             }
@@ -92,11 +90,6 @@ namespace retro
         return *this;
     }
 
-    const ScopingRules &ScopedServiceProvider::scoping_rules() const
-    {
-        return rules_;
-    }
-
     std::uint32_t ScopedServiceProvider::scope_level() const
     {
         return scope_level_;
@@ -114,52 +107,27 @@ namespace retro
 
     std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope()
     {
-        return create_scope(Name::none(), ScopingRules::nested_scope());
+        return create_scope(Name::none());
     }
 
     std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(Name name)
     {
-        return create_scope(name, ScopingRules::nested_scope());
+        return std::make_shared<ScopedServiceProvider>(service_registrations_, name, shared_from_this());
     }
 
     std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(
         const Delegate<void(ServiceCollection &)> &configure)
     {
-        return create_scope(ScopingRules::nested_scope(), configure);
-    }
-
-    std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(
-        Name name,
-        const Delegate<void(ServiceCollection &)> &configure)
-    {
-        return create_scope(name, ScopingRules::nested_scope(), configure);
-    }
-
-    std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(const ScopingRules &rules)
-    {
-        return create_scope(Name::none(), rules);
-    }
-
-    std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(Name name, const ScopingRules &rules)
-    {
-        return std::make_shared<ScopedServiceProvider>(service_registrations_, name, shared_from_this(), rules);
-    }
-
-    std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(
-        const ScopingRules &rules,
-        const Delegate<void(ServiceCollection &)> &configure)
-    {
-        return create_scope(Name::none(), rules, configure);
+        return create_scope(Name::none(), configure);
     }
 
     std::shared_ptr<ServiceScope> ScopedServiceProvider::create_scope(
         const Name name,
-        const ScopingRules &rules,
         const Delegate<void(ServiceCollection &)> &configure)
     {
         ServiceCollection services{service_registrations_};
         configure.execute(services);
-        return create_scope(name, rules);
+        return create_scope(name);
     }
 
     const ServiceInstance &ScopedServiceProvider::get_or_create(ServiceCallSite &call_site)
@@ -170,12 +138,24 @@ namespace retro
                                    {
                                        auto &created =
                                            created_services_.emplace_back(service->registration.execute(*this));
-                                       if (service->lifetime != ServiceLifetime::Transient)
+                                       if (!std::holds_alternative<TransientScope>(service->lifetime))
                                        {
                                            call_site.emplace<RealizedService>(created_services_.size() - 1);
                                        }
                                        return created;
                                    }},
                           call_site);
+    }
+
+    bool ScopedServiceProvider::can_resolve(const ServiceLifetime &lifetime) const
+    {
+        return std::visit(Overload{[this](SingletonScope) { return parent_scope_ == nullptr; },
+                                   [this](const ScopedScope &scope)
+                                   { return scope.tag.is_none() || scope.tag == tag_; },
+                                   [](TransientScope)
+                                   {
+                                       return true;
+                                   }},
+                          lifetime);
     }
 } // namespace retro

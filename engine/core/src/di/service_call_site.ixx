@@ -12,57 +12,34 @@ import retro.core.strings.name;
 
 namespace retro
 {
-    export enum class ServiceLifetime : std::uint8_t
+    export struct SingletonScope
     {
-        Singleton,
-        Scoped,
-        Transient
     };
+
+    export struct ScopedScope
+    {
+        Name tag;
+    };
+
+    export struct TransientScope
+    {
+    };
+
+    export using ServiceLifetime = std::variant<SingletonScope, ScopedScope, TransientScope>;
+
+    export constexpr ServiceLifetime singleton_service_lifetime = SingletonScope{};
+
+    export constexpr ServiceLifetime scoped_service_lifetime(const Name tag = Name::none()) noexcept
+    {
+        return ScopedScope{tag};
+    }
+
+    export constexpr ServiceLifetime transient_service_lifetime = TransientScope{};
 
     export enum class ScopeLevel : std::uint8_t
     {
         Root = 0,
         Nested = 1
-    };
-
-    export struct ScopingRules
-    {
-        bool allow_singleton = false;
-        bool allow_transient = false;
-        bool allow_scoped = false;
-
-        [[nodiscard]] static constexpr ScopingRules root_scope()
-        {
-            return {
-                .allow_singleton = true,
-                .allow_transient = true,
-                .allow_scoped = false,
-            };
-        }
-
-        [[nodiscard]] static constexpr ScopingRules nested_scope()
-        {
-            return {
-                .allow_singleton = false,
-                .allow_transient = true,
-                .allow_scoped = true,
-            };
-        }
-
-        [[nodiscard]] constexpr bool can_resolve(const ServiceLifetime lifetime) const noexcept
-        {
-            switch (lifetime)
-            {
-                case ServiceLifetime::Singleton:
-                    return allow_singleton;
-                case ServiceLifetime::Scoped:
-                    return allow_scoped;
-                case ServiceLifetime::Transient:
-                    return allow_transient;
-            }
-
-            return false;
-        }
     };
 
     using ServiceFactory = Delegate<ServiceInstance(class ServiceProvider &)>;

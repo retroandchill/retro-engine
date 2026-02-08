@@ -21,8 +21,7 @@ namespace retro
 
         explicit ScopedServiceProvider(std::span<const ServiceRegistration> registrations,
                                        Name tag,
-                                       std::shared_ptr<ServiceScope> parent_scope,
-                                       ScopingRules rules);
+                                       std::shared_ptr<ServiceScope> parent_scope);
 
         ScopedServiceProvider(const ScopedServiceProvider &) = delete;
         ScopedServiceProvider(ScopedServiceProvider &&) noexcept = default;
@@ -40,8 +39,6 @@ namespace retro
 
         ServiceProvider &service_provider() override;
 
-        const ScopingRules &scoping_rules() const override;
-
         std::uint32_t scope_level() const override;
 
         bool is_root_scope() const override;
@@ -57,23 +54,13 @@ namespace retro
         std::shared_ptr<ServiceScope> create_scope(Name name,
                                                    const Delegate<void(ServiceCollection &)> &configure) override;
 
-        std::shared_ptr<ServiceScope> create_scope(const ScopingRules &rules) override;
-
-        std::shared_ptr<ServiceScope> create_scope(Name name, const ScopingRules &rules) override;
-
-        std::shared_ptr<ServiceScope> create_scope(const ScopingRules &rules,
-                                                   const Delegate<void(ServiceCollection &)> &configure) override;
-
-        std::shared_ptr<ServiceScope> create_scope(Name name,
-                                                   const ScopingRules &rules,
-                                                   const Delegate<void(ServiceCollection &)> &configure) override;
-
       private:
         const ServiceInstance &get_or_create(ServiceCallSite &call_site);
 
+        bool can_resolve(const ServiceLifetime &lifetime) const;
+
         Name tag_;
         std::shared_ptr<ServiceScope> parent_scope_;
-        ScopingRules rules_;
         std::uint32_t scope_level_{0};
         std::vector<ServiceRegistration> service_registrations_;
         std::vector<ServiceInstance> created_services_;
