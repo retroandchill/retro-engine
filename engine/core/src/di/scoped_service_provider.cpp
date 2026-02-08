@@ -173,9 +173,9 @@ namespace retro
                                    { return instance.registration_depth() == scope_level_; },
                                    [this](const FactoryServiceCallSite &factory)
                                    {
-                                       return std::visit(Overload{[this](SingletonScope)
+                                       return std::visit(Overload{[this](SingletonServiceLifetime)
                                                                   { return parent_scope_ == nullptr; },
-                                                                  [this](const ScopedScope &scope)
+                                                                  [this](const ScopedServiceLifetime &scope)
                                                                   { return scope.tag.is_none() || scope.tag == tag_; },
                                                                   [](TransientScope)
                                                                   {

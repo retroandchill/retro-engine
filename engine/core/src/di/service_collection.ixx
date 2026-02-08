@@ -213,34 +213,34 @@ namespace retro
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_singleton()
         {
-            return add<T, T, Policy>(SingletonScope{});
+            return add<T, T, Policy>(SingletonServiceLifetime{});
         }
 
         template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_singleton()
         {
-            return add<T, Impl, Policy>(SingletonScope{});
+            return add<T, Impl, Policy>(SingletonServiceLifetime{});
         }
 
         template <CanCreateServiceFactoryFrom Functor>
         ServiceCollection &add_singleton(Functor &&functor)
         {
-            return add(SingletonScope{}, std::forward<Functor>(functor));
+            return add(SingletonServiceLifetime{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
             requires CanCreateServiceFactoryFrom<decltype(Functor)>
         ServiceCollection &add_singleton()
         {
-            return add<Functor>(SingletonScope{});
+            return add<Functor>(SingletonServiceLifetime{});
         }
 
         template <NonGenericLambda Functor>
             requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
         ServiceCollection &add_singleton(Functor &&functor)
         {
-            return add(SingletonScope{}, std::forward<Functor>(functor));
+            return add(SingletonServiceLifetime{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
@@ -249,7 +249,64 @@ namespace retro
                      !CanCreateServiceFactoryFrom<decltype(Functor)>)
         ServiceCollection &add_singleton()
         {
-            return add<Functor>(SingletonScope{});
+            return add<Functor>(SingletonServiceLifetime{});
+        }
+
+        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+            requires InjectablePolicy<T, Policy>
+        ServiceCollection &add_scoped(const Name scope_tag = Name::none())
+        {
+            return add<T, T, Policy>(ScopedServiceLifetime{scope_tag});
+        }
+
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+            requires InjectablePolicy<Impl, Policy>
+        ServiceCollection &add_scoped(const Name scope_tag = Name::none())
+        {
+            return add<T, Impl, Policy>(ScopedServiceLifetime{scope_tag});
+        }
+
+        template <CanCreateServiceFactoryFrom Functor>
+        ServiceCollection &add_scoped(Functor &&functor)
+        {
+            return add_scoped(Name::none(), std::forward<Functor>(functor));
+        }
+
+        template <CanCreateServiceFactoryFrom Functor>
+        ServiceCollection &add_scoped(const Name scope_tag, Functor &&functor)
+        {
+            return add(ScopedServiceLifetime{scope_tag}, std::forward<Functor>(functor));
+        }
+
+        template <auto Functor>
+            requires std::invocable<decltype(Functor), ServiceProvider &> &&
+                     CanCreateServiceFactoryFrom<decltype(Functor)>
+        ServiceCollection &add_scoped(const Name scope_tag = Name::none())
+        {
+            return add<Functor>(ScopedServiceLifetime{scope_tag});
+        }
+
+        template <NonGenericLambda Functor>
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
+        ServiceCollection &add_scoped(Functor &&functor)
+        {
+            return add_scoped(Name::none(), std::forward<Functor>(functor));
+        }
+
+        template <NonGenericLambda Functor>
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
+        ServiceCollection &add_scoped(const Name scope_tag, Functor &&functor)
+        {
+            return add(ScopedServiceLifetime{scope_tag}, std::forward<Functor>(functor));
+        }
+
+        template <auto Functor>
+            requires(FreeFunction<decltype(Functor)> &&
+                     ValidServiceFactoryResult<FunctionReturnType<decltype(Functor)>> &&
+                     !CanCreateServiceFactoryFrom<decltype(Functor)>)
+        ServiceCollection &add_scoped(const Name scope_tag = Name::none())
+        {
+            return add<Functor>(ScopedServiceLifetime{scope_tag});
         }
 
         template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>

@@ -14,11 +14,11 @@ import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
-    export struct SingletonScope
+    export struct SingletonServiceLifetime
     {
     };
 
-    export struct ScopedScope
+    export struct ScopedServiceLifetime
     {
         Name tag;
     };
@@ -27,7 +27,7 @@ namespace retro
     {
     };
 
-    export using ServiceLifetime = std::variant<SingletonScope, ScopedScope, TransientScope>;
+    export using ServiceLifetime = std::variant<SingletonServiceLifetime, ScopedServiceLifetime, TransientScope>;
 
     using ServiceFactory = std::move_only_function<std::shared_ptr<ServiceInstance>(class ServiceProvider &)>;
 
