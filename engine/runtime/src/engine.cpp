@@ -44,11 +44,11 @@ namespace retro
     {
         services.add_singleton<Engine>()
             .add_singleton<PipelineManager>()
-            .add_singleton<RenderPipeline, GeometryRenderPipeline, StoragePolicy::SharedOwned>()
-            .add_singleton<RenderPipeline, SpriteRenderPipeline, StoragePolicy::SharedOwned>()
-            .add_singleton<AssetSource, FileSystemAssetSource, StoragePolicy::SharedOwned>()
+            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
+            .add_singleton<RenderPipeline, SpriteRenderPipeline>()
+            .add_singleton<AssetSource, FileSystemAssetSource>()
             .add_singleton<AssetManager>()
-            .add_singleton<AssetDecoder, TextureDecoder, StoragePolicy::SharedOwned>();
+            .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
     Engine::Engine(ScriptRuntime &script_runtime,
@@ -67,8 +67,6 @@ namespace retro
                                                 renderer_.add_viewport(viewport);
                                             }}
     {
-        auto &viewport = viewports_.create_viewport();
-        viewport.set_scene(std::addressof(scene_));
     }
 
     void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
@@ -160,7 +158,10 @@ namespace retro
     {
         renderer_.begin_frame();
 
-        pipeline_manager_.collect_all_draw_calls(scene_.nodes(), renderer_.window_size());
+        for (auto &scene : scenes_.scenes())
+        {
+            pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer_.window_size());
+        }
 
         renderer_.end_frame();
     }

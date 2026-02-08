@@ -69,9 +69,9 @@ namespace retro
 
         RETRO_API void request_shutdown(std::int32_t exit_code = 0);
 
-        [[nodiscard]] inline Scene &scene()
+        [[nodiscard]] inline SceneManager &scenes()
         {
-            return scene_;
+            return scenes_;
         }
 
         [[nodiscard]] inline ViewportManager &viewports()
@@ -102,7 +102,7 @@ namespace retro
 
         std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
-        Scene scene_;
+        SceneManager scenes_;
         ViewportManager viewports_;
         ScopedDelegateSubscription<OnViewportDelegate> on_viewport_create_subscription_;
         ScopedDelegateSubscription<OnViewportDelegate> on_viewport_destroy_subscription_;

@@ -12,18 +12,25 @@ namespace RetroEngine.World;
 
 public partial class Sprite : SceneObject
 {
-    public Sprite(SceneObject? parent = null)
-        : base(NativeCreate(parent?.NativeObject ?? IntPtr.Zero))
+    private Sprite(Scene scene, IntPtr parent)
+        : base(scene, NativeCreate(scene.NativeHandle, parent))
     {
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);
     }
+
+    public Sprite(Scene scene)
+        : this(scene, IntPtr.Zero) { }
+
+    public Sprite(SceneObject parent)
+        : this(parent.Scene, parent.NativeObject) { }
 
     public Texture? Texture
     {
         get;
         set
         {
+            ThrowIfDisposed();
             field = value;
             NativeSetTexture(NativeObject, value?.NativeObject ?? IntPtr.Zero);
             if (value is not null)
@@ -38,7 +45,7 @@ public partial class Sprite : SceneObject
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetSize(NativeObject, value);
         }
@@ -49,7 +56,7 @@ public partial class Sprite : SceneObject
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetTint(NativeObject, value);
         }
@@ -60,14 +67,14 @@ public partial class Sprite : SceneObject
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetPivot(NativeObject, value);
         }
     }
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_create")]
-    private static partial IntPtr NativeCreate(IntPtr id);
+    private static partial IntPtr NativeCreate(IntPtr scene, IntPtr id);
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_texture")]
     private static partial void NativeSetTexture(IntPtr id, IntPtr texture);

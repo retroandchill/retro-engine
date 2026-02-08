@@ -19,6 +19,8 @@
 extern "C"
 {
 #endif
+    typedef struct Retro_Scene Retro_Scene;
+    typedef struct Retro_Viewport Retro_Viewport;
     typedef struct Retro_Node Retro_Node;
     typedef struct Retro_Sprite Retro_Sprite;
     typedef struct Retro_Geometry Retro_Geometry;
@@ -46,11 +48,21 @@ extern "C"
 
     typedef uint8_t Retro_GeometryType;
 
-    RETRO_API void retro_node_dispose(Retro_Node *node);
+    RETRO_API Retro_Scene *retro_scene_create();
+
+    RETRO_API void retro_scene_destroy(Retro_Scene *scene);
+
+    RETRO_API Retro_Viewport *retro_viewport_create();
+
+    RETRO_API void retro_viewport_destroy(Retro_Viewport *viewport);
+
+    RETRO_API void retro_viewport_set_scene(Retro_Viewport *viewport, Retro_Scene *scene);
+
+    RETRO_API void retro_node_dispose(Retro_Scene *scene, Retro_Node *node);
 
     RETRO_API void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform);
 
-    RETRO_API Retro_Geometry *retro_geometry_create(Retro_Node *parent);
+    RETRO_API Retro_Geometry *retro_geometry_create(Retro_Scene *scene, Retro_Node *parent);
 
     RETRO_API void retro_geometry_set_type(Retro_Geometry *node, Retro_GeometryType type);
 
@@ -66,7 +78,7 @@ extern "C"
 
     RETRO_API void retro_geometry_set_size(Retro_Geometry *node, Retro_Vector2f size);
 
-    RETRO_API Retro_Sprite *retro_sprite_create(Retro_Node *parent);
+    RETRO_API Retro_Sprite *retro_sprite_create(Retro_Scene *scene, Retro_Node *parent);
 
     RETRO_API void retro_sprite_set_texture(Retro_Sprite *node, Retro_Texture *texture);
 

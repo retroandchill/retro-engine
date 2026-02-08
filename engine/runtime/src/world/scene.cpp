@@ -18,4 +18,24 @@ namespace retro
     {
         return nodes_.nodes_of_type(type);
     }
+
+    Scene &SceneManager::create_scene()
+    {
+        const auto &created_scene = scenes_.emplace_back(std::make_unique<Scene>());
+        on_scene_created_(*created_scene);
+        return *created_scene;
+    }
+
+    void SceneManager::destroy_scene(Scene &scene)
+    {
+        const auto it = std::ranges::find_if(scenes_,
+                                             [&scene](const std::unique_ptr<Scene> &ptr)
+                                             { return ptr.get() == std::addressof(scene); });
+
+        if (it != scenes_.end())
+        {
+            on_scene_destroyed_(**it);
+            scenes_.erase(it);
+        }
+    }
 } // namespace retro

@@ -13,6 +13,7 @@ import retro.core.math.matrix;
 import retro.core.math.transform;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.world.scene;
+import retro.runtime.world.viewport;
 import retro.runtime.world.scene_node;
 import retro.runtime.assets.textures.texture;
 import retro.runtime.rendering.objects.geometry;
@@ -21,6 +22,8 @@ import retro.runtime.engine;
 import retro.core.c_api;
 import std;
 
+DECLARE_OPAQUE_C_HANDLE(Retro_Scene, retro::Scene);
+DECLARE_OPAQUE_C_HANDLE(Retro_Viewport, retro::Viewport);
 DECLARE_OPAQUE_C_HANDLE(Retro_Node, retro::SceneNode);
 DECLARE_OPAQUE_C_HANDLE(Retro_Sprite, retro::Sprite);
 DECLARE_OPAQUE_C_HANDLE(Retro_Geometry, retro::GeometryObject);
@@ -61,10 +64,34 @@ namespace
 
 extern "C"
 {
-
-    void retro_node_dispose(Retro_Node *node)
+    Retro_Scene *retro_scene_create()
     {
-        retro::Engine::instance().scene().destroy_node(*from_c(node));
+        return std::addressof(to_c(retro::Engine::instance().scenes().create_scene()));
+    }
+
+    void retro_scene_destroy(Retro_Scene *scene)
+    {
+        retro::Engine::instance().scenes().destroy_scene(*from_c(scene));
+    }
+
+    Retro_Viewport *retro_viewport_create()
+    {
+        return std::addressof(to_c(retro::Engine::instance().viewports().create_viewport()));
+    }
+
+    void retro_viewport_destroy(Retro_Viewport *viewport)
+    {
+        retro::Engine::instance().viewports().destroy_viewport(*from_c(viewport));
+    }
+
+    void retro_viewport_set_scene(Retro_Viewport *viewport, Retro_Scene *scene)
+    {
+        from_c(viewport)->set_scene(from_c(scene));
+    }
+
+    void retro_node_dispose(Retro_Scene *scene, Retro_Node *node)
+    {
+        from_c(scene)->destroy_node(*from_c(node));
     }
 
     void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform)
@@ -73,10 +100,10 @@ extern "C"
         scene_node->set_transform(from_c(*transform));
     }
 
-    Retro_Geometry *retro_geometry_create(Retro_Node *parent)
+    Retro_Geometry *retro_geometry_create(Retro_Scene *scene, Retro_Node *parent)
     {
         auto *parent_ptr = from_c(parent);
-        auto &geo = retro::Engine::instance().scene().create_node<retro::GeometryObject>(parent_ptr);
+        auto &geo = from_c(scene)->create_node<retro::GeometryObject>(parent_ptr);
         return to_c(&geo);
     }
 
@@ -116,10 +143,10 @@ extern "C"
         geo.set_size(from_c(size));
     }
 
-    Retro_Sprite *retro_sprite_create(Retro_Node *parent)
+    Retro_Sprite *retro_sprite_create(Retro_Scene *scene, Retro_Node *parent)
     {
         auto *parent_ptr = from_c(parent);
-        auto &sprite = retro::Engine::instance().scene().create_node<retro::Sprite>(parent_ptr);
+        auto &sprite = from_c(scene)->create_node<retro::Sprite>(parent_ptr);
         return to_c(&sprite);
     }
 

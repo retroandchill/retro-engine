@@ -11,6 +11,7 @@ module;
 export module retro.runtime.world.scene;
 
 import std;
+import retro.core.functional.delegate;
 import retro.core.util.noncopyable;
 import retro.core.math.transform;
 import retro.core.math.vector;
@@ -52,5 +53,35 @@ namespace retro
 
       private:
         SceneNodeList nodes_;
+    };
+
+    export using OnSceneDelegate = MulticastDelegate<void(Scene &)>;
+
+    export class RETRO_API SceneManager final : NonCopyable
+    {
+      public:
+        Scene &create_scene();
+
+        void destroy_scene(Scene &scene);
+
+        [[nodiscard]] inline std::span<const std::unique_ptr<Scene>> scenes() const noexcept
+        {
+            return scenes_;
+        }
+
+        [[nodiscard]] inline OnSceneDelegate::RegistrationType on_viewport_created() noexcept
+        {
+            return OnSceneDelegate::RegistrationType{on_scene_created_};
+        }
+
+        [[nodiscard]] inline OnSceneDelegate::RegistrationType on_viewport_destroyed() noexcept
+        {
+            return OnSceneDelegate::RegistrationType{on_scene_destroyed_};
+        }
+
+      private:
+        std::vector<std::unique_ptr<Scene>> scenes_;
+        OnSceneDelegate on_scene_created_;
+        OnSceneDelegate on_scene_destroyed_;
     };
 } // namespace retro

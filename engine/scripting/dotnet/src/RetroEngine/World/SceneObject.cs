@@ -10,22 +10,29 @@ namespace RetroEngine.World;
 
 public abstract partial class SceneObject : IDisposable
 {
-    protected SceneObject(IntPtr id)
+    protected SceneObject(Scene scene, IntPtr id)
     {
+        Scene = scene;
         NativeObject = id;
         Scale = Vector2F.One;
     }
 
+    public Scene Scene { get; }
+
     public IntPtr NativeObject { get; }
 
-    protected bool Disposed { get; private set; }
+    protected bool Disposed
+    {
+        get => field || Scene.Disposed;
+        private set;
+    }
 
     public Transform Transform
     {
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetTransform(NativeObject, value);
         }
@@ -47,6 +54,12 @@ public abstract partial class SceneObject : IDisposable
     {
         get => Transform.Scale;
         set => Transform = Transform with { Scale = value };
+    }
+
+    protected void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(Scene.Disposed, Scene);
+        ObjectDisposedException.ThrowIf(Disposed, this);
     }
 
     public void Dispose()
