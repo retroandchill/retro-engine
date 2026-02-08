@@ -21,19 +21,11 @@ namespace retro
     VulkanRenderer2D::VulkanRenderer2D(Window &window,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
+                                       VulkanSwapchain &swapchain,
                                        VulkanBufferManager &buffer_manager,
                                        VulkanCommandPool &command_pool,
                                        VulkanPipelineManager &pipeline_manager)
-        : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager},
-          swapchain_(SwapchainConfig{
-              .physical_device = device_.physical_device(),
-              .device = device_.device(),
-              .surface = surface_,
-              .graphics_family = device_.graphics_family_index(),
-              .present_family = device_.present_family_index(),
-              .width = window_.width(),
-              .height = window_.height(),
-          }),
+        : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, swapchain_(swapchain),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
           command_pool_(command_pool),
@@ -42,7 +34,7 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
           }),
-          pipeline_manager_{pipeline_manager}, linear_sampler_{create_linear_sampler()}
+          linear_sampler_{create_linear_sampler()}, pipeline_manager_{pipeline_manager}
     {
     }
 

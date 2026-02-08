@@ -13,7 +13,7 @@ module;
 #include <SDL3/SDL_vulkan.h>
 #include <vulkan/vk_platform.h>
 
-module retro.renderer.vulkan.scopes.instance;
+module retro.renderer.vulkan.components.instance;
 
 import retro.logging;
 

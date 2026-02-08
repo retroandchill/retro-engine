@@ -25,7 +25,7 @@ import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.command_pool;
 import retro.renderer.vulkan.components.pipeline;
-import retro.renderer.vulkan.scopes.instance;
+import retro.renderer.vulkan.components.instance;
 
 namespace retro
 {
@@ -151,6 +151,22 @@ namespace retro
 
             return config.physical_device.createDeviceUnique(create_info, nullptr);
         }
+
+        VulkanSwapchain create_swapchain(const Window &window,
+                                         const vk::SurfaceKHR surface,
+                                         const VulkanDeviceConfig &config,
+                                         const vk::Device device)
+        {
+            return VulkanSwapchain{SwapchainConfig{
+                .physical_device = config.physical_device,
+                .device = device,
+                .surface = surface,
+                .graphics_family = config.graphics_family,
+                .present_family = config.present_family,
+                .width = window.width(),
+                .height = window.height(),
+            }};
+        }
     } // namespace
 
     void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
@@ -160,6 +176,7 @@ namespace retro
             .add_singleton<&create_surface>()
             .add_singleton<&pick_physical_device>()
             .add_singleton<&create_device>()
+            .add_singleton<&create_swapchain>()
             .add_singleton<VulkanDevice>()
             .add_singleton<VulkanBufferManager>()
             .add_singleton<VulkanPipelineManager>()

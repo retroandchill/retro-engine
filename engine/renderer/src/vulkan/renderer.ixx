@@ -31,6 +31,7 @@ namespace retro
         using Dependencies = TypeList<Window,
                                       vk::SurfaceKHR,
                                       VulkanDevice,
+                                      VulkanSwapchain,
                                       VulkanBufferManager,
                                       VulkanCommandPool,
                                       VulkanPipelineManager>;
@@ -38,6 +39,7 @@ namespace retro
         explicit VulkanRenderer2D(Window &window,
                                   vk::SurfaceKHR surface,
                                   VulkanDevice &device,
+                                  VulkanSwapchain &swapchain,
                                   VulkanBufferManager &buffer_manager,
                                   VulkanCommandPool &command_pool,
                                   VulkanPipelineManager &pipeline_manager);
@@ -87,7 +89,7 @@ namespace retro
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
-        VulkanSwapchain swapchain_;
+        VulkanSwapchain &swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         VulkanCommandPool &command_pool_;
