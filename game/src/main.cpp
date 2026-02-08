@@ -32,7 +32,7 @@ int main()
         add_rendering_services(service_collection, window);
         add_scripting_services(service_collection);
 
-        auto service_provider = create_service_provider(service_collection);
+        const auto service_provider = service_collection.create_service_provider();
 
         std::atomic game_thread_exited = false;
         auto game_thread = std::thread{
@@ -40,7 +40,7 @@ int main()
             {
                 try
                 {
-                    EngineLifecycle engine_lifecycle{service_provider->get<Engine>()};
+                    EngineLifecycle engine_lifecycle{service_provider->get<Engine>().value()};
                     auto &engine = Engine::instance();
                     engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
                 }

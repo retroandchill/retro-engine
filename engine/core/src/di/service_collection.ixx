@@ -93,10 +93,6 @@ namespace retro
     concept InjectablePolicy = Injectable<T> && Policy != StoragePolicy::External &&
                                (Policy != StoragePolicy::IntrusiveOwned || RefCounted<T>);
 
-    template <typename T>
-    concept ValidServiceResult =
-        UniquePtrLike<T> || SharedPtrLike<T> || SmartHandle<T> || RefCountPtrLike<T> || std::movable<T>;
-
     export class RETRO_API ServiceCollection
     {
       public:
@@ -108,12 +104,13 @@ namespace retro
         ServiceCollection() = default;
 
         template <std::ranges::input_range Range>
-            requires std::convertible_to<std::ranges::range_reference_t<Range>, ServiceRegistration>
-        explicit ServiceCollection(Range &&range) : registrations_(std::from_range, std::forward<Range>(range))
+            requires std::convertible_to<std::ranges::range_reference_t<Range>, ServiceCallSite>
+        explicit ServiceCollection(Range &&range, std::uint32_t registration_depth = 0)
+            : registration_depth_(registration_depth), registrations_(std::from_range, std::forward<Range>(range))
         {
         }
 
-        [[nodiscard]] inline std::span<const ServiceRegistration> registrations() const
+        [[nodiscard]] inline std::span<const ServiceCallSite> registrations() const
         {
             return registrations_;
         }
@@ -129,75 +126,28 @@ namespace retro
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add(ServiceLifetime lifetime)
         {
-            registrations_.emplace_back(typeid(T), lifetime, &construct_service<Impl, Policy>);
+            registrations_.emplace_back(lifetime, std::in_place_type<T>, &construct_service<Impl, Policy>);
             return *this;
         }
 
-        template <std::invocable<ServiceProvider &> Functor>
-            requires ValidServiceResult<std::invoke_result_t<Functor, ServiceProvider &>>
+        template <CanCreateServiceFactoryFrom Functor>
         ServiceCollection &add(ServiceLifetime lifetime, Functor &&functor)
         {
-            using Result = std::invoke_result_t<Functor, ServiceProvider &>;
-            if constexpr (UniquePtrLike<Result>)
-            {
-                using InnerType = PointerElementT<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    lifetime,
-                    ServiceFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                                           { return ServiceInstance::from_unique(std::invoke(factory, provider)); }));
-            }
-            else if constexpr (SharedPtrLike<Result>)
-            {
-                using InnerType = PointerElementT<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    lifetime,
-                    ServiceFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                                           { return ServiceInstance::from_shared(std::invoke(factory, provider)); }));
-            }
-            else if constexpr (RefCountPtrLike<Result>)
-            {
-                using InnerType = PointerElementT<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    lifetime,
-                    ServiceFactory::create(
-                        [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                        { return ServiceInstance::from_intrusive(std::invoke(factory, provider)); }));
-            }
-            else if constexpr (SmartHandle<Result>)
-            {
-                using InnerType = HandleElementType<Result>;
-                registrations_.emplace_back(
-                    typeid(InnerType),
-                    lifetime,
-                    ServiceFactory::create(
-                        [factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                        { return ServiceInstance::from_smart_handle(std::invoke(factory, provider)); }));
-            }
-            else
-            {
-                registrations_.emplace_back(
-                    typeid(Result),
-                    lifetime,
-                    ServiceFactory::create([factory = std::forward<Functor>(functor)](ServiceProvider &provider)
-                                           { return ServiceInstance::from_direct(std::invoke(factory, provider)); }));
-            }
-
+            registrations_.emplace_back(std::in_place_type<FactoryServiceCallSite>,
+                                        lifetime,
+                                        std::forward<Functor>(functor));
             return *this;
         }
 
         template <auto Functor>
-            requires(std::invocable<decltype(Functor), ServiceProvider &> &&
-                     ValidServiceResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>)
+            requires(CanCreateServiceFactoryFrom<decltype(Functor)>)
         ServiceCollection &add(ServiceLifetime lifetime)
         {
             return add(lifetime, [](ServiceProvider &provider) { return std::invoke(Functor, provider); });
         }
 
         template <NonGenericLambda Functor>
-            requires(ValidServiceResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>)
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
         ServiceCollection &add(ServiceLifetime lifetime, Functor &&functor)
         {
             return add(lifetime,
@@ -206,8 +156,9 @@ namespace retro
         }
 
         template <auto Functor>
-            requires(FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
-                     !std::invocable<decltype(Functor), ServiceProvider &>)
+            requires(FreeFunction<decltype(Functor)> &&
+                     ValidServiceFactoryResult<FunctionReturnType<decltype(Functor)>> &&
+                     !CanCreateServiceFactoryFrom<decltype(Functor)>)
         ServiceCollection &add(ServiceLifetime lifetime)
         {
             return add(lifetime,
@@ -217,24 +168,37 @@ namespace retro
                        });
         }
 
-        template <typename T>
-        ServiceCollection &add_singleton(std::shared_ptr<T> ptr)
+        template <typename T, typename... Args>
+            requires std::constructible_from<T, Args...>
+        ServiceCollection &add(std::in_place_t, Args &&...args)
         {
-            registrations_.emplace_back(typeid(T), std::move(ptr));
+            return add<T, T>(std::in_place, std::forward<Args>(args)...);
+        }
+
+        template <typename T, std::derived_from<T> Impl, typename... Args>
+            requires std::constructible_from<Impl, Args...>
+        ServiceCollection &add(std::in_place_t, Args &&...args)
+        {
+            registrations_.emplace_back(registration_depth_,
+                                        ServiceInstance::from_direct<T, Impl>(std::forward<Args>(args)...));
             return *this;
         }
 
-        template <typename T, std::derived_from<T> Impl = T>
-        ServiceCollection &add_singleton(std::shared_ptr<Impl> ptr)
+        template <typename T>
+        ServiceCollection &add(std::shared_ptr<T> ptr)
         {
-            registrations_.emplace_back(typeid(T), std::move(ptr));
+            registrations_.emplace_back(std::in_place_type<InstanceServiceCallSite>,
+                                        registration_depth_,
+                                        ServiceInstance::from_shared<T>(std::move(ptr)));
             return *this;
         }
 
-        template <typename T>
-        ServiceCollection &add_singleton(std::unique_ptr<T> ptr)
+        template <typename T, std::invocable<T *> Deleter>
+        ServiceCollection &add(std::unique_ptr<T, Deleter> ptr)
         {
-            registrations_.emplace_back(typeid(T), std::shared_ptr<T>(ptr.release()));
+            registrations_.emplace_back(std::in_place_type<InstanceServiceCallSite>,
+                                        registration_depth_,
+                                        ServiceInstance::from_unique<T>(std::move(ptr)));
             return *this;
         }
 
@@ -249,94 +213,93 @@ namespace retro
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_singleton()
         {
-            return add<T, T, Policy>(singleton_service_lifetime);
+            return add<T, T, Policy>(SingletonScope{});
         }
 
         template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_singleton()
         {
-            return add<T, Impl, Policy>(singleton_service_lifetime);
+            return add<T, Impl, Policy>(SingletonScope{});
         }
 
-        template <std::invocable<ServiceProvider &> Functor>
-            requires ValidServiceResult<std::invoke_result_t<Functor, ServiceProvider &>>
+        template <CanCreateServiceFactoryFrom Functor>
         ServiceCollection &add_singleton(Functor &&functor)
         {
-            return add(singleton_service_lifetime, std::forward<Functor>(functor));
+            return add(SingletonScope{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
-            requires std::invocable<decltype(Functor), ServiceProvider &> &&
-                     ValidServiceResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>
+            requires CanCreateServiceFactoryFrom<decltype(Functor)>
         ServiceCollection &add_singleton()
         {
-            return add<Functor>(singleton_service_lifetime);
+            return add<Functor>(SingletonScope{});
         }
 
         template <NonGenericLambda Functor>
-            requires(ValidServiceResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>)
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
         ServiceCollection &add_singleton(Functor &&functor)
         {
-            return add(singleton_service_lifetime, std::forward<Functor>(functor));
+            return add(SingletonScope{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
-            requires(FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
-                     !std::invocable<decltype(Functor), ServiceProvider &>)
+            requires(FreeFunction<decltype(Functor)> &&
+                     ValidServiceFactoryResult<FunctionReturnType<decltype(Functor)>> &&
+                     !CanCreateServiceFactoryFrom<decltype(Functor)>)
         ServiceCollection &add_singleton()
         {
-            return add<Functor>(singleton_service_lifetime);
+            return add<Functor>(SingletonScope{});
         }
 
         template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_transient()
         {
-            return add<T, T, Policy>(transient_service_lifetime);
+            return add<T, T, Policy>(TransientScope{});
         }
 
         template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_transient()
         {
-            return add<T, Impl, Policy>(transient_service_lifetime);
+            return add<T, Impl, Policy>(TransientScope{});
         }
 
-        template <std::invocable<ServiceProvider &> Functor>
-            requires ValidServiceResult<std::invoke_result_t<Functor, ServiceProvider &>>
+        template <CanCreateServiceFactoryFrom Functor>
         ServiceCollection &add_transient(Functor &&functor)
         {
-            return add(transient_service_lifetime, std::forward<Functor>(functor));
+            return add(TransientScope{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
             requires std::invocable<decltype(Functor), ServiceProvider &> &&
-                     ValidServiceResult<std::invoke_result_t<decltype(Functor), ServiceProvider &>>
+                     CanCreateServiceFactoryFrom<decltype(Functor)>
         ServiceCollection &add_transient()
         {
-            return add<Functor>(transient_service_lifetime);
+            return add<Functor>(TransientScope{});
         }
 
         template <NonGenericLambda Functor>
-            requires(ValidServiceResult<FunctionReturnType<Functor>> && !std::invocable<Functor, ServiceProvider &>)
+            requires(ValidServiceFactoryResult<FunctionReturnType<Functor>> && !CanCreateServiceFactoryFrom<Functor>)
         ServiceCollection &add_transient(Functor &&functor)
         {
-            return add(transient_service_lifetime, std::forward<Functor>(functor));
+            return add(TransientScope{}, std::forward<Functor>(functor));
         }
 
         template <auto Functor>
-            requires(FreeFunction<decltype(Functor)> && ValidServiceResult<FunctionReturnType<decltype(Functor)>> &&
-                     !std::invocable<decltype(Functor), ServiceProvider &>)
+            requires(FreeFunction<decltype(Functor)> &&
+                     ValidServiceFactoryResult<FunctionReturnType<decltype(Functor)>> &&
+                     !CanCreateServiceFactoryFrom<decltype(Functor)>)
         ServiceCollection &add_transient()
         {
-            return add<Functor>(transient_service_lifetime);
+            return add<Functor>(TransientScope{});
         }
 
         [[nodiscard]] std::shared_ptr<ServiceProvider> create_service_provider() const;
 
       private:
-        ServiceLifetime instance_lifetime_ = singleton_service_lifetime;
-        std::vector<ServiceRegistration> registrations_;
+        std::uint32_t registration_depth_{0};
+        std::vector<ServiceCallSite> registrations_;
     };
 } // namespace retro

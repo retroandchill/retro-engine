@@ -17,7 +17,6 @@ import retro.core.type_traits.pointer;
 import retro.core.type_traits.range;
 import retro.core.functional.overload;
 import :metadata;
-import :service_registration;
 import :service_instance;
 import :service_call_site;
 import :service_identifier;

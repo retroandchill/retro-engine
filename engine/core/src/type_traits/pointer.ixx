@@ -20,8 +20,8 @@ namespace retro
     {
     };
 
-    template <typename T>
-    struct IsStdUniquePtr<std::unique_ptr<T>> : std::true_type
+    template <typename T, std::invocable<T *> Deleter>
+    struct IsStdUniquePtr<std::unique_ptr<T, Deleter>> : std::true_type
     {
     };
 
@@ -102,8 +102,8 @@ namespace retro
         using Type = T;
     };
 
-    template <typename T>
-    struct PointerElement<std::unique_ptr<T>>
+    template <typename T, std::invocable<T *> Deleter>
+    struct PointerElement<std::unique_ptr<T, Deleter>>
     {
         using Type = T;
     };

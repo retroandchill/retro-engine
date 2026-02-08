@@ -61,7 +61,7 @@ namespace retro
         std::vector<vk::UniqueFramebuffer> framebuffers_;
         std::vector<vk::UniqueCommandBuffer> command_buffers_{};
         VulkanSyncObjects sync_;
-        PipelineManager &pipeline_manager_;
+        VulkanPipelineManager &pipeline_manager_;
         VulkanBufferManager &buffer_manager_;
 
         std::uint32_t current_frame_ = 0;

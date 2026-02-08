@@ -17,9 +17,9 @@ namespace retro
                                         public std::enable_shared_from_this<ScopedServiceProvider>
     {
       public:
-        explicit ScopedServiceProvider(std::span<const ServiceRegistration> registrations);
+        explicit ScopedServiceProvider(std::span<const ServiceCallSite> registrations);
 
-        explicit ScopedServiceProvider(std::span<const ServiceRegistration> registrations,
+        explicit ScopedServiceProvider(std::span<const ServiceCallSite> registrations,
                                        Name tag,
                                        std::shared_ptr<ServiceScope> parent_scope);
 
@@ -55,15 +55,16 @@ namespace retro
                                                    const Delegate<void(ServiceCollection &)> &configure) override;
 
       private:
-        const ServiceInstance &get_or_create(ServiceCallSite &call_site);
+        const ServiceInstance &get_or_create(const ServiceCacheKey &key, const ServiceCallSite &call_site);
 
-        bool can_resolve(const ServiceLifetime &lifetime) const;
+        bool can_resolve(const ServiceCallSite &call_site) const;
 
         Name tag_;
         std::shared_ptr<ServiceScope> parent_scope_;
         std::uint32_t scope_level_{0};
-        std::vector<ServiceRegistration> service_registrations_;
-        std::vector<ServiceInstance> created_services_;
-        std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
+        std::unordered_map<ServiceCacheKey, std::size_t> registration_indices_;
+        std::vector<ServiceCallSite> service_registrations_;
+        std::unordered_map<ServiceCacheKey, std::size_t> singletons_;
+        std::vector<std::shared_ptr<ServiceInstance>> created_services_;
     };
 } // namespace retro

@@ -13,7 +13,7 @@ namespace retro
     void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport, RenderBackend backend)
     {
         auto window_backend = viewport.get()->native_handle().backend;
-        services.add_singleton(std::move(viewport));
+        services.add(std::move(viewport));
         switch (backend)
         {
             case RenderBackend::Vulkan:

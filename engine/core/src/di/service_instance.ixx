@@ -9,7 +9,7 @@ export module retro.core.di:service_instance;
 import std;
 import retro.core.functional.delegate;
 import retro.core.memory.ref_counted_ptr;
-import retro.core.memory.small_unique_ptr;
+import retro.core.util.noncopyable;
 import :metadata;
 
 namespace retro
@@ -23,45 +23,15 @@ namespace retro
         IntrusiveOwned
     };
 
-    export class ServiceInstance final
+    export class ServiceInstance : NonCopyable
     {
-        static constexpr std::size_t storage_size = 24;
+      protected:
+        inline ServiceInstance(const std::type_index type, void *ptr) noexcept : type_(type), ptr_(ptr)
+        {
+        }
 
       public:
-        ServiceInstance() = default;
-
-        ServiceInstance(const ServiceInstance &) = delete;
-        inline ServiceInstance(ServiceInstance &&other) noexcept
-            : type_{other.type_}, ptr_{other.ptr_}, storage_(std::move(other.storage_))
-        {
-            other.type_ = typeid(void);
-            other.ptr_ = nullptr;
-        }
-
-        inline ~ServiceInstance() noexcept
-        {
-            dispose();
-        }
-
-        ServiceInstance &operator=(const ServiceInstance &) = delete;
-        inline ServiceInstance &operator=(ServiceInstance &&other) noexcept
-        {
-            if (this == &other)
-            {
-                return *this;
-            }
-
-            dispose();
-
-            type_ = other.type_;
-            ptr_ = other.ptr_;
-            storage_ = std::move(other.storage_);
-
-            other.type_ = typeid(void);
-            other.ptr_ = nullptr;
-
-            return *this;
-        }
+        virtual ~ServiceInstance() = default;
 
         [[nodiscard]] inline std::type_index type() const noexcept
         {
@@ -84,132 +54,201 @@ namespace retro
             return ptr_ != nullptr;
         }
 
-        inline void dispose() noexcept
-        {
-            storage_.reset();
-            ptr_ = nullptr;
-            type_ = typeid(void);
-        }
-
         template <typename T>
             requires std::constructible_from<std::remove_cvref_t<T>, T>
-        static ServiceInstance from_direct(T &&value)
+        static std::shared_ptr<ServiceInstance> from_direct(T &&value)
         {
-            ServiceInstance instance;
-            instance.type_ = typeid(T);
-            instance.storage_ =
-                make_unique_small<StorageImpl<std::remove_cvref_t<T>>, storage_size>(std::forward<T>(value));
-            instance.ptr_ = instance.storage_->get_raw_storage();
-            return instance;
+            return from_direct<T, T>(std::forward<T>(value));
         }
+
+        template <typename T, std::derived_from<T> Impl>
+            requires std::constructible_from<std::remove_cvref_t<Impl>, Impl>
+        static std::shared_ptr<ServiceInstance> from_direct(Impl &&value);
+
+        template <typename T, typename... Args>
+            requires std::constructible_from<T, Args...>
+        static std::shared_ptr<ServiceInstance> from_direct(Args &&...args)
+        {
+            return from_direct<T, T>(std::forward<Args>(args)...);
+        }
+
+        template <typename T, std::derived_from<T> Impl, typename... Args>
+            requires std::constructible_from<Impl, Args...>
+        static std::shared_ptr<ServiceInstance> from_direct(Args &&...args);
+
+        template <typename T, std::invocable<T *> Deleter>
+        static std::shared_ptr<ServiceInstance> from_unique(std::unique_ptr<T, Deleter> p);
 
         template <typename T>
-        static ServiceInstance from_unique(std::unique_ptr<T> p)
-        {
-            ServiceInstance instance;
-            instance.type_ = typeid(T);
-            instance.ptr_ = p.get();
-            instance.storage_ = make_unique_small<StorageImpl<std::unique_ptr<T>>, storage_size>(std::move(p));
-            return instance;
-        }
-
-        template <typename T>
-        static ServiceInstance from_shared(std::shared_ptr<T> p)
-        {
-            ServiceInstance instance;
-            instance.type_ = typeid(T);
-            instance.ptr_ = p.get();
-            instance.storage_ = make_unique_small<StorageImpl<std::shared_ptr<T>>, storage_size>(std::move(p));
-            return instance;
-        }
+        static std::shared_ptr<ServiceInstance> from_shared(std::shared_ptr<T> p);
 
         template <RefCounted T>
-        static ServiceInstance from_intrusive(RefCountPtr<T> p)
-        {
-            ServiceInstance instance;
-            instance.type_ = typeid(T);
-            instance.ptr_ = p.get();
-            instance.storage_ = make_unique_small<StorageImpl<RefCountPtr<T>>, storage_size>(std::move(p));
-            return instance;
-        }
+        static std::shared_ptr<ServiceInstance> from_intrusive(RefCountPtr<T> p);
 
         template <RefCounted T>
-        static ServiceInstance from_intrusive(T *p)
-        {
-            ServiceInstance instance;
-            instance.type_ = typeid(T);
-            instance.ptr_ = p;
-            instance.storage_ = make_unique_small<StorageImpl<RefCountPtr<T>>, storage_size>(RefCountPtr<T>{p});
-            return instance;
-        }
+        static std::shared_ptr<ServiceInstance> from_intrusive(T *p);
 
         template <SmartHandle T>
-        static ServiceInstance from_smart_handle(T handle)
-        {
-            ServiceInstance instance;
-            using ElementType = HandleElementType<T>;
-            instance.type_ = typeid(ElementType);
-            instance.ptr_ = static_cast<HandleType<ElementType>>(handle.get());
-            instance.storage_ = make_unique_small<StorageImpl<T>, storage_size>(std::move(handle));
-            return instance;
-        }
+        static std::shared_ptr<ServiceInstance> from_smart_handle(T handle);
 
         template <typename T>
-        static ServiceInstance from_raw(T *p) noexcept
+        static std::shared_ptr<ServiceInstance> from_raw(T *p) noexcept
         {
-            ServiceInstance inst;
-            inst.type_ = typeid(T);
-            inst.ptr_ = p;
-            return inst;
+            return from_raw<T, T>(p);
         }
 
+        template <typename T, std::derived_from<T> Impl>
+        static std::shared_ptr<ServiceInstance> from_raw(Impl *p) noexcept;
+
         template <typename T, typename Deleter>
-            requires std::invocable<Deleter, T *>
-        static ServiceInstance from_raw(T *p, Deleter deleter) noexcept
+        static std::shared_ptr<ServiceInstance> from_raw(T *p, Deleter deleter) noexcept
         {
-            ServiceInstance inst;
-            inst.type_ = typeid(T);
-            inst.ptr_ = p;
-            inst.storage_ = make_unique_small<StorageImpl<std::unique_ptr<T, Deleter>>, storage_size>(
-                std::unique_ptr<T, Deleter>{p, std::move(deleter)});
-            return inst;
+            return from_raw<T, T, Deleter>(p, deleter);
+        }
+
+        template <typename T, std::derived_from<T> Impl, typename Deleter>
+            requires std::invocable<Deleter, T *>
+        static std::shared_ptr<ServiceInstance> from_raw(Impl *p, Deleter deleter) noexcept
+        {
+            return from_unique<T, Impl, Deleter>(std::unique_ptr<Impl, Deleter>(p, deleter));
         }
 
       private:
-        class Storage
-        {
-          public:
-            virtual ~Storage() = default;
-
-            [[nodiscard]] virtual void *get_raw_storage() noexcept = 0;
-
-            virtual void small_unique_ptr_move(void *dst) noexcept = 0;
-        };
-
-        template <typename T>
-        class StorageImpl final : public Storage
-        {
-          public:
-            explicit StorageImpl(T value) : value_{std::move(value)}
-            {
-            }
-
-            [[nodiscard]] void *get_raw_storage() noexcept override
-            {
-                return std::addressof(value_);
-            }
-
-            void small_unique_ptr_move(void *dst) noexcept override
-            {
-                std::construct_at(static_cast<StorageImpl *>(dst), std::move(*this));
-            }
-
-          private:
-            T value_;
-        };
-
-        SmallUniquePtr<Storage, storage_size> storage_;
         std::type_index type_ = typeid(void);
         void *ptr_ = nullptr;
     };
+
+    class NonOwningServiceInstance : public ServiceInstance
+    {
+      public:
+        template <typename T>
+        explicit inline NonOwningServiceInstance(std::in_place_type_t<T>, T *ptr) noexcept
+            : ServiceInstance(typeid(T), ptr)
+        {
+        }
+    };
+
+    template <typename T>
+    class DirectServiceInstance final : public ServiceInstance
+    {
+      public:
+        template <typename Base, typename... Args>
+            requires std::derived_from<T, Base> && std::constructible_from<T, Args...>
+        explicit DirectServiceInstance(std::in_place_type_t<Base>, Args &&...args)
+            : ServiceInstance(typeid(T), std::addressof(object_)), object_(std::forward<Args>(args)...)
+        {
+        }
+
+      private:
+        T object_;
+    };
+
+    template <typename T, typename Deleter = std::default_delete<T>>
+    class UniquePtrServiceInstance : public ServiceInstance
+    {
+      public:
+        explicit UniquePtrServiceInstance(std::unique_ptr<T, Deleter> ptr)
+            : ServiceInstance(typeid(T), ptr.get()), ptr_(std::move(ptr))
+        {
+        }
+
+      private:
+        std::unique_ptr<T, Deleter> ptr_;
+    };
+
+    template <typename T>
+    class SharedPtrServiceInstance : public ServiceInstance
+    {
+      public:
+        explicit SharedPtrServiceInstance(std::shared_ptr<T> ptr)
+            : ServiceInstance(typeid(T), ptr.get()), ptr_(std::move(ptr))
+        {
+        }
+
+      private:
+        std::shared_ptr<T> ptr_;
+    };
+
+    template <RefCounted T>
+    class RefCountedServiceInstance : public ServiceInstance
+    {
+      public:
+        explicit RefCountedServiceInstance(RefCountPtr<T> ptr)
+            : ServiceInstance(typeid(T), ptr.get()), ptr_(std::move(ptr))
+        {
+        }
+
+        explicit RefCountedServiceInstance(T *ptr) : ServiceInstance(typeid(T), ptr), ptr_(ptr)
+        {
+        }
+
+      private:
+        RefCountPtr<T> ptr_;
+    };
+
+    template <SmartHandle T>
+    class SmartHandleServiceInstance : public ServiceInstance
+    {
+      public:
+        using ElementType = HandleElementType<T>;
+
+        explicit SmartHandleServiceInstance(T handle)
+            : ServiceInstance(typeid(ElementType), static_cast<HandleType<ElementType>>(handle.get())),
+              handle_(std::move(handle))
+        {
+        }
+
+      private:
+        T handle_;
+    };
+
+    template <typename T, std::derived_from<T> Impl>
+        requires std::constructible_from<std::remove_cvref_t<Impl>, Impl>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_direct(Impl &&value)
+    {
+        return std::make_shared<DirectServiceInstance<Impl>>(std::in_place_type<T>, std::forward<Impl>(value));
+    }
+
+    template <typename T, std::derived_from<T> Impl, typename... Args>
+        requires std::constructible_from<Impl, Args...>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_direct(Args &&...args)
+    {
+        return std::make_shared<DirectServiceInstance<Impl>>(std::in_place_type<T>, std::forward<Args>(args)...);
+    }
+
+    template <typename T, std::invocable<T *> Deleter>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_unique(std::unique_ptr<T, Deleter> p)
+    {
+        return std::make_shared<UniquePtrServiceInstance<T, Deleter>>(std::move(p));
+    }
+
+    template <typename T>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_shared(std::shared_ptr<T> p)
+    {
+        return std::make_shared<SharedPtrServiceInstance<T>>(std::move(p));
+    }
+
+    template <RefCounted T>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_intrusive(RefCountPtr<T> p)
+    {
+        return std::make_shared<RefCountedServiceInstance<T>>(std::move(p));
+    }
+
+    template <RefCounted T>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_intrusive(T *p)
+    {
+        return std::make_shared<RefCountedServiceInstance<T>>(p);
+    }
+
+    template <SmartHandle T>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_smart_handle(T handle)
+    {
+        return std::make_shared<SmartHandleServiceInstance<T>>(std::move(handle));
+    }
+
+    template <typename T, std::derived_from<T> Impl>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_raw(Impl *p) noexcept
+    {
+        return std::make_shared<NonOwningServiceInstance>(std::in_place_type<T>, p);
+    }
 } // namespace retro
