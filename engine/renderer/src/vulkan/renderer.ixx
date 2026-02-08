@@ -15,6 +15,7 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
+import retro.renderer.vulkan.components.viewport_renderer;
 import retro.core.di;
 import retro.core.math.vector;
 import retro.platform.window;
@@ -34,7 +35,8 @@ namespace retro
                                       VulkanSwapchain,
                                       VulkanBufferManager,
                                       VulkanCommandPool,
-                                      VulkanPipelineManager>;
+                                      VulkanPipelineManager,
+                                      ViewportRendererFactory>;
 
         explicit VulkanRenderer2D(Window &window,
                                   vk::SurfaceKHR surface,
@@ -42,7 +44,8 @@ namespace retro
                                   VulkanSwapchain &swapchain,
                                   VulkanBufferManager &buffer_manager,
                                   VulkanCommandPool &command_pool,
-                                  VulkanPipelineManager &pipeline_manager);
+                                  VulkanPipelineManager &pipeline_manager,
+                                  ViewportRendererFactory &viewport_factory);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -65,12 +68,6 @@ namespace retro
         std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
 
       private:
-        static vk::UniqueRenderPass create_render_pass(vk::Device device,
-                                                       vk::Format color_format,
-                                                       vk::SampleCountFlagBits samples);
-        static std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
-                                                                      vk::RenderPass render_pass,
-                                                                      const VulkanSwapchain &swapchain);
         [[nodiscard]] vk::UniqueSampler create_linear_sampler() const;
 
         void recreate_swapchain();
@@ -99,5 +96,8 @@ namespace retro
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;
+
+        ViewportRendererFactory &viewport_factory_;
+        std::vector<std::unique_ptr<ViewportRenderer>> viewports_;
     };
 } // namespace retro

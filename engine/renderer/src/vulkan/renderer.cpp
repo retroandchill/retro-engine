@@ -18,13 +18,75 @@ import retro.renderer.vulkan.data.texture_render_data;
 
 namespace retro
 {
+    namespace
+    {
+        vk::UniqueRenderPass create_render_pass(vk::Device device,
+                                                vk::Format color_format,
+                                                vk::SampleCountFlagBits samples)
+        {
+            vk::AttachmentDescription color_attachment{{},
+                                                       color_format,
+                                                       samples,
+                                                       vk::AttachmentLoadOp::eClear,
+                                                       vk::AttachmentStoreOp::eStore,
+                                                       vk::AttachmentLoadOp::eDontCare,
+                                                       vk::AttachmentStoreOp::eDontCare,
+                                                       vk::ImageLayout::eUndefined,
+                                                       vk::ImageLayout::ePresentSrcKHR};
+
+            vk::AttachmentReference color_ref{0, vk::ImageLayout::eColorAttachmentOptimal};
+
+            vk::SubpassDescription subpass{{}, vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &color_ref};
+
+            vk::SubpassDependency dependency{vk::SubpassExternal,
+                                             0,
+                                             vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                             vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                             vk::AccessFlagBits::eNone,
+                                             vk::AccessFlagBits::eColorAttachmentWrite,
+                                             vk::DependencyFlagBits::eByRegion};
+
+            vk::RenderPassCreateInfo rp_info{.attachmentCount = 1,
+                                             .pAttachments = &color_attachment,
+                                             .subpassCount = 1,
+                                             .pSubpasses = &subpass,
+                                             .dependencyCount = 1,
+                                             .pDependencies = &dependency};
+
+            return device.createRenderPassUnique(rp_info);
+        }
+
+        std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
+                                                               vk::RenderPass render_pass,
+                                                               const VulkanSwapchain &swapchain)
+        {
+            return swapchain.image_views() |
+                   std::views::transform(
+                       [device, render_pass, &swapchain](const vk::UniqueImageView &image)
+                       {
+                           std::array attachments = {image.get()};
+
+                           vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
+                                                             .attachmentCount = attachments.size(),
+                                                             .pAttachments = attachments.data(),
+                                                             .width = swapchain.extent().width,
+                                                             .height = swapchain.extent().height,
+                                                             .layers = 1};
+
+                           return device.createFramebufferUnique(fb_info);
+                       }) |
+                   std::ranges::to<std::vector>();
+        }
+    } // namespace
+
     VulkanRenderer2D::VulkanRenderer2D(Window &window,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
                                        VulkanSwapchain &swapchain,
                                        VulkanBufferManager &buffer_manager,
                                        VulkanCommandPool &command_pool,
-                                       VulkanPipelineManager &pipeline_manager)
+                                       VulkanPipelineManager &pipeline_manager,
+                                       ViewportRendererFactory &viewport_factory)
         : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, swapchain_(swapchain),
           render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
           framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
@@ -34,8 +96,15 @@ namespace retro
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
               .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
           }),
-          linear_sampler_{create_linear_sampler()}, pipeline_manager_{pipeline_manager}
+          linear_sampler_{create_linear_sampler()}, pipeline_manager_{pipeline_manager},
+          viewport_factory_{viewport_factory}
     {
+        viewports_.emplace_back(viewport_factory_.create(ViewportConfig{
+            .x = 0,
+            .y = 0,
+            .width = swapchain_.extent().width,
+            .height = swapchain_.extent().height,
+        }));
     }
 
     void VulkanRenderer2D::wait_idle()
@@ -252,64 +321,6 @@ namespace retro
                                                          image_data.height());
     }
 
-    vk::UniqueRenderPass VulkanRenderer2D::create_render_pass(vk::Device device,
-                                                              vk::Format color_format,
-                                                              vk::SampleCountFlagBits samples)
-    {
-        vk::AttachmentDescription color_attachment{{},
-                                                   color_format,
-                                                   samples,
-                                                   vk::AttachmentLoadOp::eClear,
-                                                   vk::AttachmentStoreOp::eStore,
-                                                   vk::AttachmentLoadOp::eDontCare,
-                                                   vk::AttachmentStoreOp::eDontCare,
-                                                   vk::ImageLayout::eUndefined,
-                                                   vk::ImageLayout::ePresentSrcKHR};
-
-        vk::AttachmentReference color_ref{0, vk::ImageLayout::eColorAttachmentOptimal};
-
-        vk::SubpassDescription subpass{{}, vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &color_ref};
-
-        vk::SubpassDependency dependency{vk::SubpassExternal,
-                                         0,
-                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                         vk::AccessFlagBits::eNone,
-                                         vk::AccessFlagBits::eColorAttachmentWrite,
-                                         vk::DependencyFlagBits::eByRegion};
-
-        vk::RenderPassCreateInfo rp_info{.attachmentCount = 1,
-                                         .pAttachments = &color_attachment,
-                                         .subpassCount = 1,
-                                         .pSubpasses = &subpass,
-                                         .dependencyCount = 1,
-                                         .pDependencies = &dependency};
-
-        return device.createRenderPassUnique(rp_info);
-    }
-
-    std::vector<vk::UniqueFramebuffer> VulkanRenderer2D::create_framebuffers(vk::Device device,
-                                                                             vk::RenderPass render_pass,
-                                                                             const VulkanSwapchain &swapchain)
-    {
-        return swapchain.image_views() |
-               std::views::transform(
-                   [device, render_pass, &swapchain](const vk::UniqueImageView &image)
-                   {
-                       std::array attachments = {image.get()};
-
-                       vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
-                                                         .attachmentCount = attachments.size(),
-                                                         .pAttachments = attachments.data(),
-                                                         .width = swapchain.extent().width,
-                                                         .height = swapchain.extent().height,
-                                                         .layers = 1};
-
-                       return device.createFramebufferUnique(fb_info);
-                   }) |
-               std::ranges::to<std::vector>();
-    }
-
     vk::UniqueSampler VulkanRenderer2D::create_linear_sampler() const
     {
         const vk::SamplerCreateInfo sampler_info{
@@ -352,6 +363,16 @@ namespace retro
                                                      .old_swapchain = swapchain_.handle()}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
+
+        // TODO: Eventually we want to replace this
+        viewports_.clear();
+        viewports_.emplace_back(viewport_factory_.create(ViewportConfig{
+            .x = 0,
+            .y = 0,
+            .width = swapchain_.extent().width,
+            .height = swapchain_.extent().height,
+        }));
+
         pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
     }
 
@@ -360,17 +381,15 @@ namespace retro
         constexpr vk::CommandBufferBeginInfo begin_info{};
 
         cmd.begin(begin_info);
-        vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
 
-        const vk::RenderPassBeginInfo rp_info{.renderPass = render_pass_.get(),
-                                              .framebuffer = framebuffers_.at(image_index).get(),
-                                              .renderArea = vk::Rect2D{vk::Offset2D{0, 0}, swapchain_.extent()},
-                                              .clearValueCount = 1,
-                                              .pClearValues = &clear};
+        for (const auto &viewport : viewports_)
+        {
+            viewport->record_command_buffer(render_pass_.get(),
+                                            cmd,
+                                            framebuffers_.at(image_index).get(),
+                                            sync_.descriptor_pool(current_frame_));
+        }
 
-        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, window_.size(), sync_.descriptor_pool(current_frame_), buffer_manager_);
-        cmd.endRenderPass();
         cmd.end();
     }
 

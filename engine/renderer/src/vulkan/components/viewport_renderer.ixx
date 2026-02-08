@@ -17,24 +17,57 @@ namespace retro
 {
     export struct ViewportConfig
     {
-        std::uint32_t x = 0;
-        std::uint32_t y = 0;
+        std::int32_t x = 0;
+        std::int32_t y = 0;
         std::uint32_t width;
         std::uint32_t height;
+        std::uint32_t z_order = 0;
         std::uint32_t frames_in_flight = 2;
     };
 
     export class ViewportRenderer
     {
       public:
-        using Dependencies =
-            TypeList<VulkanDevice, vk::SurfaceKHR, VulkanSwapchain, VulkanBufferManager, VulkanPipelineManager>;
-
         ViewportRenderer(const ViewportConfig &config,
                          VulkanDevice &device,
                          vk::SurfaceKHR surface,
                          const VulkanSwapchain &swapchain,
                          VulkanBufferManager &buffer_manager,
                          VulkanPipelineManager &pipeline_manager);
+
+        void record_command_buffer(vk::RenderPass render_pass,
+                                   vk::CommandBuffer cmd,
+                                   vk::Framebuffer framebuffer,
+                                   vk::DescriptorPool descriptor_pool);
+
+      private:
+        ViewportConfig config_;
+        vk::SurfaceKHR surface_;
+        VulkanDevice &device_;
+        const VulkanSwapchain &swapchain_;
+        VulkanBufferManager &buffer_manager_;
+        VulkanPipelineManager &pipeline_manager_;
+    };
+
+    export class ViewportRendererFactory
+    {
+      public:
+        using Dependencies =
+            TypeList<VulkanDevice, vk::SurfaceKHR, VulkanSwapchain, VulkanBufferManager, VulkanPipelineManager>;
+
+        ViewportRendererFactory(VulkanDevice &device,
+                                vk::SurfaceKHR surface,
+                                const VulkanSwapchain &swapchain,
+                                VulkanBufferManager &buffer_manager,
+                                VulkanPipelineManager &pipeline_manager);
+
+        std::unique_ptr<ViewportRenderer> create(const ViewportConfig &config);
+
+      private:
+        vk::SurfaceKHR surface_;
+        VulkanDevice &device_;
+        const VulkanSwapchain &swapchain_;
+        VulkanBufferManager &buffer_manager_;
+        VulkanPipelineManager &pipeline_manager_;
     };
 } // namespace retro

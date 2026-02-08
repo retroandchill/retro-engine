@@ -24,6 +24,7 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.command_pool;
+import retro.renderer.vulkan.components.viewport_renderer;
 import retro.renderer.vulkan.components.pipeline;
 import retro.renderer.vulkan.components.instance;
 
@@ -187,6 +188,7 @@ namespace retro
                         CommandPoolConfig{.device = device.device(),
                                           .queue_family_idx = device.graphics_family_index(),
                                           .buffer_count = VulkanRenderer2D::MAX_FRAMES_IN_FLIGHT});
-                });
+                })
+            .add_singleton<ViewportRendererFactory>();
     }
 } // namespace retro

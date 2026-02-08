@@ -51,6 +51,7 @@ set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
         src/services.cpp
         src/vulkan/services.cpp
         src/vulkan/components/instance.cpp
+        src/vulkan/components/viewport_renderer.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )

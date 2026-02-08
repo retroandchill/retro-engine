@@ -1,0 +1,68 @@
+/**
+ * @file viewport_renderer.cpp
+ *
+ * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for full license information.
+ */
+module retro.renderer.vulkan.components.viewport_renderer;
+
+import retro.core.math.vector;
+
+namespace retro
+{
+    ViewportRenderer::ViewportRenderer(const ViewportConfig &config,
+                                       VulkanDevice &device,
+                                       const vk::SurfaceKHR surface,
+                                       const VulkanSwapchain &swapchain,
+                                       VulkanBufferManager &buffer_manager,
+                                       VulkanPipelineManager &pipeline_manager)
+        : config_{config}, surface_{surface}, device_{device}, swapchain_{swapchain}, buffer_manager_{buffer_manager},
+          pipeline_manager_{pipeline_manager}
+    {
+    }
+
+    void ViewportRenderer::record_command_buffer(const vk::RenderPass render_pass,
+                                                 const vk::CommandBuffer cmd,
+                                                 const vk::Framebuffer framebuffer,
+                                                 const vk::DescriptorPool descriptor_pool)
+    {
+        // ReSharper disable once CppDFAUnusedValue
+        // ReSharper disable once CppDFAUnreadVariable
+        vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
+
+        const vk::RenderPassBeginInfo rp_info{
+            .renderPass = render_pass,
+            .framebuffer = framebuffer,
+            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = config_.x, .y = config_.y},
+                                     .extent = vk::Extent2D{.width = config_.width, .height = config_.height}},
+            .clearValueCount = 1,
+            .pClearValues = &clear};
+
+        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
+        pipeline_manager_.bind_and_render(cmd,
+                                          Vector2u{config_.width, config_.height},
+                                          descriptor_pool,
+                                          buffer_manager_);
+        cmd.endRenderPass();
+    }
+
+    ViewportRendererFactory::ViewportRendererFactory(VulkanDevice &device,
+                                                     vk::SurfaceKHR surface,
+                                                     const VulkanSwapchain &swapchain,
+                                                     VulkanBufferManager &buffer_manager,
+                                                     VulkanPipelineManager &pipeline_manager)
+        : surface_{surface}, device_{device}, swapchain_{swapchain}, buffer_manager_{buffer_manager},
+          pipeline_manager_{pipeline_manager}
+    {
+    }
+
+    std::unique_ptr<ViewportRenderer> ViewportRendererFactory::create(const ViewportConfig &config)
+    {
+        return std::make_unique<ViewportRenderer>(config,
+                                                  device_,
+                                                  surface_,
+                                                  swapchain_,
+                                                  buffer_manager_,
+                                                  pipeline_manager_);
+    }
+} // namespace retro
