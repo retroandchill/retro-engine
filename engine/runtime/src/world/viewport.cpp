@@ -8,9 +8,9 @@ module retro.runtime.world.viewport;
 
 namespace retro
 {
-    RectI ViewportLayout::to_screen_rect(Vector2u screen_size) const
+    RectI ViewportLayout::to_screen_rect(const Vector2u screen_size) const
     {
-        Vector2f clamped_alignment{std::clamp(alignment.x, 0.0f, 1.0f), std::clamp(alignment.y, 0.0f, 1.0f)};
+        const Vector2f clamped_alignment{std::clamp(alignment.x, 0.0f, 1.0f), std::clamp(alignment.y, 0.0f, 1.0f)};
 
         const float relative_x1 = screen_size.x * anchors.minimum.x + offsets.left;
         const float relative_y1 = screen_size.y * anchors.minimum.y + offsets.top;
@@ -28,22 +28,12 @@ namespace retro
     Viewport &ViewportManager::create_viewport(const ViewportLayout &layout, std::int32_t z_order)
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
-        if (primary_ == nullptr)
-        {
-            primary_ = new_viewport.get();
-        }
-
         on_viewport_created_(*new_viewport);
         return *new_viewport;
     }
 
     void ViewportManager::destroy_viewport(Viewport &viewport)
     {
-        if (primary_ == std::addressof(viewport))
-        {
-            primary_ = nullptr;
-        }
-
         const auto it = std::ranges::find_if(viewports_,
                                              [&viewport](const std::unique_ptr<Viewport> &ptr)
                                              { return ptr.get() == std::addressof(viewport); });
@@ -54,11 +44,6 @@ namespace retro
         {
             on_viewport_destroyed_(**it);
             viewports_.erase(it);
-        }
-
-        if (primary_ == nullptr && !viewports_.empty())
-        {
-            primary_ = viewports_.front().get();
         }
     }
 } // namespace retro

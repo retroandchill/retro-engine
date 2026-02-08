@@ -89,16 +89,6 @@ namespace retro
 
         void destroy_viewport(Viewport &viewport);
 
-        inline void set_primary(Viewport &viewport) noexcept
-        {
-            primary_ = std::addressof(viewport);
-        }
-
-        [[nodiscard]] inline Optional<Viewport &> primary() const noexcept
-        {
-            return primary_;
-        }
-
         [[nodiscard]] inline std::span<const std::unique_ptr<Viewport>> viewports() const noexcept
         {
             return viewports_;
@@ -116,7 +106,6 @@ namespace retro
 
       private:
         std::vector<std::unique_ptr<Viewport>> viewports_;
-        Viewport *primary_ = nullptr;
         OnViewportDelegate on_viewport_created_;
         OnViewportDelegate on_viewport_destroyed_;
     };
