@@ -15,15 +15,12 @@ import retro.core.util.noncopyable;
 import retro.core.math.transform;
 import retro.core.math.vector;
 import retro.runtime.world.scene_node;
-import retro.runtime.rendering.pipeline_manager;
 
 namespace retro
 {
     export class RETRO_API Scene final : NonCopyable
     {
       public:
-        explicit Scene(PipelineManager &pipeline_manager);
-
         template <std::derived_from<SceneNode> T, typename... Args>
             requires std::constructible_from<T, Args...>
         T &create_node(SceneNode *parent, Args &&...args)
@@ -39,7 +36,10 @@ namespace retro
 
         void destroy_node(SceneNode &node);
 
-        void collect_draw_calls(Vector2u viewport_size) const;
+        [[nodiscard]] inline const SceneNodeList &nodes() const noexcept
+        {
+            return nodes_;
+        }
 
         [[nodiscard]] std::span<SceneNode *const> nodes_of_type(std::type_index type) const noexcept;
 
@@ -52,7 +52,5 @@ namespace retro
 
       private:
         SceneNodeList nodes_;
-
-        PipelineManager *pipeline_manager_;
     };
 } // namespace retro

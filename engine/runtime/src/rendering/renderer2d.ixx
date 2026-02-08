@@ -15,6 +15,7 @@ import std;
 import retro.core.di;
 import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.render_pipeline;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
@@ -36,7 +37,11 @@ namespace retro
 
         virtual std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) = 0;
 
-        [[nodiscard]] virtual Vector2u viewport_size() const = 0;
+        [[nodiscard]] virtual Vector2u window_size() const = 0;
+
+        virtual void add_viewport(Viewport &viewport) = 0;
+
+        virtual void remove_viewport(Viewport &viewport) = 0;
     };
 
 } // namespace retro

@@ -10,14 +10,14 @@ import retro.core.math.vector;
 
 namespace retro
 {
-    ViewportRenderer::ViewportRenderer(const ViewportConfig &config,
+    ViewportRenderer::ViewportRenderer(const Viewport &viewport,
                                        VulkanDevice &device,
                                        const vk::SurfaceKHR surface,
                                        const VulkanSwapchain &swapchain,
                                        VulkanBufferManager &buffer_manager,
                                        VulkanPipelineManager &pipeline_manager)
-        : config_{config}, surface_{surface}, device_{device}, swapchain_{swapchain}, buffer_manager_{buffer_manager},
-          pipeline_manager_{pipeline_manager}
+        : viewport_{viewport}, surface_{surface}, device_{device}, swapchain_{swapchain},
+          buffer_manager_{buffer_manager}, pipeline_manager_{pipeline_manager}
     {
     }
 
@@ -30,17 +30,20 @@ namespace retro
         // ReSharper disable once CppDFAUnreadVariable
         vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
 
+        auto extent = swapchain_.extent();
+        auto draw_rect = viewport_.layout().to_screen_rect(Vector2u{extent.width, extent.height});
+
         const vk::RenderPassBeginInfo rp_info{
             .renderPass = render_pass,
             .framebuffer = framebuffer,
-            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = config_.x, .y = config_.y},
-                                     .extent = vk::Extent2D{.width = config_.width, .height = config_.height}},
+            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = draw_rect.offset.x, .y = draw_rect.offset.y},
+                                     .extent = vk::Extent2D{.width = draw_rect.extent.x, .height = draw_rect.extent.y}},
             .clearValueCount = 1,
             .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
         pipeline_manager_.bind_and_render(cmd,
-                                          Vector2u{config_.width, config_.height},
+                                          Vector2u{draw_rect.extent.x, draw_rect.extent.y},
                                           descriptor_pool,
                                           buffer_manager_);
         cmd.endRenderPass();
@@ -56,9 +59,9 @@ namespace retro
     {
     }
 
-    std::unique_ptr<ViewportRenderer> ViewportRendererFactory::create(const ViewportConfig &config)
+    std::unique_ptr<ViewportRenderer> ViewportRendererFactory::create(const Viewport &viewport)
     {
-        return std::make_unique<ViewportRenderer>(config,
+        return std::make_unique<ViewportRenderer>(viewport,
                                                   device_,
                                                   surface_,
                                                   swapchain_,

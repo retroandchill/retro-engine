@@ -55,7 +55,17 @@ namespace retro
                    Renderer2D &renderer,
                    PipelineManager &pipeline_manager,
                    AssetManager &asset_manager)
-        : script_runtime_(script_runtime), renderer_(renderer), asset_manager_{asset_manager}, scene_{pipeline_manager}
+        : script_runtime_(script_runtime), renderer_(renderer), asset_manager_{asset_manager},
+          pipeline_manager_{pipeline_manager}, on_viewport_create_subscription_{viewports_.on_viewport_created(),
+                                                                                [this](Viewport &viewport)
+                                                                                {
+                                                                                    renderer_.add_viewport(viewport);
+                                                                                }},
+          on_viewport_destroy_subscription_{viewports_.on_viewport_destroyed(),
+                                            [this](Viewport &viewport)
+                                            {
+                                                renderer_.add_viewport(viewport);
+                                            }}
     {
         auto &viewport = viewports_.create_viewport();
         viewport.set_scene(std::addressof(scene_));
@@ -150,21 +160,7 @@ namespace retro
     {
         renderer_.begin_frame();
 
-        const auto result = viewports_.primary().and_then(
-            [](Viewport &primary)
-            {
-                return primary.scene().transform(
-                    [&primary](Scene &scene) -> std::tuple<Viewport &, Scene &> {
-                        return {primary, scene};
-                    });
-            });
-        if (result.has_value())
-        {
-            auto [primary, scene] = result.value();
-            const auto vp_size =
-                (primary.size().x == 0 || primary.size().y == 0) ? renderer_.viewport_size() : primary.size();
-            scene.collect_draw_calls(vp_size);
-        }
+        pipeline_manager_.collect_all_draw_calls(scene_.nodes(), renderer_.window_size());
 
         renderer_.end_frame();
     }

@@ -99,12 +99,6 @@ namespace retro
           linear_sampler_{create_linear_sampler()}, pipeline_manager_{pipeline_manager},
           viewport_factory_{viewport_factory}
     {
-        viewports_.emplace_back(viewport_factory_.create(ViewportConfig{
-            .x = 0,
-            .y = 0,
-            .width = swapchain_.extent().width,
-            .height = swapchain_.extent().height,
-        }));
     }
 
     void VulkanRenderer2D::wait_idle()
@@ -200,7 +194,7 @@ namespace retro
         buffer_manager_.reset();
     }
 
-    Vector2u VulkanRenderer2D::viewport_size() const
+    Vector2u VulkanRenderer2D::window_size() const
     {
         return window_.size();
     }
@@ -321,9 +315,21 @@ namespace retro
                                                          image_data.height());
     }
 
+    void VulkanRenderer2D::add_viewport(Viewport &viewport)
+    {
+        viewports_.emplace_back(viewport_factory_.create(viewport));
+    }
+
+    void VulkanRenderer2D::remove_viewport(Viewport &viewport)
+    {
+        std::erase_if(viewports_,
+                      [&](const std::unique_ptr<ViewportRenderer> &v)
+                      { return std::addressof(v->viewport()) == std::addressof(viewport); });
+    }
+
     vk::UniqueSampler VulkanRenderer2D::create_linear_sampler() const
     {
-        const vk::SamplerCreateInfo sampler_info{
+        constexpr vk::SamplerCreateInfo sampler_info{
             .magFilter = vk::Filter::eLinear,
             .minFilter = vk::Filter::eLinear,
             .mipmapMode = vk::SamplerMipmapMode::eLinear,
@@ -363,16 +369,6 @@ namespace retro
                                                      .old_swapchain = swapchain_.handle()}};
         render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
         framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
-
-        // TODO: Eventually we want to replace this
-        viewports_.clear();
-        viewports_.emplace_back(viewport_factory_.create(ViewportConfig{
-            .x = 0,
-            .y = 0,
-            .width = swapchain_.extent().width,
-            .height = swapchain_.extent().height,
-        }));
-
         pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
     }
 

@@ -9,6 +9,7 @@ export module retro.renderer.vulkan.renderer;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.texture_render_data;
 import retro.runtime.rendering.renderer2d;
+import retro.runtime.world.viewport;
 import retro.renderer.vulkan.components.sync;
 import retro.renderer.vulkan.components.command_pool;
 import retro.renderer.vulkan.components.device;
@@ -59,13 +60,17 @@ namespace retro
 
         void end_frame() override;
 
-        [[nodiscard]] Vector2u viewport_size() const override;
+        [[nodiscard]] Vector2u window_size() const override;
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 
         void remove_render_pipeline(std::type_index type) override;
 
         std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
+
+        void add_viewport(Viewport &viewport) override;
+
+        void remove_viewport(Viewport &viewport) override;
 
       private:
         [[nodiscard]] vk::UniqueSampler create_linear_sampler() const;
@@ -81,6 +86,7 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
+      private:
         Window &window_;
 
         vk::SurfaceKHR surface_;

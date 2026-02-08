@@ -12,28 +12,24 @@ import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.pipeline;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
-    export struct ViewportConfig
-    {
-        std::int32_t x = 0;
-        std::int32_t y = 0;
-        std::uint32_t width;
-        std::uint32_t height;
-        std::uint32_t z_order = 0;
-        std::uint32_t frames_in_flight = 2;
-    };
-
     export class ViewportRenderer
     {
       public:
-        ViewportRenderer(const ViewportConfig &config,
+        ViewportRenderer(const Viewport &viewport,
                          VulkanDevice &device,
                          vk::SurfaceKHR surface,
                          const VulkanSwapchain &swapchain,
                          VulkanBufferManager &buffer_manager,
                          VulkanPipelineManager &pipeline_manager);
+
+        [[nodiscard]] inline const Viewport &viewport() const noexcept
+        {
+            return viewport_;
+        }
 
         void record_command_buffer(vk::RenderPass render_pass,
                                    vk::CommandBuffer cmd,
@@ -41,7 +37,7 @@ namespace retro
                                    vk::DescriptorPool descriptor_pool);
 
       private:
-        ViewportConfig config_;
+        const Viewport &viewport_;
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
         const VulkanSwapchain &swapchain_;
@@ -61,7 +57,7 @@ namespace retro
                                 VulkanBufferManager &buffer_manager,
                                 VulkanPipelineManager &pipeline_manager);
 
-        std::unique_ptr<ViewportRenderer> create(const ViewportConfig &config);
+        std::unique_ptr<ViewportRenderer> create(const Viewport &viewport);
 
       private:
         vk::SurfaceKHR surface_;

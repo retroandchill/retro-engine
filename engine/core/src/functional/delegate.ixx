@@ -327,7 +327,12 @@ namespace retro
             ops_ = nullptr;
         }
 
-        constexpr Ret execute(Args &&...args) const
+        constexpr Ret operator()(Args... args) const
+        {
+            return execute(std::forward<Args>(args)...);
+        }
+
+        constexpr Ret execute(Args... args) const
         {
             auto lock = this->read_lock();
             if (!is_bound_no_locks())
@@ -748,14 +753,37 @@ namespace retro
         RETRO_API static std::atomic<std::uint64_t> next_cookie_;
     };
 
+    struct MulticastDelegateLifetimeHook
+    {
+        void *delegate;
+        void (*destroy)(void *, DelegateHandle);
+    };
+
     export template <typename, typename Policy = NoLockPolicy>
     class MulticastDelegate;
+
+    template <typename>
+    struct IsMulticastDelegate : std::false_type
+    {
+    };
+
+    template <typename Sig, typename Policy>
+    struct IsMulticastDelegate<MulticastDelegate<Sig, Policy>> : std::true_type
+    {
+    };
+
+    template <typename T>
+    concept MulticastDelegateLike = IsMulticastDelegate<std::remove_cvref_t<T>>::value;
+
+    export template <MulticastDelegateLike>
+    class MulticastDelegateRegistration;
 
     export template <typename... Args, typename Policy>
     class MulticastDelegate<void(Args...), Policy> : private ThreadPolicyMixin<Policy>
     {
       public:
         using DelegateType = Delegate<void(Args...), Policy>;
+        using RegistrationType = MulticastDelegateRegistration<MulticastDelegate>;
 
         MulticastDelegate() = default;
 
@@ -875,6 +903,11 @@ namespace retro
             free_list_.clear();
         }
 
+        void operator()(Args... args) const
+        {
+            broadcast(std::forward<Args>(args)...);
+        }
+
         void broadcast(Args... args) const
         {
             auto lock = this->read_lock();
@@ -950,4 +983,95 @@ namespace retro
     };
 
     export using SimpleMulticastDelegate = MulticastDelegate<void()>;
+
+    template <typename Delegate, typename... Args>
+    concept CanAddToDelegate = requires(Delegate &delegate, Args &&...args) {
+        {
+            delegate.add(std::forward<Args>(args)...)
+        } -> std::same_as<DelegateHandle>;
+    };
+
+    template <typename Delegate, auto Functor, typename... Args>
+    concept ConstCanAddToDelegate = requires(Delegate &delegate, Args &&...args) {
+        {
+            delegate.template add<Functor>(std::forward<Args>(args)...)
+        } -> std::same_as<DelegateHandle>;
+    };
+
+    export template <MulticastDelegateLike D>
+    class ScopedDelegateSubscription;
+
+    export template <MulticastDelegateLike D>
+    class MulticastDelegateRegistration
+    {
+      public:
+        explicit MulticastDelegateRegistration(D &delegate) noexcept : delegate_{delegate}
+        {
+        }
+
+        template <typename... BindArgs>
+            requires CanAddToDelegate<D, BindArgs...>
+        DelegateHandle add(BindArgs &&...args) const
+        {
+            return delegate_.add(std::forward<BindArgs>(args)...);
+        }
+
+        template <auto Functor, typename... BindArgs>
+            requires ConstCanAddToDelegate<D, Functor, BindArgs...>
+        DelegateHandle add(BindArgs &&...args) const
+        {
+            return delegate_.template add<Functor>(std::forward<BindArgs>(args)...);
+        }
+
+        void remove(const DelegateHandle handle)
+        {
+            delegate_.remove(handle);
+        }
+
+      private:
+        template <MulticastDelegateLike>
+        friend class ScopedDelegateSubscription;
+
+        D &delegate_;
+    };
+
+    template <MulticastDelegateLike D>
+    class ScopedDelegateSubscription
+    {
+      public:
+        template <typename... Args>
+            requires CanAddToDelegate<D, Args...>
+        explicit ScopedDelegateSubscription(D &delegate, Args &&...args) noexcept
+            : delegate_{delegate}, handle_{delegate_.add(std::forward<Args>(args)...)}
+        {
+        }
+
+        template <typename... Args>
+            requires CanAddToDelegate<D, Args...>
+        explicit ScopedDelegateSubscription(MulticastDelegateRegistration<D> delegate, Args &&...args) noexcept
+            : delegate_{delegate.delegate_}, handle_{delegate_.add(std::forward<Args>(args)...)}
+        {
+        }
+
+        ScopedDelegateSubscription(const ScopedDelegateSubscription &) = delete;
+        ScopedDelegateSubscription(ScopedDelegateSubscription &&) = delete;
+
+        ~ScopedDelegateSubscription()
+        {
+            delegate_.remove(handle_);
+        }
+
+        ScopedDelegateSubscription &operator=(const ScopedDelegateSubscription &) = delete;
+        ScopedDelegateSubscription &operator=(ScopedDelegateSubscription &&) = delete;
+
+        [[nodiscard]] DelegateHandle handle() const noexcept
+        {
+            return handle_;
+        }
+
+      private:
+        D &delegate_;
+        DelegateHandle handle_;
+    };
+
 } // namespace retro

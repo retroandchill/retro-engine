@@ -49,6 +49,8 @@ set(RETRO_RUNTIME_MODULES
         src/rendering/pipeline_manager.ixx
         src/world/scene_node.ixx
         src/world/viewport.ixx
+        src/rendering/layout/margin.ixx
+        src/rendering/layout/anchors.ixx
 )
 
 

@@ -7,20 +7,18 @@
 export module retro.core.math.rect;
 
 import retro.core.type_traits.basic;
+import retro.core.math.vector;
 import std;
 
 namespace retro
 {
-    export template <Numeric T>
+    export template <Numeric T, Numeric U = T>
     struct Rect
     {
-        T x;
-        T y;
-        T width;
-        T height;
+        Vector2<T> offset;
+        Vector2<U> extent;
     };
 
-    export using RectI = Rect<std::int32_t>;
-    export using RectU = Rect<std::uint32_t>;
+    export using RectI = Rect<std::int32_t, std::uint32_t>;
     export using RectF = Rect<float>;
 } // namespace retro

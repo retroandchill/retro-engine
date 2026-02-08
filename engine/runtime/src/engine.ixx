@@ -15,6 +15,7 @@ export module retro.runtime.engine;
 import std;
 import retro.core.di;
 import retro.core.async.manual_task_scheduler;
+import retro.core.functional.delegate;
 import retro.runtime.script_runtime;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.assets.asset_manager;
@@ -97,11 +98,14 @@ namespace retro
         ScriptRuntime &script_runtime_;
         Renderer2D &renderer_;
         AssetManager &asset_manager_;
+        PipelineManager &pipeline_manager_;
 
         std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
         Scene scene_;
         ViewportManager viewports_;
+        ScopedDelegateSubscription<OnViewportDelegate> on_viewport_create_subscription_;
+        ScopedDelegateSubscription<OnViewportDelegate> on_viewport_destroy_subscription_;
         ManualTaskScheduler scheduler_{};
     };
 
