@@ -105,6 +105,19 @@ namespace retro
         template <typename T>
         using TypedFactory = std::function<std::shared_ptr<T>(ServiceProvider &)>;
 
+        ServiceCollection() = default;
+
+        template <std::ranges::input_range Range>
+            requires std::convertible_to<std::ranges::range_reference_t<Range>, ServiceRegistration>
+        explicit ServiceCollection(Range &&range) : registrations_(std::from_range, std::forward<Range>(range))
+        {
+        }
+
+        [[nodiscard]] inline std::span<const ServiceRegistration> registrations() const
+        {
+            return registrations_;
+        }
+
         template <ServiceLifetime Lifetime, typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add()

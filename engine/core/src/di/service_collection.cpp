@@ -7,18 +7,12 @@
 module retro.core.di;
 
 import :service_collection;
+import :scoped_service_provider;
 
 namespace retro
 {
-    ServiceRegistration::ServiceRegistration(const std::type_info &type,
-                                             ServiceLifetime lifetime,
-                                             ServiceFactory factory) noexcept
-        : type{type}, registration{std::in_place_type<UnrealizedService>, lifetime, factory}
-    {
-    }
-
     std::shared_ptr<ServiceProvider> ServiceCollection::create_service_provider() const
     {
-        return std::make_shared<ServiceProviderImpl>(registrations_);
+        return std::make_shared<ScopedServiceProvider>(registrations_);
     }
 } // namespace retro

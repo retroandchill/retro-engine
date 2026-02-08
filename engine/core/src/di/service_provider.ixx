@@ -76,28 +76,4 @@ namespace retro
         virtual std::generator<void *> get_all(const std::type_info &type) = 0;
     };
 
-    class RETRO_API ServiceProviderImpl final : public ServiceProvider
-    {
-      public:
-        explicit ServiceProviderImpl(std::span<const ServiceRegistration> registrations);
-
-        ServiceProviderImpl(const ServiceProviderImpl &) = delete;
-        ServiceProviderImpl(ServiceProviderImpl &&) noexcept = default;
-
-        ~ServiceProviderImpl() noexcept override;
-
-        ServiceProviderImpl &operator=(const ServiceProviderImpl &) = delete;
-        ServiceProviderImpl &operator=(ServiceProviderImpl &&) noexcept = default;
-
-        void *get_raw(const std::type_info &type) override;
-
-        std::generator<void *> get_all(const std::type_info &type) override;
-
-      private:
-        const ServiceInstance &get_or_create(std::type_index type, ServiceCallSite &call_site);
-
-        std::vector<ServiceInstance> created_services_;
-        std::unordered_map<ServiceCacheKey, ServiceCallSite> services_;
-    };
-
 } // namespace retro

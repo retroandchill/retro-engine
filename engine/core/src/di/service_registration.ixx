@@ -11,45 +11,41 @@ import :service_call_site;
 
 namespace retro
 {
-    struct RETRO_API ServiceRegistration
+    struct ServiceRegistration
     {
         std::type_index type;
-        ServiceCallSite registration;
+        std::shared_ptr<UnrealizedService> registration;
 
-        explicit ServiceRegistration(const std::type_info &type) noexcept;
-
-        ServiceRegistration(const std::type_info &type, ServiceLifetime lifetime, ServiceFactory factory) noexcept;
+        inline ServiceRegistration(const std::type_info &type,
+                                   ServiceLifetime lifetime,
+                                   ServiceFactory factory) noexcept
+            : type{type}, registration{std::make_shared<UnrealizedService>(lifetime, std::move(factory))}
+        {
+        }
 
         template <typename T>
         ServiceRegistration(const std::type_info &type, std::shared_ptr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_shared(std::move(p));
-                                       }}
+            : type{type},
+              registration{std::make_shared<UnrealizedService>(ServiceLifetime::Singleton,
+                                                               [p = std::move(ptr)](auto &)
+                                                               { return ServiceInstance::from_shared(std::move(p)); })}
         {
         }
 
         template <typename T>
         ServiceRegistration(const std::type_info &type, std::unique_ptr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_unique(std::move(p));
-                                       }}
+            : type{type},
+              registration{std::make_shared<UnrealizedService>(ServiceLifetime::Singleton,
+                                                               [p = std::move(ptr)](auto &)
+                                                               { return ServiceInstance::from_unique(std::move(p)); })}
         {
         }
 
         template <typename T>
         ServiceRegistration(const std::type_info &type, RefCountPtr<T> ptr) noexcept
-            : type{type}, registration{std::in_place_type<UnrealizedService>,
-                                       ServiceLifetime::Singleton,
-                                       [p = std::move(ptr)](auto &)
-                                       {
-                                           return ServiceInstance::from_intrusive(std::move(p));
-                                       }}
+            : type{type}, registration{std::make_shared<UnrealizedService>(
+                              ServiceLifetime::Singleton,
+                              [p = std::move(ptr)](auto &) { return ServiceInstance::from_intrusive(std::move(p)); })}
         {
         }
     };
