@@ -12,5 +12,5 @@ import retro.platform.window;
 
 namespace retro
 {
-    export void add_vulkan_services(ServiceCollection &services);
+    export void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend);
 }

@@ -22,7 +22,8 @@ namespace retro
         if constexpr (HasDependencies<T>)
         {
             return TypeListApply<SelectedCtorArgs<T>>::call(
-                [&]<typename... Deps>() { return std::make_unique<T>(provider.get<std::decay_t<Deps>>()...); });
+                [&]<typename... Deps>()
+                { return std::make_unique<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }
         else
         {
@@ -36,7 +37,8 @@ namespace retro
         if constexpr (HasDependencies<T>)
         {
             return TypeListApply<SelectedCtorArgs<T>>::call(
-                [&]<typename... Deps>() { return std::make_shared<T>(provider.get<std::decay_t<Deps>>()...); });
+                [&]<typename... Deps>()
+                { return std::make_shared<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }
         else
         {
@@ -51,7 +53,8 @@ namespace retro
         if constexpr (HasDependencies<T>)
         {
             return TypeListApply<SelectedCtorArgs<T>>::call(
-                [&]<typename... Deps>() { return make_ref_counted<T>(provider.get<std::decay_t<Deps>>()...); });
+                [&]<typename... Deps>()
+                { return make_ref_counted<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }
         else
         {
@@ -62,7 +65,7 @@ namespace retro
     template <typename T, std::size_t... Is>
     T get_tuple_from_provider(ServiceProvider &provider, std::index_sequence<Is...>)
     {
-        return {provider.get<std::decay_t<std::tuple_element_t<Is, T>>>()...};
+        return {provider.get_required<std::decay_t<std::tuple_element_t<Is, T>>>()...};
     }
 
     template <typename T>
@@ -72,7 +75,7 @@ namespace retro
     }
 
     template <Injectable T, StoragePolicy Policy>
-    ServiceInstance construct_service(ServiceProvider &provider)
+    std::shared_ptr<ServiceInstance> construct_service(ServiceProvider &provider)
     {
         if constexpr (Policy == StoragePolicy::UniqueOwned)
         {
@@ -126,7 +129,10 @@ namespace retro
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add(ServiceLifetime lifetime)
         {
-            registrations_.emplace_back(lifetime, std::in_place_type<T>, &construct_service<Impl, Policy>);
+            registrations_.emplace_back(std::in_place_type<FactoryServiceCallSite>,
+                                        lifetime,
+                                        std::in_place_type<T>,
+                                        &construct_service<Impl, Policy>);
             return *this;
         }
 

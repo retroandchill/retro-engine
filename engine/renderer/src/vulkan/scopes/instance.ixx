@@ -8,7 +8,6 @@ export module retro.renderer.vulkan.scopes.instance;
 
 import vulkan_hpp;
 import retro.platform.window;
-import retro.renderer.vulkan.scopes.surface;
 
 namespace retro
 {

@@ -32,17 +32,35 @@ namespace retro
     using ServiceFactory = std::move_only_function<std::shared_ptr<ServiceInstance>(class ServiceProvider &)>;
 
     template <typename T>
-    concept ValidServiceFactoryResult =
-        UniquePtrLike<T> || SharedPtrLike<T> || RefCountPtrLike<T> ||
-        (std::is_pointer_v<T> && RefCounted<std::remove_pointer_t<T>>) || SmartHandle<T> || std::movable<T>;
+    concept ValidServiceFactoryResult = std::movable<T>;
+
+    template <std::movable T>
+    struct ServiceInjection
+    {
+        using Type = T;
+    };
+
+    template <std::movable T>
+        requires UniquePtrLike<T> || SharedPtrLike<T> || RefCountPtrLike<T>
+    struct ServiceInjection<T>
+    {
+        using Type = PointerElementT<T>;
+    };
+
+    template <RefCounted T>
+    struct ServiceInjection<T *>
+    {
+        using Type = T;
+    };
+
+    template <SmartHandle T>
+    struct ServiceInjection<T>
+    {
+        using Type = HandleElementType<T>;
+    };
 
     template <ValidServiceFactoryResult T>
-    using ServiceInjectionType =
-        std::conditional_t<UniquePtrLike<T> || SharedPtrLike<T> || RefCountPtrLike<T>,
-                           PointerElementT<T>,
-                           std::conditional_t<std::is_pointer_v<T> && RefCounted<std::remove_pointer_t<T>>,
-                                              std::remove_pointer_t<T>,
-                                              std::conditional_t<SmartHandle<T>, HandleElementType<T>, T>>>;
+    using ServiceInjectionType = ServiceInjection<T>::Type;
 
     template <typename T>
     concept CanCreateServiceFactoryFrom =
@@ -77,7 +95,7 @@ namespace retro
                 }
                 else
                 {
-                    return ServiceInstance::from_raw(factory(provider));
+                    return ServiceInstance::from_direct(factory(provider));
                 }
             });
     }
@@ -122,6 +140,16 @@ namespace retro
                                                Factory &&factory) noexcept
             : lifetime_{lifetime}, service_type_{typeid(ServiceResultType<Factory>)},
               factory_{create_service_factory(std::forward<Factory>(factory))}
+        {
+        }
+
+        template <typename T, typename Factory>
+            requires std::constructible_from<ServiceFactory, Factory>
+        explicit inline FactoryServiceCallSite(const ServiceLifetime lifetime,
+                                               std::in_place_type_t<T>,
+                                               Factory &&factory) noexcept
+            : lifetime_{lifetime}, service_type_{typeid(T)},
+              factory_{std::make_shared<ServiceFactory>(std::forward<Factory>(factory))}
         {
         }
 

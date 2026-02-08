@@ -51,7 +51,7 @@ namespace retro
                 using DecayedT = std::decay_t<T>;
                 using ElementType = PointerElementT<std::ranges::range_reference_t<DecayedT>>;
                 return get_all(typeid(ElementType)) |
-                       std::views::transform([](void *value) { return static_cast<DecayedT>(value); }) |
+                       std::views::transform([](void *value) { return static_cast<ElementType *>(value); }) |
                        std::ranges::to<DecayedT>();
             }
             else if constexpr (HandleWrapper<T>)
@@ -71,8 +71,33 @@ namespace retro
             }
         }
 
+        template <typename T>
+        decltype(auto) get_required()
+        {
+            if constexpr (ServiceCompatibleContainer<std::decay_t<T>>)
+            {
+                return get<T>();
+            }
+            else
+            {
+                return validate_service(get<T>());
+            }
+        }
+
         virtual void *get_raw(const std::type_info &type) = 0;
         virtual std::generator<void *> get_all(const std::type_info &type) = 0;
+
+      private:
+        template <typename T>
+        T validate_service(Optional<T> opt)
+        {
+            if (!opt.has_value())
+            {
+                throw ServiceNotFoundException{};
+            }
+
+            return *std::move(opt);
+        }
     };
 
 } // namespace retro
