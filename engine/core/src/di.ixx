@@ -10,3 +10,4 @@ export import :metadata;
 export import :service_instance;
 export import :service_provider;
 export import :service_collection;
+export import :service_scope;

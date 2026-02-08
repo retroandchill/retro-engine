@@ -202,13 +202,6 @@ namespace retro
             return *this;
         }
 
-        template <typename T, std::derived_from<T> Impl = T>
-        ServiceCollection &add_singleton(std::unique_ptr<Impl> ptr)
-        {
-            registrations_.emplace_back(typeid(T), std::shared_ptr<Impl>(ptr.release()));
-            return *this;
-        }
-
         template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_singleton()
