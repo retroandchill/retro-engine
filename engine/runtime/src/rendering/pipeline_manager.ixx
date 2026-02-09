@@ -15,6 +15,7 @@ import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;
 import retro.runtime.world.scene_node;
+import retro.runtime.world.viewport;
 import std;
 
 namespace retro
@@ -33,7 +34,9 @@ namespace retro
 
         explicit PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines);
 
-        void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size);
+        void collect_all_draw_calls(const SceneNodeList &nodes,
+                                    Vector2u viewport_size,
+                                    const CameraLayout &camera_layout);
 
       private:
         Renderer2D &renderer_;

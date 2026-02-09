@@ -158,9 +158,15 @@ namespace retro
     {
         renderer_.begin_frame();
 
-        for (auto &scene : scenes_.scenes())
+        for (auto &viewport : viewports_.viewports())
         {
-            pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer_.window_size());
+            auto scene = viewport->scene();
+            if (!scene.has_value())
+                continue;
+
+            pipeline_manager_.collect_all_draw_calls(scene->nodes(),
+                                                     renderer_.window_size(),
+                                                     viewport->camera_layout());
         }
 
         renderer_.end_frame();

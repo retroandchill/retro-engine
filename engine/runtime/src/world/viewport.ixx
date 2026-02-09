@@ -13,6 +13,7 @@ export module retro.runtime.world.viewport;
 import std;
 import retro.core.functional.delegate;
 import retro.core.math.vector;
+import retro.core.math.matrix;
 import retro.runtime.world.scene;
 import retro.core.util.noncopyable;
 import retro.core.containers.optional;
@@ -24,32 +25,60 @@ namespace retro
 {
     export class ViewportManager;
 
-    export struct ViewportLayout
+    export struct ScreenLayout
     {
         Margin offsets{};
         Anchors anchors{};
         Vector2f alignment{};
 
-        RETRO_API RectI to_screen_rect(Vector2u screen_size) const;
+        [[nodiscard]] RETRO_API RectI to_screen_rect(Vector2u screen_size) const;
 
-        constexpr friend bool operator==(const ViewportLayout &lhs, const ViewportLayout &rhs) noexcept = default;
+        constexpr friend bool operator==(const ScreenLayout &lhs, const ScreenLayout &rhs) noexcept = default;
+    };
+
+    export struct CameraLayout
+    {
+        Vector2f position{};
+        Vector2f pivot{};
+        Quaternion2f rotation{};
+        float zoom = 1.0f;
+    };
+
+    export struct ViewportDrawInfo
+    {
+        Vector2f viewport_size{};
+        Vector2f camera_position{};
+        Vector2f camera_pivot{};
+        Quaternion2f camera_rotation{};
+        float camera_zoom = 1.0f;
     };
 
     export class RETRO_API Viewport final
     {
       public:
-        inline Viewport(const ViewportLayout &layout, const std::int32_t z_order) : layout_{layout}, z_order_{z_order}
+        inline Viewport(const ScreenLayout &layout, const std::int32_t z_order)
+            : screen_layout_{layout}, z_order_{z_order}
         {
         }
 
-        [[nodiscard]] inline const ViewportLayout &layout() const noexcept
+        [[nodiscard]] inline const ScreenLayout &screen_layout() const noexcept
         {
-            return layout_;
+            return screen_layout_;
         }
 
-        inline void set_layout(const ViewportLayout &layout) noexcept
+        inline void set_screen_layout(const ScreenLayout &layout) noexcept
         {
-            layout_ = layout;
+            screen_layout_ = layout;
+        }
+
+        [[nodiscard]] inline const CameraLayout &camera_layout() const noexcept
+        {
+            return camera_layout_;
+        }
+
+        inline void set_camera_layout(const CameraLayout &camera) noexcept
+        {
+            camera_layout_ = camera;
         }
 
         [[nodiscard]] inline std::int32_t z_order() const noexcept
@@ -75,7 +104,8 @@ namespace retro
       private:
         friend class ViewportManager;
 
-        ViewportLayout layout_;
+        ScreenLayout screen_layout_;
+        CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
         Scene *scene_ = nullptr;
     };
@@ -85,7 +115,7 @@ namespace retro
     class RETRO_API ViewportManager final : NonCopyable
     {
       public:
-        Viewport &create_viewport(const ViewportLayout &layout = {}, std::int32_t z_order = 0);
+        Viewport &create_viewport(const ScreenLayout &layout = {}, std::int32_t z_order = 0);
 
         void destroy_viewport(Viewport &viewport);
 

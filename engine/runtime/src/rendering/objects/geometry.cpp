@@ -122,7 +122,9 @@ namespace retro
         geometry_batches_.clear();
     }
 
-    void GeometryRenderPipeline::collect_draw_calls(const SceneNodeList &nodes, const Vector2u viewport_size)
+    void GeometryRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
+                                                    const Vector2u viewport_size,
+                                                    const CameraLayout &camera_layout)
     {
         for (const auto *node : nodes.nodes_of_type<GeometryObject>())
         {

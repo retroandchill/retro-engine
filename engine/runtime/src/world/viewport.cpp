@@ -8,7 +8,7 @@ module retro.runtime.world.viewport;
 
 namespace retro
 {
-    RectI ViewportLayout::to_screen_rect(const Vector2u screen_size) const
+    RectI ScreenLayout::to_screen_rect(const Vector2u screen_size) const
     {
         const Vector2f clamped_alignment{std::clamp(alignment.x, 0.0f, 1.0f), std::clamp(alignment.y, 0.0f, 1.0f)};
 
@@ -26,7 +26,7 @@ namespace retro
                      .height = static_cast<std::uint32_t>(relative_height)};
     }
 
-    Viewport &ViewportManager::create_viewport(const ViewportLayout &layout, std::int32_t z_order)
+    Viewport &ViewportManager::create_viewport(const ScreenLayout &layout, std::int32_t z_order)
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
         on_viewport_created_(*new_viewport);

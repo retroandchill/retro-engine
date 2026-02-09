@@ -31,7 +31,7 @@ namespace retro
         vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
 
         auto [screen_width, screen_height] = swapchain_.extent();
-        auto [x, y, width, height] = viewport_.layout().to_screen_rect(Vector2u{screen_width, screen_height});
+        auto [x, y, width, height] = viewport_.screen_layout().to_screen_rect(Vector2u{screen_width, screen_height});
 
         const vk::RenderPassBeginInfo rp_info{.renderPass = render_pass,
                                               .framebuffer = framebuffer,

@@ -19,6 +19,7 @@ import retro.runtime.rendering.draw_command;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.world.scene;
+import retro.runtime.world.viewport;
 import retro.runtime.world.scene_node;
 import retro.runtime.assets.textures.texture;
 
@@ -41,7 +42,7 @@ namespace retro
     {
         const Texture *texture = nullptr;
         std::vector<SpriteInstanceData> instances;
-        Vector2f viewport_size{};
+        ViewportDrawInfo viewport_draw_info{};
 
         [[nodiscard]] DrawCommand create_draw_command() const;
     };
@@ -107,7 +108,9 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size) override;
+        void collect_draw_calls(const SceneNodeList &nodes,
+                                Vector2u viewport_size,
+                                const CameraLayout &camera_layout) override;
 
         void execute(RenderContext &context) override;
 

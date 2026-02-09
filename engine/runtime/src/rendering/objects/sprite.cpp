@@ -18,7 +18,7 @@ namespace retro
         return DrawCommand{
             .instance_buffers = {as_bytes(std::span{instances})},
             .descriptor_sets = {texture->render_data()},
-            .push_constants = as_bytes(std::span{&viewport_size, 1}),
+            .push_constants = as_bytes(std::span{&viewport_draw_info, 1}),
             .index_count = INDICES_PER_SPRITE,
             .instance_count = instances.size(),
         };
@@ -74,7 +74,7 @@ namespace retro
                                       .count = 1},
                 },
             .push_constant_bindings =
-                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(Vector2f), .offset = 0}};
+                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(ViewportDrawInfo), .offset = 0}};
         return layout;
     }
 
@@ -83,7 +83,9 @@ namespace retro
         batches_.clear();
     }
 
-    void SpriteRenderPipeline::collect_draw_calls(const SceneNodeList &nodes, const Vector2u viewport_size)
+    void SpriteRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
+                                                  const Vector2u viewport_size,
+                                                  const CameraLayout &camera_layout)
     {
         for (const auto *node : nodes.nodes_of_type<Sprite>())
         {
@@ -99,10 +101,16 @@ namespace retro
                                         .size = node->size(),
                                         .tint = node->tint()};
 
-            auto &batch = batches_[texture];
-            batch.texture = texture;
-            batch.viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)};
-            batch.instances.push_back(instance);
+            auto &[draw_texture, instances, viewport_draw_info] = batches_[texture];
+            draw_texture = texture;
+            viewport_draw_info = ViewportDrawInfo{
+                .viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)},
+                .camera_position = camera_layout.position,
+                .camera_pivot = camera_layout.pivot,
+                .camera_rotation = camera_layout.rotation,
+                .camera_zoom = camera_layout.zoom,
+            };
+            instances.push_back(instance);
         }
     }
 
