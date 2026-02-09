@@ -29,12 +29,12 @@ namespace retro
 
     export enum class MouseButton : std::uint8_t
     {
-        Left,
-        Middle,
-        Right,
-        X1,
-        X2,
-        Unknown,
+        left,
+        middle,
+        right,
+        x1,
+        x2,
+        unknown,
     };
 
     export struct MouseMovedEvent
@@ -49,7 +49,7 @@ namespace retro
     export struct MouseButtonEvent
     {
         std::uint32_t window_id = 0;
-        MouseButton button = MouseButton::Unknown;
+        MouseButton button = MouseButton::unknown;
         bool down = false;
         float x = 0.0f;
         float y = 0.0f;

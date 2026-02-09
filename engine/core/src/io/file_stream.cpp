@@ -41,11 +41,11 @@ namespace retro
         {
             switch (mode)
             {
-                case FileOpenMode::ReadOnly:
+                case FileOpenMode::read_only:
                     return boost::asio::file_base::read_only;
-                case FileOpenMode::ReadWrite:
+                case FileOpenMode::read_write:
                     return boost::asio::file_base::read_write;
-                case FileOpenMode::WriteOnly:
+                case FileOpenMode::write_only:
                     return boost::asio::file_base::write_only;
             }
             return boost::asio::file_base::read_only;
@@ -55,11 +55,11 @@ namespace retro
         {
             switch (origin)
             {
-                case SeekOrigin::Begin:
+                case SeekOrigin::begin:
                     return boost::asio::file_base::seek_set;
-                case SeekOrigin::Current:
+                case SeekOrigin::current:
                     return boost::asio::file_base::seek_cur;
-                case SeekOrigin::End:
+                case SeekOrigin::end:
                     return boost::asio::file_base::seek_end;
             }
 
@@ -72,27 +72,27 @@ namespace retro
             if (ec == boost::asio::error::bad_descriptor ||
                 ec == make_error_code(boost::system::errc::bad_file_descriptor))
             {
-                return StreamError::Closed;
+                return StreamError::closed;
             }
 
             if (ec == make_error_code(boost::system::errc::not_supported) ||
                 ec == make_error_code(boost::system::errc::operation_not_supported))
             {
-                return StreamError::NotSupported;
+                return StreamError::not_supported;
             }
 
             if (ec == make_error_code(boost::system::errc::invalid_argument))
             {
-                return StreamError::InvalidArgument;
+                return StreamError::invalid_argument;
             }
 
             if (ec == make_error_code(boost::system::errc::result_out_of_range) ||
                 ec == make_error_code(boost::system::errc::value_too_large))
             {
-                return StreamError::OutOfRange;
+                return StreamError::out_of_range;
             }
 
-            return StreamError::IoError;
+            return StreamError::io_error;
         }
     } // namespace
 
@@ -144,7 +144,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         return file_.size();
@@ -154,7 +154,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         return position_;
@@ -164,7 +164,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         boost::system::error_code ec;
@@ -181,7 +181,7 @@ namespace retro
 
     StreamResult<void> FileStream::set_position(const std::size_t pos)
     {
-        EXPECT(seek(pos, SeekOrigin::Begin));
+        EXPECT(seek(pos, SeekOrigin::begin));
         return {};
     }
 
@@ -189,7 +189,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         boost::system::error_code ec;
@@ -208,7 +208,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         boost::system::error_code ec;
@@ -227,7 +227,7 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         // Since we're not using an internal buffer, we don't need to flush

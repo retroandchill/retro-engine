@@ -24,7 +24,7 @@
     struct retro::CHandleTraits<handle>                                                                                \
     {                                                                                                                  \
         using CppType = type;                                                                                          \
-        static constexpr retro::CHandleType HandleType = retro::CHandleType::Opaque;                                   \
+        static constexpr retro::CHandleType HandleType = retro::CHandleType::opaque;                                   \
     };                                                                                                                 \
     template <>                                                                                                        \
     struct retro::CAliasableTraits<type>                                                                               \
@@ -37,7 +37,7 @@
     struct retro::CHandleTraits<handle>                                                                                \
     {                                                                                                                  \
         using CppType = type;                                                                                          \
-        static constexpr retro::CHandleType HandleType = retro::CHandleType::Defined;                                  \
+        static constexpr retro::CHandleType HandleType = retro::CHandleType::defined;                                  \
     };                                                                                                                 \
     template <>                                                                                                        \
     struct retro::CAliasableTraits<type>                                                                               \

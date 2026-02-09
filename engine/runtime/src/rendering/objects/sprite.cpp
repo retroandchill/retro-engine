@@ -35,46 +35,46 @@ namespace retro
             .vertex_shader = "shaders/sprite.vert.spv",
             .fragment_shader = "shaders/sprite.frag.spv",
             .vertex_bindings = {VertexInputBinding{
-                .type = VertexInputType::Instance,
+                .type = VertexInputType::instance,
                 .stride = sizeof(SpriteInstanceData),
                 .attributes =
                     {
                         // Vulkan doesn't have matrix attributes, so the most compatible option is to
                         // just treat a matrix as an array of vectors
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, transform)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, transform) + sizeof(Vector2f)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, translation)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, pivot)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, size)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, min_uv)},
-                        VertexAttribute{.type = ShaderDataType::Vec2,
+                        VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, max_uv)},
-                        VertexAttribute{.type = ShaderDataType::Vec4,
+                        VertexAttribute{.type = ShaderDataType::vec4,
                                         .size = sizeof(Color),
                                         .offset = offsetof(SpriteInstanceData, tint)},
                     },
             }},
             .descriptor_bindings =
                 {
-                    DescriptorBinding{.type = DescriptorType::CombinedImageSampler,
-                                      .stages = ShaderStage::Fragment,
+                    DescriptorBinding{.type = DescriptorType::combined_image_sampler,
+                                      .stages = ShaderStage::fragment,
                                       .count = 1},
                 },
             .push_constant_bindings =
-                PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}};
+                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(Vector2f), .offset = 0}};
         return layout;
     }
 

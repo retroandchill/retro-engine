@@ -16,11 +16,11 @@ namespace retro
 {
     export enum class StoragePolicy : std::uint8_t
     {
-        External,
-        Direct,
-        UniqueOwned,
-        SharedOwned,
-        IntrusiveOwned
+        external,
+        direct,
+        unique_owned,
+        shared_owned,
+        intrusive_owned
     };
 
     export class ServiceInstance : NonCopyable

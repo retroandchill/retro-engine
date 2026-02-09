@@ -22,11 +22,11 @@ int main()
     init_logger();
 
     auto platform_backend =
-        PlatformBackend::create({.kind = PlatformBackendKind::SDL3, .flags = PlatformInitFlags::Video});
+        PlatformBackend::create({.kind = PlatformBackendKind::sdl3, .flags = PlatformInitFlags::video});
 
     try
     {
-        const auto window = platform_backend->create_window({.flags = WindowFlags::Resizable | WindowFlags::Vulkan});
+        const auto window = platform_backend->create_window({.flags = WindowFlags::resizable | WindowFlags::vulkan});
         ServiceCollection service_collection;
         add_engine_services(service_collection);
         add_rendering_services(service_collection, window);

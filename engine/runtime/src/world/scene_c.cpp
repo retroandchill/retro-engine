@@ -51,13 +51,13 @@ namespace
         switch (type)
         {
             case Retro_GeometryType_Rectangle:
-                return retro::GeometryType::Rectangle;
+                return retro::GeometryType::rectangle;
             case Retro_GeometryType_Triangle:
-                return retro::GeometryType::Triangle;
+                return retro::GeometryType::triangle;
             case Retro_GeometryType_Custom:
-                return retro::GeometryType::Custom;
+                return retro::GeometryType::custom;
             default:
-                return retro::GeometryType::None;
+                return retro::GeometryType::none;
         }
     }
 } // namespace

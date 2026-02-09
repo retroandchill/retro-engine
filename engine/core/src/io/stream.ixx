@@ -16,18 +16,18 @@ namespace retro
 {
     export enum class SeekOrigin
     {
-        Begin,
-        Current,
-        End
+        begin,
+        current,
+        end
     };
 
     export enum class StreamError
     {
-        Closed,
-        NotSupported,
-        InvalidArgument,
-        OutOfRange,
-        IoError
+        closed,
+        not_supported,
+        invalid_argument,
+        out_of_range,
+        io_error
     };
 
     export template <typename T>

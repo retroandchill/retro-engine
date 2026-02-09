@@ -22,13 +22,13 @@ namespace retro
             switch (name_case)
             {
                 using enum NameCase;
-                case CaseSensitive:
-                    return StringComparison::CaseSensitive;
-                case IgnoreCase:
-                    return StringComparison::CaseInsensitive;
+                case case_sensitive:
+                    return StringComparison::case_sensitive;
+                case ignore_case:
+                    return StringComparison::case_insensitive;
             }
 
-            return StringComparison::CaseInsensitive;
+            return StringComparison::case_insensitive;
         }
     } // namespace
 
@@ -46,12 +46,12 @@ namespace retro
     }
 
     template <NameCase CaseSensitivity>
-        requires(CaseSensitivity == NameCase::CaseSensitive || CaseSensitivity == NameCase::IgnoreCase)
+        requires(CaseSensitivity == NameCase::case_sensitive || CaseSensitivity == NameCase::ignore_case)
     struct NameEntryComparer
     {
         static NameHash hash(const std::string_view name)
         {
-            if constexpr (CaseSensitivity == NameCase::CaseSensitive)
+            if constexpr (CaseSensitivity == NameCase::case_sensitive)
             {
                 return NameHash{std::hash<std::string_view>{}(name), static_cast<std::uint32_t>(name.size())};
             }
@@ -143,7 +143,7 @@ namespace retro
     {
         NameTable()
         {
-            get_or_add_entry_internal(NONE_STRING, FindType::Add);
+            get_or_add_entry_internal(NONE_STRING, FindType::add);
         }
 
       public:
@@ -156,7 +156,7 @@ namespace retro
         NameIndices get_or_add_entry(const std::string_view str, const FindType find_type)
         {
 
-            if (retro::compare<StringComparison::CaseInsensitive>(str, NONE_STRING) == std::strong_ordering::equal)
+            if (retro::compare<StringComparison::case_insensitive>(str, NONE_STRING) == std::strong_ordering::equal)
             {
                 return NameIndices
                 {
@@ -183,14 +183,14 @@ namespace retro
         }
 
         template <NameCase CaseSensitivity>
-            requires(CaseSensitivity == NameCase::CaseSensitive || CaseSensitivity == NameCase::IgnoreCase)
+            requires(CaseSensitivity == NameCase::case_sensitive || CaseSensitivity == NameCase::ignore_case)
         [[nodiscard]] std::strong_ordering compare(const NameEntryId lhs, const NameEntryId rhs) const noexcept
         {
             return compare<CaseSensitivity>(lhs, get(rhs));
         }
 
         template <NameCase CaseSensitivity>
-            requires(CaseSensitivity == NameCase::CaseSensitive || CaseSensitivity == NameCase::IgnoreCase)
+            requires(CaseSensitivity == NameCase::case_sensitive || CaseSensitivity == NameCase::ignore_case)
         [[nodiscard]] std::strong_ordering compare(const NameEntryId lhs, std::string_view rhs) const noexcept
         {
             return NameEntryComparer<CaseSensitivity>::compare(get(lhs), rhs);
@@ -211,7 +211,7 @@ namespace retro
         NameIndices get_or_add_entry_internal(std::string_view str, const FindType find_type)
         {
 
-            if (find_type == FindType::Add)
+            if (find_type == FindType::add)
             {
                 std::unique_lock lock{mutex_};
                 const auto next_index = static_cast<std::uint32_t>(entries_.size());
@@ -277,27 +277,27 @@ namespace retro
 
         mutable std::shared_mutex mutex_{};
         NameAllocator allocator_;
-        NameTableSet<NameCase::IgnoreCase> comparison_entries_;
+        NameTableSet<NameCase::ignore_case> comparison_entries_;
 #if RETRO_WITH_CASE_PRESERVING_NAME
-        NameTableSet<NameCase::CaseSensitive> display_entries_;
+        NameTableSet<NameCase::case_sensitive> display_entries_;
 #endif
         std::vector<const NameEntry *> entries_{};
     };
 
     std::strong_ordering NameEntryId::compare_lexical(const NameEntryId other) const noexcept
     {
-        return NameTable::instance().compare<NameCase::IgnoreCase>(*this, other);
+        return NameTable::instance().compare<NameCase::ignore_case>(*this, other);
     }
 
     std::strong_ordering NameEntryId::compare_lexical_case_sensitive(const NameEntryId other) const noexcept
     {
-        return NameTable::instance().compare<NameCase::CaseSensitive>(*this, other);
+        return NameTable::instance().compare<NameCase::case_sensitive>(*this, other);
     }
 
     bool operator==(const Name &lhs, const std::string_view rhs)
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
-        return NameTable::instance().compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length)) ==
+        return NameTable::instance().compare<NameCase::ignore_case>(lhs.comparison_index_, rhs.substr(0, new_length)) ==
                    std::strong_ordering::equal &&
                number == lhs.number_;
     }
@@ -313,7 +313,7 @@ namespace retro
     {
         const auto [number, new_length] = parse_number_from_name(rhs);
         const auto compareString =
-            NameTable::instance().compare<NameCase::IgnoreCase>(lhs.comparison_index_, rhs.substr(0, new_length));
+            NameTable::instance().compare<NameCase::ignore_case>(lhs.comparison_index_, rhs.substr(0, new_length));
         if (compareString != std::strong_ordering::equal)
         {
             return compareString;

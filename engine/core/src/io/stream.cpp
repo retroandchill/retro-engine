@@ -35,7 +35,7 @@ namespace retro
     {
         if (!can_read())
         {
-            return std::unexpected(StreamError::NotSupported);
+            return std::unexpected(StreamError::not_supported);
         }
 
         return length()
@@ -53,8 +53,8 @@ namespace retro
 
     StreamResult<std::vector<std::byte>> Stream::read_bytes_chunked()
     {
-        constexpr std::size_t BUFFER_SIZE = 4096;
-        std::array<std::byte, BUFFER_SIZE> buffer{};
+        constexpr std::size_t buffer_size = 4096;
+        std::array<std::byte, buffer_size> buffer{};
         std::vector<std::byte> result;
         std::size_t bytes_read;
         do

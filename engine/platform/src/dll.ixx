@@ -9,6 +9,7 @@ module;
 #define BOOST_DLL_USE_STD_FS
 #include <boost/dll.hpp>
 #include <boost/system/error_code.hpp>
+#include <utility>
 
 export module retro.platform.dll;
 
@@ -25,51 +26,52 @@ namespace retro
 
     export enum class LibraryLoadMode
     {
-        Default = boost::dll::load_mode::default_mode,
-        DontResolveDllReferences = boost::dll::load_mode::dont_resolve_dll_references,
-        LoadIgnoreCodeAuthzLevel = boost::dll::load_mode::load_ignore_code_authz_level,
-        LoadWithAlteredSearchPath = boost::dll::load_mode::load_with_altered_search_path,
-        RtldLazy = boost::dll::load_mode::rtld_lazy,
-        RtldNow = boost::dll::load_mode::rtld_now,
-        RtdlGlobal = boost::dll::load_mode::rtld_global,
-        RtdlLocal = boost::dll::load_mode::rtld_local,
-        RtdlDeepbind = boost::dll::load_mode::rtld_deepbind,
-        RtdlAppendDecorations = boost::dll::load_mode::append_decorations,
-        SearchSystemFolders = boost::dll::load_mode::search_system_folders
+        default_mode = boost::dll::load_mode::default_mode,
+        dont_resolve_dll_references = boost::dll::load_mode::dont_resolve_dll_references,
+        load_ignore_code_authz_level = boost::dll::load_mode::load_ignore_code_authz_level,
+        load_with_altered_search_path = boost::dll::load_mode::load_with_altered_search_path,
+        rtld_lazy = boost::dll::load_mode::rtld_lazy,
+        rtld_now = boost::dll::load_mode::rtld_now,
+        rtdl_global = boost::dll::load_mode::rtld_global,
+        rtdl_local = boost::dll::load_mode::rtld_local,
+        rtdl_deepbind = boost::dll::load_mode::rtld_deepbind,
+        rtdl_append_decorations = boost::dll::load_mode::append_decorations,
+        search_system_folders = boost::dll::load_mode::search_system_folders
     };
 
     export enum class LibraryLoadError
     {
-        NotLoaded = 0,
-        NotFound,
-        AccessDenied,
-        BadFormat,
-        InvalidPath,
-        Unknown,
+        not_loaded = 0,
+        not_found,
+        access_denied,
+        bad_format,
+        invalid_path,
+        unknown,
     };
 
     [[nodiscard]] inline LibraryLoadError translate_library_load_error(const boost::system::error_code &ec) noexcept
     {
+        using enum LibraryLoadError;
         if (!ec)
-            return LibraryLoadError::Unknown; // should not happen; caller should only translate on failure
+            return unknown; // should not happen; caller should only translate on failure
 
         // Use portable errc mappings when possible. Note: many platforms report "dependency missing"
         // as the same error as "module not found".
         namespace errc = boost::system::errc;
 
         if (ec == errc::no_such_file_or_directory)
-            return LibraryLoadError::NotFound;
+            return not_found;
 
         if (ec == errc::permission_denied)
-            return LibraryLoadError::AccessDenied;
+            return access_denied;
 
         if (ec == errc::executable_format_error)
-            return LibraryLoadError::BadFormat;
+            return bad_format;
 
         if (ec == errc::invalid_argument)
-            return LibraryLoadError::InvalidPath;
+            return invalid_path;
 
-        return LibraryLoadError::Unknown;
+        return unknown;
     }
 
     export class SharedLibrary
@@ -81,10 +83,12 @@ namespace retro
 
         static inline std::expected<SharedLibrary, LibraryLoadError> create(
             const std::filesystem::path &path,
-            LibraryLoadMode load_mode = LibraryLoadMode::Default)
+            LibraryLoadMode load_mode = LibraryLoadMode::default_mode)
         {
             boost::system::error_code ec;
-            boost::dll::shared_library library{path, static_cast<boost::dll::load_mode::type>(load_mode), ec};
+            boost::dll::shared_library library{path,
+                                               static_cast<boost::dll::load_mode::type>(std::to_underlying(load_mode)),
+                                               ec};
             if (ec.failed())
             {
                 return std::unexpected(translate_library_load_error(ec));
@@ -93,11 +97,12 @@ namespace retro
             return SharedLibrary{std::move(library)};
         }
 
-        inline std::expected<void, LibraryLoadError> load(const std::filesystem::path &path,
-                                                          LibraryLoadMode load_mode = LibraryLoadMode::Default)
+        inline std::expected<void, LibraryLoadError> load(
+            const std::filesystem::path &path,
+            const LibraryLoadMode load_mode = LibraryLoadMode::default_mode)
         {
             boost::system::error_code ec;
-            library_.load(path, static_cast<boost::dll::load_mode::type>(load_mode), ec);
+            library_.load(path, static_cast<boost::dll::load_mode::type>(std::to_underlying(load_mode)), ec);
             if (ec.failed())
             {
                 return std::unexpected(translate_library_load_error(ec));

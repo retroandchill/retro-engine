@@ -25,7 +25,7 @@ namespace retro
         {
             switch (backend)
             {
-                case WindowBackend::SDL3:
+                case WindowBackend::sdl3:
                     {
                         std::uint32_t count = 0;
                         auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
@@ -59,22 +59,22 @@ namespace retro
         {
             auto logger = get_logger();
 
-            LogLevel level = LogLevel::Info;
+            LogLevel level = LogLevel::info;
             if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
             {
-                level = LogLevel::Error;
+                level = LogLevel::error;
             }
             else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
             {
-                level = LogLevel::Warn;
+                level = LogLevel::warn;
             }
             else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo)
             {
-                level = LogLevel::Info;
+                level = LogLevel::info;
             }
             else
             {
-                level = LogLevel::Debug;
+                level = LogLevel::debug;
             }
 
             const char *msg = (callback_data && callback_data->pMessage) ? callback_data->pMessage : "";

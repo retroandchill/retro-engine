@@ -88,14 +88,14 @@ TEST(Name, FindTypeFindDoesNotCreateNewEntries)
     const auto existing_display = existing.display_index();
 
     // Lookup again using FindType::Find -> should find the same indices
-    Name found_existing{std::u16string{u"Knight"}, FindType::Find};
+    Name found_existing{std::u16string{u"Knight"}, FindType::find};
     ASSERT_TRUE(found_existing.is_valid());
     EXPECT_FALSE(found_existing.is_none());
     EXPECT_EQ(found_existing.comparison_index(), existing_comparison);
     EXPECT_EQ(found_existing.display_index(), existing_display);
 
     // Lookup unknown name with FindType::Find -> should yield a "none" name
-    Name not_created{std::u16string{u"UnknownNameThatDoesNotExist"}, FindType::Find};
+    Name not_created{std::u16string{u"UnknownNameThatDoesNotExist"}, FindType::find};
     EXPECT_TRUE(not_created.is_none());
     EXPECT_TRUE(not_created.is_valid());
     EXPECT_EQ(not_created.comparison_index(), 0u);

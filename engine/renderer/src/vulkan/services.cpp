@@ -36,7 +36,7 @@ namespace retro
         {
             switch (auto [backend, handle] = viewport.native_handle(); backend)
             {
-                case WindowBackend::SDL3:
+                case WindowBackend::sdl3:
                     {
                         vk::SurfaceKHR::CType surface;
                         if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle),

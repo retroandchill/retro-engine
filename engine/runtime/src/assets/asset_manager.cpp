@@ -41,7 +41,7 @@ namespace retro
             return std::move(decoded);
         }
 
-        return std::unexpected{AssetLoadError::InvalidAssetFormat};
+        return std::unexpected{AssetLoadError::invalid_asset_format};
     }
 
     bool AssetManager::remove_asset_from_cache(const AssetPath &path)

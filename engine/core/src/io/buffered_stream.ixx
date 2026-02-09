@@ -22,10 +22,10 @@ namespace retro
      */
     export class RETRO_API BufferedStream final : public Stream
     {
-        static constexpr std::size_t DEFAULT_BUFFER_SIZE = 8192;
+        static constexpr std::size_t default_buffer_size = 8192;
 
       public:
-        explicit inline BufferedStream(Stream &underlying, std::size_t buffer_size = DEFAULT_BUFFER_SIZE)
+        explicit inline BufferedStream(Stream &underlying, std::size_t buffer_size = default_buffer_size)
             : inner_{&underlying}, buffer_{buffer_size}
         {
         }

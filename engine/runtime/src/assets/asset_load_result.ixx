@@ -12,11 +12,11 @@ namespace retro
 {
     export enum class AssetLoadError : std::uint8_t
     {
-        BadAssetPath,
-        InvalidAssetFormat,
-        AmbiguousAssetPath,
-        AssetNotFound,
-        AssetTypeMismatch
+        bad_asset_path,
+        invalid_asset_format,
+        ambiguous_asset_path,
+        asset_not_found,
+        asset_type_mismatch
     };
 
     export template <typename T>

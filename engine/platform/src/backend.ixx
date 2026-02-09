@@ -19,20 +19,20 @@ namespace retro
 {
     export enum class PlatformBackendKind : std::uint8_t
     {
-        SDL3
+        sdl3
     };
 
     export enum class PlatformInitFlags : std::uint32_t
     {
-        None = 0,
-        Audio = 1u << 0,
-        Video = 1u << 1,
-        Joystick = 1u << 2,
-        Haptic = 1u << 3,
-        Gamepad = 1u << 4,
-        Events = 1u << 5,
-        Sensor = 1u << 6,
-        Camera = 1u << 7,
+        none = 0,
+        audio = 1u << 0,
+        video = 1u << 1,
+        joystick = 1u << 2,
+        haptic = 1u << 3,
+        gamepad = 1u << 4,
+        events = 1u << 5,
+        sensor = 1u << 6,
+        camera = 1u << 7,
     };
 
     export constexpr PlatformInitFlags operator|(PlatformInitFlags a, PlatformInitFlags b) noexcept
@@ -47,8 +47,8 @@ namespace retro
 
     export struct PlatformBackendInfo
     {
-        PlatformBackendKind kind = PlatformBackendKind::SDL3;
-        PlatformInitFlags flags = PlatformInitFlags::None;
+        PlatformBackendKind kind = PlatformBackendKind::sdl3;
+        PlatformInitFlags flags = PlatformInitFlags::none;
     };
 
     export class PlatformBackend

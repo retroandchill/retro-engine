@@ -19,7 +19,7 @@ namespace retro
     struct Vector<T, 2>
     {
         using ValueType = T;
-        static constexpr std::size_t SIZE = 2;
+        static constexpr std::size_t size = 2;
 
         T x{};
         T y{};
@@ -74,7 +74,7 @@ namespace retro
     struct Vector<T, 3>
     {
         using ValueType = T;
-        static constexpr std::size_t SIZE = 3;
+        static constexpr std::size_t size = 3;
 
         T x{};
         T y{};
@@ -142,7 +142,7 @@ namespace retro
     struct Vector<T, 4>
     {
         using ValueType = T;
-        static constexpr std::size_t SIZE = 4;
+        static constexpr std::size_t size = 4;
 
         T x;
         T y;

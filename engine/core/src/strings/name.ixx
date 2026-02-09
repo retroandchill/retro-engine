@@ -82,14 +82,14 @@ namespace retro
 {
     export enum class NameCase : std::uint8_t
     {
-        CaseSensitive,
-        IgnoreCase
+        case_sensitive,
+        ignore_case
     };
 
     export enum class FindType : std::uint8_t
     {
-        Find,
-        Add
+        find,
+        add
     };
 
     export RETRO_API constexpr std::size_t MAX_NAME_LENGTH = 1024;
@@ -122,14 +122,15 @@ namespace retro
         if (digits > 0 && digits < name.size() && first_digit[-1] == '_' && digits <= NAME_MAX_DIGITS &&
             (digits == 1 || *first_digit != '0'))
         {
-            std::int64_t Number = 0;
-            for (std::int32_t Index = 0; Index < digits; ++Index)
+            std::int64_t number = 0;
+            for (std::int32_t index = 0; index < digits; ++index)
             {
-                Number = 10 * Number + (first_digit[Index] - '0');
+                number = 10 * number + (first_digit[index] - '0');
             }
-            if (Number < std::numeric_limits<std::int32_t>::max())
+            if (number < std::numeric_limits<std::int32_t>::max())
             {
-                return std::make_pair(name_external_to_internal(Number), name.size() - (1 + digits));
+                return std::make_pair(name_external_to_internal(static_cast<std::int32_t>(number)),
+                                      name.size() - (1 + digits));
             }
         }
 
@@ -219,12 +220,12 @@ namespace retro
         constexpr Name() = default;
 
         template <EncodableRange<char> Range>
-        explicit(!CAN_IMPLICITLY_CONVERT<Range>) Name(Range &&value, FindType find_type = FindType::Add)
+        explicit(!CAN_IMPLICITLY_CONVERT<Range>) Name(Range &&value, FindType find_type = FindType::add)
             : Name(lookup_name(std::forward<Range>(value), find_type))
         {
         }
 
-        explicit(false) inline Name(const char *value, const FindType find_type = FindType::Add)
+        explicit(false) inline Name(const char *value, const FindType find_type = FindType::add)
             : Name(std::string_view{value}, find_type)
         {
         }

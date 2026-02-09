@@ -1,12 +1,10 @@
 /**
- * @file async.ixx
+ * @file task.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
 module;
-
-#include "retro/core/exports.h"
 
 #include <cassert>
 
@@ -84,7 +82,7 @@ namespace retro
     template <PromiseLike Promise>
     struct FinalAwaiter
     {
-        bool await_ready() noexcept
+        static bool await_ready() noexcept
         {
             return false;
         }
@@ -108,7 +106,7 @@ namespace retro
             return continuation;
         }
 
-        [[noreturn]] void await_resume() noexcept
+        [[noreturn]] static void await_resume() noexcept
         {
             // No resume operation
         }
@@ -117,8 +115,8 @@ namespace retro
     template <typename T, typename Result = T>
     struct TaskPromiseBase
     {
-        static constexpr std::size_t SUCCESS_STATE = 1;
-        static constexpr std::size_t EXCEPTION_STATE = 2;
+        static constexpr std::size_t success_state = 1;
+        static constexpr std::size_t exception_state = 2;
 
         TaskScheduler *scheduler = TaskScheduler::current();
 
@@ -128,7 +126,7 @@ namespace retro
         template <typename Self>
         Task<Result> get_return_object(this Self &) noexcept;
 
-        std::suspend_never initial_suspend() noexcept
+        static std::suspend_never initial_suspend() noexcept
         {
             return {};
         }
@@ -141,7 +139,7 @@ namespace retro
 
         void unhandled_exception() noexcept
         {
-            result.template emplace<EXCEPTION_STATE>(std::current_exception());
+            result.template emplace<exception_state>(std::current_exception());
         }
     };
 
@@ -151,7 +149,7 @@ namespace retro
         template <std::convertible_to<T> U>
         void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
-            this->result.template emplace<TaskPromiseBase<T>::SUCCESS_STATE>(std::forward<U>(value));
+            this->result.template emplace<TaskPromiseBase<T>::success_state>(std::forward<U>(value));
         }
     };
 
@@ -164,7 +162,7 @@ namespace retro
     {
         inline void return_void() noexcept
         {
-            result.emplace<SUCCESS_STATE>();
+            result.emplace<success_state>();
         }
     };
 
@@ -180,8 +178,8 @@ namespace retro
         {
         }
 
-        static constexpr std::size_t SUCCESS_STATE = 1;
-        static constexpr std::size_t EXCEPTION_STATE = 2;
+        static constexpr std::size_t success_state = 1;
+        static constexpr std::size_t exception_state = 2;
     };
 
     template <>
@@ -197,20 +195,20 @@ namespace retro
         }
 
         // monostate => success for void
-        static constexpr std::size_t SUCCESS_STATE = 0;
-        static constexpr std::size_t EXCEPTION_STATE = 1;
+        static constexpr std::size_t success_state = 0;
+        static constexpr std::size_t exception_state = 1;
     };
 
     template <typename T>
-    class [[nodiscard]] Task
+    class [[nodiscard("Tasks represent an async unit of work")]] Task
     {
         using Handle = std::coroutine_handle<TaskPromise<T>>;
         using State = std::variant<std::monostate, Handle, ImmediateState<T>>;
 
         struct Awaiter
         {
-            static constexpr auto SUCCESS_STATE = TaskPromise<T>::SUCCESS_STATE;
-            static constexpr auto EXCEPTION_STATE = TaskPromise<T>::EXCEPTION_STATE;
+            static constexpr auto success_state = TaskPromise<T>::success_state;
+            static constexpr auto exception_state = TaskPromise<T>::exception_state;
 
             State state{};
 
@@ -238,27 +236,27 @@ namespace retro
             {
                 if (auto *imm = std::get_if<ImmediateState<T>>(&state))
                 {
-                    if (imm->result.index() == ImmediateState<T>::EXCEPTION_STATE)
-                        std::rethrow_exception(std::get<ImmediateState<T>::EXCEPTION_STATE>(imm->result));
+                    if (imm->result.index() == ImmediateState<T>::exception_state)
+                        std::rethrow_exception(std::get<ImmediateState<T>::exception_state>(imm->result));
 
-                    assert(imm->result.index() == ImmediateState<T>::SUCCESS_STATE);
+                    assert(imm->result.index() == ImmediateState<T>::success_state);
 
                     if constexpr (!std::is_void_v<T>)
-                        return std::get<ImmediateState<T>::SUCCESS_STATE>(std::move(imm->result));
+                        return std::get<ImmediateState<T>::success_state>(std::move(imm->result));
                     else
                         return;
                 }
 
                 auto &coro = std::get<Handle>(state);
 
-                if (coro.promise().result.index() == EXCEPTION_STATE)
-                    std::rethrow_exception(std::get<EXCEPTION_STATE>(coro.promise().result));
+                if (coro.promise().result.index() == exception_state)
+                    std::rethrow_exception(std::get<exception_state>(coro.promise().result));
 
-                assert(coro.promise().result.index() == SUCCESS_STATE);
+                assert(coro.promise().result.index() == success_state);
 
                 if constexpr (!std::is_void_v<T>)
                 {
-                    auto value = std::get<SUCCESS_STATE>(std::move(coro.promise().result));
+                    auto value = std::get<success_state>(std::move(coro.promise().result));
                     coro.destroy();
                     return value;
                 }
@@ -306,18 +304,18 @@ namespace retro
         [[nodiscard]] static Task from_result(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
             return Task{
-                ImmediateState<T>{std::in_place_index<ImmediateState<T>::SUCCESS_STATE>, std::forward<U>(value)}};
+                ImmediateState<T>{std::in_place_index<ImmediateState<T>::success_state>, std::forward<U>(value)}};
         }
 
         [[nodiscard]] static Task completed() noexcept
             requires std::is_void_v<T>
         {
-            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::SUCCESS_STATE>}};
+            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::success_state>}};
         }
 
         [[nodiscard]] static Task from_exception(std::exception_ptr ex) noexcept
         {
-            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::EXCEPTION_STATE>, std::move(ex)}};
+            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::exception_state>, std::move(ex)}};
         }
 
         Awaiter operator co_await() &&

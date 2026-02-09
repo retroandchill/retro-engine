@@ -432,7 +432,7 @@ namespace retro
         {
             for (std::size_t i = 0; i < N * M; ++i)
             {
-                if (!nearly_equal(lhs.data_[i], rhs.data_[i], KINDA_SMALL_NUMBER))
+                if (!nearly_equal(lhs.data_[i], rhs.data_[i], kinda_small_number))
                     return false;
             }
         }

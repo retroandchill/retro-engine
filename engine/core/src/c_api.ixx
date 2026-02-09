@@ -19,13 +19,13 @@ namespace retro
          * The handle is defined as an opaque struct and thus has no implementation and is safe to reinterpret_cast to
          * a pointer of any size.
          */
-        Opaque,
+        opaque,
 
         /**
          * The handle is defined as an actual struct and thus to convert between types they must have identical layout
          * and must be trivially copyable and destructible.
          */
-        Defined
+        defined
     };
 
     /**
@@ -49,7 +49,7 @@ namespace retro
     using CppType = CHandleTraits<std::remove_cvref_t<T>>::CppType;
 
     export template <typename T>
-    concept OpaqueHandle = CHandle<T> && CHandleTraits<std::remove_cvref_t<T>>::HandleType == CHandleType::Opaque;
+    concept OpaqueHandle = CHandle<T> && CHandleTraits<std::remove_cvref_t<T>>::HandleType == CHandleType::opaque;
 
     template <typename T>
     concept CompatibleCHandle =

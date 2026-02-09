@@ -29,21 +29,21 @@ namespace retro
 
             const auto f = static_cast<std::uint32_t>(flags);
 
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Audio))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::audio))
                 out |= SDL_INIT_AUDIO;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Video))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::video))
                 out |= SDL_INIT_VIDEO;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Joystick))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::joystick))
                 out |= SDL_INIT_JOYSTICK;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Haptic))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::haptic))
                 out |= SDL_INIT_HAPTIC;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Gamepad))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::gamepad))
                 out |= SDL_INIT_GAMEPAD;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Events))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::events))
                 out |= SDL_INIT_EVENTS;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Sensor))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::sensor))
                 out |= SDL_INIT_SENSOR;
-            if (f & static_cast<std::uint32_t>(PlatformInitFlags::Camera))
+            if (f & static_cast<std::uint32_t>(PlatformInitFlags::camera))
                 out |= SDL_INIT_CAMERA;
 
             return out;
@@ -55,17 +55,17 @@ namespace retro
 
             const auto f = static_cast<std::uint64_t>(flags);
 
-            if (f & static_cast<std::uint64_t>(WindowFlags::Resizable))
+            if (f & static_cast<std::uint64_t>(WindowFlags::resizable))
                 out |= SDL_WINDOW_RESIZABLE;
-            if (f & static_cast<std::uint64_t>(WindowFlags::Borderless))
+            if (f & static_cast<std::uint64_t>(WindowFlags::borderless))
                 out |= SDL_WINDOW_BORDERLESS;
-            if (f & static_cast<std::uint64_t>(WindowFlags::Hidden))
+            if (f & static_cast<std::uint64_t>(WindowFlags::hidden))
                 out |= SDL_WINDOW_HIDDEN;
-            if (f & static_cast<std::uint64_t>(WindowFlags::Vulkan))
+            if (f & static_cast<std::uint64_t>(WindowFlags::vulkan))
                 out |= SDL_WINDOW_VULKAN;
-            if (f & static_cast<std::uint64_t>(WindowFlags::HighDpi))
+            if (f & static_cast<std::uint64_t>(WindowFlags::high_dpi))
                 out |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-            if (f & static_cast<std::uint64_t>(WindowFlags::AlwaysOnTop))
+            if (f & static_cast<std::uint64_t>(WindowFlags::always_on_top))
                 out |= SDL_WINDOW_ALWAYS_ON_TOP;
 
             return out;
@@ -76,17 +76,17 @@ namespace retro
             switch (sdl_button)
             {
                 case SDL_BUTTON_LEFT:
-                    return MouseButton::Left;
+                    return MouseButton::left;
                 case SDL_BUTTON_MIDDLE:
-                    return MouseButton::Middle;
+                    return MouseButton::middle;
                 case SDL_BUTTON_RIGHT:
-                    return MouseButton::Right;
+                    return MouseButton::right;
                 case SDL_BUTTON_X1:
-                    return MouseButton::X1;
+                    return MouseButton::x1;
                 case SDL_BUTTON_X2:
-                    return MouseButton::X2;
+                    return MouseButton::x2;
                 default:
-                    return MouseButton::Unknown;
+                    return MouseButton::unknown;
             }
         }
 
@@ -170,7 +170,7 @@ namespace retro
 
         [[nodiscard]] NativeWindowHandle native_handle() const noexcept override
         {
-            return {.backend = WindowBackend::SDL3, .handle = window_.get()};
+            return {.backend = WindowBackend::sdl3, .handle = window_.get()};
         }
 
         void set_title(const CStringView title) override

@@ -58,6 +58,7 @@ namespace retro
         using ViewType = std::basic_string_view<T>;
 
       public:
+        // ReSharper disable CppInconsistentNaming
         using traits_type = ViewType::traits_type;
         using value_type = ViewType::value_type;
         using pointer = ViewType::pointer;
@@ -70,6 +71,7 @@ namespace retro
         using reverse_iterator = ViewType::reverse_iterator;
         using size_type = ViewType::size_type;
         using difference_type = ViewType::difference_type;
+        // ReSharper restore CppInconsistentNaming
 
         static constexpr size_type npos = ViewType::npos;
 

@@ -20,13 +20,13 @@ namespace retro
 {
     export enum class LogLevel : std::uint8_t
     {
-        Trace,
-        Debug,
-        Info,
-        Warn,
-        Error,
-        Critical,
-        Off
+        trace,
+        debug,
+        info,
+        warn,
+        error,
+        critical,
+        off
     };
 
     export constexpr std::string_view to_string(const LogLevel level)
@@ -34,19 +34,19 @@ namespace retro
         switch (level)
         {
             using enum LogLevel;
-            case Trace:
+            case trace:
                 return "trace";
-            case Debug:
+            case debug:
                 return "debug";
-            case Info:
+            case info:
                 return "info";
-            case Warn:
+            case warn:
                 return "warn";
-            case Error:
+            case error:
                 return "error";
-            case Critical:
+            case critical:
                 return "critical";
-            case Off:
+            case off:
                 return "off";
         }
         return "unknown";
@@ -56,23 +56,21 @@ namespace retro
     {
         switch (level)
         {
-            using enum LogLevel;
-            using enum spdlog::level::level_enum;
-            case trace:
-                return Trace;
-            case debug:
-                return Debug;
-            case info:
-                return Info;
-            case warn:
-                return Warn;
-            case err:
-                return Error;
-            case critical:
-                return Critical;
-            case off:
+            case spdlog::level::level_enum::trace:
+                return LogLevel::trace;
+            case spdlog::level::level_enum::debug:
+                return LogLevel::debug;
+            case spdlog::level::level_enum::info:
+                return LogLevel::info;
+            case spdlog::level::level_enum::warn:
+                return LogLevel::warn;
+            case spdlog::level::level_enum::err:
+                return LogLevel::error;
+            case spdlog::level::level_enum::critical:
+                return LogLevel::critical;
+            case spdlog::level::level_enum::off:
             default:
-                return Off;
+                return LogLevel::off;
         }
     }
 
@@ -81,19 +79,19 @@ namespace retro
         switch (level)
         {
             using enum LogLevel;
-            case Trace:
+            case trace:
                 return spdlog::level::trace;
-            case Debug:
+            case debug:
                 return spdlog::level::debug;
-            case Info:
+            case info:
                 return spdlog::level::info;
-            case Warn:
+            case warn:
                 return spdlog::level::warn;
-            case Error:
+            case error:
                 return spdlog::level::err;
-            case Critical:
+            case critical:
                 return spdlog::level::critical;
-            case Off:
+            case off:
             default:
                 return spdlog::level::off;
         }
@@ -146,109 +144,109 @@ namespace retro
         template <Char T>
         void trace(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Trace, message);
+            log(LogLevel::trace, message);
         }
 
         template <Char T>
         void trace(const T *message)
         {
-            log(LogLevel::Trace, message);
+            log(LogLevel::trace, message);
         }
 
         template <typename... Args>
         void trace(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Trace, fmt, std::forward<Args>(args)...);
+            log(LogLevel::trace, fmt, std::forward<Args>(args)...);
         }
 
         template <Char T>
         void debug(const T *message)
         {
-            log(LogLevel::Debug, message);
+            log(LogLevel::debug, message);
         }
 
         template <Char T>
         void debug(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Debug, message);
+            log(LogLevel::debug, message);
         }
 
         template <typename... Args>
         void debug(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Debug, fmt, std::forward<Args>(args)...);
+            log(LogLevel::debug, fmt, std::forward<Args>(args)...);
         }
 
         template <Char T>
         void info(const T *message)
         {
-            log(LogLevel::Info, message);
+            log(LogLevel::info, message);
         }
 
         template <Char T>
         void info(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Info, message);
+            log(LogLevel::info, message);
         }
 
         template <typename... Args>
         void info(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Info, fmt, std::forward<Args>(args)...);
+            log(LogLevel::info, fmt, std::forward<Args>(args)...);
         }
 
         template <Char T>
         void warn(const T *message)
         {
-            log(LogLevel::Warn, message);
+            log(LogLevel::warn, message);
         }
 
         template <Char T>
         void warn(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Warn, message);
+            log(LogLevel::warn, message);
         }
 
         template <typename... Args>
         void warn(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Warn, fmt, std::forward<Args>(args)...);
+            log(LogLevel::warn, fmt, std::forward<Args>(args)...);
         }
 
         template <Char T>
         void error(const T *message)
         {
-            log(LogLevel::Error, message);
+            log(LogLevel::error, message);
         }
 
         template <Char T>
         void error(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Error, message);
+            log(LogLevel::error, message);
         }
 
         template <typename... Args>
         void error(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Error, fmt, std::forward<Args>(args)...);
+            log(LogLevel::error, fmt, std::forward<Args>(args)...);
         }
 
         template <Char T>
         void critical(const T *message)
         {
-            log(LogLevel::Critical, message);
+            log(LogLevel::critical, message);
         }
 
         template <Char T>
         void critical(const std::basic_string_view<T> message)
         {
-            log(LogLevel::Critical, message);
+            log(LogLevel::critical, message);
         }
 
         template <typename... Args>
         void critical(const std::format_string<Args...> fmt, Args &&...args)
         {
-            log(LogLevel::Critical, fmt, std::forward<Args>(args)...);
+            log(LogLevel::critical, fmt, std::forward<Args>(args)...);
         }
 
       private:

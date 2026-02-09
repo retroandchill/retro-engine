@@ -41,7 +41,7 @@ namespace retro
                                                                BufferedStream &stream)
     {
         return stream.read_all()
-            .transform_error([](StreamError) { return AssetLoadError::InvalidAssetFormat; })
+            .transform_error([](StreamError) { return AssetLoadError::invalid_asset_format; })
             .and_then([](const std::vector<std::byte> &bytes) { return load_image_data(bytes); })
             .transform([this](const ImageData &image_data) { return renderer_->upload_texture(image_data); })
             .transform([&context](std::unique_ptr<TextureRenderData> &&render_data)
@@ -54,7 +54,7 @@ namespace retro
             [](const std::string_view &error)
             {
                 get_logger().error(error);
-                return AssetLoadError::InvalidAssetFormat;
+                return AssetLoadError::invalid_asset_format;
             });
     }
 } // namespace retro

@@ -21,9 +21,9 @@ namespace retro
 
     export enum class FileOpenMode
     {
-        ReadOnly,
-        ReadWrite,
-        WriteOnly
+        read_only,
+        read_write,
+        write_only
     };
 
     export class RETRO_API FileStream final : public Stream

@@ -15,7 +15,7 @@ namespace retro
     {
         switch (info.kind)
         {
-            case PlatformBackendKind::SDL3:
+            case PlatformBackendKind::sdl3:
                 return std::make_unique<Sdl3PlatformBackend>(info.flags);
             default:
                 throw PlatformException{"Unsupported platform backend"};

@@ -17,14 +17,14 @@ namespace retro
     class Optional;
 
     template <typename T>
-    constexpr bool IS_OPTIONAL_SPECIALIZATION = false;
+    constexpr bool is_optional_specialization = false;
     template <typename T>
-    constexpr bool IS_OPTIONAL_SPECIALIZATION<Optional<T>> = true;
+    constexpr bool is_optional_specialization<Optional<T>> = true;
     template <typename T>
-    constexpr bool IS_OPTIONAL_SPECIALIZATION<std::optional<T>> = true;
+    constexpr bool is_optional_specialization<std::optional<T>> = true;
 
     template <typename T>
-    concept OptionalSpecialization = IS_OPTIONAL_SPECIALIZATION<T>;
+    concept OptionalSpecialization = is_optional_specialization<T>;
 
     template <typename T, typename Container>
     struct OptionalIterator
@@ -42,7 +42,8 @@ namespace retro
         template <typename U>
             requires(std::same_as<std::remove_cv_t<U>, std::remove_cv_t<T>> && std::is_const_v<T> &&
                      !std::is_const_v<U>)
-        constexpr OptionalIterator(const OptionalIterator<U, Container> &other) noexcept : ptr_{other.ptr_}
+        constexpr explicit(false) OptionalIterator(const OptionalIterator<U, Container> &other) noexcept
+            : ptr_{other.ptr_}
         {
         }
 
@@ -145,9 +146,11 @@ namespace retro
     class Optional
     {
       public:
+        // ReSharper disable CppInconsistentNaming
         using value_type = T;
         using iterator = OptionalIterator<T, Optional>;
         using const_iterator = OptionalIterator<const T, Optional>;
+        // ReSharper restore CppInconsistentNaming
 
         constexpr Optional() noexcept
         {

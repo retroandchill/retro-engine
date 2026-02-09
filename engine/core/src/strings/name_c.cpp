@@ -54,7 +54,7 @@ extern "C"
                                             const Retro_NameId rhs_id,
                                             const Retro_NameCase nameCase)
     {
-        if (static_cast<retro::NameCase>(nameCase) == retro::NameCase::CaseSensitive)
+        if (static_cast<retro::NameCase>(nameCase) == retro::NameCase::case_sensitive)
         {
             return strong_ordering_to_int(from_c(lhs_id).compare_lexical_case_sensitive(from_c(rhs_id)));
         }

@@ -206,8 +206,9 @@ namespace retro
         }
 
         template <typename Functor>
-            requires std::invocable<const std::remove_reference_t<Functor>, Args...> &&
-                     std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Functor>, Args...>, Ret>
+            requires(std::invocable<const std::remove_reference_t<Functor>, Args...> &&
+                     std::convertible_to<std::invoke_result_t<const std::remove_reference_t<Functor>, Args...>, Ret> &&
+                     !std::same_as<std::remove_cvref_t<Functor>, Delegate>)
         constexpr explicit(false) Delegate(Functor &&functor) : ops_(get_ops_table<std::remove_cvref_t<Functor>>())
         {
             store_functor(std::forward<Functor>(functor));
@@ -587,7 +588,7 @@ namespace retro
             }
             else
             {
-                storage_.heap_object = new Functor(std::forward<Functor>(functor));
+                storage_.heap_object = new std::remove_cvref_t<Functor>(std::forward<Functor>(functor));
             }
         }
 

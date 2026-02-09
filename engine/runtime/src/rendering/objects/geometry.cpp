@@ -51,14 +51,14 @@ namespace retro
     {
         switch (type)
         {
-            case GeometryType::Rectangle:
+            case GeometryType::rectangle:
                 geometry_ = RECTANGLE;
                 break;
-            case GeometryType::Triangle:
+            case GeometryType::triangle:
                 geometry_ = TRIANGLE;
                 break;
-            case GeometryType::None:
-            case GeometryType::Custom:
+            case GeometryType::none:
+            case GeometryType::custom:
             default:
                 geometry_ = nullptr;
                 break;
@@ -75,44 +75,44 @@ namespace retro
         static const ShaderLayout layout{
             .vertex_shader = "shaders/geometry.vert.spv",
             .fragment_shader = "shaders/geometry.frag.spv",
-            .vertex_bindings = {VertexInputBinding{.type = VertexInputType::Vertex,
+            .vertex_bindings = {VertexInputBinding{.type = VertexInputType::vertex,
                                                    .stride = sizeof(Vertex),
-                                                   .attributes = {VertexAttribute{.type = ShaderDataType::Vec2,
+                                                   .attributes = {VertexAttribute{.type = ShaderDataType::vec2,
                                                                                   .size = sizeof(Vector2f),
                                                                                   .offset = offsetof(Vertex, position)},
-                                                                  VertexAttribute{.type = ShaderDataType::Vec2,
+                                                                  VertexAttribute{.type = ShaderDataType::vec2,
                                                                                   .size = sizeof(Vector2f),
                                                                                   .offset = offsetof(Vertex, uv)}}},
                                 VertexInputBinding{
-                                    .type = VertexInputType::Instance,
+                                    .type = VertexInputType::instance,
                                     .stride = sizeof(GeometryInstanceData),
                                     .attributes =
                                         {// Vulkan doesn't have matrix attributes, so the most compatible option is to
                                          // just treat a matrix as an array of vectors
-                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                         VertexAttribute{.type = ShaderDataType::vec2,
                                                          .size = sizeof(Vector2f),
                                                          .offset = offsetof(GeometryInstanceData, transform)},
-                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                         VertexAttribute{.type = ShaderDataType::vec2,
                                                          .size = sizeof(Vector2f),
                                                          .offset = offsetof(GeometryInstanceData, transform) +
                                                                    sizeof(Vector2f)},
-                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                         VertexAttribute{.type = ShaderDataType::vec2,
                                                          .size = sizeof(Vector2f),
                                                          .offset = offsetof(GeometryInstanceData, translation)},
-                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                         VertexAttribute{.type = ShaderDataType::vec2,
                                                          .size = sizeof(Vector2f),
                                                          .offset = offsetof(GeometryInstanceData, pivot)},
-                                         VertexAttribute{.type = ShaderDataType::Vec2,
+                                         VertexAttribute{.type = ShaderDataType::vec2,
                                                          .size = sizeof(Vector2f),
                                                          .offset = offsetof(GeometryInstanceData, size)},
-                                         VertexAttribute{.type = ShaderDataType::Vec4,
+                                         VertexAttribute{.type = ShaderDataType::vec4,
                                                          .size = sizeof(Color),
                                                          .offset = offsetof(GeometryInstanceData, color)},
-                                         VertexAttribute{.type = ShaderDataType::Uint32,
+                                         VertexAttribute{.type = ShaderDataType::uint32,
                                                          .size = sizeof(std::uint32_t),
                                                          .offset = offsetof(GeometryInstanceData, has_texture)}}}},
             .push_constant_bindings =
-                PushConstantBinding{.stages = ShaderStage::Vertex, .size = sizeof(Vector2f), .offset = 0}};
+                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(Vector2f), .offset = 0}};
 
         return layout;
     }

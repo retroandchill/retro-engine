@@ -77,24 +77,24 @@ namespace retro
     template <Injectable T, StoragePolicy Policy>
     std::shared_ptr<ServiceInstance> construct_service(ServiceProvider &provider)
     {
-        if constexpr (Policy == StoragePolicy::UniqueOwned)
+        if constexpr (Policy == StoragePolicy::unique_owned)
         {
             return ServiceInstance::from_unique(construct_unique_singleton<T>(provider));
         }
-        else if constexpr (Policy == StoragePolicy::SharedOwned)
+        else if constexpr (Policy == StoragePolicy::shared_owned)
         {
             return ServiceInstance::from_shared(construct_shared_singleton<T>(provider));
         }
         else
         {
-            static_assert(Policy == StoragePolicy::IntrusiveOwned);
+            static_assert(Policy == StoragePolicy::intrusive_owned);
             return ServiceInstance::from_intrusive(construct_intrusive_singleton<T>(provider));
         }
     }
 
     template <typename T, StoragePolicy Policy>
-    concept InjectablePolicy = Injectable<T> && Policy != StoragePolicy::External &&
-                               (Policy != StoragePolicy::IntrusiveOwned || RefCounted<T>);
+    concept InjectablePolicy = Injectable<T> && Policy != StoragePolicy::external &&
+                               (Policy != StoragePolicy::intrusive_owned || RefCounted<T>);
 
     export class RETRO_API ServiceCollection
     {
@@ -118,14 +118,14 @@ namespace retro
             return registrations_;
         }
 
-        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add(ServiceLifetime lifetime)
         {
             return add<T, T, Policy>(lifetime);
         }
 
-        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add(ServiceLifetime lifetime)
         {
@@ -208,14 +208,14 @@ namespace retro
             return *this;
         }
 
-        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_singleton()
         {
             return add<T, T, Policy>(SingletonServiceLifetime{});
         }
 
-        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_singleton()
         {
@@ -251,14 +251,14 @@ namespace retro
             return add<Functor>(SingletonServiceLifetime{});
         }
 
-        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_scoped(const Name scope_tag = Name::none())
         {
             return add<T, T, Policy>(ScopedServiceLifetime{scope_tag});
         }
 
-        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_scoped(const Name scope_tag = Name::none())
         {
@@ -308,14 +308,14 @@ namespace retro
             return add<Functor>(ScopedServiceLifetime{scope_tag});
         }
 
-        template <typename T, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<T, Policy>
         ServiceCollection &add_transient()
         {
             return add<T, T, Policy>(TransientScope{});
         }
 
-        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::UniqueOwned>
+        template <typename T, std::derived_from<T> Impl, StoragePolicy Policy = StoragePolicy::unique_owned>
             requires InjectablePolicy<Impl, Policy>
         ServiceCollection &add_transient()
         {

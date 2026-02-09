@@ -51,7 +51,7 @@ namespace retro
                         auto cast_ptr = dynamic_pointer_cast<T>(std::move(asset));
                         if (cast_ptr == nullptr)
                         {
-                            return std::unexpected{AssetLoadError::AssetTypeMismatch};
+                            return std::unexpected{AssetLoadError::asset_type_mismatch};
                         }
 
                         return std::move(cast_ptr);

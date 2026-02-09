@@ -15,8 +15,8 @@ import retro.core.type_traits.basic;
 
 namespace retro
 {
-    export constexpr float KINDA_SMALL_NUMBER = 1.e-4f;
-    export constexpr float SMALL_NUMBER = 1.e-8f;
+    export constexpr float kinda_small_number = 1.e-4f;
+    export constexpr float small_number = 1.e-8f;
 
     export template <Numeric T>
     constexpr T clamp(T value, T min, T max) noexcept
@@ -31,7 +31,7 @@ namespace retro
     }
 
     export template <std::floating_point T>
-    constexpr bool nearly_equal(T lhs, T rhs, T tolerance = SMALL_NUMBER) noexcept
+    constexpr bool nearly_equal(T lhs, T rhs, T tolerance = small_number) noexcept
     {
         return abs(lhs - rhs) <= tolerance;
     }

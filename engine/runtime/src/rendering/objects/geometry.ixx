@@ -26,10 +26,10 @@ namespace retro
 
     export enum class GeometryType : std::uint8_t
     {
-        None,
-        Rectangle,
-        Triangle,
-        Custom
+        none,
+        rectangle,
+        triangle,
+        custom
     };
 
     export struct Vertex
@@ -61,7 +61,7 @@ namespace retro
         std::uint32_t texture_handle{};
         Vector2f viewport_size{};
 
-        DrawCommand create_draw_command() const;
+        [[nodiscard]] DrawCommand create_draw_command() const;
     };
 
     export class GeometryObject final : public SceneNode

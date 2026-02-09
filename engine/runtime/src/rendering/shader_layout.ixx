@@ -13,18 +13,18 @@ namespace retro
 {
     export enum class ShaderDataType : std::uint8_t
     {
-        Int32,
-        Uint32,
-        Float,
-        Vec2,
-        Vec3,
-        Vec4
+        int32,
+        uint32,
+        float32,
+        vec2,
+        vec3,
+        vec4
     };
 
     export enum class ShaderStage : std::uint8_t
     {
-        Vertex = 0x1,
-        Fragment = 0x2
+        vertex = 0x1,
+        fragment = 0x2
     };
 
     export constexpr ShaderStage operator&(ShaderStage lhs, ShaderStage rhs) noexcept
@@ -44,8 +44,8 @@ namespace retro
 
     export enum class VertexInputType : std::uint8_t
     {
-        Vertex,
-        Instance
+        vertex,
+        instance
     };
 
     export struct VertexAttribute
@@ -64,10 +64,10 @@ namespace retro
 
     export enum class DescriptorType : std::uint8_t
     {
-        Sampler,
-        CombinedImageSampler,
-        UniformBuffer,
-        StorageBuffer
+        sampler,
+        combined_image_sampler,
+        uniform_buffer,
+        storage_buffer
     };
 
     export struct DescriptorBinding

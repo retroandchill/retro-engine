@@ -32,15 +32,15 @@ namespace
     {
         switch (error)
         {
-            case retro::AssetLoadError::BadAssetPath:
+            case retro::AssetLoadError::bad_asset_path:
                 return Retro_BadAssetPath;
-            case retro::AssetLoadError::InvalidAssetFormat:
+            case retro::AssetLoadError::invalid_asset_format:
                 return Retro_InvalidAssetFormat;
-            case retro::AssetLoadError::AmbiguousAssetPath:
+            case retro::AssetLoadError::ambiguous_asset_path:
                 return Retro_AmbiguousAssetPath;
-            case retro::AssetLoadError::AssetNotFound:
+            case retro::AssetLoadError::asset_not_found:
                 return Retro_AssetNotFound;
-            case retro::AssetLoadError::AssetTypeMismatch:
+            case retro::AssetLoadError::asset_type_mismatch:
                 return Retro_AssetTypeMismatch;
             default:
                 return static_cast<Retro_AssetLoadError>(error);

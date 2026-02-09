@@ -19,8 +19,8 @@ namespace retro
         content_root /= path.package_name().to_string();
         content_root /= path.asset_name().to_string();
 
-        return FileStream::open(content_root, FileOpenMode::ReadOnly)
-            .transform_error([](const auto &) { return AssetLoadError::AssetNotFound; })
+        return FileStream::open(content_root, FileOpenMode::read_only)
+            .transform_error([](const auto &) { return AssetLoadError::asset_not_found; })
             .transform([](auto &&file) { return std::unique_ptr<Stream>{std::move(file)}; });
     }
 } // namespace retro

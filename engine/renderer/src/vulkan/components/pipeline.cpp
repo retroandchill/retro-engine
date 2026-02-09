@@ -29,9 +29,9 @@ namespace retro
         {
             switch (type)
             {
-                case VertexInputType::Vertex:
+                case VertexInputType::vertex:
                     return vk::VertexInputRate::eVertex;
-                case VertexInputType::Instance:
+                case VertexInputType::instance:
                     return vk::VertexInputRate::eInstance;
                 default:
                     throw std::invalid_argument("Invalid vertex input type");
@@ -42,17 +42,17 @@ namespace retro
         {
             switch (type)
             {
-                case ShaderDataType::Int32:
+                case ShaderDataType::int32:
                     return vk::Format::eR32Sint;
-                case ShaderDataType::Uint32:
+                case ShaderDataType::uint32:
                     return vk::Format::eR32Uint;
-                case ShaderDataType::Float:
+                case ShaderDataType::float32:
                     return vk::Format::eR32Sfloat;
-                case ShaderDataType::Vec2:
+                case ShaderDataType::vec2:
                     return vk::Format::eR32G32Sfloat;
-                case ShaderDataType::Vec3:
+                case ShaderDataType::vec3:
                     return vk::Format::eR32G32B32Sfloat;
-                case ShaderDataType::Vec4:
+                case ShaderDataType::vec4:
                     return vk::Format::eR32G32B32A32Sfloat;
                 default:
                     throw std::invalid_argument("Invalid shader data type");
@@ -63,13 +63,13 @@ namespace retro
         {
             switch (type)
             {
-                case DescriptorType::Sampler:
+                case DescriptorType::sampler:
                     return vk::DescriptorType::eSampler;
-                case DescriptorType::CombinedImageSampler:
+                case DescriptorType::combined_image_sampler:
                     return vk::DescriptorType::eCombinedImageSampler;
-                case DescriptorType::UniformBuffer:
+                case DescriptorType::uniform_buffer:
                     return vk::DescriptorType::eUniformBuffer;
-                case DescriptorType::StorageBuffer:
+                case DescriptorType::storage_buffer:
                     return vk::DescriptorType::eStorageBuffer;
                 default:
                     throw std::invalid_argument("Invalid descriptor type");
@@ -79,12 +79,12 @@ namespace retro
         constexpr vk::Flags<vk::ShaderStageFlagBits> to_vulkan_enum(const ShaderStage stage)
         {
             vk::Flags<vk::ShaderStageFlagBits> result{};
-            if (has_flag(stage, ShaderStage::Vertex))
+            if (has_flag(stage, ShaderStage::vertex))
             {
                 result |= vk::ShaderStageFlagBits::eVertex;
             }
 
-            if (has_flag(stage, ShaderStage::Fragment))
+            if (has_flag(stage, ShaderStage::fragment))
             {
                 result |= vk::ShaderStageFlagBits::eFragment;
             }
@@ -164,7 +164,7 @@ namespace retro
             std::size_t instance_binding = 0;
             for (auto &binding : layout.vertex_bindings)
             {
-                if (binding.type == VertexInputType::Vertex)
+                if (binding.type == VertexInputType::vertex)
                 {
                     auto &vertex_buffer = command.vertex_buffers[vertex_binding];
                     auto [buffer, mapped_data, offset] =
@@ -175,7 +175,7 @@ namespace retro
                     offsets.push_back(offset);
                     vertex_binding++;
                 }
-                else if (binding.type == VertexInputType::Instance)
+                else if (binding.type == VertexInputType::instance)
                 {
                     auto &instance_buffer = command.instance_buffers[instance_binding];
                     auto [buffer, mapped_data, offset] =

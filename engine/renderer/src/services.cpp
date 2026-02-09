@@ -16,7 +16,7 @@ namespace retro
         services.add(std::move(viewport));
         switch (backend)
         {
-            case RenderBackend::Vulkan:
+            case RenderBackend::vulkan:
                 add_vulkan_services(services, window_backend);
                 break;
             default:

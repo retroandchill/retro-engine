@@ -18,7 +18,7 @@ namespace retro
 {
     export enum class WindowBackend
     {
-        SDL3
+        sdl3
     };
 
     export struct NativeWindowHandle
@@ -29,13 +29,13 @@ namespace retro
 
     export enum class WindowFlags : std::uint64_t
     {
-        None = 0,
-        Resizable = 1uLL << 0,
-        Borderless = 1uLL << 1,
-        Hidden = 1uLL << 2,
-        Vulkan = 1uLL << 3,
-        HighDpi = 1uLL << 4,
-        AlwaysOnTop = 1uLL << 5,
+        none = 0,
+        resizable = 1uLL << 0,
+        borderless = 1uLL << 1,
+        hidden = 1uLL << 2,
+        vulkan = 1uLL << 3,
+        high_dpi = 1uLL << 4,
+        always_on_top = 1uLL << 5,
     };
 
     export constexpr WindowFlags operator|(WindowFlags a, WindowFlags b) noexcept
@@ -58,8 +58,8 @@ namespace retro
         std::int32_t width = 1280;
         std::int32_t height = 720;
         CStringView title{"Game"};
-        WindowFlags flags = WindowFlags::Resizable;
-        WindowBackend backend = WindowBackend::SDL3;
+        WindowFlags flags = WindowFlags::resizable;
+        WindowBackend backend = WindowBackend::sdl3;
     };
 
     export class Window

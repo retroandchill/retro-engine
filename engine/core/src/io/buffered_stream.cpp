@@ -16,12 +16,12 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         if (!can_read())
         {
-            return std::unexpected(StreamError::NotSupported);
+            return std::unexpected(StreamError::not_supported);
         }
 
         std::size_t buffer_offset = position_ - buffer_start_;
@@ -81,12 +81,12 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         if (!can_seek())
         {
-            return std::unexpected(StreamError::NotSupported);
+            return std::unexpected(StreamError::not_supported);
         }
 
         EXPECT(inner_->seek(offset, origin));
@@ -99,7 +99,7 @@ namespace retro
 
     StreamResult<void> BufferedStream::set_position(std::size_t pos)
     {
-        EXPECT(seek(pos, SeekOrigin::Begin));
+        EXPECT(seek(pos, SeekOrigin::begin));
         return {};
     }
 
@@ -107,12 +107,12 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         if (!can_read())
         {
-            return std::unexpected(StreamError::NotSupported);
+            return std::unexpected(StreamError::not_supported);
         }
 
         std::size_t bytes_read = 0;
@@ -155,12 +155,12 @@ namespace retro
     {
         if (is_closed())
         {
-            return std::unexpected(StreamError::Closed);
+            return std::unexpected(StreamError::closed);
         }
 
         if (!can_write())
         {
-            return std::unexpected(StreamError::NotSupported);
+            return std::unexpected(StreamError::not_supported);
         }
 
         auto result = inner_->write(src);

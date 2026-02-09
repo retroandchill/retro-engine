@@ -18,10 +18,10 @@ namespace retro
 {
     export enum class RenderBackend : std::uint8_t
     {
-        Vulkan
+        vulkan
     };
 
     export RETRO_API void add_rendering_services(ServiceCollection &services,
                                                  std::shared_ptr<Window> viewport,
-                                                 RenderBackend backend = RenderBackend::Vulkan);
+                                                 RenderBackend backend = RenderBackend::vulkan);
 } // namespace retro
