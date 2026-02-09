@@ -103,13 +103,7 @@ namespace retro
 
             auto &[draw_texture, instances, viewport_draw_info] = batches_[texture];
             draw_texture = texture;
-            viewport_draw_info = ViewportDrawInfo{
-                .viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)},
-                .camera_position = camera_layout.position,
-                .camera_pivot = camera_layout.pivot,
-                .camera_rotation = camera_layout.rotation,
-                .camera_zoom = camera_layout.zoom,
-            };
+            viewport_draw_info = camera_layout.get_draw_info(viewport_size);
             instances.push_back(instance);
         }
     }

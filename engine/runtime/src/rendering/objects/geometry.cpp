@@ -41,7 +41,7 @@ namespace retro
                 },
             .instance_buffers = {as_bytes(std::span{instances})},
             .index_buffer = as_bytes(std::span{geometry->indices}),
-            .push_constants = as_bytes(std::span{&viewport_size, 1}),
+            .push_constants = as_bytes(std::span{&viewport_draw_info, 1}),
             .index_count = geometry->indices.size(),
             .instance_count = instances.size(),
         };
@@ -112,7 +112,7 @@ namespace retro
                                                          .size = sizeof(std::uint32_t),
                                                          .offset = offsetof(GeometryInstanceData, has_texture)}}}},
             .push_constant_bindings =
-                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(Vector2f), .offset = 0}};
+                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(ViewportDrawInfo), .offset = 0}};
 
         return layout;
     }
@@ -143,7 +143,7 @@ namespace retro
 
             auto &batch = geometry_batches_[geometry];
             batch.geometry = geometry;
-            batch.viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)};
+            batch.viewport_draw_info = camera_layout.get_draw_info(viewport_size);
             batch.instances.push_back(instance);
         }
     }

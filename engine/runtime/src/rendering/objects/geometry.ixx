@@ -19,6 +19,7 @@ import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.world.scene;
 import retro.runtime.world.scene_node;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
@@ -59,7 +60,7 @@ namespace retro
         const Geometry *geometry{};
         std::vector<GeometryInstanceData> instances{};
         std::uint32_t texture_handle{};
-        Vector2f viewport_size{};
+        ViewportDrawInfo viewport_draw_info{};
 
         [[nodiscard]] DrawCommand create_draw_command() const;
     };

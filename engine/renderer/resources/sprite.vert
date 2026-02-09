@@ -1,4 +1,5 @@
 #version 450
+#include "common/camera.glsl"
 
 layout(location = 0) in mat2 inTransform;
 layout(location = 2) in vec2 inTranslation;
@@ -11,13 +12,9 @@ layout(location = 7) in vec4 inTint;
 layout(location = 0) out vec2 vUV;
 layout(location = 1) out vec4 vTint;
 
-layout(push_constant) uniform SceneData {
-    vec2 viewportSize;
-    vec2 cameraPosition;
-    vec2 cameraPivot;
-    vec2 cameraRotation;
-    float cameraZoom;
-} uData;
+layout(push_constant) uniform SceneDataBlock {
+    CameraData uData;
+};
 
 const vec2 vertices[] = vec2[](
     vec2(0.0f, 0.0f),
@@ -34,19 +31,7 @@ void main() {
     vec2 localPos = (position - inPivot) * inSize;
     vec2 spriteWorldPos = inTransform * localPos + inTranslation;
 
-    vec2 normalizedCameraPos = uData.cameraPosition / uData.viewportSize;
-
-    vec2 cameraTranslatedPos = spriteWorldPos / uData.viewportSize - normalizedCameraPos;
-    vec2 cameraPivotOffset = cameraTranslatedPos - uData.cameraPivot;
-
-    mat2 cameraRotMat = mat2(
-         uData.cameraRotation.x, uData.cameraRotation.y,
-        -uData.cameraRotation.y, uData.cameraRotation.x
-    );
-
-    vec2 cameraRotatedPos = cameraRotMat * cameraPivotOffset + uData.cameraPivot;
-
-    vec2 cameraFinalPos = cameraRotatedPos * uData.cameraZoom;
+    vec2 cameraFinalPos = translate_to_camera_space(uData, spriteWorldPos);
 
     vec2 ndc = cameraFinalPos * 2.0 - 1.0;
     gl_Position = vec4(ndc, 0.0, 1.0);

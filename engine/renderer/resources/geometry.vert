@@ -1,4 +1,5 @@
 #version 450
+#include "common/camera.glsl"
 
 // Vertex attributes from the buffer
 layout(location = 0) in vec2 inPosition;
@@ -16,15 +17,17 @@ layout(location = 1) out vec4 vColor;
 layout(location = 2) out flat uint vHasTexture;
 
 
-layout(push_constant) uniform SceneData {
-    vec2 viewportSize;
-} uData;
+layout(push_constant) uniform SceneDataBlock {
+    CameraData uData;
+};
 
 void main() {
     vec2 localPos = (inPosition - inPivot) * inSize;
-    vec2 transformedPos = inTransform * localPos + inTranslation;
+    vec2 worldPos = inTransform * localPos + inTranslation;
 
-    vec2 ndc = (transformedPos / uData.viewportSize) * 2.0 - 1.0;
+    vec2 cameraFinalPos = translate_to_camera_space(uData, worldPos);
+
+    vec2 ndc = cameraFinalPos * 2.0 - 1.0;
     gl_Position = vec4(ndc, 0.0, 1.0);
     vUV = inUV;
     vColor = inColor;

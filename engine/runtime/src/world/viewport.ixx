@@ -36,14 +36,6 @@ namespace retro
         constexpr friend bool operator==(const ScreenLayout &lhs, const ScreenLayout &rhs) noexcept = default;
     };
 
-    export struct CameraLayout
-    {
-        Vector2f position{};
-        Vector2f pivot{};
-        Quaternion2f rotation{};
-        float zoom = 1.0f;
-    };
-
     export struct ViewportDrawInfo
     {
         Vector2f viewport_size{};
@@ -51,6 +43,25 @@ namespace retro
         Vector2f camera_pivot{};
         Quaternion2f camera_rotation{};
         float camera_zoom = 1.0f;
+    };
+
+    export struct CameraLayout
+    {
+        Vector2f position{};
+        Vector2f pivot{};
+        Quaternion2f rotation{};
+        float zoom = 1.0f;
+
+        [[nodiscard]] constexpr ViewportDrawInfo get_draw_info(const Vector2u viewport_size) const noexcept
+        {
+            return ViewportDrawInfo{
+                .viewport_size = Vector2f{static_cast<float>(viewport_size.x), static_cast<float>(viewport_size.y)},
+                .camera_position = position,
+                .camera_pivot = pivot,
+                .camera_rotation = rotation,
+                .camera_zoom = zoom,
+            };
+        }
     };
 
     export class RETRO_API Viewport final

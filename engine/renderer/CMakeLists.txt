@@ -21,7 +21,7 @@ foreach(SHADER ${RENDERER_SHADERS})
     add_custom_command(
             OUTPUT "${SPV}"
             COMMAND "${CMAKE_COMMAND}" -E make_directory "${RENDERER_SHADER_OUTPUT_DIR}"
-            COMMAND "${GLSLC_EXECUTABLE}" -g --target-env=vulkan1.2 "${SHADER}" -o "${SPV}"
+            COMMAND "${GLSLC_EXECUTABLE}" -g -I"${CMAKE_CURRENT_SOURCE_DIR}" --target-env=vulkan1.2 "${SHADER}" -o "${SPV}"
             DEPENDS "${SHADER}"
             COMMENT "Compiling GLSL shader ${SHADER_NAME} -> ${SPV}"
             VERBATIM
