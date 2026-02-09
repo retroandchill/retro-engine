@@ -30,22 +30,19 @@ namespace retro
         // ReSharper disable once CppDFAUnreadVariable
         vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
 
-        auto extent = swapchain_.extent();
-        auto draw_rect = viewport_.layout().to_screen_rect(Vector2u{extent.width, extent.height});
+        auto [screen_width, screen_height] = swapchain_.extent();
+        auto [x, y, width, height] = viewport_.layout().to_screen_rect(Vector2u{screen_width, screen_height});
 
-        const vk::RenderPassBeginInfo rp_info{
-            .renderPass = render_pass,
-            .framebuffer = framebuffer,
-            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = draw_rect.offset.x, .y = draw_rect.offset.y},
-                                     .extent = vk::Extent2D{.width = draw_rect.extent.x, .height = draw_rect.extent.y}},
-            .clearValueCount = 1,
-            .pClearValues = &clear};
+        const vk::RenderPassBeginInfo rp_info{.renderPass = render_pass,
+                                              .framebuffer = framebuffer,
+                                              .renderArea =
+                                                  vk::Rect2D{.offset = vk::Offset2D{.x = x, .y = y},
+                                                             .extent = vk::Extent2D{.width = width, .height = height}},
+                                              .clearValueCount = 1,
+                                              .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd,
-                                          Vector2u{draw_rect.extent.x, draw_rect.extent.y},
-                                          descriptor_pool,
-                                          buffer_manager_);
+        pipeline_manager_.bind_and_render(cmd, Vector2u{width, height}, descriptor_pool, buffer_manager_);
         cmd.endRenderPass();
     }
 

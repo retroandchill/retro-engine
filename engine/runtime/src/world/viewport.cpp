@@ -20,9 +20,10 @@ namespace retro
         const float relative_height = relative_y2 - relative_y1;
         const float x = relative_x1 - relative_width * clamped_alignment.x;
         const float y = relative_y1 - relative_height * clamped_alignment.y;
-        return RectI{.offset = Vector2i{static_cast<std::int32_t>(x), static_cast<std::int32_t>(y)},
-                     .extent = Vector2u{static_cast<std::uint32_t>(relative_width),
-                                        static_cast<std::uint32_t>(relative_height)}};
+        return RectI{.x = static_cast<std::int32_t>(x),
+                     .y = static_cast<std::int32_t>(y),
+                     .width = static_cast<std::uint32_t>(relative_width),
+                     .height = static_cast<std::uint32_t>(relative_height)};
     }
 
     Viewport &ViewportManager::create_viewport(const ViewportLayout &layout, std::int32_t z_order)
