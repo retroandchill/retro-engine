@@ -12,6 +12,7 @@ import retro.core.di;
 import vulkan_hpp;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
@@ -33,6 +34,7 @@ namespace retro
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
+                             const Viewport &viewport,
                              vk::DescriptorPool descriptor_pool,
                              VulkanBufferManager &buffer_manager);
 
@@ -73,6 +75,7 @@ namespace retro
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
+                             const Viewport &viewport,
                              vk::DescriptorPool descriptor_pool,
                              VulkanBufferManager &buffer_manager);
         void clear_draw_queue();

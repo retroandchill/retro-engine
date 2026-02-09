@@ -37,9 +37,9 @@ namespace retro
 
         virtual void collect_draw_calls(const SceneNodeList &nodes,
                                         Vector2u viewport_size,
-                                        const CameraLayout &camera_layout) = 0;
+                                        const Viewport &viewport) = 0;
 
-        virtual void execute(RenderContext &context) = 0;
+        virtual void execute(RenderContext &context, const Viewport &viewport) = 0;
     };
 
 } // namespace retro

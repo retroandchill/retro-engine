@@ -128,11 +128,9 @@ namespace retro
 
         void clear_draw_queue() override;
 
-        void collect_draw_calls(const SceneNodeList &nodes,
-                                Vector2u viewport_size,
-                                const CameraLayout &camera_layout) override;
+        void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport) override;
 
-        void execute(RenderContext &context) override;
+        void execute(RenderContext &context, const Viewport &viewport) override;
 
       private:
         std::unordered_map<const Geometry *, GeometryBatch> geometry_batches_{};

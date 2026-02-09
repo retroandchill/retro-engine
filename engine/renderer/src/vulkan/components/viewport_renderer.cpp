@@ -42,7 +42,7 @@ namespace retro
                                               .pClearValues = &clear};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, Vector2u{width, height}, descriptor_pool, buffer_manager_);
+        pipeline_manager_.bind_and_render(cmd, Vector2u{width, height}, viewport_, descriptor_pool, buffer_manager_);
         cmd.endRenderPass();
     }
 

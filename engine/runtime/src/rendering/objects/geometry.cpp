@@ -124,7 +124,7 @@ namespace retro
 
     void GeometryRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
                                                     const Vector2u viewport_size,
-                                                    const CameraLayout &camera_layout)
+                                                    const Viewport &viewport)
     {
         for (const auto *node : nodes.nodes_of_type<GeometryObject>())
         {
@@ -143,12 +143,12 @@ namespace retro
 
             auto &batch = geometry_batches_[geometry];
             batch.geometry = geometry;
-            batch.viewport_draw_info = camera_layout.get_draw_info(viewport_size);
+            batch.viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
             batch.instances.push_back(instance);
         }
     }
 
-    void GeometryRenderPipeline::execute(RenderContext &context)
+    void GeometryRenderPipeline::execute(RenderContext &context, const Viewport &viewport)
     {
         std::vector<GeometryBatch> batches;
         std::vector<DrawCommand> draw_calls;

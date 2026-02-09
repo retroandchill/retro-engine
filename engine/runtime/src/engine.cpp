@@ -164,9 +164,7 @@ namespace retro
             if (!scene.has_value())
                 continue;
 
-            pipeline_manager_.collect_all_draw_calls(scene->nodes(),
-                                                     renderer_.window_size(),
-                                                     viewport->camera_layout());
+            pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer_.window_size(), *viewport);
         }
 
         renderer_.end_frame();

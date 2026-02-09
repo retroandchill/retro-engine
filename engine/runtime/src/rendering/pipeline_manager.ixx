@@ -34,9 +34,7 @@ namespace retro
 
         explicit PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines);
 
-        void collect_all_draw_calls(const SceneNodeList &nodes,
-                                    Vector2u viewport_size,
-                                    const CameraLayout &camera_layout);
+        void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport);
 
       private:
         Renderer2D &renderer_;

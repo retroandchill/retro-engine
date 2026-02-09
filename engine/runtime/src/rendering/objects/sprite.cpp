@@ -85,8 +85,9 @@ namespace retro
 
     void SpriteRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
                                                   const Vector2u viewport_size,
-                                                  const CameraLayout &camera_layout)
+                                                  const Viewport &viewport)
     {
+        auto &batch_for_viewport = batches_[std::addressof(viewport)];
         for (const auto *node : nodes.nodes_of_type<Sprite>())
         {
             auto *texture = node->texture().get();
@@ -101,20 +102,25 @@ namespace retro
                                         .size = node->size(),
                                         .tint = node->tint()};
 
-            auto &[draw_texture, instances, viewport_draw_info] = batches_[texture];
+            auto &[draw_texture, instances, viewport_draw_info] = batch_for_viewport[texture];
             draw_texture = texture;
-            viewport_draw_info = camera_layout.get_draw_info(viewport_size);
+            viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
             instances.push_back(instance);
         }
     }
 
-    void SpriteRenderPipeline::execute(RenderContext &context)
+    void SpriteRenderPipeline::execute(RenderContext &context, const Viewport &viewport)
     {
+        const auto it = batches_.find(std::addressof(viewport));
+        if (it == batches_.end())
+            return;
+
+        const auto &viewport_batches = it->second;
         std::vector<SpriteBatch> batches;
         std::vector<DrawCommand> draw_calls;
-        batches.reserve(batches_.size());
-        draw_calls.reserve(batches_.size());
-        for (auto &batch : batches_ | std::views::values)
+        batches.reserve(viewport_batches.size());
+        draw_calls.reserve(viewport_batches.size());
+        for (auto &batch : viewport_batches | std::views::values)
         {
             auto &moved_batch = batches.emplace_back(std::move(batch));
             draw_calls.emplace_back(moved_batch.create_draw_command());

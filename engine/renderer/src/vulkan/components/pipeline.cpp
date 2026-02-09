@@ -158,8 +158,8 @@ namespace retro
             if (layout.vertex_bindings.empty())
                 return;
 
-            InlineList<vk::Buffer, DRAW_ARRAY_SIZE> vertex_buffers;
-            InlineList<std::size_t, DRAW_ARRAY_SIZE> offsets;
+            InlineList<vk::Buffer, draw_array_size> vertex_buffers;
+            InlineList<std::size_t, draw_array_size> offsets;
             std::size_t vertex_binding = 0;
             std::size_t instance_binding = 0;
             for (auto &binding : layout.vertex_bindings)
@@ -203,10 +203,10 @@ namespace retro
 
             auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
 
-            InlineList<vk::DescriptorBufferInfo, DRAW_ARRAY_SIZE> buffer_infos;
-            InlineList<vk::DescriptorImageInfo, DRAW_ARRAY_SIZE> image_infos;
+            InlineList<vk::DescriptorBufferInfo, draw_array_size> buffer_infos;
+            InlineList<vk::DescriptorImageInfo, draw_array_size> image_infos;
 
-            InlineList<vk::WriteDescriptorSet, DRAW_ARRAY_SIZE> writes;
+            InlineList<vk::WriteDescriptorSet, draw_array_size> writes;
             for (auto &&[i, binding] : layout.descriptor_bindings | std::views::enumerate)
             {
                 auto &write_set = writes.emplace_back();
@@ -309,6 +309,7 @@ namespace retro
 
     void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
                                                const Vector2u viewport_size,
+                                               const Viewport &viewport,
                                                const vk::DescriptorPool descriptor_pool,
                                                VulkanBufferManager &buffer_manager)
     {
@@ -320,7 +321,7 @@ namespace retro
                                     descriptor_pool,
                                     buffer_manager,
                                     viewport_size};
-        pipeline_->execute(context);
+        pipeline_->execute(context, viewport);
     }
 
     vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device)
@@ -522,12 +523,13 @@ namespace retro
 
     void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd,
                                                 const Vector2u viewport_size,
-                                                vk::DescriptorPool descriptor_pool,
+                                                const Viewport &viewport,
+                                                const vk::DescriptorPool descriptor_pool,
                                                 VulkanBufferManager &buffer_manager)
     {
         for (auto &pipeline : pipelines_)
         {
-            pipeline.bind_and_render(cmd, viewport_size, descriptor_pool, buffer_manager);
+            pipeline.bind_and_render(cmd, viewport_size, viewport, descriptor_pool, buffer_manager);
         }
     }
 
