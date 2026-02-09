@@ -8,7 +8,8 @@ using System.Runtime.InteropServices;
 
 namespace RetroEngine.Core.Math;
 
-public interface IRect<out TPosition, out TExtent>
+public interface IRect<TSelf, TPosition, TExtent> : IEquatable<TSelf>, IEqualityOperators<TSelf, TSelf, bool>
+    where TSelf : unmanaged, IRect<TSelf, TPosition, TExtent>
     where TPosition : INumber<TPosition>
     where TExtent : INumber<TExtent>
 {
@@ -16,10 +17,12 @@ public interface IRect<out TPosition, out TExtent>
     TPosition Y { get; }
     TExtent Width { get; }
     TExtent Height { get; }
+
+    void Deconstruct(out TPosition x, out TPosition y, out TExtent width, out TExtent height);
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly record struct RectI(int X, int Y, uint Width, uint Height) : IRect<int, uint>;
+public readonly record struct RectI(int X, int Y, uint Width, uint Height) : IRect<RectI, int, uint>;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly record struct RectF(float X, float Y, float Width, float Height) : IRect<float, float>;
+public readonly record struct RectF(float X, float Y, float Width, float Height) : IRect<RectF, float, float>;
