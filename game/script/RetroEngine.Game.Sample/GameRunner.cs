@@ -22,7 +22,7 @@ public sealed class GameRunner : IGameSession
         Logger.Info("Starting game runner.");
 
         _scene = new Scene();
-        _viewport = new Viewport() { Scene = _scene };
+        _viewport = new Viewport { Scene = _scene, CameraPivot = new Vector2F(0.5f, 0.5f) };
 
         var texture = Asset.Load<Texture>(new AssetPath("graphics", "eevee.png"));
 
@@ -30,7 +30,6 @@ public sealed class GameRunner : IGameSession
             new Sprite(_scene)
             {
                 Texture = texture,
-                Position = new Vector2F(640f, 360f),
                 Pivot = new Vector2F(0.5f, 0.5f),
                 Tint = new Color(1, 1, 1),
             }

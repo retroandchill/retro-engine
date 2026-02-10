@@ -31,6 +31,7 @@ DECLARE_OPAQUE_C_HANDLE(Retro_Texture, retro::Texture);
 DECLARE_DEFINED_C_HANDLE(Retro_Vector2f, retro::Vector2f);
 DECLARE_DEFINED_C_HANDLE(Retro_Color, retro::Color);
 DECLARE_DEFINED_C_HANDLE(Retro_Vertex, retro::Vertex);
+DECLARE_DEFINED_C_HANDLE(Retro_ScreenLayout, retro::ScreenLayout);
 
 using retro::from_c;
 using retro::to_c;
@@ -44,6 +45,14 @@ namespace
 
         const auto matrix = retro::Matrix2x2f{rotation} * retro::Matrix2x2f{scale};
         return retro::Transform2f{matrix, from_c(transform.position)};
+    }
+
+    retro::CameraLayout from_c(const Retro_CameraLayout &layout)
+    {
+        return retro::CameraLayout{.position = from_c(layout.position),
+                                   .pivot = from_c(layout.pivot),
+                                   .rotation = retro::Quaternion2f{layout.rotation},
+                                   .zoom = layout.zoom};
     }
 
     retro::GeometryType from_c(const Retro_GeometryType type) noexcept
@@ -87,6 +96,16 @@ extern "C"
     void retro_viewport_set_scene(Retro_Viewport *viewport, Retro_Scene *scene)
     {
         from_c(viewport)->set_scene(from_c(scene));
+    }
+
+    void retro_viewport_set_screen_layout(Retro_Viewport *viewport, const Retro_ScreenLayout *layout)
+    {
+        from_c(viewport)->set_screen_layout(from_c(*layout));
+    }
+
+    void retro_viewport_set_camera_layout(Retro_Viewport *viewport, const Retro_CameraLayout *layout)
+    {
+        from_c(viewport)->set_camera_layout(from_c(*layout));
     }
 
     void retro_node_dispose(Retro_Scene *scene, Retro_Node *node)

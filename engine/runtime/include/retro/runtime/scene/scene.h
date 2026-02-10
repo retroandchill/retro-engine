@@ -25,6 +25,35 @@ extern "C"
     typedef struct Retro_Sprite Retro_Sprite;
     typedef struct Retro_Geometry Retro_Geometry;
 
+    typedef struct Retro_Margin
+    {
+        float left;
+        float top;
+        float right;
+        float bottom;
+    } Retro_Margin;
+
+    typedef struct Retro_Anchors
+    {
+        Retro_Vector2f minimum;
+        Retro_Vector2f maximum;
+    } Retro_Anchors;
+
+    typedef struct Retro_ScreenLayout
+    {
+        Retro_Margin offsets;
+        Retro_Anchors anchors;
+        Retro_Vector2f alignment;
+    } Retro_ScreenLayout;
+
+    typedef struct Retro_CameraLayout
+    {
+        Retro_Vector2f position;
+        Retro_Vector2f pivot;
+        float rotation;
+        float zoom;
+    } Retro_CameraLayout;
+
     typedef struct Retro_Vertex
     {
         Retro_Vector2f position{};
@@ -57,6 +86,10 @@ extern "C"
     RETRO_API void retro_viewport_destroy(Retro_Viewport *viewport);
 
     RETRO_API void retro_viewport_set_scene(Retro_Viewport *viewport, Retro_Scene *scene);
+
+    RETRO_API void retro_viewport_set_screen_layout(Retro_Viewport *viewport, const Retro_ScreenLayout *layout);
+
+    RETRO_API void retro_viewport_set_camera_layout(Retro_Viewport *viewport, const Retro_CameraLayout *layout);
 
     RETRO_API void retro_node_dispose(Retro_Scene *scene, Retro_Node *node);
 
