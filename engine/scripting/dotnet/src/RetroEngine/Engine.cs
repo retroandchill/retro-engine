@@ -67,6 +67,7 @@ public sealed partial class Engine : IDisposable
     public void Dispose()
     {
         _synchronizationContext.Dispose();
+        SynchronizationContext.SetSynchronizationContext(null);
     }
 
     private const string LibraryName = "retro_runtime";
