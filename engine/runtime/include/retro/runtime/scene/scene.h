@@ -77,6 +77,12 @@ extern "C"
 
     typedef uint8_t Retro_GeometryType;
 
+    typedef struct Retro_UVs
+    {
+        Retro_Vector2f min;
+        Retro_Vector2f max;
+    } Retro_UVs;
+
     RETRO_API Retro_Scene *retro_scene_create();
 
     RETRO_API void retro_scene_destroy(Retro_Scene *scene);
@@ -120,6 +126,8 @@ extern "C"
     RETRO_API void retro_sprite_set_pivot(Retro_Sprite *node, Retro_Vector2f pivot);
 
     RETRO_API void retro_sprite_set_size(Retro_Sprite *node, Retro_Vector2f size);
+
+    RETRO_API void retro_sprite_set_uv_rect(Retro_Sprite *node, Retro_UVs uv_rect);
 
     static inline Retro_Node *retro_sprite_as_node(Retro_Sprite *sprite)
     {

@@ -10,21 +10,10 @@ using RetroEngine.Core.Math;
 
 namespace RetroEngine.World;
 
+public readonly record struct UVs(Vector2F Min, Vector2F Max);
+
 public partial class Sprite : SceneObject
 {
-    private Sprite(Scene scene, IntPtr parent)
-        : base(scene, NativeCreate(scene.NativeHandle, parent))
-    {
-        Size = new Vector2F(100, 100);
-        Tint = new Color(1, 1, 1);
-    }
-
-    public Sprite(Scene scene)
-        : this(scene, IntPtr.Zero) { }
-
-    public Sprite(SceneObject parent)
-        : this(parent.Scene, parent.NativeObject) { }
-
     public Texture? Texture
     {
         get;
@@ -33,10 +22,12 @@ public partial class Sprite : SceneObject
             ThrowIfDisposed();
             field = value;
             NativeSetTexture(NativeObject, value?.NativeObject ?? IntPtr.Zero);
-            if (value is not null)
-            {
-                Size = new Vector2F(value.Width, value.Height);
-            }
+            if (value is null)
+                return;
+
+            var uvXRange = UVs.Max.X - UVs.Min.X;
+            var uvYRange = UVs.Max.Y - UVs.Min.Y;
+            Size = new Vector2F(value.Width * uvXRange, value.Height * uvYRange);
         }
     }
 
@@ -73,6 +64,31 @@ public partial class Sprite : SceneObject
         }
     }
 
+    public UVs UVs
+    {
+        get;
+        set
+        {
+            ThrowIfDisposed();
+            field = value;
+            NativeSetUVs(NativeObject, value);
+        }
+    }
+
+    private Sprite(Scene scene, IntPtr parent)
+        : base(scene, NativeCreate(scene.NativeHandle, parent))
+    {
+        Size = new Vector2F(100, 100);
+        Tint = new Color(1, 1, 1);
+        UVs = new UVs(Vector2F.Zero, Vector2F.One);
+    }
+
+    public Sprite(Scene scene)
+        : this(scene, IntPtr.Zero) { }
+
+    public Sprite(SceneObject parent)
+        : this(parent.Scene, parent.NativeObject) { }
+
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(IntPtr scene, IntPtr id);
 
@@ -87,4 +103,7 @@ public partial class Sprite : SceneObject
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_size")]
     private static partial void NativeSetSize(IntPtr id, Vector2F size);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_uv_rect")]
+    private static partial void NativeSetUVs(IntPtr id, UVs size);
 }

@@ -128,8 +128,8 @@ public static class Main
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static void ShutdownScriptEngine()
     {
-        Engine.RequestShutdown();
         _gameSession?.Terminate();
         _gameSession = null;
+        Engine.RequestShutdown();
     }
 }

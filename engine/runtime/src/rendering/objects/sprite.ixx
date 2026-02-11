@@ -25,6 +25,12 @@ import retro.runtime.assets.textures.texture;
 
 namespace retro
 {
+    export struct UVs
+    {
+        Vector2f min{0, 0};
+        Vector2f max{1, 1};
+    };
+
     export class SpriteRenderPipeline;
 
     export struct SpriteInstanceData
@@ -92,11 +98,22 @@ namespace retro
             size_ = size;
         }
 
+        [[nodiscard]] inline const UVs &uvs() const noexcept
+        {
+            return uvs_;
+        }
+
+        inline void set_uvs(const UVs &uvs) noexcept
+        {
+            uvs_ = uvs;
+        }
+
       private:
         RefCountPtr<Texture> texture_;
         Color tint_ = Color::white();
         Vector2f pivot_{};
         Vector2f size_{100, 100};
+        UVs uvs_{};
     };
 
     class RETRO_API SpriteRenderPipeline final : public RenderPipeline

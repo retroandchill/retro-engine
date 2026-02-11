@@ -15,7 +15,7 @@ public sealed class GameRunner : IGameSession
 {
     private Scene _scene = null!;
     private Viewport _viewport = null!;
-    private readonly List<SceneObject> _sceneObjects = [];
+    private readonly List<SimpleFlipbook> _sceneObjects = [];
 
     public void Start()
     {
@@ -24,16 +24,13 @@ public sealed class GameRunner : IGameSession
         _scene = new Scene();
         _viewport = new Viewport { Scene = _scene, CameraPivot = new Vector2F(0.5f, 0.5f) };
 
-        var texture = Asset.Load<Texture>(new AssetPath("graphics", "eevee.png"));
+        var texture = Asset.Load<Texture>(new AssetPath("graphics", "133.png"));
+        if (texture is null)
+        {
+            return;
+        }
 
-        _sceneObjects.Add(
-            new Sprite(_scene)
-            {
-                Texture = texture,
-                Pivot = new Vector2F(0.5f, 0.5f),
-                Tint = new Color(1, 1, 1),
-            }
-        );
+        _sceneObjects.Add(new SimpleFlipbook(_scene, texture, 10.0f) { Scale = new Vector2F(3, 3) });
     }
 
     public void Stop()

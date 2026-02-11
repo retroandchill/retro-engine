@@ -32,6 +32,7 @@ DECLARE_DEFINED_C_HANDLE(Retro_Vector2f, retro::Vector2f);
 DECLARE_DEFINED_C_HANDLE(Retro_Color, retro::Color);
 DECLARE_DEFINED_C_HANDLE(Retro_Vertex, retro::Vertex);
 DECLARE_DEFINED_C_HANDLE(Retro_ScreenLayout, retro::ScreenLayout);
+DECLARE_DEFINED_C_HANDLE(Retro_UVs, retro::UVs);
 
 using retro::from_c;
 using retro::to_c;
@@ -191,5 +192,11 @@ extern "C"
     {
         auto &geo = *from_c(node);
         geo.set_size(from_c(size));
+    }
+
+    void retro_sprite_set_uv_rect(Retro_Sprite *node, Retro_UVs uv_rect)
+    {
+        auto &sprite = *from_c(node);
+        sprite.set_uvs(from_c(uv_rect));
     }
 }

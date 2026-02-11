@@ -100,6 +100,8 @@ namespace retro
                                         .translation = transform.translation(),
                                         .pivot = node->pivot(),
                                         .size = node->size(),
+                                        .min_uv = node->uvs().min,
+                                        .max_uv = node->uvs().max,
                                         .tint = node->tint()};
 
             auto &[draw_texture, instances, viewport_draw_info] = batch_for_viewport[texture];
