@@ -97,6 +97,8 @@ extern "C"
 
     RETRO_API void retro_viewport_set_camera_layout(Retro_Viewport *viewport, const Retro_CameraLayout *layout);
 
+    RETRO_API void retro_viewport_set_z_order(Retro_Viewport *viewport, int32_t z_order);
+
     RETRO_API void retro_node_dispose(Retro_Scene *scene, Retro_Node *node);
 
     RETRO_API void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform);

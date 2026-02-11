@@ -109,6 +109,11 @@ extern "C"
         from_c(viewport)->set_camera_layout(from_c(*layout));
     }
 
+    void retro_viewport_set_z_order(Retro_Viewport *viewport, const int32_t z_order)
+    {
+        from_c(viewport)->set_z_order(z_order);
+    }
+
     void retro_node_dispose(Retro_Scene *scene, Retro_Node *node)
     {
         from_c(scene)->destroy_node(*from_c(node));

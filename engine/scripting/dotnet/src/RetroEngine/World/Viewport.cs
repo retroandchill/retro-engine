@@ -40,6 +40,17 @@ public sealed partial class Viewport : IDisposable
         }
     }
 
+    public int ZOrder
+    {
+        get;
+        set
+        {
+            ObjectDisposedException.ThrowIf(Disposed, this);
+            field = value;
+            NativeSetZOrder(NativeHandle, field);
+        }
+    }
+
     public CameraLayout CameraLayout
     {
         get;
@@ -100,6 +111,9 @@ public sealed partial class Viewport : IDisposable
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_screen_layout")]
     private static partial void NativeSetScreenLayout(IntPtr viewport, in ScreenLayout layout);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_z_order")]
+    private static partial void NativeSetZOrder(IntPtr viewport, int zOrder);
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_camera_layout")]
     private static partial void NativeSetCameraLayout(IntPtr viewport, in CameraLayout layout);

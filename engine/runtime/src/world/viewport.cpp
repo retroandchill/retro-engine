@@ -26,10 +26,18 @@ namespace retro
                      .height = static_cast<std::uint32_t>(relative_height)};
     }
 
+    void Viewport::set_z_order(const std::int32_t z_order) noexcept
+    {
+        z_order_ = z_order;
+        on_z_order_changed_(*this, z_order);
+    }
+
     Viewport &ViewportManager::create_viewport(const ScreenLayout &layout, std::int32_t z_order)
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
         on_viewport_created_(*new_viewport);
+        new_viewport->on_z_order_changed().add([this](Viewport &, std::int32_t) { sorted_ = false; });
+        sorted_ = false;
         return *new_viewport;
     }
 
@@ -46,5 +54,14 @@ namespace retro
             on_viewport_destroyed_(**it);
             viewports_.erase(it);
         }
+    }
+
+    void ViewportManager::sort_by_z_order()
+    {
+        if (sorted_)
+            return;
+
+        std::ranges::sort(viewports_, [](const auto &lhs, const auto &rhs) { return lhs->z_order_ < rhs->z_order_; });
+        sorted_ = true;
     }
 } // namespace retro

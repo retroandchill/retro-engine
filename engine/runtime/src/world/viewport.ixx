@@ -66,6 +66,8 @@ namespace retro
 
     export class RETRO_API Viewport final
     {
+        using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
+
       public:
         inline Viewport(const ScreenLayout &layout, const std::int32_t z_order)
             : screen_layout_{layout}, z_order_{z_order}
@@ -97,9 +99,11 @@ namespace retro
             return z_order_;
         }
 
-        inline void set_z_order(std::int32_t z_order) noexcept
+        void set_z_order(std::int32_t z_order) noexcept;
+
+        inline ZOrderChanged::RegistrationType on_z_order_changed()
         {
-            z_order_ = z_order;
+            return ZOrderChanged::RegistrationType{on_z_order_changed_};
         }
 
         [[nodiscard]] inline Optional<Scene &> scene() const noexcept
@@ -118,6 +122,7 @@ namespace retro
         ScreenLayout screen_layout_;
         CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
+        MulticastDelegate<void(Viewport &, std::int32_t)> on_z_order_changed_;
         Scene *scene_ = nullptr;
     };
 
@@ -145,9 +150,12 @@ namespace retro
             return OnViewportDelegate::RegistrationType{on_viewport_destroyed_};
         }
 
+        void sort_by_z_order();
+
       private:
         std::vector<std::unique_ptr<Viewport>> viewports_;
         OnViewportDelegate on_viewport_created_;
         OnViewportDelegate on_viewport_destroyed_;
+        bool sorted_ = false;
     };
 } // namespace retro
