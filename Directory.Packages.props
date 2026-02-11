@@ -20,5 +20,6 @@
     <PackageVersion Include="RhoMicro.CodeAnalysis.UtilityGenerators" Version="23.2.2" />
     <PackageVersion Include="System.CommandLine" Version="2.0.1" />
     <PackageVersion Include="System.Text.Json" Version="10.0.1" />
+    <PackageVersion Include="ZLinq" Version="1.5.4" />
   </ItemGroup>
 </Project>

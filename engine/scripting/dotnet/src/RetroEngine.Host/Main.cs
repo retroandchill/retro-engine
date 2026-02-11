@@ -16,7 +16,6 @@ namespace RetroEngine.Host;
 
 public static class Main
 {
-    private static GameThreadSynchronizationContext? _synchronizationContext;
     private static IGameSession? _gameSession;
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
@@ -40,10 +39,7 @@ public static class Main
                 Exit = &ShutdownScriptEngine,
             };
 
-            _synchronizationContext = new GameThreadSynchronizationContext();
-            _synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
-
-            SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+            Engine.Create();
 
             AssetRegistry.RegisterDefaultAssetFactories();
 
@@ -126,17 +122,14 @@ public static class Main
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static int Tick(float deltaTime, int maxTasks)
     {
-        var tasksCalled = _synchronizationContext?.Pump(maxTasks) ?? 0;
-        return tasksCalled;
+        return Engine.Instance.Tick(deltaTime, maxTasks);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     public static void ShutdownScriptEngine()
     {
+        Engine.RequestShutdown();
         _gameSession?.Terminate();
         _gameSession = null;
-
-        _synchronizationContext?.Dispose();
-        _synchronizationContext = null;
     }
 }

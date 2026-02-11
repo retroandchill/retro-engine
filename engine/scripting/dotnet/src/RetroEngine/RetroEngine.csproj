@@ -18,4 +18,7 @@
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="..\RetroEngine.Strings\RetroEngine.Strings.Native.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="ZLinq" />
+    </ItemGroup>
 </Project>
