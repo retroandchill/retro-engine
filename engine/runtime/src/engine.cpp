@@ -158,7 +158,6 @@ namespace retro
     {
         renderer_.begin_frame();
 
-        viewports_.sort_by_z_order();
         for (auto &viewport : viewports_.viewports())
         {
             auto scene = viewport->scene();

@@ -105,5 +105,6 @@ namespace retro
 
         ViewportRendererFactory &viewport_factory_;
         std::vector<std::unique_ptr<ViewportRenderer>> viewports_;
+        bool viewports_sorted_ = false;
     };
 } // namespace retro

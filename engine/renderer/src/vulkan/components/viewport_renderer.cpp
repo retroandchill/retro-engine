@@ -6,8 +6,6 @@
  */
 module retro.renderer.vulkan.components.viewport_renderer;
 
-import retro.core.math.vector;
-
 namespace retro
 {
     ViewportRenderer::ViewportRenderer(const Viewport &viewport,
@@ -21,32 +19,27 @@ namespace retro
     {
     }
 
-    void ViewportRenderer::record_command_buffer(const vk::RenderPass render_pass,
-                                                 const vk::CommandBuffer cmd,
-                                                 const vk::Framebuffer framebuffer,
-                                                 const vk::DescriptorPool descriptor_pool)
+    void ViewportRenderer::render_viewport(const vk::CommandBuffer cmd,
+                                           const Vector2u &framebuffer_size,
+                                           const vk::DescriptorPool descriptor_pool)
     {
-        // ReSharper disable once CppDFAUnusedValue
-        // ReSharper disable once CppDFAUnreadVariable
-        vk::ClearValue color_clear_value{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
-        vk::ClearValue depth_clear_value{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f}};
+        auto [x, y, width, height] = viewport_.screen_layout().to_screen_rect(framebuffer_size);
 
-        std::array clear_values = {color_clear_value, depth_clear_value};
+        // Set viewport and scissor for this viewport only
+        const vk::Viewport vp{.x = static_cast<float>(x),
+                              .y = static_cast<float>(y),
+                              .width = static_cast<float>(width),
+                              .height = static_cast<float>(height),
+                              .minDepth = 0.0f,
+                              .maxDepth = 1.0f};
 
-        auto [screen_width, screen_height] = swapchain_.extent();
-        auto [x, y, width, height] = viewport_.screen_layout().to_screen_rect(Vector2u{screen_width, screen_height});
+        const vk::Rect2D scissor{.offset = vk::Offset2D{.x = x, .y = y},
+                                 .extent = vk::Extent2D{.width = width, .height = height}};
 
-        const vk::RenderPassBeginInfo rp_info{.renderPass = render_pass,
-                                              .framebuffer = framebuffer,
-                                              .renderArea =
-                                                  vk::Rect2D{.offset = vk::Offset2D{.x = x, .y = y},
-                                                             .extent = vk::Extent2D{.width = width, .height = height}},
-                                              .clearValueCount = clear_values.size(),
-                                              .pClearValues = clear_values.data()};
+        cmd.setViewport(0, vp);
+        cmd.setScissor(0, scissor);
 
-        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-        pipeline_manager_.bind_and_render(cmd, Vector2u{width, height}, viewport_, descriptor_pool, buffer_manager_);
-        cmd.endRenderPass();
+        pipeline_manager_.bind_and_render(cmd, framebuffer_size, viewport_, descriptor_pool, buffer_manager_);
     }
 
     ViewportRendererFactory::ViewportRendererFactory(VulkanDevice &device,

@@ -8,6 +8,7 @@ export module retro.renderer.vulkan.components.viewport_renderer;
 
 import vulkan_hpp;
 import retro.core.di;
+import retro.core.math.vector;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.swapchain;
@@ -31,10 +32,9 @@ namespace retro
             return viewport_;
         }
 
-        void record_command_buffer(vk::RenderPass render_pass,
-                                   vk::CommandBuffer cmd,
-                                   vk::Framebuffer framebuffer,
-                                   vk::DescriptorPool descriptor_pool);
+        void render_viewport(vk::CommandBuffer cmd,
+                             const Vector2u &framebuffer_size,
+                             vk::DescriptorPool descriptor_pool);
 
       private:
         const Viewport &viewport_;

@@ -36,8 +36,6 @@ namespace retro
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
         on_viewport_created_(*new_viewport);
-        new_viewport->on_z_order_changed().add([this](Viewport &, std::int32_t) { sorted_ = false; });
-        sorted_ = false;
         return *new_viewport;
     }
 
@@ -54,14 +52,5 @@ namespace retro
             on_viewport_destroyed_(**it);
             viewports_.erase(it);
         }
-    }
-
-    void ViewportManager::sort_by_z_order()
-    {
-        if (sorted_)
-            return;
-
-        std::ranges::sort(viewports_, [](const auto &lhs, const auto &rhs) { return lhs->z_order_ < rhs->z_order_; });
-        sorted_ = true;
     }
 } // namespace retro

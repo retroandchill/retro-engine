@@ -337,6 +337,8 @@ namespace retro
     void VulkanRenderer2D::add_viewport(Viewport &viewport)
     {
         viewports_.emplace_back(viewport_factory_.create(viewport));
+        viewport.on_z_order_changed().add([this](Viewport &, std::int32_t) { viewports_sorted_ = false; });
+        viewports_sorted_ = false;
     }
 
     void VulkanRenderer2D::remove_viewport(Viewport &viewport)
@@ -397,13 +399,42 @@ namespace retro
 
         cmd.begin(begin_info);
 
+        if (!viewports_sorted_)
+        {
+            using PtrType = std::unique_ptr<ViewportRenderer>;
+            std::ranges::sort(viewports_,
+                              [](const PtrType &a, const PtrType &b)
+                              { return a->viewport().z_order() < b->viewport().z_order(); });
+            viewports_sorted_ = true;
+        }
+
+        // ReSharper disable once CppDFAUnusedValue
+        // ReSharper disable once CppDFAUnreadVariable
+        vk::ClearValue color_clear_value{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
+        vk::ClearValue depth_clear_value{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f}};
+
+        std::array clear_values = {color_clear_value, depth_clear_value};
+
+        auto [screen_width, screen_height] = swapchain_.extent();
+
+        const vk::RenderPassBeginInfo rp_info{
+            .renderPass = render_pass_.get(),
+            .framebuffer = framebuffers_.at(image_index).get(),
+            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = 0, .y = 0},
+                                     .extent = vk::Extent2D{.width = screen_width, .height = screen_height}},
+            .clearValueCount = clear_values.size(),
+            .pClearValues = clear_values.data()};
+
+        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
+
         for (const auto &viewport : viewports_)
         {
-            viewport->record_command_buffer(render_pass_.get(),
-                                            cmd,
-                                            framebuffers_.at(image_index).get(),
-                                            sync_.descriptor_pool(current_frame_));
+            viewport->render_viewport(cmd,
+                                      Vector2u{screen_width, screen_height},
+                                      sync_.descriptor_pool(current_frame_));
         }
+
+        cmd.endRenderPass();
 
         cmd.end();
     }

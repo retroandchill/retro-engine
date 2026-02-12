@@ -150,12 +150,9 @@ namespace retro
             return OnViewportDelegate::RegistrationType{on_viewport_destroyed_};
         }
 
-        void sort_by_z_order();
-
       private:
         std::vector<std::unique_ptr<Viewport>> viewports_;
         OnViewportDelegate on_viewport_created_;
         OnViewportDelegate on_viewport_destroyed_;
-        bool sorted_ = false;
     };
 } // namespace retro
