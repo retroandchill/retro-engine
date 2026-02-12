@@ -1,4 +1,0 @@
-﻿pathspec>=0.12.1
-pqdm>=0.2.0
-autopep8>=2.3.2
-pre-commit>=4.5.1
