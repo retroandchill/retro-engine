@@ -1,3 +1,5 @@
+#ifndef COMMON_CAMERA
+#define COMMON_CAMERA
 struct CameraData {
     vec2 viewportSize;
     vec2 cameraPosition;
@@ -20,3 +22,4 @@ vec2 translate_to_camera_space(in CameraData sceneData, in vec2 worldPos) {
 
     return cameraRotatedPos * sceneData.cameraZoom;
 }
+#endif

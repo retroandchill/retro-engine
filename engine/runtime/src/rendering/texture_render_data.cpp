@@ -24,18 +24,20 @@ namespace retro
     std::expected<ImageData, std::string_view> ImageData::create_from_memory(std::span<const std::byte> bytes) noexcept
     {
         ImageData result{};
+        std::int32_t channels;
         auto *image_data = stbi_load_from_memory(reinterpret_cast<stbi_uc const *>(bytes.data()),
                                                  static_cast<std::int32_t>(bytes.size()),
                                                  &result.width_,
                                                  &result.height_,
-                                                 &result.channels_,
-                                                 0);
+                                                 &channels,
+                                                 4);
 
         if (image_data == nullptr)
         {
             return std::unexpected{stbi_failure_reason()};
         }
 
+        result.channels_ = 4;
         result.image_data_.reset(reinterpret_cast<std::byte *>(image_data));
 
         return std::move(result);

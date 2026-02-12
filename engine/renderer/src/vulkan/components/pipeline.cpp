@@ -459,6 +459,12 @@ namespace retro
                                                              .attachmentCount = 1,
                                                              .pAttachments = &color_blend_attachment};
 
+        vk::PipelineDepthStencilStateCreateInfo depth_stencil{.depthTestEnable = vk::True,
+                                                              .depthWriteEnable = vk::True,
+                                                              .depthCompareOp = vk::CompareOp::eLess,
+                                                              .depthBoundsTestEnable = vk::False,
+                                                              .stencilTestEnable = vk::False};
+
         vk::GraphicsPipelineCreateInfo pipeline_info{.stageCount = static_cast<std::uint32_t>(shader_stages.size()),
                                                      .pStages = shader_stages.data(),
                                                      .pVertexInputState = &vertex_input_info,
@@ -466,6 +472,7 @@ namespace retro
                                                      .pViewportState = &viewport_state,
                                                      .pRasterizationState = &rasterizer,
                                                      .pMultisampleState = &multisampling,
+                                                     .pDepthStencilState = &depth_stencil,
                                                      .pColorBlendState = &color_blending,
                                                      .layout = layout,
                                                      .renderPass = render_pass,

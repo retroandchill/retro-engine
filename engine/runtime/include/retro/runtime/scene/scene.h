@@ -103,7 +103,13 @@ extern "C"
 
     RETRO_API void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform);
 
-    RETRO_API Retro_Geometry *retro_geometry_create(Retro_Scene *scene, Retro_Node *parent);
+    RETRO_API int32_t retro_node_set_z_order(Retro_Node *node, int32_t z_order);
+
+    RETRO_API void retro_node_attach_to_parent(Retro_Node *node, Retro_Node *parent);
+
+    RETRO_API void retro_node_detach_from_parent(Retro_Node *node);
+
+    RETRO_API Retro_Geometry *retro_geometry_create(Retro_Scene *scene);
 
     RETRO_API void retro_geometry_set_type(Retro_Geometry *node, Retro_GeometryType type);
 
@@ -119,7 +125,7 @@ extern "C"
 
     RETRO_API void retro_geometry_set_size(Retro_Geometry *node, Retro_Vector2f size);
 
-    RETRO_API Retro_Sprite *retro_sprite_create(Retro_Scene *scene, Retro_Node *parent);
+    RETRO_API Retro_Sprite *retro_sprite_create(Retro_Scene *scene);
 
     RETRO_API void retro_sprite_set_texture(Retro_Sprite *node, Retro_Texture *texture);
 

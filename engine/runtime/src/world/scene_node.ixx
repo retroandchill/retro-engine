@@ -53,6 +53,13 @@ namespace retro
             return world_transform_;
         }
 
+        [[nodiscard]] inline std::int32_t z_order() const noexcept
+        {
+            return z_order_;
+        }
+
+        void set_z_order(const std::int32_t z_order);
+
         void attach_to_parent(SceneNode *parent);
         void detach_from_parent();
 
@@ -66,6 +73,7 @@ namespace retro
         std::vector<SceneNode *> children_;
         Transform2f transform_{};
         Transform2f world_transform_{};
+        std::int32_t z_order_{0};
     };
 
     class RETRO_API SceneNodeList

@@ -10,12 +10,21 @@ module;
 
 module retro.runtime.world.scene_node;
 
+import retro.core.math.operations;
+
 namespace retro
 {
     void SceneNode::set_transform(const Transform2f &transform)
     {
         transform_ = transform;
         update_world_transform();
+    }
+
+    void SceneNode::set_z_order(const std::int32_t z_order)
+    {
+        static constexpr std::int32_t max_z_order = 500000;
+        static constexpr std::int32_t min_z_order = -max_z_order;
+        z_order_ = clamp(z_order, min_z_order, max_z_order);
     }
 
     void SceneNode::attach_to_parent(SceneNode *parent)

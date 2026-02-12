@@ -75,8 +75,8 @@ public partial class Sprite : SceneObject
         }
     }
 
-    private Sprite(Scene scene, IntPtr parent)
-        : base(scene, NativeCreate(scene.NativeHandle, parent))
+    private Sprite(Scene scene, SceneObject? parent)
+        : base(scene, parent, NativeCreate(scene.NativeHandle, parent?.NativeObject ?? IntPtr.Zero))
     {
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);
@@ -84,10 +84,10 @@ public partial class Sprite : SceneObject
     }
 
     public Sprite(Scene scene)
-        : this(scene, IntPtr.Zero) { }
+        : this(scene, null) { }
 
     public Sprite(SceneObject parent)
-        : this(parent.Scene, parent.NativeObject) { }
+        : this(parent.Scene, parent) { }
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(IntPtr scene, IntPtr id);

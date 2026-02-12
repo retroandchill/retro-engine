@@ -39,17 +39,26 @@ namespace retro
         {
             return extent_;
         }
-        [[nodiscard]] inline const std::vector<vk::UniqueImageView> &image_views() const noexcept
+
+        [[nodiscard]] inline std::span<const vk::UniqueImageView> color_image_views() const noexcept
         {
-            return image_views_;
+            return color_image_views_;
+        }
+
+        [[nodiscard]] inline std::span<const vk::UniqueImageView> depth_image_views() const noexcept
+        {
+            return depth_image_views_;
         }
 
       private:
         void create_image_views(vk::Device device);
 
         vk::UniqueSwapchainKHR swapchain_{};
-        std::vector<vk::Image> images_;
-        std::vector<vk::UniqueImageView> image_views_;
+        std::vector<vk::Image> color_images_;
+        std::vector<vk::UniqueImageView> color_image_views_;
+        std::vector<vk::UniqueImage> depth_images_;
+        std::vector<vk::UniqueDeviceMemory> depth_image_memory_;
+        std::vector<vk::UniqueImageView> depth_image_views_;
         vk::Format format_{vk::Format::eUndefined};
         vk::Extent2D extent_{};
     };

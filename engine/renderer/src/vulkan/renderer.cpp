@@ -20,34 +20,52 @@ namespace retro
 {
     namespace
     {
-        vk::UniqueRenderPass create_render_pass(vk::Device device,
-                                                vk::Format color_format,
-                                                vk::SampleCountFlagBits samples)
+        vk::UniqueRenderPass create_render_pass(const vk::Device device,
+                                                const vk::Format color_format,
+                                                const vk::SampleCountFlagBits samples)
         {
-            vk::AttachmentDescription color_attachment{{},
-                                                       color_format,
-                                                       samples,
-                                                       vk::AttachmentLoadOp::eClear,
-                                                       vk::AttachmentStoreOp::eStore,
-                                                       vk::AttachmentLoadOp::eDontCare,
-                                                       vk::AttachmentStoreOp::eDontCare,
-                                                       vk::ImageLayout::eUndefined,
-                                                       vk::ImageLayout::ePresentSrcKHR};
+            const vk::AttachmentDescription color_attachment{.format = color_format,
+                                                             .samples = samples,
+                                                             .loadOp = vk::AttachmentLoadOp::eClear,
+                                                             .storeOp = vk::AttachmentStoreOp::eStore,
+                                                             .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+                                                             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+                                                             .initialLayout = vk::ImageLayout::eUndefined,
+                                                             .finalLayout = vk::ImageLayout::ePresentSrcKHR};
 
-            vk::AttachmentReference color_ref{0, vk::ImageLayout::eColorAttachmentOptimal};
+            const vk::AttachmentDescription depth_attachment{.format = vk::Format::eD32Sfloat,
+                                                             .samples = samples,
+                                                             .loadOp = vk::AttachmentLoadOp::eClear,
+                                                             .storeOp = vk::AttachmentStoreOp::eDontCare,
+                                                             .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+                                                             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+                                                             .initialLayout = vk::ImageLayout::eUndefined,
+                                                             .finalLayout =
+                                                                 vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-            vk::SubpassDescription subpass{{}, vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &color_ref};
+            std::array attachments = {color_attachment, depth_attachment};
 
-            vk::SubpassDependency dependency{vk::SubpassExternal,
-                                             0,
-                                             vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                             vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                             vk::AccessFlagBits::eNone,
-                                             vk::AccessFlagBits::eColorAttachmentWrite,
-                                             vk::DependencyFlagBits::eByRegion};
+            vk::AttachmentReference color_ref{.attachment = 0, .layout = vk::ImageLayout::eColorAttachmentOptimal};
+            vk::AttachmentReference depth_ref{.attachment = 1,
+                                              .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
-            vk::RenderPassCreateInfo rp_info{.attachmentCount = 1,
-                                             .pAttachments = &color_attachment,
+            vk::SubpassDescription subpass{.pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
+                                           .colorAttachmentCount = 1,
+                                           .pColorAttachments = &color_ref,
+                                           .pDepthStencilAttachment = &depth_ref};
+
+            vk::SubpassDependency dependency{.srcSubpass = vk::SubpassExternal,
+                                             .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+                                                             vk::PipelineStageFlagBits::eEarlyFragmentTests,
+                                             .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+                                                             vk::PipelineStageFlagBits::eEarlyFragmentTests,
+                                             .srcAccessMask = vk::AccessFlagBits::eNone,
+                                             .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite |
+                                                              vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                                             .dependencyFlags = vk::DependencyFlagBits::eByRegion};
+
+            vk::RenderPassCreateInfo rp_info{.attachmentCount = attachments.size(),
+                                             .pAttachments = attachments.data(),
                                              .subpassCount = 1,
                                              .pSubpasses = &subpass,
                                              .dependencyCount = 1,
@@ -60,18 +78,19 @@ namespace retro
                                                                vk::RenderPass render_pass,
                                                                const VulkanSwapchain &swapchain)
         {
-            return swapchain.image_views() |
+            return std::views::zip(swapchain.color_image_views(), swapchain.depth_image_views()) |
                    std::views::transform(
-                       [device, render_pass, &swapchain](const vk::UniqueImageView &image)
+                       [device, render_pass, &swapchain](
+                           const std::tuple<const vk::UniqueImageView &, const vk::UniqueImageView &> &images)
                        {
-                           std::array attachments = {image.get()};
+                           std::array attachments = {std::get<0>(images).get(), std::get<1>(images).get()};
 
-                           vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
-                                                             .attachmentCount = attachments.size(),
-                                                             .pAttachments = attachments.data(),
-                                                             .width = swapchain.extent().width,
-                                                             .height = swapchain.extent().height,
-                                                             .layers = 1};
+                           const vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
+                                                                   .attachmentCount = attachments.size(),
+                                                                   .pAttachments = attachments.data(),
+                                                                   .width = swapchain.extent().width,
+                                                                   .height = swapchain.extent().height,
+                                                                   .layers = 1};
 
                            return device.createFramebufferUnique(fb_info);
                        }) |
@@ -94,7 +113,7 @@ namespace retro
           sync_(SyncConfig{
               .device = device_.device(),
               .frames_in_flight = MAX_FRAMES_IN_FLIGHT,
-              .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.image_views().size()),
+              .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.color_image_views().size()),
           }),
           linear_sampler_{create_linear_sampler()}, pipeline_manager_{pipeline_manager},
           viewport_factory_{viewport_factory}

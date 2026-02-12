@@ -8,4 +8,8 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     outColor = vColor;
+
+    if (outColor.a < 0.001) {
+        discard;
+    }
 }

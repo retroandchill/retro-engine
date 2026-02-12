@@ -49,6 +49,7 @@ namespace retro
     {
         alignas(16) Matrix2x2f transform{};
         alignas(8) Vector2f translation{};
+        std::int32_t z_order{};
         alignas(8) Vector2f pivot{};
         alignas(8) Vector2f size{1, 1};
         alignas(16) Color color{1, 1, 1, 1};

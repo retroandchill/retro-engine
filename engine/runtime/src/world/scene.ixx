@@ -24,13 +24,12 @@ namespace retro
       public:
         template <std::derived_from<SceneNode> T, typename... Args>
             requires std::constructible_from<T, Args...>
-        T &create_node(SceneNode *parent, Args &&...args)
+        T &create_node(Args &&...args)
         {
             auto node = std::make_unique<T>(std::forward<Args>(args)...);
 
             T &ref = *node;
 
-            ref.attach_to_parent(parent);
             nodes_.add(std::move(node));
             return ref;
         }

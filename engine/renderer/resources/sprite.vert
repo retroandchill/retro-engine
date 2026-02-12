@@ -1,13 +1,15 @@
 #version 450
 #include "common/camera.glsl"
+#include "common/depth.glsl"
 
 layout(location = 0) in mat2 inTransform;
 layout(location = 2) in vec2 inTranslation;
-layout(location = 3) in vec2 inPivot;
-layout(location = 4) in vec2 inSize;
-layout(location = 5) in vec2 inMinUV;
-layout(location = 6) in vec2 inMaxUV;
-layout(location = 7) in vec4 inTint;
+layout(location = 3) in int inZOrder;
+layout(location = 4) in vec2 inPivot;
+layout(location = 5) in vec2 inSize;
+layout(location = 6) in vec2 inMinUV;
+layout(location = 7) in vec2 inMaxUV;
+layout(location = 8) in vec4 inTint;
 
 layout(location = 0) out vec2 vUV;
 layout(location = 1) out vec4 vTint;
@@ -34,7 +36,8 @@ void main() {
     vec2 cameraFinalPos = translate_to_camera_space(uData, spriteWorldPos);
 
     vec2 ndc = cameraFinalPos * 2.0 - 1.0;
-    gl_Position = vec4(ndc, 0.0, 1.0);
+    float depth = calculateDepth(inZOrder);
+    gl_Position = vec4(ndc, depth, 1.0);
 
     vUV = inMinUV + ((inMaxUV - inMinUV) * position);
     vTint = inTint;

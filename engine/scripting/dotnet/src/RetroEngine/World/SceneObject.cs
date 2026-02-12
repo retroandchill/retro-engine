@@ -10,10 +10,11 @@ namespace RetroEngine.World;
 
 public abstract partial class SceneObject : IDisposable
 {
-    protected SceneObject(Scene scene, IntPtr id)
+    protected SceneObject(Scene scene, SceneObject? parent, IntPtr id)
     {
         Scene = scene;
         NativeObject = id;
+        Parent = parent;
         Scale = Vector2F.One;
     }
 
@@ -25,6 +26,24 @@ public abstract partial class SceneObject : IDisposable
     {
         get => field || Scene.Disposed;
         private set;
+    }
+
+    public SceneObject? Parent
+    {
+        get;
+        set
+        {
+            ThrowIfDisposed();
+            field = value;
+            if (field is not null)
+            {
+                NativeAttachToParent(NativeObject, field.NativeObject);
+            }
+            else
+            {
+                NativeDetachFromParent(NativeObject);
+            }
+        }
     }
 
     public Transform Transform
@@ -56,6 +75,16 @@ public abstract partial class SceneObject : IDisposable
         set => Transform = Transform with { Scale = value };
     }
 
+    public int ZOrder
+    {
+        get;
+        set
+        {
+            ThrowIfDisposed();
+            field = NativeSetZOrder(NativeObject, value);
+        }
+    }
+
     protected void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(Scene.Disposed, Scene);
@@ -76,6 +105,15 @@ public abstract partial class SceneObject : IDisposable
 
     [LibraryImport(LibraryName, EntryPoint = "retro_node_set_transform")]
     private static partial void NativeSetTransform(IntPtr obj, in Transform transform);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_node_set_z_order")]
+    private static partial int NativeSetZOrder(IntPtr obj, int zOrder);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_node_attach_to_parent")]
+    private static partial void NativeAttachToParent(IntPtr obj, IntPtr parent);
+
+    [LibraryImport(LibraryName, EntryPoint = "retro_node_detach_from_parent")]
+    private static partial void NativeDetachFromParent(IntPtr obj);
 
     [LibraryImport(LibraryName, EntryPoint = "retro_node_dispose")]
     private static partial void NativeDispose(IntPtr obj);

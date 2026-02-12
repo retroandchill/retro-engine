@@ -28,7 +28,10 @@ namespace retro
     {
         // ReSharper disable once CppDFAUnusedValue
         // ReSharper disable once CppDFAUnreadVariable
-        vk::ClearValue clear{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
+        vk::ClearValue color_clear_value{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
+        vk::ClearValue depth_clear_value{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f}};
+
+        std::array clear_values = {color_clear_value, depth_clear_value};
 
         auto [screen_width, screen_height] = swapchain_.extent();
         auto [x, y, width, height] = viewport_.screen_layout().to_screen_rect(Vector2u{screen_width, screen_height});
@@ -38,8 +41,8 @@ namespace retro
                                               .renderArea =
                                                   vk::Rect2D{.offset = vk::Offset2D{.x = x, .y = y},
                                                              .extent = vk::Extent2D{.width = width, .height = height}},
-                                              .clearValueCount = 1,
-                                              .pClearValues = &clear};
+                                              .clearValueCount = clear_values.size(),
+                                              .pClearValues = clear_values.data()};
 
         cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
         pipeline_manager_.bind_and_render(cmd, Vector2u{width, height}, viewport_, descriptor_pool, buffer_manager_);

@@ -50,6 +50,9 @@ namespace retro
                         VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, translation)},
+                        VertexAttribute{.type = ShaderDataType::int32,
+                                        .size = sizeof(std::int32_t),
+                                        .offset = offsetof(SpriteInstanceData, z_order)},
                         VertexAttribute{.type = ShaderDataType::vec2,
                                         .size = sizeof(Vector2f),
                                         .offset = offsetof(SpriteInstanceData, pivot)},
@@ -98,6 +101,7 @@ namespace retro
 
             SpriteInstanceData instance{.transform = transform.matrix(),
                                         .translation = transform.translation(),
+                                        .z_order = node->z_order(),
                                         .pivot = node->pivot(),
                                         .size = node->size(),
                                         .min_uv = node->uvs().min,

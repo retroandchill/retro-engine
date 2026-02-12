@@ -125,10 +125,29 @@ extern "C"
         scene_node->set_transform(from_c(*transform));
     }
 
-    Retro_Geometry *retro_geometry_create(Retro_Scene *scene, Retro_Node *parent)
+    int32_t retro_node_set_z_order(Retro_Node *node, const int32_t z_order)
+    {
+        auto *scene_node = from_c(node);
+        scene_node->set_z_order(z_order);
+        return scene_node->z_order();
+    }
+
+    void retro_node_attach_to_parent(Retro_Node *node, Retro_Node *parent)
     {
         auto *parent_ptr = from_c(parent);
-        auto &geo = from_c(scene)->create_node<retro::GeometryObject>(parent_ptr);
+        auto *scene_node = from_c(node);
+        scene_node->attach_to_parent(parent_ptr);
+    }
+
+    void retro_node_detach_from_parent(Retro_Node *node)
+    {
+        auto *scene_node = from_c(node);
+        scene_node->detach_from_parent();
+    }
+
+    Retro_Geometry *retro_geometry_create(Retro_Scene *scene)
+    {
+        auto &geo = from_c(scene)->create_node<retro::GeometryObject>();
         return to_c(&geo);
     }
 
@@ -168,10 +187,9 @@ extern "C"
         geo.set_size(from_c(size));
     }
 
-    Retro_Sprite *retro_sprite_create(Retro_Scene *scene, Retro_Node *parent)
+    Retro_Sprite *retro_sprite_create(Retro_Scene *scene)
     {
-        auto *parent_ptr = from_c(parent);
-        auto &sprite = from_c(scene)->create_node<retro::Sprite>(parent_ptr);
+        auto &sprite = from_c(scene)->create_node<retro::Sprite>();
         return to_c(&sprite);
     }
 
