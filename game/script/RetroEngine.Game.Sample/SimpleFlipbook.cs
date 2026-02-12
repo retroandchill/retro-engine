@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Tickables;
 using RetroEngine.World;
@@ -24,6 +25,12 @@ public sealed class SimpleFlipbook : ITickable, IDisposable
     private float _timeSinceLastFrame;
     private int _currentFrame;
     private readonly int _frameCount;
+
+    public Color Tint
+    {
+        get => _sprite.Tint;
+        set => _sprite.Tint = value;
+    }
 
     public Vector2F Scale
     {

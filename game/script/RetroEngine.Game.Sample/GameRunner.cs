@@ -4,6 +4,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Logging;
 using RetroEngine.World;
@@ -30,7 +31,9 @@ public sealed class GameRunner : IGameSession
         }
         var backgroundTexture = Asset.Load<Texture>(new AssetPath("graphics", "background.png"));
 
-        _sceneObjects.Add(new SimpleFlipbook(_scene, eeveeTexture, 10.0f) { Scale = new Vector2F(3, 3) });
+        _sceneObjects.Add(
+            new SimpleFlipbook(_scene, eeveeTexture, 10.0f) { Scale = new Vector2F(3, 3), Tint = new Color(1, 1, 1) }
+        );
         _sceneObjects.Add(
             new Sprite(_scene)
             {
