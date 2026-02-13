@@ -7,6 +7,12 @@
     <BuildType Name="Managed-Debug" />
     <BuildType Name="Managed-Release" />
   </Configurations>
+  <Folder Name="/editor/" />
+  <Folder Name="/editor/dotnet/">
+    <Project Path="editor/dotnet/RetroEngine.Editor/RetroEngine.Editor.csproj">
+      <BuildType Project="Debug" />
+    </Project>
+  </Folder>
   <Folder Name="/engine/" />
   <Folder Name="/engine/scripting/" />
   <Folder Name="/engine/scripting/dotnet/" />
