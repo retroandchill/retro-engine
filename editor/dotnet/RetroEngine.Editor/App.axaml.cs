@@ -1,7 +1,6 @@
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using RetroEngine.Editor.ViewModels;
@@ -9,7 +8,7 @@ using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
 
-public partial class App : Application
+public class App : Application
 {
     public override void Initialize()
     {
@@ -29,7 +28,7 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void DisableAvaloniaDataAnnotationValidation()
+    private static void DisableAvaloniaDataAnnotationValidation()
     {
         // Get an array of plugins to remove
         var dataValidationPluginsToRemove = BindingPlugins
