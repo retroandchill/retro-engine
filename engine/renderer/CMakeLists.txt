@@ -52,6 +52,7 @@ set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
         src/vulkan/services.cpp
         src/vulkan/components/instance.cpp
         src/vulkan/components/viewport_renderer.cpp
+        src/vulkan/components/surface.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
@@ -72,6 +73,7 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         src/vulkan/services.ixx
         src/vulkan/components/instance.ixx
         src/vulkan/components/viewport_renderer.ixx
+        src/vulkan/components/surface.ixx
 )
 
 add_library(retro_renderer

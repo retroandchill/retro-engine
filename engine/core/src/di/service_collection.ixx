@@ -174,6 +174,26 @@ namespace retro
                        });
         }
 
+        template <typename T>
+        ServiceCollection &add(T &ref)
+        {
+            if constexpr (SharedFromThisCapable<T>)
+            {
+                return add(ref.shared_from_this());
+            }
+            else if constexpr (RefCounted<T>)
+            {
+                return add(RefCountPtr<T>(std::addressof(ref)));
+            }
+            else
+            {
+                registrations_.emplace_back(std::in_place_type<InstanceServiceCallSite>,
+                                            registration_depth_,
+                                            ServiceInstance::from_raw<T>(std::addressof(ref)));
+                return *this;
+            }
+        }
+
         template <typename T, typename... Args>
             requires std::constructible_from<T, Args...>
         ServiceCollection &add(std::in_place_t, Args &&...args)
@@ -205,6 +225,15 @@ namespace retro
             registrations_.emplace_back(std::in_place_type<InstanceServiceCallSite>,
                                         registration_depth_,
                                         ServiceInstance::from_unique<T>(std::move(ptr)));
+            return *this;
+        }
+
+        template <RefCounted T>
+        ServiceCollection &add(RefCountPtr<T> ptr)
+        {
+            registrations_.emplace_back(std::in_place_type<InstanceServiceCallSite>,
+                                        registration_depth_,
+                                        ServiceInstance::from_intrusive<T>(std::move(ptr)));
             return *this;
         }
 

@@ -4,10 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/exports.h"
-
 export module retro.platform.window;
 
 import std;
@@ -59,7 +55,6 @@ namespace retro
         std::int32_t height = 720;
         CStringView title{"Game"};
         WindowFlags flags = WindowFlags::resizable;
-        WindowBackend backend = WindowBackend::sdl3;
     };
 
     export class Window

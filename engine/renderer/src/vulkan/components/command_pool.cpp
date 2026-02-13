@@ -28,10 +28,9 @@ namespace retro
 
         buffers_.resize(cfg.buffer_count);
 
-        vk::CommandBufferAllocateInfo alloc_info{.commandPool = pool_.get(),
-                                                 .level = vk::CommandBufferLevel::ePrimary,
-                                                 .commandBufferCount = cfg.buffer_count};
-
-        buffers_ = cfg.device.allocateCommandBuffersUnique(alloc_info);
+        buffers_ = cfg.device.allocateCommandBuffersUnique(
+            vk::CommandBufferAllocateInfo{.commandPool = pool_.get(),
+                                          .level = vk::CommandBufferLevel::ePrimary,
+                                          .commandBufferCount = cfg.buffer_count});
     }
 } // namespace retro

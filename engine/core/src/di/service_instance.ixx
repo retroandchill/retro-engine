@@ -92,13 +92,7 @@ namespace retro
         static std::shared_ptr<ServiceInstance> from_smart_handle(T handle);
 
         template <typename T>
-        static std::shared_ptr<ServiceInstance> from_raw(T *p) noexcept
-        {
-            return from_raw<T, T>(p);
-        }
-
-        template <typename T, std::derived_from<T> Impl>
-        static std::shared_ptr<ServiceInstance> from_raw(Impl *p) noexcept;
+        static std::shared_ptr<ServiceInstance> from_raw(T *p) noexcept;
 
         template <typename T, typename Deleter>
         static std::shared_ptr<ServiceInstance> from_raw(T *p, Deleter deleter) noexcept
@@ -246,8 +240,8 @@ namespace retro
         return std::make_shared<SmartHandleServiceInstance<T>>(std::move(handle));
     }
 
-    template <typename T, std::derived_from<T> Impl>
-    std::shared_ptr<ServiceInstance> ServiceInstance::from_raw(Impl *p) noexcept
+    template <typename T>
+    std::shared_ptr<ServiceInstance> ServiceInstance::from_raw(T *p) noexcept
     {
         return std::make_shared<NonOwningServiceInstance>(std::in_place_type<T>, p);
     }

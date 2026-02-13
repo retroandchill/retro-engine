@@ -55,6 +55,13 @@ namespace retro
     concept WeakPtrLike = IsStdWeakPtr<std::remove_cvref_t<T>>::value;
 
     export template <typename T>
+    concept SharedFromThisCapable = requires(T &t) {
+        {
+            t.shared_from_this()
+        } -> SharedPtrLike;
+    };
+
+    export template <typename T>
     concept WeakFromThisCapable = requires(T &t) {
         {
             t.weak_from_this()

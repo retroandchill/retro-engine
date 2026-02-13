@@ -21,13 +21,14 @@ int main()
 
     init_logger();
 
-    auto platform_backend =
+    const auto platform_backend =
         PlatformBackend::create({.kind = PlatformBackendKind::sdl3, .flags = PlatformInitFlags::video});
 
     try
     {
         const auto window = platform_backend->create_window({.flags = WindowFlags::resizable | WindowFlags::vulkan});
         ServiceCollection service_collection;
+        service_collection.add(*platform_backend);
         add_engine_services(service_collection);
         add_rendering_services(service_collection, window);
         add_scripting_services(service_collection);

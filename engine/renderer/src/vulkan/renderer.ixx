@@ -86,7 +86,6 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-      private:
         Window &window_;
 
         vk::SurfaceKHR surface_;
