@@ -41,38 +41,38 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
         COMMENT "Copying compiled shaders to runtime directory"
 )
 
-set(RETRO_RENDERER_SOURCES src/vulkan/renderer.cpp
-        src/vulkan/components/sync.cpp
-        src/vulkan/components/pipeline.cpp
-        src/vulkan/components/device.cpp
-        src/vulkan/components/swapchain.cpp
-        src/vulkan/components/buffer_manager.cpp
-        src/services.cpp
-        src/vulkan/services.cpp
-        src/vulkan/components/instance.cpp
-        src/vulkan/components/viewport_renderer.cpp
-        src/vulkan/components/surface.cpp
-        src/vulkan/texture_manager.cpp
+set(RETRO_RENDERER_SOURCES private/src/vulkan/renderer.cpp
+        private/src/vulkan/components/sync.cpp
+        private/src/vulkan/components/pipeline.cpp
+        private/src/vulkan/components/device.cpp
+        private/src/vulkan/components/swapchain.cpp
+        private/src/vulkan/components/buffer_manager.cpp
+        private/src/services.cpp
+        private/src/vulkan/services.cpp
+        private/src/vulkan/components/instance.cpp
+        private/src/vulkan/components/viewport_renderer.cpp
+        private/src/vulkan/components/surface.cpp
+        private/src/vulkan/texture_manager.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
 
 set(RETRO_RENDERER_PUBLIC_MODULES
-        src/services.ixx
+        public/src/services.ixx
 )
 
 set(RETRO_RENDERER_PRIVATE_MODULES
-        src/vulkan/renderer.ixx
-        src/vulkan/components/sync.ixx
-        src/vulkan/components/pipeline.ixx
-        src/vulkan/components/device.ixx
-        src/vulkan/components/swapchain.ixx
-        src/vulkan/components/buffer_manager.ixx
-        src/vulkan/services.ixx
-        src/vulkan/components/instance.ixx
-        src/vulkan/components/viewport_renderer.ixx
-        src/vulkan/components/surface.ixx
-        src/vulkan/texture_manager.ixx
+        private/src/vulkan/renderer.ixx
+        private/src/vulkan/components/sync.ixx
+        private/src/vulkan/components/pipeline.ixx
+        private/src/vulkan/components/device.ixx
+        private/src/vulkan/components/swapchain.ixx
+        private/src/vulkan/components/buffer_manager.ixx
+        private/src/vulkan/services.ixx
+        private/src/vulkan/components/instance.ixx
+        private/src/vulkan/components/viewport_renderer.ixx
+        private/src/vulkan/components/surface.ixx
+        private/src/vulkan/texture_manager.ixx
 )
 
 add_library(retro_renderer

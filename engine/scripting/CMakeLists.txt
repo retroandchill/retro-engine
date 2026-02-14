@@ -2,12 +2,12 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_SCRIPTING_SOURCES src/backend/dotnet.cpp
-        src/services.cpp)
+set(RETRO_SCRIPTING_SOURCES private/src/backend/dotnet.cpp
+        private/src/services.cpp)
 
-set(RETRO_SCRIPTING_PUBLIC_MODULES src/services.ixx)
+set(RETRO_SCRIPTING_PUBLIC_MODULES public/src/services.ixx)
 
-set(RETRO_SCRIPTING_PRIVATE_MODULES src/backend/dotnet.ixx)
+set(RETRO_SCRIPTING_PRIVATE_MODULES private/src/backend/dotnet.ixx)
 
 add_library(retro_scripting
         ${RETRO_SCRIPTING_SOURCES}

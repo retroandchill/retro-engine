@@ -2,56 +2,56 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_RUNTIME_SOURCES src/engine.cpp
-        src/world/scene.cpp
-        src/world/scene_c.cpp
-        src/engine_c.cpp
-        src/rendering/objects/geometry.cpp
-        src/rendering/pipeline_manager.cpp
-        src/assets/asset_manager.cpp
-        src/assets/assets_c.cpp
-        src/rendering/objects/sprite.cpp
-        src/assets/asset.cpp
-        src/assets/filesystem_asset_source.cpp
-        src/assets/textures/texture_decoder.cpp
-        src/rendering/texture_manager.cpp
-        src/world/scene_node.cpp
-        src/world/viewport.cpp
-        src/rendering/renderer2d.cpp
+set(RETRO_RUNTIME_SOURCES private/src/engine.cpp
+        private/src/world/scene.cpp
+        private/src/world/scene_c.cpp
+        private/src/engine_c.cpp
+        private/src/rendering/objects/geometry.cpp
+        private/src/rendering/pipeline_manager.cpp
+        private/src/assets/asset_manager.cpp
+        private/src/assets/assets_c.cpp
+        private/src/rendering/objects/sprite.cpp
+        private/src/assets/asset.cpp
+        private/src/assets/filesystem_asset_source.cpp
+        private/src/assets/textures/texture_decoder.cpp
+        private/src/rendering/texture_manager.cpp
+        private/src/world/scene_node.cpp
+        private/src/world/viewport.cpp
+        private/src/rendering/renderer2d.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
-        include/retro/runtime/scene/scene.h
-        include/retro/runtime/engine.h
-        src/assets/textures/texture.cpp
-        include/retro/runtime/assets/assets.h
+        public/include/retro/runtime/scene/scene.h
+        public/include/retro/runtime/engine.h
+        private/src/assets/textures/texture.cpp
+        public/include/retro/runtime/assets/assets.h
 )
 
 set(RETRO_RUNTIME_MODULES
-        src/world/scene.ixx
-        src/rendering/renderer2d.ixx
-        src/rendering/objects/geometry.ixx
-        src/assets/asset_manager.ixx
-        src/assets/textures/texture.ixx
-        src/engine.ixx
-        src/rendering/objects/sprite.ixx
-        src/script_runtime.ixx
-        src/assets/asset_path.ixx
-        src/assets/asset.ixx
-        src/assets/filesystem_asset_source.ixx
-        src/rendering/texture_manager.ixx
-        src/assets/asset_source.ixx
-        src/assets/asset_decoder.ixx
-        src/assets/asset_load_result.ixx
-        src/assets/textures/texture_decoder.ixx
-        src/rendering/shader_layout.ixx
-        src/rendering/draw_command.ixx
-        src/rendering/render_pipeline.ixx
-        src/rendering/pipeline_manager.ixx
-        src/world/scene_node.ixx
-        src/world/viewport.ixx
-        src/rendering/layout/margin.ixx
-        src/rendering/layout/anchors.ixx
+        public/src/world/scene.ixx
+        public/src/rendering/renderer2d.ixx
+        public/src/rendering/objects/geometry.ixx
+        public/src/assets/asset_manager.ixx
+        public/src/assets/textures/texture.ixx
+        public/src/engine.ixx
+        public/src/rendering/objects/sprite.ixx
+        public/src/script_runtime.ixx
+        public/src/assets/asset_path.ixx
+        public/src/assets/asset.ixx
+        public/src/assets/filesystem_asset_source.ixx
+        public/src/rendering/texture_manager.ixx
+        public/src/assets/asset_source.ixx
+        public/src/assets/asset_decoder.ixx
+        public/src/assets/asset_load_result.ixx
+        public/src/assets/textures/texture_decoder.ixx
+        public/src/rendering/shader_layout.ixx
+        public/src/rendering/draw_command.ixx
+        public/src/rendering/render_pipeline.ixx
+        public/src/rendering/pipeline_manager.ixx
+        public/src/world/scene_node.ixx
+        public/src/world/viewport.ixx
+        public/src/rendering/layout/margin.ixx
+        public/src/rendering/layout/anchors.ixx
 )
 
 
@@ -61,7 +61,7 @@ add_library(retro_runtime
         ${RETRO_RUNTIME_HEADERS}
 )
 
-target_include_directories(retro_runtime PUBLIC include)
+target_include_directories(retro_runtime PUBLIC public/include)
 
 retro_add_boilerplate(retro_runtime)
 

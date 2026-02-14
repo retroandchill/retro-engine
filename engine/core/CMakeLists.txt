@@ -2,86 +2,94 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_CORE_SOURCES src/strings/name.cpp
-        src/io/file_stream.cpp
-        src/strings/name_c.cpp
-        src/functional/delegate.cpp
-        src/di/service_provider.cpp
-        src/io/stream.cpp
-        src/io/buffered_stream.cpp
-        src/async/task_scheduler.cpp
-        src/async/manual_task_scheduler.cpp
-        src/di/service_collection.cpp
-        src/di/scoped_service_provider.cpp
+set(RETRO_CORE_SOURCES private/src/strings/name.cpp
+        private/src/io/file_stream.cpp
+        private/src/strings/name_c.cpp
+        private/src/functional/delegate.cpp
+        private/src/di/service_provider.cpp
+        private/src/io/stream.cpp
+        private/src/io/buffered_stream.cpp
+        private/src/async/task_scheduler.cpp
+        private/src/async/manual_task_scheduler.cpp
+        private/src/di/service_collection.cpp
+        private/src/di/scoped_service_provider.cpp
 )
 
-set(RETRO_CORE_HEADERS include/retro/core/exports.h
-        include/retro/core/per_project_boilerplate.hpp
-        include/retro/core/strings/name.h
-        include/retro/core/math/vector.h
-        include/retro/core/math/color.h
-        include/retro/core/macros.hpp)
+set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
+        public/include/retro/core/per_project_boilerplate.hpp
+        public/include/retro/core/strings/name.h
+        public/include/retro/core/math/vector.h
+        public/include/retro/core/math/color.h
+        public/include/retro/core/macros.hpp)
 
-set(RETRO_CORE_MODULES
-        src/strings/format.ixx
-        src/strings/name.ixx
-        src/memory/buffers.ixx
-        src/memory/ref_counted_ptr.ixx
-        src/algorithm/hashing.ixx
-        src/util/color.ixx
-        src/io/file_stream.ixx
-        src/functional/delegate.ixx
-        src/memory/arena_allocator.ixx
-        src/async/task.ixx
-        src/containers/optional.ixx
-        src/di/service_provider.ixx
-        src/di/metadata.ixx
-        src/util/exceptions.ixx
-        src/containers/inline_list.ixx
-        src/c_api.ixx
-        src/util/noncopyable.ixx
-        src/type_traits/pointer.ixx
-        src/type_traits/range.ixx
-        src/type_traits/comparison.ixx
-        src/type_traits/callable.ixx
-        src/type_traits/variant.ixx
-        src/type_traits/basic.ixx
-        src/memory/align.ixx
-        src/math/operations.ixx
-        src/math/vector.ixx
-        src/math/matrix.ixx
-        src/math/transform.ixx
-        src/functional/overload.ixx
-        src/functional/binding.ixx
-        src/io/stream.ixx
-        src/io/buffered_stream.ixx
-        src/async/task_scheduler.ixx
-        src/async/manual_task_scheduler.ixx
-        src/strings/cstring_view.ixx
-        src/strings/encoding.ixx
-        src/strings/deps/uni_algo.ixx
-        src/math/rect.ixx
-        src/di/service_instance.ixx
-        src/di/service_call_site.ixx
-        src/di/service_identifier.ixx
-        src/di/service_collection.ixx
-        src/di.ixx
-        src/util/deferred.ixx
-        src/memory/small_unique_ptr.ixx
-        src/di/service_scope.ixx
-        src/di/scoped_service_provider.ixx
+set(RETRO_CORE_PRIVATE_MODULES
+        private/src/di/scoped_service_provider.ixx
 )
 
-add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_MODULES} ${RETRO_CORE_HEADERS})
+set(RETRO_CORE_PUBLIC_MODULES
+        public/src/strings/format.ixx
+        public/src/strings/name.ixx
+        public/src/memory/buffers.ixx
+        public/src/memory/ref_counted_ptr.ixx
+        public/src/algorithm/hashing.ixx
+        public/src/util/color.ixx
+        public/src/io/file_stream.ixx
+        public/src/functional/delegate.ixx
+        public/src/memory/arena_allocator.ixx
+        public/src/async/task.ixx
+        public/src/containers/optional.ixx
+        public/src/di/service_provider.ixx
+        public/src/di/metadata.ixx
+        public/src/util/exceptions.ixx
+        public/src/containers/inline_list.ixx
+        public/src/c_api.ixx
+        public/src/util/noncopyable.ixx
+        public/src/type_traits/pointer.ixx
+        public/src/type_traits/range.ixx
+        public/src/type_traits/comparison.ixx
+        public/src/type_traits/callable.ixx
+        public/src/type_traits/variant.ixx
+        public/src/type_traits/basic.ixx
+        public/src/memory/align.ixx
+        public/src/math/operations.ixx
+        public/src/math/vector.ixx
+        public/src/math/matrix.ixx
+        public/src/math/transform.ixx
+        public/src/functional/overload.ixx
+        public/src/functional/binding.ixx
+        public/src/io/stream.ixx
+        public/src/io/buffered_stream.ixx
+        public/src/async/task_scheduler.ixx
+        public/src/async/manual_task_scheduler.ixx
+        public/src/strings/cstring_view.ixx
+        public/src/strings/encoding.ixx
+        public/src/strings/deps/uni_algo.ixx
+        public/src/math/rect.ixx
+        public/src/di/service_instance.ixx
+        public/src/di/service_call_site.ixx
+        public/src/di/service_identifier.ixx
+        public/src/di/service_collection.ixx
+        public/src/di.ixx
+        public/src/util/deferred.ixx
+        public/src/memory/small_unique_ptr.ixx
+        public/src/di/service_scope.ixx
+)
+
+add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
 
 retro_add_boilerplate(retro_core)
 
-target_include_directories(retro_core PUBLIC include)
+target_include_directories(retro_core PUBLIC public/include)
 
 target_sources(retro_core PUBLIC
     FILE_SET retro_core_public_modules
     TYPE CXX_MODULES FILES
-        ${RETRO_CORE_MODULES})
+        ${RETRO_CORE_PUBLIC_MODULES})
+
+target_sources(retro_core PRIVATE
+        FILE_SET retro_core_private_modules
+        TYPE CXX_MODULES FILES
+        ${RETRO_CORE_PRIVATE_MODULES})
 
 find_package(Boost REQUIRED COMPONENTS asio pool unordered)
 find_package(fmt CONFIG REQUIRED)
