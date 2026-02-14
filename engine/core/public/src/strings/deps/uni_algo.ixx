@@ -54,4 +54,14 @@ export namespace una
         using caseless::compare_utf16;
         using caseless::compare_utf8;
     } // namespace caseless
+
+    namespace codepoint
+    {
+        using codepoint::is_whitespace;
+    }
+
+    namespace detail::rng
+    {
+        using rng::operator|;
+    }
 } // namespace una

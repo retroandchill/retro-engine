@@ -22,7 +22,7 @@ class TestObject : public IntrusiveRefCounted
         ++live_count_;
     }
 
-    ~TestObject() noexcept override
+    ~TestObject() noexcept
     {
         --live_count_;
         ++destruction_count_;

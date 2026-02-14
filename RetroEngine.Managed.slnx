@@ -10,13 +10,21 @@
   <Folder Name="/editor/" />
   <Folder Name="/editor/dotnet/">
     <Project Path="editor/dotnet/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
-      <BuildType Project="Debug" />
+      <BuildType Solution="Dev-Release|*" Project="Debug" />
+      <BuildType Solution="Managed-Debug|*" Project="Debug" />
+      <BuildType Solution="Managed-Release|*" Project="Debug" />
+      <BuildType Solution="Pkg-Debug|*" Project="Debug" />
+      <BuildType Solution="Pkg-Release|*" Project="Debug" />
     </Project>
     <Project Path="editor/dotnet/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
       <BuildType Project="Debug" />
     </Project>
     <Project Path="editor/dotnet/RetroEngine.Editor/RetroEngine.Editor.csproj">
-      <BuildType Project="Debug" />
+      <BuildType Solution="Dev-Release|*" Project="Debug" />
+      <BuildType Solution="Managed-Debug|*" Project="Debug" />
+      <BuildType Solution="Managed-Release|*" Project="Debug" />
+      <BuildType Solution="Pkg-Debug|*" Project="Debug" />
+      <BuildType Solution="Pkg-Release|*" Project="Debug" />
     </Project>
   </Folder>
   <Folder Name="/engine/" />

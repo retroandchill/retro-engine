@@ -13,6 +13,7 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/async/manual_task_scheduler.cpp
         private/src/di/service_collection.cpp
         private/src/di/scoped_service_provider.cpp
+        private/src/localization/text.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -73,6 +74,14 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/util/deferred.ixx
         public/src/memory/small_unique_ptr.ixx
         public/src/di/service_scope.ixx
+        public/src/localization/text_data.ixx
+        public/src/localization/text_source_types.ixx
+        public/src/util/enum_class_flags.ixx
+        public/src/localization/text.ixx
+        public/src/localization/loc_key.ixx
+        public/src/util/date_time.ixx
+        public/src/localization/text_key.ixx
+        public/src/localization/string_table.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
@@ -91,14 +100,18 @@ target_sources(retro_core PRIVATE
         TYPE CXX_MODULES FILES
         ${RETRO_CORE_PRIVATE_MODULES})
 
-find_package(Boost REQUIRED COMPONENTS asio pool unordered)
+find_package(Boost REQUIRED COMPONENTS algorithm asio crc pool unordered)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
-target_link_libraries(retro_core PRIVATE Boost::asio Boost::unordered Boost::pool
+find_package(ICU COMPONENTS uc i18n REQUIRED)
+target_link_libraries(retro_core PRIVATE Boost::asio Boost::algorithm Boost::unordered Boost::pool
+                                        Boost::crc
                                         uni-algo::uni-algo
                                         fmt::fmt
-                                        gcem)
+                                        gcem
+                                        ICU::uc
+                                        ICU::i18n)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

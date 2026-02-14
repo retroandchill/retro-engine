@@ -51,7 +51,7 @@ namespace retro
     {
       protected:
         IntrusiveRefCounted() noexcept = default;
-        virtual ~IntrusiveRefCounted() noexcept = default;
+        ~IntrusiveRefCounted() noexcept = default;
 
       public:
         IntrusiveRefCounted(const IntrusiveRefCounted &) noexcept = delete;
@@ -64,11 +64,12 @@ namespace retro
             ref_count_.fetch_add(1, std::memory_order_relaxed);
         }
 
-        inline void release() noexcept
+        template <typename Self>
+        inline void release(this Self &self) noexcept
         {
-            if (ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1)
+            if (static_cast<IntrusiveRefCounted &>(self).ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1)
             {
-                delete this; // NOSONAR
+                delete std::addressof(self); // NOSONAR
             }
         }
 

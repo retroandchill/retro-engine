@@ -214,13 +214,13 @@ namespace retro
         };
 
         template <EncodableRange<char> Range>
-        static constexpr bool CAN_IMPLICITLY_CONVERT = CanImplicitlyConvert<std::remove_cvref_t<Range>>::value;
+        static constexpr bool can_implicitly_convert = CanImplicitlyConvert<std::remove_cvref_t<Range>>::value;
 
       public:
         constexpr Name() = default;
 
         template <EncodableRange<char> Range>
-        explicit(!CAN_IMPLICITLY_CONVERT<Range>) Name(Range &&value, FindType find_type = FindType::add)
+        explicit(!can_implicitly_convert<Range>) Name(Range &&value, FindType find_type = FindType::add)
             : Name(lookup_name(std::forward<Range>(value), find_type))
         {
         }

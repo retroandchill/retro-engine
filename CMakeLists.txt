@@ -9,6 +9,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 
 option(BUILD_TESTS "Should the test cases be built as well" ON)
+option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
 option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
 option(RETRO_DOTNET_CONFIGURATION "What is the name of the .NET configuration" ON)
 
@@ -46,6 +47,12 @@ if (RETRO_WITH_CASE_PRESERVING_NAME)
 else()
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
     set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="false")
+endif()
+
+if (RETRO_WITH_EDITOR_DATA)
+    add_compile_definitions(RETRO_WITH_EDITOR_DATA=1)
+else()
+    add_compile_definitions(RETRO_WITH_EDITOR_DATA=0)
 endif()
 
 set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
