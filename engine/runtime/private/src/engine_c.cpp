@@ -5,7 +5,7 @@
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
 
-#include "retro/runtime/engine.h"
+#include "retro/runtime/engine_c.h"
 
 import retro.runtime.engine;
 

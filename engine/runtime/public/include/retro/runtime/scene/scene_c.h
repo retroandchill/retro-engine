@@ -1,5 +1,5 @@
 /**
- * @file scene.h
+ * @file scene_c.h
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -9,9 +9,9 @@
 #pragma once
 
 #include "retro/core/exports.h"
-#include "retro/core/math/color.h"
-#include "retro/core/math/vector.h"
-#include "retro/runtime/assets/assets.h"
+#include "retro/core/math/color_c.h"
+#include "retro/core/math/vector_c.h"
+#include "retro/runtime/assets/assets_c.h"
 
 #include <stdint.h> // NOLINT We want to use a C header here
 

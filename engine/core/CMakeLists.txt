@@ -17,9 +17,9 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
         public/include/retro/core/per_project_boilerplate.hpp
-        public/include/retro/core/strings/name.h
-        public/include/retro/core/math/vector.h
-        public/include/retro/core/math/color.h
+        public/include/retro/core/strings/name_c.h
+        public/include/retro/core/math/vector_c.h
+        public/include/retro/core/math/color_c.h
         public/include/retro/core/macros.hpp)
 
 set(RETRO_CORE_PRIVATE_MODULES
@@ -79,7 +79,7 @@ add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETR
 
 retro_add_boilerplate(retro_core)
 
-target_include_directories(retro_core PUBLIC public/include)
+target_include_directories(retro_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public/include)
 
 target_sources(retro_core PUBLIC
     FILE_SET retro_core_public_modules

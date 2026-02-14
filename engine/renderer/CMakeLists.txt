@@ -82,7 +82,7 @@ add_library(retro_renderer
         ${RETRO_RENDERER_PRIVATE_MODULES}
 )
 
-target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public/include)
 
 retro_add_boilerplate(retro_renderer)
 

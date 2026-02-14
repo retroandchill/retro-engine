@@ -8,7 +8,7 @@ set(RETRO_LOGGING_SOURCES private/src/logging.cpp
 set(RETRO_LOGGING_MODULES public/src/logging.ixx
 )
 
-set(RETRO_LOGGING_HEADERS public/include/retro/logging/logger.h)
+set(RETRO_LOGGING_HEADERS public/include/retro/logging/logger_c.h)
 
 add_library(retro_logging ${RETRO_LOGGING_SOURCES} ${RETRO_LOGGING_MODULES} ${RETRO_LOGGING_HEADERS})
 
@@ -18,7 +18,7 @@ target_sources(retro_logging PUBLIC
         FILE_SET CXX_MODULES FILES
         ${RETRO_LOGGING_MODULES})
 
-target_include_directories(retro_logging PUBLIC public/include)
+target_include_directories(retro_logging PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public/include)
 
 find_package(spdlog REQUIRED)
 target_link_libraries(retro_logging PUBLIC retro_core spdlog::spdlog)

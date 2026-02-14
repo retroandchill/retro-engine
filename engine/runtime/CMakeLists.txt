@@ -21,10 +21,10 @@ set(RETRO_RUNTIME_SOURCES private/src/engine.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
-        public/include/retro/runtime/scene/scene.h
-        public/include/retro/runtime/engine.h
+        public/include/retro/runtime/scene/scene_c.h
+        public/include/retro/runtime/engine_c.h
         private/src/assets/textures/texture.cpp
-        public/include/retro/runtime/assets/assets.h
+        public/include/retro/runtime/assets/assets_c.h
 )
 
 set(RETRO_RUNTIME_MODULES
@@ -61,7 +61,7 @@ add_library(retro_runtime
         ${RETRO_RUNTIME_HEADERS}
 )
 
-target_include_directories(retro_runtime PUBLIC public/include)
+target_include_directories(retro_runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public/include)
 
 retro_add_boilerplate(retro_runtime)
 
