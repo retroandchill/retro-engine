@@ -29,15 +29,20 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        using Dependencies = TypeList<Renderer2D &, const std::vector<RenderPipeline *> &>;
-        static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
+        using Dependencies = TypeList<const std::vector<RenderPipeline *> &>;
+        static constexpr std::size_t default_pool_size = 1024 * 1024 * 16;
 
-        explicit PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines);
+        explicit PipelineManager(const std::vector<RenderPipeline *> &pipelines);
+
+        [[nodiscard]] inline auto pipelines() const noexcept
+        {
+            return pipelines_ | std::views::transform([](const std::pair<std::type_index, PipelineUsage> &entry)
+                                                      { return std::make_pair(entry.first, entry.second.pipeline); });
+        }
 
         void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport);
 
       private:
-        Renderer2D &renderer_;
         std::map<std::type_index, PipelineUsage> pipelines_{};
     };
 } // namespace retro

@@ -51,25 +51,72 @@ namespace retro
             .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
-    Engine::Engine(ScriptRuntime &script_runtime,
-                   Renderer2D &renderer,
+    Engine::Engine(ServiceScopeFactory &service_scope_factory,
+                   ScriptRuntime &script_runtime,
                    PipelineManager &pipeline_manager,
                    AssetManager &asset_manager)
-        : script_runtime_(script_runtime), renderer_(renderer), asset_manager_{asset_manager},
-          pipeline_manager_{pipeline_manager}, on_viewport_create_subscription_{viewports_.on_viewport_created(),
-                                                                                [this](Viewport &viewport)
-                                                                                {
-                                                                                    renderer_.add_viewport(viewport);
-                                                                                }},
-          on_viewport_destroy_subscription_{viewports_.on_viewport_destroyed(),
-                                            [this](Viewport &viewport)
-                                            {
-                                                renderer_.add_viewport(viewport);
-                                            }}
+        : service_scope_factory_{service_scope_factory}, script_runtime_(script_runtime), asset_manager_{asset_manager},
+          pipeline_manager_{pipeline_manager}
     {
+        viewports_.on_viewport_created().add(
+            [this](Viewport &viewport)
+            {
+                viewport.on_window_changed().add(
+                    [this](Viewport &vp, const std::weak_ptr<Window> &old_win, const std::weak_ptr<Window> &new_win)
+                    {
+                        const auto old_window_ptr = old_win.lock();
+                        const auto new_window_ptr = new_win.lock();
+
+                        if (old_window_ptr == new_window_ptr)
+                            return;
+
+                        if (old_window_ptr != nullptr)
+                        {
+                            auto renderer = renderers_.find(old_window_ptr->id());
+                            if (renderer != renderers_.end())
+                            {
+                                renderer->second->remove_viewport(vp);
+                            }
+                        }
+
+                        if (new_window_ptr != nullptr)
+                        {
+                            auto renderer = renderers_.find(new_window_ptr->id());
+                            if (renderer != renderers_.end())
+                            {
+                                renderer->second->add_viewport(vp);
+                            }
+                        }
+                    });
+
+                const auto window_id =
+                    viewport.window().transform([](const std::shared_ptr<Window> &window) { return window->id(); });
+                if (!window_id.has_value())
+                    return;
+
+                const auto renderer = renderers_.find(*window_id);
+                if (renderer == renderers_.end())
+                    return;
+
+                renderer->second->add_viewport(viewport);
+            });
+        viewports_.on_viewport_destroyed().add(
+            [this](Viewport &viewport)
+            {
+                const auto window_id =
+                    viewport.window().transform([](const std::shared_ptr<Window> &window) { return window->id(); });
+                if (!window_id.has_value())
+                    return;
+
+                const auto renderer = renderers_.find(*window_id);
+                if (renderer == renderers_.end())
+                    return;
+
+                renderer->second->remove_viewport(viewport);
+            });
     }
 
-    void Engine::run(std::u16string_view assembly_path, std::u16string_view class_name, std::u16string_view entry_point)
+    void Engine::run(const std::u16string_view assembly_path, const std::u16string_view class_name)
     {
         TaskScheduler::Scope task_scope{&scheduler_};
         using clock = std::chrono::steady_clock;
@@ -132,7 +179,10 @@ namespace retro
         }
 
         script_runtime_.tear_down();
-        renderer_.wait_idle();
+        for (const auto &renderer : renderers_ | std::views::values)
+        {
+            renderer->wait_idle();
+        }
         asset_manager_.on_engine_shutdown();
     }
 
@@ -140,6 +190,43 @@ namespace retro
     {
         exit_code_.store(exit_code);
         running_.store(false);
+    }
+
+    void Engine::add_window(Window &window)
+    {
+        auto [inserted, success] =
+            renderers_.emplace(window.id(), RendererRef{window.shared_from_this(), service_scope_factory_});
+        if (!success)
+        {
+            get_logger().critical("Failed to add window {} to engine", window.id());
+            return;
+        }
+
+        for (auto [type, pipeline] : pipeline_manager_.pipelines())
+            inserted->second->add_new_render_pipeline(type, *pipeline);
+
+        if (!primary_renderer_.has_value())
+        {
+            primary_renderer_ = *inserted->second;
+        }
+    }
+
+    void Engine::remove_window(const Window &window)
+    {
+        const auto id = window.id();
+        renderers_.erase(id);
+
+        if (primary_renderer_.has_value() && primary_renderer_->window().id() == id)
+        {
+            if (!renderers_.empty())
+            {
+                primary_renderer_ = *renderers_.begin()->second;
+            }
+            else
+            {
+                primary_renderer_.reset();
+            }
+        }
     }
 
     bool Engine::remove_asset_from_cache(const AssetPath &path) const
@@ -156,17 +243,20 @@ namespace retro
     // ReSharper disable once CppMemberFunctionMayBeConst
     void Engine::render()
     {
-        renderer_.begin_frame();
-
-        for (auto &viewport : viewports_.viewports())
+        for (const auto &renderer : renderers_ | std::views::values)
         {
-            auto scene = viewport->scene();
-            if (!scene.has_value())
-                continue;
+            renderer->begin_frame();
 
-            pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer_.window_size(), *viewport);
+            for (auto &viewport : viewports_.viewports())
+            {
+                auto scene = viewport->scene();
+                if (!scene.has_value())
+                    continue;
+
+                pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer->window().size(), *viewport);
+            }
+
+            renderer->end_frame();
         }
-
-        renderer_.end_frame();
     }
 } // namespace retro

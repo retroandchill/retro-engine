@@ -1,5 +1,5 @@
 /**
- * @file texture_render_data.ixx
+ * @file texture_manager.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime.rendering.texture_render_data;
+export module retro.runtime.rendering.texture_manager;
 
 import std;
 
@@ -78,5 +78,13 @@ namespace retro
       private:
         std::int32_t width_{};
         std::int32_t height_{};
+    };
+
+    export class TextureManager
+    {
+      public:
+        virtual ~TextureManager() = default;
+
+        virtual std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) = 0;
     };
 } // namespace retro

@@ -10,10 +10,10 @@ import retro.renderer.vulkan.services;
 
 namespace retro
 {
-    void add_rendering_services(ServiceCollection &services, std::shared_ptr<Window> viewport, RenderBackend backend)
+    void add_rendering_services(ServiceCollection &services,
+                                const WindowBackend window_backend,
+                                const RenderBackend backend)
     {
-        auto window_backend = viewport.get()->native_handle().backend;
-        services.add(std::move(viewport));
         switch (backend)
         {
             case RenderBackend::vulkan:

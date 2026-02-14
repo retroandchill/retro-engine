@@ -13,7 +13,7 @@ export module retro.runtime.assets.textures.texture_decoder;
 import retro.core.di;
 import retro.runtime.assets.asset_decoder;
 import retro.runtime.assets.asset_load_result;
-import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.texture_manager;
 import retro.runtime.assets.asset;
 import retro.core.memory.ref_counted_ptr;
 import retro.core.io.buffered_stream;
@@ -25,9 +25,9 @@ namespace retro
     export class RETRO_API TextureDecoder final : public AssetDecoder
     {
       public:
-        using Dependencies = TypeList<Renderer2D &>;
+        using Dependencies = TypeList<TextureManager &>;
 
-        explicit inline TextureDecoder(Renderer2D &renderer) : renderer_{&renderer}
+        explicit inline TextureDecoder(TextureManager &renderer) : manager_{renderer}
         {
         }
 
@@ -38,6 +38,6 @@ namespace retro
       private:
         static AssetLoadResult<ImageData> load_image_data(std::span<const std::byte> bytes) noexcept;
 
-        Renderer2D *renderer_;
+        TextureManager &manager_;
     };
 } // namespace retro

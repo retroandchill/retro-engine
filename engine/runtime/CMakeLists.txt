@@ -14,9 +14,10 @@ set(RETRO_RUNTIME_SOURCES src/engine.cpp
         src/assets/asset.cpp
         src/assets/filesystem_asset_source.cpp
         src/assets/textures/texture_decoder.cpp
-        src/rendering/texture_render_data.cpp
+        src/rendering/texture_manager.cpp
         src/world/scene_node.cpp
         src/world/viewport.cpp
+        src/rendering/renderer2d.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -38,7 +39,7 @@ set(RETRO_RUNTIME_MODULES
         src/assets/asset_path.ixx
         src/assets/asset.ixx
         src/assets/filesystem_asset_source.ixx
-        src/rendering/texture_render_data.ixx
+        src/rendering/texture_manager.ixx
         src/assets/asset_source.ixx
         src/assets/asset_decoder.ixx
         src/assets/asset_load_result.ixx

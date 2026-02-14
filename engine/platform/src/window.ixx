@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/exports.h"
+
 export module retro.platform.window;
 
 import std;
@@ -57,10 +61,18 @@ namespace retro
         WindowFlags flags = WindowFlags::resizable;
     };
 
-    export class Window
+    export class Window : public std::enable_shared_from_this<Window>
     {
+      protected:
+        RETRO_API Window();
+
       public:
         virtual ~Window() = default;
+
+        [[nodiscard]] inline std::uint64_t id() const noexcept
+        {
+            return id_;
+        }
 
         [[nodiscard]] virtual NativeWindowHandle native_handle() const noexcept = 0;
 
@@ -77,5 +89,8 @@ namespace retro
         {
             return size().y;
         }
+
+      private:
+        std::uint64_t id_;
     };
 } // namespace retro

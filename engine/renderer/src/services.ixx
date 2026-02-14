@@ -22,6 +22,6 @@ namespace retro
     };
 
     export RETRO_API void add_rendering_services(ServiceCollection &services,
-                                                 std::shared_ptr<Window> viewport,
+                                                 WindowBackend window_backend,
                                                  RenderBackend backend = RenderBackend::vulkan);
 } // namespace retro

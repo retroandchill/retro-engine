@@ -7,7 +7,7 @@
 export module retro.runtime.rendering.draw_command;
 
 import std;
-import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.texture_manager;
 import retro.core.containers.inline_list;
 
 namespace retro

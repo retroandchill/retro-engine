@@ -20,6 +20,7 @@ import retro.core.containers.optional;
 import retro.runtime.rendering.layout.margin;
 import retro.runtime.rendering.layout.anchors;
 import retro.core.math.rect;
+import retro.platform.window;
 
 namespace retro
 {
@@ -66,9 +67,11 @@ namespace retro
 
     export class RETRO_API Viewport final
     {
-        using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
-
       public:
+        using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
+        using WindowChanged =
+            MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
+
         inline Viewport(const ScreenLayout &layout, const std::int32_t z_order)
             : screen_layout_{layout}, z_order_{z_order}
         {
@@ -116,14 +119,35 @@ namespace retro
             scene_ = scene;
         }
 
+        [[nodiscard]] inline Optional<std::shared_ptr<Window>> window() const noexcept
+        {
+            if (auto win = window_.lock(); win != nullptr)
+            {
+                return std::move(win);
+            }
+
+            return std::nullopt;
+        }
+
+        void set_window(Window &window) noexcept;
+
+        void clear_window() noexcept;
+
+        inline WindowChanged::RegistrationType on_window_changed()
+        {
+            return WindowChanged::RegistrationType{on_window_changed_};
+        }
+
       private:
         friend class ViewportManager;
 
         ScreenLayout screen_layout_;
         CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
-        MulticastDelegate<void(Viewport &, std::int32_t)> on_z_order_changed_;
+        ZOrderChanged on_z_order_changed_;
         Scene *scene_ = nullptr;
+        std::weak_ptr<Window> window_;
+        WindowChanged on_window_changed_;
     };
 
     export using OnViewportDelegate = MulticastDelegate<void(Viewport &)>;

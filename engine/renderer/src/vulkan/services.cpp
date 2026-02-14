@@ -13,23 +13,26 @@ import retro.runtime.rendering.renderer2d;
 import retro.platform.backend;
 import retro.platform.window;
 import retro.renderer.vulkan.renderer;
+import retro.runtime.rendering.texture_manager;
+import retro.renderer.vulkan.texture_manager;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.swapchain;
-import retro.renderer.vulkan.components.command_pool;
 import retro.renderer.vulkan.components.viewport_renderer;
 import retro.renderer.vulkan.components.pipeline;
 import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.surface;
+import retro.renderer.vulkan.components.sync;
 
 namespace retro
 {
     void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
     {
-        services.add_singleton<Renderer2D, VulkanRenderer2D>()
+        services.add_scoped<Renderer2D, VulkanRenderer2D>()
+            .add_singleton<TextureManager, VulkanTextureManager>()
             .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
-            .add_singleton<&create_surface>()
-            .add_singleton(
+            .add_scoped<&create_surface>()
+            .add_scoped(
                 [](const Window &window, const vk::SurfaceKHR surface, const VulkanDevice &device)
                 {
                     return std::make_unique<VulkanSwapchain>(SwapchainConfig{
@@ -45,15 +48,16 @@ namespace retro
             .add_singleton([](const VulkanInstance &instance, PlatformBackend &platform_backend)
                            { return VulkanDevice::create(instance, platform_backend); })
             .add_singleton<VulkanBufferManager>()
-            .add_singleton<VulkanPipelineManager>()
+            .add_scoped<VulkanPipelineManager>()
             .add_singleton(
                 [](const VulkanDevice &device)
                 {
-                    return std::make_unique<VulkanCommandPool>(
-                        CommandPoolConfig{.device = device.device(),
-                                          .queue_family_idx = device.graphics_family_index(),
-                                          .buffer_count = VulkanRenderer2D::MAX_FRAMES_IN_FLIGHT});
+                    const vk::CommandPoolCreateInfo pool_info{.flags =
+                                                                  vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                              .queueFamilyIndex = device.graphics_family_index()};
+
+                    return device.device().createCommandPoolUnique(pool_info);
                 })
-            .add_singleton<ViewportRendererFactory>();
+            .add_scoped<ViewportRendererFactory>();
     }
 } // namespace retro

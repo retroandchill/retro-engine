@@ -22,6 +22,8 @@ import retro.runtime.assets.asset_manager;
 import retro.runtime.assets.asset_path;
 import retro.runtime.assets.asset_load_result;
 import retro.core.memory.ref_counted_ptr;
+import retro.platform.window;
+import retro.core.containers.optional;
 import retro.runtime.assets.asset;
 import retro.runtime.world.scene;
 import retro.runtime.rendering.pipeline_manager;
@@ -32,10 +34,10 @@ namespace retro
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ScriptRuntime &, Renderer2D &, PipelineManager &, AssetManager &>;
+        using Dependencies = TypeList<ServiceScopeFactory &, ScriptRuntime &, PipelineManager &, AssetManager &>;
 
-        RETRO_API Engine(ScriptRuntime &script_runtime,
-                         Renderer2D &renderer,
+        RETRO_API Engine(ServiceScopeFactory &service_scope_factory,
+                         ScriptRuntime &script_runtime,
                          PipelineManager &pipeline_manager,
                          AssetManager &asset_manager);
 
@@ -63,11 +65,18 @@ namespace retro
             instance_ = nullptr;
         }
 
-        RETRO_API void run(std::u16string_view assembly_path,
-                           std::u16string_view class_name,
-                           std::u16string_view entry_point);
+        RETRO_API void run(std::u16string_view assembly_path, std::u16string_view class_name);
 
         RETRO_API void request_shutdown(std::int32_t exit_code = 0);
+
+        [[nodiscard]] inline Optional<Renderer2D &> primary_renderer() const noexcept
+        {
+            return primary_renderer_;
+        }
+
+        RETRO_API void add_window(Window &window);
+
+        RETRO_API void remove_window(const Window &window);
 
         [[nodiscard]] inline SceneManager &scenes()
         {
@@ -95,8 +104,10 @@ namespace retro
 
         friend struct AssetPathHook;
 
+        ServiceScopeFactory &service_scope_factory_;
         ScriptRuntime &script_runtime_;
-        Renderer2D &renderer_;
+        std::map<std::uint64_t, RendererRef> renderers_;
+        Optional<Renderer2D &> primary_renderer_;
         AssetManager &asset_manager_;
         PipelineManager &pipeline_manager_;
 
@@ -104,8 +115,6 @@ namespace retro
         std::atomic<bool> running_{false};
         SceneManager scenes_;
         ViewportManager viewports_;
-        ScopedDelegateSubscription<OnViewportDelegate> on_viewport_create_subscription_;
-        ScopedDelegateSubscription<OnViewportDelegate> on_viewport_destroy_subscription_;
         ManualTaskScheduler scheduler_{};
     };
 

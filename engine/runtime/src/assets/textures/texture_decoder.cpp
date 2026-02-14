@@ -8,7 +8,7 @@ module retro.runtime.assets.textures.texture_decoder;
 
 import retro.core.io.stream;
 import retro.runtime.assets.textures.texture;
-import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.texture_manager;
 import retro.logging;
 
 namespace retro
@@ -43,7 +43,7 @@ namespace retro
         return stream.read_all()
             .transform_error([](StreamError) { return AssetLoadError::invalid_asset_format; })
             .and_then([](const std::vector<std::byte> &bytes) { return load_image_data(bytes); })
-            .transform([this](const ImageData &image_data) { return renderer_->upload_texture(image_data); })
+            .transform([this](const ImageData &image_data) { return manager_.upload_texture(image_data); })
             .transform([&context](std::unique_ptr<TextureRenderData> &&render_data)
                        { return make_ref_counted<Texture>(context.path, std::move(render_data)); });
     }

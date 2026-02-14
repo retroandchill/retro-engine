@@ -4,6 +4,7 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_PLATFORM_SOURCES
         src/backend.cpp
+        src/window.cpp
 )
 
 set(RETRO_PLATFORM_HEADERS )

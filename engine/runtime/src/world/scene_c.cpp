@@ -86,7 +86,16 @@ extern "C"
 
     Retro_Viewport *retro_viewport_create()
     {
-        return std::addressof(to_c(retro::Engine::instance().viewports().create_viewport()));
+
+        auto &viewport = retro::Engine::instance().viewports().create_viewport();
+
+        // TODO: Remove this and make this configurable in C#
+        if (const auto primary_renderer = retro::Engine::instance().primary_renderer(); primary_renderer.has_value())
+        {
+            viewport.set_window(primary_renderer->window());
+        }
+
+        return std::addressof(to_c(viewport));
     }
 
     void retro_viewport_destroy(Retro_Viewport *viewport)

@@ -53,9 +53,14 @@ namespace retro
 
     void *ScopedServiceProvider::get_raw(const std::type_info &type)
     {
-        if (type == typeid(ServiceScopeFactory) || type == typeid(ServiceProvider))
+        if (type == typeid(ServiceScopeFactory))
         {
-            return this;
+            return static_cast<ServiceScopeFactory *>(this);
+        }
+
+        if (type == typeid(ServiceProvider))
+        {
+            return static_cast<ServiceProvider *>(this);
         }
 
         if (const auto existing = registration_indices_.find(ServiceCacheKey{.id = ServiceIdentifier{type}});
@@ -138,7 +143,7 @@ namespace retro
     {
         ServiceCollection services{service_registrations_, scope_level_ + 1};
         configure.execute(services);
-        return create_scope(name);
+        return std::make_shared<ScopedServiceProvider>(services.registrations(), name, shared_from_this());
     }
 
     const ServiceInstance &ScopedServiceProvider::get_or_create(const ServiceCacheKey &key,

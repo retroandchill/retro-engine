@@ -26,31 +26,32 @@ int main()
 
     try
     {
-        const auto window = platform_backend->create_window({.flags = WindowFlags::resizable | WindowFlags::vulkan});
         ServiceCollection service_collection;
         service_collection.add(*platform_backend);
         add_engine_services(service_collection);
-        add_rendering_services(service_collection, window);
+        add_rendering_services(service_collection, WindowBackend::sdl3);
         add_scripting_services(service_collection);
 
         const auto service_provider = service_collection.create_service_provider();
 
+        const auto window = platform_backend->create_window({.flags = WindowFlags::resizable | WindowFlags::vulkan});
         std::atomic game_thread_exited = false;
-        auto game_thread = std::thread{
-            [&]
-            {
-                try
-                {
-                    EngineLifecycle engine_lifecycle{service_provider->get_required<Engine>()};
-                    auto &engine = Engine::instance();
-                    engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner", u"Main");
-                }
-                catch (const std::exception &ex)
-                {
-                    std::cerr << "Fatal error: " << ex.what() << '\n';
-                }
-                game_thread_exited.store(true);
-            }};
+        auto game_thread =
+            std::thread{[&]
+                        {
+                            try
+                            {
+                                EngineLifecycle engine_lifecycle{service_provider->get_required<Engine>()};
+                                auto &engine = Engine::instance();
+                                engine.add_window(*window);
+                                engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner");
+                            }
+                            catch (const std::exception &ex)
+                            {
+                                std::cerr << "Fatal error: " << ex.what() << '\n';
+                            }
+                            game_thread_exited.store(true);
+                        }};
 
         while (!game_thread_exited.load())
         {

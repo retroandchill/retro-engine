@@ -7,11 +7,10 @@
 export module retro.renderer.vulkan.renderer;
 
 import retro.runtime.rendering.render_pipeline;
-import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.world.viewport;
 import retro.renderer.vulkan.components.sync;
-import retro.renderer.vulkan.components.command_pool;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
@@ -28,14 +27,14 @@ namespace retro
     export class VulkanRenderer2D final : public Renderer2D
     {
       public:
-        static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+        static constexpr std::uint32_t max_frames_in_flight = 2;
 
         using Dependencies = TypeList<Window &,
                                       vk::SurfaceKHR,
                                       VulkanDevice &,
                                       VulkanSwapchain &,
                                       VulkanBufferManager &,
-                                      VulkanCommandPool &,
+                                      vk::CommandPool,
                                       VulkanPipelineManager &,
                                       ViewportRendererFactory &>;
 
@@ -44,7 +43,7 @@ namespace retro
                                   VulkanDevice &device,
                                   VulkanSwapchain &swapchain,
                                   VulkanBufferManager &buffer_manager,
-                                  VulkanCommandPool &command_pool,
+                                  vk::CommandPool command_pool,
                                   VulkanPipelineManager &pipeline_manager,
                                   ViewportRendererFactory &viewport_factory);
 
@@ -60,13 +59,11 @@ namespace retro
 
         void end_frame() override;
 
-        [[nodiscard]] Vector2u window_size() const override;
+        [[nodiscard]] Window &window() const override;
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 
         void remove_render_pipeline(std::type_index type) override;
-
-        std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
 
         void add_viewport(Viewport &viewport) override;
 
@@ -78,14 +75,6 @@ namespace retro
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, std::uint32_t image_index);
 
-        [[nodiscard]] vk::UniqueCommandBuffer begin_one_shot_commands() const;
-        void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
-
-        static void transition_image_layout(vk::CommandBuffer cmd,
-                                            vk::Image image,
-                                            vk::ImageLayout old_layout,
-                                            vk::ImageLayout new_layout);
-
         Window &window_;
 
         vk::SurfaceKHR surface_;
@@ -94,9 +83,9 @@ namespace retro
         VulkanSwapchain &swapchain_;
         vk::UniqueRenderPass render_pass_;
         std::vector<vk::UniqueFramebuffer> framebuffers_;
-        VulkanCommandPool &command_pool_;
+        vk::CommandPool command_pool_;
+        std::vector<vk::UniqueCommandBuffer> command_buffers_;
         VulkanSyncObjects sync_;
-        vk::UniqueSampler linear_sampler_;
         VulkanPipelineManager &pipeline_manager_;
 
         std::uint32_t current_frame_ = 0;

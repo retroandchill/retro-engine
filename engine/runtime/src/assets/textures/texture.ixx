@@ -12,7 +12,7 @@ export module retro.runtime.assets.textures.texture;
 
 import retro.runtime.assets.asset;
 import retro.runtime.assets.asset_path;
-import retro.runtime.rendering.texture_render_data;
+import retro.runtime.rendering.texture_manager;
 import retro.core.strings.name;
 import std;
 

@@ -32,6 +32,20 @@ namespace retro
         on_z_order_changed_(*this, z_order);
     }
 
+    void Viewport::set_window(Window &window) noexcept
+    {
+        const auto old_window = window_;
+        window_ = window.weak_from_this();
+        on_window_changed_(*this, old_window, window_);
+    }
+
+    void Viewport::clear_window() noexcept
+    {
+        const auto old_window = window_;
+        window_.reset();
+        on_window_changed_(*this, old_window, window_);
+    }
+
     Viewport &ViewportManager::create_viewport(const ScreenLayout &layout, std::int32_t z_order)
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
