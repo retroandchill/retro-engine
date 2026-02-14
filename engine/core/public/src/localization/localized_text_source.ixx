@@ -22,9 +22,11 @@ namespace retro
             return LocalizedTextSourcePriority::normal;
         }
 
+        virtual Optional<std::u16string> query_localized_string(LocalizedTextSourceCategory category,
+                                                                std::u16string_view source_string) = 0;
+
         virtual Optional<std::u16string> get_native_culture_name(LocalizedTextSourceCategory category) = 0;
 
-        virtual std::unordered_set<std::u16string> get_localized_culture_names(
-            LocalizedTextSourceCategory category) = 0;
+        virtual std::unordered_set<std::u16string> get_available_cultures(LocalizedTextSourceCategory category) = 0;
     };
 } // namespace retro

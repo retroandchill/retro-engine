@@ -87,9 +87,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/localization/string_table.ixx
         public/src/localization.ixx
         public/src/localization/localization_manager.ixx
-        public/src/util/lazy_singleton.ixx
         public/src/localization/localized_text_source.ixx
-        public/src/localization/text_localization_resource.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
