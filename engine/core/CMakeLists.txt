@@ -14,6 +14,8 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/di/service_collection.cpp
         private/src/di/scoped_service_provider.cpp
         private/src/localization/text.cpp
+        private/src/localization/text_history.cpp
+        private/src/localization/localization_manager.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -25,6 +27,7 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/src/di/scoped_service_provider.ixx
+        private/src/localization/text_history.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -82,6 +85,10 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/util/date_time.ixx
         public/src/localization/text_key.ixx
         public/src/localization/string_table.ixx
+        public/src/localization.ixx
+        public/src/localization/localization_manager.ixx
+        public/src/util/lazy_singleton.ixx
+        public/src/localization/localized_text_source.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})

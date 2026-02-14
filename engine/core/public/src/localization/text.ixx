@@ -8,18 +8,18 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization.text;
+export module retro.core.localization:text;
 
 import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
-import retro.core.localization.text_data;
+import :text_data;
 import retro.core.memory.ref_counted_ptr;
-import retro.core.localization.loc_key;
-import retro.core.localization.text_key;
+import :loc_key;
+import :text_key;
 import retro.core.util.date_time;
 import retro.core.strings.name;
-import retro.core.localization.string_table;
+import :string_table;
 import retro.core.functional.delegate;
 import retro.core.type_traits.basic;
 import retro.core.strings.encoding;
@@ -38,6 +38,16 @@ namespace retro
 
     export template <>
     constexpr bool is_flag_enum<TextFlag> = true;
+
+    export enum class TextIdenticalModeFlags : std::uint8_t
+    {
+        none = 0,
+        deep_compare = 1 << 0,
+        lexical_compare_invariants = 1 << 1
+    };
+
+    export template <>
+    constexpr bool is_flag_enum<TextIdenticalModeFlags> = true;
 
     export enum class TextComparisonLevel
     {
@@ -142,5 +152,13 @@ namespace retro
 
         RefCountPtr<TextData> text_data_;
         TextFlag flags_ = TextFlag::none;
+    };
+
+    class HistoricFormatData
+    {
+    };
+
+    class HistoricTextNumericData
+    {
     };
 } // namespace retro

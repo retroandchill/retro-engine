@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization.text_key;
+export module retro.core.localization:text_key;
 
 import std;
 import retro.core.type_traits.range;
@@ -53,13 +53,13 @@ namespace retro
       public:
         constexpr TextId() = default;
 
-        constexpr TextId(const TextKey package, const TextKey key) noexcept : package_{package}, key_{key}
+        constexpr TextId(const TextKey ns, const TextKey key) noexcept : namespace_{ns}, key_{key}
         {
         }
 
-        [[nodiscard]] TextKey package() const noexcept
+        [[nodiscard]] TextKey text_namespace() const noexcept
         {
-            return package_;
+            return namespace_;
         }
         [[nodiscard]] TextKey key() const noexcept
         {
@@ -68,24 +68,24 @@ namespace retro
 
         constexpr friend bool operator==(const TextId &lhs, const TextId &rhs)
         {
-            return lhs.package_ == rhs.package_ && lhs.key_ == rhs.key_;
+            return lhs.namespace_ == rhs.namespace_ && lhs.key_ == rhs.key_;
         }
 
         constexpr bool is_empty() const noexcept
         {
-            return package_.is_empty() && key_.is_empty();
+            return namespace_.is_empty() && key_.is_empty();
         }
 
         constexpr void reset() noexcept
         {
-            package_.reset();
+            namespace_.reset();
             key_.reset();
         }
 
       private:
         friend struct std::hash<TextId>;
 
-        TextKey package_;
+        TextKey namespace_;
         TextKey key_;
     };
 } // namespace retro
@@ -101,6 +101,6 @@ struct std::hash<retro::TextId>
 {
     std::size_t operator()(const retro::TextId &id) const
     {
-        return hash_combine(id.package_, id.key_);
+        return hash_combine(id.namespace_, id.key_);
     }
 };

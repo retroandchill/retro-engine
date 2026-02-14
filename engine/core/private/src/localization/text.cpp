@@ -4,9 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module retro.core.localization.text;
+module retro.core.localization;
 
-import retro.core.localization.text_source_types;
+import :text;
+import :text_source_types;
 
 namespace retro
 {
@@ -41,6 +42,16 @@ namespace retro
         std::uint16_t local_history_revision() const noexcept override
         {
             return 0;
+        }
+
+        TextHistory &text_history() override
+        {
+            throw std::runtime_error{"TextHistory is not supported for unlocalized text"};
+        }
+
+        const TextHistory &text_history() const override
+        {
+            throw std::runtime_error{"TextHistory is not supported for unlocalized text"};
         }
 
       private:
