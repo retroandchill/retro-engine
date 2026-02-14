@@ -15,24 +15,6 @@ namespace retro
     {
     };
 
-    template <typename List, typename T>
-    struct PushBack;
-
-    template <typename... Ts, typename T>
-    struct PushBack<TypeList<Ts...>, T>
-    {
-        using Type = TypeList<Ts..., T>;
-    };
-
-    template <typename A, typename B>
-    struct Concat;
-
-    template <typename... As, typename... Bs>
-    struct Concat<TypeList<As...>, TypeList<Bs...>>
-    {
-        using Type = TypeList<As..., Bs...>;
-    };
-
     template <typename>
     struct IsTypeList : std::false_type
     {
@@ -79,50 +61,8 @@ namespace retro
     {
     };
 
-    using NotFound = void;
-
-    template <typename T, typename Deps, typename Picked>
-    struct FindFistCtorArgs;
-
-    template <typename T, typename Picked>
-    struct FindFistCtorArgs<T, TypeList<>, Picked>
-    {
-        using Type = std::conditional_t<IsConstructibleFromList<T, Picked>::value, Picked, NotFound>;
-    };
-
-    template <typename T, typename D0, typename... RestDeps, typename Picked>
-    struct FindFistCtorArgs<T, TypeList<D0, RestDeps...>, Picked>
-    {
-      private:
-        template <typename A>
-        using TryA = FindFistCtorArgs<T, TypeList<RestDeps...>, typename PushBack<Picked, A>::Type>::Type;
-
-        template <typename Choices>
-        struct TryChoicesRec;
-
-        template <>
-        struct TryChoicesRec<TypeList<>>
-        {
-            using Type = NotFound;
-        };
-
-        template <typename A0, typename... As>
-        struct TryChoicesRec<TypeList<A0, As...>>
-        {
-            using Attempt = TryA<A0>;
-            using Type = std::
-                conditional_t<std::same_as<Attempt, NotFound>, typename TryChoicesRec<TypeList<As...>>::Type, Attempt>;
-        };
-
-      public:
-        using Type = TryChoicesRec<ArgChoices<D0>>::Type;
-    };
-
-    export template <HasDependencies T>
-    using SelectedCtorArgs = FindFistCtorArgs<T, DependenciesOf<T>, TypeList<>>::Type;
-
     template <typename T>
-    concept ConstructorDependenciesValid = HasDependencies<T> && requires { typename SelectedCtorArgs<T>; };
+    concept ConstructorDependenciesValid = HasDependencies<T> && IsConstructibleFromList<T, DependenciesOf<T>>::value;
 
     export template <typename T>
     concept Injectable = ConstructorDependenciesValid<T> || std::is_default_constructible_v<T>;

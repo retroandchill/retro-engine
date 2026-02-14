@@ -32,7 +32,7 @@ namespace retro
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ScriptRuntime, Renderer2D, PipelineManager, AssetManager>;
+        using Dependencies = TypeList<ScriptRuntime &, Renderer2D &, PipelineManager &, AssetManager &>;
 
         RETRO_API Engine(ScriptRuntime &script_runtime,
                          Renderer2D &renderer,

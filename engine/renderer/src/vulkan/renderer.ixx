@@ -30,14 +30,14 @@ namespace retro
       public:
         static constexpr std::uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
-        using Dependencies = TypeList<Window,
+        using Dependencies = TypeList<Window &,
                                       vk::SurfaceKHR,
-                                      VulkanDevice,
-                                      VulkanSwapchain,
-                                      VulkanBufferManager,
-                                      VulkanCommandPool,
-                                      VulkanPipelineManager,
-                                      ViewportRendererFactory>;
+                                      VulkanDevice &,
+                                      VulkanSwapchain &,
+                                      VulkanBufferManager &,
+                                      VulkanCommandPool &,
+                                      VulkanPipelineManager &,
+                                      ViewportRendererFactory &>;
 
         explicit VulkanRenderer2D(Window &window,
                                   vk::SurfaceKHR surface,

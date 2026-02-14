@@ -49,7 +49,7 @@ namespace retro
     {
       public:
         using Dependencies =
-            TypeList<VulkanDevice, vk::SurfaceKHR, VulkanSwapchain, VulkanBufferManager, VulkanPipelineManager>;
+            TypeList<VulkanDevice &, vk::SurfaceKHR, VulkanSwapchain &, VulkanBufferManager &, VulkanPipelineManager &>;
 
         ViewportRendererFactory(VulkanDevice &device,
                                 vk::SurfaceKHR surface,

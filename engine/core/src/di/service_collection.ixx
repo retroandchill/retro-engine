@@ -21,7 +21,7 @@ namespace retro
     {
         if constexpr (HasDependencies<T>)
         {
-            return TypeListApply<SelectedCtorArgs<T>>::call(
+            return TypeListApply<DependenciesOf<T>>::call(
                 [&]<typename... Deps>()
                 { return std::make_unique<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }
@@ -36,7 +36,7 @@ namespace retro
     {
         if constexpr (HasDependencies<T>)
         {
-            return TypeListApply<SelectedCtorArgs<T>>::call(
+            return TypeListApply<DependenciesOf<T>>::call(
                 [&]<typename... Deps>()
                 { return std::make_shared<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }
@@ -52,7 +52,7 @@ namespace retro
     {
         if constexpr (HasDependencies<T>)
         {
-            return TypeListApply<SelectedCtorArgs<T>>::call(
+            return TypeListApply<DependenciesOf<T>>::call(
                 [&]<typename... Deps>()
                 { return make_ref_counted<T>(provider.get_required<std::decay_t<Deps>>()...); });
         }

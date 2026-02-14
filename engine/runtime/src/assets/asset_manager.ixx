@@ -29,7 +29,7 @@ namespace retro
     export class RETRO_API AssetManager
     {
       public:
-        using Dependencies = TypeList<AssetSource, AssetDecoder>;
+        using Dependencies = TypeList<AssetSource &, std::vector<AssetDecoder *>>;
 
         explicit inline AssetManager(AssetSource &asset_source, std::vector<AssetDecoder *> decoders)
             : asset_source_{asset_source}, decoders_{std::move(decoders)}

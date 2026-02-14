@@ -25,7 +25,7 @@ namespace retro
     export class RETRO_API TextureDecoder final : public AssetDecoder
     {
       public:
-        using Dependencies = TypeList<Renderer2D>;
+        using Dependencies = TypeList<Renderer2D &>;
 
         explicit inline TextureDecoder(Renderer2D &renderer) : renderer_{&renderer}
         {

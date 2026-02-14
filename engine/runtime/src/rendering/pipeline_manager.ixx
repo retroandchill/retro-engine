@@ -29,7 +29,7 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        using Dependencies = TypeList<Renderer2D, RenderPipeline>;
+        using Dependencies = TypeList<Renderer2D &, const std::vector<RenderPipeline *> &>;
         static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 16;
 
         explicit PipelineManager(Renderer2D &renderer, const std::vector<RenderPipeline *> &pipelines);

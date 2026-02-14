@@ -24,28 +24,24 @@ import retro.renderer.vulkan.components.surface;
 
 namespace retro
 {
-    namespace
-    {
-        VulkanSwapchain create_swapchain(const Window &window, const vk::SurfaceKHR surface, const VulkanDevice &device)
-        {
-            return VulkanSwapchain{SwapchainConfig{
-                .physical_device = device.physical_device(),
-                .device = device.device(),
-                .surface = surface,
-                .graphics_family = device.graphics_family_index(),
-                .present_family = device.present_family_index(),
-                .width = window.width(),
-                .height = window.height(),
-            }};
-        }
-    } // namespace
-
     void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
     {
         services.add_singleton<Renderer2D, VulkanRenderer2D>()
             .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
             .add_singleton<&create_surface>()
-            .add_singleton<&create_swapchain>()
+            .add_singleton(
+                [](const Window &window, const vk::SurfaceKHR surface, const VulkanDevice &device)
+                {
+                    return std::make_unique<VulkanSwapchain>(SwapchainConfig{
+                        .physical_device = device.physical_device(),
+                        .device = device.device(),
+                        .surface = surface,
+                        .graphics_family = device.graphics_family_index(),
+                        .present_family = device.present_family_index(),
+                        .width = window.width(),
+                        .height = window.height(),
+                    });
+                })
             .add_singleton([](const VulkanInstance &instance, PlatformBackend &platform_backend)
                            { return VulkanDevice::create(instance, platform_backend); })
             .add_singleton<VulkanBufferManager>()
