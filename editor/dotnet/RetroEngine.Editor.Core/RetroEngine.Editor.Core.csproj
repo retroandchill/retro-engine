@@ -11,6 +11,10 @@
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="JetBrains.Annotations" />
+      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Strings\RetroEngine.Strings.Managed.csproj" />
+        <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
 </Project>
