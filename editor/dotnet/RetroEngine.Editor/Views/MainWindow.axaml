@@ -15,6 +15,21 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open..."/>
+                <Separator/>
+                <MenuItem Header="_Exit"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Copy"/>
+                <MenuItem Header="Paste"/>
+            </MenuItem>
+        </Menu>
+        <DockPanel>
+
+        </DockPanel>
+    </DockPanel>
 
 </Window>

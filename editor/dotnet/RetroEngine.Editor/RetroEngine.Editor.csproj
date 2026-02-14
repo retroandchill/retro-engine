@@ -23,5 +23,16 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Dock.Avalonia" />
+        <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+        <PackageReference Include="Dock.Model.Mvvm" />
+        <PackageReference Include="Dock.Serializer.SystemTextJson" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\RetroEngine.Editor.Core\RetroEngine.Editor.Core.csproj" />
+      <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false"/>
     </ItemGroup>
 </Project>

@@ -9,6 +9,12 @@
   </Configurations>
   <Folder Name="/editor/" />
   <Folder Name="/editor/dotnet/">
+    <Project Path="editor/dotnet/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
+      <BuildType Project="Debug" />
+    </Project>
+    <Project Path="editor/dotnet/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
+      <BuildType Project="Debug" />
+    </Project>
     <Project Path="editor/dotnet/RetroEngine.Editor/RetroEngine.Editor.csproj">
       <BuildType Project="Debug" />
     </Project>

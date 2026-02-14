@@ -55,7 +55,7 @@
         <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
     </PropertyGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">
         <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshalling"/>
     </ItemGroup>
 </Project>
