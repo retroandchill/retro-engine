@@ -7,57 +7,9 @@
 module retro.core.localization;
 
 import :text;
-import :text_source_types;
 
 namespace retro
 {
-    class UnlocalizedTextData final : public TextData
-    {
-      public:
-        explicit UnlocalizedTextData(std::u16string &&source_string)
-            : display_string_{make_text_display_string(std::move(source_string))}
-        {
-        }
-
-        const std::u16string &source_string() const noexcept override
-        {
-            return display_string_->string();
-        }
-
-        const std::u16string &display_string() const noexcept override
-        {
-            return display_string_->string();
-        }
-
-        TextConstDisplayStringPtr localized_string() const noexcept override
-        {
-            return display_string_;
-        }
-
-        std::uint16_t global_history_revision() const noexcept override
-        {
-            return 0;
-        }
-
-        std::uint16_t local_history_revision() const noexcept override
-        {
-            return 0;
-        }
-
-        TextHistory &text_history() override
-        {
-            throw std::runtime_error{"TextHistory is not supported for unlocalized text"};
-        }
-
-        const TextHistory &text_history() const override
-        {
-            throw std::runtime_error{"TextHistory is not supported for unlocalized text"};
-        }
-
-      private:
-        TextDisplayStringPtr display_string_;
-    };
-
     const Text &Text::empty()
     {
         static Text empty_text{};
@@ -65,7 +17,7 @@ namespace retro
     }
 
     Text::Text(std::u16string &&source_string)
-        : Text{make_ref_counted<UnlocalizedTextData>(std::move(source_string)), TextFlag::initialized_from_string}
+        : Text{make_unlocalized_string(std::move(source_string)), TextFlag::initialized_from_string}
     {
     }
 
@@ -76,7 +28,7 @@ namespace retro
 
     Text Text::as_culture_invariant(std::u16string &&source_string)
     {
-        return Text{make_ref_counted<UnlocalizedTextData>(std::move(source_string)), TextFlag::culture_invariant};
+        return Text{make_unlocalized_string(std::move(source_string)), TextFlag::culture_invariant};
     }
 
     Text Text::as_culture_invariant(Text text)
@@ -139,17 +91,17 @@ namespace retro
 
     Text Text::trim() const
     {
-        return Text{make_ref_counted<UnlocalizedTextData>(std::u16string{retro::trim(to_string())}), flags_};
+        return Text{make_unlocalized_string(retro::trim(to_string())), flags_};
     }
 
     Text Text::trim_start() const
     {
-        return Text{make_ref_counted<UnlocalizedTextData>(std::u16string{retro::trim_start(to_string())}), flags_};
+        return Text{make_unlocalized_string(std::u16string{to_string()}), flags_};
     }
 
     Text Text::trim_end() const
     {
-        return Text{make_ref_counted<UnlocalizedTextData>(std::u16string{retro::trim_end(to_string())}), flags_};
+        return Text{make_unlocalized_string(retro::trim_end(to_string())), flags_};
     }
 
     bool Text::is_transient() const noexcept

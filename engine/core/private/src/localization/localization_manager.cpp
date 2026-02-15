@@ -10,7 +10,7 @@ import :localization_manager;
 
 namespace retro
 {
-    LocalizationManager::LocalizationManager()
+    LocalizationManager::LocalizationManager() : current_locale_{u"en"}
     {
     }
 
@@ -20,127 +20,107 @@ namespace retro
         return instance;
     }
 
-    TextConstDisplayStringPtr LocalizationManager::find_display_string(const TextKey ns,
-                                                                       const TextKey key,
-                                                                       const std::u16string_view source_string) const
+    LocalizedStringConstPtr LocalizationManager::get_localized_string(TextKey namespace_key,
+                                                                      TextKey string_key,
+                                                                      std::u16string_view fallback_source) const
     {
-        if (key.is_empty())
+        if (string_key.is_empty())
         {
-            return nullptr;
-        }
-
-        return find_display_string_internal(TextId{ns, key}, source_string);
-    }
-
-    TextConstDisplayStringPtr LocalizationManager::get_display_string(TextKey ns,
-                                                                      TextKey key,
-                                                                      std::u16string_view source_string) const
-    {
-        if (key.is_empty())
-        {
-            return nullptr;
-        }
-
-        TextId text_id{ns, key};
-
-        const auto full_namespace = text_id.text_namespace().to_string();
-        const auto display_namespace = full_namespace;
-        if (compare(full_namespace, display_namespace) != std::strong_ordering::equal)
-        {
-            text_id = TextId(TextKey{display_namespace}, text_id.key());
-        }
-
-        return find_display_string_internal(text_id, source_string);
-    }
-
-    std::uint16_t LocalizationManager::text_revision() const
-    {
-        std::shared_lock lock{text_revision_mutex_};
-        return text_revision_counter_;
-    }
-
-    std::uint16_t LocalizationManager::get_local_revision_for_text_id(TextId text_id) const
-    {
-        if (text_id.is_empty())
-            return 0;
-
-        std::shared_lock lock{text_revision_mutex_};
-        if (const auto found_revision = text_revisions_.find(text_id); found_revision != text_revisions_.end())
-        {
-            return found_revision->second;
-        }
-
-        return 0;
-    }
-
-    std::pair<std::uint16_t, std::uint16_t> LocalizationManager::get_text_revisions(TextId text_id) const
-    {
-        std::shared_lock lock{text_revision_mutex_};
-
-        if (const auto found_revision = text_id.is_empty() ? text_revisions_.end() : text_revisions_.find(text_id);
-            found_revision != text_revisions_.end())
-        {
-            return std::make_pair(text_revision_counter_, found_revision->second);
-        }
-
-        return std::make_pair(text_revision_counter_, 0);
-    }
-
-    void LocalizationManager::on_culture_changed()
-    {
-        // TODO: This is a no-op for now
-    }
-
-    void LocalizationManager::dirty_local_revision_for_text_id(TextId text_id)
-    {
-        std::unique_lock lock{text_revision_mutex_};
-
-        auto found_local_revision = text_revisions_.find(text_id);
-        if (found_local_revision == text_revisions_.end())
-        {
-            // Increment and wrap around on overflow, but don't stay at 0
-            while (++found_local_revision->second == 0)
+            if (!fallback_source.empty())
             {
+                return make_unlocalized_string(std::u16string{fallback_source});
+            }
+            return nullptr;
+        }
+
+        TextId text_id{namespace_key, string_key};
+
+        {
+            std::shared_lock lock{lookup_mutex_};
+
+            const auto found_entry = string_table_.find(text_id);
+            if (found_entry != string_table_.end())
+            {
+                // Validate source string match if provided
+                if (fallback_source.empty() ||
+                    found_entry->second.source_hash == std::hash<std::u16string_view>{}(fallback_source))
+                {
+                    return found_entry->second.string;
+                }
             }
         }
-        else
-        {
-            text_revisions_.emplace(text_id, 1);
-        }
-    }
 
-    TextConstDisplayStringPtr LocalizationManager::find_display_string_internal(TextId text_id,
-                                                                                std::u16string_view source_string) const
-    {
-        if (is_initialized())
+        // Not found or source mismatch - return unlocalized fallback
+        if (!fallback_source.empty())
         {
-            return nullptr;
-        }
-
-        std::shared_lock lock{display_string_table_mutex_};
-
-        if (auto live_entry = display_string_table_.find(text_id); live_entry != display_string_table_.end())
-        {
-            if (source_string.empty() || live_entry->second.source_string_hash == text::hash_string(source_string))
-            {
-                return live_entry->second.display_string;
-            }
+            return make_unlocalized_string(std::u16string{fallback_source});
         }
 
         return nullptr;
     }
 
-    void LocalizationManager::dirty_text_revision()
+    std::uint16_t LocalizationManager::global_revision() const
     {
-        {
-            std::unique_lock lock{text_revision_mutex_};
+        std::shared_lock lock{revision_mutex_};
+        return global_revision_;
+    }
 
-            while (++text_revision_counter_ == 0)
-            {
-            }
-            text_revisions_.clear();
+    TextRevision LocalizationManager::get_text_revision(TextId text_id) const
+    {
+        if (text_id.is_empty())
+        {
+            return TextRevision{};
         }
 
-        on_text_revision_changed();
+        std::shared_lock lock{revision_mutex_};
+
+        const auto found_local = local_revisions_.find(text_id);
+        const std::uint16_t local = (found_local != local_revisions_.end()) ? found_local->second : 0;
+
+        return TextRevision{global_revision_, local};
+    }
+
+    void LocalizationManager::register_source(std::shared_ptr<LocalizedTextSource> source)
+    {
+        if (!source)
+        {
+            return;
+        }
+
+        {
+            std::unique_lock lock{lookup_mutex_};
+            sources_.push_back(std::move(source));
+        }
+
+        // Sort by priority (highest first)
+        std::sort(sources_.begin(),
+                  sources_.end(),
+                  [](const auto &a, const auto &b) { return a->priority() > b->priority(); });
+    }
+
+    std::u16string LocalizationManager::current_locale() const
+    {
+        std::shared_lock lock{lookup_mutex_};
+        return current_locale_;
+    }
+
+    void LocalizationManager::set_locale(std::u16string_view locale_name)
+    {
+        {
+            std::unique_lock lock{lookup_mutex_};
+            current_locale_ = std::u16string{locale_name};
+        }
+
+        // Increment global revision to signal all text needs update
+        {
+            std::unique_lock lock{revision_mutex_};
+            if (++global_revision_ == 0)
+            {
+                ++global_revision_; // Skip 0
+            }
+            local_revisions_.clear();
+        }
+
+        on_revision_changed_();
     }
 } // namespace retro

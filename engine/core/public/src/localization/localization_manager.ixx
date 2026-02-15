@@ -13,8 +13,8 @@ export module retro.core.localization:localization_manager;
 import std;
 import retro.core.util.enum_class_flags;
 import retro.core.util.lazy_singleton;
-import :text_source_types;
 import :text_key;
+import :localized_string;
 import :localized_text_source;
 import retro.core.containers.optional;
 import retro.core.util.noncopyable;
@@ -32,127 +32,54 @@ namespace retro
     export template <>
     constexpr bool is_flag_enum<LocalizationManagerInitializedFlags> = true;
 
-    export class RETRO_API LocalizationManager
+    export class RETRO_API LocalizationManager : NonCopyable
     {
         LocalizationManager();
+        ~LocalizationManager() = default;
 
       public:
-        ~LocalizationManager() = default;
-        LocalizationManager(const LocalizationManager &) = delete;
-        LocalizationManager(LocalizationManager &&) = delete;
-        LocalizationManager &operator=(const LocalizationManager &) = delete;
-        LocalizationManager &operator=(LocalizationManager &&) = delete;
-
         static LocalizationManager &get();
 
-        std::u16string requested_language_name() const;
-        std::u16string requested_locale_name() const;
-        std::u16string get_native_culture_name(LocalizedTextSourceCategory category) const;
+        LocalizedStringConstPtr get_localized_string(TextKey namespace_key,
+                                                     TextKey string_key,
+                                                     std::u16string_view fallback_source = {}) const;
 
-        std::vector<std::u16string> get_localized_culture_names(LocalizedTextSourceCategory category) const;
+        std::uint16_t global_revision() const;
 
-        std::int32_t get_localization_target_path_id(std::u16string_view localization_target_path);
+        TextRevision get_text_revision(TextId text_id) const;
 
-        void register_text_source(std::shared_ptr<LocalizedTextSource> localized_text_source,
-                                  bool refresh_resources = true);
+        void register_source(std::shared_ptr<LocalizedTextSource> source);
 
-        TextConstDisplayStringPtr find_display_string(TextKey ns,
-                                                      TextKey key,
-                                                      std::u16string_view source_string = {}) const;
+        std::u16string current_locale() const;
+        void set_locale(std::u16string_view locale_name);
 
-        TextConstDisplayStringPtr get_display_string(TextKey ns, TextKey key, std::u16string_view source_string) const;
-
-        std::uint16_t text_revision() const;
-
-        std::uint16_t get_local_revision_for_text_id(TextId text_id) const;
-
-        std::pair<std::uint16_t, std::uint16_t> get_text_revisions(TextId text_id) const;
-
-        class TextRevisionChangedEvent : public MulticastDelegate<void()>
+        class RevisionChangedEvent : public MulticastDelegate<void()>
         {
             friend LocalizationManager;
         };
 
-        inline TextRevisionChangedEvent::RegistrationType on_text_revision_changed()
+        [[nodiscard]] RevisionChangedEvent::RegistrationType on_revision_changed()
         {
-            return on_text_revision_changed_;
+            return on_revision_changed_;
         }
 
       private:
-        void on_culture_changed();
-
-        void dirty_local_revision_for_text_id(TextId text_id);
-
-        TextConstDisplayStringPtr find_display_string_internal(TextId text_id, std::u16string_view source_string) const;
-
-        void dirty_text_revision();
-
-        friend RETRO_API void begin_pre_init_text_localization();
-        friend RETRO_API void begin_init_text_localization();
-        friend RETRO_API void init_engine_text_localization();
-        friend RETRO_API void init_game_text_localization();
-
-        struct DisplayStringEntry
+        struct LocalizedStringEntry
         {
-            TextConstDisplayStringPtr display_string;
-#if RETRO_WITH_EDITOR_DATA
-            TextKey loc_res_id;
-#endif
-            std::int32_t localization_target_path_id = index_none<std::int32_t>;
-            std::uint32_t source_string_hash;
-
-            DisplayStringEntry(TextKey loc_res_id,
-                               const std::int32_t localization_target_path_id,
-                               const std::uint32_t source_string_hash,
-                               TextConstDisplayStringPtr display_string) noexcept
-                : display_string{std::move(display_string)},
-#if RETRO_WITH_EDITOR_DATA
-                  loc_res_id{std::move(loc_res_id)},
-#endif
-                  localization_target_path_id{localization_target_path_id}, source_string_hash{source_string_hash}
-            {
-            }
+            LocalizedStringConstPtr string;
+            std::uint32_t source_hash;
         };
 
-        using DisplayStringLookupTable = std::unordered_map<TextId, DisplayStringEntry>;
+        mutable std::shared_mutex lookup_mutex_;
+        std::unordered_map<TextId, LocalizedStringEntry> string_table_;
 
-        struct DisplayStringsForLocalizationTarget
-        {
-            std::u16string localization_target_path;
-            std::unordered_set<TextId> text_ids;
-            bool is_mounted = false;
-        };
+        mutable std::shared_mutex revision_mutex_;
+        std::unordered_map<TextId, std::uint16_t> local_revisions_;
+        std::uint16_t global_revision_ = 1;
 
-        struct DisplayStringsByLocalizationTarget
-        {
-            std::pair<DisplayStringsForLocalizationTarget &, std::int32_t> find_or_add(
-                std::u16string_view localization_target_path);
-            Optional<DisplayStringsByLocalizationTarget &> find(std::int32_t localization_target_path_id);
-            void track_text_id(std::int32_t current_localization_path_id,
-                               std::int32_t new_localization_path_id,
-                               TextId text_id);
+        std::u16string current_locale_;
+        std::vector<std::shared_ptr<LocalizedTextSource>> sources_;
 
-          private:
-            std::vector<DisplayStringsForLocalizationTarget> display_strings_;
-            std::unordered_map<std::u16string_view, std::int32_t> localization_target_paths_to_ids_;
-        };
-
-        std::atomic<LocalizationManagerInitializedFlags> initialized_flags_{LocalizationManagerInitializedFlags::none};
-
-        bool is_initialized() const
-        {
-            return initialized_flags_ != LocalizationManagerInitializedFlags::none;
-        }
-
-        mutable std::shared_mutex display_string_table_mutex_;
-        DisplayStringLookupTable display_string_table_;
-        DisplayStringsByLocalizationTarget display_strings_by_localization_target_id_;
-
-        mutable std::shared_mutex text_revision_mutex_;
-        std::unordered_map<TextId, std::uint16_t> text_revisions_;
-        std::uint16_t text_revision_counter_ = 1;
-
-        TextRevisionChangedEvent on_text_revision_changed_;
-        std::vector<std::shared_ptr<LocalizedTextSource>> localized_text_sources_;
+        RevisionChangedEvent on_revision_changed_;
     };
 } // namespace retro

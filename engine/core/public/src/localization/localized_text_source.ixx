@@ -7,11 +7,42 @@
 export module retro.core.localization:localized_text_source;
 
 import std;
-import :text_source_types;
 import retro.core.containers.optional;
+import retro.core.util.enum_class_flags;
 
 namespace retro
 {
+    export enum class LocalizedTextSourceCategory : std::uint8_t
+    {
+        game,
+        engine,
+        editor
+    };
+
+    export enum class LocalizationLoadFlags : std::uint8_t
+    {
+        none = 0,
+        native = 1 << 0,
+        editor = 1 << 1,
+        game = 1 << 2,
+        engine = 1 << 3,
+        additional = 1 << 4,
+        force_localized_game = 1 << 5,
+        skip_existing = 1 << 6
+    };
+
+    export template <>
+    constexpr bool is_flag_enum<LocalizationLoadFlags> = true;
+
+    struct LocalizedTextSourcePriority
+    {
+        static constexpr std::int32_t lowest = -1000;
+        static constexpr std::int32_t low = -100;
+        static constexpr std::int32_t normal = 0;
+        static constexpr std::int32_t high = 100;
+        static constexpr std::int32_t highest = 1000;
+    };
+
     export class LocalizedTextSource
     {
       public:

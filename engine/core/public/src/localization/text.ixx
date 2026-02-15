@@ -13,13 +13,11 @@ export module retro.core.localization:text;
 import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
-import :text_data;
+import :localized_string;
 import retro.core.memory.ref_counted_ptr;
-import :loc_key;
 import :text_key;
 import retro.core.util.date_time;
 import retro.core.strings.name;
-import :string_table;
 import retro.core.functional.delegate;
 import retro.core.type_traits.basic;
 import retro.core.strings.encoding;
@@ -145,20 +143,13 @@ namespace retro
         [[nodiscard]] bool is_initialized_from_string() const noexcept;
 
       private:
-        template <std::derived_from<TextData> T>
-        explicit Text(RefCountPtr<T> &&text_data, TextFlag flags = TextFlag::none) : text_data_(std::move(text_data))
+        template <std::derived_from<LocalizedString> T>
+        explicit Text(RefCountPtr<T> &&text_data, const TextFlag flags = TextFlag::none)
+            : text_data_(std::move(text_data)), flags_{flags}
         {
         }
 
-        RefCountPtr<TextData> text_data_;
+        LocalizedStringPtr text_data_;
         TextFlag flags_ = TextFlag::none;
-    };
-
-    class HistoricFormatData
-    {
-    };
-
-    class HistoricTextNumericData
-    {
     };
 } // namespace retro

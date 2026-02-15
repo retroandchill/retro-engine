@@ -16,58 +16,54 @@ import retro.core.algorithm.hashing;
 
 namespace retro
 {
-    export namespace text
-    {
-        inline std::size_t hash_string(const std::u16string_view str)
-        {
-            return std::hash<std::u16string_view>{}(str);
-        }
-
-        inline std::size_t hash_string(const std::u16string_view str, const std::uint32_t base)
-        {
-            return hash_combine(base, str);
-        }
-    } // namespace text
+    export class TextId;
 
     export class RETRO_API TextKey
     {
       public:
-        constexpr TextKey() = default;
+        constexpr TextKey() noexcept = default;
 
         explicit TextKey(std::u16string_view key) noexcept;
 
-        [[nodiscard]] std::u16string to_string() const;
-        void append_string(std::u16string &out) const;
+        [[nodiscard]] constexpr std::uint32_t id() const noexcept
+        {
+            return id_;
+        }
 
-        constexpr friend bool operator==(const TextKey &lhs, const TextKey &rhs) noexcept = default;
+        [[nodiscard]] const std::u16string &to_string() const noexcept;
 
         [[nodiscard]] constexpr bool is_empty() const noexcept
         {
-            return index_ == 0;
+            return id_ == 0;
         }
 
-        constexpr void reset()
+        constexpr void reset() noexcept
         {
-            index_ = 0;
+            id_ = 0;
         }
+
+        constexpr friend bool operator==(const TextKey &lhs, const TextKey &rhs) noexcept = default;
+
+        constexpr friend std::strong_ordering operator<=>(const TextKey &lhs, const TextKey &rhs) noexcept = default;
 
       private:
-        explicit constexpr TextKey(const std::int32_t index) noexcept : index_{index}
+        explicit constexpr TextKey(std::uint32_t id) noexcept : id_{id}
         {
         }
 
-        std::int32_t index_ = 0;
+        std::uint32_t id_ = 0;
 
         friend std::hash<TextKey>;
-        friend class TextKeyState;
+        friend class TextId;
+        friend class TextKeyRegistry;
     };
 
-    export class TextId
+    class RETRO_API TextId
     {
       public:
-        constexpr TextId() = default;
+        constexpr TextId() noexcept = default;
 
-        constexpr TextId(const TextKey ns, const TextKey key) noexcept : namespace_{ns}, key_{key}
+        constexpr TextId(const TextKey &ns, const TextKey &key) noexcept : namespace_{ns}, key_{key}
         {
         }
 
@@ -75,14 +71,10 @@ namespace retro
         {
             return namespace_;
         }
+
         [[nodiscard]] TextKey key() const noexcept
         {
             return key_;
-        }
-
-        constexpr friend bool operator==(const TextId &lhs, const TextId &rhs)
-        {
-            return lhs.namespace_ == rhs.namespace_ && lhs.key_ == rhs.key_;
         }
 
         [[nodiscard]] constexpr bool is_empty() const noexcept
@@ -96,25 +88,33 @@ namespace retro
             key_.reset();
         }
 
-      private:
-        friend std::hash<TextId>;
+        constexpr friend bool operator==(const TextId &lhs, const TextId &rhs) noexcept = default;
 
-        TextKey namespace_;
-        TextKey key_;
+        constexpr friend std::strong_ordering operator<=>(const TextId &lhs, const TextId &rhs) noexcept = default;
+
+      private:
+        TextKey namespace_{};
+        TextKey key_{};
+
+        friend std::hash<TextId>;
+        friend class TextKeyRegistry;
     };
 } // namespace retro
 
 template <>
 struct std::hash<retro::TextKey>
 {
-    RETRO_API std::size_t operator()(const retro::TextKey &key) const noexcept;
+    constexpr std::size_t operator()(const retro::TextKey &key) const noexcept
+    {
+        return retro::hash_combine(key.id());
+    }
 };
 
 template <>
 struct std::hash<retro::TextId>
 {
-    std::size_t operator()(const retro::TextId &id) const noexcept
+    constexpr std::size_t operator()(const retro::TextId &id) const noexcept
     {
-        return hash_combine(id.namespace_, id.key_);
+        return retro::hash_combine(id.namespace_, id.key_);
     }
 };

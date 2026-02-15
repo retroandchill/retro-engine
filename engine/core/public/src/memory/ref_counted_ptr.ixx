@@ -88,9 +88,12 @@ namespace retro
 
     constexpr RefCountInternal ref_count_internal{};
 
-    export template <RefCounted T>
+    export template <typename T>
+        requires RefCounted<std::remove_cv_t<T>>
     class RefCountPtr
     {
+        using NonConstType = std::remove_cv_t<T>;
+
       public:
         using element_type = T;
 
@@ -100,13 +103,13 @@ namespace retro
         {
         }
 
-        explicit constexpr RefCountPtr(T *ptr) noexcept : ptr_(ptr)
+        explicit constexpr RefCountPtr(NonConstType *ptr) noexcept : ptr_(ptr)
         {
             if (ptr_ != nullptr)
                 intrusive_retain(ptr_);
         }
 
-        explicit constexpr RefCountPtr(RefCountInternal, T *ptr) noexcept : ptr_(ptr)
+        explicit constexpr RefCountPtr(RefCountInternal, NonConstType *ptr) noexcept : ptr_(ptr)
         {
         }
 
@@ -117,6 +120,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
+            requires std::constructible_from<NonConstType *, U *>
         explicit(false) constexpr RefCountPtr(const RefCountPtr<U> &other) noexcept : ptr_(other.get())
         {
             if (ptr_ != nullptr)
@@ -129,6 +133,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
+            requires std::constructible_from<NonConstType *, U *>
         explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release(RefCountInternal{}))
         {
             other.ptr_ = nullptr;
@@ -150,6 +155,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
+            requires std::assignable_from<NonConstType *, U *>
         constexpr RefCountPtr &operator=(const RefCountPtr<U> &other) noexcept
         {
             reset(other.get());
@@ -172,6 +178,7 @@ namespace retro
         }
 
         template <std::derived_from<T> U>
+            requires std::assignable_from<NonConstType *, U *>
         constexpr RefCountPtr &operator=(RefCountPtr<U> &&other) noexcept
         {
             if (ptr_)
@@ -185,7 +192,7 @@ namespace retro
             return *this;
         }
 
-        constexpr RefCountPtr &operator=(T *ptr) noexcept
+        constexpr RefCountPtr &operator=(NonConstType **ptr) noexcept
         {
             reset(ptr);
             return *this;
@@ -206,7 +213,7 @@ namespace retro
             return *ptr_;
         }
 
-        T *release(RefCountInternal) noexcept
+        NonConstType *release(RefCountInternal) noexcept
         {
             auto ptr = ptr_;
             ptr_ = nullptr;
@@ -290,13 +297,18 @@ namespace retro
         }
 
       private:
-        template <RefCounted U>
+        template <typename U>
+            requires RefCounted<std::remove_cv_t<U>>
         friend class RefCountPtr;
 
-        T *ptr_{nullptr};
+        NonConstType *ptr_ = nullptr;
     };
 
     export template <RefCounted T>
+    RefCountPtr(T *) -> RefCountPtr<T>;
+
+    export template <typename T>
+        requires RefCounted<std::remove_cv_t<T>>
     constexpr void swap(RefCountPtr<T> &a, RefCountPtr<T> &b) noexcept
     {
         a.swap(b);
@@ -306,7 +318,7 @@ namespace retro
         requires std::constructible_from<T, Args...>
     constexpr RefCountPtr<T> make_ref_counted(Args &&...args)
     {
-        return RefCountPtr<T>{new T{std::forward<Args>(args)...}};
+        return RefCountPtr<T>{new std::remove_cv_t<T>{std::forward<Args>(args)...}};
     }
 
     export template <RefCounted T, RefCounted U>
