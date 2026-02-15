@@ -8,7 +8,7 @@ module retro.core.localization.localization_manager;
 
 namespace retro
 {
-    LocalizationManager::LocalizationManager() : current_locale_{CultureInfo::create("en_US")}
+    LocalizationManager::LocalizationManager() : current_locale_{Locale::create("en_US")}
     {
     }
 

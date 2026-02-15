@@ -1,5 +1,5 @@
 /**
- * @file culture_info.cpp
+ * @file locale.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,11 +8,11 @@ module;
 
 #include <unicode/locid.h>
 
-module retro.core.localization.culture_info;
+module retro.core.localization.locale;
 
 namespace retro
 {
-    CultureInfo::CultureInfo(ConstructTag, const CStringView locale_tag)
+    Locale::Locale(ConstructTag, const CStringView locale_tag)
         : locale_tag_{locale_tag.empty() ? "en_US" : locale_tag.to_string()},
           icu_locale_{icu::Locale(locale_tag_.c_str())}
     {
@@ -39,7 +39,7 @@ namespace retro
         is_right_to_left_ = icu_locale_.isRightToLeft();
     }
 
-    bool operator==(const CultureInfo &lhs, const CultureInfo &rhs) noexcept
+    bool operator==(const Locale &lhs, const Locale &rhs) noexcept
     {
         return lhs.icu_locale_ == rhs.icu_locale_;
     }

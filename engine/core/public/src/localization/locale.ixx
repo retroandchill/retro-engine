@@ -1,5 +1,5 @@
 /**
- * @file culture_info.ixx
+ * @file locale.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -10,7 +10,7 @@ module;
 
 #include <unicode/locid.h>
 
-export module retro.core.localization.culture_info;
+export module retro.core.localization.locale;
 
 import std;
 import retro.core.strings.cstring_view;
@@ -18,18 +18,18 @@ import retro.core.util.noncopyable;
 
 namespace retro
 {
-    export class RETRO_API CultureInfo : NonCopyable
+    export class RETRO_API Locale : NonCopyable
     {
         struct ConstructTag
         {
         };
 
       public:
-        explicit CultureInfo(ConstructTag, CStringView locale_tag = "");
+        explicit Locale(ConstructTag, CStringView locale_tag = "");
 
-        static inline std::shared_ptr<CultureInfo> create(CStringView locale_tag = "")
+        static inline std::shared_ptr<Locale> create(CStringView locale_tag = "")
         {
-            return std::make_shared<CultureInfo>(ConstructTag{}, locale_tag);
+            return std::make_shared<Locale>(ConstructTag{}, locale_tag);
         }
 
         // Locale identification
@@ -63,7 +63,7 @@ namespace retro
             return is_right_to_left_;
         }
 
-        friend bool operator==(const CultureInfo &lhs, const CultureInfo &rhs) noexcept;
+        friend bool operator==(const Locale &lhs, const Locale &rhs) noexcept;
 
       private:
         std::string locale_tag_;
@@ -76,5 +76,5 @@ namespace retro
         bool is_right_to_left_ = false;
     };
 
-    export using CultureInfoPtr = std::shared_ptr<CultureInfo>;
+    export using CultureInfoPtr = std::shared_ptr<Locale>;
 } // namespace retro

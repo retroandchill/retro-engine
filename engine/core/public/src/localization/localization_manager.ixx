@@ -15,7 +15,7 @@ import retro.core.util.enum_class_flags;
 import retro.core.localization.text_key;
 import retro.core.localization.localized_string;
 import retro.core.localization.localized_text_source;
-import retro.core.localization.culture_info;
+import retro.core.localization.locale;
 import retro.core.containers.optional;
 import retro.core.strings.cstring_view;
 import retro.core.util.noncopyable;

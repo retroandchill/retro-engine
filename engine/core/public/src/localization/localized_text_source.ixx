@@ -12,7 +12,7 @@ import retro.core.util.enum_class_flags;
 import retro.core.functional.delegate;
 import retro.core.localization.localized_string;
 import retro.core.localization.text_key;
-import retro.core.localization.culture_info;
+import retro.core.localization.locale;
 
 namespace retro
 {

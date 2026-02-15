@@ -19,7 +19,7 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/localization/text_key.cpp
         private/src/util/guid.cpp
         private/src/memory/arena_allocator.cpp
-        private/src/localization/culture_info.cpp
+        private/src/localization/locale.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -88,7 +88,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/localization/localization_manager.ixx
         public/src/localization/localized_text_source.ixx
         public/src/util/guid.ixx
-        public/src/localization/culture_info.ixx
+        public/src/localization/locale.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
