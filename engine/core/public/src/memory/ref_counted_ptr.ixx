@@ -229,7 +229,7 @@ namespace retro
             }
         }
 
-        constexpr void reset(T *ptr) noexcept
+        constexpr void reset(NonConstType *ptr) noexcept
         {
             if (ptr == ptr_)
                 return;

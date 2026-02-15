@@ -55,20 +55,13 @@ namespace retro
 
         void reload_strings_for_locale(LocalizedTextSourceCategory category);
 
-        class RevisionChangedEvent : public MulticastDelegate<void()>
-        {
-            friend LocalizationManager;
-        };
-
-        [[nodiscard]] RevisionChangedEvent::RegistrationType on_revision_changed()
+        [[nodiscard]] SimpleMulticastDelegate::RegistrationType on_revision_changed()
         {
             return on_revision_changed_;
         }
 
       private:
         void cache_localized_string(TextId text_id, LocalizedStringConstPtr string, std::size_t source_hash);
-
-        void invalidate_local_revision(TextId text_id);
 
         struct LocalizedStringEntry
         {
@@ -86,6 +79,6 @@ namespace retro
         std::u16string current_locale_;
         std::vector<std::shared_ptr<LocalizedTextSource>> sources_;
 
-        RevisionChangedEvent on_revision_changed_;
+        SimpleMulticastDelegate on_revision_changed_;
     };
 } // namespace retro

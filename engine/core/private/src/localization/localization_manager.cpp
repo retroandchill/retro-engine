@@ -183,10 +183,4 @@ namespace retro
             }
         }
     }
-
-    void LocalizationManager::invalidate_local_revision(const TextId text_id)
-    {
-        std::unique_lock lock{revision_mutex_};
-        local_revisions_.erase(text_id);
-    }
 } // namespace retro
