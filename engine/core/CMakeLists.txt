@@ -84,7 +84,6 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/localization/text.ixx
         public/src/util/date_time.ixx
         public/src/localization/text_key.ixx
-        public/src/localization.ixx
         public/src/localization/localization_manager.ixx
         public/src/util/lazy_singleton.ixx
         public/src/localization/localized_text_source.ixx

@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization:text_key;
+export module retro.core.localization.text_key;
 
 import std;
 import retro.core.type_traits.range;

@@ -8,14 +8,14 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization:localization_manager;
+export module retro.core.localization.localization_manager;
 
 import std;
 import retro.core.util.enum_class_flags;
 import retro.core.util.lazy_singleton;
-import :text_key;
-import :localized_string;
-import :localized_text_source;
+import retro.core.localization.text_key;
+import retro.core.localization.localized_string;
+import retro.core.localization.localized_text_source;
 import retro.core.containers.optional;
 import retro.core.util.noncopyable;
 import retro.core.functional.delegate;

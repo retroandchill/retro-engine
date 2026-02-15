@@ -8,11 +8,11 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization:localized_string;
+export module retro.core.localization.localized_string;
 
 import std;
 import retro.core.memory.ref_counted_ptr;
-import :text_key;
+import retro.core.localization.text_key;
 import retro.core.strings.encoding;
 import retro.core.util.enum_class_flags;
 

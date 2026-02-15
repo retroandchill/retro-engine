@@ -8,14 +8,14 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.core.localization:text;
+export module retro.core.localization.text;
 
 import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
-import :localized_string;
+import retro.core.localization.localized_string;
 import retro.core.memory.ref_counted_ptr;
-import :text_key;
+import retro.core.localization.text_key;
 import retro.core.util.date_time;
 import retro.core.strings.name;
 import retro.core.functional.delegate;

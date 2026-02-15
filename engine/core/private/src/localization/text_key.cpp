@@ -9,9 +9,8 @@ module;
 #include <cassert>
 #include <cstddef>
 
-module retro.core.localization;
+module retro.core.localization.text_key;
 
-import :text_key;
 import retro.core.type_traits.range;
 import retro.core.util.guid;
 import retro.core.memory.arena_allocator;
