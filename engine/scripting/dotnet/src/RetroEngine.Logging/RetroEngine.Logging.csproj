@@ -22,7 +22,7 @@
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Strings.Managed.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />

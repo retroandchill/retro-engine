@@ -16,10 +16,21 @@ import retro.core.algorithm.hashing;
 
 namespace retro
 {
+    export namespace text
+    {
+        constexpr std::size_t hash_string(const std::u16string_view str)
+        {
+            return std::hash<std::u16string_view>{}(str);
+        }
+
+        constexpr std::size_t hash_string(const std::u16string_view str, const std::uint32_t base)
+        {
+            return hash_combine(base, str);
+        }
+    } // namespace text
+
     export class RETRO_API TextKey
     {
-        static constexpr std::int32_t index_none = -1;
-
       public:
         constexpr TextKey() = default;
 
@@ -45,7 +56,7 @@ namespace retro
         static void tear_down();
 
       private:
-        std::int32_t index_ = index_none;
+        std::int32_t index_ = index_none<std::int32_t>;
     };
 
     export class TextId

@@ -6,6 +6,8 @@
  */
 module;
 
+#include "retro/core/exports.h"
+
 #include <cassert>
 
 export module retro.core.memory.arena_allocator;
@@ -290,5 +292,7 @@ namespace retro
     {
         return ArenaAllocator<T, Allocator>(allocator);
     }
+
+    export RETRO_API SingleArena &get_persistent_arena();
 
 } // namespace retro

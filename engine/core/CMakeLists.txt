@@ -16,6 +16,9 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/localization/text.cpp
         private/src/localization/text_history.cpp
         private/src/localization/localization_manager.cpp
+        private/src/localization/text_key.cpp
+        private/src/util/guid.cpp
+        private/src/memory/arena_allocator.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -90,6 +93,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/util/lazy_singleton.ixx
         public/src/localization/localized_text_source.ixx
         public/src/localization/text_localization_resource.ixx
+        public/src/util/guid.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
@@ -108,13 +112,14 @@ target_sources(retro_core PRIVATE
         TYPE CXX_MODULES FILES
         ${RETRO_CORE_PRIVATE_MODULES})
 
-find_package(Boost REQUIRED COMPONENTS algorithm asio crc pool unordered)
+find_package(Boost REQUIRED COMPONENTS algorithm asio crc pool unordered uuid)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
 find_package(ICU COMPONENTS uc i18n REQUIRED)
 target_link_libraries(retro_core PRIVATE Boost::asio Boost::algorithm Boost::unordered Boost::pool
                                         Boost::crc
+                                        Boost::uuid
                                         uni-algo::uni-algo
                                         fmt::fmt
                                         gcem
