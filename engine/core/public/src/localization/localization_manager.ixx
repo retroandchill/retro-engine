@@ -53,6 +53,8 @@ namespace retro
         std::u16string current_locale() const;
         void set_locale(std::u16string_view locale_name);
 
+        void reload_strings_for_locale(LocalizedTextSourceCategory category);
+
         class RevisionChangedEvent : public MulticastDelegate<void()>
         {
             friend LocalizationManager;
@@ -64,10 +66,14 @@ namespace retro
         }
 
       private:
+        void cache_localized_string(TextId text_id, LocalizedStringConstPtr string, std::size_t source_hash);
+
+        void invalidate_local_revision(TextId text_id);
+
         struct LocalizedStringEntry
         {
             LocalizedStringConstPtr string;
-            std::uint32_t source_hash;
+            std::size_t source_hash;
         };
 
         mutable std::shared_mutex lookup_mutex_;

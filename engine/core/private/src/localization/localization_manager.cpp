@@ -34,16 +34,16 @@ namespace retro
         TextId text_id{namespace_key, string_key};
 
         {
-            std::shared_lock lock{lookup_mutex_};
+            std::shared_lock sources_lock{lookup_mutex_};
 
-            const auto found_entry = string_table_.find(text_id);
-            if (found_entry != string_table_.end())
+            const std::u16string current_locale_copy = current_locale_;
+
+            for (const auto &source : sources_)
             {
-                // Validate source string match if provided
-                if (fallback_source.empty() ||
-                    found_entry->second.source_hash == std::hash<std::u16string_view>{}(fallback_source))
+                const auto result = source->get_localized_string(text_id, current_locale_copy, fallback_source);
+                if (result.has_value())
                 {
-                    return found_entry->second.string;
+                    return *result;
                 }
             }
         }
@@ -120,5 +120,73 @@ namespace retro
         }
 
         on_revision_changed_();
+    }
+
+    void LocalizationManager::reload_strings_for_locale(LocalizedTextSourceCategory category)
+    {
+        // Snapshot the current locale (avoid holding lock during source load)
+        std::u16string locale_to_load;
+        {
+            std::shared_lock lock{lookup_mutex_};
+            locale_to_load = current_locale_;
+        }
+
+        // Clear and reload the string cache
+        {
+            std::unique_lock cache_lock{lookup_mutex_};
+
+            // Clear all cached strings
+            string_table_.clear();
+
+            // Load from all sources in priority order
+            for (const auto &[text_id, string] :
+                 sources_ |
+                     std::views::transform([&](auto &source)
+                                           { return source->load_localized_strings(category, locale_to_load); }) |
+                     std::views::join)
+            {
+                cache_localized_string(text_id, string, 0);
+            }
+        }
+
+        // Update revisions and notify
+        {
+            std::unique_lock rev_lock{revision_mutex_};
+            if (++global_revision_ == 0)
+            {
+                ++global_revision_; // Skip 0
+            }
+            local_revisions_.clear();
+        }
+
+        on_revision_changed_();
+    }
+
+    void LocalizationManager::cache_localized_string(const TextId text_id,
+                                                     LocalizedStringConstPtr string,
+                                                     const std::size_t source_hash)
+    {
+        if (string == nullptr)
+        {
+            return;
+        }
+
+        // Assumes caller holds lookup_mutex_ write lock
+        string_table_.emplace(text_id, LocalizedStringEntry{std::move(string), source_hash});
+
+        // Mark this text ID as having a valid local revision
+        {
+            std::unique_lock rev_lock{revision_mutex_};
+            if (auto &local_rev = local_revisions_[text_id]; ++local_rev == 0)
+            {
+                ++local_rev; // Skip 0
+            }
+        }
+    }
+
+    void LocalizationManager::invalidate_local_revision(const TextId text_id)
+    {
+        std::unique_lock lock{revision_mutex_};
+        local_revisions_.erase(text_id);
     }
 } // namespace retro

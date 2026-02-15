@@ -264,10 +264,30 @@ namespace retro
             return lhs.ptr_ == rhs.ptr_;
         }
 
+        [[nodiscard]] friend constexpr bool operator==(const RefCountPtr &lhs, std::nullptr_t) noexcept
+        {
+            return lhs.ptr_ == nullptr;
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(std::nullptr_t, const RefCountPtr &rhs) noexcept
+        {
+            return rhs.ptr_ == nullptr;
+        }
+
         [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const RefCountPtr &lhs,
                                                                         const RefCountPtr &rhs) noexcept
         {
             return lhs.ptr_ <=> rhs.ptr_;
+        }
+
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const RefCountPtr &lhs, std::nullptr_t) noexcept
+        {
+            return lhs.ptr_ <=> nullptr;
+        }
+
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(std::nullptr_t, const RefCountPtr &rhs) noexcept
+        {
+            return nullptr <=> rhs.ptr_;
         }
 
         template <std::derived_from<T> U>

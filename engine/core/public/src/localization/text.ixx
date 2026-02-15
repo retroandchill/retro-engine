@@ -149,7 +149,7 @@ namespace retro
         {
         }
 
-        LocalizedStringPtr text_data_;
+        LocalizedStringConstPtr text_data_;
         TextFlag flags_ = TextFlag::none;
     };
 } // namespace retro
