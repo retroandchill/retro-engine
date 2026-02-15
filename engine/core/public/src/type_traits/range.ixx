@@ -56,13 +56,13 @@ namespace retro
             } -> std::same_as<const T::char_type *>;
             {
                 T::move(s, cs, n)
-            } -> std::same_as<T::char_type *>;
+            } -> std::same_as<typename T::char_type *>;
             {
                 T::copy(s, cs, n)
-            } -> std::same_as<T::char_type *>;
+            } -> std::same_as<typename T::char_type *>;
             {
                 T::assign(s, n, c1)
-            } -> std::same_as<T::char_type *>;
+            } -> std::same_as<typename T::char_type *>;
             {
                 T::not_eof(T::to_int_type(c1))
             } -> std::same_as<typename T::int_type>;

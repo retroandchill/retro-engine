@@ -26,5 +26,34 @@ namespace retro
 
         virtual std::unordered_set<std::u16string> get_localized_culture_names(
             LocalizedTextSourceCategory category) = 0;
+
+        static inline bool should_load_native(const LocalizationLoadFlags load_flags)
+        {
+            return has_any_flags(load_flags, LocalizationLoadFlags::native);
+        }
+
+        static inline bool should_load_editor(const LocalizationLoadFlags load_flags)
+        {
+            return has_any_flags(load_flags, LocalizationLoadFlags::editor);
+        }
+
+        static inline bool should_load_game(const LocalizationLoadFlags load_flags)
+        {
+            return has_any_flags(load_flags, LocalizationLoadFlags::game | LocalizationLoadFlags::force_localized_game);
+        }
+
+        static inline bool should_load_additional(const LocalizationLoadFlags load_flags)
+        {
+            return has_any_flags(load_flags, LocalizationLoadFlags::additional);
+        }
+
+        static inline bool should_load_native_game_data(const LocalizationLoadFlags load_flags)
+        {
+#if RETRO_WITH_EDITOR_DATA
+            return !has_all_flags(load_flags, LocalizationLoadFlags::force_localized_game);
+#else
+            return false;
+#endif
+        }
     };
 } // namespace retro

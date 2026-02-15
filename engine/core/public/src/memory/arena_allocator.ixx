@@ -45,7 +45,7 @@ namespace retro
     export class SingleArena
     {
       public:
-        explicit constexpr SingleArena(const std::size_t size)
+        explicit inline SingleArena(const std::size_t size)
             : data_(std::make_unique<std::byte[]>(size)), capacity_{size}
         {
         }

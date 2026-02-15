@@ -155,23 +155,23 @@ namespace retro
             {
             }
 
-            bool is_string_view() const noexcept
+            [[nodiscard]] bool is_string_view() const noexcept
             {
                 return string_length != index_none<std::size_t>;
             }
 
-            bool is_guid() const noexcept
+            [[nodiscard]] bool is_guid() const noexcept
             {
                 return !is_string_view();
             }
 
-            const TextKeyStringView &as_string_view() const noexcept
+            [[nodiscard]] TextKeyStringView as_string_view() const noexcept
             {
                 assert(is_string_view());
                 return TextKeyStringView{static_cast<const char *>(data_ptr), string_length};
             }
 
-            const Guid &as_guid() const noexcept
+            [[nodiscard]] const Guid &as_guid() const noexcept
             {
                 assert(is_guid());
                 return *static_cast<const Guid *>(data_ptr);
@@ -184,23 +184,23 @@ namespace retro
 
         struct KeyData
         {
-            bool is_string_view() const noexcept
+            [[nodiscard]] bool is_string_view() const noexcept
             {
                 return string_length != index_none<std::size_t>;
             }
 
-            TextKeyStringView as_string_view() const noexcept
+            [[nodiscard]] TextKeyStringView as_string_view() const noexcept
             {
                 assert(is_string_view());
                 return TextKeyStringView{static_cast<const char *>(data_ptr), string_length};
             }
 
-            bool is_guid() const noexcept
+            [[nodiscard]] bool is_guid() const noexcept
             {
                 return !is_string_view();
             }
 
-            const Guid &as_guid() const noexcept
+            [[nodiscard]] const Guid &as_guid() const noexcept
             {
                 assert(is_guid());
                 return *static_cast<const Guid *>(data_ptr);
@@ -231,7 +231,70 @@ namespace retro
 
         TextKey find_or_add_internal(std::u16string_view str, const std::size_t string_hash)
         {
-            assert(false);
+            std::int32_t index;
+            auto guid = Guid::parse_exact(str, GuidFormat::digits)
+                            .and_then(
+                                [str](const Guid &g) -> Optional<Guid>
+                                {
+                                    for (const auto ch : str)
+                                    {
+                                        if (!std::isdigit(ch) || !std::isupper(ch))
+                                            return std::nullopt;
+                                    }
+
+                                    return g;
+                                });
+            if (guid.has_value())
+            {
+                const KeyDataView key_data{*guid, string_hash};
+                index = find_or_add_data(key_data);
+            }
+            else
+            {
+                const auto converted_string = convert_string<TextKeyCharType>(str);
+                const KeyDataView key_data{converted_string, string_hash};
+                index = find_or_add_data(key_data);
+            }
+
+            assert(index != index_none<std::int32_t>);
+
+            return TextKey{index};
+        }
+
+        std::int32_t find_or_add_data(const KeyDataView &key_data)
+        {
+            std::int32_t num_elements_read = 0;
+            {
+                std::shared_lock lock{mutex_};
+
+                if (const auto found_index = key_data_allocations_.find(key_data);
+                    found_index != index_none<std::int32_t>)
+                {
+                    return found_index;
+                }
+
+                num_elements_read = key_data_allocations_.size();
+            }
+
+            {
+                std::unique_lock lock{mutex_};
+
+                if (key_data_allocations_.size() >= num_elements_read)
+                {
+                    if (const auto found_index = key_data_allocations_.find(key_data);
+                        found_index != index_none<std::int32_t>)
+                    {
+                        return found_index;
+                    }
+                }
+
+                if (key_data.is_string_view())
+                {
+                    return key_data_allocations_.add(key_data.as_string_view(), key_data.string_hash);
+                }
+
+                return key_data_allocations_.add(key_data.as_guid(), key_data.string_hash);
+            }
         }
 
         class KeyDataAllocator
@@ -321,8 +384,9 @@ namespace retro
                 allocate_hash();
 
                 std::int32_t element_index = elements_.first_index();
-                for (auto &element : elements_)
+                for (std::uint32_t i = 0; i < hash_size_; ++i)
                 {
+                    auto &element = elements_.get(element_index);
                     const std::uint32_t element_hash = element.string_hash;
                     const std::uint32_t hash_index = element_hash & (hash_size_ - 1);
 
@@ -358,4 +422,44 @@ namespace retro
         mutable std::shared_mutex mutex_;
         KeyDataAllocator key_data_allocations_;
     };
+
+    namespace
+    {
+        constexpr std::int32_t to_internal_index(std::int32_t index) noexcept
+        {
+            return index - 1;
+        }
+    } // namespace
+
+    TextKey::TextKey(const std::u16string_view key) noexcept
+    {
+        if (key.empty())
+        {
+            reset();
+        }
+        else
+        {
+            *this = TextKeyState::state().find_or_add(key);
+        }
+    }
+
+    std::u16string TextKey::to_string() const
+    {
+        std::u16string output;
+        append_string(output);
+        return output;
+    }
+
+    void TextKey::append_string(std::u16string &out) const
+    {
+        if (index_ != 0)
+        {
+            TextKeyState::state().append_string_by_index(to_internal_index(index_), out);
+        }
+    }
 } // namespace retro
+
+std::size_t std::hash<retro::TextKey>::operator()(const retro::TextKey &key) const noexcept
+{
+    return key.index_ != 0 ? retro::TextKeyState::state().get_hash_by_index(key.index_) : 0;
+}

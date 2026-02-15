@@ -61,6 +61,17 @@ namespace retro
         custom_v8 = boost::uuids::uuid::version_custom_v8
     };
 
+    export enum class GuidFormat : std::uint8_t
+    {
+        digits,
+        digits_lower,
+        digits_with_hyphens,
+        digits_with_hyphens_lower,
+        digits_with_hyphens_in_braces,
+        digits_with_hyphens_in_parentheses,
+        hex_values_in_braces
+    };
+
     /**
      * @brief A GUID (Globally Unique Identifier) type compatible with C# System.Guid
      *
@@ -132,22 +143,22 @@ namespace retro
             return DataType::static_size();
         }
 
-        [[nodiscard]] constexpr GuidVariant variant() const noexcept
+        [[nodiscard]] inline GuidVariant variant() const noexcept
         {
             return static_cast<GuidVariant>(data_.variant());
         }
 
-        [[nodiscard]] constexpr GuidVersion version() const noexcept
+        [[nodiscard]] inline GuidVersion version() const noexcept
         {
             return static_cast<GuidVersion>(data_.version());
         }
 
-        [[nodiscard]] constexpr bool is_nil() const noexcept
+        [[nodiscard]] inline bool is_nil() const noexcept
         {
             return data_.is_nil();
         }
 
-        constexpr void swap(Guid &other) noexcept
+        inline void swap(Guid &other) noexcept
         {
             return data_.swap(other.data_);
         }
@@ -166,12 +177,119 @@ namespace retro
 
         static Guid create_v7();
 
-        template <std::ranges::input_range StringType>
-            requires Char<std::ranges::range_value_t<StringType>>
-        [[nodiscard]] constexpr static Guid from_string(StringType &&range)
+        template <std::ranges::forward_range StringType>
+            requires Char<std::ranges::range_value_t<StringType>> && std::ranges::sized_range<StringType>
+        [[nodiscard]] constexpr static Optional<Guid> parse(StringType &&range)
         {
-            boost::uuids::string_generator generator;
-            return Guid{generator(std::ranges::begin(range), std::ranges::end(range))};
+            switch (std::ranges::size(range))
+            {
+                case 32:
+                    return parse_exact(range, GuidFormat::digits);
+                case 36:
+                    return parse_exact(range, GuidFormat::digits_with_hyphens);
+                case 38:
+                    if (*std::ranges::begin(range) == '{')
+                    {
+                        return parse_exact(range, GuidFormat::digits_with_hyphens_in_braces);
+                    }
+
+                    return parse_exact(range, GuidFormat::digits_with_hyphens_in_parentheses);
+                case 68:
+                    return parse_exact(range, GuidFormat::hex_values_in_braces);
+                default:
+                    return std::nullopt;
+            }
+        }
+
+        template <std::ranges::forward_range StringType>
+            requires Char<std::ranges::range_value_t<StringType>> && std::ranges::sized_range<StringType>
+        [[nodiscard]] constexpr static Optional<Guid> parse_exact(StringType &&range, GuidFormat format)
+        {
+            std::array<value_type, 16> bytes{};
+            auto it = std::ranges::begin(range);
+            auto end = std::ranges::end(range);
+
+            // Skip opening brace if present
+            if (format == GuidFormat::digits_with_hyphens_in_braces ||
+                format == GuidFormat::digits_with_hyphens_in_parentheses || format == GuidFormat::hex_values_in_braces)
+            {
+                if (it == end)
+                    return std::nullopt;
+                ++it; // Skip '{' or '('
+            }
+
+            std::size_t byte_index = 0;
+
+            while (it != end && byte_index < 16)
+            {
+                auto ch = *it;
+
+                // Skip hyphens if expected
+                if ((format == GuidFormat::digits_with_hyphens || format == GuidFormat::digits_with_hyphens_in_braces ||
+                     format == GuidFormat::digits_with_hyphens_in_parentheses) &&
+                    ch == static_cast<std::ranges::range_value_t<StringType>>('-'))
+                {
+                    ++it;
+                    continue;
+                }
+
+                // Skip spaces if hex_values_in_braces format
+                if (format == GuidFormat::hex_values_in_braces)
+                {
+                    if (ch == static_cast<std::ranges::range_value_t<StringType>>(' ') ||
+                        ch == static_cast<std::ranges::range_value_t<StringType>>('{') ||
+                        ch == static_cast<std::ranges::range_value_t<StringType>>('}') ||
+                        ch == static_cast<std::ranges::range_value_t<StringType>>(','))
+                    {
+                        ++it;
+                        continue;
+                    }
+                }
+
+                if (!is_hex(ch))
+                    return std::nullopt;
+
+                auto hi = hex_to_byte(ch);
+                ++it;
+
+                if (it == end)
+                    return std::nullopt;
+
+                ch = *it;
+
+                // Skip hyphens again if needed
+                if ((format == GuidFormat::digits_with_hyphens || format == GuidFormat::digits_with_hyphens_in_braces ||
+                     format == GuidFormat::digits_with_hyphens_in_parentheses) &&
+                    ch == static_cast<typename std::ranges::range_value_t<StringType>>('-'))
+                {
+                    --it; // Back up to reprocess the second hex digit
+                    ++it;
+                    ++it;
+                    continue;
+                }
+
+                if (!is_hex(ch))
+                    return std::nullopt;
+
+                auto lo = hex_to_byte(ch);
+                bytes[byte_index++] = static_cast<value_type>((hi << 4) | lo);
+                ++it;
+            }
+
+            // Skip closing brace if present
+            if (format == GuidFormat::digits_with_hyphens_in_braces ||
+                format == GuidFormat::digits_with_hyphens_in_parentheses || format == GuidFormat::hex_values_in_braces)
+            {
+                if (it == end)
+                    return std::nullopt;
+                ++it; // Skip '}' or ')'
+            }
+
+            // Verify we've consumed the entire range
+            if (it != end || byte_index != 16)
+                return std::nullopt;
+
+            return Guid{bytes};
         }
 
         template <Char T = char, SimpleAllocator Allocator = std::allocator<T>>
@@ -188,7 +306,7 @@ namespace retro
         template <Char T, CharTraits Traits, SimpleAllocator Allocator>
         constexpr void append_string(std::basic_string<T, Traits, Allocator> &str) const
         {
-            to_chars(data_, std::back_inserter(str));
+            boost::uuids::to_chars(data_, std::back_inserter(str));
         }
 
       private:
@@ -198,12 +316,12 @@ namespace retro
 
         DataType data_{};
 
-        constexpr friend bool operator==(const Guid &lhs, const Guid &rhs) noexcept
+        inline friend bool operator==(const Guid &lhs, const Guid &rhs) noexcept
         {
             return lhs.data_ == rhs.data_;
         }
 
-        constexpr friend std::strong_ordering operator<=>(const Guid &lhs, const Guid &rhs) noexcept
+        inline friend std::strong_ordering operator<=>(const Guid &lhs, const Guid &rhs) noexcept
         {
             return lhs.data_ <=> rhs.data_;
         }
@@ -228,7 +346,7 @@ namespace retro
 export template <>
 struct std::hash<retro::Guid>
 {
-    constexpr std::size_t operator()(const retro::Guid &guid) const noexcept
+    inline std::size_t operator()(const retro::Guid &guid) const noexcept
     {
         return std::hash<retro::Guid::DataType>{}(guid.data_);
     }

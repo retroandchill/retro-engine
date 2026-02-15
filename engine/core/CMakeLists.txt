@@ -92,7 +92,6 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/localization/localization_manager.ixx
         public/src/util/lazy_singleton.ixx
         public/src/localization/localized_text_source.ixx
-        public/src/localization/text_localization_resource.ixx
         public/src/util/guid.ixx
 )
 

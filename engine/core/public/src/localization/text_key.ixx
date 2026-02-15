@@ -18,12 +18,12 @@ namespace retro
 {
     export namespace text
     {
-        constexpr std::size_t hash_string(const std::u16string_view str)
+        inline std::size_t hash_string(const std::u16string_view str)
         {
             return std::hash<std::u16string_view>{}(str);
         }
 
-        constexpr std::size_t hash_string(const std::u16string_view str, const std::uint32_t base)
+        inline std::size_t hash_string(const std::u16string_view str, const std::uint32_t base)
         {
             return hash_combine(base, str);
         }
@@ -34,29 +34,32 @@ namespace retro
       public:
         constexpr TextKey() = default;
 
-        constexpr explicit TextKey(std::u16string_view key) noexcept;
+        explicit TextKey(std::u16string_view key) noexcept;
 
-        std::u16string to_string() const;
+        [[nodiscard]] std::u16string to_string() const;
         void append_string(std::u16string &out) const;
 
         constexpr friend bool operator==(const TextKey &lhs, const TextKey &rhs) noexcept = default;
 
-        constexpr bool is_empty() const noexcept
+        [[nodiscard]] constexpr bool is_empty() const noexcept
         {
-            return index_ == index_none;
+            return index_ == 0;
         }
 
         constexpr void reset()
         {
-            index_ = index_none;
+            index_ = 0;
         }
 
-        static void compact_data_structures();
-
-        static void tear_down();
-
       private:
-        std::int32_t index_ = index_none<std::int32_t>;
+        explicit constexpr TextKey(const std::int32_t index) noexcept : index_{index}
+        {
+        }
+
+        std::int32_t index_ = 0;
+
+        friend std::hash<TextKey>;
+        friend class TextKeyState;
     };
 
     export class TextId
@@ -82,7 +85,7 @@ namespace retro
             return lhs.namespace_ == rhs.namespace_ && lhs.key_ == rhs.key_;
         }
 
-        constexpr bool is_empty() const noexcept
+        [[nodiscard]] constexpr bool is_empty() const noexcept
         {
             return namespace_.is_empty() && key_.is_empty();
         }
@@ -94,7 +97,7 @@ namespace retro
         }
 
       private:
-        friend struct std::hash<TextId>;
+        friend std::hash<TextId>;
 
         TextKey namespace_;
         TextKey key_;
@@ -104,13 +107,13 @@ namespace retro
 template <>
 struct std::hash<retro::TextKey>
 {
-    RETRO_API std::size_t operator()(const retro::TextKey &key) const;
+    RETRO_API std::size_t operator()(const retro::TextKey &key) const noexcept;
 };
 
 template <>
 struct std::hash<retro::TextId>
 {
-    std::size_t operator()(const retro::TextId &id) const
+    std::size_t operator()(const retro::TextId &id) const noexcept
     {
         return hash_combine(id.namespace_, id.key_);
     }

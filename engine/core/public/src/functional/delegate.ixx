@@ -1006,7 +1006,7 @@ namespace retro
     class MulticastDelegateRegistration
     {
       public:
-        explicit MulticastDelegateRegistration(D &delegate) noexcept : delegate_{delegate}
+        explicit(false) MulticastDelegateRegistration(D &delegate) noexcept : delegate_{delegate}
         {
         }
 
