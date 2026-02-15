@@ -3,7 +3,7 @@
         <RetroEngineBackend Condition="'$(RetroEngineBackend)' == ''">Managed</RetroEngineBackend>
     </PropertyGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <PackageReference Include="RetroEngine.Strings.Managed" Version="$(RetroEngineVersion)" />
+        <PackageReference Include="RetroEngine.Portable.Managed" Version="$(RetroEngineVersion)" />
     </ItemGroup>
     <!--
     Custom: user is responsible for referencing their own backend package

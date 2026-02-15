@@ -6,7 +6,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using RetroEngine.Logging;
-using RetroEngine.Strings;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
 

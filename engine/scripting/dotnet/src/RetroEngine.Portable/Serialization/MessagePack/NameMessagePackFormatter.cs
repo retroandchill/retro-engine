@@ -4,9 +4,9 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using MessagePack;
 using MessagePack.Formatters;
-using RetroEngine.Strings;
+using RetroEngine.Portable.Strings;
 
-namespace DefaultNamespace;
+namespace RetroEngine.Portable.Serialization.MessagePack;
 
 public class NameMessagePackFormatter : IMessagePackFormatter<Name>
 {

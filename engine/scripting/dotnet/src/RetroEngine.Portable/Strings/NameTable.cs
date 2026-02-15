@@ -5,7 +5,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
-namespace RetroEngine.Strings;
+namespace RetroEngine.Portable.Strings;
 
 internal readonly record struct NameHash(int Hash, int Length);
 

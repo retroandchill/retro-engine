@@ -13,10 +13,10 @@
         <ProjectReference Include="..\RetroEngine.Logging\RetroEngine.Logging.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\RetroEngine.Strings\RetroEngine.Strings.Managed.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Strings.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="..\RetroEngine.Strings\RetroEngine.Strings.Native.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="ZLinq" />

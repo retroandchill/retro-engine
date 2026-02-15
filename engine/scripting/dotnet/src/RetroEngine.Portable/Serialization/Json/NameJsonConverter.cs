@@ -4,8 +4,9 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RetroEngine.Portable.Strings;
 
-namespace RetroEngine.Strings.Serialization.Json;
+namespace RetroEngine.Portable.Serialization.Json;
 
 public sealed class NameJsonConverter : JsonConverter<Name>
 {

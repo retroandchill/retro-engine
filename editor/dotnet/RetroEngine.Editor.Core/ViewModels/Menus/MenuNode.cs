@@ -4,7 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using RetroEngine.Strings;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.ViewModels.Menus;
 

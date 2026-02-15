@@ -8,14 +8,14 @@
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <RootNamespace>RetroEngine.Portable</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="RetroEngine.Strings.targets" Pack="true" PackagePath="buildTransitive\" />
+        <None Include="RetroEngine.Portable.targets" Pack="true" PackagePath="buildTransitive\" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Remove="Name.cs" />
-        <Compile Remove="NameTable.cs" />
+        <Compile Remove="Strings\**\*.cs" />
+        <Compile Remove="Localization\**\*.cs" />
         <Compile Remove="Serialization\**\*.cs" />
-        <Compile Remove="Interop\**\*.cs" />
     </ItemGroup>
 </Project>

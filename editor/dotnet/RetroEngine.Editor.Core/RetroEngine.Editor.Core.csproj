@@ -19,10 +19,10 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Strings\RetroEngine.Strings.Managed.csproj" />
+        <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable\RetroEngine.Strings.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Strings\RetroEngine.Strings.Native.csproj" />
+        <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
     </ItemGroup>
 
 </Project>

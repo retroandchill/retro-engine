@@ -3,8 +3,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>RetroEngine.Strings</AssemblyName>
-        <RootNamespace>RetroEngine.Strings</RootNamespace>
+        <AssemblyName>RetroEngine.Portable</AssemblyName>
+        <RootNamespace>RetroEngine.Portable</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;</Configurations>
         <Platforms>AnyCPU</Platforms>
@@ -14,7 +14,7 @@
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Remove="NameTable.cs"/>
+        <Compile Remove="Strings\NameTable.cs"/>
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />

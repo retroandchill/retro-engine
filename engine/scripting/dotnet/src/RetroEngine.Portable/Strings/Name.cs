@@ -5,12 +5,12 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
-using DefaultNamespace;
 using JetBrains.Annotations;
 using MessagePack;
-using RetroEngine.Strings.Serialization.Json;
+using RetroEngine.Portable.Serialization.Json;
+using RetroEngine.Portable.Serialization.MessagePack;
 
-namespace RetroEngine.Strings;
+namespace RetroEngine.Portable.Strings;
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly partial struct NameEntryId(uint value)
