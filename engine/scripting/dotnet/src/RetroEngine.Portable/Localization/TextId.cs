@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Numerics;
 
 namespace RetroEngine.Portable.Localization;

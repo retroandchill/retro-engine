@@ -12,11 +12,12 @@ export module retro.core.localization.localization_manager;
 
 import std;
 import retro.core.util.enum_class_flags;
-import retro.core.util.lazy_singleton;
 import retro.core.localization.text_key;
 import retro.core.localization.localized_string;
 import retro.core.localization.localized_text_source;
+import retro.core.localization.culture_info;
 import retro.core.containers.optional;
+import retro.core.strings.cstring_view;
 import retro.core.util.noncopyable;
 import retro.core.functional.delegate;
 
@@ -50,10 +51,12 @@ namespace retro
 
         void register_source(std::shared_ptr<LocalizedTextSource> source);
 
-        std::u16string current_locale() const;
-        void set_locale(std::u16string_view locale_name);
+        inline CultureInfoPtr current_locale() const
+        {
+            return current_locale_;
+        }
 
-        void reload_strings_for_locale(LocalizedTextSourceCategory category);
+        void set_locale(CultureInfoPtr culture_info);
 
         [[nodiscard]] SimpleMulticastDelegate::RegistrationType on_revision_changed()
         {
@@ -76,7 +79,7 @@ namespace retro
         std::unordered_map<TextId, std::uint16_t> local_revisions_;
         std::uint16_t global_revision_ = 1;
 
-        std::u16string current_locale_;
+        CultureInfoPtr current_locale_;
         std::vector<std::shared_ptr<LocalizedTextSource>> sources_;
 
         SimpleMulticastDelegate on_revision_changed_;

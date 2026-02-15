@@ -12,6 +12,7 @@ import retro.core.util.enum_class_flags;
 import retro.core.functional.delegate;
 import retro.core.localization.localized_string;
 import retro.core.localization.text_key;
+import retro.core.localization.culture_info;
 
 namespace retro
 {
@@ -49,17 +50,13 @@ namespace retro
             LocalizedTextSourceCategory category) = 0;
 
         [[nodiscard]] inline LocalizedStringResult get_localized_string(const TextId text_id,
-                                                                        const std::u16string_view locale) const
+                                                                        CultureInfoPtr locale) const
         {
-            return get_localized_string(text_id, locale, {});
+            return get_localized_string(text_id, std::move(locale), {});
         }
 
         [[nodiscard]] virtual LocalizedStringResult get_localized_string(TextId text_id,
-                                                                         std::u16string_view locale,
+                                                                         CultureInfoPtr locale,
                                                                          std::u16string_view fallback_source) const = 0;
-
-        [[nodiscard]] virtual std::generator<std::pair<TextId, LocalizedStringConstPtr>> load_localized_strings(
-            LocalizedTextSourceCategory category,
-            std::u16string_view locale) const = 0;
     };
 } // namespace retro
