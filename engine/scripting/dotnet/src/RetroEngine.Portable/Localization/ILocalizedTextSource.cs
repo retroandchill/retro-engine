@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
+
 namespace RetroEngine.Portable.Localization;
 
 public enum LocalizedTextSourceCategory : byte
@@ -29,5 +31,5 @@ public interface ILocalizedTextSource
 
     IEnumerable<string> GetLocalizedCultureNames(LocalizedTextSourceCategory category);
 
-    string? GetLocalizedString(TextId id, Locale locale, string fallback = "");
+    string? GetLocalizedString(TextId id, CultureInfo cultureInfo, string fallback = "");
 }

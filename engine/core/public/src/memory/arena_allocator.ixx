@@ -45,7 +45,7 @@ namespace retro
     export class SingleArena
     {
       public:
-        explicit inline SingleArena(const std::size_t size)
+        explicit constexpr SingleArena(const std::size_t size)
             : data_(std::make_unique<std::byte[]>(size)), capacity_{size}
         {
         }
@@ -292,7 +292,5 @@ namespace retro
     {
         return ArenaAllocator<T, Allocator>(allocator);
     }
-
-    export RETRO_API SingleArena &get_persistent_arena();
 
 } // namespace retro

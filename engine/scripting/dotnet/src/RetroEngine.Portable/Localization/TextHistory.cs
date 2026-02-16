@@ -1,7 +1,12 @@
-﻿// // @file TextHistory.cs
+// // @file TextHistory.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
+using System.Globalization;
+using System.Numerics;
+using RetroEngine.Portable.Concurrency;
+using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -17,15 +22,8 @@ internal abstract class TextHistory : ITextData
     {
         get
         {
-            _lock.EnterReadLock();
-            try
-            {
-                return field;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
+            using var scope = _lock.EnterReadScope();
+            return field;
         }
         private set;
     }
@@ -36,57 +34,37 @@ internal abstract class TextHistory : ITextData
 
     public abstract string BuildInvariantDisplayString();
 
-    void UpdateDisplayStringIfOutOfDate()
+    public abstract bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags);
+
+    public void UpdateDisplayStringIfOutOfDate()
     {
         if (!CanUpdateDisplayString)
             return;
 
         var currentRevision = LocalizationManager.Instance.GetTextRevision(TextId);
 
-        _lock.EnterWriteLock();
-        try
-        {
-            if (Revision == currentRevision)
-                return;
-            Revision = currentRevision;
-            UpdateDisplayString();
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
+        using var scope = _lock.EnterWriteScope();
+        if (Revision == currentRevision)
+            return;
+        Revision = currentRevision;
+        UpdateDisplayString();
     }
 
     protected virtual bool CanUpdateDisplayString => true;
 
-    protected abstract void UpdateDisplayString();
+    internal abstract void UpdateDisplayString();
 
     protected void MarkDisplayStringOutOfDate()
     {
-        _lock.EnterWriteLock();
-        try
-        {
-            Revision = new TextRevision(0, 0);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
+        using var scope = _lock.EnterWriteScope();
+        Revision = new TextRevision(0, 0);
     }
 
     protected void MarkDisplayStringUpToDate()
     {
         var canUpdate = CanUpdateDisplayString;
-
-        _lock.EnterWriteLock();
-        try
-        {
-            Revision = canUpdate ? LocalizationManager.Instance.GetTextRevision(TextId) : new TextRevision(0, 0);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
+        using var scope = _lock.EnterWriteScope();
+        Revision = canUpdate ? LocalizationManager.Instance.GetTextRevision(TextId) : new TextRevision(0, 0);
     }
 }
 
@@ -114,10 +92,147 @@ internal class TextHistoryBase : TextHistory
         return _source;
     }
 
+    public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
+    {
+        return false;
+    }
+
     protected override bool CanUpdateDisplayString => !TextId.IsEmpty;
 
-    protected override void UpdateDisplayString()
+    internal override void UpdateDisplayString()
     {
         _localized = LocalizationManager.Instance.GetDisplayString(TextId.Namespace, TextId.Key, _source);
+    }
+}
+
+internal abstract class TextHistoryGenerated(string displayString) : TextHistory
+{
+    private string _displayString = displayString;
+
+    public TextHistoryGenerated()
+        : this("") { }
+
+    public sealed override TextId TextId => TextId.Empty;
+    public override string DisplayString => _displayString;
+
+    internal override void UpdateDisplayString()
+    {
+        _displayString = BuildLocalizedDisplayString();
+    }
+
+    protected abstract string BuildLocalizedDisplayString();
+}
+
+internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
+    where T : unmanaged, INumber<T>
+{
+    protected T SourceValue { get; }
+
+    protected NumberFormattingOptions? FormatOptions { get; }
+
+    protected CultureInfo? TargetCulture { get; }
+
+    protected TextHistoryFormatNumber() { }
+
+    protected TextHistoryFormatNumber(
+        string displayString,
+        T sourceValue,
+        NumberFormattingOptions? formatOptions = null,
+        CultureInfo? targetCulture = null
+    )
+        : base(displayString)
+    {
+        SourceValue = sourceValue;
+        FormatOptions = formatOptions;
+        TargetCulture = targetCulture;
+    }
+
+    public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
+    {
+        return other is TextHistoryFormatNumber<T> castOther
+            && SourceValue == castOther.SourceValue
+            && (FormatOptions ?? NumberFormattingOptions.DefaultWithGrouping)
+                == (castOther.FormatOptions ?? NumberFormattingOptions.DefaultWithGrouping)
+            && Equals(TargetCulture, castOther.TargetCulture);
+    }
+
+    protected string BuildNumericDisplayString(DecimalNumberFormattingRules formattingRules, int valueMultiplier = 1)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(valueMultiplier);
+        var formattingOptions = FormatOptions ?? formattingRules.DefaultFormattingOptions;
+        return FastDecimalFormat.NumberToString(SourceValue, formattingRules, formattingOptions);
+    }
+}
+
+internal sealed class TextHistoryAsNumber<T> : TextHistoryFormatNumber<T>
+    where T : unmanaged, INumber<T>
+{
+    public override string BuildInvariantDisplayString()
+    {
+        var culture = TargetCulture ?? LocalizationManager.Instance.CultureProvider.CurrentCulture;
+
+        var numberFormatInfo = culture.NumberFormat;
+        return "";
+    }
+
+    protected override string BuildLocalizedDisplayString()
+    {
+        throw new NotImplementedException();
+    }
+}
+
+internal sealed class TextHistoryTransformed : TextHistoryGenerated
+{
+    public enum TransformType
+    {
+        ToUpper,
+        ToLower,
+    }
+
+    private readonly Text _sourceText;
+    private readonly TransformType _transformType;
+
+    public TextHistoryTransformed()
+    {
+        _sourceText = Text.Empty;
+        _transformType = TransformType.ToUpper;
+    }
+
+    public TextHistoryTransformed(string displayString, Text sourceText, TransformType transformType)
+        : base(displayString)
+    {
+        _sourceText = sourceText;
+        _transformType = transformType;
+    }
+
+    public override string BuildInvariantDisplayString()
+    {
+        _sourceText.Rebuild();
+
+        return _transformType switch
+        {
+            TransformType.ToUpper => _sourceText.BuildSourceString().ToUpperInvariant(),
+            TransformType.ToLower => _sourceText.BuildSourceString().ToLowerInvariant(),
+            _ => throw new ArgumentOutOfRangeException(nameof(_transformType), _transformType, null),
+        };
+    }
+
+    public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
+    {
+        return other is TextHistoryTransformed otherTransformed
+            && _sourceText.IdenticalTo(otherTransformed._sourceText, flags)
+            && _transformType == otherTransformed._transformType;
+    }
+
+    protected override string BuildLocalizedDisplayString()
+    {
+        _sourceText.Rebuild();
+
+        return _transformType switch
+        {
+            TransformType.ToUpper => TextTransformer.ToUpper(_sourceText.ToString()),
+            TransformType.ToLower => TextTransformer.ToLower(_sourceText.ToString()),
+            _ => throw new ArgumentOutOfRangeException(nameof(_transformType), _transformType, null),
+        };
     }
 }

@@ -12,6 +12,7 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="Strings\NameTable.cs"/>

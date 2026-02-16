@@ -41,6 +41,9 @@
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Logging/RetroEngine.Logging.csproj">
       <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj">
+      <BuildType Project="Debug" />
+    </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.csproj" />
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.Managed.csproj">
       <Build Solution="Dev-Debug|*" Project="false" />

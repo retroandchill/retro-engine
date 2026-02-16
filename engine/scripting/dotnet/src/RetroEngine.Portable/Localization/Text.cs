@@ -39,8 +39,13 @@ public enum TextComparisonLevel
 
 public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {
-    private readonly ITextData? _textData;
+    private ITextData TextData => field ?? EmptyTextData;
+
     private TextFlag Flags { get; init; }
+
+    private static readonly ITextData EmptyTextData = new TextHistoryBase();
+
+    public static readonly Text Empty = new(EmptyTextData);
 
     public bool IsEmpty => string.IsNullOrEmpty(ToString());
 
@@ -52,10 +57,10 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public bool IsInitializedFromString => Flags.HasFlag(TextFlag.InitializedFromString);
 
-    private Text(ITextData textData, TextFlag glags = TextFlag.None)
+    private Text(ITextData textData, TextFlag flags = TextFlag.None)
     {
-        _textData = textData;
-        Flags = glags;
+        TextData = textData;
+        Flags = flags;
     }
 
     public Text(string sourceString)
@@ -71,24 +76,58 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return new Text(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.CultureInvariant);
     }
 
-    public static Text AsCultureInvariant(Text text)
+    public Text AsCultureInvariant()
     {
-        return text with { Flags = text.Flags | TextFlag.CultureInvariant };
+        return this with { Flags = Flags | TextFlag.CultureInvariant };
     }
 
     public Text ToLower()
     {
-        throw new NotImplementedException();
+        var resultString = TextTransformer.ToUpper(ToString());
+        return new Text(
+            new TextHistoryTransformed(resultString, this, TextHistoryTransformed.TransformType.ToLower),
+            TextFlag.Transient
+        );
     }
 
     public Text ToUpper()
     {
-        throw new NotImplementedException();
+        var resultString = TextTransformer.ToUpper(ToString());
+        return new Text(
+            new TextHistoryTransformed(resultString, this, TextHistoryTransformed.TransformType.ToUpper),
+            TextFlag.Transient
+        );
+    }
+
+    public Text TrimStart()
+    {
+        var currentString = ToString();
+        var trimmedString = currentString.TrimStart();
+        return IsCultureInvariant ? AsCultureInvariant(trimmedString) : new Text(trimmedString);
+    }
+
+    public Text TrimEnd()
+    {
+        var currentString = ToString();
+        var trimmedString = currentString.TrimEnd();
+        return IsCultureInvariant ? AsCultureInvariant(trimmedString) : new Text(trimmedString);
+    }
+
+    public Text Trim()
+    {
+        var currentString = ToString();
+        var trimmedString = currentString.Trim();
+        return IsCultureInvariant ? AsCultureInvariant(trimmedString) : new Text(trimmedString);
     }
 
     public override string ToString()
     {
-        return _textData?.DisplayString ?? "";
+        return TextData.DisplayString;
+    }
+
+    public string BuildSourceString()
+    {
+        return TextData.History.BuildInvariantDisplayString();
     }
 
     public override bool Equals(object? obj)
@@ -104,6 +143,46 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public bool Equals(Text other, TextComparisonLevel level)
     {
         return ToString().Equals(other.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public bool IdenticalTo(Text other, TextIdenticalModeFlags flags = TextIdenticalModeFlags.None)
+    {
+        if (ReferenceEquals(TextData, other.TextData))
+            return true;
+
+        Rebuild();
+        other.Rebuild();
+
+        var displayString = TextData.LocalizedString;
+        var otherDisplayString = other.TextData.LocalizedString;
+        if (
+            displayString is not null
+            && otherDisplayString is not null
+            && ReferenceEquals(displayString, otherDisplayString)
+        )
+        {
+            return true;
+        }
+
+        if (flags.HasFlag(TextIdenticalModeFlags.DeepCompare))
+        {
+            var thisHistory = TextData.History;
+            var otherHistory = other.TextData.History;
+
+            if (thisHistory.IdenticalTo(otherHistory, flags))
+            {
+                return true;
+            }
+        }
+
+        if (!flags.HasFlag(TextIdenticalModeFlags.LexicalCompareInvariants))
+            return false;
+
+        var thisIsInvariant = (Flags & (TextFlag.CultureInvariant | TextFlag.InitializedFromString)) != 0;
+        var otherIsInvariant = (other.Flags & (TextFlag.CultureInvariant | TextFlag.InitializedFromString)) != 0;
+
+        return thisIsInvariant
+            && otherIsInvariant & ToString().Equals(other.ToString(), StringComparison.InvariantCultureIgnoreCase);
     }
 
     public override int GetHashCode()
@@ -149,5 +228,10 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static bool operator <=(Text left, Text right)
     {
         return left.CompareTo(right) <= 0;
+    }
+
+    internal void Rebuild()
+    {
+        TextData.History.UpdateDisplayString();
     }
 }

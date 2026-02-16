@@ -3,6 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
+using RetroEngine.Portable.Concurrency;
+
 namespace RetroEngine.Portable.Localization;
 
 public sealed class LocalizationManager
@@ -16,12 +19,20 @@ public sealed class LocalizationManager
     private readonly Dictionary<TextId, ushort> _localRevisions = new();
     private ushort _globalRevision = 1;
 
-    private Locale _currentLocale = new("en_US");
-    private List<ILocalizedTextSource> _sources = [];
+    private CultureInfo _currentLocale = CultureInfo.CurrentCulture;
+    private readonly List<ILocalizedTextSource> _sources = [];
+
+    private ICultureProvider _cultureProvider;
 
     public event Action? OnRevisionChanged;
 
-    private LocalizationManager() { }
+    private LocalizationManager()
+    {
+        _cultureProvider = new DotnetCultureProvider();
+        _cultureProvider.CurrentCultureChanged += HandleProviderCultureChanged;
+
+        HandleProviderCultureChanged(_cultureProvider.CurrentCulture);
+    }
 
     public static LocalizationManager Instance { get; } = new();
 
@@ -29,33 +40,20 @@ public sealed class LocalizationManager
     {
         get
         {
-            _revisionLock.EnterReadLock();
-            try
-            {
-                return _globalRevision;
-            }
-            finally
-            {
-                _revisionLock.ExitReadLock();
-            }
+            using var scope = _lookupLock.EnterReadScope();
+            return _globalRevision;
         }
     }
 
-    public string? GetDisplayString(TextKey ns, TextKey key, string fallback = "")
+    public string? GetDisplayString(TextKey ns, TextKey key, string? fallback = null)
     {
         if (key.IsEmpty)
         {
-            if (!string.IsNullOrEmpty(fallback))
-            {
-                return fallback;
-            }
-
-            return null;
+            return !string.IsNullOrEmpty(fallback) ? fallback : null;
         }
 
         var textId = new TextId(ns, key);
-        _lookupLock.EnterReadLock();
-        try
+        using (_lookupLock.EnterReadScope())
         {
             var currentLocale = _currentLocale;
 
@@ -67,10 +65,6 @@ public sealed class LocalizationManager
                 return result;
             }
         }
-        finally
-        {
-            _lookupLock.ExitReadLock();
-        }
 
         return !string.IsNullOrEmpty(fallback) ? fallback : null;
     }
@@ -80,76 +74,39 @@ public sealed class LocalizationManager
         if (textId.IsEmpty)
             return new TextRevision();
 
-        _revisionLock.EnterReadLock();
-        try
-        {
-            return new TextRevision(GlobalRevision, _localRevisions.GetValueOrDefault(textId));
-        }
-        finally
-        {
-            _revisionLock.ExitReadLock();
-        }
+        using var scope = _lookupLock.EnterReadScope();
+        return new TextRevision(GlobalRevision, _localRevisions.GetValueOrDefault(textId));
     }
 
     public void RegisterSource(ILocalizedTextSource source)
     {
-        _lookupLock.EnterWriteLock();
-        try
-        {
-            _sources.Add(source);
-            _sources.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
-        }
-        finally
-        {
-            _lookupLock.ExitWriteLock();
-        }
+        using var scope = _lookupLock.EnterWriteScope();
+        _sources.Add(source);
+        _sources.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
     }
 
-    public Locale CurrentLocale
+    public ICultureProvider CultureProvider
     {
         get
         {
-            _lookupLock.EnterReadLock();
-            try
-            {
-                return _currentLocale;
-            }
-            finally
-            {
-                _lookupLock.ExitReadLock();
-            }
+            using var scope = _lookupLock.EnterReadScope();
+            return _cultureProvider;
         }
         set
         {
-            _lookupLock.EnterWriteLock();
-            try
+            ArgumentNullException.ThrowIfNull(value);
+
+            using (_lookupLock.EnterWriteScope())
             {
-                if (_currentLocale == value)
+                if (ReferenceEquals(_cultureProvider, value))
                     return;
 
-                _currentLocale = value;
-            }
-            finally
-            {
-                _lookupLock.ExitWriteLock();
+                _cultureProvider.CurrentCultureChanged -= HandleProviderCultureChanged;
+                _cultureProvider = value;
+                _cultureProvider.CurrentCultureChanged += HandleProviderCultureChanged;
             }
 
-            _revisionLock.EnterWriteLock();
-            try
-            {
-                if (++_globalRevision == 0)
-                {
-                    ++_globalRevision;
-                }
-
-                _localRevisions.Clear();
-            }
-            finally
-            {
-                _revisionLock.ExitWriteLock();
-            }
-
-            OnRevisionChanged?.Invoke();
+            HandleProviderCultureChanged(_cultureProvider.CurrentCulture);
         }
     }
 
@@ -158,19 +115,32 @@ public sealed class LocalizationManager
         // Assumes the caller holds lookup write lock
         _stringTable.Add(textId, new LocalizationKeyEntry(textData, sourceHash));
 
-        _revisionLock.EnterWriteLock();
-        try
+        using var scope = _revisionLock.EnterWriteScope();
+        var localRevision = _localRevisions[textId];
+        if (++localRevision == 0)
         {
-            var localRevision = _localRevisions[textId];
-            if (++localRevision == 0)
+            ++localRevision;
+        }
+        _localRevisions[textId] = localRevision;
+    }
+
+    private void HandleProviderCultureChanged(CultureInfo culture)
+    {
+        using (_lookupLock.EnterWriteScope())
+        {
+            _currentLocale = culture;
+        }
+
+        using (_revisionLock.EnterWriteScope())
+        {
+            if (++_globalRevision == 0)
             {
-                ++localRevision;
+                ++_globalRevision;
             }
-            _localRevisions[textId] = localRevision;
+
+            _localRevisions.Clear();
         }
-        finally
-        {
-            _revisionLock.ExitWriteLock();
-        }
+
+        OnRevisionChanged?.Invoke();
     }
 }

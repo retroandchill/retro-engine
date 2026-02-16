@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
+using RetroEngine.Portable.Concurrency;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -25,21 +26,15 @@ internal class TextKeyRegistry
 
         var hash = string.GetHashCode(str);
 
-        _lock.EnterReadLock();
-        try
+        using (_lock.EnterReadScope())
         {
             if (_stringToId.TryGetValue(hash, out var id))
             {
                 return id;
             }
         }
-        finally
-        {
-            _lock.ExitReadLock();
-        }
 
-        _lock.EnterWriteLock();
-        try
+        using (_lock.EnterWriteScope())
         {
             if (_stringToId.TryGetValue(hash, out var id))
             {
@@ -51,22 +46,11 @@ internal class TextKeyRegistry
             _idToString.Add(newId, str.ToString());
             return newId;
         }
-        finally
-        {
-            _lock.ExitWriteLock();
-        }
     }
 
     public string GetString(uint id)
     {
-        _lock.EnterReadLock();
-        try
-        {
-            return _idToString.GetValueOrDefault(id, "");
-        }
-        finally
-        {
-            _lock.ExitReadLock();
-        }
+        using var scope = _lock.EnterReadScope();
+        return _idToString.GetValueOrDefault(id, "");
     }
 }
