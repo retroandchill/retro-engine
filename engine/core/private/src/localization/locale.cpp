@@ -13,20 +13,20 @@ module retro.core.localization.locale;
 namespace retro
 {
     Locale::Locale(ConstructTag, const CStringView locale_tag)
-        : locale_tag_{locale_tag.empty() ? "en_US" : locale_tag.to_string()},
+        : locale_tag_{locale_tag.empty() ? "en-US" : locale_tag.to_string()},
           icu_locale_{icu::Locale(locale_tag_.c_str())}
     {
         if (icu_locale_.isBogus())
         {
-            icu_locale_ = icu::Locale("en_US");
-            locale_tag_ = "en_US";
+            icu_locale_ = icu::Locale("en-US");
+            locale_tag_ = "en-US";
         }
 
         icu::UnicodeString native_name;
         icu::UnicodeString english_name;
 
         icu_locale_.getDisplayName(icu_locale_, native_name);
-        icu_locale_.getDisplayName(icu::Locale("en_US"), english_name);
+        icu_locale_.getDisplayName(icu::Locale("en-US"), english_name);
 
         native_name.toUTF8String(name_);
         english_name.toUTF8String(english_name_);

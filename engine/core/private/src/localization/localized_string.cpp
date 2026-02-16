@@ -33,6 +33,11 @@ namespace retro
             return TextRevision{0, 0};
         }
 
+        TextId text_id() const noexcept override
+        {
+            return TextId{};
+        }
+
         LocalizedStringFlags flags() const noexcept override
         {
             return flags_;

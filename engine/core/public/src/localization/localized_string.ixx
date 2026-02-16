@@ -45,10 +45,7 @@ namespace retro
 
         virtual TextRevision revision() const noexcept = 0;
 
-        virtual TextId text_id() const noexcept
-        {
-            return TextId{};
-        }
+        virtual TextId text_id() const noexcept = 0;
 
         virtual LocalizedStringFlags flags() const noexcept = 0;
     };

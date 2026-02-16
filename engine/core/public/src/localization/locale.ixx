@@ -72,9 +72,8 @@ namespace retro
         std::string english_name_;
         std::string language_;
         std::string region_;
-        std::string script_;
         bool is_right_to_left_ = false;
     };
 
-    export using CultureInfoPtr = std::shared_ptr<Locale>;
+    export using LocalePtr = std::shared_ptr<Locale>;
 } // namespace retro

@@ -126,6 +126,16 @@ namespace retro
             TextComparisonLevel comparison_level = TextComparisonLevel::default_compare) const noexcept;
         [[nodiscard]] bool equals_ignore_case(const Text &other) const noexcept;
 
+        [[nodiscard]] inline bool friend operator==(const Text &lhs, const Text &rhs) noexcept
+        {
+            return lhs.equals(rhs);
+        }
+
+        [[nodiscard]] inline std::strong_ordering friend operator<=>(const Text &lhs, const Text &rhs) noexcept
+        {
+            return lhs.compare_to(rhs);
+        }
+
         [[nodiscard]] bool is_empty() const noexcept;
 
         [[nodiscard]] bool is_empty_or_whitespace() const noexcept;

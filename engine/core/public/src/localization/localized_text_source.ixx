@@ -49,14 +49,13 @@ namespace retro
         virtual std::unordered_set<std::u16string> get_localized_culture_names(
             LocalizedTextSourceCategory category) = 0;
 
-        [[nodiscard]] inline LocalizedStringResult get_localized_string(const TextId text_id,
-                                                                        CultureInfoPtr locale) const
+        [[nodiscard]] inline LocalizedStringResult get_localized_string(const TextId text_id, LocalePtr locale) const
         {
             return get_localized_string(text_id, std::move(locale), {});
         }
 
         [[nodiscard]] virtual LocalizedStringResult get_localized_string(TextId text_id,
-                                                                         CultureInfoPtr locale,
+                                                                         LocalePtr locale,
                                                                          std::u16string_view fallback_source) const = 0;
     };
 } // namespace retro

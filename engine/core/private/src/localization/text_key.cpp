@@ -26,11 +26,11 @@ namespace retro
             return instance;
         }
 
-        [[nodiscard]] TextKey find_or_add(std::u16string_view str)
+        [[nodiscard]] std::uint32_t find_or_add(std::u16string_view str)
         {
             if (str.empty())
             {
-                return TextKey{0};
+                return 0;
             }
 
             const std::size_t str_hash = std::hash<std::u16string_view>{}(str);
@@ -40,7 +40,7 @@ namespace retro
 
                 if (const auto found = string_to_id_.find(str_hash); found != string_to_id_.end())
                 {
-                    return TextKey{found->second};
+                    return found->second;
                 }
             }
 
@@ -50,7 +50,7 @@ namespace retro
                 // Double-check after acquiring write lock
                 if (const auto found = string_to_id_.find(str_hash); found != string_to_id_.end())
                 {
-                    return TextKey{found->second};
+                    return found->second;
                 }
 
                 const std::uint32_t new_id = ++next_id_;
@@ -59,7 +59,7 @@ namespace retro
                 string_to_id_.emplace(str_hash, new_id);
                 id_to_string_.emplace(new_id, std::u16string{str});
 
-                return TextKey{new_id};
+                return new_id;
             }
         }
 
@@ -85,7 +85,7 @@ namespace retro
         std::uint32_t next_id_ = 0;
     };
 
-    TextKey::TextKey(std::u16string_view key) noexcept : id_{TextKeyRegistry::get().find_or_add(key).id_}
+    TextKey::TextKey(std::u16string_view key) noexcept : id_{TextKeyRegistry::get().find_or_add(key)}
     {
     }
 

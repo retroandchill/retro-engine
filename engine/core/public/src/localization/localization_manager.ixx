@@ -51,12 +51,9 @@ namespace retro
 
         void register_source(std::shared_ptr<LocalizedTextSource> source);
 
-        inline CultureInfoPtr current_locale() const
-        {
-            return current_locale_;
-        }
+        LocalePtr current_locale() const;
 
-        void set_locale(CultureInfoPtr culture_info);
+        void set_locale(LocalePtr culture_info);
 
         [[nodiscard]] SimpleMulticastDelegate::RegistrationType on_revision_changed()
         {
@@ -79,7 +76,7 @@ namespace retro
         std::unordered_map<TextId, std::uint16_t> local_revisions_;
         std::uint16_t global_revision_ = 1;
 
-        CultureInfoPtr current_locale_;
+        LocalePtr current_locale_;
         std::vector<std::shared_ptr<LocalizedTextSource>> sources_;
 
         SimpleMulticastDelegate on_revision_changed_;

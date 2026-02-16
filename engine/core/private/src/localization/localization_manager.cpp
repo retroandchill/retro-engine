@@ -80,7 +80,7 @@ namespace retro
 
     void LocalizationManager::register_source(std::shared_ptr<LocalizedTextSource> source)
     {
-        if (!source)
+        if (source == nullptr)
         {
             return;
         }
@@ -88,22 +88,25 @@ namespace retro
         {
             std::unique_lock lock{lookup_mutex_};
             sources_.push_back(std::move(source));
+            std::ranges::sort(sources_, [](const auto &a, const auto &b) { return a->priority() > b->priority(); });
         }
-
-        // Sort by priority (highest first)
-        std::sort(sources_.begin(),
-                  sources_.end(),
-                  [](const auto &a, const auto &b) { return a->priority() > b->priority(); });
     }
 
-    void LocalizationManager::set_locale(CultureInfoPtr culture_info)
+    LocalePtr LocalizationManager::current_locale() const
+    {
+        std::shared_lock lock{lookup_mutex_};
+        return current_locale_;
+    }
+
+    void LocalizationManager::set_locale(LocalePtr culture_info)
     {
         {
             std::unique_lock lock{lookup_mutex_};
-            if (*current_locale_ != *culture_info)
+            if (*current_locale_ == *culture_info)
             {
-                current_locale_ = std::move(culture_info);
+                return;
             }
+            current_locale_ = std::move(culture_info);
         }
 
         // Increment global revision to signal all text needs update
