@@ -6,19 +6,39 @@
  */
 module retro.core.localization.text;
 
-import retro.core.localization.text_history;
+import :text_history;
+import retro.core.localization.text_transformer;
 
 namespace retro
 {
     const Text &Text::empty()
     {
-        static Text empty_text{};
+        static Text empty_text{make_ref_counted<TextHistoryBase>()};
         return empty_text;
+    }
+
+    Text::Text() : Text{empty().text_data_}
+    {
     }
 
     Text::Text(std::u16string &&source_string)
         : Text{make_ref_counted<TextHistoryBase>(TextId{}, std::move(source_string)), TextFlag::initialized_from_string}
     {
+    }
+
+    Text::Text(Text &&other) noexcept : text_data_(std::move(other.text_data_)), flags_(other.flags_)
+    {
+        other.text_data_ = empty().text_data_;
+        other.flags_ = TextFlag::none;
+    }
+
+    Text &Text::operator=(Text &&other) noexcept
+    {
+        text_data_ = std::move(other.text_data_);
+        flags_ = other.flags_;
+        other.text_data_ = empty().text_data_;
+        other.flags_ = TextFlag::none;
+        return *this;
     }
 
     Text Text::from_name(const Name value)
@@ -81,27 +101,20 @@ namespace retro
 
     Text Text::to_lower() const
     {
-        return retro::to_lower(to_string());
+        Text result{make_ref_counted<TextHistoryTransformed>(TextTransformer::to_lower(to_string()),
+                                                             *this,
+                                                             TextHistoryTransformed::TransformType::to_lower)};
+        result.flags_ |= TextFlag::transient;
+        return result;
     }
 
     Text Text::to_upper() const
     {
-        return retro::to_upper(to_string());
-    }
-
-    Text Text::trim() const
-    {
-        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{retro::trim(to_string())}), flags_};
-    }
-
-    Text Text::trim_start() const
-    {
-        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{to_string()}), flags_};
-    }
-
-    Text Text::trim_end() const
-    {
-        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{retro::trim_end(to_string())}), flags_};
+        Text result{make_ref_counted<TextHistoryTransformed>(TextTransformer::to_upper(to_string()),
+                                                             *this,
+                                                             TextHistoryTransformed::TransformType::to_upper)};
+        result.flags_ |= TextFlag::transient;
+        return result;
     }
 
     bool Text::is_transient() const noexcept
@@ -117,5 +130,10 @@ namespace retro
     bool Text::is_initialized_from_string() const noexcept
     {
         return has_any_flags(flags_, TextFlag::initialized_from_string);
+    }
+
+    void Text::rebuild() const
+    {
+        text_data_->mutable_text_history().update_display_string_if_out_of_date();
     }
 } // namespace retro

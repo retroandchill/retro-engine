@@ -6,7 +6,6 @@
  */
 module retro.core.localization.localization_manager;
 
-import retro.core.localization.text_history;
 import retro.core.memory.ref_counted_ptr;
 
 namespace retro
@@ -21,7 +20,7 @@ namespace retro
         return instance;
     }
 
-    LocalizedStringConstPtr LocalizationManager::get_localized_string(TextKey namespace_key,
+    TextDisplayStringConstPtr LocalizationManager::get_display_string(TextKey namespace_key,
                                                                       TextKey string_key,
                                                                       std::u16string_view fallback_source) const
     {
@@ -29,7 +28,7 @@ namespace retro
         {
             if (!fallback_source.empty())
             {
-                return make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{fallback_source});
+                return std::make_shared<std::u16string>(fallback_source);
             }
             return nullptr;
         }
@@ -41,23 +40,20 @@ namespace retro
 
             const auto current_locale_copy = current_locale_;
 
-            for (const auto &source : sources_)
+            auto valid_options =
+                sources_ |
+                std::views::transform(
+                    [&](const auto &source)
+                    { return source->get_localized_string(text_id, current_locale_copy, fallback_source); }) |
+                std::views::join;
+            if (const auto result = valid_options.begin(); result != valid_options.end())
             {
-                if (const auto result = source->get_localized_string(text_id, current_locale_copy, fallback_source);
-                    result.has_value())
-                {
-                    return *result;
-                }
+                return *result;
             }
         }
 
         // Not found or source mismatch - return unlocalized fallback
-        if (!fallback_source.empty())
-        {
-            return make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{fallback_source});
-        }
-
-        return nullptr;
+        return !fallback_source.empty() ? std::make_shared<std::u16string>(fallback_source) : nullptr;
     }
 
     std::uint16_t LocalizationManager::global_revision() const
@@ -126,7 +122,7 @@ namespace retro
     }
 
     void LocalizationManager::cache_localized_string(const TextId text_id,
-                                                     LocalizedStringConstPtr string,
+                                                     TextDisplayStringConstPtr string,
                                                      const std::size_t source_hash)
     {
         if (string == nullptr)

@@ -13,8 +13,8 @@ export module retro.core.localization.localization_manager;
 import std;
 import retro.core.util.enum_class_flags;
 import retro.core.localization.text_key;
-import retro.core.localization.text_data;
 import retro.core.localization.localized_text_source;
+import retro.core.localization.text;
 import retro.core.localization.locale;
 import retro.core.containers.optional;
 import retro.core.strings.cstring_view;
@@ -41,7 +41,7 @@ namespace retro
       public:
         static LocalizationManager &get();
 
-        LocalizedStringConstPtr get_localized_string(TextKey namespace_key,
+        TextDisplayStringConstPtr get_display_string(TextKey namespace_key,
                                                      TextKey string_key,
                                                      std::u16string_view fallback_source = {}) const;
 
@@ -61,11 +61,11 @@ namespace retro
         }
 
       private:
-        void cache_localized_string(TextId text_id, LocalizedStringConstPtr string, std::size_t source_hash);
+        void cache_localized_string(TextId text_id, TextDisplayStringConstPtr string, std::size_t source_hash);
 
         struct LocalizedStringEntry
         {
-            LocalizedStringConstPtr string;
+            TextDisplayStringConstPtr string;
             std::size_t source_hash;
         };
 

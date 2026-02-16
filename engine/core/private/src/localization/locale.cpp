@@ -39,6 +39,20 @@ namespace retro
         is_right_to_left_ = icu_locale_.isRightToLeft();
     }
 
+    std::u16string Locale::to_upper(const std::u16string_view str) const
+    {
+        icu::UnicodeString upper_str(str);
+        upper_str.toUpper(icu_locale_);
+        return std::u16string{std::from_range, upper_str};
+    }
+
+    std::u16string Locale::to_lower(const std::u16string_view str) const
+    {
+        icu::UnicodeString upper_str(str);
+        upper_str.toLower(icu_locale_);
+        return std::u16string{std::from_range, upper_str};
+    }
+
     bool operator==(const Locale &lhs, const Locale &rhs) noexcept
     {
         return lhs.icu_locale_ == rhs.icu_locale_;

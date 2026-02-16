@@ -63,6 +63,9 @@ namespace retro
             return is_right_to_left_;
         }
 
+        std::u16string to_upper(std::u16string_view str) const;
+        std::u16string to_lower(std::u16string_view str) const;
+
         friend bool operator==(const Locale &lhs, const Locale &rhs) noexcept;
 
       private:

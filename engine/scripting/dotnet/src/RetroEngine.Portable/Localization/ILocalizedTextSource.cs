@@ -29,5 +29,5 @@ public interface ILocalizedTextSource
 
     IEnumerable<string> GetLocalizedCultureNames(LocalizedTextSourceCategory category);
 
-    ILocalizedString? GetLocalizedString(TextId id, Locale locale, string fallback = "");
+    string? GetLocalizedString(TextId id, Locale locale, string fallback = "");
 }

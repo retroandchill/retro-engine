@@ -13,7 +13,7 @@ export module retro.core.localization.text;
 import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
-import retro.core.localization.text_data;
+export import :text_data;
 import retro.core.memory.ref_counted_ptr;
 import retro.core.localization.text_key;
 import retro.core.util.date_time;
@@ -75,7 +75,7 @@ namespace retro
       public:
         static const Text &empty();
 
-        Text() = default;
+        Text();
 
         explicit Text(std::u16string &&source_string);
 
@@ -86,21 +86,12 @@ namespace retro
         }
 
         Text(const Text &) = default;
-        inline Text(Text &&other) noexcept : text_data_(std::move(other.text_data_)), flags_(other.flags_)
-        {
-            other.flags_ = TextFlag::none;
-        }
+        Text(Text &&other) noexcept;
 
         ~Text() = default;
 
         Text &operator=(const Text &) = default;
-        inline Text &operator=(Text &&other) noexcept
-        {
-            text_data_ = std::move(other.text_data_);
-            flags_ = other.flags_;
-            other.flags_ = TextFlag::none;
-            return *this;
-        }
+        Text &operator=(Text &&other) noexcept;
 
         static Text from_name(Name value);
 
@@ -144,22 +135,22 @@ namespace retro
 
         [[nodiscard]] Text to_upper() const;
 
-        [[nodiscard]] Text trim() const;
-        [[nodiscard]] Text trim_start() const;
-        [[nodiscard]] Text trim_end() const;
-
         [[nodiscard]] bool is_transient() const noexcept;
         [[nodiscard]] bool is_culture_invariant() const noexcept;
         [[nodiscard]] bool is_initialized_from_string() const noexcept;
 
       private:
         template <std::derived_from<TextData> T>
-        explicit Text(RefCountPtr<T> &&text_data, const TextFlag flags = TextFlag::none)
+        explicit Text(RefCountPtr<T> text_data, const TextFlag flags = TextFlag::none)
             : text_data_(std::move(text_data)), flags_{flags}
         {
         }
 
-        LocalizedStringConstPtr text_data_;
+        void rebuild() const;
+
+        RefCountPtr<TextData> text_data_;
         TextFlag flags_ = TextFlag::none;
+
+        friend class TextHistoryTransformed;
     };
 } // namespace retro

@@ -7,7 +7,7 @@ namespace RetroEngine.Portable.Localization;
 
 public sealed class LocalizationManager
 {
-    private readonly record struct LocalizationKeyEntry(ILocalizedString String, int Hash);
+    private readonly record struct LocalizationKeyEntry(ITextData String, int Hash);
 
     private readonly ReaderWriterLockSlim _lookupLock = new();
     private readonly Dictionary<TextId, LocalizationKeyEntry> _stringTable = new();
@@ -39,6 +39,40 @@ public sealed class LocalizationManager
                 _revisionLock.ExitReadLock();
             }
         }
+    }
+
+    public string? GetDisplayString(TextKey ns, TextKey key, string fallback = "")
+    {
+        if (key.IsEmpty)
+        {
+            if (!string.IsNullOrEmpty(fallback))
+            {
+                return fallback;
+            }
+
+            return null;
+        }
+
+        var textId = new TextId(ns, key);
+        _lookupLock.EnterReadLock();
+        try
+        {
+            var currentLocale = _currentLocale;
+
+            var result = _sources
+                .Select(x => x.GetLocalizedString(textId, currentLocale))
+                .FirstOrDefault(x => x is not null);
+            if (result is not null)
+            {
+                return result;
+            }
+        }
+        finally
+        {
+            _lookupLock.ExitReadLock();
+        }
+
+        return !string.IsNullOrEmpty(fallback) ? fallback : null;
     }
 
     public TextRevision GetTextRevision(TextId textId)
@@ -119,10 +153,10 @@ public sealed class LocalizationManager
         }
     }
 
-    private void CacheLocalizedString(TextId textId, ILocalizedString localizedString, int sourceHash)
+    private void CacheLocalizedString(TextId textId, ITextData textData, int sourceHash)
     {
         // Assumes the caller holds lookup write lock
-        _stringTable.Add(textId, new LocalizationKeyEntry(localizedString, sourceHash));
+        _stringTable.Add(textId, new LocalizationKeyEntry(textData, sourceHash));
 
         _revisionLock.EnterWriteLock();
         try

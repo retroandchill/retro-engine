@@ -39,7 +39,7 @@ public enum TextComparisonLevel
 
 public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {
-    private readonly ILocalizedString? _localizedString;
+    private readonly ITextData? _textData;
     private TextFlag Flags { get; init; }
 
     public bool IsEmpty => string.IsNullOrEmpty(ToString());
@@ -52,14 +52,14 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public bool IsInitializedFromString => Flags.HasFlag(TextFlag.InitializedFromString);
 
-    private Text(ILocalizedString localizedString, TextFlag glags = TextFlag.None)
+    private Text(ITextData textData, TextFlag glags = TextFlag.None)
     {
-        _localizedString = localizedString;
+        _textData = textData;
         Flags = glags;
     }
 
     public Text(string sourceString)
-        : this(ILocalizedString.CreateUnlocalized(sourceString), TextFlag.InitializedFromString) { }
+        : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
 
     public static Text FromName(Name name)
     {
@@ -68,7 +68,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static Text AsCultureInvariant(string sourceString)
     {
-        return new Text(ILocalizedString.CreateUnlocalized(sourceString), TextFlag.CultureInvariant);
+        return new Text(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.CultureInvariant);
     }
 
     public static Text AsCultureInvariant(Text text)
@@ -86,24 +86,9 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         throw new NotImplementedException();
     }
 
-    public Text Trim()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Text TrimStart()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Text TrimEnd()
-    {
-        throw new NotImplementedException();
-    }
-
     public override string ToString()
     {
-        return _localizedString?.DisplayString ?? "";
+        return _textData?.DisplayString ?? "";
     }
 
     public override bool Equals(object? obj)
