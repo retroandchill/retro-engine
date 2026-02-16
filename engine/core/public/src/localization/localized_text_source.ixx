@@ -10,7 +10,7 @@ import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
 import retro.core.functional.delegate;
-import retro.core.localization.localized_string;
+import retro.core.localization.text_data;
 import retro.core.localization.text_key;
 import retro.core.localization.locale;
 

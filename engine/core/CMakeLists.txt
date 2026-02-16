@@ -14,12 +14,12 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/di/service_collection.cpp
         private/src/di/scoped_service_provider.cpp
         private/src/localization/text.cpp
-        private/src/localization/localized_string.cpp
         private/src/localization/localization_manager.cpp
         private/src/localization/text_key.cpp
         private/src/util/guid.cpp
         private/src/memory/arena_allocator.cpp
         private/src/localization/locale.cpp
+        private/src/localization/text_history.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -31,6 +31,7 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/src/di/scoped_service_provider.ixx
+        private/src/localization/text_history.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -80,7 +81,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/src/util/deferred.ixx
         public/src/memory/small_unique_ptr.ixx
         public/src/di/service_scope.ixx
-        public/src/localization/localized_string.ixx
+        public/src/localization/text_data.ixx
         public/src/util/enum_class_flags.ixx
         public/src/localization/text.ixx
         public/src/util/date_time.ixx

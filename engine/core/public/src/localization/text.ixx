@@ -13,7 +13,7 @@ export module retro.core.localization.text;
 import std;
 import retro.core.containers.optional;
 import retro.core.util.enum_class_flags;
-import retro.core.localization.localized_string;
+import retro.core.localization.text_data;
 import retro.core.memory.ref_counted_ptr;
 import retro.core.localization.text_key;
 import retro.core.util.date_time;
@@ -153,7 +153,7 @@ namespace retro
         [[nodiscard]] bool is_initialized_from_string() const noexcept;
 
       private:
-        template <std::derived_from<LocalizedString> T>
+        template <std::derived_from<TextData> T>
         explicit Text(RefCountPtr<T> &&text_data, const TextFlag flags = TextFlag::none)
             : text_data_(std::move(text_data)), flags_{flags}
         {

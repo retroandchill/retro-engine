@@ -6,6 +6,9 @@
  */
 module retro.core.localization.localization_manager;
 
+import retro.core.localization.text_history;
+import retro.core.memory.ref_counted_ptr;
+
 namespace retro
 {
     LocalizationManager::LocalizationManager() : current_locale_{Locale::create("en_US")}
@@ -26,7 +29,7 @@ namespace retro
         {
             if (!fallback_source.empty())
             {
-                return make_unlocalized_string(std::u16string{fallback_source});
+                return make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{fallback_source});
             }
             return nullptr;
         }
@@ -51,7 +54,7 @@ namespace retro
         // Not found or source mismatch - return unlocalized fallback
         if (!fallback_source.empty())
         {
-            return make_unlocalized_string(std::u16string{fallback_source});
+            return make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{fallback_source});
         }
 
         return nullptr;

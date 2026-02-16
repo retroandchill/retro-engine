@@ -6,6 +6,8 @@
  */
 module retro.core.localization.text;
 
+import retro.core.localization.text_history;
+
 namespace retro
 {
     const Text &Text::empty()
@@ -15,7 +17,7 @@ namespace retro
     }
 
     Text::Text(std::u16string &&source_string)
-        : Text{make_unlocalized_string(std::move(source_string)), TextFlag::initialized_from_string}
+        : Text{make_ref_counted<TextHistoryBase>(TextId{}, std::move(source_string)), TextFlag::initialized_from_string}
     {
     }
 
@@ -26,7 +28,7 @@ namespace retro
 
     Text Text::as_culture_invariant(std::u16string &&source_string)
     {
-        return Text{make_unlocalized_string(std::move(source_string)), TextFlag::culture_invariant};
+        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::move(source_string)), TextFlag::culture_invariant};
     }
 
     Text Text::as_culture_invariant(Text text)
@@ -89,17 +91,17 @@ namespace retro
 
     Text Text::trim() const
     {
-        return Text{make_unlocalized_string(retro::trim(to_string())), flags_};
+        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{retro::trim(to_string())}), flags_};
     }
 
     Text Text::trim_start() const
     {
-        return Text{make_unlocalized_string(std::u16string{to_string()}), flags_};
+        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{to_string()}), flags_};
     }
 
     Text Text::trim_end() const
     {
-        return Text{make_unlocalized_string(retro::trim_end(to_string())), flags_};
+        return Text{make_ref_counted<TextHistoryBase>(TextId{}, std::u16string{retro::trim_end(to_string())}), flags_};
     }
 
     bool Text::is_transient() const noexcept

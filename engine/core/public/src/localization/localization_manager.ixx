@@ -13,7 +13,7 @@ export module retro.core.localization.localization_manager;
 import std;
 import retro.core.util.enum_class_flags;
 import retro.core.localization.text_key;
-import retro.core.localization.localized_string;
+import retro.core.localization.text_data;
 import retro.core.localization.localized_text_source;
 import retro.core.localization.locale;
 import retro.core.containers.optional;
