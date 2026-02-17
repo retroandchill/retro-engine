@@ -25,7 +25,7 @@ public static class LocalizedTextSourcePriority
 
 public interface ILocalizedTextSource
 {
-    int Priority => 0;
+    int Priority => LocalizedTextSourcePriority.Normal;
 
     string? GetNativeCultureName(LocalizedTextSourceCategory category);
 

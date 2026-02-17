@@ -15,6 +15,7 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
+        <PackageReference Include="TimeZoneNames" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />

@@ -3,38 +3,72 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Text;
-
 namespace RetroEngine.Portable.Localization.Formatting;
 
-public enum RoundingMode : int
+public enum GroupingRule : byte
 {
-    HalfToEven,
-    HalfFromZero,
-    HalfToZero,
-    FromZero,
-    ToZero,
-    ToNegativeInfinity,
-    ToPositiveInfinity,
+    Enabled,
+    Disabled,
 }
 
-public record NumberFormattingOptions
+public enum NumberFormatType : byte
 {
-    /// <summary>
-    /// (Max exponent of double) + (the number of decimal digits in a double) + 1.
-    /// </summary>
-    private const int DefaultMaximumIntegralDigits = 308 + 15 + 1;
+    Number,
+    Percent,
+}
 
-    public bool AlwaysSign { get; init; } = false;
-    public bool UseGrouping { get; init; } = true;
-    public bool IndicateNearlyInteger { get; init; } = false;
-    public RoundingMode RoundingMode { get; init; } = RoundingMode.HalfToEven;
-    public int MinimumIntegralDigits { get; init; } = 1;
-    public int MaximumIntegralDigits { get; init; } = DefaultMaximumIntegralDigits;
-    public int MinimumFractionalDigits { get; init; } = 0;
-    public int MaximumFractionalDigits { get; init; } = 3;
+public readonly record struct NumberFormattingOptions
+{
+    public bool AlwaysSign { get; init; }
+    public GroupingRule Grouping { get; init; }
+    public int? MinimumIntegralDigits { get; init; }
+    public int? MinimumFractionalDigits { get; init; }
+    public int? MaximumFractionalDigits { get; init; }
 
-    public static readonly NumberFormattingOptions DefaultWithGrouping = new() { UseGrouping = true };
+    internal string BuildPattern(NumberFormatType formatType)
+    {
+        var integral = BuildIntegralPart();
+        var fractional = BuildFractionalPart();
+        var core = formatType switch
+        {
+            NumberFormatType.Number => $"{integral}{fractional}",
+            NumberFormatType.Percent => $"{integral}{fractional}%",
+            _ => throw new ArgumentOutOfRangeException(nameof(formatType), formatType, null),
+        };
 
-    public static readonly NumberFormattingOptions DefaultWithoutGrouping = new() { UseGrouping = false };
+        if (!AlwaysSign)
+            return core;
+
+        var positive = $"+{core}";
+        var negative = $"-{core}";
+
+        return $"{positive};{negative};{positive}";
+    }
+
+    private string BuildIntegralPart()
+    {
+        var minInt = MinimumIntegralDigits ?? 1;
+        var required = new string('0', minInt);
+
+        return Grouping == GroupingRule.Enabled ? $"#,##{required}" : $"###{required}";
+    }
+
+    private string BuildFractionalPart()
+    {
+        if (MaximumFractionalDigits is null or 0)
+            return string.Empty;
+
+        var minFrac = MinimumFractionalDigits ?? 0;
+        var maxFrac = MaximumFractionalDigits.Value;
+
+        if (minFrac > maxFrac)
+            throw new InvalidOperationException(
+                "MinimumFractionalDigits cannot be greater than MaximumFractionalDigits."
+            );
+
+        var required = new string('0', minFrac);
+        var optional = new string('#', maxFrac - minFrac);
+
+        return "." + required + optional;
+    }
 }

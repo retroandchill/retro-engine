@@ -3,7 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using System.Numerics;
+using System.Text;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
 
@@ -30,12 +32,37 @@ public enum TextIdenticalModeFlags : byte
 
 public enum TextComparisonLevel
 {
-    Default,
-    Primary,
-    Secondary,
-    Tertiary,
-    Quaternary,
-    Quinary,
+    /// <summary>
+    /// Uses the current culture's default string comparison rules.
+    /// </summary>
+    CultureDefault,
+
+    /// <summary>
+    /// Compares base characters only (ignores case, accents, width, and kana type).
+    /// Suitable for very fuzzy, user-friendly matching.
+    /// </summary>
+    IgnoreCaseAccentWidth,
+
+    /// <summary>
+    /// Compares letters and accents but ignores case (A == a, Á != A).
+    /// </summary>
+    IgnoreCase,
+
+    /// <summary>
+    /// Case- and accent-sensitive comparison using the current culture.
+    /// </summary>
+    CultureSensitive,
+
+    /// <summary>
+    /// Culture-sensitive comparison that treats punctuation and symbols
+    /// as significant for sorting.
+    /// </summary>
+    CultureSensitiveWithPunctuation,
+
+    /// <summary>
+    /// Exact, ordinal (binary) comparison of the underlying characters.
+    /// </summary>
+    Ordinal,
 }
 
 public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
@@ -67,100 +94,141 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public Text(string sourceString)
         : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
 
-    private static Text AsNumberInternal<T>(T value, NumberFormattingOptions? options, CultureHandle? targetCulture)
+    public static Text AsNumber<T>(
+        T value,
+        NumberFormattingOptions options = default,
+        CultureHandle? targetCulture = null
+    )
+        where T : unmanaged, INumber<T>
+    {
+        return AsNumber(value, options, NumberFormatType.Number, targetCulture);
+    }
+
+    private static Text AsNumber<T>(
+        T value,
+        NumberFormattingOptions options,
+        NumberFormatType type,
+        CultureHandle? targetCulture
+    )
         where T : unmanaged, INumber<T>
     {
         var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var formattingRules = culture.NumberFormattingRules;
-        var formattingOptions = options ?? formattingRules.DefaultFormattingOptions;
-        var nativeString = FastDecimalFormat.NumberToString(value, formattingRules, formattingOptions);
-        return new Text(new TextHistoryAsNumber<T>(nativeString, value, formattingOptions, targetCulture));
+        var formatString = options.BuildPattern(type);
+        var nativeString = value.ToString(formatString, culture.Culture);
+        return new Text(
+            new TextHistoryFormatNumber<T>(nativeString, value, formatString, targetCulture),
+            TextFlag.Transient
+        );
     }
 
-    public static Text AsNumber(
-        float value,
-        NumberFormattingOptions? options = null,
+    public static Text AsPercent<T>(
+        T value,
+        NumberFormattingOptions options = default,
+        CultureHandle? targetCulture = null
+    )
+        where T : unmanaged, IFloatingPoint<T>
+    {
+        return AsNumber(value, options, NumberFormatType.Percent, targetCulture);
+    }
+
+    public static Text AsCurrency<T>(
+        T value,
+        string? currencyCode = null,
+        int? decimalPlaces = null,
+        CultureHandle? targetCulture = null
+    )
+        where T : unmanaged, INumber<T>
+    {
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var builder = new StringBuilder();
+        builder.Append('C');
+        if (decimalPlaces is not null)
+        {
+            builder.Append(decimalPlaces.Value);
+        }
+
+        if (currencyCode is not null)
+        {
+            builder.Append(',');
+            builder.Append(currencyCode);
+        }
+
+        var formatString = builder.ToString();
+        var nativeString = value.ToString(formatString, culture.Culture);
+        return new Text(
+            new TextHistoryFormatNumber<T>(nativeString, value, formatString, targetCulture),
+            TextFlag.Transient
+        );
+    }
+
+    public static Text AsDate(
+        DateTimeOffset dateTime,
+        DateTimeFormatStyle format = DateTimeFormatStyle.Default,
+        string? timeZoneId = null,
         CultureHandle? targetCulture = null
     )
     {
-        return AsNumberInternal(value, options, targetCulture);
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var nativeString = dateTime.ToDateString(format, timeZoneId, culture);
+        return new Text(
+            new TextHistoryAsDate(nativeString, dateTime, format, timeZoneId, targetCulture),
+            TextFlag.Transient
+        );
     }
 
-    public static Text AsNumber(
-        double value,
-        NumberFormattingOptions? options = null,
+    public static Text AsTime(
+        DateTimeOffset dateTime,
+        DateTimeFormatStyle format = DateTimeFormatStyle.Default,
+        string? timeZoneId = null,
         CultureHandle? targetCulture = null
     )
     {
-        return AsNumberInternal(value, options, targetCulture);
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var nativeString = dateTime.ToTimeString(format, timeZoneId, culture);
+        return new Text(
+            new TextHistoryAsTime(nativeString, dateTime, format, timeZoneId, targetCulture),
+            TextFlag.Transient
+        );
     }
 
-    public static Text AsNumber(
-        sbyte value,
-        NumberFormattingOptions? options = null,
+    public static Text AsDateTime(
+        DateTimeOffset dateTime,
+        DateTimeFormatStyle dateFormat = DateTimeFormatStyle.Default,
+        DateTimeFormatStyle timeFormat = DateTimeFormatStyle.Default,
+        string? timeZoneId = null,
         CultureHandle? targetCulture = null
     )
     {
-        return AsNumberInternal(value, options, targetCulture);
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var nativeString = dateTime.ToDateTimeString(dateFormat, timeFormat, timeZoneId, culture);
+        return new Text(
+            new TextHistoryAsDateTime(nativeString, dateTime, dateFormat, timeFormat, timeZoneId, targetCulture),
+            TextFlag.Transient
+        );
     }
 
-    public static Text AsNumber(
-        short value,
-        NumberFormattingOptions? options = null,
+    public static Text AsDateTime(
+        DateTimeOffset dateTime,
+        string pattern,
+        string? timeZoneId = null,
         CultureHandle? targetCulture = null
     )
     {
-        return AsNumberInternal(value, options, targetCulture);
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var timeZone = timeZoneId is not null ? TimeZoneInfo.FindSystemTimeZoneById(timeZoneId) : TimeZoneInfo.Local;
+        var toLocalTime = dateTime.ToOffset(timeZone.GetUtcOffset(dateTime));
+        var nativeString = toLocalTime.ToString(pattern, culture.Culture);
+        return new Text(
+            new TextHistoryAsDateTime(nativeString, dateTime, pattern, timeZone.Id, targetCulture),
+            TextFlag.Transient
+        );
     }
 
-    public static Text AsNumber(int value, NumberFormattingOptions? options = null, CultureHandle? targetCulture = null)
+    public static Text FromTimeSpan(TimeSpan timeSpan, CultureHandle? targetCulture = null)
     {
-        return AsNumberInternal(value, options, targetCulture);
-    }
-
-    public static Text AsNumber(
-        long value,
-        NumberFormattingOptions? options = null,
-        CultureHandle? targetCulture = null
-    )
-    {
-        return AsNumberInternal(value, options, targetCulture);
-    }
-
-    public static Text AsNumber(
-        byte value,
-        NumberFormattingOptions? options = null,
-        CultureHandle? targetCulture = null
-    )
-    {
-        return AsNumberInternal(value, options, targetCulture);
-    }
-
-    public static Text AsNumber(
-        ushort value,
-        NumberFormattingOptions? options = null,
-        CultureHandle? targetCulture = null
-    )
-    {
-        return AsNumberInternal(value, options, targetCulture);
-    }
-
-    public static Text AsNumber(
-        uint value,
-        NumberFormattingOptions? options = null,
-        CultureHandle? targetCulture = null
-    )
-    {
-        return AsNumberInternal(value, options, targetCulture);
-    }
-
-    public static Text AsNumber(
-        ulong value,
-        NumberFormattingOptions? options = null,
-        CultureHandle? targetCulture = null
-    )
-    {
-        return AsNumberInternal(value, options, targetCulture);
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var nativeString = timeSpan.ToString("g", culture.Culture);
+        return new Text(new TextHistoryAsTimespan(nativeString, timeSpan, targetCulture), TextFlag.Transient);
     }
 
     public static Text FromName(Name name)
@@ -234,12 +302,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public bool Equals(Text other)
     {
-        return Equals(other, TextComparisonLevel.Default);
+        return Equals(other, TextComparisonLevel.CultureDefault);
     }
 
     public bool Equals(Text other, TextComparisonLevel level)
     {
-        return ToString().Equals(other.ToString(), StringComparison.OrdinalIgnoreCase);
+        return Compare(other, level) == 0;
     }
 
     public bool IdenticalTo(Text other, TextIdenticalModeFlags flags = TextIdenticalModeFlags.None)
@@ -282,6 +350,25 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
             && otherIsInvariant & ToString().Equals(other.ToString(), StringComparison.InvariantCultureIgnoreCase);
     }
 
+    private static CompareOptions GetCompareOptions(TextComparisonLevel level)
+    {
+        return level switch
+        {
+            TextComparisonLevel.CultureDefault => CompareOptions.None,
+            TextComparisonLevel.IgnoreCaseAccentWidth => CompareOptions.IgnoreCase
+                | CompareOptions.IgnoreNonSpace
+                | CompareOptions.IgnoreKanaType
+                | CompareOptions.IgnoreWidth,
+            TextComparisonLevel.IgnoreCase => CompareOptions.IgnoreCase
+                | CompareOptions.IgnoreKanaType
+                | CompareOptions.IgnoreWidth,
+            TextComparisonLevel.CultureSensitive => CompareOptions.None,
+            TextComparisonLevel.CultureSensitiveWithPunctuation => CompareOptions.StringSort,
+            TextComparisonLevel.Ordinal => CompareOptions.Ordinal,
+            _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
+        };
+    }
+
     public override int GetHashCode()
     {
         return ToString().GetHashCode();
@@ -289,12 +376,13 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public int CompareTo(Text other)
     {
-        return Compare(other, TextComparisonLevel.Default);
+        return Compare(other, TextComparisonLevel.CultureDefault);
     }
 
     public int Compare(Text other, TextComparisonLevel level)
     {
-        return ToString().CompareTo(other.ToString(), StringComparison.OrdinalIgnoreCase);
+        var currentCulture = LocalizationManager.Instance.CurrentCulture.Culture;
+        return string.Compare(ToString(), other.ToString(), currentCulture, GetCompareOptions(level));
     }
 
     public static bool operator ==(Text left, Text right)
