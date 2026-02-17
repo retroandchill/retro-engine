@@ -25,8 +25,16 @@ public static class ReadWriteLockingExtensions
 {
     extension(ReaderWriterLockSlim lockSlim)
     {
-        public ReadLockScope EnterReadScope() => new(lockSlim);
+        public ReadLockScope EnterReadScope()
+        {
+            lockSlim.EnterReadLock();
+            return new ReadLockScope(lockSlim);
+        }
 
-        public WriteLockScope EnterWriteScope() => new(lockSlim);
+        public WriteLockScope EnterWriteScope()
+        {
+            lockSlim.EnterWriteLock();
+            return new WriteLockScope(lockSlim);
+        }
     }
 }

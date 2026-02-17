@@ -130,7 +130,7 @@ internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
 
     protected NumberFormattingOptions? FormatOptions { get; }
 
-    protected CultureInfo? TargetCulture { get; }
+    protected CultureHandle? TargetCulture { get; }
 
     protected TextHistoryFormatNumber() { }
 
@@ -138,7 +138,7 @@ internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
         string displayString,
         T sourceValue,
         NumberFormattingOptions? formatOptions = null,
-        CultureInfo? targetCulture = null
+        CultureHandle? targetCulture = null
     )
         : base(displayString)
     {
@@ -167,17 +167,28 @@ internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
 internal sealed class TextHistoryAsNumber<T> : TextHistoryFormatNumber<T>
     where T : unmanaged, INumber<T>
 {
+    public TextHistoryAsNumber() { }
+
+    public TextHistoryAsNumber(
+        string displayString,
+        T sourceValue,
+        NumberFormattingOptions? formatOptions = null,
+        CultureHandle? targetCulture = null
+    )
+        : base(displayString, sourceValue, formatOptions, targetCulture) { }
+
     public override string BuildInvariantDisplayString()
     {
-        var culture = TargetCulture ?? LocalizationManager.Instance.CultureProvider.CurrentCulture;
-
-        var numberFormatInfo = culture.NumberFormat;
-        return "";
+        var culture = LocalizationManager.Instance.InvariantCulture;
+        var numberFormatInfo = culture.NumberFormattingRules;
+        return BuildNumericDisplayString(numberFormatInfo);
     }
 
     protected override string BuildLocalizedDisplayString()
     {
-        throw new NotImplementedException();
+        var culture = TargetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var numberFormatInfo = culture.NumberFormattingRules;
+        return BuildNumericDisplayString(numberFormatInfo);
     }
 }
 

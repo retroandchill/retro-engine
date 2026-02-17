@@ -172,7 +172,7 @@ public static class FastDecimalFormat
         var minimumIntegral = Math.Max(0, options.MinimumIntegralDigits);
         var minimumFractional = Math.Max(0, options.MinimumFractionalDigits);
 
-        var maximumIntegral = Math.Max(minimumIntegral, options.MaximumFractionalDigits);
+        var maximumIntegral = Math.Max(minimumIntegral, options.MaximumIntegralDigits);
         var maximumFractional = Math.Max(minimumFractional, options.MaximumFractionalDigits);
 
         if (
@@ -261,7 +261,7 @@ public static class FastDecimalFormat
             buffer[finalBufferIndex] = tempBuffer[stringLength - finalBufferIndex - 1];
         }
 
-        return buffer[stringLength..];
+        return buffer[..stringLength];
     }
 
     private static Span<char> IntegralToStringCommon(
@@ -309,7 +309,7 @@ public static class FastDecimalFormat
         }
 
         ref var valueToRound = ref isRoundingEntireNumber ? ref integralPart : ref fractionalPart;
-        valueToRound = Math.TruncateToHalfIfClose(valueToRound, Pow10Table[decimalPlacesToRoundTo]);
+        valueToRound = Math.TruncateToHalfIfClose(valueToRound * Pow10Table[decimalPlacesToRoundTo]);
 
         valueToRound = roundingMode switch
         {
@@ -376,7 +376,7 @@ public static class FastDecimalFormat
         buffer.Append(finalSuffix);
     }
 
-    internal static void IntegralToString(
+    private static void IntegralToString(
         bool isNegative,
         ulong value,
         DecimalNumberFormattingRules rules,
@@ -404,7 +404,7 @@ public static class FastDecimalFormat
         BuildFinalString(isNegative, formattingOptions.AlwaysSign, rules, integralPart, fractionalSpan, buffer);
     }
 
-    internal static void FractionalToString(
+    private static void FractionalToString(
         double value,
         DecimalNumberFormattingRules rules,
         NumberFormattingOptions formattingOptions,
@@ -499,7 +499,7 @@ public static class FastDecimalFormat
         BuildFinalString(isNegative, formattingOptions.AlwaysSign, rules, integralSpan, fractionalSpan, buffer);
     }
 
-    public static void NumberToString<T>(
+    private static void NumberToString<T>(
         T value,
         DecimalNumberFormattingRules rules,
         NumberFormattingOptions formattingOptions,

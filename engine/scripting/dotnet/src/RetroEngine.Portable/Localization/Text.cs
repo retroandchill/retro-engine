@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Numerics;
+using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Portable.Localization;
@@ -65,6 +66,102 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public Text(string sourceString)
         : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
+
+    private static Text AsNumberInternal<T>(T value, NumberFormattingOptions? options, CultureHandle? targetCulture)
+        where T : unmanaged, INumber<T>
+    {
+        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
+        var formattingRules = culture.NumberFormattingRules;
+        var formattingOptions = options ?? formattingRules.DefaultFormattingOptions;
+        var nativeString = FastDecimalFormat.NumberToString(value, formattingRules, formattingOptions);
+        return new Text(new TextHistoryAsNumber<T>(nativeString, value, formattingOptions, targetCulture));
+    }
+
+    public static Text AsNumber(
+        float value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        double value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        sbyte value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        short value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(int value, NumberFormattingOptions? options = null, CultureHandle? targetCulture = null)
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        long value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        byte value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        ushort value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        uint value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
+
+    public static Text AsNumber(
+        ulong value,
+        NumberFormattingOptions? options = null,
+        CultureHandle? targetCulture = null
+    )
+    {
+        return AsNumberInternal(value, options, targetCulture);
+    }
 
     public static Text FromName(Name name)
     {

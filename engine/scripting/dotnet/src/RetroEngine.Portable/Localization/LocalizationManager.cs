@@ -19,24 +19,22 @@ public sealed class LocalizationManager
     private readonly Dictionary<TextId, ushort> _localRevisions = new();
     private ushort _globalRevision = 1;
 
-    private CultureInfo _currentLocale = CultureInfo.CurrentCulture;
-    private readonly List<ILocalizedTextSource> _sources = [];
+    private readonly ReaderWriterLockSlim _cultureLock = new();
+    private CultureHandle _currentCulture;
+    public CultureHandle InvariantCulture { get; } = new(CultureInfo.InvariantCulture);
 
-    private ICultureProvider _cultureProvider;
+    private readonly List<ILocalizedTextSource> _sources = [];
 
     public event Action? OnRevisionChanged;
 
     private LocalizationManager()
     {
-        _cultureProvider = new DotnetCultureProvider();
-        _cultureProvider.CurrentCultureChanged += HandleProviderCultureChanged;
-
-        HandleProviderCultureChanged(_cultureProvider.CurrentCulture);
+        _currentCulture = new CultureHandle(CultureInfo.CurrentCulture);
     }
 
     public static LocalizationManager Instance { get; } = new();
 
-    public ushort GlobalRevision
+    internal ushort GlobalRevision
     {
         get
         {
@@ -45,7 +43,7 @@ public sealed class LocalizationManager
         }
     }
 
-    public string? GetDisplayString(TextKey ns, TextKey key, string? fallback = null)
+    internal string? GetDisplayString(TextKey ns, TextKey key, string? fallback = null)
     {
         if (key.IsEmpty)
         {
@@ -55,7 +53,7 @@ public sealed class LocalizationManager
         var textId = new TextId(ns, key);
         using (_lookupLock.EnterReadScope())
         {
-            var currentLocale = _currentLocale;
+            var currentLocale = CurrentCulture;
 
             var result = _sources
                 .Select(x => x.GetLocalizedString(textId, currentLocale))
@@ -69,7 +67,7 @@ public sealed class LocalizationManager
         return !string.IsNullOrEmpty(fallback) ? fallback : null;
     }
 
-    public TextRevision GetTextRevision(TextId textId)
+    internal TextRevision GetTextRevision(TextId textId)
     {
         if (textId.IsEmpty)
             return new TextRevision();
@@ -85,28 +83,22 @@ public sealed class LocalizationManager
         _sources.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
     }
 
-    public ICultureProvider CultureProvider
+    public CultureHandle CurrentCulture
     {
         get
         {
-            using var scope = _lookupLock.EnterReadScope();
-            return _cultureProvider;
+            using var scope = _cultureLock.EnterReadScope();
+            return _currentCulture;
         }
+    }
+
+    public string CurrentCultureName
+    {
+        get => CurrentCulture.Name;
         set
         {
-            ArgumentNullException.ThrowIfNull(value);
-
-            using (_lookupLock.EnterWriteScope())
-            {
-                if (ReferenceEquals(_cultureProvider, value))
-                    return;
-
-                _cultureProvider.CurrentCultureChanged -= HandleProviderCultureChanged;
-                _cultureProvider = value;
-                _cultureProvider.CurrentCultureChanged += HandleProviderCultureChanged;
-            }
-
-            HandleProviderCultureChanged(_cultureProvider.CurrentCulture);
+            using var scope = _cultureLock.EnterWriteScope();
+            _currentCulture = new CultureHandle(CultureInfo.GetCultureInfo(value));
         }
     }
 
@@ -122,25 +114,5 @@ public sealed class LocalizationManager
             ++localRevision;
         }
         _localRevisions[textId] = localRevision;
-    }
-
-    private void HandleProviderCultureChanged(CultureInfo culture)
-    {
-        using (_lookupLock.EnterWriteScope())
-        {
-            _currentLocale = culture;
-        }
-
-        using (_revisionLock.EnterWriteScope())
-        {
-            if (++_globalRevision == 0)
-            {
-                ++_globalRevision;
-            }
-
-            _localRevisions.Clear();
-        }
-
-        OnRevisionChanged?.Invoke();
     }
 }

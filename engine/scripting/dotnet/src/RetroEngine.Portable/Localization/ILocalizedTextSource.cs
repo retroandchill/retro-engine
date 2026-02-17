@@ -31,5 +31,5 @@ public interface ILocalizedTextSource
 
     IEnumerable<string> GetLocalizedCultureNames(LocalizedTextSourceCategory category);
 
-    string? GetLocalizedString(TextId id, CultureInfo cultureInfo, string fallback = "");
+    string? GetLocalizedString(TextId id, CultureHandle cultureInfo, string fallback = "");
 }
