@@ -10,7 +10,7 @@ namespace RetroEngine.Portable.Localization;
 
 public sealed class LocalizationManager
 {
-    private readonly record struct LocalizationKeyEntry(ITextData String, int Hash);
+    private readonly record struct LocalizationKeyEntry(string String, int Hash);
 
     private readonly ReaderWriterLockSlim _lookupLock = new();
     private readonly Dictionary<TextId, LocalizationKeyEntry> _stringTable = new();
@@ -51,20 +51,17 @@ public sealed class LocalizationManager
         }
 
         var textId = new TextId(ns, key);
-        using (_lookupLock.EnterReadScope())
-        {
-            var currentLocale = CurrentCulture;
+        using var scope = _lookupLock.EnterReadScope();
+        var currentLocale = CurrentCulture;
 
-            var result = _sources
-                .Select(x => x.GetLocalizedString(textId, currentLocale))
-                .FirstOrDefault(x => x is not null);
-            if (result is not null)
-            {
-                return result;
-            }
-        }
+        var result = _sources
+            .Select(x => x.GetLocalizedString(textId, currentLocale))
+            .FirstOrDefault(x => x is not null);
+        if (result is null)
+            return !string.IsNullOrEmpty(fallback) ? fallback : null;
 
-        return !string.IsNullOrEmpty(fallback) ? fallback : null;
+        CacheLocalizedString(textId, result, result.GetHashCode());
+        return result;
     }
 
     internal TextRevision GetTextRevision(TextId textId)
@@ -102,7 +99,7 @@ public sealed class LocalizationManager
         }
     }
 
-    private void CacheLocalizedString(TextId textId, ITextData textData, int sourceHash)
+    private void CacheLocalizedString(TextId textId, string textData, int sourceHash)
     {
         // Assumes the caller holds lookup write lock
         _stringTable.Add(textId, new LocalizationKeyEntry(textData, sourceHash));
