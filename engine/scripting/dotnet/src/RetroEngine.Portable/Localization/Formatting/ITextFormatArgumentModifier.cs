@@ -9,6 +9,8 @@ namespace RetroEngine.Portable.Localization.Formatting;
 
 public interface ITextFormatArgumentModifier
 {
+    string ModifierPattern { get; }
+
     (bool UsesFormatArgs, int Length) EstimateLength();
 
     void Evaluate<TContext>(FormatArg arg, in TContext context, StringBuilder builder)

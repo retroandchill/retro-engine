@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Superpower;
 using ZLinq;
 
@@ -15,10 +14,10 @@ internal delegate FormatArg? TextFormatArgResolver<in T>(T context, PlaceholderK
 
 public interface ITextFormatContext
 {
-    int EstimatedArgLength { get; }
-    bool RebuildText { get; }
-    bool RebuildAsSource { get; }
-    FormatArg? ResolveArg(PlaceholderKey key, int argNumber);
+    internal int EstimatedArgLength { get; }
+    internal bool RebuildText { get; }
+    internal bool RebuildAsSource { get; }
+    internal FormatArg? ResolveArg(PlaceholderKey key, int argNumber);
 }
 
 internal static class TextFormatContext

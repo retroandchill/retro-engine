@@ -8,6 +8,14 @@ using Superpower;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
+[Flags]
+public enum TextFormatFlags : byte
+{
+    None = 0,
+    EvaluateArgumentModifiers = 1 << 0,
+    Default = EvaluateArgumentModifiers,
+}
+
 public sealed class TextFormat
 {
     private enum SourceType : byte
@@ -26,6 +34,7 @@ public sealed class TextFormat
     private readonly SourceType _sourceType;
     private readonly Text _sourceText;
     private string _sourceExpression = "";
+    private readonly TextFormatFlags _formatFlags;
     private readonly Lock _compiledDataLock = new();
     private readonly List<FormatSegment> _compiledSegments = [];
     private TextSnapshot _compiledTextSnapshot;
@@ -57,19 +66,29 @@ public sealed class TextFormat
         }
     }
 
-    public TextFormat(Text text, TextFormatDefinition? patternDefinition = null)
+    public TextFormat(
+        Text text,
+        TextFormatDefinition? patternDefinition = null,
+        TextFormatFlags formatFlags = TextFormatFlags.Default
+    )
     {
         _sourceType = SourceType.Text;
         _sourceText = text;
         PatternDefinition = patternDefinition ?? TextFormatDefinition.Default;
+        _formatFlags = formatFlags;
         Compile();
     }
 
-    public TextFormat(string sourceString, TextFormatDefinition? patternDefinition = null)
+    public TextFormat(
+        string sourceString,
+        TextFormatDefinition? patternDefinition = null,
+        TextFormatFlags formatFlags = TextFormatFlags.Default
+    )
     {
         _sourceType = SourceType.String;
         _sourceExpression = sourceString;
         PatternDefinition = patternDefinition ?? TextFormatDefinition.Default;
+        _formatFlags = formatFlags;
         Compile();
     }
 
@@ -130,7 +149,15 @@ public sealed class TextFormat
                     {
                         if (mod is not null)
                         {
-                            mod.Evaluate(possibleArg.Value, in ctx, resultBuilder);
+                            if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
+                            {
+                                mod.Evaluate(possibleArg.Value, in ctx, resultBuilder);
+                            }
+                            else
+                            {
+                                resultBuilder.Append(PatternDefinition.ArgModChar);
+                                resultBuilder.Append(mod.ModifierPattern);
+                            }
                         }
                         else
                         {
@@ -184,9 +211,16 @@ public sealed class TextFormat
                     if (modifier is null)
                         return;
 
-                    var (argModUsesFormatArgs, argModLength) = modifier.EstimateLength();
-                    self._baseFormatStringLength += argModLength;
-                    self._formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
+                    if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
+                    {
+                        var (argModUsesFormatArgs, argModLength) = modifier.EstimateLength();
+                        self._baseFormatStringLength += argModLength;
+                        self._formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
+                    }
+                    else
+                    {
+                        self._baseFormatStringLength += modifier.ModifierPattern.Length + 1;
+                    }
                 }
             );
         }
