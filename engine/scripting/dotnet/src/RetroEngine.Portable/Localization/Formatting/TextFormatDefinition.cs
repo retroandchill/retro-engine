@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Superpower;
-using Superpower.Model;
 using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -40,10 +39,11 @@ public sealed class TextFormatDefinition
             ArgEndChar,
             ArgModChar,
             escapedChar,
-            EscapeChar
+            EscapeChar,
+            TextFormatter.Instance
         );
         var literalChar = escapedChar.Or(
-            Character.Except(c => c != ArgStartChar && c != EscapeChar, "literal character")
+            Character.Except(c => c != ArgStartChar && c != EscapeChar && c != ArgModChar, "literal character")
         );
         var literalSegment = literalChar
             .AtLeastOnce()
@@ -53,62 +53,41 @@ public sealed class TextFormatDefinition
         Format = segment.Many().Select(IReadOnlyList<FormatSegment> (segments) => segments);
     }
 
-    private static readonly TextParser<string> Identifier = Character.Letter.SelectMany(
-        _ => Character.LetterOrDigit.Or(Character.EqualTo('_')).Many(),
-        (first, rest) => new string([first, .. rest])
-    );
-
-    private static readonly TextParser<Unit> Whitespace = Character.WhiteSpace.Many().Value(Unit.Value);
-
-    private static readonly TextParser<string> QuotedValue = Character
-        .EqualTo('"')
-        .SelectMany(
-            _ => Character.EqualTo('\\').IgnoreThen(Character.AnyChar).Or(Character.Except('"')).Many(),
-            (open, content) => new { open, content }
-        )
-        .SelectMany(_ => Character.EqualTo('"'), (t, _) => new string(t.content.ToArray()));
-
-    private static TextParser<string> BareValue =>
-        Character
-            .Matching(c => c != ',' && c != ')', "argument value character")
-            .AtLeastOnce()
-            .Select(cs => new string(cs).Trim())
-            .Where(s => s.Length > 0);
-
-    private static TextParser<string> ArgValue =>
-        QuotedValue.Between(Whitespace, Whitespace).Try().Or(BareValue.Between(Whitespace, Whitespace));
-
-    private static readonly TextParser<Unit> Comma = Character
-        .EqualTo(',')
-        .Between(Whitespace, Whitespace)
-        .Value(Unit.Value);
-
-    private static TextParser<IReadOnlyList<T>> ParenList<T>(TextParser<T> element)
+    private static TextParser<ITextFormatArgumentModifier> RegisteredModifierParser(
+        TextFormatter formatter,
+        string keyword
+    )
     {
-        return from l in Character.EqualTo('(').Between(Whitespace, Whitespace)
-            from items in element.ManyDelimitedBy(Comma).OptionalOrDefault(Array.Empty<T>())
-            from r in Character.EqualTo(')').Between(Whitespace, Whitespace)
-            select (IReadOnlyList<T>)items.ToArray();
+        return formatter.TryGetArgumentModifier(keyword, out var parser)
+            ? parser
+            : throw new FormatException($"Unknown argument modifier '{keyword}'.");
     }
 
-    private static readonly TextParser<KeyValuePair<string, string>> NamedArg = Identifier
-        .Between(Whitespace, Whitespace)
-        .SelectMany(_ => Character.EqualTo('=').Between(Whitespace, Whitespace), (key, eq) => new { key, eq })
-        .SelectMany(_ => ArgValue, (t, val) => new KeyValuePair<string, string>(t.key, val));
-
-    private static TextParser<string> PositionalArg => ArgValue;
-
-    private static readonly TextParser<ModifierArgs> ModifierArgsParser = ParenList(NamedArg)
-        .Select(ModifierArgs (pairs) => new NamedArgs(pairs.ToDictionary(p => p.Key, p => p.Value)))
-        .Try()
-        .Or(ParenList(PositionalArg).Select(ModifierArgs (values) => new PositionalArgs(values)));
-
-    private static TextParser<ArgModifier> ArgModifierParser(char argModChar)
+    private static TextParser<ITextFormatArgumentModifier> ArgModifierParser(char argModChar, TextFormatter formatter)
     {
-        return Character
-            .EqualTo(argModChar)
-            .SelectMany(bar => Identifier.Between(Whitespace, Whitespace), (bar, name) => new { bar, name })
-            .SelectMany(@t => ModifierArgsParser, (@t, args) => new ArgModifier(@t.name, args));
+        return from bar in Character.EqualTo(argModChar)
+            from name in TextFormatParsingUtils.Identifier.Between(
+                TextFormatParsingUtils.Whitespace,
+                TextFormatParsingUtils.Whitespace
+            )
+            from modifier in RegisteredModifierParser(formatter, name)
+            select modifier;
+    }
+
+    private static TextParser<FormatSegment> PlaceholderWithOptionalModifier(
+        char argStartChar,
+        char argEndChar,
+        char argModChar,
+        TextParser<char> escapedChar,
+        char escapeChar,
+        TextFormatter formatter
+    )
+    {
+        return PlaceholderKeyParser(argStartChar, argEndChar, escapedChar, escapeChar)
+            .SelectMany(
+                _ => ArgModifierParser(argModChar, formatter)!.OptionalOrDefault(),
+                FormatSegment (rawKey, mod) => BuildPlaceholder(rawKey, mod)
+            );
     }
 
     private static TextParser<string> PlaceholderKeyParser(
@@ -130,22 +109,7 @@ public sealed class TextFormatDefinition
             .SelectMany(_ => Character.EqualTo(argEndChar), (@t, _) => new string(t.keyChars.ToArray()));
     }
 
-    private static TextParser<FormatSegment> PlaceholderWithOptionalModifier(
-        char argStartChar,
-        char argEndChar,
-        char argModChar,
-        TextParser<char> escapedChar,
-        char escapeChar
-    )
-    {
-        return PlaceholderKeyParser(argStartChar, argEndChar, escapedChar, escapeChar)
-            .SelectMany(
-                rawKey => ArgModifierParser(argModChar)!.OptionalOrDefault(),
-                FormatSegment (rawKey, mod) => BuildPlaceholder(rawKey, mod)
-            );
-    }
-
-    private static PlaceholderSegment BuildPlaceholder(string raw, ArgModifier? modifier)
+    private static PlaceholderSegment BuildPlaceholder(string raw, ITextFormatArgumentModifier? modifier)
     {
         var key = raw.Trim();
         return !string.IsNullOrEmpty(key)

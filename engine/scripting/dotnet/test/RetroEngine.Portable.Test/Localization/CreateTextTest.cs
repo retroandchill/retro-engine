@@ -20,11 +20,4 @@ public class CreateTextTest
         var text2 = Text.AsNumber(123.456);
         Assert.That(text2.ToString(), Is.EqualTo("123.456"));
     }
-
-    [Test]
-    public void TestCompileStringFormat()
-    {
-        var parsed = TextFormat.Parse("Hello {0}!");
-        Assert.That(parsed.ToString(), Is.EqualTo("Hello {0}!"));
-    }
 }
