@@ -6,29 +6,51 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Superpower;
+using ZLinq;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
-internal readonly struct ArgumentTokenSpecifier
+internal delegate FormatArg? TextFormatArgResolver<in T>(T context, PlaceholderKey key, int argNumber)
+    where T : allows ref struct;
+
+public interface ITextFormatContext
 {
-    public string ArgumentName { get; }
+    int EstimatedArgLength { get; }
+    bool RebuildText { get; }
+    bool RebuildAsSource { get; }
+    FormatArg? ResolveArg(PlaceholderKey key, int argNumber);
+}
 
-    public int? ArgumentIndex { get; }
-
-    public ArgumentTokenSpecifier(string argumentName)
+internal static class TextFormatContext
+{
+    public static TextFormatContext<T> Create<T>(
+        T context,
+        TextFormatArgResolver<T> argResolver,
+        int estimatedArgLength,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+        where T : allows ref struct
     {
-        ArgumentName = argumentName;
-        if (int.TryParse(argumentName, out var index) && index >= 0)
-        {
-            ArgumentIndex = index;
-        }
+        return new TextFormatContext<T>(context, argResolver, estimatedArgLength, rebuildText, rebuildAsSource);
     }
+}
 
-    public void Deconstruct(out string argumentName, out int? argumentIndex)
-    {
-        argumentName = ArgumentName;
-        argumentIndex = ArgumentIndex;
-    }
+internal readonly ref struct TextFormatContext<T>(
+    T context,
+    TextFormatArgResolver<T> argResolver,
+    int estimatedArgLength,
+    bool rebuildText,
+    bool rebuildAsSource
+) : ITextFormatContext
+    where T : allows ref struct
+{
+    private readonly T _context = context;
+    public int EstimatedArgLength { get; } = estimatedArgLength;
+    public bool RebuildText { get; } = rebuildText;
+    public bool RebuildAsSource { get; } = rebuildAsSource;
+
+    public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
 public sealed class TextFormatter
@@ -49,11 +71,140 @@ public sealed class TextFormatter
         _argumentModifiers.Remove(keyword, out _);
     }
 
-    public bool TryGetArgumentModifier(
-        string keyword,
-        [NotNullWhen(true)] out TextParser<ITextFormatArgumentModifier>? modifier
+    public TextParser<ITextFormatArgumentModifier>? FindArgumentModifier(string keyword)
+    {
+        return _argumentModifiers.GetValueOrDefault(keyword);
+    }
+
+    public static Text Format(
+        TextFormat format,
+        IReadOnlyDictionary<string, FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
     )
     {
-        return _argumentModifiers.TryGetValue(keyword, out modifier);
+        throw new NotImplementedException();
+    }
+
+    public static Text Format(
+        TextFormat format,
+        IReadOnlyList<FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        throw new NotImplementedException();
+    }
+
+    public static Text Format(
+        TextFormat format,
+        ReadOnlySpan<FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        throw new NotImplementedException();
+    }
+
+    public static string FormatStr(
+        TextFormat format,
+        IReadOnlyDictionary<string, FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        var estimatedArgLength = arguments.Sum(p => EstimateArgumentValueLength(p.Value));
+        return Format(
+            format,
+            TextFormatContext.Create(
+                arguments,
+                (args, key, _) => args.TryGetValue(key.Name, out var arg) ? arg : null,
+                estimatedArgLength,
+                rebuildText,
+                rebuildAsSource
+            )
+        );
+    }
+
+    public static string FormatStr(
+        TextFormat format,
+        IReadOnlyList<FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        var estimatedArgLength = arguments.Sum(EstimateArgumentValueLength);
+        return Format(
+            format,
+            TextFormatContext.Create(
+                arguments,
+                (args, key, argNumber) =>
+                {
+                    var argIndex = key.Index;
+                    if (key.Index == -1)
+                    {
+                        argIndex = argNumber;
+                    }
+
+                    return args.Count > argIndex ? args[argIndex] : null;
+                },
+                estimatedArgLength,
+                rebuildText,
+                rebuildAsSource
+            )
+        );
+    }
+
+    public static string FormatStr(
+        TextFormat format,
+        ReadOnlySpan<FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        var estimatedArgLength = arguments.AsValueEnumerable().Sum(EstimateArgumentValueLength);
+        return Format(
+            format,
+            TextFormatContext.Create(
+                arguments,
+                (args, key, argNumber) =>
+                {
+                    var argIndex = key.Index;
+                    if (key.Index == -1)
+                    {
+                        argIndex = argNumber;
+                    }
+
+                    return args.Length > argIndex ? args[argIndex] : null;
+                },
+                estimatedArgLength,
+                rebuildText,
+                rebuildAsSource
+            )
+        );
+    }
+
+    public static string Format<TContext>(TextFormat format, in TContext context)
+        where TContext : ITextFormatContext, allows ref struct
+    {
+        var fmtPattern = format;
+        if (context.RebuildAsSource)
+        {
+            var formatText = format.SourceText;
+
+            if (context.RebuildText)
+            {
+                formatText.Rebuild();
+            }
+
+            fmtPattern = new TextFormat(formatText, fmtPattern.PatternDefinition);
+        }
+
+        return fmtPattern.Format(context);
+    }
+
+    private static int EstimateArgumentValueLength(FormatArg arg)
+    {
+        return arg.Match(_ => 20, _ => 20, _ => 20, _ => 20, text => text.ToString().Length, _ => 0);
     }
 }

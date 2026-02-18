@@ -48,30 +48,35 @@ public sealed class TextFormatDefinition
         var literalSegment = literalChar
             .AtLeastOnce()
             .Select(chars => new string(chars.ToArray()))
-            .Select(FormatSegment (text) => new LiteralSegment(text));
+            .Select(FormatSegment.Literal);
         var segment = placeholderSegment.Or(literalSegment);
         Format = segment.Many().Select(IReadOnlyList<FormatSegment> (segments) => segments);
     }
 
-    private static TextParser<ITextFormatArgumentModifier> RegisteredModifierParser(
+    private static TextParser<ITextFormatArgumentModifier>? RegisteredModifierParser(
         TextFormatter formatter,
         string keyword
     )
     {
-        return formatter.TryGetArgumentModifier(keyword, out var parser)
-            ? parser
-            : throw new FormatException($"Unknown argument modifier '{keyword}'.");
+        return formatter.FindArgumentModifier(keyword);
     }
 
-    private static TextParser<ITextFormatArgumentModifier> ArgModifierParser(char argModChar, TextFormatter formatter)
+    private static TextParser<ITextFormatArgumentModifier?> ArgModifierParser(char argModChar, TextFormatter formatter)
     {
-        return from bar in Character.EqualTo(argModChar)
-            from name in TextFormatParsingUtils.Identifier.Between(
-                TextFormatParsingUtils.Whitespace,
-                TextFormatParsingUtils.Whitespace
+        return Character
+            .EqualTo(argModChar)
+            .SelectMany(
+                _ =>
+                    TextFormatParsingUtils.Identifier.Between(
+                        TextFormatParsingUtils.Whitespace,
+                        TextFormatParsingUtils.Whitespace
+                    ),
+                (bar, name) => (bar, name)
             )
-            from modifier in RegisteredModifierParser(formatter, name)
-            select modifier;
+            .SelectMany(
+                t => RegisteredModifierParser(formatter, t.name)!.OptionalOrDefault(),
+                (_, modifier) => modifier
+            );
     }
 
     private static TextParser<FormatSegment> PlaceholderWithOptionalModifier(
@@ -85,7 +90,7 @@ public sealed class TextFormatDefinition
     {
         return PlaceholderKeyParser(argStartChar, argEndChar, escapedChar, escapeChar)
             .SelectMany(
-                _ => ArgModifierParser(argModChar, formatter)!.OptionalOrDefault(),
+                _ => ArgModifierParser(argModChar, formatter).OptionalOrDefault(),
                 FormatSegment (rawKey, mod) => BuildPlaceholder(rawKey, mod)
             );
     }
@@ -109,11 +114,11 @@ public sealed class TextFormatDefinition
             .SelectMany(_ => Character.EqualTo(argEndChar), (@t, _) => new string(t.keyChars.ToArray()));
     }
 
-    private static PlaceholderSegment BuildPlaceholder(string raw, ITextFormatArgumentModifier? modifier)
+    private static FormatSegment BuildPlaceholder(string raw, ITextFormatArgumentModifier? modifier)
     {
         var key = raw.Trim();
         return !string.IsNullOrEmpty(key)
-            ? new PlaceholderSegment(key, modifier)
+            ? FormatSegment.Placeholder(key, modifier)
             : throw new FormatException("Invalid placeholder format.");
     }
 }

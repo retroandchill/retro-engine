@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using Superpower;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -56,21 +57,25 @@ public sealed class TextFormat
         }
     }
 
-    public TextFormat(Text text, TextFormatDefinition patternDefinition)
+    public TextFormat(Text text, TextFormatDefinition? patternDefinition = null)
     {
         _sourceType = SourceType.Text;
         _sourceText = text;
-        PatternDefinition = patternDefinition;
+        PatternDefinition = patternDefinition ?? TextFormatDefinition.Default;
         Compile();
     }
 
-    public TextFormat(string sourceString, TextFormatDefinition patternDefinition)
+    public TextFormat(string sourceString, TextFormatDefinition? patternDefinition = null)
     {
         _sourceType = SourceType.String;
         _sourceExpression = sourceString;
-        PatternDefinition = patternDefinition;
+        PatternDefinition = patternDefinition ?? TextFormatDefinition.Default;
         Compile();
     }
+
+    public static implicit operator TextFormat(Text text) => new(text);
+
+    public static implicit operator TextFormat(string sourceString) => new(sourceString);
 
     public bool IdenticalTo(TextFormat other, TextIdenticalModeFlags flags)
     {
@@ -84,6 +89,65 @@ public sealed class TextFormat
                 && string.Equals(_sourceExpression, other._sourceExpression, StringComparison.Ordinal),
             _ => throw new InvalidOperationException(),
         };
+    }
+
+    internal string Format<TContext>(in TContext context)
+        where TContext : ITextFormatContext, allows ref struct
+    {
+        using var scope = _compiledDataLock.EnterScope();
+        return FormatInternal(context);
+    }
+
+    private string FormatInternal<TContext>(in TContext context)
+        where TContext : ITextFormatContext, allows ref struct
+    {
+        if (_sourceType == SourceType.Text && context.RebuildText)
+        {
+            _sourceText.Rebuild();
+        }
+
+        ConditionalCompile();
+
+        if (_compiledSegments.Count == 0)
+        {
+            return _sourceExpression;
+        }
+
+        var resultBuilder = new StringBuilder(
+            _baseFormatStringLength + context.EstimatedArgLength * _formatArgumentEstimateMultiplier
+        );
+
+        var argumentIndex = 0;
+        foreach (var segment in _compiledSegments)
+        {
+            segment.Visit(
+                context,
+                (_, str) => resultBuilder.Append(str),
+                (ctx, key, mod) =>
+                {
+                    var possibleArg = ctx.ResolveArg(key, argumentIndex);
+                    if (possibleArg is not null)
+                    {
+                        if (mod is not null)
+                        {
+                            mod.Evaluate(possibleArg.Value, in ctx, resultBuilder);
+                        }
+                        else
+                        {
+                            possibleArg.Value.ToFormattedString(ctx.RebuildText, ctx.RebuildAsSource, resultBuilder);
+                        }
+                    }
+                    else
+                    {
+                        resultBuilder.Append(PatternDefinition.ArgStartChar);
+                        resultBuilder.Append(key.Name);
+                        resultBuilder.Append(PatternDefinition.ArgEndChar);
+                    }
+                }
+            );
+        }
+
+        return resultBuilder.ToString();
     }
 
     private void Compile()
@@ -111,21 +175,20 @@ public sealed class TextFormat
 
         foreach (var token in _compiledSegments)
         {
-            switch (token)
-            {
-                case LiteralSegment literalSegment:
-                    _baseFormatStringLength += literalSegment.Text.Length;
-                    break;
-                case PlaceholderSegment placeholderSegment:
-                    _expressionType = CompiledExpressionType.Complex;
-                    if (placeholderSegment.Modifier is not null)
-                    {
-                        var (argModUsesFormatArgs, argModLength) = placeholderSegment.Modifier.EstimateLength();
-                        _baseFormatStringLength += argModLength;
-                        _formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
-                    }
-                    break;
-            }
+            token.Match(
+                this,
+                (self, str) => self._baseFormatStringLength += str.Length,
+                (self, _, modifier) =>
+                {
+                    self._expressionType = CompiledExpressionType.Complex;
+                    if (modifier is null)
+                        return;
+
+                    var (argModUsesFormatArgs, argModLength) = modifier.EstimateLength();
+                    self._baseFormatStringLength += argModLength;
+                    self._formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
+                }
+            );
         }
     }
 

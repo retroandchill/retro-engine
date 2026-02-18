@@ -12,6 +12,7 @@
     <PackageVersion Include="Dock.Model.Mvvm" Version="11.3.11.13" />
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="11.3.11.13" />
     <PackageVersion Include="DotMake.CommandLine" Version="3.1.0" />
+    <PackageVersion Include="Dusharp" Version="0.7.2" />
     <PackageVersion Include="Handlebars.Net" Version="2.1.6" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MessagePack" Version="3.1.4" />

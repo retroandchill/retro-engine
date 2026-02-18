@@ -18,9 +18,11 @@
         <Compile Remove="Strings\NameTable.cs"/>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="Dusharp" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
         <PackageReference Include="Superpower" />
         <PackageReference Include="TimeZoneNames" />
+        <PackageReference Include="ZLinq" />
     </ItemGroup>
 </Project>

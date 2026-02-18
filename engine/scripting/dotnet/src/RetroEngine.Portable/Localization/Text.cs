@@ -94,6 +94,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public Text(string sourceString)
         : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
 
+    public static implicit operator Text(string? sourceString) => new(sourceString ?? string.Empty);
+
     public static Text AsNumber<T>(
         T value,
         NumberFormattingOptions options = default,

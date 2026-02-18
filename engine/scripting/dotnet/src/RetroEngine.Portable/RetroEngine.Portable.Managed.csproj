@@ -13,10 +13,12 @@
         <Compile Remove="Interop/**/*.cs"/>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="Dusharp" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
         <PackageReference Include="Superpower" />
         <PackageReference Include="TimeZoneNames" />
+        <PackageReference Include="ZLinq" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
