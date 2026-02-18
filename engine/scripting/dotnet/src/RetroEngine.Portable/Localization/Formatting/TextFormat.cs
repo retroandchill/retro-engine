@@ -3,101 +3,91 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Text;
+using Superpower;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
-internal abstract record FormatSegment;
-
-internal sealed record LiteralSegment(string Text) : FormatSegment;
-
-internal sealed record PlaceholderSegment(string Key) : FormatSegment;
-
 public sealed class TextFormat
 {
-    public string SourceString { get; }
-
-    private readonly List<FormatSegment> _segments = [];
-
-    private void Compile(string formatString)
+    private enum SourceType : byte
     {
-        var segments = new List<FormatSegment>();
-        var currentText = new StringBuilder();
-        var placeholder = new StringBuilder();
+        Text,
+        String,
+    }
 
-        var isEscaped = false;
-        var inPlaceholder = false;
+    public enum CompiledExpressionType : byte
+    {
+        Invalid,
+        Simple,
+        Complex,
+    }
 
-        foreach (var c in formatString)
+    private readonly SourceType _sourceType;
+    private readonly Text _sourceText;
+    private string _sourceExpression = "";
+    private readonly Lock _compiledDataLock = new();
+    private readonly List<FormatSegment> _compiledSegments = [];
+    private TextSnapshot _compiledTextSnapshot;
+    private int _baseFormatStringLength;
+    private int _formatArgumentEstimateMultiplier;
+
+    public Text SourceText => _sourceType == SourceType.Text ? _sourceText : new Text(_sourceExpression);
+    public string SourceString => _sourceType == SourceType.String ? _sourceExpression : _sourceText.ToString();
+
+    public TextFormatDefinition PatternDefinition { get; } = TextFormatDefinition.Default;
+
+    private CompiledExpressionType _expressionType;
+    public CompiledExpressionType ExpressionType
+    {
+        get
         {
-            if (isEscaped)
-            {
-                if (inPlaceholder)
-                {
-                    placeholder.Append(c);
-                }
-                else
-                {
-                    currentText.Append(c);
-                }
-            }
+            using var scope = _compiledDataLock.EnterScope();
+            return _expressionType;
+        }
+    }
 
-            if (c == '`')
-            {
-                isEscaped = true;
-                continue;
-            }
+    public bool IsValid
+    {
+        get
+        {
+            using var scope = _compiledDataLock.EnterScope();
+            return ExpressionType != CompiledExpressionType.Invalid;
+        }
+    }
 
-            if (!inPlaceholder)
-            {
-                if (c == '{')
-                {
-                    if (currentText.Length > 0)
-                    {
-                        segments.Add(new LiteralSegment(currentText.ToString()));
-                        currentText.Clear();
-                    }
+    private void Compile()
+    {
+        _compiledSegments.Clear();
+        if (_sourceType == SourceType.Text)
+        {
+            _sourceExpression = _sourceText.ToString();
+            _compiledTextSnapshot = new TextSnapshot(_sourceText);
+        }
 
-                    inPlaceholder = true;
-                }
-                else
-                {
-                    currentText.Append(c);
-                }
-            }
-            else
-            {
-                if (c == '}')
-                {
-                    var key = placeholder.ToString().Trim();
-                    if (string.IsNullOrEmpty(key))
-                        throw new FormatException("Invalid placeholder format.");
+        _expressionType = CompiledExpressionType.Simple;
+        _baseFormatStringLength = 0;
+        _formatArgumentEstimateMultiplier = 1;
+        var result = PatternDefinition.Format.TryParse(_sourceExpression);
+        var validExpression = result.HasValue;
+        if (validExpression)
+        {
+            _compiledSegments.AddRange(result.Value);
 
-                    segments.Add(new PlaceholderSegment(key));
-                    placeholder.Clear();
-                    inPlaceholder = false;
-                }
-                else
+            for (var tokenIndex = 0; tokenIndex < _compiledSegments.Count; tokenIndex++)
+            {
+                var token = _compiledSegments[tokenIndex];
+
+                switch (token)
                 {
-                    placeholder.Append(c);
+                    case LiteralSegment literalSegment:
+                        _baseFormatStringLength += literalSegment.Text.Length;
+                        break;
+                    case PlaceholderSegment placeholderSegment:
+                        _expressionType = CompiledExpressionType.Complex;
+
+                        break;
                 }
             }
         }
-
-        if (isEscaped)
-        {
-            throw new FormatException("Unterminated escape sequence.");
-        }
-
-        if (inPlaceholder)
-        {
-            throw new FormatException("Unterminated placeholder.");
-        }
-
-        if (currentText.Length > 0)
-            segments.Add(new LiteralSegment(currentText.ToString()));
-
-        _segments.Clear();
-        _segments.AddRange(segments);
     }
 }

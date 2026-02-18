@@ -67,9 +67,9 @@ public enum TextComparisonLevel
 
 public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {
-    private ITextData TextData => field ?? EmptyTextData;
+    internal ITextData TextData => field ?? EmptyTextData;
 
-    private TextFlag Flags { get; init; }
+    internal TextFlag Flags { get; private init; }
 
     private static readonly ITextData EmptyTextData = new TextHistoryBase();
 
