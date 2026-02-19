@@ -21,7 +21,7 @@ public sealed class LocalizationManager
 
     private readonly ReaderWriterLockSlim _cultureLock = new();
     private CultureHandle _currentCulture;
-    public CultureHandle InvariantCulture { get; } = new(CultureInfo.InvariantCulture);
+    public CultureHandle InvariantCulture { get; } = new(CultureInfo.InvariantCulture.Name);
 
     private readonly List<ILocalizedTextSource> _sources = [];
 
@@ -29,7 +29,7 @@ public sealed class LocalizationManager
 
     private LocalizationManager()
     {
-        _currentCulture = new CultureHandle(CultureInfo.CurrentCulture);
+        _currentCulture = new CultureHandle(CultureInfo.CurrentCulture.Name);
     }
 
     public static LocalizationManager Instance { get; } = new();
@@ -95,7 +95,7 @@ public sealed class LocalizationManager
         set
         {
             using var scope = _cultureLock.EnterWriteScope();
-            _currentCulture = new CultureHandle(CultureInfo.GetCultureInfo(value));
+            _currentCulture = new CultureHandle(value);
         }
     }
 

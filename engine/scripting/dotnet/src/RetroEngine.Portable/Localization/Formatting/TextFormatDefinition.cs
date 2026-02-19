@@ -43,7 +43,7 @@ public sealed class TextFormatDefinition
             TextFormatter.Instance
         );
         var literalChar = escapedChar.Or(
-            Character.Except(c => c != ArgStartChar && c != EscapeChar && c != ArgModChar, "literal character")
+            Character.Except(c => c == ArgStartChar || c == EscapeChar || c == ArgModChar, "literal character")
         );
         var literalSegment = literalChar
             .AtLeastOnce()
@@ -53,15 +53,16 @@ public sealed class TextFormatDefinition
         Format = segment.Many().Select(IReadOnlyList<FormatSegment> (segments) => segments);
     }
 
-    private static TextParser<ITextFormatArgumentModifier>? RegisteredModifierParser(
-        TextFormatter formatter,
-        string keyword
-    )
+    private static GetTextArgumentModifier? RegisteredModifierParser(TextFormatter formatter, string keyword)
     {
         return formatter.FindArgumentModifier(keyword);
     }
 
-    private static TextParser<ITextFormatArgumentModifier?> ArgModifierParser(char argModChar, TextFormatter formatter)
+    private static TextParser<ITextFormatArgumentModifier?> ArgModifierParser(
+        string fullString,
+        char argModChar,
+        TextFormatter formatter
+    )
     {
         return Character
             .EqualTo(argModChar)
@@ -73,10 +74,8 @@ public sealed class TextFormatDefinition
                     ),
                 (bar, name) => (bar, name)
             )
-            .SelectMany(
-                t => RegisteredModifierParser(formatter, t.name)!.OptionalOrDefault(),
-                (_, modifier) => modifier
-            );
+            .SelectMany(_ => TextFormatParsingUtils.ParenRawString, (t, args) => (fullString, t.name, args))
+            .Select(t => RegisteredModifierParser(formatter, t.name)?.Invoke(t.fullString, t.name, t.args));
     }
 
     private static TextParser<FormatSegment> PlaceholderWithOptionalModifier(
@@ -89,10 +88,7 @@ public sealed class TextFormatDefinition
     )
     {
         return PlaceholderKeyParser(argStartChar, argEndChar, escapedChar, escapeChar)
-            .SelectMany(
-                _ => ArgModifierParser(argModChar, formatter).OptionalOrDefault(),
-                FormatSegment (rawKey, mod) => BuildPlaceholder(rawKey, mod)
-            );
+            .SelectMany(s => ArgModifierParser(s, argModChar, formatter).OptionalOrDefault(), BuildPlaceholder);
     }
 
     private static TextParser<string> PlaceholderKeyParser(

@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using RetroEngine.Assets;
-using RetroEngine.Core.Async;
 using RetroEngine.Host.Interop;
 using RetroEngine.Logging;
 

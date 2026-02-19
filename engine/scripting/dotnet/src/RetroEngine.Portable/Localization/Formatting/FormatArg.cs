@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Numerics;
 using System.Text;
 using Dusharp;
 
@@ -48,12 +49,39 @@ public partial struct FormatArg
 
     public string ToFormattedString(bool rebuildText, bool rebuildAsSource)
     {
-        throw new NotImplementedException();
+        var stringBuilder = new StringBuilder();
+        ToFormattedString(rebuildText, rebuildAsSource, stringBuilder);
+        return stringBuilder.ToString();
     }
 
     public void ToFormattedString(bool rebuildText, bool rebuildAsSource, StringBuilder builder)
     {
-        throw new NotImplementedException();
+        Match(
+            value => ToFormattedString(value, builder),
+            value => ToFormattedString(value, builder),
+            value => ToFormattedString(value, builder),
+            value => ToFormattedString(value, builder),
+            text =>
+            {
+                if (rebuildText)
+                {
+                    text.Rebuild();
+                }
+
+                builder.Append(rebuildAsSource ? text.BuildSourceString() : text.ToString());
+            },
+            _ =>
+            {
+                // Do nothing
+            }
+        );
+    }
+
+    private static void ToFormattedString<T>(T value, StringBuilder builder)
+        where T : unmanaged, INumber<T>
+    {
+        var culture = LocalizationManager.Instance.CurrentCulture;
+        builder.Append(value.ToString(null, culture.Culture));
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);
@@ -81,4 +109,44 @@ public partial struct FormatArg
     public static implicit operator FormatArg(string? str) => Text(str);
 
     public static implicit operator FormatArg(TextGender gender) => Gender(gender);
+
+    public static implicit operator FormatArg(FormatNumericArg arg)
+    {
+        return arg.Match(Signed, Unsigned, Float, Double);
+    }
+}
+
+[Union]
+public partial struct FormatNumericArg
+{
+    [UnionCase]
+    public static partial FormatNumericArg Signed(long value);
+
+    [UnionCase]
+    public static partial FormatNumericArg Unsigned(ulong value);
+
+    [UnionCase]
+    public static partial FormatNumericArg Float(float value);
+
+    [UnionCase]
+    public static partial FormatNumericArg Double(double value);
+
+    public static FormatNumericArg FromNumber<T>(T value)
+        where T : unmanaged, INumber<T>
+    {
+        return value switch
+        {
+            sbyte v => Signed(v),
+            short v => Signed(v),
+            int v => Signed(v),
+            long v => Signed(v),
+            byte v => Unsigned(v),
+            ushort v => Unsigned(v),
+            uint v => Unsigned(v),
+            ulong v => Unsigned(v),
+            float v => Float(v),
+            double v => Double(v),
+            _ => throw new ArgumentException($"Cannot convert {value} to a number"),
+        };
+    }
 }

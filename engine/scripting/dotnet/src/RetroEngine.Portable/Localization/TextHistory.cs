@@ -35,6 +35,10 @@ internal abstract class TextHistory : ITextData
 
     public abstract bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags);
 
+    public virtual IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text) => [];
+
+    public virtual HistoricTextNumericData? GetHistoricNumericData(Text text) => null;
+
     public void UpdateDisplayStringIfOutOfDate()
     {
         if (!CanUpdateDisplayString)
@@ -122,10 +126,10 @@ internal abstract class TextHistoryGenerated(string displayString) : TextHistory
     protected abstract string BuildLocalizedDisplayString();
 }
 
-internal sealed class TextHistoryFormatNumber<T> : TextHistoryGenerated
+internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
     where T : unmanaged, INumber<T>
 {
-    private readonly T _sourceValue;
+    protected T SourceValue { get; }
 
     private readonly string? _formatPattern;
 
@@ -141,7 +145,7 @@ internal sealed class TextHistoryFormatNumber<T> : TextHistoryGenerated
     )
         : base(displayString)
     {
-        _sourceValue = sourceValue;
+        SourceValue = sourceValue;
         _formatPattern = formatString;
         _targetCulture = targetCulture;
     }
@@ -154,7 +158,7 @@ internal sealed class TextHistoryFormatNumber<T> : TextHistoryGenerated
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
     {
         return other is TextHistoryFormatNumber<T> otherNumber
-            && _sourceValue == otherNumber._sourceValue
+            && SourceValue == otherNumber.SourceValue
             && _formatPattern == otherNumber._formatPattern
             && Equals(_targetCulture, otherNumber._targetCulture);
     }
@@ -167,8 +171,42 @@ internal sealed class TextHistoryFormatNumber<T> : TextHistoryGenerated
 
     private string BuildNumericDisplayString(IFormatProvider formatProvider)
     {
-        return _sourceValue.ToString(_formatPattern, formatProvider);
+        return SourceValue.ToString(_formatPattern, formatProvider);
     }
+}
+
+internal sealed class TextHistoryAsNumber<T> : TextHistoryFormatNumber<T>
+    where T : unmanaged, INumber<T>
+{
+    private readonly NumberFormatType _formatType;
+
+    public TextHistoryAsNumber() { }
+
+    public TextHistoryAsNumber(
+        string displayString,
+        T sourceValue,
+        NumberFormatType formatType,
+        string formatString,
+        CultureHandle? targetCulture
+    )
+        : base(displayString, sourceValue, formatString, targetCulture)
+    {
+        _formatType = formatType;
+    }
+
+    public override HistoricTextNumericData? GetHistoricNumericData(Text text)
+    {
+        return new HistoricTextNumericData(_formatType, FormatNumericArg.FromNumber(SourceValue));
+    }
+}
+
+internal sealed class TextHistoryAsCurrency<T> : TextHistoryFormatNumber<T>
+    where T : unmanaged, INumber<T>
+{
+    public TextHistoryAsCurrency() { }
+
+    public TextHistoryAsCurrency(string displayString, T sourceValue, string formatString, CultureHandle? targetCulture)
+        : base(displayString, sourceValue, formatString, targetCulture) { }
 }
 
 internal sealed class TextHistoryAsDate : TextHistoryGenerated
@@ -420,6 +458,16 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated
         return other is TextHistoryTransformed otherTransformed
             && _sourceText.IdenticalTo(otherTransformed._sourceText, flags)
             && _transformType == otherTransformed._transformType;
+    }
+
+    public override IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text)
+    {
+        return _sourceText.HistoricFormatData;
+    }
+
+    public override HistoricTextNumericData? GetHistoricNumericData(Text text)
+    {
+        return _sourceText.HistoricNumericData;
     }
 
     protected override string BuildLocalizedDisplayString()

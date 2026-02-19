@@ -14,6 +14,7 @@
     <PackageVersion Include="DotMake.CommandLine" Version="3.1.0" />
     <PackageVersion Include="Dusharp" Version="0.7.2" />
     <PackageVersion Include="Handlebars.Net" Version="2.1.6" />
+    <PackageVersion Include="ICU4N" Version="60.1.0-alpha.439" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MessagePack" Version="3.1.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />

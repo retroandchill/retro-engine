@@ -66,6 +66,8 @@ public sealed class TextFormat
         }
     }
 
+    public static TextFormat Empty { get; } = new(Text.Empty);
+
     public TextFormat(
         Text text,
         TextFormatDefinition? patternDefinition = null,

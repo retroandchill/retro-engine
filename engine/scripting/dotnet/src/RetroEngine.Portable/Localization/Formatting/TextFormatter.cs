@@ -52,15 +52,27 @@ internal readonly ref struct TextFormatContext<T>(
     public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
+public delegate ITextFormatArgumentModifier? GetTextArgumentModifier(string fullString, string name, string argsString);
+
 public sealed class TextFormatter
 {
-    private readonly ConcurrentDictionary<string, TextParser<ITextFormatArgumentModifier>> _argumentModifiers = new();
+    private readonly ConcurrentDictionary<string, GetTextArgumentModifier> _argumentModifiers = new();
 
-    private TextFormatter() { }
+    private TextFormatter()
+    {
+        _argumentModifiers.TryAdd(
+            "plural",
+            (f, _, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Cardinal, a)
+        );
+        _argumentModifiers.TryAdd(
+            "ordinal",
+            (f, _, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Ordinal, a)
+        );
+    }
 
     public static TextFormatter Instance { get; } = new();
 
-    public void RegisterTextArgumentModifier(string keyword, TextParser<ITextFormatArgumentModifier> compileDelegate)
+    public void RegisterTextArgumentModifier(string keyword, GetTextArgumentModifier compileDelegate)
     {
         _argumentModifiers.TryAdd(keyword, compileDelegate);
     }
@@ -70,7 +82,7 @@ public sealed class TextFormatter
         _argumentModifiers.Remove(keyword, out _);
     }
 
-    public TextParser<ITextFormatArgumentModifier>? FindArgumentModifier(string keyword)
+    public GetTextArgumentModifier? FindArgumentModifier(string keyword)
     {
         return _argumentModifiers.GetValueOrDefault(keyword);
     }

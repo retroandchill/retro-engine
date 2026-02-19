@@ -19,6 +19,7 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Dusharp" />
+        <PackageReference Include="ICU4N" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
         <PackageReference Include="Superpower" />

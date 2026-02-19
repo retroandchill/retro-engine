@@ -118,7 +118,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         var formatString = options.BuildPattern(type);
         var nativeString = value.ToString(formatString, culture.Culture);
         return new Text(
-            new TextHistoryFormatNumber<T>(nativeString, value, formatString, targetCulture),
+            new TextHistoryAsNumber<T>(nativeString, value, type, formatString, targetCulture),
             TextFlag.Transient
         );
     }
@@ -158,7 +158,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         var formatString = builder.ToString();
         var nativeString = value.ToString(formatString, culture.Culture);
         return new Text(
-            new TextHistoryFormatNumber<T>(nativeString, value, formatString, targetCulture),
+            new TextHistoryAsCurrency<T>(nativeString, value, formatString, targetCulture),
             TextFlag.Transient
         );
     }
@@ -416,6 +416,10 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     {
         return left.CompareTo(right) <= 0;
     }
+
+    internal IEnumerable<HistoricTextFormatData> HistoricFormatData => TextData.History.GetHistoricFormatData(this);
+
+    internal HistoricTextNumericData? HistoricNumericData => TextData.History.GetHistoricNumericData(this);
 
     internal void Rebuild()
     {
