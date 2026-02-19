@@ -5,7 +5,7 @@
 
 using System.Numerics;
 using System.Text;
-using Dusharp;
+using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -17,7 +17,7 @@ public enum TextGender : byte
 }
 
 [Union]
-public partial struct FormatArg
+public readonly partial struct FormatArg
 {
     [UnionCase]
     public static partial FormatArg Signed(long value);
@@ -117,7 +117,7 @@ public partial struct FormatArg
 }
 
 [Union]
-public partial struct FormatNumericArg
+public readonly partial struct FormatNumericArg
 {
     [UnionCase]
     public static partial FormatNumericArg Signed(long value);

@@ -6,10 +6,8 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
-using RetroEngine.Portable.Collections;
 using RetroEngine.Portable.Collections.Immutable;
 using Superpower;
-using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -19,7 +17,7 @@ public interface ITextFormatArgumentModifier
 
     (bool UsesFormatArgs, int Length) EstimateLength();
 
-    void Evaluate<TContext>(FormatArg arg, in TContext context, StringBuilder builder)
+    void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
     protected static ImmutableOrderedDictionary<string, string>? ParseKeyValueArgs(string argsString)
@@ -144,12 +142,12 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
         return (_doPluralFormsUseFormatArgs, _longestPluralFormStringLength);
     }
 
-    public void Evaluate<TContext>(FormatArg arg, in TContext context, StringBuilder builder)
+    public void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct
     {
         var culture = LocalizationManager.Instance.CurrentCulture;
 
-        if (!TryGetPluralFormForArgument(arg, 1, out var valuePluralForm) && arg.TryGetTextData(out var textValue))
+        if (!TryGetPluralFormForArgument(in arg, 1, out var valuePluralForm) && arg.TryGetTextData(out var textValue))
         {
             var textValueNumericData = textValue.HistoricNumericData;
             if (textValueNumericData is not null)
@@ -166,7 +164,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
 
         return;
 
-        bool TryGetPluralFormForArgument(FormatArg a, int argValueMultiplier, out TextPluralForm pluralForm)
+        bool TryGetPluralFormForArgument(in FormatArg a, int argValueMultiplier, out TextPluralForm pluralForm)
         {
             var form = a.Match(
                 TextPluralForm? (val) => culture.GetPluralForm(val * argValueMultiplier, _pluralType),

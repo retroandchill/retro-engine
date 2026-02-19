@@ -13,7 +13,6 @@
         <Compile Remove="Interop/**/*.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Dusharp" />
         <PackageReference Include="ICU4N" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
@@ -23,5 +22,8 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable.SourceGenerator\RetroEngine.Portable.SourceGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
     </ItemGroup>
 </Project>

@@ -141,11 +141,12 @@ public sealed class TextFormat
         var argumentIndex = 0;
         foreach (var segment in _compiledSegments)
         {
-            segment.Visit(
+            segment.Match(
                 context,
                 (_, str) => resultBuilder.Append(str),
                 (ctx, key, mod) =>
                 {
+                    // ReSharper disable once AccessToModifiedClosure
                     var possibleArg = ctx.ResolveArg(key, argumentIndex);
                     if (possibleArg is not null)
                     {
@@ -174,6 +175,7 @@ public sealed class TextFormat
                     }
                 }
             );
+            argumentIndex++;
         }
 
         return resultBuilder.ToString();

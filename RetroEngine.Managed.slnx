@@ -44,6 +44,9 @@
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj">
       <BuildType Project="Debug" />
     </Project>
+    <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj">
+      <BuildType Project="Debug" />
+    </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.csproj" />
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.Managed.csproj">
       <Build Solution="Dev-Debug|*" Project="false" />

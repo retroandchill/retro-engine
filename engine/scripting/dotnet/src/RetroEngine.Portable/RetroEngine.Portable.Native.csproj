@@ -13,12 +13,14 @@
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
         <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable.SourceGenerator\RetroEngine.Portable.SourceGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="Strings\NameTable.cs"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Dusharp" />
         <PackageReference Include="ICU4N" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />

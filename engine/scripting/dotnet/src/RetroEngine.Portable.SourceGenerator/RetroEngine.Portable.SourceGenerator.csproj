@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>14</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>true</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <IsRoslynComponent>true</IsRoslynComponent>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.Common" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+      <PackageReference Include="PolySharp">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Retro.SourceGeneratorUtilities" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\RetroEngine.Portable.Common\Utils\ExceptionUtils.cs">
+        <Link>Unions\Extensions\ExceptionUtils.cs</Link>
+      </Compile>
+      <Compile Include="..\RetroEngine.Portable.Common\Utils\UnionAttribute.cs">
+        <Link>Unions\Attributes\UnionAttribute.cs</Link>
+      </Compile>
+    </ItemGroup>
+
+</Project>
