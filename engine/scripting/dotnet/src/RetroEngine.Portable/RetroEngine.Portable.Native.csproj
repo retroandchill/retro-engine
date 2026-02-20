@@ -24,6 +24,7 @@
         <PackageReference Include="ICU4N" />
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
+        <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" />
         <PackageReference Include="Superpower" />
         <PackageReference Include="TimeZoneNames" />
         <PackageReference Include="ZLinq" />
