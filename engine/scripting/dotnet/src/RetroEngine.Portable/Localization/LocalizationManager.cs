@@ -5,6 +5,7 @@
 
 using System.Globalization;
 using RetroEngine.Portable.Concurrency;
+using RetroEngine.Portable.Localization.Cultures;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -19,18 +20,11 @@ public sealed class LocalizationManager
     private readonly Dictionary<TextId, ushort> _localRevisions = new();
     private ushort _globalRevision = 1;
 
-    private readonly ReaderWriterLockSlim _cultureLock = new();
-    private CultureHandle _currentCulture;
-    public CultureHandle InvariantCulture { get; } = new(CultureInfo.InvariantCulture.Name);
-
     private readonly List<ILocalizedTextSource> _sources = [];
 
     public event Action? OnRevisionChanged;
 
-    private LocalizationManager()
-    {
-        _currentCulture = new CultureHandle(CultureInfo.CurrentCulture.Name);
-    }
+    private LocalizationManager() { }
 
     public static LocalizationManager Instance { get; } = new();
 
@@ -52,7 +46,7 @@ public sealed class LocalizationManager
 
         var textId = new TextId(ns, key);
         using var scope = _lookupLock.EnterReadScope();
-        var currentLocale = CurrentCulture;
+        var currentLocale = Culture.CurrentCulture;
 
         var result = _sources
             .Select(x => x.GetLocalizedString(textId, currentLocale))
@@ -78,25 +72,6 @@ public sealed class LocalizationManager
         using var scope = _lookupLock.EnterWriteScope();
         _sources.Add(source);
         _sources.Sort((a, b) => -a.Priority.CompareTo(b.Priority));
-    }
-
-    public CultureHandle CurrentCulture
-    {
-        get
-        {
-            using var scope = _cultureLock.EnterReadScope();
-            return _currentCulture;
-        }
-    }
-
-    public string CurrentCultureName
-    {
-        get => CurrentCulture.Name;
-        set
-        {
-            using var scope = _cultureLock.EnterWriteScope();
-            _currentCulture = new CultureHandle(value);
-        }
     }
 
     private void CacheLocalizedString(TextId textId, string textData, int sourceHash)

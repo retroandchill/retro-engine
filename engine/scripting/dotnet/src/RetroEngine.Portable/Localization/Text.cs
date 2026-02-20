@@ -6,6 +6,7 @@
 using System.Globalization;
 using System.Numerics;
 using System.Text;
+using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
 
@@ -96,69 +97,49 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static implicit operator Text(string? sourceString) => new(sourceString ?? string.Empty);
 
-    public static Text AsNumber<T>(
-        T value,
-        NumberFormattingOptions options = default,
-        CultureHandle? targetCulture = null
-    )
+    public static Text AsNumber<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, INumber<T>
     {
-        return AsNumber(value, options, NumberFormatType.Number, targetCulture);
-    }
-
-    private static Text AsNumber<T>(
-        T value,
-        NumberFormattingOptions options,
-        NumberFormatType type,
-        CultureHandle? targetCulture
-    )
-        where T : unmanaged, INumber<T>
-    {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var formatString = options.BuildPattern(type);
-        var nativeString = value.ToString(formatString, culture.Culture);
-        return new Text(
-            new TextHistoryAsNumber<T>(nativeString, value, type, formatString, targetCulture),
-            TextFlag.Transient
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var numberFormattingRules = culture.DecimalNumberFormattingRules;
+        var nativeString = FastDecimalFormat.NumberToString(
+            value,
+            numberFormattingRules,
+            options ?? numberFormattingRules.DefaultFormattingOptions
         );
+        return new Text(new TextHistoryAsNumber<T>(nativeString, value, options, targetCulture), TextFlag.Transient);
     }
 
-    public static Text AsPercent<T>(
-        T value,
-        NumberFormattingOptions options = default,
-        CultureHandle? targetCulture = null
-    )
+    public static Text AsPercent<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, IFloatingPoint<T>
     {
-        return AsNumber(value, options, NumberFormatType.Percent, targetCulture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var numberFormattingRules = culture.PercentNumberFormattingRules;
+        var nativeString = FastDecimalFormat.NumberToString(
+            value,
+            numberFormattingRules,
+            options ?? numberFormattingRules.DefaultFormattingOptions
+        );
+        return new Text(new TextHistoryAsPercent<T>(nativeString, value, options, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsCurrency<T>(
         T value,
         string? currencyCode = null,
-        int? decimalPlaces = null,
-        CultureHandle? targetCulture = null
+        NumberFormattingOptions? options = null,
+        Culture? targetCulture = null
     )
         where T : unmanaged, INumber<T>
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var builder = new StringBuilder();
-        builder.Append('C');
-        if (decimalPlaces is not null)
-        {
-            builder.Append(decimalPlaces.Value);
-        }
-
-        if (currencyCode is not null)
-        {
-            builder.Append(',');
-            builder.Append(currencyCode);
-        }
-
-        var formatString = builder.ToString();
-        var nativeString = value.ToString(formatString, culture.Culture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var numberFormattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var nativeString = FastDecimalFormat.NumberToString(
+            value,
+            numberFormattingRules,
+            options ?? numberFormattingRules.DefaultFormattingOptions
+        );
         return new Text(
-            new TextHistoryAsCurrency<T>(nativeString, value, formatString, targetCulture),
+            new TextHistoryAsCurrency<T>(nativeString, value, currencyCode, options, targetCulture),
             TextFlag.Transient
         );
     }
@@ -167,11 +148,11 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         DateTimeOffset dateTime,
         DateTimeFormatStyle format = DateTimeFormatStyle.Default,
         string? timeZoneId = null,
-        CultureHandle? targetCulture = null
+        Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var nativeString = dateTime.ToDateString(format, timeZoneId, culture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var nativeString = TextChronoFormatter.AsDate(dateTime, format, timeZoneId, culture);
         return new Text(
             new TextHistoryAsDate(nativeString, dateTime, format, timeZoneId, targetCulture),
             TextFlag.Transient
@@ -182,11 +163,11 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         DateTimeOffset dateTime,
         DateTimeFormatStyle format = DateTimeFormatStyle.Default,
         string? timeZoneId = null,
-        CultureHandle? targetCulture = null
+        Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var nativeString = dateTime.ToTimeString(format, timeZoneId, culture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var nativeString = TextChronoFormatter.AsTime(dateTime, format, timeZoneId, culture);
         return new Text(
             new TextHistoryAsTime(nativeString, dateTime, format, timeZoneId, targetCulture),
             TextFlag.Transient
@@ -198,11 +179,11 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         DateTimeFormatStyle dateFormat = DateTimeFormatStyle.Default,
         DateTimeFormatStyle timeFormat = DateTimeFormatStyle.Default,
         string? timeZoneId = null,
-        CultureHandle? targetCulture = null
+        Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var nativeString = dateTime.ToDateTimeString(dateFormat, timeFormat, timeZoneId, culture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var nativeString = TextChronoFormatter.AsDateTime(dateTime, dateFormat, timeFormat, timeZoneId, culture);
         return new Text(
             new TextHistoryAsDateTime(nativeString, dateTime, dateFormat, timeFormat, timeZoneId, targetCulture),
             TextFlag.Transient
@@ -213,29 +194,35 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         DateTimeOffset dateTime,
         string pattern,
         string? timeZoneId = null,
-        CultureHandle? targetCulture = null
+        Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var timeZone = timeZoneId is not null ? TimeZoneInfo.FindSystemTimeZoneById(timeZoneId) : TimeZoneInfo.Local;
-        var toLocalTime = dateTime.ToOffset(timeZone.GetUtcOffset(dateTime));
-        var nativeString = toLocalTime.ToString(pattern, culture.Culture);
+        var culture = targetCulture ?? Culture.CurrentCulture;
+        var nativeString = TextChronoFormatter.AsDateTime(dateTime, pattern, timeZoneId, culture);
         return new Text(
-            new TextHistoryAsDateTime(nativeString, dateTime, pattern, timeZone.Id, targetCulture),
+            new TextHistoryAsDateTime(nativeString, dateTime, pattern, timeZoneId, targetCulture),
             TextFlag.Transient
         );
     }
 
-    public static Text FromTimeSpan(TimeSpan timeSpan, CultureHandle? targetCulture = null)
+    public static Text FromTimeSpan(TimeSpan timeSpan, Culture? targetCulture = null)
     {
-        var culture = targetCulture ?? LocalizationManager.Instance.CurrentCulture;
-        var nativeString = timeSpan.ToString("g", culture.Culture);
-        return new Text(new TextHistoryAsTimespan(nativeString, timeSpan, targetCulture), TextFlag.Transient);
+        throw new NotImplementedException();
     }
 
     public static Text FromName(Name name)
     {
         return new Text(name.ToString());
+    }
+
+    public static Text AsLocalizable(TextKey ns, TextKey key, ReadOnlySpan<char> str)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static Text AsLocalizable(ReadOnlySpan<char> ns, ReadOnlySpan<char> key, ReadOnlySpan<char> str)
+    {
+        return AsLocalizable(new TextKey(ns), new TextKey(key), str);
     }
 
     public static Text AsCultureInvariant(string sourceString)
@@ -309,7 +296,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public bool Equals(Text other, TextComparisonLevel level)
     {
-        return Compare(other, level) == 0;
+        return TextComparison.Equals(ToString(), other.ToString(), level);
     }
 
     public bool IdenticalTo(Text other, TextIdenticalModeFlags flags = TextIdenticalModeFlags.None)
@@ -383,8 +370,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public int Compare(Text other, TextComparisonLevel level)
     {
-        var currentCulture = LocalizationManager.Instance.CurrentCulture.Culture;
-        return string.Compare(ToString(), other.ToString(), currentCulture, GetCompareOptions(level));
+        return TextComparison.Compare(ToString(), other.ToString(), level);
     }
 
     public static bool operator ==(Text left, Text right)

@@ -57,10 +57,6 @@
     "name" : "icu",
     "version>=" : "78.2"
   }, {
-    "name" : "boost-locale",
-    "version>=" : "1.90.0#1"
-  },
-    {
       "name": "boost-algorithm",
       "version>=": "1.90.0#1"
     } ],

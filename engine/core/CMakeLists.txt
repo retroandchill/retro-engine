@@ -13,6 +13,8 @@ set(RETRO_CORE_SOURCES private/src/strings/name.cpp
         private/src/async/manual_task_scheduler.cpp
         private/src/di/service_collection.cpp
         private/src/di/scoped_service_provider.cpp
+        private/src/localization/locale_c.cpp
+        private/src/localization/locale.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -20,10 +22,13 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
         public/include/retro/core/strings/name_c.h
         public/include/retro/core/math/vector_c.h
         public/include/retro/core/math/color_c.h
-        public/include/retro/core/macros.hpp)
+        public/include/retro/core/macros.hpp
+        public/include/retro/core/localization/locale_c.h)
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/src/di/scoped_service_provider.ixx
+        private/src/localization/locale.ixx
+        private/src/localization/icu.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES

@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
+using RetroEngine.Portable.Localization.Cultures;
 using Superpower;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -145,7 +146,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     public void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct
     {
-        var culture = LocalizationManager.Instance.CurrentCulture;
+        var culture = Culture.CurrentCulture;
 
         if (!TryGetPluralFormForArgument(in arg, 1, out var valuePluralForm) && arg.TryGetTextData(out var textValue))
         {

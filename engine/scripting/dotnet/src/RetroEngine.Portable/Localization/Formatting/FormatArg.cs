@@ -5,6 +5,7 @@
 
 using System.Numerics;
 using System.Text;
+using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -80,8 +81,10 @@ public readonly partial struct FormatArg
     private static void ToFormattedString<T>(T value, StringBuilder builder)
         where T : unmanaged, INumber<T>
     {
-        var culture = LocalizationManager.Instance.CurrentCulture;
-        builder.Append(value.ToString(null, culture.Culture));
+        var culture = Culture.CurrentCulture;
+        var formattingRules = culture.DecimalNumberFormattingRules;
+        var formattingOptions = formattingRules.DefaultFormattingOptions;
+        FastDecimalFormat.NumberToString(value, formattingRules, formattingOptions, builder);
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);

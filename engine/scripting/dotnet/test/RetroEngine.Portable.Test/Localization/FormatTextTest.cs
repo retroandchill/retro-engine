@@ -12,16 +12,6 @@ namespace RetroEngine.Portable.Test.Localization;
 public class FormatTextTest
 {
     [Test]
-    public unsafe void TestIcuInterop()
-    {
-        var enBytes = Encoding.UTF8.GetBytes("en_US");
-        Span<char> targetBuffer = stackalloc char[32];
-        var resultString = IcuInterop.GetDisplayName(enBytes, enBytes, targetBuffer);
-        var targetString = new string(resultString.ToArray());
-        Assert.That(targetString, Is.EqualTo("en_US"));
-    }
-
-    [Test]
     public void CanDenotePluralForms()
     {
         var format = new TextFormat(

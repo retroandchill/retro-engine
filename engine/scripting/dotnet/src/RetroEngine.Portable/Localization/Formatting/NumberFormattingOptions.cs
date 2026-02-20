@@ -5,70 +5,37 @@
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
-public enum GroupingRule : byte
-{
-    Enabled,
-    Disabled,
-}
-
 public enum NumberFormatType : byte
 {
     Number,
     Percent,
 }
 
-public readonly record struct NumberFormattingOptions
+public enum RoundingMode
 {
-    public bool AlwaysSign { get; init; }
-    public GroupingRule Grouping { get; init; }
-    public int? MinimumIntegralDigits { get; init; }
-    public int? MinimumFractionalDigits { get; init; }
-    public int? MaximumFractionalDigits { get; init; }
+    HalfToEven,
+    HalfFromZero,
+    HalfToZero,
+    FromZero,
+    ToZero,
+    ToNegativeInfinity,
+    ToPositiveInfinity,
+}
 
-    internal string BuildPattern(NumberFormatType formatType)
-    {
-        var integral = BuildIntegralPart();
-        var fractional = BuildFractionalPart();
-        var core = formatType switch
-        {
-            NumberFormatType.Number => $"{integral}{fractional}",
-            NumberFormatType.Percent => $"{integral}{fractional}%",
-            _ => throw new ArgumentOutOfRangeException(nameof(formatType), formatType, null),
-        };
+public record NumberFormattingOptions
+{
+    private const int DoubleMax10Exp = 308;
+    private const int DoubleDigits10Exp = 15;
 
-        if (!AlwaysSign)
-            return core;
+    public bool AlwaysSign { get; init; } = false;
+    public bool UseGrouping { get; init; } = true;
+    public bool IndicateNearlyInteger { get; init; } = false;
+    public RoundingMode RoundingMode { get; init; } = RoundingMode.HalfToEven;
+    public int MinimumIntegralDigits { get; init; } = 1;
+    public int MaximumIntegralDigits { get; init; } = DoubleMax10Exp + DoubleDigits10Exp + 1;
+    public int MinimumFractionalDigits { get; init; }
+    public int MaximumFractionalDigits { get; init; } = 3;
 
-        var positive = $"+{core}";
-        var negative = $"-{core}";
-
-        return $"{positive};{negative};{positive}";
-    }
-
-    private string BuildIntegralPart()
-    {
-        var minInt = MinimumIntegralDigits ?? 1;
-        var required = new string('0', minInt);
-
-        return Grouping == GroupingRule.Enabled ? $"#,##{required}" : $"###{required}";
-    }
-
-    private string BuildFractionalPart()
-    {
-        if (MaximumFractionalDigits is null or 0)
-            return string.Empty;
-
-        var minFrac = MinimumFractionalDigits ?? 0;
-        var maxFrac = MaximumFractionalDigits.Value;
-
-        if (minFrac > maxFrac)
-            throw new InvalidOperationException(
-                "MinimumFractionalDigits cannot be greater than MaximumFractionalDigits."
-            );
-
-        var required = new string('0', minFrac);
-        var optional = new string('#', maxFrac - minFrac);
-
-        return "." + required + optional;
-    }
+    public static NumberFormattingOptions DefaultWithGrouping { get; } = new() { UseGrouping = true };
+    public static NumberFormattingOptions DefaultWithoutGrouping { get; } = new() { UseGrouping = false };
 }

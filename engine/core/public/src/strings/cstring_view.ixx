@@ -87,6 +87,10 @@ namespace retro
             assert(arr.back() == '\0');
         }
 
+        constexpr explicit(false) BasicCStringView(const T *str) noexcept : view_{str}
+        {
+        }
+
         explicit(false) BasicCStringView(const std::basic_string<T> &str) noexcept : view_{str}
         {
         }
