@@ -12,141 +12,41 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization;
 
-public sealed class CultureHandle
+public sealed class CultureHandle : IEquatable<CultureHandle>, IEqualityOperators<CultureHandle, CultureHandle, bool>
 {
-    private static readonly UCultureInfo EnglishCultureInfo = new("en");
+    public string Name => Culture.Name;
+    internal CultureInfo Culture { get; }
+    internal UCultureInfo IcuCulture { get; }
 
-    private readonly UCultureInfo _icuCultureInfo;
-    public string Name { get; }
+    internal string ShortDatePattern { get; }
+    internal string MediumDatePattern { get; }
+    internal string LongDatePattern { get; }
+    internal string FullDatePattern { get; }
+    internal string ShortTimePattern => Culture.DateTimeFormat.ShortTimePattern;
+    internal string LongTimePattern => Culture.DateTimeFormat.LongTimePattern;
 
-    public string NativeName { get; }
+    private static readonly ConcurrentDictionary<
+        (string CultureName, TextPluralType Type),
+        PluralRules
+    > PluralRulesCache = new();
 
-    public string DisplayName { get; }
-
-    public string EnglishName { get; }
-
-    public string ThreeLetterIsoLanguageName { get; }
-
-    public string TwoLetterIsoLanguageName { get; }
-
-    public int KeyboardLayoutId { get; }
-
-    public int LCID { get; }
-
-    public string NativeLanguage { get; private set; }
-
-    public string Region { get; }
-
-    public string NativeRegion { get; }
-
-    public string Script { get; }
-
-    public string Variant { get; }
-
-    public bool IsRightToLeft { get; }
-
-    internal CultureHandle(UCultureInfo cultureInfo)
+    internal CultureHandle(string name)
     {
-        _icuCultureInfo = cultureInfo;
-        Name = _icuCultureInfo.Name;
-        DisplayName = _icuCultureInfo.DisplayName;
-        NativeName = _icuCultureInfo.NativeName;
-        EnglishName = _icuCultureInfo.GetDisplayName(EnglishCultureInfo);
-        ThreeLetterIsoLanguageName = _icuCultureInfo.TwoLetterISOLanguageName;
-        TwoLetterIsoLanguageName = _icuCultureInfo.TwoLetterISOLanguageName;
-        NativeLanguage = _icuCultureInfo.Language;
-        Region = _icuCultureInfo.Country;
-        Script = _icuCultureInfo.Script;
-        Variant = _icuCultureInfo.Variant;
-        IsRightToLeft = _icuCultureInfo.IsRightToLeft;
+        Culture = CultureInfo.GetCultureInfo(name);
+        IcuCulture = new UCultureInfo(name);
+        var dateInfo = Culture.DateTimeFormat;
+        var allShortDatePatterns = dateInfo.GetAllDateTimePatterns('d');
+        var allLongDatePatterns = dateInfo.GetAllDateTimePatterns('D');
+
+        ShortDatePattern = allShortDatePatterns.FirstOrDefault(d => !d.Contains("yyyy")) ?? dateInfo.ShortDatePattern;
+        MediumDatePattern = allShortDatePatterns.FirstOrDefault(d => d.Contains("MMM")) ?? dateInfo.ShortDatePattern;
+        LongDatePattern = allLongDatePatterns.FirstOrDefault(d => !d.Contains("dddd")) ?? dateInfo.LongDatePattern;
+        FullDatePattern = allLongDatePatterns.FirstOrDefault(d => d.Contains("dddd")) ?? dateInfo.LongDatePattern;
     }
-
-    public IEnumerable<string> GetPrioritizedParentCultureNames()
-    {
-        return GetPrioritizedParentCultureNames(TwoLetterIsoLanguageName, Script, Region);
-    }
-
-    public static IEnumerable<string> GetPrioritizedParentCultureNames(
-        string languageCode,
-        string scriptCode,
-        string regionCode
-    )
-    {
-        if (!string.IsNullOrEmpty(scriptCode) && !string.IsNullOrEmpty(regionCode))
-        {
-            yield return CreateCultureName(languageCode, scriptCode, regionCode);
-        }
-
-        if (!string.IsNullOrEmpty(regionCode))
-        {
-            yield return CreateCultureName(languageCode, "", regionCode);
-        }
-
-        if (!string.IsNullOrEmpty(scriptCode))
-        {
-            yield return CreateCultureName(languageCode, scriptCode, "");
-        }
-
-        yield return languageCode;
-    }
-
-    public static string CreateCultureName(string languageCode, string scriptCode, string regionCode)
-    {
-        if (!string.IsNullOrEmpty(scriptCode) && !string.IsNullOrEmpty(regionCode))
-        {
-            return $"{languageCode}-{scriptCode}-{regionCode}";
-        }
-
-        if (!string.IsNullOrEmpty(regionCode))
-        {
-            return $"{languageCode}-{regionCode}";
-        }
-
-        return !string.IsNullOrEmpty(scriptCode) ? $"{languageCode}-{scriptCode}" : languageCode;
-    }
-
-    private static readonly Lock _decimalNumberFormattingRulesLock = new();
-
-    public DecimalNumberFormattingRules DecimalNumberFormattingRules
-    {
-        get
-        {
-            if (field is not null)
-            {
-                return field;
-            }
-
-            var numberFormat = _icuCultureInfo.NumberFormat;
-
-            using var scope = _decimalNumberFormattingRulesLock.EnterScope();
-            if (field is null)
-            {
-                field = new DecimalNumberFormattingRules
-                {
-                    NanString = numberFormat.NaNSymbol,
-                    NegativePrefixString = numberFormat.NegativeSign,
-                };
-            }
-
-            return field;
-        }
-    }
-
-    private static DecimalNumberFormattingRules CreateDecimalNumberFormattingRules(UNumberFormatInfo numberFormat)
-    {
-        var useGrouping = numberFormat.NumberGroupSizes.Length > 0;
-        var roundingMode = numberFormat.NumberingSystem;
-    }
-
-    private static readonly Lock _percentNumberFormattingRulesLock = new();
-    public DecimalNumberFormattingRules PercentFormattingRules { get; }
-
-    public DecimalNumberFormattingRules GetCurrencyFormattingRules(string currencyCode) { }
 
     public TextPluralForm GetPluralForm<T>(T value, TextPluralType pluralType)
         where T : unmanaged, INumber<T>
     {
-        /*
         if (T.IsNaN(value) || T.IsInfinity(value))
             return TextPluralForm.Other;
 
@@ -186,9 +86,30 @@ public sealed class CultureHandle
             "many" => TextPluralForm.Many,
             _ => TextPluralForm.Other,
         };
-        */
-        throw new NotImplementedException();
     }
 
-    public IEnumerable<TextPluralForm> GetValidPluralForms(TextPluralType pluralType) { }
+    public override bool Equals(object? obj)
+    {
+        return obj is CultureHandle other && Equals(other);
+    }
+
+    public bool Equals(CultureHandle? other)
+    {
+        return other is not null && Name == other.Name;
+    }
+
+    public static bool operator ==(CultureHandle? left, CultureHandle? right)
+    {
+        return left?.Equals(right) ?? right is null;
+    }
+
+    public static bool operator !=(CultureHandle? left, CultureHandle? right)
+    {
+        return !(left == right);
+    }
+
+    public override int GetHashCode()
+    {
+        return Name.GetHashCode();
+    }
 }
