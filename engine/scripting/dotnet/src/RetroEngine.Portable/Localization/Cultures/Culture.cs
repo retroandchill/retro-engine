@@ -16,7 +16,6 @@ internal enum IcuErrorCode;
 public sealed partial class Culture
 {
     internal const int KeywordAndValuesCapacity = 100;
-    private static readonly CultureId EnglishCultureId = new("en");
     private const int MillisPerSecond = 1000;
 
     private readonly Locale _locale;
@@ -24,7 +23,7 @@ public sealed partial class Culture
     public CultureInfo CultureInfo { get; }
     public string DisplayName { get; }
     public string EnglishName { get; }
-    public int LCID => NativeGetLCID(_locale.Id);
+    public int LCID => _locale.LCID;
     public string Name { get; }
     public string ThreeLetterISOLanguageName { get; }
     public string TwoLetterISOLanguageName { get; }
@@ -55,22 +54,21 @@ public sealed partial class Culture
     {
         _locale = locale;
         CultureInfo = CultureInfo.GetCultureInfo(locale.Id.ToString());
-        Span<char> buffer = stackalloc char[KeywordAndValuesCapacity];
-        Name = GetNativeString(locale.Id, buffer, NativeGetName);
-        ThreeLetterISOLanguageName = NativeGetISO3Language(locale.Id);
-        TwoLetterISOLanguageName = GetNativeString(locale.Id, buffer, NativeGetLanguage);
-        Region = GetNativeString(locale.Id, buffer, NativeGetCountry);
-        Script = GetNativeString(locale.Id, buffer, NativeGetScript);
-        Variant = GetNativeString(locale.Id, buffer, NativeGetVariant);
-        IsRightToLeft = NativeIsRightToLeft(locale.Id);
+        Name = _locale.Name;
+        ThreeLetterISOLanguageName = _locale.ThreeLetterISOLanguageName;
+        TwoLetterISOLanguageName = _locale.TwoLetterISOLanguageName;
+        Region = _locale.Region;
+        Script = _locale.Script;
+        Variant = _locale.Variant;
+        IsRightToLeft = _locale.IsRightToLeft;
 
-        DisplayName = GetNativeString(locale.Id, buffer, NativeGetDisplayName);
-        EnglishName = GetNativeString(locale.Id, EnglishCultureId, buffer, NativeGetDisplayName);
+        DisplayName = _locale.DisplayName;
+        EnglishName = _locale.EnglishName;
 
-        var displayLanguage = GetNativeString(locale.Id, buffer, NativeGetDisplayLanguage);
-        var displayRegion = GetNativeString(locale.Id, buffer, NativeGetDisplayCountry);
-        var displayScript = GetNativeString(locale.Id, buffer, NativeGetDisplayScript);
-        var displayVariant = GetNativeString(locale.Id, buffer, NativeGetDisplayVariant);
+        var displayLanguage = _locale.DisplayLanguage;
+        var displayRegion = _locale.DisplayCountry;
+        var displayScript = _locale.DisplayScript;
+        var displayVariant = _locale.DisplayVariant;
         NativeLanguage = displayScript.Length > 0 ? $"{displayLanguage} ({displayScript})" : displayLanguage;
         NativeRegion = displayVariant.Length > 0 ? $"{displayRegion} ({displayVariant})" : displayRegion;
 
@@ -475,143 +473,9 @@ public sealed partial class Culture
             ?? throw new InvalidOperationException("Invariant culture collator is null.");
     }
 
-    private delegate int NativeGetInvariantString(
-        CultureId locale,
-        Span<char> buffer,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    private delegate int NativeGetTranslatedString(
-        CultureId locale,
-        CultureId displayLocale,
-        Span<char> buffer,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    private static string GetNativeString(CultureId locale, Span<char> buffer, NativeGetInvariantString func)
-    {
-        var length = func(locale, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
-
-    private static string GetNativeString(CultureId locale, Span<char> buffer, NativeGetTranslatedString func)
-    {
-        var length = func(locale, locale, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
-
-    private static string GetNativeString(
-        CultureId locale,
-        CultureId displayLocale,
-        Span<char> buffer,
-        NativeGetTranslatedString func
-    )
-    {
-        var length = func(locale, displayLocale, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
-
     internal const string UnicodeLibName = "icuuc";
     internal const string I18NLibName = "icuin";
 
     [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDefault", StringMarshalling = StringMarshalling.Utf8)]
     private static partial string NativeGetDefault();
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getName")]
-    private static partial int NativeGetName(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDisplayName")]
-    private static partial int NativeGetDisplayName(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getLanguage")]
-    private static partial int NativeGetLanguage(
-        CultureId targetLocal,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getScript")]
-    private static partial int NativeGetScript(
-        CultureId targetLocal,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDisplayScript")]
-    private static partial int NativeGetDisplayScript(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getCountry")]
-    private static partial int NativeGetCountry(
-        CultureId targetLocal,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDisplayCountry")]
-    private static partial int NativeGetDisplayCountry(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getVariant")]
-    private static partial int NativeGetVariant(
-        CultureId targetLocal,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDisplayVariant")]
-    private static partial int NativeGetDisplayVariant(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getISO3Language", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial string NativeGetISO3Language(CultureId targetLocal);
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDisplayLanguage")]
-    private static partial int NativeGetDisplayLanguage(
-        CultureId targetLocal,
-        CultureId displayLocale,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_isRightToLeft")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeIsRightToLeft(CultureId targetLocal);
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getLCID")]
-    private static partial int NativeGetLCID(CultureId targetLocal);
 }

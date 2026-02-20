@@ -12,5 +12,9 @@ namespace retro
     {
         locale_.getDisplayName(display_name_);
         locale_.getDisplayName(icu::Locale("en"), english_name_);
+        locale_.getDisplayLanguage(display_language_);
+        locale_.getDisplayCountry(display_region_);
+        locale_.getDisplayScript(display_script_);
+        locale_.getDisplayVariant(display_variant_);
     }
 } // namespace retro

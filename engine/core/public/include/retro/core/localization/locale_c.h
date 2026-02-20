@@ -8,7 +8,7 @@
 
 #include "retro/core/exports.h"
 
-#include <cstdint>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -27,6 +27,28 @@ extern "C"
     RETRO_API const char16_t *retro_locale_get_display_name(Retro_Locale *locale);
 
     RETRO_API const char16_t *retro_locale_get_english_name(Retro_Locale *locale);
+
+    RETRO_API const char *retro_locale_get_three_letter_language_name(Retro_Locale *locale);
+
+    RETRO_API const char *retro_locale_get_two_letter_language_name(Retro_Locale *locale);
+
+    RETRO_API const char *retro_locale_get_region(Retro_Locale *locale);
+
+    RETRO_API const char *retro_locale_get_script(Retro_Locale *locale);
+
+    RETRO_API const char *retro_locale_get_variant(Retro_Locale *locale);
+
+    RETRO_API const char16_t *retro_locale_get_display_language(Retro_Locale *locale);
+
+    RETRO_API const char16_t *retro_locale_get_display_region(Retro_Locale *locale);
+
+    RETRO_API const char16_t *retro_locale_get_display_script(Retro_Locale *locale);
+
+    RETRO_API const char16_t *retro_locale_get_display_variant(Retro_Locale *locale);
+
+    RETRO_API uint8_t retro_locale_is_right_to_left(Retro_Locale *locale);
+
+    RETRO_API uint32_t retro_locale_get_lcid(Retro_Locale *locale);
 
 #ifdef __cplusplus
 }
