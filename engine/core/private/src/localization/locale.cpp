@@ -11,5 +11,6 @@ namespace retro
     Locale::Locale(const char *locale) : locale_{icu::Locale::createFromName(locale)}
     {
         locale_.getDisplayName(display_name_);
+        locale_.getDisplayName(icu::Locale("en"), english_name_);
     }
 } // namespace retro

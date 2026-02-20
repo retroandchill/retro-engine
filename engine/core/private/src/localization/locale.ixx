@@ -31,8 +31,14 @@ namespace retro
             return display_name_;
         }
 
+        [[nodiscard]] inline const icu::UnicodeString &english_name() const noexcept
+        {
+            return english_name_;
+        }
+
       private:
         icu::Locale locale_;
         icu::UnicodeString display_name_;
+        icu::UnicodeString english_name_;
     };
 } // namespace retro

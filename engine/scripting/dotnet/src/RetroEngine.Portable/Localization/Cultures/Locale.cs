@@ -4,16 +4,21 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-public sealed partial class Locale : IDisposable
+public sealed unsafe partial class Locale : IDisposable
 {
     public CultureId Id { get; }
     private readonly IntPtr _nativeLocale;
     private bool _disposed;
 
     public bool IsBogus => NativeIsBogus(_nativeLocale);
+
+    public string Name => Utf8StringMarshaller.ConvertToManaged(NativeGetName(_nativeLocale)) ?? "";
+
+    public string DisplayName => new string(NativeGetDisplayName(_nativeLocale));
 
     private Locale(CultureId id, IntPtr nativeLocale)
     {
@@ -34,17 +39,23 @@ public sealed partial class Locale : IDisposable
 
     [LibraryImport(
         Culture.UnicodeLibName,
-        EntryPoint = "ulocale_openForLocaleID",
+        EntryPoint = "retro_create_locale",
         StringMarshalling = StringMarshalling.Utf8
     )]
-    private static partial IntPtr NativeOpen(string localeId, int localeIdLength, out IcuErrorCode errorCode);
+    private static partial IntPtr NativeOpen(string localeId);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ulocale_close")]
+    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "retro_destroy_locale")]
     private static partial void NativeClose(IntPtr nativeLocale);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ulocale_isBogus")]
+    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "retro_locale_is_bogus")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeIsBogus(IntPtr nativeLocale);
+
+    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "retro_locale_get_name")]
+    private static partial byte* NativeGetName(IntPtr nativeLocale);
+
+    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "retro_locale_get_display_name")]
+    private static partial char* NativeGetDisplayName(IntPtr nativeLocale);
 
     private void ReleaseUnmanagedResources()
     {

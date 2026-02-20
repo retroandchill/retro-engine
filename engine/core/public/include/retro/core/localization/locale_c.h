@@ -26,6 +26,8 @@ extern "C"
 
     RETRO_API const char16_t *retro_locale_get_display_name(Retro_Locale *locale);
 
+    RETRO_API const char16_t *retro_locale_get_english_name(Retro_Locale *locale);
+
 #ifdef __cplusplus
 }
 #endif

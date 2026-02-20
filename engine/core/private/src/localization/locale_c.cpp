@@ -37,3 +37,8 @@ const char16_t *retro_locale_get_display_name(Retro_Locale *locale)
 {
     return retro::from_c(locale)->display_name().getBuffer();
 }
+
+const char16_t *retro_locale_get_english_name(Retro_Locale *locale)
+{
+    return retro::from_c(locale)->english_name().getBuffer();
+}
