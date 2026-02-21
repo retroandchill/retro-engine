@@ -35,7 +35,7 @@ public sealed unsafe partial class Locale : IDisposable
     public string DisplayLanguage => new(NativeGetDisplayLanguage(_nativeLocale));
     public string Region => Utf8StringMarshaller.ConvertToManaged(NativeGetCountry(_nativeLocale)) ?? "";
     public bool IsRightToLeft => NativeIsRightToLeft(_nativeLocale);
-    public int LCID => NativeGetLCID(_nativeLocale);
+    public uint LCID => NativeGetLCID(_nativeLocale);
 
     private Locale(CultureId id, IntPtr nativeLocale)
     {
@@ -119,5 +119,5 @@ public sealed unsafe partial class Locale : IDisposable
     private static partial bool NativeIsRightToLeft(IntPtr nativeLocale);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_lcid")]
-    private static partial int NativeGetLCID(IntPtr nativeLocale);
+    private static partial uint NativeGetLCID(IntPtr nativeLocale);
 }

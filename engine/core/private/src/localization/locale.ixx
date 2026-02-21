@@ -86,7 +86,7 @@ namespace retro
             return locale_.isRightToLeft();
         }
 
-        [[nodiscard]] inline std::int32_t lcid() const noexcept
+        [[nodiscard]] inline std::uint32_t lcid() const noexcept
         {
             return locale_.getLCID();
         }
