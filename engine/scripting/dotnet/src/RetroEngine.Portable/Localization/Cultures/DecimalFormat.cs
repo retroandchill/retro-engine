@@ -17,8 +17,18 @@ internal unsafe struct NativeDecimalDigits
     public fixed char Digits[DigitsCapacity];
 }
 
+internal readonly unsafe ref struct NativeDecimalSymbol(char* buffer, int length)
+{
+    private ReadOnlySpan<char> AsSpan() => new(buffer, length);
+
+    public override string ToString()
+    {
+        return AsSpan().ToString();
+    }
+}
+
 [StructLayout(LayoutKind.Sequential)]
-internal unsafe ref struct NativeDecimalNumberFormattingRules
+internal ref struct NativeDecimalNumberFormattingRules
 {
     public sbyte IsGroupingUsed;
     public NumberFormatRoundingMode RoundingMode;
@@ -26,13 +36,14 @@ internal unsafe ref struct NativeDecimalNumberFormattingRules
     public int MaximumIntegerDigits;
     public int MinimumFractionDigits;
     public int MaximumFractionDigits;
-    public char* NanString;
-    public char* PlusSign;
-    public char* MinusSign;
+    public NativeDecimalSymbol NanString;
+    public NativeDecimalSymbol PlusSign;
+    public NativeDecimalSymbol MinusSign;
     public char GroupingSeperator;
     public char DecimalSeparator;
     public int GroupingSize;
     public int SecondaryGroupingSize;
+    public int MinimumGroupingDigits;
     public NativeDecimalDigits Digits;
 }
 

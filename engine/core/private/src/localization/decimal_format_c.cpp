@@ -16,6 +16,14 @@ import retro.core.localization.buffers;
 DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale)
 DECLARE_OPAQUE_C_HANDLE(Retro_DecimalFormat, icu::DecimalFormat)
 
+namespace
+{
+    Retro_DecimalSymbol to_format_symbol(const icu::UnicodeString &str)
+    {
+        return Retro_DecimalSymbol{.buffer = str.getBuffer(), .length = str.length()};
+    }
+} // namespace
+
 Retro_DecimalFormat *retro_create_decimal_format(const Retro_Locale *format)
 {
     UErrorCode status;
@@ -67,14 +75,12 @@ Retro_DecimalNumberFormattingRules retro_decimal_format_get_formatting_rules(Ret
         .maximum_integer_digits = cpp_format->getMaximumIntegerDigits(),
         .minimum_fraction_digits = cpp_format->getMinimumFractionDigits(),
         .maximum_fraction_digits = cpp_format->getMaximumFractionDigits(),
-        .nan_string =
-            cpp_format->getDecimalFormatSymbols()->getConstSymbol(icu::DecimalFormatSymbols::kNaNSymbol).getBuffer(),
-        .plus_string = cpp_format->getDecimalFormatSymbols()
-                           ->getConstSymbol(icu::DecimalFormatSymbols::kPlusSignSymbol)
-                           .getBuffer(),
-        .minus_string = cpp_format->getDecimalFormatSymbols()
-                            ->getConstSymbol(icu::DecimalFormatSymbols::kMinusSignSymbol)
-                            .getBuffer(),
+        .nan_string = to_format_symbol(
+            cpp_format->getDecimalFormatSymbols()->getConstSymbol(icu::DecimalFormatSymbols::kNaNSymbol)),
+        .plus_string = to_format_symbol(
+            cpp_format->getDecimalFormatSymbols()->getConstSymbol(icu::DecimalFormatSymbols::kPlusSignSymbol)),
+        .minus_string = to_format_symbol(
+            cpp_format->getDecimalFormatSymbols()->getConstSymbol(icu::DecimalFormatSymbols::kMinusSignSymbol)),
         .grouping_seperator_char = extract_char(icu::DecimalFormatSymbols::kGroupingSeparatorSymbol, ','),
         .decimal_separator_char = extract_char(icu::DecimalFormatSymbols::kDecimalSeparatorSymbol, '.'),
         .primary_grouping_size = cpp_format->getGroupingSize(),
@@ -142,15 +148,15 @@ void retro_decimal_format_set_digits(Retro_DecimalFormat *format, const Retro_De
     auto *cpp_format = retro::from_c(format);
 
     auto decimal_symbols = *cpp_format->getDecimalFormatSymbols();
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kZeroDigitSymbol, digits->digits[0]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kOneDigitSymbol, digits->digits[1]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kTwoDigitSymbol, digits->digits[2]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kThreeDigitSymbol, digits->digits[3]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kFourDigitSymbol, digits->digits[4]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kFiveDigitSymbol, digits->digits[5]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kSixDigitSymbol, digits->digits[6]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kSevenDigitSymbol, digits->digits[7]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kEightDigitSymbol, digits->digits[8]);
-    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kNineDigitSymbol, digits->digits[9]);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kZeroDigitSymbol, digits->digits[0], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kOneDigitSymbol, digits->digits[1], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kTwoDigitSymbol, digits->digits[2], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kThreeDigitSymbol, digits->digits[3], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kFourDigitSymbol, digits->digits[4], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kFiveDigitSymbol, digits->digits[5], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kSixDigitSymbol, digits->digits[6], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kSevenDigitSymbol, digits->digits[7], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kEightDigitSymbol, digits->digits[8], false);
+    decimal_symbols.setSymbol(icu::DecimalFormatSymbols::kNineDigitSymbol, digits->digits[9], false);
     cpp_format->setDecimalFormatSymbols(decimal_symbols);
 }

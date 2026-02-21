@@ -23,6 +23,12 @@ extern "C"
         char16_t digits[10];
     } Retro_DecimalDigits;
 
+    typedef struct Retro_DecimalSymbol
+    {
+        const char16_t *buffer;
+        int32_t length;
+    } Retro_DecimalSymbol;
+
     typedef struct Retro_DecimalNumberFormattingRules
     {
         int8_t is_grouping_used;
@@ -31,9 +37,9 @@ extern "C"
         int32_t maximum_integer_digits;
         int32_t minimum_fraction_digits;
         int32_t maximum_fraction_digits;
-        const char16_t *nan_string;
-        const char16_t *plus_string;
-        const char16_t *minus_string;
+        Retro_DecimalSymbol nan_string;
+        Retro_DecimalSymbol plus_string;
+        Retro_DecimalSymbol minus_string;
         const char16_t grouping_seperator_char;
         const char16_t decimal_separator_char;
         const int32_t primary_grouping_size;

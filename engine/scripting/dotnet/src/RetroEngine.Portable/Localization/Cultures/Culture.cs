@@ -225,17 +225,18 @@ public sealed class Culture
         return new DecimalNumberFormattingRules
         {
             DefaultFormattingOptions = formattingOptions,
-            NanString = new string(nativeFormattingRules.NanString),
-            NegativePrefixString = positivePrefix,
-            NegativeSuffixString = positiveSuffix,
-            PositivePrefixString = negativePrefix,
-            PositiveSuffixString = negativeSuffix,
-            PlusString = new string(nativeFormattingRules.PlusSign),
-            MinusString = new string(nativeFormattingRules.MinusSign),
+            NanString = nativeFormattingRules.NanString.ToString(),
+            PositivePrefixString = positivePrefix,
+            PositiveSuffixString = positiveSuffix,
+            NegativePrefixString = negativePrefix,
+            NegativeSuffixString = negativeSuffix,
+            PlusString = nativeFormattingRules.PlusSign.ToString(),
+            MinusString = nativeFormattingRules.MinusSign.ToString(),
             GroupingSeparatorChar = nativeFormattingRules.GroupingSeperator,
             DecimalSeparatorChar = nativeFormattingRules.DecimalSeparator,
             PrimaryGroupingSize = (byte)nativeFormattingRules.GroupingSize,
             SecondaryGroupingSize = (byte)nativeFormattingRules.SecondaryGroupingSize,
+            MinimumGroupingDigits = (byte)nativeFormattingRules.MinimumGroupingDigits,
             Digits = new ReadOnlySpan<char>(nativeFormattingRules.Digits.Digits, digitsLength).ToArray(),
         };
     }
