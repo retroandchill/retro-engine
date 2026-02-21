@@ -34,7 +34,8 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
         public/include/retro/core/localization/calendar_c.h
         public/include/retro/core/localization/time_zone_c.h
         public/include/retro/core/localization/collator_c.h
-        public/include/retro/core/localization/plural_rules_c.h)
+        public/include/retro/core/localization/plural_rules_c.h
+)
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/src/di/scoped_service_provider.ixx

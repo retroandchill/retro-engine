@@ -6,10 +6,11 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Portable.Interop;
+using ZLinq;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-public sealed unsafe partial class Locale : IDisposable
+internal unsafe partial class Locale : IDisposable
 {
     internal IntPtr NativeLocale { get; }
     private bool _disposed;
@@ -17,9 +18,11 @@ public sealed unsafe partial class Locale : IDisposable
 
     public bool IsBogus => NativeIsBogus(NativeLocale);
 
-    public string Name => Utf8StringMarshaller.ConvertToManaged(NativeGetName(NativeLocale)) ?? "";
+    public virtual string Name => Utf8StringMarshaller.ConvertToManaged(NativeGetName(NativeLocale)) ?? "";
 
-    public string DisplayName
+    public virtual string NativeName => Name.Replace('_', '-');
+
+    public virtual string DisplayName
     {
         get
         {
@@ -28,7 +31,7 @@ public sealed unsafe partial class Locale : IDisposable
         }
     }
 
-    public string EnglishName
+    public virtual string EnglishName
     {
         get
         {
@@ -37,13 +40,13 @@ public sealed unsafe partial class Locale : IDisposable
         }
     }
 
-    public string ThreeLetterISOLanguageName =>
+    public virtual string ThreeLetterISOLanguageName =>
         Utf8StringMarshaller.ConvertToManaged(NativeGetISO3Language(NativeLocale)) ?? "";
-    public string TwoLetterISOLanguageName =>
+    public virtual string TwoLetterISOLanguageName =>
         Utf8StringMarshaller.ConvertToManaged(NativeGetLanguage(NativeLocale)) ?? "";
 
-    public string Script => Utf8StringMarshaller.ConvertToManaged(NativeGetScript(NativeLocale)) ?? "";
-    public string Variant => Utf8StringMarshaller.ConvertToManaged(NativeGetVariant(NativeLocale)) ?? "";
+    public virtual string Script => Utf8StringMarshaller.ConvertToManaged(NativeGetScript(NativeLocale)) ?? "";
+    public virtual string Variant => Utf8StringMarshaller.ConvertToManaged(NativeGetVariant(NativeLocale)) ?? "";
     public string DisplayVariant
     {
         get
@@ -80,8 +83,8 @@ public sealed unsafe partial class Locale : IDisposable
         }
     }
 
-    public string Region => Utf8StringMarshaller.ConvertToManaged(NativeGetCountry(NativeLocale)) ?? "";
-    public bool IsRightToLeft => NativeIsRightToLeft(NativeLocale);
+    public virtual string Region => Utf8StringMarshaller.ConvertToManaged(NativeGetCountry(NativeLocale)) ?? "";
+    public virtual bool IsRightToLeft => NativeIsRightToLeft(NativeLocale);
     public uint LCID => NativeGetLCID(NativeLocale);
 
     public static Locale Default { get; } = new(NativeGetDefault(), false);
@@ -98,6 +101,9 @@ public sealed unsafe partial class Locale : IDisposable
         _ownsNativePtr = true;
     }
 
+    protected Locale(string id)
+        : this(NativeOpen(id)) { }
+
     ~Locale()
     {
         ReleaseUnmanagedResources();
@@ -107,6 +113,35 @@ public sealed unsafe partial class Locale : IDisposable
     {
         var nativeLocale = NativeOpen(id);
         return nativeLocale != IntPtr.Zero ? new Locale(nativeLocale) : null;
+    }
+
+    internal static void SetDefaultLocale(string localeId) => NativeSetDefaultLocale(localeId);
+
+    public static Locale[] GetAvailableLocales()
+    {
+        var nativeLocales = NativeGetAvailableLocales(out var count);
+        return MemoryMarshal
+            .CreateReadOnlySpan(ref nativeLocales, count)
+            .AsValueEnumerable()
+            .Select(ptr => new Locale(ptr, false))
+            .ToArray();
+    }
+
+    public static List<string> GetAvailableLanguageIds()
+    {
+        var languages = new List<string>();
+        for (var language = NativeGetISOLanguages(); language is not null; language++)
+        {
+            var langPointer = *language;
+            if (langPointer[2] != 0)
+                continue;
+
+            var languageId = Utf8StringMarshaller.ConvertToManaged(*language);
+            if (languageId is not null)
+                languages.Add(languageId);
+        }
+
+        return languages;
     }
 
     private void ReleaseUnmanagedResources()
@@ -193,4 +228,17 @@ public sealed unsafe partial class Locale : IDisposable
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_lcid")]
     private static partial uint NativeGetLCID(IntPtr nativeLocale);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_available_locales")]
+    private static partial IntPtr NativeGetAvailableLocales(out int count);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_available_languages")]
+    private static partial byte** NativeGetISOLanguages();
+
+    [LibraryImport(
+        NativeLibraries.RetroCore,
+        EntryPoint = "retro_locale_set_default",
+        StringMarshalling = StringMarshalling.Utf8
+    )]
+    private static partial void NativeSetDefaultLocale(string localeId);
 }

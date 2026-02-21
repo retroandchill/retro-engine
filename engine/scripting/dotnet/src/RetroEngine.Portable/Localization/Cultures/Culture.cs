@@ -19,20 +19,26 @@ public sealed class Culture
 
     private readonly Locale _locale;
     public CultureInfo CultureInfo { get; }
-    public string DisplayName { get; }
-    public string EnglishName { get; }
+    public string DisplayName { get; private set; }
+    public string EnglishName { get; private set; }
     public uint LCID => _locale.LCID;
     public string Name { get; }
+    public string NativeName { get; private set; }
     public string ThreeLetterISOLanguageName { get; }
     public string TwoLetterISOLanguageName { get; }
-    public string NativeLanguage { get; }
+    public string NativeLanguage { get; private set; }
     public string Region { get; }
-    public string NativeRegion { get; }
+    public string NativeRegion { get; private set; }
     public string Script { get; }
     public string Variant { get; }
     public bool IsRightToLeft { get; }
 
+    public IEnumerable<string> PrioritizedParentCultureName =>
+        GetPrioritizedParentCultureNames(TwoLetterISOLanguageName, Script, Region);
+
     public static Culture CurrentCulture { get; }
+
+    public static Culture DefaultCulture { get; }
 
     public static Culture InvariantCulture { get; }
 
@@ -47,10 +53,11 @@ public sealed class Culture
             ?? new Locale()
             ?? throw new InvalidOperationException("Invariant locale is null.");
         InvariantCulture = new Culture(InvariantLocale);
-        CurrentCulture = new Culture(Locale.Default);
+        DefaultCulture = new Culture(Locale.Default);
+        CurrentCulture = DefaultCulture;
     }
 
-    private Culture(Locale locale)
+    internal Culture(Locale locale)
     {
         _locale = locale;
         CultureInfo = CultureInfo.GetCultureInfo(locale.Name.Replace('_', '-'));
@@ -62,15 +69,7 @@ public sealed class Culture
         Variant = _locale.Variant;
         IsRightToLeft = _locale.IsRightToLeft;
 
-        DisplayName = _locale.DisplayName;
-        EnglishName = _locale.EnglishName;
-
-        var displayLanguage = _locale.DisplayLanguage;
-        var displayRegion = _locale.DisplayCountry;
-        var displayScript = _locale.DisplayScript;
-        var displayVariant = _locale.DisplayVariant;
-        NativeLanguage = displayScript.Length > 0 ? $"{displayLanguage} ({displayScript})" : displayLanguage;
-        NativeRegion = displayVariant.Length > 0 ? $"{displayRegion} ({displayVariant})" : displayRegion;
+        RefreshCultureDisplayNames([]);
 
         _cardinalPluralRules =
             PluralRules.Create(_locale, PluralType.Cardinal)
@@ -89,6 +88,45 @@ public sealed class Culture
     {
         var locale = Locale.Create(cultureId) ?? throw new CultureNotFoundException($"Culture {cultureId} not found.");
         return !locale.IsBogus ? locale : InvariantLocale;
+    }
+
+    public static string CreateCultureName(string languageCode, string scriptCode, string regionCode)
+    {
+        if (!string.IsNullOrEmpty(scriptCode) && !string.IsNullOrEmpty(regionCode))
+        {
+            return $"{languageCode}-{scriptCode}-{regionCode}";
+        }
+
+        if (!string.IsNullOrEmpty(regionCode))
+        {
+            return $"{languageCode}-{regionCode}";
+        }
+
+        return !string.IsNullOrEmpty(scriptCode) ? $"{languageCode}-{scriptCode}" : languageCode;
+    }
+
+    public static IEnumerable<string> GetPrioritizedParentCultureNames(
+        string languageCode,
+        string scriptCode,
+        string regionCode
+    )
+    {
+        if (!string.IsNullOrEmpty(scriptCode) && !string.IsNullOrEmpty(regionCode))
+        {
+            yield return CreateCultureName(languageCode, scriptCode, regionCode);
+        }
+
+        if (!string.IsNullOrEmpty(regionCode))
+        {
+            yield return CreateCultureName(languageCode, "", regionCode);
+        }
+
+        if (!string.IsNullOrEmpty(scriptCode))
+        {
+            yield return CreateCultureName(languageCode, scriptCode, "");
+        }
+
+        yield return languageCode;
     }
 
     private readonly Lock _decimalNumberFormattingRulesLock = new();
@@ -503,5 +541,53 @@ public sealed class Culture
         return Collator.Create(locale)
             ?? Collator.Create(InvariantLocale)
             ?? throw new InvalidOperationException("Invariant culture collator is null.");
+    }
+
+    public void RefreshCultureDisplayNames(ReadOnlySpan<string> prioritizedDisplayCultureNames, bool fullRefresh = true)
+    {
+        DisplayName = ApplyCultureDisplayNameSubstitutes(prioritizedDisplayCultureNames, _locale.DisplayName);
+
+        if (!fullRefresh)
+            return;
+
+        EnglishName = ApplyCultureDisplayNameSubstitutes(["en"], _locale.EnglishName);
+
+        var prioritizedParentCultureName = PrioritizedParentCultureName.ToArray();
+
+        var displayLanguage = _locale.DisplayLanguage;
+        var displayRegion = _locale.DisplayCountry;
+        var displayScript = _locale.DisplayScript;
+        var displayVariant = _locale.DisplayVariant;
+        NativeName = ApplyCultureDisplayNameSubstitutes(prioritizedParentCultureName, _locale.NativeName);
+        NativeLanguage = ApplyCultureDisplayNameSubstitutes(
+            prioritizedParentCultureName,
+            displayScript.Length > 0 ? $"{displayLanguage} ({displayScript})" : displayLanguage
+        );
+        NativeRegion = ApplyCultureDisplayNameSubstitutes(
+            prioritizedParentCultureName,
+            displayVariant.Length > 0 ? $"{displayRegion} ({displayVariant})" : displayRegion
+        );
+    }
+
+    private readonly record struct DisplayNameSubstitute(string Culture, string OldString, string NewString);
+
+    private static readonly List<DisplayNameSubstitute> DisplayNameSubstitutes = [];
+
+    private static string ApplyCultureDisplayNameSubstitutes(
+        ReadOnlySpan<string> prioritizedDisplayCultureNames,
+        string displayName
+    )
+    {
+        // TODO: We may need to load config data from somwhere, but that isn't set up yet
+
+        foreach (var substitute in DisplayNameSubstitutes)
+        {
+            if (string.IsNullOrEmpty(substitute.Culture) || prioritizedDisplayCultureNames.Contains(substitute.Culture))
+            {
+                displayName = displayName.Replace(substitute.OldString, substitute.NewString);
+            }
+        }
+
+        return displayName;
     }
 }

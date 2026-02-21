@@ -8,4 +8,8 @@
         <RootNamespace>RetroEngine.Portable</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Serilog" />
+    </ItemGroup>
+
 </Project>

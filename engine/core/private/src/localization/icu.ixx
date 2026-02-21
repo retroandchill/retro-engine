@@ -12,14 +12,22 @@ module;
 #include <unicode/gregocal.h>
 #include <unicode/locid.h>
 #include <unicode/plurfmt.h>
+#include <unicode/putil.h>
+#include <unicode/udata.h>
 
 export module retro.core.localization.icu;
 
 export using ::UErrorCode;
 export using ::UPluralType;
+export using ::u_setDataDirectory;
+export using ::uloc_setDefault;
+
+export using ::UDataFileAccess;
 
 export namespace U_ICU_NAMESPACE
 {
+    constexpr std::uint32_t version_major = U_ICU_VERSION_MAJOR_NUM;
+
     using icu::Collator;
     using icu::DateFormat;
     using icu::DecimalFormat;

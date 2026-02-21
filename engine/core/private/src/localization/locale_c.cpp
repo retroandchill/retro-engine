@@ -8,6 +8,8 @@
 
 #include "retro/core/macros.hpp"
 
+#include <unicode/urename.h>
+
 import std;
 import retro.core.c_api;
 import retro.core.localization.icu;
@@ -120,4 +122,20 @@ uint8_t retro_locale_is_right_to_left(Retro_Locale *locale)
 uint32_t retro_locale_get_lcid(Retro_Locale *locale)
 {
     return retro::from_c(locale)->getLCID();
+}
+
+const Retro_Locale *retro_get_available_locales(int32_t *count)
+{
+    return retro::to_c(icu::Locale::getAvailableLocales(*count));
+}
+
+const char *const *retro_locale_get_available_languages()
+{
+    return icu::Locale::getISOLanguages();
+}
+
+void retro_locale_set_default(const char *locale_name)
+{
+    UErrorCode status;
+    uloc_setDefault(locale_name, &status);
 }

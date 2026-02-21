@@ -26,6 +26,8 @@ public readonly struct TextKey : IEquatable<TextKey>, IComparable<TextKey>, ICom
         Id = id;
     }
 
+    public static implicit operator TextKey(string key) => new(key);
+
     public override string ToString()
     {
         return TextKeyRegistry.Instance.GetString(Id);

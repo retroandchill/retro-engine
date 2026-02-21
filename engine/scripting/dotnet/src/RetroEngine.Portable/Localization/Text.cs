@@ -252,6 +252,16 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return new Text(name.ToString());
     }
 
+    public static Text AsCultureInvariant(string sourceString)
+    {
+        return new Text(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.CultureInvariant);
+    }
+
+    public Text AsCultureInvariant()
+    {
+        return this with { Flags = Flags | TextFlag.CultureInvariant };
+    }
+
     public static Text AsLocalizable(TextKey ns, TextKey key, ReadOnlySpan<char> str)
     {
         throw new NotImplementedException();
@@ -262,14 +272,9 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return AsLocalizable(new TextKey(ns), new TextKey(key), str);
     }
 
-    public static Text AsCultureInvariant(string sourceString)
+    public static bool FindTextInLiveTable(TextKey ns, TextKey key, out Text result, string? sourceString = null)
     {
-        return new Text(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.CultureInvariant);
-    }
-
-    public Text AsCultureInvariant()
-    {
-        return this with { Flags = Flags | TextFlag.CultureInvariant };
+        throw new NotImplementedException();
     }
 
     public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)

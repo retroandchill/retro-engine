@@ -27,6 +27,8 @@ internal sealed partial class TimeZone : IDisposable
 
     public static TimeZone Unknown { get; } = new(NativeGetUnknown(), false);
 
+    public static TimeZone Local { get; } = new(TimeZoneInfo.Local.Id);
+
     public TimeZone()
         : this(NativeCreateDefault()) { }
 
