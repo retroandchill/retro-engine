@@ -11,36 +11,82 @@ namespace RetroEngine.Portable.Localization.Cultures;
 public sealed unsafe partial class Locale : IDisposable
 {
     public CultureId Id { get; }
-    private readonly IntPtr _nativeLocale;
+    internal IntPtr NativeLocale { get; }
     private bool _disposed;
 
-    public bool IsBogus => NativeIsBogus(_nativeLocale);
+    public bool IsBogus => NativeIsBogus(NativeLocale);
 
-    public string Name => Utf8StringMarshaller.ConvertToManaged(NativeGetName(_nativeLocale)) ?? "";
+    public string Name => Utf8StringMarshaller.ConvertToManaged(NativeGetName(NativeLocale)) ?? "";
 
-    public string DisplayName => new(NativeGetDisplayName(_nativeLocale));
+    public string DisplayName
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetDisplayName);
+        }
+    }
 
-    public string EnglishName => new(NativeGetEnglishName(_nativeLocale));
+    public string EnglishName
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetEnglishName);
+        }
+    }
 
     public string ThreeLetterISOLanguageName =>
-        Utf8StringMarshaller.ConvertToManaged(NativeGetISO3Language(_nativeLocale)) ?? "";
+        Utf8StringMarshaller.ConvertToManaged(NativeGetISO3Language(NativeLocale)) ?? "";
     public string TwoLetterISOLanguageName =>
-        Utf8StringMarshaller.ConvertToManaged(NativeGetLanguage(_nativeLocale)) ?? "";
+        Utf8StringMarshaller.ConvertToManaged(NativeGetLanguage(NativeLocale)) ?? "";
 
-    public string Script => Utf8StringMarshaller.ConvertToManaged(NativeGetScript(_nativeLocale)) ?? "";
-    public string Variant => Utf8StringMarshaller.ConvertToManaged(NativeGetVariant(_nativeLocale)) ?? "";
-    public string DisplayVariant => new(NativeGetDisplayVariant(_nativeLocale));
-    public string DisplayScript => new(NativeGetDisplayScript(_nativeLocale));
-    public string DisplayCountry => new(NativeGetDisplayCountry(_nativeLocale));
-    public string DisplayLanguage => new(NativeGetDisplayLanguage(_nativeLocale));
-    public string Region => Utf8StringMarshaller.ConvertToManaged(NativeGetCountry(_nativeLocale)) ?? "";
-    public bool IsRightToLeft => NativeIsRightToLeft(_nativeLocale);
-    public uint LCID => NativeGetLCID(_nativeLocale);
+    public string Script => Utf8StringMarshaller.ConvertToManaged(NativeGetScript(NativeLocale)) ?? "";
+    public string Variant => Utf8StringMarshaller.ConvertToManaged(NativeGetVariant(NativeLocale)) ?? "";
+    public string DisplayVariant
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetDisplayVariant);
+        }
+    }
+
+    public string DisplayScript
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetDisplayScript);
+        }
+    }
+
+    public string DisplayCountry
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetDisplayCountry);
+        }
+    }
+
+    public string DisplayLanguage
+    {
+        get
+        {
+            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+            return NativeGetString(buffer, NativeGetDisplayLanguage);
+        }
+    }
+
+    public string Region => Utf8StringMarshaller.ConvertToManaged(NativeGetCountry(NativeLocale)) ?? "";
+    public bool IsRightToLeft => NativeIsRightToLeft(NativeLocale);
+    public uint LCID => NativeGetLCID(NativeLocale);
 
     private Locale(CultureId id, IntPtr nativeLocale)
     {
         Id = id;
-        _nativeLocale = nativeLocale;
+        NativeLocale = nativeLocale;
     }
 
     ~Locale()
@@ -56,7 +102,7 @@ public sealed unsafe partial class Locale : IDisposable
 
     private void ReleaseUnmanagedResources()
     {
-        NativeClose(_nativeLocale);
+        NativeClose(NativeLocale);
     }
 
     public void Dispose()
@@ -66,6 +112,12 @@ public sealed unsafe partial class Locale : IDisposable
         _disposed = true;
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
+    }
+
+    private string NativeGetString(Span<char> buffer, Func<IntPtr, Span<char>, int, int> func)
+    {
+        var realLength = func(NativeLocale, buffer, buffer.Length);
+        return realLength > buffer.Length ? buffer.ToString() : buffer[..realLength].ToString();
     }
 
     [LibraryImport("retro_core", EntryPoint = "retro_create_locale")]
@@ -82,10 +134,10 @@ public sealed unsafe partial class Locale : IDisposable
     private static partial byte* NativeGetName(IntPtr nativeLocale);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_display_name")]
-    private static partial char* NativeGetDisplayName(IntPtr nativeLocale);
+    private static partial int NativeGetDisplayName(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_english_name")]
-    private static partial char* NativeGetEnglishName(IntPtr nativeLocale);
+    private static partial int NativeGetEnglishName(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_three_letter_language_name")]
     private static partial byte* NativeGetISO3Language(IntPtr nativeLocale);
@@ -97,22 +149,22 @@ public sealed unsafe partial class Locale : IDisposable
     private static partial byte* NativeGetScript(IntPtr nativeLocale);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_display_script")]
-    private static partial char* NativeGetDisplayScript(IntPtr nativeLocale);
+    private static partial int NativeGetDisplayScript(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_region")]
     private static partial byte* NativeGetCountry(IntPtr nativeLocale);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_display_region")]
-    private static partial char* NativeGetDisplayCountry(IntPtr nativeLocale);
+    private static partial int NativeGetDisplayCountry(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_variant")]
     private static partial byte* NativeGetVariant(IntPtr nativeLocale);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_display_variant")]
-    private static partial char* NativeGetDisplayVariant(IntPtr nativeLocale);
+    private static partial int NativeGetDisplayVariant(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_get_display_language")]
-    private static partial char* NativeGetDisplayLanguage(IntPtr nativeLocale);
+    private static partial int NativeGetDisplayLanguage(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
     [LibraryImport("retro_core", EntryPoint = "retro_locale_is_right_to_left")]
     [return: MarshalAs(UnmanagedType.U1)]

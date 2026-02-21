@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
@@ -38,13 +39,13 @@ internal sealed partial class PluralRules : IDisposable
         return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "uplrules_openForType")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_openForType")]
     private static partial IntPtr NativeOpen(CultureId locale, PluralType type, out IcuErrorCode errorCode);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "uplrules_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_close")]
     private static partial void NativeClose(IntPtr rules);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "uplrules_select")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_select")]
     private static partial int NativeSelect(
         IntPtr rules,
         double number,

@@ -4,8 +4,77 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
+using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.Cultures;
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct NativeDecimalDigits
+{
+    public const int DigitsCapacity = 10;
+
+    public fixed char Digits[DigitsCapacity];
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe ref struct NativeDecimalNumberFormattingRules
+{
+    public sbyte IsGroupingUsed;
+    public NumberFormatRoundingMode RoundingMode;
+    public int MinimumIntegerDigits;
+    public int MaximumIntegerDigits;
+    public int MinimumFractionDigits;
+    public int MaximumFractionDigits;
+    public char* NanString;
+    public char* PlusSign;
+    public char* MinusSign;
+    public char GroupingSeperator;
+    public char DecimalSeparator;
+    public int GroupingSize;
+    public int SecondaryGroupingSize;
+    public NativeDecimalDigits Digits;
+}
+
+internal readonly record struct DecimalFormatPrefixAndSuffix(
+    string PositivePrefix,
+    string PositiveSuffix,
+    string NegativePrefix,
+    string NegativeSuffix
+);
+
+internal enum NumberFormatRoundingMode
+{
+    RoundCeiling,
+    RoundFloor,
+    RoundDown,
+    RoundUp,
+    RoundHalfEven,
+    RoundHalfDown = RoundHalfEven + 1,
+    RoundHalfUp,
+    RoundUnnecessary,
+    RoundHalfOdd,
+    RoundHalfCeiling,
+    RoundHalfFloor,
+}
+
+internal static class NumberRoundingModeExtensions
+{
+    public static RoundingMode ToRoundingMode(this NumberFormatRoundingMode mode)
+    {
+        return mode switch
+        {
+            NumberFormatRoundingMode.RoundHalfEven => RoundingMode.HalfToEven,
+            NumberFormatRoundingMode.RoundHalfUp => RoundingMode.HalfFromZero,
+            NumberFormatRoundingMode.RoundHalfDown => RoundingMode.HalfToZero,
+            NumberFormatRoundingMode.RoundUp => RoundingMode.FromZero,
+            NumberFormatRoundingMode.RoundDown => RoundingMode.ToZero,
+            NumberFormatRoundingMode.RoundFloor => RoundingMode.ToNegativeInfinity,
+            NumberFormatRoundingMode.RoundCeiling => RoundingMode.ToPositiveInfinity,
+            _ => RoundingMode.HalfToEven,
+        };
+    }
+}
 
 internal sealed partial class DecimalFormat : IDisposable
 {
@@ -14,21 +83,48 @@ internal sealed partial class DecimalFormat : IDisposable
 
     public bool IsGroupingUsed
     {
-        get => NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.GroupingUsed) != 0;
-        set => NativeSetAttribute(NativeDecimalFormat, NumberFormatAttribute.GroupingUsed, value ? 1 : 0);
+        set => NativeSetGroupingUsed(NativeDecimalFormat, value);
     }
 
-    public NumberFormatRoundingMode RoundingMode =>
-        (NumberFormatRoundingMode)NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.RoundingMode);
-    public int MinimumIntegerDigits => NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.MinIntegerDigits);
-    public int MaximumIntegerDigits => NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.MaxIntegerDigits);
-    public int MinimumFractionDigits =>
-        NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.MinFractionDigits);
-    public int MaximumFractionDigits =>
-        NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.MaxFractionDigits);
-    public int GroupingSize => NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.GroupingSize);
-    public int SecondaryGroupingSize =>
-        NativeGetAttribute(NativeDecimalFormat, NumberFormatAttribute.SecondaryGroupingSize);
+    public string? CurrencyCode
+    {
+        set => NativeSetCurrencyCode(NativeDecimalFormat, value);
+    }
+
+    public NativeDecimalDigits Digits
+    {
+        set => NativeSetDigits(NativeDecimalFormat, in value);
+    }
+
+    public NativeDecimalNumberFormattingRules FormattingRules => NativeGetFormattingRules(NativeDecimalFormat);
+
+    public DecimalFormatPrefixAndSuffix PrefixAndSuffix
+    {
+        get
+        {
+            Span<char> positivePrefix = stackalloc char[Culture.KeywordAndValuesCapacity];
+            Span<char> positiveSuffix = stackalloc char[Culture.KeywordAndValuesCapacity];
+            Span<char> negativePrefix = stackalloc char[Culture.KeywordAndValuesCapacity];
+            Span<char> negativeSuffix = stackalloc char[Culture.KeywordAndValuesCapacity];
+            var (posPreLen, posSufLen, negPreLen, negSufLen) = NativeGetPrefixAndSuffix(
+                NativeDecimalFormat,
+                positivePrefix,
+                positivePrefix.Length,
+                positiveSuffix,
+                positiveSuffix.Length,
+                negativePrefix,
+                negativePrefix.Length,
+                negativeSuffix,
+                negativeSuffix.Length
+            );
+            return new DecimalFormatPrefixAndSuffix(
+                posPreLen >= positivePrefix.Length ? positivePrefix.ToString() : positivePrefix[..posPreLen].ToString(),
+                posSufLen >= positiveSuffix.Length ? positiveSuffix.ToString() : positiveSuffix[..posSufLen].ToString(),
+                negPreLen >= negativePrefix.Length ? negativePrefix.ToString() : negativePrefix[..negPreLen].ToString(),
+                negSufLen >= negativeSuffix.Length ? negativeSuffix.ToString() : negativeSuffix[..negSufLen].ToString()
+            );
+        }
+    }
 
     private DecimalFormat(IntPtr nativeDecimalFormat)
     {
@@ -40,113 +136,82 @@ internal sealed partial class DecimalFormat : IDisposable
         ReleaseUnmanagedResources();
     }
 
-    public static DecimalFormat? CreateInstance(CultureId locale)
+    public static DecimalFormat? CreateInstance(Locale locale)
     {
-        return Create(NumberFormatStyle.Default, locale);
+        return Create(locale, NativeCreate);
     }
 
-    public static DecimalFormat? CreatePercentInstance(CultureId locale)
+    public static DecimalFormat? CreatePercentInstance(Locale locale)
     {
-        return Create(NumberFormatStyle.Percent, locale);
+        return Create(locale, NativeCreatePercent);
     }
 
-    public static DecimalFormat? CreateCurrencyInstance(CultureId locale)
+    public static DecimalFormat? CreateCurrencyInstance(Locale locale)
     {
-        return Create(NumberFormatStyle.Currency, locale);
+        return Create(locale, NativeCreateCurrency);
     }
 
-    private static DecimalFormat? Create(NumberFormatStyle style, CultureId locale)
+    private static DecimalFormat? Create(Locale locale, Func<IntPtr, IntPtr> nativeCreate)
     {
-        var format = NativeOpen(style, string.Empty, 0, locale, IntPtr.Zero, out var errorCode);
+        var format = nativeCreate(locale.NativeLocale);
         return format != IntPtr.Zero ? new DecimalFormat(format) : null;
     }
 
-    public string GetTextAttribute(NumberFormatTextAttribute attribute)
-    {
-        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-        var length = NativeGetTextAttribute(NativeDecimalFormat, attribute, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_decimal_format")]
+    private static partial IntPtr NativeCreate(IntPtr locale);
 
-    public void SetTextAttribute(NumberFormatTextAttribute attribute, string? value)
-    {
-        NativeSetTextAttribute(NativeDecimalFormat, attribute, value, value?.Length ?? 0, out _);
-    }
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_percent_decimal_format")]
+    private static partial IntPtr NativeCreatePercent(IntPtr locale);
 
-    public string GetSymbol(NumberFormatSymbol symbol)
-    {
-        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-        var length = NativeGetSymbol(NativeDecimalFormat, symbol, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_currency_decimal_format")]
+    private static partial IntPtr NativeCreateCurrency(IntPtr locale);
 
-    public void SetSymbol(NumberFormatSymbol symbol, ReadOnlySpan<char> value)
-    {
-        NativeSetSymbol(NativeDecimalFormat, symbol, value, value.Length, out _);
-    }
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_decimal_format")]
+    private static partial void NativeDestroy(IntPtr nativeDecimalFormat);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_open")]
-    private static partial IntPtr NativeOpen(
-        NumberFormatStyle style,
-        ReadOnlySpan<char> pattern,
-        int patternLength,
-        CultureId locale,
-        IntPtr parseError,
-        out IcuErrorCode errorCode
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_get_formatting_rules")]
+    private static partial NativeDecimalNumberFormattingRules NativeGetFormattingRules(IntPtr nativeDecimalFormat);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly record struct DecimalFormatPrefixAndSuffixResult(
+        int PositivePrefixLength,
+        int PositiveSuffixLength,
+        int NegativePrefixLength,
+        int NegativeSuffixLength
     );
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_close")]
-    private static partial void NativeClose(IntPtr nativeDecimalFormat);
-
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_getAttribute")]
-    private static partial int NativeGetAttribute(IntPtr nativeDecimalFormat, NumberFormatAttribute attribute);
-
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_setAttribute")]
-    private static partial void NativeSetAttribute(
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_get_prefix_and_suffix_lengths")]
+    private static partial DecimalFormatPrefixAndSuffixResult NativeGetPrefixAndSuffix(
         IntPtr nativeDecimalFormat,
-        NumberFormatAttribute attribute,
-        int value
+        Span<char> positivePrefix,
+        int positivePrefixCapacity,
+        Span<char> positiveSuffix,
+        int positiveSuffixCapacity,
+        Span<char> negativePrefix,
+        int negativePrefixCapacity,
+        Span<char> negativeSuffix,
+        int negativeSuffixCapacity
     );
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_getTextAttribute")]
-    private static partial int NativeGetTextAttribute(
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_set_is_grouping_used")]
+    private static partial void NativeSetGroupingUsed(
         IntPtr nativeDecimalFormat,
-        NumberFormatTextAttribute attribute,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
+        [MarshalAs(UnmanagedType.I1)] bool isGroupingUsed
     );
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_setTextAttribute")]
-    private static partial void NativeSetTextAttribute(
-        IntPtr nativeDecimalFormat,
-        NumberFormatTextAttribute attribute,
-        ReadOnlySpan<char> value,
-        int valueLength,
-        out IcuErrorCode errorCode
-    );
+    [LibraryImport(
+        NativeLibraries.RetroCore,
+        EntryPoint = "retro_decimal_format_set_currency_code",
+        StringMarshalling = StringMarshalling.Utf16
+    )]
+    private static partial void NativeSetCurrencyCode(IntPtr nativeDecimalFormat, string? isGroupingUsed);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_getSymbol")]
-    private static partial int NativeGetSymbol(
-        IntPtr nativeDecimalFormat,
-        NumberFormatSymbol symbol,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "unum_setSymbol")]
-    private static partial void NativeSetSymbol(
-        IntPtr nativeDecimalFormat,
-        NumberFormatSymbol symbol,
-        ReadOnlySpan<char> value,
-        int valueLength,
-        out IcuErrorCode errorCode
-    );
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_set_digits")]
+    private static partial void NativeSetDigits(IntPtr nativeDecimalFormat, in NativeDecimalDigits digits);
 
     private void ReleaseUnmanagedResources()
     {
-        NativeClose(NativeDecimalFormat);
+        NativeDestroy(NativeDecimalFormat);
     }
 
     public void Dispose()

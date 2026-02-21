@@ -51,15 +51,6 @@ internal sealed partial class Calendar : IDisposable
     private readonly IntPtr _nativeCalendar;
     private bool _disposed;
 
-    public static string DefaultTimeZone
-    {
-        get
-        {
-            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-            var length = NativeGetDefaultTimeZone(buffer, buffer.Length, out _);
-            return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-        }
-    }
     public double Time => NativeGetGregorianChange(_nativeCalendar, out _);
 
     private Calendar(IntPtr nativeCalendar)
@@ -76,13 +67,6 @@ internal sealed partial class Calendar : IDisposable
     {
         var nativeCalendar = NativeOpen(timeZone, timeZone.Length, IntPtr.Zero, type, out _);
         return nativeCalendar != IntPtr.Zero ? new Calendar(nativeCalendar) : null;
-    }
-
-    public static string GetCanonicalTimeZoneId(ReadOnlySpan<char> id)
-    {
-        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-        var length = NativeGetCanonicalTimeZoneId(id, id.Length, buffer, buffer.Length, out _);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
     public void Set(CalendarDateFields dateField, int value) => NativeSet(_nativeCalendar, dateField, value);
@@ -104,30 +88,6 @@ internal sealed partial class Calendar : IDisposable
 
     [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_getGregorianChange")]
     private static partial double NativeGetGregorianChange(IntPtr nativeCalendar, out IcuErrorCode errorCode);
-
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_getCanonicalTimeZoneID")]
-    private static partial int NativeGetCanonicalTimeZoneId(
-        ReadOnlySpan<char> id,
-        int length,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_getDefaultTimeZone")]
-    private static partial int NativeGetDefaultTimeZone(
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
-
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_getTimeZoneID")]
-    internal static partial int NativeGetTimeZoneId(
-        IntPtr nativeCalendar,
-        Span<char> result,
-        int maxResultSize,
-        out IcuErrorCode errorCode
-    );
 
     private void ReleaseUnmanagedResources()
     {

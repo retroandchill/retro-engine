@@ -23,7 +23,7 @@ public sealed partial class Culture
     public CultureInfo CultureInfo { get; }
     public string DisplayName { get; }
     public string EnglishName { get; }
-    public int LCID => _locale.LCID;
+    public uint LCID => _locale.LCID;
     public string Name { get; }
     public string ThreeLetterISOLanguageName { get; }
     public string TwoLetterISOLanguageName { get; }
@@ -102,8 +102,8 @@ public sealed partial class Culture
             }
 
             var decimalFormatterForCulture =
-                DecimalFormat.CreateInstance(_locale.Id)
-                ?? DecimalFormat.CreateInstance(InvariantLocale.Id)
+                DecimalFormat.CreateInstance(_locale)
+                ?? DecimalFormat.CreateInstance(InvariantLocale)
                 ?? throw new InvalidOperationException("Invariant culture decimal formatter is null.");
             var newFormattingRules = ExtractNumberFormattingRules(decimalFormatterForCulture);
 
@@ -124,8 +124,8 @@ public sealed partial class Culture
             }
 
             var decimalFormatterForCulture =
-                DecimalFormat.CreatePercentInstance(_locale.Id)
-                ?? DecimalFormat.CreatePercentInstance(InvariantLocale.Id)
+                DecimalFormat.CreatePercentInstance(_locale)
+                ?? DecimalFormat.CreatePercentInstance(InvariantLocale)
                 ?? throw new InvalidOperationException("Invariant culture decimal formatter is null.");
             var newFormattingRules = ExtractNumberFormattingRules(decimalFormatterForCulture);
 
@@ -159,13 +159,13 @@ public sealed partial class Culture
         }
 
         var decimalFormatterForCulture =
-            DecimalFormat.CreateCurrencyInstance(_locale.Id)
-            ?? DecimalFormat.CreateCurrencyInstance(InvariantLocale.Id)
+            DecimalFormat.CreateCurrencyInstance(_locale)
+            ?? DecimalFormat.CreateCurrencyInstance(InvariantLocale)
             ?? throw new InvalidOperationException("Invariant culture decimal formatter is null.");
 
         if (!useDefaultFormattingRules)
         {
-            decimalFormatterForCulture.SetTextAttribute(NumberFormatTextAttribute.CurrencyCode, currencyCode);
+            decimalFormatterForCulture.CurrencyCode = currencyCode;
         }
 
         var newCurrencyFormattingRules = ExtractNumberFormattingRules(decimalFormatterForCulture);
@@ -203,51 +203,40 @@ public sealed partial class Culture
             : currentSuffix;
     }
 
-    private static DecimalNumberFormattingRules ExtractNumberFormattingRules(DecimalFormat decimalFormat)
+    private static unsafe DecimalNumberFormattingRules ExtractNumberFormattingRules(DecimalFormat decimalFormat)
     {
+        var nativeFormattingRules = decimalFormat.FormattingRules;
+
         var formattingOptions = new NumberFormattingOptions
         {
-            UseGrouping = decimalFormat.IsGroupingUsed,
-            RoundingMode = decimalFormat.RoundingMode.ToRoundingMode(),
-            MinimumIntegralDigits = decimalFormat.MinimumIntegerDigits,
-            MaximumIntegralDigits = decimalFormat.MaximumIntegerDigits,
-            MinimumFractionalDigits = decimalFormat.MinimumFractionDigits,
-            MaximumFractionalDigits = decimalFormat.MaximumFractionDigits,
+            UseGrouping = nativeFormattingRules.IsGroupingUsed != 0,
+            RoundingMode = nativeFormattingRules.RoundingMode.ToRoundingMode(),
+            MinimumIntegralDigits = nativeFormattingRules.MinimumIntegerDigits,
+            MaximumIntegralDigits = nativeFormattingRules.MaximumIntegerDigits,
+            MinimumFractionalDigits = nativeFormattingRules.MinimumFractionDigits,
+            MaximumFractionalDigits = nativeFormattingRules.MaximumFractionDigits,
         };
 
         decimalFormat.IsGroupingUsed = true;
 
+        var (positivePrefix, positiveSuffix, negativePrefix, negativeSuffix) = decimalFormat.PrefixAndSuffix;
+
+        const int digitsLength = NativeDecimalDigits.DigitsCapacity;
         return new DecimalNumberFormattingRules
         {
             DefaultFormattingOptions = formattingOptions,
-            NanString = decimalFormat.GetSymbol(NumberFormatSymbol.NanSymbol),
-            NegativePrefixString = decimalFormat.GetTextAttribute(NumberFormatTextAttribute.NegativePrefix),
-            NegativeSuffixString = decimalFormat.GetTextAttribute(NumberFormatTextAttribute.NegativeSuffix),
-            PositivePrefixString = decimalFormat.GetTextAttribute(NumberFormatTextAttribute.PositivePrefix),
-            PositiveSuffixString = decimalFormat.GetTextAttribute(NumberFormatTextAttribute.PositiveSuffix),
-            PlusString = decimalFormat.GetSymbol(NumberFormatSymbol.PlusSignSymbol),
-            MinusString = decimalFormat.GetSymbol(NumberFormatSymbol.MinusSignSymbol),
-            GroupingSeparatorChar = decimalFormat
-                .GetSymbol(NumberFormatSymbol.GroupingSeparatorSymbol)
-                .FirstOrDefault(','),
-            DecimalSeparatorChar = decimalFormat
-                .GetSymbol(NumberFormatSymbol.DecimalSeparatorSymbol)
-                .FirstOrDefault('.'),
-            PrimaryGroupingSize = (byte)decimalFormat.GroupingSize,
-            SecondaryGroupingSize = (byte)decimalFormat.SecondaryGroupingSize,
-            Digits =
-            [
-                decimalFormat.GetSymbol(NumberFormatSymbol.ZeroDigitSymbol).FirstOrDefault('0'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.OneDigitSymbol).FirstOrDefault('1'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.TwoDigitSymbol).FirstOrDefault('2'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.ThreeDigitSymbol).FirstOrDefault('3'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.FourDigitSymbol).FirstOrDefault('4'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.FiveDigitSymbol).FirstOrDefault('5'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.SixDigitSymbol).FirstOrDefault('6'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.SevenDigitSymbol).FirstOrDefault('7'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.EightDigitSymbol).FirstOrDefault('8'),
-                decimalFormat.GetSymbol(NumberFormatSymbol.NineDigitSymbol).FirstOrDefault('9'),
-            ],
+            NanString = new string(nativeFormattingRules.NanString),
+            NegativePrefixString = positivePrefix,
+            NegativeSuffixString = positiveSuffix,
+            PositivePrefixString = negativePrefix,
+            PositiveSuffixString = negativeSuffix,
+            PlusString = new string(nativeFormattingRules.PlusSign),
+            MinusString = new string(nativeFormattingRules.MinusSign),
+            GroupingSeparatorChar = nativeFormattingRules.GroupingSeperator,
+            DecimalSeparatorChar = nativeFormattingRules.DecimalSeparator,
+            PrimaryGroupingSize = (byte)nativeFormattingRules.GroupingSize,
+            SecondaryGroupingSize = (byte)nativeFormattingRules.SecondaryGroupingSize,
+            Digits = new ReadOnlySpan<char>(nativeFormattingRules.Digits.Digits, digitsLength).ToArray(),
         };
     }
 
@@ -286,22 +275,27 @@ public sealed partial class Culture
                 return field;
 
             var formatter =
-                DecimalFormat.CreateInstance(_locale.Id)
-                ?? DecimalFormat.CreateInstance(InvariantLocale.Id)
+                DecimalFormat.CreateInstance(_locale)
+                ?? DecimalFormat.CreateInstance(InvariantLocale)
                 ?? throw new InvalidOperationException("Invariant culture decimal formatter is null.");
 
             var decimalSymbols = DecimalNumberFormattingRules;
-            formatter.SetSymbol(NumberFormatSymbol.ZeroDigitSymbol, [decimalSymbols.Digits[0]]);
-            formatter.SetSymbol(NumberFormatSymbol.OneDigitSymbol, [decimalSymbols.Digits[1]]);
-            formatter.SetSymbol(NumberFormatSymbol.TwoDigitSymbol, [decimalSymbols.Digits[2]]);
-            formatter.SetSymbol(NumberFormatSymbol.ThreeDigitSymbol, [decimalSymbols.Digits[3]]);
-            formatter.SetSymbol(NumberFormatSymbol.FourDigitSymbol, [decimalSymbols.Digits[4]]);
-            formatter.SetSymbol(NumberFormatSymbol.FiveDigitSymbol, [decimalSymbols.Digits[5]]);
-            formatter.SetSymbol(NumberFormatSymbol.SixDigitSymbol, [decimalSymbols.Digits[6]]);
-            formatter.SetSymbol(NumberFormatSymbol.SevenDigitSymbol, [decimalSymbols.Digits[7]]);
-            formatter.SetSymbol(NumberFormatSymbol.EightDigitSymbol, [decimalSymbols.Digits[8]]);
-            formatter.SetSymbol(NumberFormatSymbol.NineDigitSymbol, [decimalSymbols.Digits[9]]);
+            var nativeDigits = new NativeDecimalDigits();
+            unsafe
+            {
+                nativeDigits.Digits[0] = decimalSymbols.Digits[0];
+                nativeDigits.Digits[1] = decimalSymbols.Digits[1];
+                nativeDigits.Digits[2] = decimalSymbols.Digits[2];
+                nativeDigits.Digits[3] = decimalSymbols.Digits[3];
+                nativeDigits.Digits[4] = decimalSymbols.Digits[4];
+                nativeDigits.Digits[5] = decimalSymbols.Digits[5];
+                nativeDigits.Digits[6] = decimalSymbols.Digits[6];
+                nativeDigits.Digits[7] = decimalSymbols.Digits[7];
+                nativeDigits.Digits[8] = decimalSymbols.Digits[8];
+                nativeDigits.Digits[9] = decimalSymbols.Digits[9];
+            }
 
+            formatter.Digits = nativeDigits;
             formatter.IsGroupingUsed = false;
 
             field = formatter;
@@ -311,14 +305,59 @@ public sealed partial class Culture
 
     internal DateFormat GetDateFormatter(DateTimeFormatStyle dateStyle, string? timeZone)
     {
-        _dateFormat ??= CreateDateFormat(_locale.Id, DateTimeDecimalFormat);
-        return GetDateTimeFormatter(_dateFormat, DateFormatStyle.Ignore, dateStyle.ToIcuEnum(), timeZone);
+        _dateFormat ??= CreateDateFormat(_locale, DateTimeDecimalFormat);
+
+        var defaultFormatter = _dateFormat;
+        var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
+        if (!isDefaultTimeZone)
+        {
+            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
+            var defaultTimeZoneId = defaultFormatter.TimeZoneId;
+            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
+
+            isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
+        }
+
+        var isDefault = dateStyle == DateTimeFormatStyle.Default && isDefaultTimeZone;
+
+        if (isDefault)
+            return defaultFormatter;
+
+        var formatter =
+            DateFormat.CreateDate(_locale, dateStyle.ToIcuEnum())
+            ?? DateFormat.CreateDate(InvariantLocale, dateStyle.ToIcuEnum())
+            ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        formatter.TimeZoneId = timeZone ?? "";
+        return formatter;
     }
 
     internal DateFormat GetTimeFormatter(DateTimeFormatStyle timeStyle, string? timeZone)
     {
-        _timeFormat ??= CreateTimeFormat(_locale.Id, DateTimeDecimalFormat);
-        return GetDateTimeFormatter(_timeFormat, timeStyle.ToIcuEnum(), DateFormatStyle.Ignore, timeZone);
+        _timeFormat ??= CreateTimeFormat(_locale, DateTimeDecimalFormat);
+
+        var defaultFormatter = _timeFormat;
+        var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
+        if (!isDefaultTimeZone)
+        {
+            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
+            var defaultTimeZoneId = defaultFormatter.TimeZoneId;
+            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
+
+            isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
+        }
+
+        var isDefault = timeStyle == DateTimeFormatStyle.Default && isDefaultTimeZone;
+
+        if (isDefault)
+            return defaultFormatter;
+
+        var formatter =
+            DateFormat.CreateTime(_locale, timeStyle.ToIcuEnum())
+            ?? DateFormat.CreateTime(InvariantLocale, timeStyle.ToIcuEnum())
+            ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        formatter.TimeZoneId = timeZone ?? "";
+        formatter.NumberFormat = DateTimeDecimalFormat;
+        return formatter;
     }
 
     internal DateFormat GetDateTimeFormatter(
@@ -327,97 +366,75 @@ public sealed partial class Culture
         string? timeZone
     )
     {
-        _dateTimeFormat ??= CreateDateTimeFormat(_locale.Id, DateTimeDecimalFormat);
-        return GetDateTimeFormatter(_dateTimeFormat, timeStyle.ToIcuEnum(), dateStyle.ToIcuEnum(), timeZone);
-    }
+        _dateTimeFormat ??= CreateDateTimeFormat(_locale, DateTimeDecimalFormat);
 
-    internal DateFormat GetDateTimeFormatter(ReadOnlySpan<char> pattern, string? timeZone)
-    {
-        var dateFormat =
-            DateFormat.Create(pattern, _locale.Id, timeZone)
-            ?? (
-                DateFormat.Create(pattern, InvariantLocale.Id, timeZone)
-                ?? throw new InvalidOperationException("Invariant culture date formatter is null.")
-            );
-        dateFormat.NumberFormat = DateTimeDecimalFormat;
-        return dateFormat;
-    }
-
-    private DateFormat GetDateTimeFormatter(
-        DateFormat defaultFormatter,
-        DateFormatStyle timeStyle,
-        DateFormatStyle dateStyle,
-        string? timeZone
-    )
-    {
+        var defaultFormatter = _dateTimeFormat;
         var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
         if (!isDefaultTimeZone)
         {
-            var canonicalInputTimeZoneId = Calendar.GetCanonicalTimeZoneId(timeZone);
+            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
             var defaultTimeZoneId = defaultFormatter.TimeZoneId;
-            var canonicalDefaultTimeZoneId = Calendar.GetCanonicalTimeZoneId(defaultTimeZoneId);
+            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
 
             isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
-            if (!isDefaultTimeZone)
-            {
-                timeZone = defaultTimeZoneId;
-            }
         }
 
-        var isDefault = dateStyle == DateFormatStyle.Default && isDefaultTimeZone;
+        var isDefault =
+            dateStyle == DateTimeFormatStyle.Default && timeStyle == DateTimeFormatStyle.Default && isDefaultTimeZone;
 
         if (isDefault)
             return defaultFormatter;
 
-        return DateFormat.Create(timeStyle, dateStyle, _locale.Id, timeZone)
-            ?? DateFormat.Create(timeStyle, dateStyle, InvariantLocale.Id, timeZone)
+        var formatter =
+            DateFormat.CreateTime(_locale, timeStyle.ToIcuEnum())
+            ?? DateFormat.CreateTime(InvariantLocale, timeStyle.ToIcuEnum())
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        formatter.TimeZoneId = timeZone ?? "";
+        formatter.NumberFormat = DateTimeDecimalFormat;
+        return formatter;
     }
 
-    private static DateFormat CreateDateFormat(CultureId locale, DecimalFormat numberFormat)
+    internal DateFormat GetDateTimeFormatter(ReadOnlySpan<char> pattern, string? timeZone)
+    {
+        var dateFormat = DateFormat.Create(_locale, pattern) ?? DateFormat.Create(InvariantLocale, pattern);
+
+        if (dateFormat is null)
+            return GetDateTimeFormatter(DateTimeFormatStyle.Default, DateTimeFormatStyle.Default, timeZone);
+
+        dateFormat.TimeZoneId = timeZone ?? "";
+        dateFormat.NumberFormat = DateTimeDecimalFormat;
+        return dateFormat;
+    }
+
+    private static DateFormat CreateDateFormat(Locale locale, DecimalFormat numberFormat)
     {
         var dateFormat =
-            DateFormat.Create(DateFormatStyle.Ignore, DateFormatStyle.Default, locale, Calendar.DefaultTimeZone)
-            ?? (
-                DateFormat.Create(
-                    DateFormatStyle.Default,
-                    DateFormatStyle.Default,
-                    InvariantLocale.Id,
-                    Calendar.DefaultTimeZone
-                ) ?? throw new InvalidOperationException("Invariant culture date formatter is null.")
-            );
+            DateFormat.CreateDate(locale, DateFormatStyle.Default)
+            ?? DateFormat.CreateDate(InvariantLocale, DateFormatStyle.Default)
+            ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        dateFormat.TimeZoneId = "";
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }
 
-    private static DateFormat CreateTimeFormat(CultureId locale, DecimalFormat numberFormat)
+    private static DateFormat CreateTimeFormat(Locale locale, DecimalFormat numberFormat)
     {
         var dateFormat =
-            DateFormat.Create(DateFormatStyle.Default, DateFormatStyle.Ignore, locale, Calendar.DefaultTimeZone)
-            ?? (
-                DateFormat.Create(
-                    DateFormatStyle.Default,
-                    DateFormatStyle.Default,
-                    InvariantLocale.Id,
-                    Calendar.DefaultTimeZone
-                ) ?? throw new InvalidOperationException("Invariant culture date formatter is null.")
-            );
+            DateFormat.CreateTime(locale, DateFormatStyle.Default)
+            ?? DateFormat.CreateTime(InvariantLocale, DateFormatStyle.Default)
+            ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        dateFormat.TimeZoneId = "";
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }
 
-    private static DateFormat CreateDateTimeFormat(CultureId locale, DecimalFormat numberFormat)
+    private static DateFormat CreateDateTimeFormat(Locale locale, DecimalFormat numberFormat)
     {
         var dateFormat =
-            DateFormat.Create(DateFormatStyle.Default, DateFormatStyle.Default, locale, Calendar.DefaultTimeZone)
-            ?? (
-                DateFormat.Create(
-                    DateFormatStyle.Default,
-                    DateFormatStyle.Default,
-                    InvariantLocale.Id,
-                    Calendar.DefaultTimeZone
-                ) ?? throw new InvalidOperationException("Invariant culture date formatter is null.")
-            );
+            DateFormat.CreateDateTime(locale, DateFormatStyle.Default, DateFormatStyle.Default)
+            ?? DateFormat.CreateDateTime(InvariantLocale, DateFormatStyle.Default, DateFormatStyle.Default)
+            ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
+        dateFormat.TimeZoneId = "";
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }

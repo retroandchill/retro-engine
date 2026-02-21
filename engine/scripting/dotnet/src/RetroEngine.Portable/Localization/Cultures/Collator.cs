@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
@@ -63,16 +64,16 @@ internal sealed partial class Collator : IDisposable, ICloneable
         return NativeStrColl(_collator, s1, s1.Length, s2, s2.Length);
     }
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ucol_open")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_open")]
     private static partial IntPtr NativeOpen(CultureId cultureId, out IcuErrorCode errorCode);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ucol_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_close")]
     private static partial void NativeClose(IntPtr collator);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ucol_clone")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_clone")]
     private static partial IntPtr NativeClone(IntPtr collator, out IcuErrorCode errorCode);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ucol_strcoll")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_strcoll")]
     private static partial CollationResult NativeStrColl(
         IntPtr collator,
         ReadOnlySpan<char> s1,
@@ -81,7 +82,7 @@ internal sealed partial class Collator : IDisposable, ICloneable
         int s2Len
     );
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "ucol_setStrength")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_setStrength")]
     private static partial void NativeSetStrength(IntPtr collator, CollationStrength strength);
 
     private void ReleaseUnmanagedResources()

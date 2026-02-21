@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.Cultures;
@@ -52,13 +53,20 @@ internal sealed partial class DateFormat : IDisposable
     {
         get
         {
-            var calendar = NativeGetCalendar(_nativeDateFormat);
-            if (calendar == IntPtr.Zero)
-                return Calendar.DefaultTimeZone;
-
             Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-            var length = Calendar.NativeGetTimeZoneId(calendar, buffer, buffer.Length, out _);
+            var length = NativeGetTimeZoneId(_nativeDateFormat, buffer, buffer.Length);
             return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
+        }
+        set
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                NativeSetTimeZoneId(_nativeDateFormat, value, value.Length);
+            }
+            else
+            {
+                NativeSetTimeZoneId(_nativeDateFormat);
+            }
         }
     }
 
@@ -74,69 +82,85 @@ internal sealed partial class DateFormat : IDisposable
         ReleaseUnmanagedResources();
     }
 
-    public static DateFormat? Create(
-        DateFormatStyle timeStyle,
-        DateFormatStyle dateStyle,
-        CultureId locale,
-        ReadOnlySpan<char> timeZoneId
-    )
+    public static DateFormat? CreateDate(Locale locale, DateFormatStyle dateStyle)
     {
-        var nativeDateFormat = NativeOpen(timeStyle, dateStyle, locale, timeZoneId, timeZoneId.Length, null, 0, out _);
+        var nativeDateFormat = NativeCreateDate(locale.NativeLocale, dateStyle);
         return nativeDateFormat != IntPtr.Zero ? new DateFormat(nativeDateFormat) : null;
     }
 
-    public static DateFormat? Create(ReadOnlySpan<char> pattern, CultureId locale, ReadOnlySpan<char> timeZoneId)
+    public static DateFormat? CreateTime(Locale locale, DateFormatStyle timeStyle)
     {
-        var nativeDateFormat = NativeOpen(
-            DateFormatStyle.Default,
-            DateFormatStyle.Default,
-            locale,
-            timeZoneId,
-            timeZoneId.Length,
-            pattern,
-            pattern.Length,
-            out _
-        );
+        var nativeDateFormat = NativeCreateTime(locale.NativeLocale, timeStyle);
         return nativeDateFormat != IntPtr.Zero ? new DateFormat(nativeDateFormat) : null;
+    }
+
+    public static DateFormat? CreateDateTime(Locale locale, DateFormatStyle dateStyle, DateFormatStyle timeStyle)
+    {
+        var nativeDateFormat = NativeCreateDateTime(locale.NativeLocale, dateStyle, timeStyle);
+        return nativeDateFormat != IntPtr.Zero ? new DateFormat(nativeDateFormat) : null;
+    }
+
+    public static DateFormat? Create(Locale locale, ReadOnlySpan<char> pattern)
+    {
+        var nativeDateFormat = NativeCreateCustom(locale.NativeLocale, pattern, pattern.Length);
+        return nativeDateFormat != IntPtr.Zero ? new DateFormat(nativeDateFormat) : null;
+    }
+
+    public static string GetCanonicalTimeZoneId(ReadOnlySpan<char> id)
+    {
+        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+        var length = NativeGetCanonicalId(id, id.Length, buffer, buffer.Length);
+        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
     public string Format(double date)
     {
         Span<char> buffer = stackalloc char[256];
-        var length = NativeFormat(_nativeDateFormat, date, buffer, buffer.Length, IntPtr.Zero, out _);
+        var length = NativeFormat(_nativeDateFormat, date, buffer, buffer.Length);
         return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "udat_open")]
-    private static partial IntPtr NativeOpen(
-        DateFormatStyle timeStyle,
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_date_format")]
+    private static partial IntPtr NativeCreateDate(IntPtr locale, DateFormatStyle dateStyle);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_time_format")]
+    private static partial IntPtr NativeCreateTime(IntPtr locale, DateFormatStyle timeStyle);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_date_time_format")]
+    private static partial IntPtr NativeCreateDateTime(
+        IntPtr locale,
         DateFormatStyle dateStyle,
-        CultureId locale,
-        ReadOnlySpan<char> timeZoneId,
-        int timeZoneIdLength,
-        ReadOnlySpan<char> pattern,
-        int patternLength,
-        out IcuErrorCode errorCode
+        DateFormatStyle timeStyle
     );
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "udat_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_custom_date_format")]
+    private static partial IntPtr NativeCreateCustom(IntPtr locale, ReadOnlySpan<char> pattern, int patternLength);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_date_format")]
     private static partial void NativeClose(IntPtr nativeDateFormat);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "udat_setNumberFormat")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_time_zone_get_canonical_id")]
+    private static partial int NativeGetCanonicalId(
+        ReadOnlySpan<char> timeZoneId,
+        int timeZoneIdLength,
+        Span<char> result,
+        int resultLength
+    );
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_get_time_zone_id")]
+    private static partial int NativeGetTimeZoneId(IntPtr nativeDateFormat, Span<char> result, int resultLength);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_time_zone")]
+    private static partial void NativeSetTimeZoneId(IntPtr nativeDateFormat, ReadOnlySpan<char> buffer, int length);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_default_time_zone")]
+    private static partial void NativeSetTimeZoneId(IntPtr nativeDateFormat);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_decimal_format")]
     private static partial void NativeSetNumberFormat(IntPtr nativeDateFormat, IntPtr nativeNumberFormat);
 
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "udat_getCalendar")]
-    private static partial IntPtr NativeGetCalendar(IntPtr nativeDateFormat);
-
-    [LibraryImport(Culture.UnicodeLibName, EntryPoint = "udat_format")]
-    private static partial int NativeFormat(
-        IntPtr nativeDateFormat,
-        double date,
-        Span<char> result,
-        int maxResultSize,
-        IntPtr position,
-        out IcuErrorCode errorCode
-    );
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_format")]
+    private static partial int NativeFormat(IntPtr nativeDateFormat, double date, Span<char> result, int maxResultSize);
 
     private void ReleaseUnmanagedResources()
     {

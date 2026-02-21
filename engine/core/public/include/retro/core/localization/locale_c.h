@@ -24,9 +24,9 @@ extern "C"
 
     RETRO_API const char *retro_locale_get_name(Retro_Locale *locale);
 
-    RETRO_API const char16_t *retro_locale_get_display_name(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_display_name(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
-    RETRO_API const char16_t *retro_locale_get_english_name(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_english_name(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
     RETRO_API const char *retro_locale_get_three_letter_language_name(Retro_Locale *locale);
 
@@ -38,13 +38,13 @@ extern "C"
 
     RETRO_API const char *retro_locale_get_variant(Retro_Locale *locale);
 
-    RETRO_API const char16_t *retro_locale_get_display_language(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_display_language(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
-    RETRO_API const char16_t *retro_locale_get_display_region(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_display_region(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
-    RETRO_API const char16_t *retro_locale_get_display_script(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_display_script(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
-    RETRO_API const char16_t *retro_locale_get_display_variant(Retro_Locale *locale);
+    RETRO_API int32_t retro_locale_get_display_variant(Retro_Locale *locale, char16_t *buffer, int32_t length);
 
     RETRO_API uint8_t retro_locale_is_right_to_left(Retro_Locale *locale);
 
