@@ -4,7 +4,9 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
-using Superpower;
+using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using RetroEngine.Portable.Localization.History;
 using ZLinq;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -89,12 +91,24 @@ public sealed class TextFormatter
 
     public static Text Format(
         TextFormat format,
+        ImmutableDictionary<string, FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
+        return new Text(new TextHistoryNamedFormat(resultString, format, arguments), TextFlag.Transient);
+    }
+
+    public static Text Format(
+        TextFormat format,
         IReadOnlyDictionary<string, FormatArg> arguments,
         bool rebuildText,
         bool rebuildAsSource
     )
     {
-        throw new NotImplementedException();
+        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
+        return new Text(new TextHistoryNamedFormat(resultString, format, arguments), TextFlag.Transient);
     }
 
     public static Text Format(
@@ -104,7 +118,19 @@ public sealed class TextFormatter
         bool rebuildAsSource
     )
     {
-        throw new NotImplementedException();
+        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
+        return new Text(new TextHistoryOrderedFormat(resultString, format, arguments), TextFlag.Transient);
+    }
+
+    public static Text Format(
+        TextFormat format,
+        ImmutableArray<FormatArg> arguments,
+        bool rebuildText,
+        bool rebuildAsSource
+    )
+    {
+        var resultString = FormatStr(format, arguments.AsSpan(), rebuildText, rebuildAsSource);
+        return new Text(new TextHistoryOrderedFormat(resultString, format, arguments), TextFlag.Transient);
     }
 
     public static Text Format(
@@ -114,7 +140,8 @@ public sealed class TextFormatter
         bool rebuildAsSource
     )
     {
-        throw new NotImplementedException();
+        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
+        return new Text(new TextHistoryOrderedFormat(resultString, format, [.. arguments]), TextFlag.Transient);
     }
 
     public static string FormatStr(
@@ -166,6 +193,7 @@ public sealed class TextFormatter
         );
     }
 
+    [OverloadResolutionPriority(1)]
     public static string FormatStr(
         TextFormat format,
         ReadOnlySpan<FormatArg> arguments,

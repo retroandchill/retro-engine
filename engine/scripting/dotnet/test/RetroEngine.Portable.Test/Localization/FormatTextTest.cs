@@ -20,28 +20,13 @@ public class FormatTextTest
 
         Assert.That(format.IsValid);
 
-        var formatted = TextFormatter.FormatStr(
-            format,
-            new Dictionary<string, FormatArg> { ["NumCats"] = 1 },
-            false,
-            false
-        );
-        Assert.That(formatted, Is.EqualTo("There is 1 cat"));
+        var formatted = Text.Format(format, new Dictionary<string, FormatArg> { ["NumCats"] = 1 });
+        Assert.That(formatted.ToString(), Is.EqualTo("There is 1 cat"));
 
-        formatted = TextFormatter.FormatStr(
-            format,
-            new Dictionary<string, FormatArg> { ["NumCats"] = 2 },
-            false,
-            false
-        );
-        Assert.That(formatted, Is.EqualTo("There are 2 cats"));
+        formatted = Text.Format(format, new Dictionary<string, FormatArg> { ["NumCats"] = 2 });
+        Assert.That(formatted.ToString(), Is.EqualTo("There are 2 cats"));
 
-        formatted = TextFormatter.FormatStr(
-            format,
-            new Dictionary<string, FormatArg> { ["NumCats"] = 0 },
-            false,
-            false
-        );
-        Assert.That(formatted, Is.EqualTo("There are 0 cats"));
+        formatted = Text.Format(format, new Dictionary<string, FormatArg> { ["NumCats"] = 0 });
+        Assert.That(formatted.ToString(), Is.EqualTo("There are 0 cats"));
     }
 }

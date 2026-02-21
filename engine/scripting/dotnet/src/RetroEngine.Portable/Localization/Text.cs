@@ -3,12 +3,16 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
+using RetroEngine.Portable.Localization.History;
 using RetroEngine.Portable.Strings;
+using ZLinq;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -86,7 +90,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public bool IsInitializedFromString => Flags.HasFlag(TextFlag.InitializedFromString);
 
-    private Text(ITextData textData, TextFlag flags = TextFlag.None)
+    internal Text(ITextData textData, TextFlag flags = TextFlag.None)
     {
         TextData = textData;
         Flags = flags;
@@ -205,9 +209,42 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         );
     }
 
-    public static Text FromTimeSpan(TimeSpan timeSpan, Culture? targetCulture = null)
+    public static Text AsTimespan(TimeSpan timeSpan, Culture? targetCulture = null)
     {
-        throw new NotImplementedException();
+        var culture = targetCulture ?? Culture.CurrentCulture;
+
+        var totalHours = timeSpan.TotalHours;
+        var hours = (int)totalHours;
+        var minutes = timeSpan.Minutes;
+        var seconds = timeSpan.Seconds;
+
+        var formattingOptions = new NumberFormattingOptions() { MinimumIntegralDigits = 2, MaximumIntegralDigits = 2 };
+
+        if (hours > 0)
+        {
+            var timespanFormatPattern = AsLocalizable(
+                "Timespan",
+                "Format_HoursMinutesSeconds",
+                "{Hours}:{Minutes}:{Seconds}"
+            );
+            var timeArguments = new Dictionary<string, FormatArg>
+            {
+                ["Hours"] = hours,
+                ["Minutes"] = AsNumber(minutes, formattingOptions, culture),
+                ["Seconds"] = AsNumber(seconds, formattingOptions, culture),
+            };
+            return Format(timespanFormatPattern, timeArguments);
+        }
+        else
+        {
+            var timespanFormatPattern = AsLocalizable("Timespan", "Format_MinutesSeconds", "{Minutes}:{Seconds}");
+            var timeArguments = new Dictionary<string, FormatArg>
+            {
+                ["Minutes"] = minutes,
+                ["Seconds"] = AsNumber(seconds, formattingOptions, culture),
+            };
+            return Format(timespanFormatPattern, timeArguments);
+        }
     }
 
     public static Text FromName(Name name)
@@ -233,6 +270,77 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public Text AsCultureInvariant()
     {
         return this with { Flags = Flags | TextFlag.CultureInvariant };
+    }
+
+    public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments, false, false);
+    }
+
+    public static Text Format(TextFormat format, ImmutableDictionary<string, FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments, false, false);
+    }
+
+    public static Text Format(TextFormat format, IReadOnlyList<FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments, false, false);
+    }
+
+    public static Text Format(TextFormat format, ImmutableArray<FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments, false, false);
+    }
+
+    [OverloadResolutionPriority(1)]
+    public static Text Format(TextFormat format, params ReadOnlySpan<FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments, false, false);
+    }
+
+    public static Text Join(Text separator, IEnumerable<FormatArg> elements)
+    {
+        return Join(separator, elements.AsValueEnumerable());
+    }
+
+    public static Text Join(Text separator, params ReadOnlySpan<FormatArg> elements)
+    {
+        if (elements.Length == 1 && elements[0].TryGetTextData(out var textData))
+        {
+            return textData;
+        }
+
+        return Join(separator, elements.AsValueEnumerable());
+    }
+
+    private static Text Join<TEnumerator>(Text separator, ValueEnumerable<TEnumerator, FormatArg> elements)
+        where TEnumerator : struct, IValueEnumerator<FormatArg>, allows ref struct
+    {
+        if (elements.TryGetNonEnumeratedCount(out var count) && count == 0)
+            return Empty;
+
+        var formatPattern = new StringBuilder();
+        var namedArgs = new Dictionary<string, FormatArg>();
+
+        if (elements.TryGetNonEnumeratedCount(out var argsCount))
+        {
+            namedArgs.EnsureCapacity(argsCount + 1);
+        }
+
+        namedArgs.Add("Delimiter", separator);
+
+        foreach (var (i, element) in elements.Index())
+        {
+            if (i != 0)
+                formatPattern.Append("{Delimiter}");
+
+            namedArgs.Add(i.ToString(), element);
+
+            formatPattern.Append('{').Append(i).Append('}');
+        }
+
+        var namedFormatPattern = AsCultureInvariant(formatPattern.ToString());
+        return TextFormatter.Format(namedFormatPattern, namedArgs, false, false);
     }
 
     public Text ToLower()
