@@ -16,6 +16,10 @@ extern "C"
 #endif
     typedef struct Retro_Locale Retro_Locale;
 
+    RETRO_API const Retro_Locale *retro_get_default_locale();
+
+    RETRO_API Retro_Locale *retro_create_default_locale();
+
     RETRO_API Retro_Locale *retro_create_locale(const char *locale);
 
     RETRO_API void retro_destroy_locale(Retro_Locale *locale);

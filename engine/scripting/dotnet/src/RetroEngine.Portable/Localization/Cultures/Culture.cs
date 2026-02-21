@@ -6,20 +6,18 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
 internal enum IcuErrorCode;
 
-public sealed partial class Culture
+public sealed class Culture
 {
     internal const int KeywordAndValuesCapacity = 100;
     private const int MillisPerSecond = 1000;
 
     private readonly Locale _locale;
-    public CultureId Id => _locale.Id;
     public CultureInfo CultureInfo { get; }
     public string DisplayName { get; }
     public string EnglishName { get; }
@@ -45,17 +43,17 @@ public sealed partial class Culture
         InvariantGregorianCalendar = Calendar.Create();
         InvariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
         InvariantLocale =
-            Locale.Create(new CultureId("us-EN-POSIX"))
-            ?? Locale.Create(new CultureId(""))
+            Locale.Create("us-EN-POSIX")
+            ?? new Locale()
             ?? throw new InvalidOperationException("Invariant locale is null.");
         InvariantCulture = new Culture(InvariantLocale);
-        CurrentCulture = new Culture(new CultureId(NativeGetDefault()));
+        CurrentCulture = new Culture(Locale.Default);
     }
 
     private Culture(Locale locale)
     {
         _locale = locale;
-        CultureInfo = CultureInfo.GetCultureInfo(locale.Id.ToString());
+        CultureInfo = CultureInfo.GetCultureInfo(locale.Name.Replace('_', '-'));
         Name = _locale.Name;
         ThreeLetterISOLanguageName = _locale.ThreeLetterISOLanguageName;
         TwoLetterISOLanguageName = _locale.TwoLetterISOLanguageName;
@@ -75,19 +73,19 @@ public sealed partial class Culture
         NativeRegion = displayVariant.Length > 0 ? $"{displayRegion} ({displayVariant})" : displayRegion;
 
         _cardinalPluralRules =
-            PluralRules.Create(locale.Id, PluralType.Cardinal)
-            ?? PluralRules.Create(InvariantLocale.Id, PluralType.Cardinal)
+            PluralRules.Create(_locale, PluralType.Cardinal)
+            ?? PluralRules.Create(InvariantLocale, PluralType.Cardinal)
             ?? throw new InvalidOperationException("Cardinal plural rules are null.");
         _ordinalPluralRules =
-            PluralRules.Create(locale.Id, PluralType.Ordinal)
-            ?? PluralRules.Create(InvariantLocale.Id, PluralType.Ordinal)
+            PluralRules.Create(_locale, PluralType.Ordinal)
+            ?? PluralRules.Create(InvariantLocale, PluralType.Ordinal)
             ?? throw new InvalidOperationException("Ordinal plural rules are null.");
     }
 
-    internal Culture(CultureId cultureId)
+    internal Culture(string cultureId)
         : this(CreateLocale(cultureId)) { }
 
-    private static Locale CreateLocale(CultureId cultureId)
+    private static Locale CreateLocale(string cultureId)
     {
         var locale = Locale.Create(cultureId) ?? throw new CultureNotFoundException($"Culture {cultureId} not found.");
         return !locale.IsBogus ? locale : InvariantLocale;
@@ -499,16 +497,10 @@ public sealed partial class Culture
         return collator;
     }
 
-    private Collator CreateCollator(Locale locale)
+    private static Collator CreateCollator(Locale locale)
     {
-        return Collator.Create(locale.Id)
-            ?? Collator.Create(InvariantLocale.Id)
+        return Collator.Create(locale)
+            ?? Collator.Create(InvariantLocale)
             ?? throw new InvalidOperationException("Invariant culture collator is null.");
     }
-
-    internal const string UnicodeLibName = "icuuc";
-    internal const string I18NLibName = "icuin";
-
-    [LibraryImport(UnicodeLibName, EntryPoint = "uloc_getDefault", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial string NativeGetDefault();
 }

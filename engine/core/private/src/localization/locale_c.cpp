@@ -15,6 +15,16 @@ import retro.core.localization.buffers;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale)
 
+const Retro_Locale *retro_get_default_locale()
+{
+    return retro::to_c(&icu::Locale::getDefault());
+}
+
+Retro_Locale *retro_create_default_locale()
+{
+    return retro::to_c(new icu::Locale());
+}
+
 Retro_Locale *retro_create_locale(const char *locale)
 {
     return retro::to_c(new icu::Locale(locale));

@@ -26,9 +26,9 @@ internal sealed partial class PluralRules : IDisposable
         ReleaseUnmanagedResources();
     }
 
-    public static PluralRules? Create(CultureId locale, PluralType type)
+    public static PluralRules? Create(Locale locale, PluralType type)
     {
-        var rules = NativeOpen(locale, type);
+        var rules = NativeOpen(locale.NativeLocale, type);
         return rules != IntPtr.Zero ? new PluralRules(rules) : null;
     }
 
@@ -47,7 +47,7 @@ internal sealed partial class PluralRules : IDisposable
     }
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_plural_rules")]
-    private static partial IntPtr NativeOpen(CultureId locale, PluralType type);
+    private static partial IntPtr NativeOpen(IntPtr locale, PluralType type);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_plural_rules")]
     private static partial void NativeClose(IntPtr rules);

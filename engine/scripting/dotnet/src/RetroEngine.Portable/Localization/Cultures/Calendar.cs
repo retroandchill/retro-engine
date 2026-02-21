@@ -52,7 +52,7 @@ internal sealed partial class Calendar : IDisposable
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_calendar")]
     private static partial void NativeClose(IntPtr nativeCalendar);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_set_calendar_time_zone")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_set_time_zone")]
     private static partial void NativeSetTimeZone(IntPtr nativeCalendar, IntPtr nativeTimeZone);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_set")]

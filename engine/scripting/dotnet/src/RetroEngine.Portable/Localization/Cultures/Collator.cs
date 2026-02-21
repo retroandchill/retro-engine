@@ -49,9 +49,9 @@ internal sealed partial class Collator : IDisposable, ICloneable
         ReleaseUnmanagedResources();
     }
 
-    public static Collator? Create(CultureId id)
+    public static Collator? Create(Locale locale)
     {
-        var collator = NativeOpen(id);
+        var collator = NativeOpen(locale.NativeLocale);
         return collator != IntPtr.Zero ? new Collator(collator) : null;
     }
 
@@ -65,7 +65,7 @@ internal sealed partial class Collator : IDisposable, ICloneable
     }
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_collator")]
-    private static partial IntPtr NativeOpen(CultureId cultureId);
+    private static partial IntPtr NativeOpen(IntPtr locale);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_collator")]
     private static partial void NativeClose(IntPtr collator);
