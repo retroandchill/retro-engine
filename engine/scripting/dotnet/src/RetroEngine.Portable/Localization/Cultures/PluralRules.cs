@@ -28,31 +28,35 @@ internal sealed partial class PluralRules : IDisposable
 
     public static PluralRules? Create(CultureId locale, PluralType type)
     {
-        var rules = NativeOpen(locale, type, out _);
+        var rules = NativeOpen(locale, type);
         return rules != IntPtr.Zero ? new PluralRules(rules) : null;
+    }
+
+    public string Select(int number)
+    {
+        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
+        var length = NativeSelect(_rules, number, buffer, buffer.Length);
+        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
     public string Select(double number)
     {
         Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-        var length = NativeSelect(_rules, number, buffer, buffer.Length, out _);
+        var length = NativeSelect(_rules, number, buffer, buffer.Length);
         return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_openForType")]
-    private static partial IntPtr NativeOpen(CultureId locale, PluralType type, out IcuErrorCode errorCode);
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_plural_rules")]
+    private static partial IntPtr NativeOpen(CultureId locale, PluralType type);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_plural_rules")]
     private static partial void NativeClose(IntPtr rules);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "uplrules_select")]
-    private static partial int NativeSelect(
-        IntPtr rules,
-        double number,
-        Span<char> keyword,
-        int capacity,
-        out IcuErrorCode errorCode
-    );
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_plural_rules_select_int32")]
+    private static partial int NativeSelect(IntPtr rules, double number, Span<char> keyword, int capacity);
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_plural_rules_select_float64")]
+    private static partial int NativeSelect(IntPtr rules, int number, Span<char> keyword, int capacity);
 
     private void ReleaseUnmanagedResources()
     {

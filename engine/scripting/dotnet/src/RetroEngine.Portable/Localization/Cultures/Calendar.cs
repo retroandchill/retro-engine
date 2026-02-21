@@ -4,54 +4,26 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-internal enum CalendarType
-{
-    Traditional,
-    Default = Traditional,
-    Gregorian,
-}
-
-internal enum CalendarDateFields
-{
-    Era,
-    Year,
-    Month,
-    WeekOfYear,
-    WeekOfMonth,
-    Date,
-    DayOfYear,
-    DayOfWeek,
-    DayOfWeekInMonth,
-    AmPm,
-    Hour,
-    HourOfDay,
-    Minute,
-    Second,
-    Millisecond,
-    ZoneOffset,
-    DstOffset,
-    YearWoy,
-    DowLocal,
-    ExtendedYear,
-    JulianDay,
-    MillisecondsInDay,
-    IsLeapMonth,
-    OrdinalMonth,
-    FieldCount = OrdinalMonth + 1,
-    DayOfMonth = Date,
-}
-
 internal sealed partial class Calendar : IDisposable
 {
-    private const string UnknownTimeZone = "Etc/Unknown";
-
     private readonly IntPtr _nativeCalendar;
     private bool _disposed;
 
-    public double Time => NativeGetGregorianChange(_nativeCalendar, out _);
+    public double Time => NativeGetTime(_nativeCalendar, out _);
+
+    public TimeZone TimeZone
+    {
+        get;
+        set
+        {
+            field = value;
+            NativeSetTimeZone(_nativeCalendar, value.NativePtr);
+        }
+    } = TimeZone.Unknown;
 
     private Calendar(IntPtr nativeCalendar)
     {
@@ -63,31 +35,39 @@ internal sealed partial class Calendar : IDisposable
         ReleaseUnmanagedResources();
     }
 
-    public static Calendar? Create(CalendarType type, ReadOnlySpan<char> timeZone = UnknownTimeZone)
+    public static Calendar? Create()
     {
-        var nativeCalendar = NativeOpen(timeZone, timeZone.Length, IntPtr.Zero, type, out _);
+        var nativeCalendar = NativeOpen();
         return nativeCalendar != IntPtr.Zero ? new Calendar(nativeCalendar) : null;
     }
 
-    public void Set(CalendarDateFields dateField, int value) => NativeSet(_nativeCalendar, dateField, value);
+    public void Set(int year, int month, int dayOfMonth, int hourOfDay, int minute, int second)
+    {
+        NativeSet(_nativeCalendar, year, month, dayOfMonth, hourOfDay, minute, second);
+    }
 
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_open")]
-    private static partial IntPtr NativeOpen(
-        ReadOnlySpan<char> zoneId,
-        int zoneIdLength,
-        IntPtr locale,
-        CalendarType type,
-        out IcuErrorCode errorCode
-    );
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_calendar")]
+    private static partial IntPtr NativeOpen();
 
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_calendar")]
     private static partial void NativeClose(IntPtr nativeCalendar);
 
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_set")]
-    private static partial void NativeSet(IntPtr nativeCalendar, CalendarDateFields dateField, int value);
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_set_calendar_time_zone")]
+    private static partial void NativeSetTimeZone(IntPtr nativeCalendar, IntPtr nativeTimeZone);
 
-    [LibraryImport(Culture.I18NLibName, EntryPoint = "ucal_getGregorianChange")]
-    private static partial double NativeGetGregorianChange(IntPtr nativeCalendar, out IcuErrorCode errorCode);
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_set")]
+    private static partial void NativeSet(
+        IntPtr nativeCalendar,
+        int year,
+        int month,
+        int dayOfMonth,
+        int hourOfDay,
+        int minute,
+        int second
+    );
+
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_get_time")]
+    private static partial double NativeGetTime(IntPtr nativeCalendar, out IcuErrorCode errorCode);
 
     private void ReleaseUnmanagedResources()
     {

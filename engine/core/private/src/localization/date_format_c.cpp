@@ -11,10 +11,12 @@
 import std;
 import retro.core.c_api;
 import retro.core.localization.icu;
+import retro.core.localization.buffers;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale)
 DECLARE_OPAQUE_C_HANDLE(Retro_DecimalFormat, icu::DecimalFormat)
 DECLARE_OPAQUE_C_HANDLE(Retro_DateFormat, icu::DateFormat)
+DECLARE_OPAQUE_C_HANDLE(Retro_TimeZone, icu::TimeZone)
 
 Retro_DateFormat *retro_create_date_format(Retro_Locale *locale, int32_t date_format)
 {
@@ -48,30 +50,9 @@ void retro_destroy_date_format(Retro_DateFormat *format)
     delete retro::from_c(format);
 }
 
-int32_t retro_time_zone_get_canonical_id(const char16_t *id, const int32_t id_length, char16_t *buffer, int32_t length)
+void retro_date_format_set_time_zone(Retro_DateFormat *format, const Retro_TimeZone *time_zone)
 {
-    UErrorCode status;
-    const icu::UnicodeString input_time_zone_id{id, id_length};
-    icu::UnicodeString output_time_zone_id;
-    icu::TimeZone::getCanonicalID(input_time_zone_id, output_time_zone_id, status);
-    return retro::write_to_output_buffer(output_time_zone_id, std::span{buffer, static_cast<std::size_t>(length)});
-}
-
-int32_t retro_date_format_get_time_zone_id(Retro_DateFormat *format, char16_t *buffer, int32_t length)
-{
-    icu::UnicodeString output_time_zone_id;
-    retro::from_c(format)->getTimeZone().getID(output_time_zone_id);
-    return retro::write_to_output_buffer(output_time_zone_id, std::span{buffer, static_cast<std::size_t>(length)});
-}
-
-void retro_date_format_set_time_zone(Retro_DateFormat *format, const char16_t *id, const int32_t id_length)
-{
-    retro::from_c(format)->adoptTimeZone(icu::TimeZone::createTimeZone(icu::UnicodeString{id, id_length}));
-}
-
-void retro_date_format_set_default_time_zone(Retro_DateFormat *format)
-{
-    retro::from_c(format)->adoptTimeZone(icu::TimeZone::createDefault());
+    retro::from_c(format)->setTimeZone(*retro::from_c(time_zone));
 }
 
 void retro_date_format_set_decimal_format(Retro_DateFormat *format, const Retro_DecimalFormat *decimal_format)

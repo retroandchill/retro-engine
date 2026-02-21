@@ -11,6 +11,7 @@
 import std;
 import retro.core.c_api;
 import retro.core.localization.icu;
+import retro.core.localization.buffers;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale)
 

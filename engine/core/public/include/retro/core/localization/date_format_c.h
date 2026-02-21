@@ -16,6 +16,7 @@ extern "C"
     typedef struct Retro_Locale Retro_Locale;
     typedef struct Retro_DecimalFormat Retro_DecimalFormat;
     typedef struct Retro_DateFormat Retro_DateFormat;
+    typedef struct Retro_TimeZone Retro_TimeZone;
 
     RETRO_API Retro_DateFormat *retro_create_date_format(Retro_Locale *locale, int32_t date_format);
 
@@ -31,16 +32,7 @@ extern "C"
 
     RETRO_API void retro_destroy_date_format(Retro_DateFormat *format);
 
-    RETRO_API int32_t retro_time_zone_get_canonical_id(const char16_t *id,
-                                                       int32_t id_length,
-                                                       char16_t *buffer,
-                                                       int32_t length);
-
-    RETRO_API int32_t retro_date_format_get_time_zone_id(Retro_DateFormat *format, char16_t *buffer, int32_t length);
-
-    RETRO_API void retro_date_format_set_time_zone(Retro_DateFormat *format, const char16_t *id, int32_t id_length);
-
-    RETRO_API void retro_date_format_set_default_time_zone(Retro_DateFormat *format);
+    RETRO_API void retro_date_format_set_time_zone(Retro_DateFormat *format, const Retro_TimeZone *time_zone);
 
     RETRO_API void retro_date_format_set_decimal_format(Retro_DateFormat *format,
                                                         const Retro_DecimalFormat *decimal_format);

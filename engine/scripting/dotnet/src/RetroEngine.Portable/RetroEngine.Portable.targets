@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
-        <RetroEngineBackend Condition="'$(RetroEngineBackend)' == ''">Managed</RetroEngineBackend>
+        <RetroEngineBackend Condition="'$(RetroEngineBackend)' == ''">Native</RetroEngineBackend>
     </PropertyGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <PackageReference Include="RetroEngine.Portable.Managed" Version="$(RetroEngineVersion)" />
+    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
+        <PackageReference Include="RetroEngine.Portable.Native" Version="$(RetroEngineVersion)" />
     </ItemGroup>
     <!--
     Custom: user is responsible for referencing their own backend package

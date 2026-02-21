@@ -51,29 +51,29 @@ internal sealed partial class Collator : IDisposable, ICloneable
 
     public static Collator? Create(CultureId id)
     {
-        var collator = NativeOpen(id, out _);
+        var collator = NativeOpen(id);
         return collator != IntPtr.Zero ? new Collator(collator) : null;
     }
 
     object ICloneable.Clone() => Clone();
 
-    public Collator Clone() => new(NativeClone(_collator, out _));
+    public Collator Clone() => new(NativeClone(_collator));
 
     public CollationResult Compare(ReadOnlySpan<char> s1, ReadOnlySpan<char> s2)
     {
         return NativeStrColl(_collator, s1, s1.Length, s2, s2.Length);
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_open")]
-    private static partial IntPtr NativeOpen(CultureId cultureId, out IcuErrorCode errorCode);
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_collator")]
+    private static partial IntPtr NativeOpen(CultureId cultureId);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_close")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_collator")]
     private static partial void NativeClose(IntPtr collator);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_clone")]
-    private static partial IntPtr NativeClone(IntPtr collator, out IcuErrorCode errorCode);
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_clone")]
+    private static partial IntPtr NativeClone(IntPtr collator);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_strcoll")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_compare")]
     private static partial CollationResult NativeStrColl(
         IntPtr collator,
         ReadOnlySpan<char> s1,
@@ -82,7 +82,7 @@ internal sealed partial class Collator : IDisposable, ICloneable
         int s2Len
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "ucol_setStrength")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_set_strength")]
     private static partial void NativeSetStrength(IntPtr collator, CollationStrength strength);
 
     private void ReleaseUnmanagedResources()

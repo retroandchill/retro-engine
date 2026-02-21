@@ -6,7 +6,7 @@
         <RetroEngineVersion>0.1.0</RetroEngineVersion>
         <IsPackable>true</IsPackable>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <RootNamespace>RetroEngine.Portable</RootNamespace>
     </PropertyGroup>

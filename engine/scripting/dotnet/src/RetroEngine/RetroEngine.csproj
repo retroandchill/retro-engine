@@ -5,15 +5,12 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
         <ProjectReference Include="..\RetroEngine.Logging\RetroEngine.Logging.csproj" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />

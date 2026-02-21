@@ -6,7 +6,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;Managed-Debug;Managed-Release</Configurations>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
@@ -21,9 +21,6 @@
     </ItemGroup>
     <ItemGroup>
         <Using Include="NUnit.Framework" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Managed'">
-        <ProjectReference Include="..\..\src\RetroEngine.Portable\RetroEngine.Portable.Managed.csproj" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="..\..\src\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />

@@ -11,6 +11,7 @@
 import std;
 import retro.core.c_api;
 import retro.core.localization.icu;
+import retro.core.localization.buffers;
 
 DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale)
 DECLARE_OPAQUE_C_HANDLE(Retro_DecimalFormat, icu::DecimalFormat)
@@ -119,19 +120,11 @@ Retro_DecimalFormatPrefixAndSuffixResult retro_decimal_format_get_prefix_and_suf
     cpp_format->getNegativePrefix(negative_prefix_str);
     cpp_format->getNegativeSuffix(negative_suffix_str);
 
-    auto get_string_value = [](const icu::UnicodeString &str, std::span<char16_t> buffer)
-    {
-        std::ranges::copy_n(str.begin(),
-                            std::min(str.length(), static_cast<std::int32_t>(buffer.size())),
-                            buffer.begin());
-        return str.length();
-    };
-
     return Retro_DecimalFormatPrefixAndSuffixResult{
-        .positive_prefix_length = get_string_value(positive_prefix_str, positive_prefix_span),
-        .positive_suffix_length = get_string_value(positive_suffix_str, positive_suffix_span),
-        .negative_prefix_length = get_string_value(negative_prefix_str, negative_prefix_span),
-        .negative_suffix_length = get_string_value(negative_suffix_str, negative_suffix_span)};
+        .positive_prefix_length = retro::write_to_output_buffer(positive_prefix_str, positive_prefix_span),
+        .positive_suffix_length = retro::write_to_output_buffer(positive_suffix_str, positive_suffix_span),
+        .negative_prefix_length = retro::write_to_output_buffer(negative_prefix_str, negative_prefix_span),
+        .negative_suffix_length = retro::write_to_output_buffer(negative_suffix_str, negative_suffix_span)};
 }
 
 void retro_decimal_format_set_is_grouping_used(Retro_DecimalFormat *format, const int8_t is_grouping_used)

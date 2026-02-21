@@ -49,26 +49,15 @@ internal sealed partial class DateFormat : IDisposable
     private readonly IntPtr _nativeDateFormat;
     private bool _disposed;
 
-    public string TimeZoneId
+    public TimeZone TimeZone
     {
-        get
-        {
-            Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-            var length = NativeGetTimeZoneId(_nativeDateFormat, buffer, buffer.Length);
-            return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-        }
+        get;
         set
         {
-            if (!string.IsNullOrEmpty(value))
-            {
-                NativeSetTimeZoneId(_nativeDateFormat, value, value.Length);
-            }
-            else
-            {
-                NativeSetTimeZoneId(_nativeDateFormat);
-            }
+            field = value;
+            NativeSetTimeZone(_nativeDateFormat, value.NativePtr);
         }
-    }
+    } = TimeZone.Unknown;
 
     public DecimalFormat NumberFormat
     {
@@ -106,13 +95,6 @@ internal sealed partial class DateFormat : IDisposable
         return nativeDateFormat != IntPtr.Zero ? new DateFormat(nativeDateFormat) : null;
     }
 
-    public static string GetCanonicalTimeZoneId(ReadOnlySpan<char> id)
-    {
-        Span<char> buffer = stackalloc char[Culture.KeywordAndValuesCapacity];
-        var length = NativeGetCanonicalId(id, id.Length, buffer, buffer.Length);
-        return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
-    }
-
     public string Format(double date)
     {
         Span<char> buffer = stackalloc char[256];
@@ -139,22 +121,8 @@ internal sealed partial class DateFormat : IDisposable
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_date_format")]
     private static partial void NativeClose(IntPtr nativeDateFormat);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_time_zone_get_canonical_id")]
-    private static partial int NativeGetCanonicalId(
-        ReadOnlySpan<char> timeZoneId,
-        int timeZoneIdLength,
-        Span<char> result,
-        int resultLength
-    );
-
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_get_time_zone_id")]
-    private static partial int NativeGetTimeZoneId(IntPtr nativeDateFormat, Span<char> result, int resultLength);
-
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_time_zone")]
-    private static partial void NativeSetTimeZoneId(IntPtr nativeDateFormat, ReadOnlySpan<char> buffer, int length);
-
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_default_time_zone")]
-    private static partial void NativeSetTimeZoneId(IntPtr nativeDateFormat);
+    private static partial void NativeSetTimeZone(IntPtr nativeDateFormat, IntPtr nativeTimeZone);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_decimal_format")]
     private static partial void NativeSetNumberFormat(IntPtr nativeDateFormat, IntPtr nativeNumberFormat);

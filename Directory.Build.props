@@ -39,16 +39,6 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)' == 'Managed-Debug'">
-        <RetroEngineBackend>Managed</RetroEngineBackend>
-        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Managed-Release'">
-        <RetroEngineBackend>Managed</RetroEngineBackend>
-        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
-    </PropertyGroup>
-
     <PropertyGroup
             Condition="'$(RetroEngineCasePreservingNames)' == 'true'"
     >

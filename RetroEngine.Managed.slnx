@@ -4,28 +4,21 @@
     <BuildType Name="Dev-Release" />
     <BuildType Name="Pkg-Debug" />
     <BuildType Name="Pkg-Release" />
-    <BuildType Name="Managed-Debug" />
-    <BuildType Name="Managed-Release" />
   </Configurations>
   <Folder Name="/editor/" />
   <Folder Name="/editor/dotnet/">
     <Project Path="editor/dotnet/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
       <BuildType Solution="Dev-Release|*" Project="Debug" />
-      <BuildType Solution="Managed-Release|*" Project="Debug" />
       <BuildType Solution="Pkg-Debug|*" Project="Debug" />
       <BuildType Solution="Pkg-Release|*" Project="Debug" />
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
     <Project Path="editor/dotnet/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
       <BuildType Project="Debug" />
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
     <Project Path="editor/dotnet/RetroEngine.Editor/RetroEngine.Editor.csproj">
       <BuildType Solution="Dev-Release|*" Project="Debug" />
-      <BuildType Solution="Managed-Release|*" Project="Debug" />
       <BuildType Solution="Pkg-Debug|*" Project="Debug" />
       <BuildType Solution="Pkg-Release|*" Project="Debug" />
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/engine/" />
@@ -33,33 +26,19 @@
   <Folder Name="/engine/scripting/dotnet/" />
   <Folder Name="/engine/scripting/dotnet/src/">
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Core/RetroEngine.Core.csproj">
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Host/RetroEngine.Host.csproj">
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Logging/RetroEngine.Logging.csproj">
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj">
-      <BuildType Project="Debug" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj">
-      <BuildType Project="Debug" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.csproj" />
-    <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.Managed.csproj">
-      <Build Solution="Dev-Debug|*" Project="false" />
-      <Build Solution="Dev-Release|*" Project="false" />
-      <Build Solution="Pkg-Debug|*" Project="false" />
-      <Build Solution="Pkg-Release|*" Project="false" />
-    </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine.Portable/RetroEngine.Portable.Native.csproj">
-      <Build Solution="Managed-Debug|*" Project="false" />
-      <Build Solution="Managed-Release|*" Project="false" />
     </Project>
     <Project Path="engine/scripting/dotnet/src/RetroEngine/RetroEngine.csproj">
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/engine/scripting/dotnet/test/">
@@ -69,10 +48,8 @@
   <Folder Name="/game/scripts/">
     <Project Path="game/script/RetroEngine.Game.Sample/RetroEngine.Game.Sample.csproj">
       <BuildType Solution="Dev-Release|*" Project="Debug" />
-      <BuildType Solution="Managed-Release|*" Project="Debug" />
       <BuildType Solution="Pkg-Debug|*" Project="Debug" />
       <BuildType Solution="Pkg-Release|*" Project="Debug" />
-      <Build Solution="Managed-Debug|*" Project="false" />
     </Project>
   </Folder>
 </Solution>

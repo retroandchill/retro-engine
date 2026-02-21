@@ -42,6 +42,8 @@ public sealed partial class Culture
 
     static Culture()
     {
+        InvariantGregorianCalendar = Calendar.Create();
+        InvariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
         InvariantLocale =
             Locale.Create(new CultureId("us-EN-POSIX"))
             ?? Locale.Create(new CultureId(""))
@@ -241,7 +243,7 @@ public sealed partial class Culture
     }
 
     private static readonly Lock InvariantGregorianCalendarLock = new();
-    private static readonly Calendar? InvariantGregorianCalendar = Calendar.Create(CalendarType.Gregorian);
+    private static readonly Calendar? InvariantGregorianCalendar;
 
     private DateFormat? _dateFormat;
     private DateFormat? _timeFormat;
@@ -257,13 +259,14 @@ public sealed partial class Culture
 
         var utcTime = dateTimeOffset.UtcDateTime;
         using var scope = InvariantGregorianCalendarLock.EnterScope();
-        InvariantGregorianCalendar.Set(CalendarDateFields.Year, utcTime.Year);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Month, utcTime.Month - 1);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Date, utcTime.Day);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Hour, utcTime.Hour);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Minute, utcTime.Minute);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Second, utcTime.Second);
-        InvariantGregorianCalendar.Set(CalendarDateFields.Millisecond, utcTime.Millisecond);
+        InvariantGregorianCalendar.Set(
+            utcTime.Year,
+            utcTime.Month - 1,
+            utcTime.Day,
+            utcTime.Hour,
+            utcTime.Minute,
+            utcTime.Second
+        );
         return InvariantGregorianCalendar.Time;
     }
 
@@ -311,9 +314,9 @@ public sealed partial class Culture
         var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
         if (!isDefaultTimeZone)
         {
-            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
-            var defaultTimeZoneId = defaultFormatter.TimeZoneId;
-            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
+            var canonicalInputTimeZoneId = TimeZone.GetCanonicalId(timeZone);
+            var defaultTimeZoneId = defaultFormatter.TimeZone.Id;
+            var canonicalDefaultTimeZoneId = TimeZone.GetCanonicalId(defaultTimeZoneId);
 
             isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
         }
@@ -327,7 +330,7 @@ public sealed partial class Culture
             DateFormat.CreateDate(_locale, dateStyle.ToIcuEnum())
             ?? DateFormat.CreateDate(InvariantLocale, dateStyle.ToIcuEnum())
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        formatter.TimeZoneId = timeZone ?? "";
+        formatter.TimeZone = isDefaultTimeZone ? new TimeZone() : new TimeZone(timeZone);
         return formatter;
     }
 
@@ -339,9 +342,9 @@ public sealed partial class Culture
         var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
         if (!isDefaultTimeZone)
         {
-            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
-            var defaultTimeZoneId = defaultFormatter.TimeZoneId;
-            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
+            var canonicalInputTimeZoneId = TimeZone.GetCanonicalId(timeZone);
+            var defaultTimeZoneId = defaultFormatter.TimeZone.Id;
+            var canonicalDefaultTimeZoneId = TimeZone.GetCanonicalId(defaultTimeZoneId);
 
             isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
         }
@@ -355,7 +358,7 @@ public sealed partial class Culture
             DateFormat.CreateTime(_locale, timeStyle.ToIcuEnum())
             ?? DateFormat.CreateTime(InvariantLocale, timeStyle.ToIcuEnum())
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        formatter.TimeZoneId = timeZone ?? "";
+        formatter.TimeZone = isDefaultTimeZone ? new TimeZone() : new TimeZone(timeZone);
         formatter.NumberFormat = DateTimeDecimalFormat;
         return formatter;
     }
@@ -372,9 +375,9 @@ public sealed partial class Culture
         var isDefaultTimeZone = string.IsNullOrWhiteSpace(timeZone);
         if (!isDefaultTimeZone)
         {
-            var canonicalInputTimeZoneId = DateFormat.GetCanonicalTimeZoneId(timeZone);
-            var defaultTimeZoneId = defaultFormatter.TimeZoneId;
-            var canonicalDefaultTimeZoneId = DateFormat.GetCanonicalTimeZoneId(defaultTimeZoneId);
+            var canonicalInputTimeZoneId = TimeZone.GetCanonicalId(timeZone);
+            var defaultTimeZoneId = defaultFormatter.TimeZone.Id;
+            var canonicalDefaultTimeZoneId = TimeZone.GetCanonicalId(defaultTimeZoneId);
 
             isDefaultTimeZone = canonicalInputTimeZoneId == canonicalDefaultTimeZoneId;
         }
@@ -389,7 +392,7 @@ public sealed partial class Culture
             DateFormat.CreateTime(_locale, timeStyle.ToIcuEnum())
             ?? DateFormat.CreateTime(InvariantLocale, timeStyle.ToIcuEnum())
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        formatter.TimeZoneId = timeZone ?? "";
+        formatter.TimeZone = isDefaultTimeZone ? new TimeZone() : new TimeZone(timeZone);
         formatter.NumberFormat = DateTimeDecimalFormat;
         return formatter;
     }
@@ -401,7 +404,7 @@ public sealed partial class Culture
         if (dateFormat is null)
             return GetDateTimeFormatter(DateTimeFormatStyle.Default, DateTimeFormatStyle.Default, timeZone);
 
-        dateFormat.TimeZoneId = timeZone ?? "";
+        dateFormat.TimeZone = string.IsNullOrEmpty(timeZone) ? new TimeZone() : new TimeZone(timeZone);
         dateFormat.NumberFormat = DateTimeDecimalFormat;
         return dateFormat;
     }
@@ -412,7 +415,7 @@ public sealed partial class Culture
             DateFormat.CreateDate(locale, DateFormatStyle.Default)
             ?? DateFormat.CreateDate(InvariantLocale, DateFormatStyle.Default)
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        dateFormat.TimeZoneId = "";
+        dateFormat.TimeZone = new TimeZone();
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }
@@ -423,7 +426,7 @@ public sealed partial class Culture
             DateFormat.CreateTime(locale, DateFormatStyle.Default)
             ?? DateFormat.CreateTime(InvariantLocale, DateFormatStyle.Default)
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        dateFormat.TimeZoneId = "";
+        dateFormat.TimeZone = new TimeZone();
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }
@@ -434,7 +437,7 @@ public sealed partial class Culture
             DateFormat.CreateDateTime(locale, DateFormatStyle.Default, DateFormatStyle.Default)
             ?? DateFormat.CreateDateTime(InvariantLocale, DateFormatStyle.Default, DateFormatStyle.Default)
             ?? throw new InvalidOperationException("Invariant culture date formatter is null.");
-        dateFormat.TimeZoneId = "";
+        dateFormat.TimeZone = new TimeZone();
         dateFormat.NumberFormat = numberFormat;
         return dateFormat;
     }
@@ -451,7 +454,20 @@ public sealed partial class Culture
             TextPluralType.Ordinal => _ordinalPluralRules,
             _ => throw new ArgumentOutOfRangeException(nameof(pluralType), pluralType, null),
         };
-        var formTag = rules.Select(double.CreateTruncating(value));
+        var formTag = value switch
+        {
+            sbyte i8 => rules.Select(i8),
+            short i16 => rules.Select(i16),
+            int i32 => rules.Select(i32),
+            long i64 => rules.Select(i64),
+            byte u8 => rules.Select(u8),
+            ushort u16 => rules.Select(u16),
+            uint u32 => rules.Select(u32),
+            ulong u64 => rules.Select(u64),
+            float f32 => rules.Select(f32),
+            double f64 => rules.Select(f64),
+            _ => throw new ArgumentOutOfRangeException(nameof(value), value, null),
+        };
         return GetPluralForm(formTag);
     }
 

@@ -18,9 +18,6 @@
                           ReferenceOutputAssembly="false"/>
     </ItemGroup>
     <ItemGroup>
-        <Compile Remove="Strings\NameTable.cs"/>
-    </ItemGroup>
-    <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
         <PackageReference Include="Superpower" />
