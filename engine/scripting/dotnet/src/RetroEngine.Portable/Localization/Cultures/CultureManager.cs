@@ -3,18 +3,16 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-public sealed partial class CultureManager
+public sealed class CultureManager
 {
     internal readonly record struct IcuCultureData(
         string Name,
@@ -53,7 +51,8 @@ public sealed partial class CultureManager
     private bool _cultureMappingsInitialized;
     private readonly Dictionary<string, string> _cultureMappings = new();
 
-    private bool _allowedCulturesInitialized;
+    [MemberNotNullWhen(true, nameof(_allowedCulturesFilter))]
+    private bool AllowedCulturesInitialized => _allowedCulturesFilter is not null;
     private CultureFilter? _allowedCulturesFilter;
 
     private readonly Lock _cachedCulturesLock = new();
@@ -70,7 +69,7 @@ public sealed partial class CultureManager
         ImmutableArray<(Name Name, string Culture)> AssetGroups
     );
 
-    public Culture CurrentCulture { get; }
+    public Culture CurrentCulture => CurrentLanguage;
 
     private CultureManager()
     {
@@ -79,7 +78,6 @@ public sealed partial class CultureManager
         _cultureMappingsInitialized = false;
         ConditionalInitializeCultureMappings();
 
-        _allowedCulturesInitialized = false;
         ConditionalIntializeAllowedCultures();
 
         InvariantCulture = FindCanonizedCulture("en-US-POSIX") ?? FindOrMakeCanonizedCulture("");
@@ -100,7 +98,7 @@ public sealed partial class CultureManager
         _invariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
     }
 
-    public static CultureManager Instance { get; }
+    public static CultureManager Instance { get; } = new();
 
     public bool SetCurrentCulture(string cultureName)
     {
@@ -338,7 +336,6 @@ public sealed partial class CultureManager
         _cultureMappings.Clear();
         ConditionalInitializeCultureMappings();
 
-        _allowedCulturesInitialized = false;
         _allowedCulturesFilter = null;
         ConditionalIntializeAllowedCultures();
     }
@@ -348,18 +345,140 @@ public sealed partial class CultureManager
         get { return _availableCultures.Select(x => x.Name).Concat(_customCultures.Select(x => x.Name)); }
     }
 
-    public IEnumerable<string> GetPrioritizedCultureNames(string name);
+    public List<string> GetPrioritizedCultureNames(string name)
+    {
+        var givenCulture = IsCultureRemapped(name, out var mappedCulture)
+            ? mappedCulture
+            : Culture.GetCanonicalName(name, this);
 
-    public IEnumerable<string> GetAvailableCulture(IEnumerable<string> inCultureNames, bool includeDerivedCultures);
+        var prioritizedCultureNames = new List<string>();
 
-    public void RefreshCultureDisplayNames(IEnumerable<string> prioritizedDisplayCultureNames);
+        var givenCultureData = PopulateCultureData(givenCulture);
+        if (givenCultureData is not null)
+        {
+            var parentCultureData = new List<IcuCultureData>();
+            if (
+                string.IsNullOrEmpty(givenCultureData.Value.ScriptCode)
+                && !string.IsNullOrEmpty(givenCultureData.Value.CountryCode)
+            )
+            {
+                if (
+                    _availableLanguagesToSubCulturesMap.TryGetValue(
+                        givenCultureData.Value.LanguageCode,
+                        out var culturesForLanguage
+                    )
+                )
+                {
+                    parentCultureData.AddRange(
+                        culturesForLanguage
+                            .Select(cultureIndex => _availableCultures[cultureIndex])
+                            .Where(cultureData =>
+                                !string.IsNullOrEmpty(cultureData.ScriptCode)
+                                && cultureData.CountryCode == givenCultureData.Value.CountryCode
+                            )
+                    );
+                }
+            }
+
+            if (parentCultureData.Count == 0)
+            {
+                parentCultureData.Add(givenCultureData.Value);
+            }
+
+            var prioritizedCultureData = new List<IcuCultureData>(parentCultureData.Count + 3);
+            foreach (var cultureData in parentCultureData)
+            {
+                var prioritizedParentCultures = Culture.GetPrioritizedParentCultureNames(
+                    cultureData.LanguageCode,
+                    cultureData.ScriptCode,
+                    cultureData.CountryCode
+                );
+                foreach (var prioritizedParentCulture in prioritizedParentCultures)
+                {
+                    var prioritizedParentCultureData = PopulateCultureData(prioritizedParentCulture);
+                    if (
+                        prioritizedParentCultureData is not null
+                        && !prioritizedCultureData.Contains(prioritizedParentCultureData.Value)
+                    )
+                    {
+                        prioritizedCultureData.Add(prioritizedParentCultureData.Value);
+                    }
+                }
+            }
+
+            var preferTraditionalChinese = givenCultureData.Value.CountryCode is "HK" or "MO";
+            prioritizedCultureData.Sort(
+                (a, b) =>
+                {
+                    var dataOneSortWeight =
+                        (string.IsNullOrEmpty(a.CountryCode) ? 0 : 4)
+                        + (string.IsNullOrEmpty(a.ScriptCode) ? 0 : 2)
+                        + (preferTraditionalChinese && a.ScriptCode == "Hant" ? 1 : 0);
+                    var dataTwoSortWeight =
+                        (string.IsNullOrEmpty(b.CountryCode) ? 0 : 4)
+                        + (string.IsNullOrEmpty(b.ScriptCode) ? 0 : 2)
+                        + (preferTraditionalChinese && b.ScriptCode == "Hant" ? 1 : 0);
+                    return dataOneSortWeight >= dataTwoSortWeight ? 1 : -1;
+                }
+            );
+
+            prioritizedCultureNames.EnsureCapacity(prioritizedCultureData.Count);
+            prioritizedCultureNames.AddRange(
+                prioritizedCultureData
+                    .Where(cultureData => IsCultureAllowed(cultureData.Name))
+                    .Select(cultureData => cultureData.Name)
+            );
+        }
+
+        if (prioritizedCultureNames.Count == 0)
+        {
+            prioritizedCultureNames.Add("en");
+        }
+
+        return prioritizedCultureNames;
+
+        IcuCultureData? PopulateCultureData(string cultureName)
+        {
+            if (_availableCulturesMap.TryGetValue(cultureName, out var cultureDataIndex))
+            {
+                return _availableCultures[cultureDataIndex];
+            }
+
+            var culture = FindCanonizedCulture(cultureName);
+            if (culture is not null)
+            {
+                return new IcuCultureData(
+                    culture.Name,
+                    culture.TwoLetterISOLanguageName,
+                    culture.Script,
+                    culture.Region
+                );
+            }
+
+            return null;
+        }
+    }
+
+    public IEnumerable<string> GetAvailableCultures(ICollection<string> cultureNames, bool includeDerivedCultures)
+    {
+        if (includeDerivedCultures)
+        {
+            return CultureNames
+                .Select(GetCulture)
+                .OfType<Culture>()
+                .SelectMany(c => c.PrioritizedParentCultureNames.Where(cultureNames.Contains))
+                .Distinct();
+        }
+
+        return cultureNames.Where(c => GetCulture(c) is not null).Distinct();
+    }
 
     public void HandleLanguageChanged(Culture newLanguage)
     {
         Locale.SetDefaultLocale(newLanguage.Name);
 
         _cachedPrioritizedDisplayCultureNames.Clear();
-        _cachedPrioritizedDisplayCultureNames.AddRange(newLanguage.PrioritizedParentCultureName);
+        _cachedPrioritizedDisplayCultureNames.AddRange(newLanguage.PrioritizedParentCultureNames);
 
         using var scope = _cachedCulturesLock.EnterScope();
         foreach (var (_, culture) in _cachedCultures)
@@ -368,9 +487,27 @@ public sealed partial class CultureManager
         }
     }
 
-    public IEnumerable<string> GetPrioritizedCultureNames(string name);
+    public double DateTimeOffsetToIcuDate(DateTimeOffset dateTimeOffset)
+    {
+        const int millisPerSecond = 1000;
+        if (_invariantGregorianCalendar is null)
+        {
+            var unixTimestamp = dateTimeOffset.ToUnixTimeMilliseconds();
+            return (double)unixTimestamp / millisPerSecond;
+        }
 
-    public double DateTimeOffsetToIcuDate(DateTimeOffset dateTime);
+        var utcTime = dateTimeOffset.UtcDateTime;
+        using var scope = _invariantGregorianCalendarLock.EnterScope();
+        _invariantGregorianCalendar.Set(
+            utcTime.Year,
+            utcTime.Month - 1,
+            utcTime.Day,
+            utcTime.Hour,
+            utcTime.Minute,
+            utcTime.Second
+        );
+        return _invariantGregorianCalendar.Time;
+    }
 
     private void InitializeAvailableCultures()
     {
@@ -380,7 +517,38 @@ public sealed partial class CultureManager
         _availableCulturesMap.EnsureCapacity(availableLocales.Length);
         _availableLanguagesToSubCulturesMap.EnsureCapacity(availableLocales.Length);
 
-        var appendCultureData = (string cultureName, string languageCode, string scriptCode, string countryCode) =>
+        foreach (var locale in availableLocales)
+        {
+            var language = locale.TwoLetterISOLanguageName;
+            var script = locale.Script;
+            var country = locale.Region;
+
+            AppendCultureData(script, language, "", "");
+            if (!string.IsNullOrEmpty(country))
+            {
+                AppendCultureData(Culture.CreateCultureName(language, "", country), language, "", country);
+            }
+
+            if (!string.IsNullOrEmpty(script))
+            {
+                AppendCultureData(Culture.CreateCultureName(language, script, ""), language, script, "");
+            }
+
+            if (!string.IsNullOrEmpty(country) && !string.IsNullOrEmpty(script))
+            {
+                AppendCultureData(Culture.CreateCultureName(language, script, country), language, script, country);
+            }
+        }
+
+        foreach (var language in Locale.GetAvailableLanguageIds().Select(x => x.ToLowerInvariant()))
+        {
+            AppendCultureData(language, language, "", "");
+        }
+
+        AppendCultureData("en-US-POSIX", "en", "", "US-POSIX");
+        return;
+
+        void AppendCultureData(string cultureName, string languageCode, string scriptCode, string countryCode)
         {
             if (_availableCulturesMap.ContainsKey(cultureName))
                 return;
@@ -398,59 +566,83 @@ public sealed partial class CultureManager
 
             var cultureData = new IcuCultureData(cultureName, languageCode, scriptCode, countryCode);
             _availableCultures.Add(cultureData);
-        };
-
-        foreach (var locale in availableLocales)
-        {
-            var language = locale.TwoLetterISOLanguageName;
-            var script = locale.Script;
-            var country = locale.Region;
-
-            appendCultureData(script, language, "", "");
-            if (!string.IsNullOrEmpty(country))
-            {
-                appendCultureData(Culture.CreateCultureName(language, "", country), language, "", country);
-            }
-
-            if (!string.IsNullOrEmpty(script))
-            {
-                appendCultureData(Culture.CreateCultureName(language, script, ""), language, script, "");
-            }
-
-            if (!string.IsNullOrEmpty(country) && !string.IsNullOrEmpty(script))
-            {
-                appendCultureData(Culture.CreateCultureName(language, script, country), language, script, country);
-            }
         }
-
-        foreach (var language in Locale.GetAvailableLanguageIds().Select(x => x.ToLowerInvariant()))
-        {
-            appendCultureData(language, language, "", "");
-        }
-
-        appendCultureData("en-US-POSIX", "en", "", "US-POSIX");
     }
 
-    private void ConditionalInitializeCultureMappings();
+    private void ConditionalInitializeCultureMappings()
+    {
+        // TODO: Once configs are in place, we need to go back and set this up
+        if (_cultureMappingsInitialized)
+        {
+            return;
+        }
+
+        _cultureMappingsInitialized = true;
+    }
 
     [MemberNotNull(nameof(_allowedCulturesFilter))]
-    private void ConditionalIntializeAllowedCultures();
+    private void ConditionalIntializeAllowedCultures()
+    {
+        if (AllowedCulturesInitialized)
+        {
+            return;
+        }
 
-    private Culture? FindCulture(string name);
+        _allowedCulturesFilter = new CultureFilter(_availableCulturesMap.Keys.ToHashSet());
+    }
 
-    private Culture FindOrMakeCulture(string name);
+    private Culture? FindCulture(string name)
+    {
+        return FindCanonizedCulture(Culture.GetCanonicalName(name, this));
+    }
 
-    private Culture? FindCanonizedCulture(string name);
+    private Culture FindOrMakeCulture(string name)
+    {
+        return FindOrMakeCanonizedCulture(Culture.GetCanonicalName(name, this));
+    }
 
-    private Culture FindOrMakeCanonizedCulture(string name);
+    private Culture? FindCanonizedCulture(string name)
+    {
+        using (_cachedCulturesLock.EnterScope())
+        {
+            if (_cachedCultures.TryGetValue(name, out var culture))
+            {
+                return culture;
+            }
+        }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_icu_version")]
-    private static partial uint NativeGetIcuVersion();
+        Culture? newCulture;
 
-    [LibraryImport(
-        NativeLibraries.RetroCore,
-        EntryPoint = "retro_set_icu_data_directory",
-        StringMarshalling = StringMarshalling.Utf8
-    )]
-    private static partial void NativeSetIcuDataDirectory(string directory);
+        var customCulture = GetCustomCulture(name);
+        if (customCulture is not null)
+        {
+            newCulture = customCulture;
+        }
+        else if (_availableCulturesMap.ContainsKey(name))
+        {
+            newCulture = new Culture(name);
+        }
+        else
+        {
+            // TODO: We should load from resources but that is not currently set up
+            newCulture = null;
+        }
+
+        if (newCulture is null)
+            return newCulture;
+
+        newCulture.RefreshCultureDisplayNames(CollectionsMarshal.AsSpan(_cachedPrioritizedDisplayCultureNames), false);
+
+        using (_cachedCulturesLock.EnterScope())
+        {
+            _cachedCultures[name] = newCulture;
+        }
+
+        return newCulture;
+    }
+
+    private Culture FindOrMakeCanonizedCulture(string name)
+    {
+        return FindCanonizedCulture(name) ?? new Culture(name);
+    }
 }

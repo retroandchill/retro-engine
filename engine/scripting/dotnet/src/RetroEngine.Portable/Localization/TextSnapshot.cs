@@ -9,7 +9,7 @@ internal readonly struct TextSnapshot
 {
     private readonly ITextData? _textData;
     private readonly string? _localizedString;
-    private readonly TextRevision _revision;
+    private readonly TextRevisions _revisions;
     private readonly TextFlag _flags;
 
     public TextSnapshot() { }
@@ -18,7 +18,7 @@ internal readonly struct TextSnapshot
     {
         _textData = text.TextData;
         _localizedString = text.TextData.History.DisplayString;
-        _revision = GetHistoryForText(text);
+        _revisions = GetHistoryForText(text);
         _flags = text.Flags;
     }
 
@@ -29,7 +29,7 @@ internal readonly struct TextSnapshot
         return _textData is not null
             && _textData == text.TextData
             && _localizedString == text.TextData.LocalizedString
-            && _revision == GetHistoryForText(text)
+            && _revisions == GetHistoryForText(text)
             && _flags == text.Flags;
     }
 
@@ -38,12 +38,12 @@ internal readonly struct TextSnapshot
         text.Rebuild();
 
         return _textData is not null
-            && _revision == GetHistoryForText(text)
+            && _revisions == GetHistoryForText(text)
             && string.Equals(_localizedString, text.TextData.LocalizedString, StringComparison.Ordinal);
     }
 
-    private static TextRevision GetHistoryForText(Text text)
+    private static TextRevisions GetHistoryForText(Text text)
     {
-        return text.IsEmpty || text.IsCultureInvariant ? new TextRevision(0, 0) : text.TextData.Revision;
+        return text.IsEmpty || text.IsCultureInvariant ? new TextRevisions(0, 0) : text.TextData.Revisions;
     }
 }

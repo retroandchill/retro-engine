@@ -33,7 +33,7 @@ public sealed class Culture
     public string Variant { get; }
     public bool IsRightToLeft { get; }
 
-    public IEnumerable<string> PrioritizedParentCultureName =>
+    public IEnumerable<string> PrioritizedParentCultureNames =>
         GetPrioritizedParentCultureNames(TwoLetterISOLanguageName, Script, Region);
 
     public static Culture CurrentCulture { get; }
@@ -127,6 +127,11 @@ public sealed class Culture
         }
 
         yield return languageCode;
+    }
+
+    internal static string GetCanonicalName(string name, CultureManager cultureManager)
+    {
+        return CultureUtilities.GetCanonicalName(name, "en-US-POSIX", cultureManager);
     }
 
     private readonly Lock _decimalNumberFormattingRulesLock = new();
@@ -552,7 +557,7 @@ public sealed class Culture
 
         EnglishName = ApplyCultureDisplayNameSubstitutes(["en"], _locale.EnglishName);
 
-        var prioritizedParentCultureName = PrioritizedParentCultureName.ToArray();
+        var prioritizedParentCultureName = PrioritizedParentCultureNames.ToArray();
 
         var displayLanguage = _locale.DisplayLanguage;
         var displayRegion = _locale.DisplayCountry;

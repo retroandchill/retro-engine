@@ -7,7 +7,7 @@ using RetroEngine.Portable.Localization.History;
 
 namespace RetroEngine.Portable.Localization;
 
-public readonly record struct TextRevision(ushort Global, ushort Local);
+public readonly record struct TextRevisions(ushort Global, ushort Local);
 
 internal interface ITextData
 {
@@ -17,7 +17,7 @@ internal interface ITextData
 
     string? LocalizedString { get; }
 
-    TextRevision Revision { get; }
+    TextRevisions Revisions { get; }
 
     TextHistory History { get; }
 }

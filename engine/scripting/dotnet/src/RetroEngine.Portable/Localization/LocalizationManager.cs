@@ -289,7 +289,7 @@ public sealed class LocalizationManager
         throw new NotImplementedException();
     }
 
-    public TextRevision GetTextRevisions(TextId textId)
+    public TextRevisions GetTextRevisions(TextId textId)
     {
         throw new NotImplementedException();
     }
