@@ -268,24 +268,20 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return this with { Flags = Flags | TextFlag.CultureInvariant };
     }
 
+    public static Text AsLocalizable(TextKey @namespace, TextKey key, string str)
+    {
+        return !string.IsNullOrEmpty(str) ? TextCache.Instance.FindOrCache(str, new TextId(@namespace, key)) : Empty;
+    }
+
     public static Text AsLocalizable(TextKey @namespace, TextKey key, ReadOnlySpan<char> str)
     {
-        throw new NotImplementedException();
+        return !str.IsEmpty ? TextCache.Instance.FindOrCache(str, new TextId(@namespace, key)) : Empty;
     }
 
-    public static Text AsLocalizable(ReadOnlySpan<char> @namespace, ReadOnlySpan<char> key, ReadOnlySpan<char> str)
+    public static Text? FindTextInLiveTable(TextKey @namespace, TextKey key, string? sourceString = null)
     {
-        return AsLocalizable(new TextKey(@namespace), new TextKey(key), str);
-    }
-
-    public static bool FindTextInLiveTable(
-        TextKey @namespace,
-        TextKey key,
-        out Text result,
-        string? sourceString = null
-    )
-    {
-        throw new NotImplementedException();
+        var foundString = LocalizationManager.Instance.FindDisplayString(@namespace, key, sourceString);
+        return foundString is not null ? new Text(new TextHistoryBase(new TextId(@namespace, key), foundString)) : null;
     }
 
     public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)

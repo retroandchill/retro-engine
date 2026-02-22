@@ -13,7 +13,7 @@ internal class TextKeyRegistry
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly Dictionary<int, uint> _stringToId = new();
     private readonly Dictionary<uint, string> _idToString = new();
-    private uint _nextId = 0;
+    private uint _nextId;
 
     private TextKeyRegistry() { }
 

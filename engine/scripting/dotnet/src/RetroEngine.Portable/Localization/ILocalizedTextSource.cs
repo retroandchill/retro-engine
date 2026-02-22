@@ -3,23 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Globalization;
-
 namespace RetroEngine.Portable.Localization;
-
-public enum LocalizedTextSourceCategory : byte
-{
-    Game,
-    Engine,
-    Editor,
-}
-
-public enum QueryLocalizedResourceResult : byte
-{
-    Found,
-    NotFound,
-    NotImplemented,
-}
 
 [Flags]
 public enum LocalizationLoadFlags : byte
@@ -30,8 +14,7 @@ public enum LocalizationLoadFlags : byte
     Game = 1 << 2,
     Engine = 1 << 3,
     Additional = 1 << 4,
-    ForceLocalizedGame = 1 << 5,
-    SkipExisting = 1 << 6,
+    SkipExisting = 1 << 5,
 }
 
 public static class LocalizedTextSourcePriority
@@ -47,44 +30,22 @@ public interface ILocalizedTextSource
 {
     int Priority => LocalizedTextSourcePriority.Normal;
 
-    string? GetNativeCultureName(LocalizedTextSourceCategory category);
+    string? NativeCultureName { get; }
 
     void GetLocalizedCultureNames(LocalizationLoadFlags flags, ISet<string> localizedCultureNames);
 
     void LoadLocalizedResources(
         LocalizationLoadFlags loadFlags,
-        ReadOnlySpan<string> prioritizedCultures,
+        IReadOnlyList<string> prioritizedCultures,
         TextLocalizationResource nativeResource,
         TextLocalizationResource localizedResource
     );
 
-    QueryLocalizedResourceResult QueryLocalizedResource(
+    ValueTask LoadLocalizedResourcesAsync(
         LocalizationLoadFlags loadFlags,
-        ReadOnlySpan<string> prioritizedCultures,
-        TextId textId,
+        IReadOnlyList<string> prioritizedCultures,
         TextLocalizationResource nativeResource,
-        TextLocalizationResource localizedResource
-    )
-    {
-        return QueryLocalizedResourceResult.NotImplemented;
-    }
-}
-
-public static class LocalizedTextSourceExtensions
-{
-    extension(LocalizationLoadFlags loadFlags)
-    {
-        public bool ShouldLoadNative => loadFlags.HasFlag(LocalizationLoadFlags.Native);
-
-        public bool ShouldLoadEditor => loadFlags.HasFlag(LocalizationLoadFlags.Editor);
-        public bool ShouldLoadGame =>
-            loadFlags.HasFlag(LocalizationLoadFlags.Game) | loadFlags.HasFlag(LocalizationLoadFlags.ForceLocalizedGame);
-
-        public bool ShouldLoadEngine => loadFlags.HasFlag(LocalizationLoadFlags.Engine);
-
-        public bool ShouldLoadAdditional => loadFlags.HasFlag(LocalizationLoadFlags.Additional);
-
-        public bool ShouldLoadNativeGameData =>
-            App.IsEditor && !loadFlags.HasFlag(LocalizationLoadFlags.ForceLocalizedGame);
-    }
+        TextLocalizationResource localizedResource,
+        CancellationToken cancellationToken = default
+    );
 }
