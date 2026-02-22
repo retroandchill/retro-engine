@@ -1,6 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 using RetroEngine.Core.Async;
 using RetroEngine.Logging;
+using RetroEngine.Portable.Localization;
+using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
 using ZLinq;
 
@@ -8,7 +10,8 @@ namespace RetroEngine;
 
 public sealed partial class Engine : IDisposable
 {
-    private readonly GameThreadSynchronizationContext _synchronizationContext;
+    private readonly CultureManager.LifetimeScope _cultureScope = new();
+    private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
 
@@ -18,9 +21,10 @@ public sealed partial class Engine : IDisposable
 
     private Engine()
     {
-        _synchronizationContext = new GameThreadSynchronizationContext();
         _synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
         SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+
+        LocalizationManager.Instance.ThreadSync = _synchronizationContext;
     }
 
     public static Engine Create()
@@ -68,6 +72,7 @@ public sealed partial class Engine : IDisposable
     {
         _synchronizationContext.Dispose();
         SynchronizationContext.SetSynchronizationContext(null);
+        _cultureScope.Dispose();
     }
 
     private const string LibraryName = "retro_runtime";

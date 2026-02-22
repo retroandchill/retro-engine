@@ -37,6 +37,12 @@ public sealed partial class LocalizationManager
     private readonly List<ILocalizedTextSource> _localizedTextSources = [];
     private readonly AsyncSerialQueue _updateQueue = new();
 
+    public IThreadSync? ThreadSync
+    {
+        get;
+        set => Interlocked.Exchange(ref field, value);
+    }
+
     private LocalizationManager()
     {
         CultureManager.Instance.OnCultureChanged += OnCultureChanged;
@@ -379,6 +385,13 @@ public sealed partial class LocalizationManager
             _localTextRevisions.Clear();
         }
 
-        OnTextRevisionChanged?.Invoke();
+        if (ThreadSync is null || ThreadSync.SyncThreadId == Environment.CurrentManagedThreadId)
+        {
+            OnTextRevisionChanged?.Invoke();
+        }
+        else if (OnTextRevisionChanged is not null)
+        {
+            ThreadSync.RunOnPrimaryThread(OnTextRevisionChanged);
+        }
     }
 }

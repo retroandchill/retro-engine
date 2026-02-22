@@ -4,15 +4,16 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
+using RetroEngine.Portable.Async;
 
 namespace RetroEngine.Core.Async;
 
-public sealed class GameThreadSynchronizationContext : SynchronizationContext, IDisposable
+public sealed class GameThreadSynchronizationContext : SynchronizationContext, IThreadSync, IDisposable
 {
-    private readonly int _gameThreadId = Environment.CurrentManagedThreadId;
     private readonly ConcurrentQueue<(SendOrPostCallback Callback, object? State)> _workItems = new();
 
-    public bool IsOnGameThread => _gameThreadId == Environment.CurrentManagedThreadId;
+    public int SyncThreadId { get; } = Environment.CurrentManagedThreadId;
+    public bool IsOnGameThread => SyncThreadId == Environment.CurrentManagedThreadId;
 
     public event Action<Exception>? UnhandledException;
 
@@ -59,6 +60,148 @@ public sealed class GameThreadSynchronizationContext : SynchronizationContext, I
         }
 
         return processed;
+    }
+
+    public void RunOnPrimaryThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        if (IsOnGameThread)
+        {
+            action();
+            return;
+        }
+
+        Post(
+            state =>
+            {
+                var act = (Action)state!;
+                act();
+            },
+            action
+        );
+    }
+
+    public void RunOnPrimaryThread(Func<Task> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (IsOnGameThread)
+        {
+            action()
+                .ContinueWith(
+                    t =>
+                    {
+                        if (t is { IsFaulted: true, Exception: { } ex })
+                        {
+                            RunOnPrimaryThread(() =>
+                            {
+                                var flatten = ex.Flatten();
+                                UnhandledException?.Invoke(flatten);
+                            });
+                        }
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default
+                );
+            return;
+        }
+
+        // ReSharper disable once AsyncVoidLambda
+        Post(
+            static state =>
+            {
+                var (act, self) = ((Func<Task>, GameThreadSynchronizationContext))state!;
+                act()
+                    .ContinueWith(
+                        t =>
+                        {
+                            if (t is { IsFaulted: true, Exception: { } ex })
+                            {
+                                self.RunOnPrimaryThread(() =>
+                                {
+                                    var flatten = ex.Flatten();
+                                    self.UnhandledException?.Invoke(flatten);
+                                });
+                            }
+                        },
+                        CancellationToken.None,
+                        TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default
+                    );
+            },
+            action
+        );
+    }
+
+    public Task RunOnPrimaryThreadAsync(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (IsOnGameThread)
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        var tcs = new TaskCompletionSource();
+        Post(
+            static stateObj =>
+            {
+                var (act, tcsLocal, ctx) = ((Action, TaskCompletionSource, GameThreadSynchronizationContext))stateObj!;
+
+                try
+                {
+                    act();
+                    tcsLocal.SetResult();
+                }
+                catch (Exception ex)
+                {
+                    ctx.UnhandledException?.Invoke(ex);
+                    tcsLocal.SetException(ex);
+                }
+            },
+            (action, tcs, this)
+        );
+
+        return tcs.Task;
+    }
+
+    public Task RunOnPrimaryThreadAsync(Func<Task> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (IsOnGameThread)
+        {
+            return action();
+        }
+
+        var tcs = new TaskCompletionSource();
+
+        Post(
+            static stateObj =>
+            {
+                var (func, tcsLocal, ctx) = ((Func<Task>, TaskCompletionSource, GameThreadSynchronizationContext))
+                    stateObj!;
+
+                func()
+                    .ContinueWith(t =>
+                    {
+                        if (t is { IsFaulted: true, Exception: { } ex })
+                        {
+                            ctx.UnhandledException?.Invoke(ex);
+                            tcsLocal.SetException(ex);
+                        }
+                        else
+                        {
+                            tcsLocal.SetResult();
+                        }
+                    });
+            },
+            (action, tcs, this)
+        );
+
+        return tcs.Task;
     }
 
     public void Dispose()
