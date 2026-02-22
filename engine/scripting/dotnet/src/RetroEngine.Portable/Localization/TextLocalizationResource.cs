@@ -3,6 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.IO.Hashing;
+using System.Runtime.InteropServices;
+using Serilog;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Portable.Localization;
@@ -15,9 +18,10 @@ public partial struct TextLocalizationMetaDataResource()
     public bool IsUGC { get; set; }
 
     [CreateSyncVersion]
-    public ValueTask<bool> LoadFromFileAsync(string filePath, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> LoadFromFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await using var stream = File.OpenRead(filePath);
+        return await LoadFromStreamAsync(stream, cancellationToken);
     }
 
     [CreateSyncVersion]
@@ -27,13 +31,22 @@ public partial struct TextLocalizationMetaDataResource()
     }
 
     [CreateSyncVersion]
-    public ValueTask<bool> SaveToFileAsync(string filePath, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> SaveToFileAsync(
+        string filePath,
+        string locMetaId,
+        CancellationToken cancellationToken = default
+    )
     {
-        throw new NotImplementedException();
+        await using var stream = File.OpenWrite(filePath);
+        return await SaveToStreamAsync(stream, locMetaId, cancellationToken);
     }
 
     [CreateSyncVersion]
-    public ValueTask<bool> SaveToStreamAsync(Stream stream, CancellationToken cancellationToken = default)
+    public ValueTask<bool> SaveToStreamAsync(
+        Stream stream,
+        string locMetaId,
+        CancellationToken cancellationToken = default
+    )
     {
         throw new NotImplementedException();
     }
@@ -54,19 +67,23 @@ public sealed partial class TextLocalizationResource
 
     public static uint HashString(ReadOnlySpan<char> str)
     {
-        throw new NotImplementedException();
+        var crc = new Crc32();
+        crc.Append(MemoryMarshal.AsBytes(str));
+        ReadOnlySpan<char> hash = ['\0'];
+        crc.Append(MemoryMarshal.AsBytes(hash));
+        return crc.GetCurrentHashAsUInt32();
     }
 
     public void AddEntry(
         TextKey @namespace,
         TextKey key,
-        string sourceString,
+        ReadOnlySpan<char> sourceString,
         string localizedString,
         int priority,
         TextKey locResId = default
     )
     {
-        throw new NotImplementedException();
+        AddEntry(@namespace, key, HashString(sourceString), localizedString, priority, locResId);
     }
 
     public void AddEntry(
@@ -78,29 +95,53 @@ public sealed partial class TextLocalizationResource
         TextKey locResId = default
     )
     {
-        throw new NotImplementedException();
+        var newEntry = new Entry
+        {
+            LocResId = locResId,
+            LocalizationTargetPathId = TextLocalizationResourceUtil.GetLocalizationTargetPathIdFromLocResId(locResId),
+            SourceStringHash = sourceStringHash,
+            LocalizedString = localizedString,
+            Priority = priority,
+        };
+
+        var textId = new TextId(@namespace, key);
+        if (_entries.TryGetValue(textId, out var existingEntry))
+        {
+            if (ShouldReplaceEntry(@namespace, key, existingEntry, newEntry))
+            {
+                _entries[textId] = newEntry;
+            }
+        }
+        else
+        {
+            _entries.Add(textId, newEntry);
+        }
     }
 
-    public bool IsEmpty => throw new NotImplementedException();
+    public bool IsEmpty => _entries.Count == 0;
 
     [CreateSyncVersion]
-    public ValueTask LoadFromDirectoryAsync(
+    public async ValueTask LoadFromDirectoryAsync(
         string directoryPath,
         int priority,
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        foreach (var filePath in Directory.EnumerateFiles(directoryPath, "*.locres"))
+        {
+            await LoadFromFileAsync(filePath, priority, cancellationToken);
+        }
     }
 
     [CreateSyncVersion]
-    public ValueTask<bool> LoadFromFileAsync(
+    public async ValueTask<bool> LoadFromFileAsync(
         string filePath,
         int priority,
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        await using var stream = File.OpenRead(filePath);
+        return await LoadFromStreamAsync(stream, new TextKey(filePath), priority, cancellationToken);
     }
 
     [CreateSyncVersion]
@@ -115,9 +156,10 @@ public sealed partial class TextLocalizationResource
     }
 
     [CreateSyncVersion]
-    public ValueTask<bool> SaveToFileAsync(string filePath, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> SaveToFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await using var stream = File.OpenWrite(filePath);
+        return await SaveToStreamAsync(stream, new TextKey(filePath), cancellationToken);
     }
 
     [CreateSyncVersion]
@@ -132,6 +174,13 @@ public sealed partial class TextLocalizationResource
 
     private static bool ShouldReplaceEntry(TextKey @namespace, TextKey key, in Entry currentEntry, in Entry newEntry)
     {
-        throw new NotImplementedException();
+        if (newEntry.Priority < currentEntry.Priority)
+            return true;
+
+        if (newEntry.Priority > currentEntry.Priority)
+            return false;
+
+        Log.Warning("Duplicate localization entry found for {Namespace}.{Key}. Using the first one.", @namespace, key);
+        return false;
     }
 }

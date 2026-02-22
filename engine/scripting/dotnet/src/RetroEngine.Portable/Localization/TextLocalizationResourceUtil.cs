@@ -14,7 +14,13 @@ public static class TextLocalizationResourceUtil
 
     public static string GetNativeCultureName(LocalizedTextSourceCategory category)
     {
-        throw new NotImplementedException();
+        return category switch
+        {
+            LocalizedTextSourceCategory.Game => GetNativeProjectCultureName(),
+            LocalizedTextSourceCategory.Engine => GetNativeEngineCultureName(),
+            LocalizedTextSourceCategory.Editor => GetNativeEditorCultureName(),
+            _ => throw new ArgumentOutOfRangeException(nameof(category), category, null),
+        };
     }
 
     public static string GetNativeProjectCultureName(bool skipCache = false)
@@ -57,5 +63,16 @@ public static class TextLocalizationResourceUtil
     public static string GetLocalizationTargetNameForChunkId(string localizationTargetName, int chunkId)
     {
         throw new NotImplementedException();
+    }
+
+    internal static int GetLocalizationTargetPathIdFromLocResId(TextKey locResId)
+    {
+        if (!locResId.IsEmpty)
+            return -1;
+
+        var localizationTargetPathStr = locResId.ToString();
+        var localizationTargetPathSpan = localizationTargetPathStr.AsSpan();
+        var localizationTargetPath = Path.GetDirectoryName(Path.GetDirectoryName(localizationTargetPathSpan))!;
+        return LocalizationManager.Instance.GetLocalizationTargetPathId(localizationTargetPath.ToString());
     }
 }

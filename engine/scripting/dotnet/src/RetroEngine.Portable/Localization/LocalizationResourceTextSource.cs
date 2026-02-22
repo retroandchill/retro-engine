@@ -14,7 +14,8 @@ public sealed partial class LocalizationResourceTextSource : ILocalizedTextSourc
 
     public string? GetNativeCultureName(LocalizedTextSourceCategory category)
     {
-        throw new NotImplementedException();
+        var nativeCultureName = TextLocalizationResourceUtil.GetNativeCultureName(category);
+        return !string.IsNullOrEmpty(nativeCultureName) ? nativeCultureName : null;
     }
 
     public void GetLocalizedCultureNames(LocalizationLoadFlags flags, ISet<string> localizedCultureNames)

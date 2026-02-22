@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Async;
 using RetroEngine.Portable.Concurrency;
 using RetroEngine.Portable.Localization.Cultures;
 using Serilog;
@@ -111,7 +112,7 @@ public sealed partial class LocalizationManager
 
     private LocalizationManagerInitializedFlags _initializedFlags = LocalizationManagerInitializedFlags.None;
 
-    bool IsInitialized => _initializedFlags != LocalizationManagerInitializedFlags.None;
+    public bool IsInitialized => _initializedFlags != LocalizationManagerInitializedFlags.None;
 
     private readonly ReaderWriterLockSlim _displayTableLock = new();
     private readonly Dictionary<TextId, DisplayStringEntry> _displayTable = new();
@@ -127,6 +128,8 @@ public sealed partial class LocalizationManager
     private readonly LocalizationResourceTextSource _locResTextSource = new();
     private readonly PolyglotTextSource _polyglotTextSource = new();
 
+    private readonly AsyncSerialQueue _asyncLocalizationTaskQueue = new();
+
     private LocalizationManager()
     {
         const bool refreshResources = false;
@@ -135,6 +138,24 @@ public sealed partial class LocalizationManager
     }
 
     public static LocalizationManager Instance { get; } = new();
+
+    public static void BeginInitTextLocalization()
+    {
+        CultureManager.Instance.OnCultureChanged += Instance.OnCultureChanged;
+    }
+
+    [CreateSyncVersion]
+    public static async Task InitEngineTextLocalizationAsync(CancellationToken cancellationToken = default)
+    {
+        await Instance.WaitForTasksAsync();
+
+        // TODO: Actually fill this out
+
+        Interlocked.Exchange(
+            ref Instance._initializedFlags,
+            Instance._initializedFlags | LocalizationManagerInitializedFlags.Engine
+        );
+    }
 
     public void AddOrUpdateDisplayStringInLiveTable(
         string @namespace,
@@ -373,6 +394,16 @@ public sealed partial class LocalizationManager
         UpdateLiveTable(localizationResource);
     }
 
+    public void WaitForTasks()
+    {
+        WaitForTasksAsync().Wait();
+    }
+
+    public Task WaitForTasksAsync()
+    {
+        return _asyncLocalizationTaskQueue.WhenIdle();
+    }
+
     [CreateSyncVersion]
     public async Task RefreshResourcesAsync(CancellationToken cancellationToken = default)
     {
@@ -420,31 +451,28 @@ public sealed partial class LocalizationManager
         var targetPaths = localizationTargetPaths.ToArray();
         var availableTextSources = _localizedTextSources.ToArray();
 
-        await Task.Run(
-            async () =>
+        await QueueAsyncTask(async () =>
+        {
+            foreach (var localizationTargetPath in targetPaths.Where(Directory.Exists))
             {
-                foreach (var localizationTargetPath in targetPaths.Where(Directory.Exists))
-                {
-                    var locMetaResource = new TextLocalizationMetaDataResource();
-                    var locMetaFilename = $"{Path.GetDirectoryName(localizationTargetPath)}.locmeta";
-                    await locMetaResource.LoadFromFileAsync(
-                        Path.Join(localizationTargetPath, locMetaFilename),
-                        cancellationToken
-                    );
+                var locMetaResource = new TextLocalizationMetaDataResource();
+                var locMetaFilename = $"{Path.GetDirectoryName(localizationTargetPath)}.locmeta";
+                await locMetaResource.LoadFromFileAsync(
+                    Path.Join(localizationTargetPath, locMetaFilename),
+                    cancellationToken
+                );
 
-                    var finalLocLoadFlags =
-                        locLoadFlags
-                        | (locMetaResource.IsUGC ? LocalizationLoadFlags.SkipExisting : LocalizationLoadFlags.None);
-                    LoadLocalizationTargetsForPrioritizedCultures(
-                        availableTextSources,
-                        [localizationTargetPath],
-                        CollectionsMarshal.AsSpan(prioritizedCultureNames),
-                        finalLocLoadFlags
-                    );
-                }
-            },
-            cancellationToken
-        );
+                var finalLocLoadFlags =
+                    locLoadFlags
+                    | (locMetaResource.IsUGC ? LocalizationLoadFlags.SkipExisting : LocalizationLoadFlags.None);
+                LoadLocalizationTargetsForPrioritizedCultures(
+                    availableTextSources,
+                    [localizationTargetPath],
+                    CollectionsMarshal.AsSpan(prioritizedCultureNames),
+                    finalLocLoadFlags
+                );
+            }
+        });
     }
 
     public async Task HandleLocalizationTargetsUnmounted(
@@ -455,34 +483,31 @@ public sealed partial class LocalizationManager
         if (!IsInitialized || localizationTargetPaths.IsEmpty)
             return;
 
-        await Task.Run(
-            () =>
+        await QueueAsyncTask(() =>
+        {
+            var textCache = TextCache.Instance;
+
+            using var scope = _displayTableLock.EnterWriteScope();
+
+            foreach (var localizationTargetPath in localizationTargetPaths.Span)
             {
-                var textCache = TextCache.Instance;
-
-                using var scope = _displayTableLock.EnterWriteScope();
-
-                foreach (var localizationTargetPath in localizationTargetPaths.Span)
+                var displayStringsForLocalizationTarget = _displayStringsByLocalizationTargetId.FindOrAdd(
+                    localizationTargetPath
+                );
+                if (!displayStringsForLocalizationTarget.IsMounted)
+                    continue;
+                foreach (var textId in displayStringsForLocalizationTarget.TextIds)
                 {
-                    var displayStringsForLocalizationTarget = _displayStringsByLocalizationTargetId.FindOrAdd(
-                        localizationTargetPath
-                    );
-                    if (!displayStringsForLocalizationTarget.IsMounted)
-                        continue;
-                    foreach (var textId in displayStringsForLocalizationTarget.TextIds)
-                    {
-                        _displayTable.Remove(textId);
-                    }
-                    textCache.RemoveCache(displayStringsForLocalizationTarget.TextIds);
-
-                    displayStringsForLocalizationTarget.TextIds.Clear();
-                    displayStringsForLocalizationTarget.IsMounted = false;
+                    _displayTable.Remove(textId);
                 }
+                textCache.RemoveCache(displayStringsForLocalizationTarget.TextIds);
 
-                DirtyTextRevision();
-            },
-            cancellationToken
-        );
+                displayStringsForLocalizationTarget.TextIds.Clear();
+                displayStringsForLocalizationTarget.IsMounted = false;
+            }
+
+            DirtyTextRevision();
+        });
     }
 
     public ushort TextRevision
@@ -571,7 +596,7 @@ public sealed partial class LocalizationManager
 
     public bool IsLocalizationLocked { get; private set; }
 
-    public bool ShouldForceLoadGameLocalization => App.IsEditor && IsGameLocalizationPreviewEnabled;
+    public bool ShouldForceLoadGameLocalization => App.IsEditor;
 
     public event Action? OnTextRevsionChanged;
 
@@ -671,19 +696,16 @@ public sealed partial class LocalizationManager
 
     private Task LoadLocalizationResourcesForPrioritizedCulturesAsync(
         ReadOnlyMemory<string> prioritizedCultureNames,
-        LocalizationLoadFlags loadFlags,
-        CancellationToken cancellationToken = default
+        LocalizationLoadFlags loadFlags
     )
     {
         var availableTextSources = _localizedTextSources.ToArray();
-        return Task.Run(
-            () =>
-                LoadLocalizationResourcesForPrioritizedCultures(
-                    availableTextSources,
-                    prioritizedCultureNames.Span,
-                    loadFlags
-                ),
-            cancellationToken
+        return QueueAsyncTask(() =>
+            LoadLocalizationResourcesForPrioritizedCultures(
+                availableTextSources,
+                prioritizedCultureNames.Span,
+                loadFlags
+            )
         );
     }
 
@@ -753,20 +775,17 @@ public sealed partial class LocalizationManager
     private Task LoadLocalizationResourcesForPrioritizedCulturesAsync(
         ReadOnlyMemory<string> prioritizedCultureName,
         ReadOnlyMemory<string> localizationTargetPaths,
-        LocalizationLoadFlags loadFlags,
-        CancellationToken cancellationToken = default
+        LocalizationLoadFlags loadFlags
     )
     {
         var availableTextSources = _localizedTextSources.ToArray();
-        return Task.Run(
-            () =>
-                LoadLocalizationResourcesForPrioritizedCultures(
-                    availableTextSources,
-                    prioritizedCultureName.Span,
-                    localizationTargetPaths.Span,
-                    loadFlags
-                ),
-            cancellationToken
+        return QueueAsyncTask(() =>
+            LoadLocalizationResourcesForPrioritizedCultures(
+                availableTextSources,
+                prioritizedCultureName.Span,
+                localizationTargetPaths.Span,
+                loadFlags
+            )
         );
     }
 
@@ -835,21 +854,28 @@ public sealed partial class LocalizationManager
     private Task LoadLocalizationTargetsForPrioritizedCulturesAsync(
         ReadOnlyMemory<string> prioritizedCultureName,
         ReadOnlyMemory<string> localizationTargetPaths,
-        LocalizationLoadFlags loadFlags,
-        CancellationToken cancellationToken = default
+        LocalizationLoadFlags loadFlags
     )
     {
         var availableTextSources = _localizedTextSources.ToArray();
-        return Task.Run(
-            () =>
-                LoadLocalizationTargetsForPrioritizedCultures(
-                    availableTextSources,
-                    localizationTargetPaths.Span,
-                    prioritizedCultureName.Span,
-                    loadFlags
-                ),
-            cancellationToken
+        return QueueAsyncTask(() =>
+            LoadLocalizationTargetsForPrioritizedCultures(
+                availableTextSources,
+                localizationTargetPaths.Span,
+                prioritizedCultureName.Span,
+                loadFlags
+            )
         );
+    }
+
+    public Task QueueAsyncTask(Action task)
+    {
+        return _asyncLocalizationTaskQueue.Enqueue(task);
+    }
+
+    public Task QueueAsyncTask(Func<Task> task)
+    {
+        return _asyncLocalizationTaskQueue.Enqueue(task);
     }
 
     private void UpdateLiveTable(
