@@ -81,7 +81,7 @@ public readonly partial struct FormatArg
     private static void ToFormattedString<T>(T value, StringBuilder builder)
         where T : unmanaged, INumber<T>
     {
-        var culture = Culture.CurrentCulture;
+        var culture = CultureManager.Instance.CurrentLocale;
         var formattingRules = culture.DecimalNumberFormattingRules;
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         FastDecimalFormat.NumberToString(value, formattingRules, formattingOptions, builder);

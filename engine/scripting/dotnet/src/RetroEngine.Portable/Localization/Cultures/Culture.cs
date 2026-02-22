@@ -19,16 +19,16 @@ public sealed class Culture
 
     private readonly Locale _locale;
     public CultureInfo CultureInfo { get; }
-    public string DisplayName { get; private set; }
-    public string EnglishName { get; private set; }
+    public string DisplayName { get; private set; } = null!;
+    public string EnglishName { get; private set; } = null!;
     public uint LCID => _locale.LCID;
     public string Name { get; }
-    public string NativeName { get; private set; }
+    public string NativeName { get; private set; } = null!;
     public string ThreeLetterISOLanguageName { get; }
     public string TwoLetterISOLanguageName { get; }
-    public string NativeLanguage { get; private set; }
+    public string NativeLanguage { get; private set; } = null!;
     public string Region { get; }
-    public string NativeRegion { get; private set; }
+    public string NativeRegion { get; private set; } = null!;
     public string Script { get; }
     public string Variant { get; }
     public bool IsRightToLeft { get; }
@@ -36,26 +36,10 @@ public sealed class Culture
     public IEnumerable<string> PrioritizedParentCultureNames =>
         GetPrioritizedParentCultureNames(TwoLetterISOLanguageName, Script, Region);
 
-    public static Culture CurrentCulture { get; }
-
-    public static Culture DefaultCulture { get; }
-
-    public static Culture InvariantCulture { get; }
-
-    private static readonly Locale InvariantLocale;
-
-    static Culture()
-    {
-        InvariantGregorianCalendar = Calendar.Create();
-        InvariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
-        InvariantLocale =
-            Locale.Create("us-EN-POSIX")
-            ?? new Locale()
-            ?? throw new InvalidOperationException("Invariant locale is null.");
-        InvariantCulture = new Culture(InvariantLocale);
-        DefaultCulture = new Culture(Locale.Default);
-        CurrentCulture = DefaultCulture;
-    }
+    private static readonly Locale InvariantLocale =
+        Locale.Create("us-EN-POSIX")
+        ?? new Locale()
+        ?? throw new InvalidOperationException("Invariant locale is null.");
 
     internal Culture(Locale locale)
     {
@@ -284,33 +268,9 @@ public sealed class Culture
         };
     }
 
-    private static readonly Lock InvariantGregorianCalendarLock = new();
-    private static readonly Calendar? InvariantGregorianCalendar;
-
     private DateFormat? _dateFormat;
     private DateFormat? _timeFormat;
     private DateFormat? _dateTimeFormat;
-
-    internal static double DateTimeOffsetToIcuDate(DateTimeOffset dateTimeOffset)
-    {
-        if (InvariantGregorianCalendar is null)
-        {
-            var unixTimestamp = dateTimeOffset.ToUnixTimeMilliseconds();
-            return (double)unixTimestamp / MillisPerSecond;
-        }
-
-        var utcTime = dateTimeOffset.UtcDateTime;
-        using var scope = InvariantGregorianCalendarLock.EnterScope();
-        InvariantGregorianCalendar.Set(
-            utcTime.Year,
-            utcTime.Month - 1,
-            utcTime.Day,
-            utcTime.Hour,
-            utcTime.Minute,
-            utcTime.Second
-        );
-        return InvariantGregorianCalendar.Time;
-    }
 
     private DecimalFormat DateTimeDecimalFormat
     {

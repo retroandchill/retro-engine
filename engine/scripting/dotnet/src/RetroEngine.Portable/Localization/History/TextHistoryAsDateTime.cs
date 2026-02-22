@@ -53,7 +53,7 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated
 
     public override string BuildInvariantDisplayString()
     {
-        return BuildDateTimeDisplayString(Culture.InvariantCulture);
+        return BuildDateTimeDisplayString(CultureManager.Instance.InvariantCulture);
     }
 
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
@@ -68,7 +68,7 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated
 
     protected override string BuildLocalizedDisplayString()
     {
-        return BuildDateTimeDisplayString(_targetCulture ?? Culture.CurrentCulture);
+        return BuildDateTimeDisplayString(_targetCulture ?? CultureManager.Instance.CurrentLocale);
     }
 
     private string BuildDateTimeDisplayString(Culture culture)

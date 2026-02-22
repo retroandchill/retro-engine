@@ -175,10 +175,11 @@ public sealed class LocalizationManager
         }
     }
 
-    public string RequestLanguageName =>
-        GetRequestedCulture("LANGUAGE=", "Language", Culture.DefaultCulture.Name, out _);
+    public string RequestedLanguageName =>
+        GetRequestedCulture("LANGUAGE=", "Language", CultureManager.Instance.DefaultLanguage.Name, out _);
 
-    public string RequiredLocaleName => GetRequestedCulture("LOCALE=", "Locale", Culture.DefaultCulture.Name, out _);
+    public string RequiredLocaleName =>
+        GetRequestedCulture("LOCALE=", "Locale", CultureManager.Instance.DefaultLocale.Name, out _);
 
     private string GetRequestedCulture(
         string? commandLineKey,

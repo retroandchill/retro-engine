@@ -11,7 +11,7 @@ public static class TextComparison
 {
     public static int Compare(ReadOnlySpan<char> left, ReadOnlySpan<char> right, TextComparisonLevel level)
     {
-        var currentCulture = Culture.CurrentCulture;
+        var currentCulture = CultureManager.Instance.CurrentLanguage;
         var collator = currentCulture.GetCollator(level);
         return (int)collator.Compare(left, right);
     }

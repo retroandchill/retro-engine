@@ -11,11 +11,11 @@ internal static class TextTransformer
 {
     public static string ToUpper(string text)
     {
-        return text.ToUpper(Culture.CurrentCulture.CultureInfo);
+        return text.ToUpper(CultureManager.Instance.CurrentLocale.CultureInfo);
     }
 
     public static string ToLower(string text)
     {
-        return text.ToLower(Culture.CurrentCulture.CultureInfo);
+        return text.ToLower(CultureManager.Instance.CurrentLocale.CultureInfo);
     }
 }

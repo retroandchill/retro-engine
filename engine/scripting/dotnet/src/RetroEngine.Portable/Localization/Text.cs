@@ -104,7 +104,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static Text AsNumber<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, INumber<T>
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var numberFormattingRules = culture.DecimalNumberFormattingRules;
         var nativeString = FastDecimalFormat.NumberToString(
             value,
@@ -117,7 +117,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static Text AsPercent<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, IFloatingPoint<T>
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var numberFormattingRules = culture.PercentNumberFormattingRules;
         var nativeString = FastDecimalFormat.NumberToString(
             value,
@@ -135,7 +135,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     )
         where T : unmanaged, INumber<T>
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var numberFormattingRules = culture.GetCurrencyFormattingRules(currencyCode);
         var nativeString = FastDecimalFormat.NumberToString(
             value,
@@ -155,7 +155,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var nativeString = TextChronoFormatter.AsDate(dateTime, format, timeZoneId, culture);
         return new Text(
             new TextHistoryAsDate(nativeString, dateTime, format, timeZoneId, targetCulture),
@@ -170,7 +170,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var nativeString = TextChronoFormatter.AsTime(dateTime, format, timeZoneId, culture);
         return new Text(
             new TextHistoryAsTime(nativeString, dateTime, format, timeZoneId, targetCulture),
@@ -186,7 +186,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var nativeString = TextChronoFormatter.AsDateTime(dateTime, dateFormat, timeFormat, timeZoneId, culture);
         return new Text(
             new TextHistoryAsDateTime(nativeString, dateTime, dateFormat, timeFormat, timeZoneId, targetCulture),
@@ -201,7 +201,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
         var nativeString = TextChronoFormatter.AsDateTime(dateTime, pattern, timeZoneId, culture);
         return new Text(
             new TextHistoryAsDateTime(nativeString, dateTime, pattern, timeZoneId, targetCulture),
@@ -211,7 +211,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static Text AsTimespan(TimeSpan timeSpan, Culture? targetCulture = null)
     {
-        var culture = targetCulture ?? Culture.CurrentCulture;
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
 
         var totalHours = timeSpan.TotalHours;
         var hours = (int)totalHours;

@@ -30,14 +30,14 @@ internal sealed class TextHistoryAsCurrency<T> : TextHistoryFormatNumber<T>
 
     protected override string BuildLocalizedDisplayString()
     {
-        var culture = TargetCulture ?? Culture.CurrentCulture;
+        var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
         var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         return BuildNumericDisplayString(formattingRules);
     }
 
     public override string BuildInvariantDisplayString()
     {
-        var culture = Culture.InvariantCulture;
+        var culture = CultureManager.Instance.InvariantCulture;
         var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         return BuildNumericDisplayString(formattingRules);
     }

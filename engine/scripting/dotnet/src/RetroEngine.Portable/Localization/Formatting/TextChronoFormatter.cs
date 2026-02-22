@@ -16,7 +16,7 @@ public static class TextChronoFormatter
         Culture targetCulture
     )
     {
-        var icuDate = Culture.DateTimeOffsetToIcuDate(dateTime);
+        var icuDate = CultureManager.Instance.DateTimeOffsetToIcuDate(dateTime);
         var format = targetCulture.GetDateFormatter(style, timezone);
         return format.Format(icuDate);
     }
@@ -28,7 +28,7 @@ public static class TextChronoFormatter
         Culture culture
     )
     {
-        var icuDate = Culture.DateTimeOffsetToIcuDate(dateTime);
+        var icuDate = CultureManager.Instance.DateTimeOffsetToIcuDate(dateTime);
         var format = culture.GetTimeFormatter(timeStyle, timezone);
         return format.Format(icuDate);
     }
@@ -41,7 +41,7 @@ public static class TextChronoFormatter
         Culture culture
     )
     {
-        var icuDate = Culture.DateTimeOffsetToIcuDate(dateTime);
+        var icuDate = CultureManager.Instance.DateTimeOffsetToIcuDate(dateTime);
         var format = culture.GetDateTimeFormatter(dateStyle, timeStyle, timezone);
         return format.Format(icuDate);
     }
@@ -53,7 +53,7 @@ public static class TextChronoFormatter
         Culture culture
     )
     {
-        var icuDate = Culture.DateTimeOffsetToIcuDate(dateTime);
+        var icuDate = CultureManager.Instance.DateTimeOffsetToIcuDate(dateTime);
         var format = culture.GetDateTimeFormatter(customPattern, timezone);
         return format.Format(icuDate);
     }

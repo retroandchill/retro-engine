@@ -24,14 +24,14 @@ internal sealed class TextHistoryAsPercent<T> : TextHistoryFormatNumber<T>
 
     protected override string BuildLocalizedDisplayString()
     {
-        var culture = TargetCulture ?? Culture.CurrentCulture;
+        var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
         var formattingRules = culture.PercentNumberFormattingRules;
         return BuildNumericDisplayString(formattingRules, 100);
     }
 
     public override string BuildInvariantDisplayString()
     {
-        var culture = Culture.InvariantCulture;
+        var culture = CultureManager.Instance.InvariantCulture;
         var formattingRules = culture.PercentNumberFormattingRules;
         return BuildNumericDisplayString(formattingRules, 100);
     }
