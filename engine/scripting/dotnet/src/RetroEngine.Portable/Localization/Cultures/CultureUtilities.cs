@@ -107,7 +107,7 @@ public static class CultureUtilities
             var nameTagType = NameTagType.Variant;
             switch (parsedNameTags.Count)
             {
-                case > 0 when IsLanguageCode(nameTagStr):
+                case 0 when IsLanguageCode(nameTagStr):
                     nameTagType = NameTagType.Language;
                     nameTagStr = ConditionLanguageCode(nameTagStr);
                     break;

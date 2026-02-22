@@ -6,6 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>RetroEngine.Portable</RootNamespace>
+        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

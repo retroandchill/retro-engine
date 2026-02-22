@@ -14,6 +14,19 @@ namespace RetroEngine.Portable.Localization.Cultures;
 
 public sealed class CultureManager
 {
+    public sealed class LifetimeScope : IDisposable
+    {
+        public LifetimeScope()
+        {
+            Initialize();
+        }
+
+        public void Dispose()
+        {
+            TearDown();
+        }
+    }
+
     internal readonly record struct IcuCultureData(
         string Name,
         string LanguageCode,
@@ -63,6 +76,10 @@ public sealed class CultureManager
 
     private readonly List<string> _cachedPrioritizedDisplayCultureNames = [];
 
+    private readonly TimeZone _localTimeZone;
+    public bool IsInitialized => !_disposed;
+    private bool _disposed;
+
     public readonly record struct CultureStateSnapshot(
         string Language,
         string Locale,
@@ -82,7 +99,8 @@ public sealed class CultureManager
 
         InvariantCulture = FindCanonizedCulture("en-US-POSIX") ?? FindOrMakeCanonizedCulture("");
 
-        DefaultLanguage = FindOrMakeCulture(CultureInfo.DefaultThreadCurrentCulture?.Name ?? "en");
+        var defaultLanguage = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
+        DefaultLanguage = FindOrMakeCulture(defaultLanguage.Name);
         var defaultLocaleName = CultureInfo.InstalledUICulture.Name;
         DefaultLocale = !string.IsNullOrEmpty(defaultLocaleName)
             ? FindOrMakeCulture(defaultLocaleName)
@@ -93,12 +111,34 @@ public sealed class CultureManager
         HandleLanguageChanged(DefaultLanguage);
 
         // We just need to pull in the TimeZone class to force the static constructor to run.
-        _ = TimeZone.Local;
+        _localTimeZone = new TimeZone(TimeZoneInfo.Local.Id);
         _invariantGregorianCalendar = Calendar.Create();
         _invariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
     }
 
-    public static CultureManager Instance { get; } = new();
+    private static CultureManager? _cultureManager;
+    public static CultureManager Instance =>
+        _cultureManager ?? throw new InvalidOperationException("CultureManager has not been initialized.");
+
+    public static void Initialize()
+    {
+        if (_cultureManager is not null)
+            throw new InvalidOperationException("CultureManager has already been initialized.");
+        Interlocked.Exchange(ref _cultureManager, new CultureManager());
+    }
+
+    public static LifetimeScope InitializeScope()
+    {
+        return new LifetimeScope();
+    }
+
+    public static void TearDown()
+    {
+        if (_cultureManager is null)
+            throw new InvalidOperationException("CultureManager has not been initialized.");
+        _cultureManager.Dispose();
+        Interlocked.Exchange(ref _cultureManager, null);
+    }
 
     public bool SetCurrentCulture(string cultureName)
     {
@@ -644,5 +684,31 @@ public sealed class CultureManager
     private Culture FindOrMakeCanonizedCulture(string name)
     {
         return FindCanonizedCulture(name) ?? new Culture(name);
+    }
+
+    private void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        Interlocked.Exchange(ref _disposed, true);
+        CurrentLanguage.Dispose();
+        CurrentLocale.Dispose();
+
+        foreach (var (_, culture) in _currentAssetGroupCultures)
+            culture.Dispose();
+
+        DefaultLanguage.Dispose();
+        DefaultLocale.Dispose();
+
+        foreach (var culture in _customCultures)
+            culture.Dispose();
+        InvariantCulture.Dispose();
+
+        _invariantGregorianCalendar?.Dispose();
+        _localTimeZone.Dispose();
+
+        foreach (var (_, culture) in _cachedCultures)
+            culture.Dispose();
     }
 }

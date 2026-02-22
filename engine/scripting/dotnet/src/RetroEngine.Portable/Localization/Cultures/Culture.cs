@@ -12,10 +12,9 @@ namespace RetroEngine.Portable.Localization.Cultures;
 
 internal enum IcuErrorCode;
 
-public sealed class Culture
+public sealed class Culture : IDisposable
 {
     internal const int KeywordAndValuesCapacity = 100;
-    private const int MillisPerSecond = 1000;
 
     private readonly Locale _locale;
     public CultureInfo CultureInfo { get; }
@@ -272,12 +271,13 @@ public sealed class Culture
     private DateFormat? _timeFormat;
     private DateFormat? _dateTimeFormat;
 
+    private DecimalFormat? _dateTimeDecimalFormat;
     private DecimalFormat DateTimeDecimalFormat
     {
         get
         {
-            if (field is not null)
-                return field;
+            if (_dateTimeDecimalFormat is not null)
+                return _dateTimeDecimalFormat;
 
             var formatter =
                 DecimalFormat.CreateInstance(_locale)
@@ -303,8 +303,8 @@ public sealed class Culture
             formatter.Digits = nativeDigits;
             formatter.IsGroupingUsed = false;
 
-            field = formatter;
-            return field;
+            _dateTimeDecimalFormat = formatter;
+            return _dateTimeDecimalFormat;
         }
     }
 
@@ -554,5 +554,17 @@ public sealed class Culture
         }
 
         return displayName;
+    }
+
+    public void Dispose()
+    {
+        _locale.Dispose();
+        _dateFormat?.Dispose();
+        _timeFormat?.Dispose();
+        _dateTimeFormat?.Dispose();
+        _cardinalPluralRules.Dispose();
+        _ordinalPluralRules.Dispose();
+        _collator?.Dispose();
+        _dateTimeDecimalFormat?.Dispose();
     }
 }

@@ -54,7 +54,7 @@ extern "C"
 
     RETRO_API uint32_t retro_locale_get_lcid(Retro_Locale *locale);
 
-    RETRO_API const Retro_Locale *retro_get_available_locales(int32_t *count);
+    RETRO_API const Retro_Locale *retro_get_available_locales(int32_t *count, int32_t *stride);
 
     RETRO_API const char *const *retro_locale_get_available_languages();
 

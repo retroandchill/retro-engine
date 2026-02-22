@@ -124,8 +124,9 @@ uint32_t retro_locale_get_lcid(Retro_Locale *locale)
     return retro::from_c(locale)->getLCID();
 }
 
-const Retro_Locale *retro_get_available_locales(int32_t *count)
+const Retro_Locale *retro_get_available_locales(int32_t *count, int32_t *stride)
 {
+    *stride = sizeof(icu::Locale);
     return retro::to_c(icu::Locale::getAvailableLocales(*count));
 }
 

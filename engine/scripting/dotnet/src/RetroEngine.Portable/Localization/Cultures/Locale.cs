@@ -119,18 +119,21 @@ internal unsafe partial class Locale : IDisposable
 
     public static Locale[] GetAvailableLocales()
     {
-        var nativeLocales = NativeGetAvailableLocales(out var count);
-        return MemoryMarshal
-            .CreateReadOnlySpan(ref nativeLocales, count)
-            .AsValueEnumerable()
-            .Select(ptr => new Locale(ptr, false))
-            .ToArray();
+        var nativeLocales = NativeGetAvailableLocales(out var count, out var stride);
+        var result = new Locale[count];
+        for (var i = 0; i < count; i++)
+        {
+            var ptr = IntPtr.Add(nativeLocales, stride * i);
+            result[i] = new Locale(ptr, false);
+        }
+
+        return result;
     }
 
     public static List<string> GetAvailableLanguageIds()
     {
         var languages = new List<string>();
-        for (var language = NativeGetISOLanguages(); language is not null; language++)
+        for (var language = NativeGetISOLanguages(); *language is not null; language++)
         {
             var langPointer = *language;
             if (langPointer[2] != 0)
@@ -230,7 +233,7 @@ internal unsafe partial class Locale : IDisposable
     private static partial uint NativeGetLCID(IntPtr nativeLocale);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_available_locales")]
-    private static partial IntPtr NativeGetAvailableLocales(out int count);
+    private static partial IntPtr NativeGetAvailableLocales(out int count, out int stride);
 
     [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_available_languages")]
     private static partial byte** NativeGetISOLanguages();

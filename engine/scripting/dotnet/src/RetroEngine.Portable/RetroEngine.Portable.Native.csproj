@@ -23,5 +23,9 @@
         <PackageReference Include="Superpower" />
         <PackageReference Include="TimeZoneNames" />
         <PackageReference Include="ZLinq" />
+        <PackageReference Include="Zomp.SyncMethodGenerator">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 </Project>
