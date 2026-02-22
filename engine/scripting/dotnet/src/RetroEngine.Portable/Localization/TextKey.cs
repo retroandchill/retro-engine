@@ -28,6 +28,8 @@ public readonly struct TextKey : IEquatable<TextKey>, IComparable<TextKey>, ICom
 
     public static implicit operator TextKey(string key) => new(key);
 
+    public static implicit operator TextKey(ReadOnlySpan<char> key) => new(key);
+
     public override string ToString()
     {
         return TextKeyRegistry.Instance.GetString(Id);

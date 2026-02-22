@@ -72,7 +72,7 @@ public sealed class PolyglotTextData
 
     public PolyglotTextData(
         LocalizedTextSourceCategory category,
-        string ns,
+        string @namespace,
         string key,
         string nativeString,
         string nativeCulture
@@ -80,12 +80,14 @@ public sealed class PolyglotTextData
     {
         Category = category;
         NativeCulture = nativeCulture;
-        Namespace = ns;
+        Namespace = @namespace;
         Key = key;
         NativeString = nativeString;
         ArgumentException.ThrowIfNullOrEmpty(key);
         ArgumentException.ThrowIfNullOrEmpty(nativeString);
     }
+
+    public bool IsValid() => IsValid(out _);
 
     public bool IsValid(out Text failureReason)
     {

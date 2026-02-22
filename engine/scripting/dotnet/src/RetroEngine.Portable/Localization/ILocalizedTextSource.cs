@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using RetroEngine.Portable.Localization.Cultures;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -50,12 +49,12 @@ public interface ILocalizedTextSource
 
     string? GetNativeCultureName(LocalizedTextSourceCategory category);
 
-    IEnumerable<string> GetLocalizedCultureNames(LocalizedTextSourceCategory category);
+    void GetLocalizedCultureNames(LocalizationLoadFlags flags, ISet<string> localizedCultureNames);
 
     void LoadLocalizedResources(
         LocalizationLoadFlags loadFlags,
         ReadOnlySpan<string> prioritizedCultures,
-        TextId textId,
+        TextLocalizationResource nativeResource,
         TextLocalizationResource localizedResource
     );
 
@@ -69,8 +68,6 @@ public interface ILocalizedTextSource
     {
         return QueryLocalizedResourceResult.NotImplemented;
     }
-
-    string? GetLocalizedString(TextId id, Culture cultureInfo, string fallback = "");
 }
 
 public static class LocalizedTextSourceExtensions

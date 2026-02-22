@@ -20,10 +20,10 @@ public sealed partial class TypeInfo : IEquatable<TypeInfo>
 
     public TypeKind Kind { get; }
 
-    public TypeInfo(string? ns, TypeInfo? containingType, string name, string fullyQualifiedName, TypeKind kind)
+    public TypeInfo(string? @namespace, TypeInfo? containingType, string name, string fullyQualifiedName, TypeKind kind)
     {
         Name = name;
-        Namespace = ns;
+        Namespace = @namespace;
         ContainingType = containingType;
         Kind = kind;
         _fullyQualifiedName = fullyQualifiedName;
@@ -54,12 +54,18 @@ public sealed partial class TypeInfo : IEquatable<TypeInfo>
 
     public override string ToString() => GetFullyQualifiedName(false);
 
-    public static TypeInfo SpecificType(string? ns, TypeInfo? containingType, string name, TypeKind kind)
+    public static TypeInfo SpecificType(string? @namespace, TypeInfo? containingType, string name, TypeKind kind)
     {
-        var namespacePart = !string.IsNullOrEmpty(ns) ? $"{ns}." : string.Empty;
+        var namespacePart = !string.IsNullOrEmpty(@namespace) ? $"{@namespace}." : string.Empty;
         var containingTypesPart =
             containingType != null ? $"{string.Join(".", FlattenNesting(containingType))}." : string.Empty;
-        return new TypeInfo(ns, containingType, name, $"global::{namespacePart}{containingTypesPart}{name}", kind);
+        return new TypeInfo(
+            @namespace,
+            containingType,
+            name,
+            $"global::{namespacePart}{containingTypesPart}{name}",
+            kind
+        );
     }
 
     public static TypeInfo SpecialName(string name, TypeKind kind) => new(null, null, name, name, kind);

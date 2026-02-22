@@ -96,6 +96,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Flags = flags;
     }
 
+    internal Text(string sourceString, TextKey @namespace, TextKey key, TextFlag flags = TextFlag.None)
+    {
+        TextData = new TextHistoryBase(new TextId(@namespace, key), sourceString);
+        Flags = flags;
+    }
+
     public Text(string sourceString)
         : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
 
@@ -262,17 +268,22 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return this with { Flags = Flags | TextFlag.CultureInvariant };
     }
 
-    public static Text AsLocalizable(TextKey ns, TextKey key, ReadOnlySpan<char> str)
+    public static Text AsLocalizable(TextKey @namespace, TextKey key, ReadOnlySpan<char> str)
     {
         throw new NotImplementedException();
     }
 
-    public static Text AsLocalizable(ReadOnlySpan<char> ns, ReadOnlySpan<char> key, ReadOnlySpan<char> str)
+    public static Text AsLocalizable(ReadOnlySpan<char> @namespace, ReadOnlySpan<char> key, ReadOnlySpan<char> str)
     {
-        return AsLocalizable(new TextKey(ns), new TextKey(key), str);
+        return AsLocalizable(new TextKey(@namespace), new TextKey(key), str);
     }
 
-    public static bool FindTextInLiveTable(TextKey ns, TextKey key, out Text result, string? sourceString = null)
+    public static bool FindTextInLiveTable(
+        TextKey @namespace,
+        TextKey key,
+        out Text result,
+        string? sourceString = null
+    )
     {
         throw new NotImplementedException();
     }
