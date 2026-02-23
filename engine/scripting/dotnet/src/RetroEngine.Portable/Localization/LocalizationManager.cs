@@ -232,12 +232,7 @@ public sealed partial class LocalizationManager
     [CreateSyncVersion]
     public async Task RefreshResourcesAsync(CancellationToken cancellationToken = default)
     {
-        var locLoadFlags = LocalizationLoadFlags.None;
-        locLoadFlags |= LocalizationLoadFlags.Editor;
-        locLoadFlags |= App.IsGame ? LocalizationLoadFlags.Game : LocalizationLoadFlags.None;
-        locLoadFlags |= LocalizationLoadFlags.Engine;
-        locLoadFlags |= LocalizationLoadFlags.Native;
-        locLoadFlags |= LocalizationLoadFlags.Additional;
+        const LocalizationLoadFlags locLoadFlags = LocalizationLoadFlags.Default;
 
         await LoadLocalizationResourcesForCultureAsync(
             SnapshotLocalizedTextSources(),

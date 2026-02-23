@@ -12,29 +12,15 @@ public sealed class CultureFilter
 
     public CultureFilter(HashSet<string>? availableCulture = null)
     {
-        var buildConfig = App.BuildConfiguration;
-        var targetFlags =
-            LocalizationLoadFlags.Engine
-            | (App.IsEditor ? LocalizationLoadFlags.Editor : LocalizationLoadFlags.None)
-            | (App.IsGame ? LocalizationLoadFlags.Game : LocalizationLoadFlags.None);
-
-        Init(buildConfig, targetFlags, availableCulture);
+        Init(LocalizationLoadFlags.Default, availableCulture);
     }
 
-    public CultureFilter(
-        BuildConfiguration buildConfiguration,
-        LocalizationLoadFlags targetFlags,
-        HashSet<string>? availableCulture = null
-    )
+    public CultureFilter(LocalizationLoadFlags targetFlags, HashSet<string>? availableCulture = null)
     {
-        Init(buildConfiguration, targetFlags, availableCulture);
+        Init(targetFlags, availableCulture);
     }
 
-    private void Init(
-        BuildConfiguration buildConfiguration,
-        LocalizationLoadFlags targetFlags,
-        HashSet<string>? availableCulture
-    )
+    private void Init(LocalizationLoadFlags targetFlags, HashSet<string>? availableCulture)
     {
         // TODO: For now we don't have config loading so this doesn't matter
     }

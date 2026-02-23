@@ -9,12 +9,9 @@ namespace RetroEngine.Portable.Localization;
 public enum LocalizationLoadFlags : byte
 {
     None = 0,
-    Native = 1 << 0,
-    Editor = 1 << 1,
-    Game = 1 << 2,
-    Engine = 1 << 3,
-    Additional = 1 << 4,
-    SkipExisting = 1 << 5,
+    SkipExisting = 1 << 0,
+
+    Default = None,
 }
 
 public static class LocalizedTextSourcePriority
