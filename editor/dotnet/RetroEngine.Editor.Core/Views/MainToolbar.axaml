@@ -11,24 +11,17 @@
     </Design.DataContext>
 
     <StackPanel>
-        <Menu ItemsSource="{Binding Items}">
-            <Menu.Styles>
-                <!-- Style for top-level MenuItem (SubMenuViewModel) -->
-                <Style Selector="Menu > MenuItem" x:DataType="menus:SubMenuViewModel">
-                    <Setter Property="Header" Value="{Binding Header}" />
-                    <Setter Property="ItemsSource" Value="{Binding Children}"/>
-                </Style>
-
-                <Style Selector="MenuItem > MenuItem">
-                    <Setter Property="Header" Value="{Binding Header}" />
-                    <Setter Property="InputGesture" Value="{Binding InputGesture}"/>
-                    <Setter Property="IsEnabled" Value="{Binding IsEnabled}"/>
-                </Style>
-
-                <Style Selector="MenuItem.separator">
-                    <Setter Property="Header" Value="-"/>
-                </Style>
-            </Menu.Styles>
+        <Menu>
+            <MenuItem Header="File">
+                <MenuItem Header="{Binding OpenText}" Command="{Binding OpenCommand}" InputGesture="Ctrl+O" IsEnabled="True"/>
+                <MenuItem Header="{Binding SaveText}" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="True"/>
+                <Separator/>
+                <MenuItem Header="{Binding ExitText}" Command="{Binding ExitCommand}" IsEnabled="True"/>
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="{Binding UndoCommand}" Command="{Binding UndoCommand}" InputGesture="Ctrl+Z" IsEnabled="True"/>
+                <MenuItem Header="{Binding RedoText}" Command="{Binding RedoCommand}" InputGesture="Ctrl+Y" IsEnabled="True"/>
+            </MenuItem>
         </Menu>
     </StackPanel>
 </UserControl>

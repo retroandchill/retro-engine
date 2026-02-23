@@ -28,8 +28,7 @@ public sealed class TextCache
 
     private Text? FindExisting(ReadOnlySpan<char> textLiteral, TextId textId)
     {
-        var text = Text.Empty;
-        var textFound = false;
+        Text? text = null;
         _cachedText.GetAndApply(
             textLiteral,
             textId,
@@ -40,11 +39,10 @@ public sealed class TextCache
                     return;
 
                 text = t;
-                textFound = true;
             }
         );
 
-        return textFound ? text : null;
+        return text;
     }
 
     private Text CacheText(string textLiteral, TextId textId)
