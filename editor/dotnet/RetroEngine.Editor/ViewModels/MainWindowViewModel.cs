@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using RetroEngine.Editor.Core.Attributes;
+using RetroEngine.Editor.Core.ViewModels.Menus;
 using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor.ViewModels;
@@ -7,5 +8,5 @@ namespace RetroEngine.Editor.ViewModels;
 [ViewModelFor<MainWindow>]
 public partial class MainWindowViewModel : ObservableObject
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
+    public MenuBar Toolbar { get; init; } = new();
 }
