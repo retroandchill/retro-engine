@@ -12,21 +12,8 @@ using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-public sealed class CultureManager
+public sealed class CultureManager : IDisposable
 {
-    public sealed class LifetimeScope : IDisposable
-    {
-        public LifetimeScope()
-        {
-            Initialize();
-        }
-
-        public void Dispose()
-        {
-            TearDown();
-        }
-    }
-
     internal readonly record struct IcuCultureData(
         string Name,
         string LanguageCode,
@@ -77,7 +64,6 @@ public sealed class CultureManager
     private readonly List<string> _cachedPrioritizedDisplayCultureNames = [];
 
     private readonly TimeZone _localTimeZone;
-    public bool IsInitialized => !_disposed;
     private bool _disposed;
 
     public readonly record struct CultureStateSnapshot(
@@ -116,29 +102,7 @@ public sealed class CultureManager
         _invariantGregorianCalendar?.TimeZone = TimeZone.Unknown;
     }
 
-    private static CultureManager? _cultureManager;
-    public static CultureManager Instance =>
-        _cultureManager ?? throw new InvalidOperationException("CultureManager has not been initialized.");
-
-    public static void Initialize()
-    {
-        if (_cultureManager is not null)
-            throw new InvalidOperationException("CultureManager has already been initialized.");
-        Interlocked.Exchange(ref _cultureManager, new CultureManager());
-    }
-
-    public static LifetimeScope InitializeScope()
-    {
-        return new LifetimeScope();
-    }
-
-    public static void TearDown()
-    {
-        if (_cultureManager is null)
-            throw new InvalidOperationException("CultureManager has not been initialized.");
-        _cultureManager.Dispose();
-        Interlocked.Exchange(ref _cultureManager, null);
-    }
+    public static CultureManager Instance { get; } = new();
 
     public bool SetCurrentCulture(string cultureName)
     {
@@ -281,7 +245,6 @@ public sealed class CultureManager
         {
             yield return culture;
         }
-        ;
     }
 
     public CultureStateSnapshot BackupCultureState()
@@ -686,7 +649,7 @@ public sealed class CultureManager
         return FindCanonizedCulture(name) ?? new Culture(name);
     }
 
-    private void Dispose()
+    public void Dispose()
     {
         if (_disposed)
             return;

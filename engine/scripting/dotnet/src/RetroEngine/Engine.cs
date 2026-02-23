@@ -10,7 +10,6 @@ namespace RetroEngine;
 
 public sealed partial class Engine : IDisposable
 {
-    private readonly CultureManager.LifetimeScope _cultureScope = new();
     private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
@@ -21,6 +20,7 @@ public sealed partial class Engine : IDisposable
 
     private Engine()
     {
+        _ = CultureManager.Instance;
         _synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
         SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
 
@@ -72,7 +72,7 @@ public sealed partial class Engine : IDisposable
     {
         _synchronizationContext.Dispose();
         SynchronizationContext.SetSynchronizationContext(null);
-        _cultureScope.Dispose();
+        CultureManager.Instance.Dispose();
     }
 
     private const string LibraryName = "retro_runtime";

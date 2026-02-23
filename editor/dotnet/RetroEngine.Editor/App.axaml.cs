@@ -13,7 +13,7 @@ public class App : Application
 {
     public override void Initialize()
     {
-        CultureManager.Initialize();
+        _ = CultureManager.Instance;
         AvaloniaXamlLoader.Load(this);
     }
 
@@ -33,7 +33,7 @@ public class App : Application
 
     private static void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        CultureManager.TearDown();
+        CultureManager.Instance.Dispose();
     }
 
     private static void DisableAvaloniaDataAnnotationValidation()

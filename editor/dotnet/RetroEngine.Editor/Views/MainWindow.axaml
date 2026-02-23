@@ -17,7 +17,7 @@
     </Design.DataContext>
 
     <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
-        <views:MainToolbar DataContext="{Binding Toolbar}" DockPanel.Dock="Top"/>
+        <views:DynamicMenu DataContext="{Binding Toolbar}" DockPanel.Dock="Top"/>
         <DockPanel>
 
         </DockPanel>

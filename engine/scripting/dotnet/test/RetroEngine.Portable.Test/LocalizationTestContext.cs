@@ -13,12 +13,12 @@ public class LocalizationTestContext
     [OneTimeSetUp]
     public void SetupLocalization()
     {
-        CultureManager.Initialize();
+        _ = CultureManager.Instance;
     }
 
     [OneTimeTearDown]
     public void TearDownLocalization()
     {
-        CultureManager.TearDown();
+        CultureManager.Instance.Dispose();
     }
 }
