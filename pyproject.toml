@@ -20,5 +20,5 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-    "tools/autotile-converter",
+    "engine/src/programs/python/autotile-converter",
 ]

@@ -73,7 +73,7 @@ endif ()
 function(retro_add_boilerplate TARGET_NAME)
     set(BOILERPLATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_boilerplate.cpp")
     configure_file(
-            "${CMAKE_SOURCE_DIR}/config/per_project_boilerplate.cpp.in"
+            "${CMAKE_SOURCE_DIR}/templates/per_project_boilerplate.cpp.in"
             "${BOILERPLATE_FILE}"
             @ONLY
     )
@@ -94,6 +94,5 @@ if (BUILD_TESTS)
     enable_testing()
 endif()
 
-add_subdirectory(external)
 add_subdirectory(engine)
-add_subdirectory(game)
+add_subdirectory(games)
