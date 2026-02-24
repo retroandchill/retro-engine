@@ -11,9 +11,8 @@
         <DefineConstants>$(DefineConstants);RETRO_NAME_BACKEND_NATIVE</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
-        <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
-        <ProjectReference Include="..\RetroEngine.Portable.SourceGenerator\RetroEngine.Portable.SourceGenerator.csproj"
+        <ProjectReference Include="$(RetroEnginePortableCommonProj)" />
+        <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
     </ItemGroup>

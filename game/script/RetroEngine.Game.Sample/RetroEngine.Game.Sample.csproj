@@ -10,8 +10,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Logging\RetroEngine.Logging.csproj" />
-      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine\RetroEngine.csproj" />
+      <ProjectReference Include="$(RetroEngineLoggingProj)" />
+      <ProjectReference Include="$(RetroEngineProj)" />
     </ItemGroup>
 
 </Project>

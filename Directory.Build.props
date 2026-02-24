@@ -1,4 +1,22 @@
 ﻿<Project>
+    <PropertyGroup>
+        <RootSlnDir>$(MSBuildThisFileDirectory)</RootSlnDir>
+        <EngineProjectsDir>$(RootSlnDir)/engine/scripting/dotnet/src</EngineProjectsDir>
+        <RetroEngineProj>$(EngineProjectsDir)/RetroEngine/RetroEngine.csproj</RetroEngineProj>
+        <RetroEngineCoreProj>$(EngineProjectsDir)/RetroEngine.Core/RetroEngine.Core.csproj</RetroEngineCoreProj>
+        <RetroEngineHostProj>$(EngineProjectsDir)/RetroEngine.Host/RetroEngine.Host.csproj</RetroEngineHostProj>
+        <RetroEngineLoggingProj>$(EngineProjectsDir)/RetroEngine.Logging/RetroEngine.Logging.csproj</RetroEngineLoggingProj>
+        <RetroEnginePortableProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.csproj</RetroEnginePortableProj>
+        <RetroEnginePortableNativeProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.Native.csproj</RetroEnginePortableNativeProj>
+        <RetroEnginePortableCommonProj>$(EngineProjectsDir)/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj</RetroEnginePortableCommonProj>
+        <RetroEnginePortableSourceGeneratorProj>$(EngineProjectsDir)/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj</RetroEnginePortableSourceGeneratorProj>
+
+        <EditorProjectsDir>$(RootSlnDir)/editor/dotnet</EditorProjectsDir>
+        <RetroEngineEditorProj>$(EditorProjectsDir)/RetroEngine.Editor/RetroEngine.Editor.csproj</RetroEngineEditorProj>
+        <RetroEngineEditorCoreProj>$(EditorProjectsDir)/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj</RetroEngineEditorCoreProj>
+        <RetroEngineEditorSourceGeneratorProj>$(EditorProjectsDir)/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj</RetroEngineEditorSourceGeneratorProj>
+    </PropertyGroup>
+
     <PropertyGroup Condition="'$(Configuration)' == 'Dev-Debug'">
         <RetroEngineBackend>Native</RetroEngineBackend>
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>

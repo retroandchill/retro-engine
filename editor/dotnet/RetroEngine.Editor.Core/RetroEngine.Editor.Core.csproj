@@ -14,16 +14,16 @@
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="Dock.Model.Avalonia" />
       <PackageReference Include="JetBrains.Annotations" />
-      <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable.SourceGenerator\RetroEngine.Portable.SourceGenerator.csproj"
+      <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false"/>
-        <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
+        <ProjectReference Include="$(RetroEngineEditorSourceGeneratorProj)"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
+        <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
     </ItemGroup>
 
     <ItemGroup>

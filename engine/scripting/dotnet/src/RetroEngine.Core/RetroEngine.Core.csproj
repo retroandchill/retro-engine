@@ -8,7 +8,7 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
-      <ProjectReference Include="..\RetroEngine.Portable.Common\RetroEngine.Portable.Common.csproj" />
+      <ProjectReference Include="$(RetroEnginePortableCommonProj)" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />

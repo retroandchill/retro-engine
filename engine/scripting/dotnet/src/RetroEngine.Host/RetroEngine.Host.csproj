@@ -9,8 +9,8 @@
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
-        <ProjectReference Include="..\RetroEngine.Logging\RetroEngine.Logging.csproj" />
-        <ProjectReference Include="..\RetroEngine\RetroEngine.csproj" />
+        <ProjectReference Include="$(RetroEngineCoreProj)" />
+        <ProjectReference Include="$(RetroEngineLoggingProj)" />
+        <ProjectReference Include="$(RetroEngineProj)" />
     </ItemGroup>
 </Project>

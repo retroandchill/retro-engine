@@ -29,8 +29,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RetroEngine.Editor.Core\RetroEngine.Editor.Core.csproj" />
-      <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
+      <ProjectReference Include="$(RetroEngineEditorCoreProj)" />
+      <ProjectReference Include="$(RetroEngineEditorSourceGeneratorProj)"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false"/>
     </ItemGroup>

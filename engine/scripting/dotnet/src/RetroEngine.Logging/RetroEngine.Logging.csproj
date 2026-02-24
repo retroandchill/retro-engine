@@ -9,19 +9,10 @@
         <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-    <PropertyGroup
-            Condition="'$(RetroEngineBackend)' == 'Native'
-                            and '$(RetroEngineNativeOutputDirectory)' != ''"
-    >
-        <!-- Only redirect Native builds driven by CMake -->
-        <OutputPath>$(RetroEngineNativeOutputDirectory)</OutputPath>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+        <ProjectReference Include="$(RetroEngineCoreProj)" />
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
+        <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
     </ItemGroup>
 </Project>
