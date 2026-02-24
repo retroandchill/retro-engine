@@ -1,8 +1,10 @@
-﻿using Avalonia.Input;
+﻿using System.Collections.ObjectModel;
+using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels.Menus;
+using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Views;
 using RetroEngine.Portable.Localization;
 
@@ -64,6 +66,12 @@ public partial class MainWindowViewModel : ObservableObject
                 },
             ],
         };
+
+    public ObservableCollection<FileDocument> Documents { get; } =
+    [
+        new() { Title = "Document 1", Content = "Content of document 1" },
+        new() { Title = "Document 2", Content = "Content of document 2" },
+    ];
 
     private static void Open() { }
 

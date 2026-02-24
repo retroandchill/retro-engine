@@ -24,9 +24,7 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Dock.Avalonia" />
         <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
-        <PackageReference Include="Dock.Model.Mvvm" />
         <PackageReference Include="Dock.Serializer.SystemTextJson" />
     </ItemGroup>
 

@@ -5,11 +5,11 @@
 
 using Avalonia.Controls;
 
-namespace RetroEngine.Editor.Core.Views;
+namespace RetroEngine.Editor.Core.Views.Menus;
 
-public partial class DynamicMenu : UserControl
+public partial class DynamicMenuView : UserControl
 {
-    public DynamicMenu()
+    public DynamicMenuView()
     {
         InitializeComponent();
     }

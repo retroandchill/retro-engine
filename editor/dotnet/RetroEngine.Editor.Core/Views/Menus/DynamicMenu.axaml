@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:menus="clr-namespace:RetroEngine.Editor.Core.ViewModels.Menus"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.DynamicMenu">
+             x:Class="RetroEngine.Editor.Core.Views.Menus.DynamicMenuView">
     <Design.DataContext>
         <menus:DynamicMenuViewModel/>
     </Design.DataContext>

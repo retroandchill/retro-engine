@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Dock.Model.Core;
 using RetroEngine.Editor.Core.ViewModels;
 
 namespace RetroEngine.Editor.Core;

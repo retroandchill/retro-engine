@@ -16,6 +16,7 @@
         <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="ZLinq" />
     </ItemGroup>
 </Project>

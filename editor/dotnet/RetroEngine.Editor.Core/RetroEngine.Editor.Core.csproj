@@ -12,6 +12,7 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
+      <PackageReference Include="Dock.Model.Avalonia" />
       <PackageReference Include="JetBrains.Annotations" />
       <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable.SourceGenerator\RetroEngine.Portable.SourceGenerator.csproj"
                         OutputItemType="Analyzer"
@@ -23,6 +24,13 @@
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="..\..\..\engine\scripting\dotnet\src\RetroEngine.Portable\RetroEngine.Portable.Native.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\Menus\DynamicMenu.axaml.cs">
+        <DependentUpon>DynamicMenu.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
 </Project>
