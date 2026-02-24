@@ -2,8 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RetroEngine.Editor.App"
              xmlns:core="clr-namespace:RetroEngine.Editor.Core;assembly=RetroEngine.Editor.Core"
+             xmlns:converters="clr-namespace:RetroEngine.Editor.Core.Converters;assembly=RetroEngine.Editor.Core"
              RequestedThemeVariant="Dark">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <converters:TextToStringConverter x:Key="TextToStringConverter"/>
+    </Application.Resources>
 
     <Application.DataTemplates>
         <core:ViewLocator/>

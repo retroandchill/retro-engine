@@ -13,27 +13,16 @@
         Title="RetroEngine.Editor">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+
     <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
         <menus:DynamicMenuView DataContext="{Binding Toolbar}" DockPanel.Dock="Top"/>
-        <DockControl InitializeLayout="True" InitializeFactory="True">
-            <DockControl.Factory>
-                <Factory />
-            </DockControl.Factory>
-            <RootDock>
-                <DocumentDock ItemsSource="{Binding Documents}">
-                    <DocumentDock.DocumentTemplate>
-                        <DocumentTemplate>
-                            <TextBox x:DataType="tabs:FileDocument" Text="{Binding Content}" AcceptsReturn="True" />
-                        </DocumentTemplate>
-                    </DocumentDock.DocumentTemplate>
-                </DocumentDock>
-            </RootDock>
-        </DockControl>
+        <views:MainDockingArea/>
     </DockPanel>
 
 </Window>

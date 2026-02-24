@@ -67,12 +67,6 @@ public partial class MainWindowViewModel : ObservableObject
             ],
         };
 
-    public ObservableCollection<FileDocument> Documents { get; } =
-    [
-        new() { Title = "Document 1", Content = "Content of document 1" },
-        new() { Title = "Document 2", Content = "Content of document 2" },
-    ];
-
     private static void Open() { }
 
     private static void Save() { }
