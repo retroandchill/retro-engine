@@ -41,8 +41,8 @@ int main()
                         {
                             try
                             {
-                                EngineLifecycle engine_lifecycle{service_provider->get_required<Engine>()};
-                                auto &engine = Engine::instance();
+                                Engine engine{service_provider};
+                                EngineLifecycle engine_lifecycle{engine};
                                 engine.add_window(*window);
                                 engine.run(u"RetroEngine.Game.Sample.dll", u"RetroEngine.Game.Sample.GameRunner");
                             }

@@ -42,8 +42,7 @@ namespace retro
 
     void add_engine_services(ServiceCollection &services)
     {
-        services.add_singleton<Engine>()
-            .add_singleton<PipelineManager>()
+        services.add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline>()
             .add_singleton<AssetSource, FileSystemAssetSource>()
@@ -51,12 +50,12 @@ namespace retro
             .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
-    Engine::Engine(ServiceScopeFactory &service_scope_factory,
-                   ScriptRuntime &script_runtime,
-                   PipelineManager &pipeline_manager,
-                   AssetManager &asset_manager)
-        : service_scope_factory_{service_scope_factory}, script_runtime_(script_runtime), asset_manager_{asset_manager},
-          pipeline_manager_{pipeline_manager}
+    Engine::Engine(std::shared_ptr<ServiceProvider> service_provider)
+        : service_provider_{std::move(service_provider)},
+          service_scope_factory_{service_provider_->get_required<ServiceScopeFactory>()},
+          script_runtime_(service_provider_->get_required<ScriptRuntime>()),
+          asset_manager_{service_provider_->get_required<AssetManager>()},
+          pipeline_manager_{service_provider_->get_required<PipelineManager>()}
     {
         viewports_.on_viewport_created().add(
             [this](Viewport &viewport)

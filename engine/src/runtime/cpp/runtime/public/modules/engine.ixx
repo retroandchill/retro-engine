@@ -34,12 +34,7 @@ namespace retro
     export class Engine
     {
       public:
-        using Dependencies = TypeList<ServiceScopeFactory &, ScriptRuntime &, PipelineManager &, AssetManager &>;
-
-        RETRO_API Engine(ServiceScopeFactory &service_scope_factory,
-                         ScriptRuntime &script_runtime,
-                         PipelineManager &pipeline_manager,
-                         AssetManager &asset_manager);
+        RETRO_API explicit Engine(std::shared_ptr<ServiceProvider> service_provider);
 
         ~Engine() = default;
 
@@ -104,6 +99,7 @@ namespace retro
 
         friend struct AssetPathHook;
 
+        std::shared_ptr<ServiceProvider> service_provider_{};
         ServiceScopeFactory &service_scope_factory_;
         ScriptRuntime &script_runtime_;
         std::map<std::uint64_t, RendererRef> renderers_;

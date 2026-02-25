@@ -5,9 +5,12 @@
 set(RETRO_PLATFORM_SOURCES
         private/backend.cpp
         private/window.cpp
+        private/backend_c.cpp
 )
 
-set(RETRO_PLATFORM_HEADERS )
+set(RETRO_PLATFORM_HEADERS
+        public/include/retro/platform/backend_c.h
+)
 
 set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx)
 
@@ -19,11 +22,11 @@ set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/backend.ixx
 )
 
-
-
 add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_PUBLIC_MODULES} ${RETRO_PLATFORM_PRIVATE_MODULES} ${RETRO_PLATFORM_HEADERS})
 
 retro_add_boilerplate(retro_platform)
+
+target_include_directories(retro_platform PUBLIC public/include)
 
 target_sources(retro_platform PUBLIC
         FILE_SET retro_platform_public

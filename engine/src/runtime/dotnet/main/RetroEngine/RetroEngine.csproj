@@ -17,6 +17,7 @@
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="ZLinq" />
     </ItemGroup>
 </Project>

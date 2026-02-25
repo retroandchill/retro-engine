@@ -4,8 +4,10 @@
         <EngineProjectsDir>$(RootSlnDir)/engine/src/runtime/dotnet/main</EngineProjectsDir>
         <RetroEngineProj>$(EngineProjectsDir)/RetroEngine/RetroEngine.csproj</RetroEngineProj>
         <RetroEngineCoreProj>$(EngineProjectsDir)/RetroEngine.Core/RetroEngine.Core.csproj</RetroEngineCoreProj>
+        <RetroEngineGameProj>$(EngineProjectsDir)/RetroEngine.Game/RetroEngine.Game.csproj</RetroEngineGameProj>
         <RetroEngineHostProj>$(EngineProjectsDir)/RetroEngine.Host/RetroEngine.Host.csproj</RetroEngineHostProj>
         <RetroEngineLoggingProj>$(EngineProjectsDir)/RetroEngine.Logging/RetroEngine.Logging.csproj</RetroEngineLoggingProj>
+        <RetroEnginePlatformProj>$(EngineProjectsDir)/RetroEngine.Platform/RetroEngine.Platform.csproj</RetroEnginePlatformProj>
         <RetroEnginePortableProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.csproj</RetroEnginePortableProj>
         <RetroEnginePortableNativeProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.Native.csproj</RetroEnginePortableNativeProj>
         <RetroEnginePortableCommonProj>$(EngineProjectsDir)/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj</RetroEnginePortableCommonProj>
