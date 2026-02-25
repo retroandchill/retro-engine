@@ -4,8 +4,8 @@
     {
       "name": "base",
       "hidden": true,
-      "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/cmake-build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/engine/build/${presetName}",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
@@ -18,6 +18,7 @@
       "description": "Development build, Debug, shared libraries, case-preserving names ON",
       "inherits": "base",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "RETRO_WITH_EDITOR_DATA": "ON",
         "RETRO_BUILD_SHARED": "ON",
         "RETRO_WITH_CASE_PRESERVING_NAME": "ON",
@@ -30,6 +31,7 @@
       "description": "Development build, Release, shared libraries, case-preserving names ON",
       "inherits": "base",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "RETRO_WITH_EDITOR_DATA": "ON",
         "RETRO_BUILD_SHARED": "ON",
         "RETRO_WITH_CASE_PRESERVING_NAME": "ON",
@@ -42,6 +44,7 @@
       "description": "Packaged build, Debug, static libraries, case-preserving names OFF",
       "inherits": "base",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "RETRO_WITH_EDITOR_DATA": "OFF",
         "RETRO_BUILD_SHARED": "OFF",
         "RETRO_WITH_CASE_PRESERVING_NAME": "OFF",
@@ -54,33 +57,12 @@
       "description": "Packaged build, Release, static libraries, case-preserving names OFF",
       "inherits": "base",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "RETRO_WITH_EDITOR_DATA": "OFF",
         "RETRO_BUILD_SHARED": "OFF",
         "RETRO_WITH_CASE_PRESERVING_NAME": "OFF",
         "RETRO_DOTNET_CONFIGURATION": "Pkg-Release"
       }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "dev-debug",
-      "configurePreset": "dev-debug",
-      "configuration": "Debug"
-    },
-    {
-      "name": "dev-release",
-      "configurePreset": "dev-release",
-      "configuration": "Release"
-    },
-    {
-      "name": "pkg-debug",
-      "configurePreset": "pkg-debug",
-      "configuration": "Debug"
-    },
-    {
-      "name": "pkg-release",
-      "configurePreset": "pkg-release",
-      "configuration": "Release"
     }
   ]
 }

@@ -2,7 +2,7 @@
     <Import Project="$(MSBuildThisFileDirectory)\..\Directory.Build.props"/>
     <PropertyGroup>
         <OutputPath>$(MSBuildThisFileDirectory)/bin/$(BuildConfigName)</OutputPath>
-        <IntermediateOutputPath>$(MSBuildThisFileDirectory)/obj/$(BuildConfigName)/$(MSBuildProjectName)/</IntermediateOutputPath>
+        <IntermediateOutputPath>$(MSBuildThisFileDirectory)/build/$(BuildConfigName)/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
         <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
     </PropertyGroup>
 </Project>
