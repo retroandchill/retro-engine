@@ -18,6 +18,7 @@ cmake-build-*/
 # .NET build outputs
 artifacts/
 **/bin/
+**/lib/
 **/obj/
 **/TestResults/
 **/TestResult*/

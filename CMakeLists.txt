@@ -55,10 +55,11 @@ else()
     add_compile_definitions(RETRO_WITH_EDITOR_DATA=0)
 endif()
 
-set(RETRO_OUTPUT_ROOT "${CMAKE_BINARY_DIR}")
+string(TOLOWER ${RETRO_DOTNET_CONFIGURATION} RETRO_BUILD_CONFIG)
+set(RETRO_OUTPUT_ROOT "${CMAKE_SOURCE_DIR}/engine")
 
-set(RETRO_BIN_DIR "${RETRO_OUTPUT_ROOT}/bin")
-set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib")
+set(RETRO_BIN_DIR "${RETRO_OUTPUT_ROOT}/bin/${RETRO_BUILD_CONFIG}")
+set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib/${RETRO_BUILD_CONFIG}")
 
 set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output directory")
 set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")

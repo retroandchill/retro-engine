@@ -16,7 +16,9 @@
     </Project>
     <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj" />
   </Folder>
-  <Folder Name="/engine/" />
+  <Folder Name="/engine/">
+    <File Path="engine/Directory.Build.props" />
+  </Folder>
   <Folder Name="/engine/scripting/" />
   <Folder Name="/engine/scripting/dotnet/" />
   <Folder Name="/engine/scripting/dotnet/src/">

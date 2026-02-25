@@ -20,9 +20,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Dev-Debug'">
         <RetroEngineBackend>Native</RetroEngineBackend>
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
-        <OutputPath>$(SolutionDir)/cmake-build-dev-debug/bin</OutputPath>
-        <IntermediateOutputPath>$(SolutionDir)/cmake-build-dev-debug/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
-        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
+        <BuildConfigName>dev-debug</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
@@ -31,9 +29,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Dev-Release'">
         <RetroEngineBackend>Native</RetroEngineBackend>
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
-        <OutputPath>$(SolutionDir)/cmake-build-dev-release/bin</OutputPath>
-        <IntermediateOutputPath>$(SolutionDir)/cmake-build-dev-release/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
-        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
+        <BuildConfigName>dev-release</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
@@ -41,9 +37,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Pkg-Debug'">
         <RetroEngineBackend>Native</RetroEngineBackend>
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
-        <OutputPath>$(SolutionDir)/cmake-build-pkg-debug/bin</OutputPath>
-        <IntermediateOutputPath>$(SolutionDir)/cmake-build-pkg-debug/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
-        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
+        <BuildConfigName>pkg-debug</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
@@ -52,9 +46,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Pkg-Release'">
         <RetroEngineBackend>Native</RetroEngineBackend>
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
-        <OutputPath>$(SolutionDir)/cmake-build-pkg-release/bin</OutputPath>
-        <IntermediateOutputPath>$(SolutionDir)/cmake-build-pkg-release/obj/$(MSBuildProjectName)/</IntermediateOutputPath>
-        <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
+        <BuildConfigName>pkg-release</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
