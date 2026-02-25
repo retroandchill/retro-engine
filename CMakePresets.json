@@ -21,8 +21,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "RETRO_WITH_EDITOR_DATA": "ON",
         "RETRO_BUILD_SHARED": "ON",
-        "RETRO_WITH_CASE_PRESERVING_NAME": "ON",
-        "RETRO_DOTNET_CONFIGURATION": "Dev-Debug"
+        "RETRO_WITH_CASE_PRESERVING_NAME": "ON"
       }
     },
     {
@@ -34,8 +33,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "RETRO_WITH_EDITOR_DATA": "ON",
         "RETRO_BUILD_SHARED": "ON",
-        "RETRO_WITH_CASE_PRESERVING_NAME": "ON",
-        "RETRO_DOTNET_CONFIGURATION": "Dev-Release"
+        "RETRO_WITH_CASE_PRESERVING_NAME": "ON"
       }
     },
     {
@@ -47,8 +45,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "RETRO_WITH_EDITOR_DATA": "OFF",
         "RETRO_BUILD_SHARED": "OFF",
-        "RETRO_WITH_CASE_PRESERVING_NAME": "OFF",
-        "RETRO_DOTNET_CONFIGURATION": "Pkg-Debug"
+        "RETRO_WITH_CASE_PRESERVING_NAME": "OFF"
       }
     },
     {
@@ -60,8 +57,7 @@
         "CMAKE_BUILD_TYPE": "Release",
         "RETRO_WITH_EDITOR_DATA": "OFF",
         "RETRO_BUILD_SHARED": "OFF",
-        "RETRO_WITH_CASE_PRESERVING_NAME": "OFF",
-        "RETRO_DOTNET_CONFIGURATION": "Pkg-Release"
+        "RETRO_WITH_CASE_PRESERVING_NAME": "OFF"
       }
     }
   ]

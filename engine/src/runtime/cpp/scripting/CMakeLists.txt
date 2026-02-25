@@ -38,7 +38,7 @@ target_link_libraries(retro_scripting PUBLIC
         retro_core retro_runtime
         unofficial::nethost::nethost)
 
-add_dependencies(retro_scripting retro_managed)
+add_dependencies(retro_scripting)
 
 set_target_properties(retro_scripting PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

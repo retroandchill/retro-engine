@@ -43,10 +43,8 @@ endif()
 
 if (RETRO_WITH_CASE_PRESERVING_NAME)
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
-    set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="true")
 else()
     add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
-    set(RETRO_MANAGED_OPTIONS -p:RetroEngineCasePreservingNames="false")
 endif()
 
 if (RETRO_WITH_EDITOR_DATA)
@@ -64,8 +62,6 @@ set(RETRO_LIB_DIR "${RETRO_OUTPUT_ROOT}/lib/${RETRO_BUILD_CONFIG}")
 set(RETRO_BIN_DIR "${RETRO_BIN_DIR}" CACHE PATH "Retro Engine binary output directory")
 set(RETRO_LIB_DIR "${RETRO_LIB_DIR}" CACHE PATH "Retro Engine library output directory")
 
-set(RETRO_MANAGED_SOLUTION "${CMAKE_SOURCE_DIR}/RetroEngine.Managed.slnx")
-
 find_program(GLSLC_EXECUTABLE glslc HINTS "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/Bin32")
 if (NOT GLSLC_EXECUTABLE)
     message(FATAL_ERROR "glslc not found. Install Vulkan SDK or add glslc to PATH.")
@@ -80,15 +76,6 @@ function(retro_add_boilerplate TARGET_NAME)
     )
     target_sources(${TARGET_NAME} PRIVATE "${BOILERPLATE_FILE}")
 endfunction()
-
-add_custom_target(retro_managed ALL
-        COMMAND dotnet build "${RETRO_MANAGED_SOLUTION}"
-            -c "${RETRO_DOTNET_CONFIGURATION}"
-            -p:Platform="Any CPU"
-            ${RETRO_MANAGED_OPTIONS}
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        USES_TERMINAL
-        COMMENT "Building .NET managed assemblies")
 
 if (BUILD_TESTS)
     include(CTest)
