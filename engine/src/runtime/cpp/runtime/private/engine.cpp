@@ -50,8 +50,8 @@ namespace retro
             .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
-    Engine::Engine(std::shared_ptr<ServiceProvider> service_provider)
-        : service_provider_{std::move(service_provider)},
+    Engine::Engine(std::unique_ptr<PlatformBackend> platform_backend, std::shared_ptr<ServiceProvider> service_provider)
+        : platform_backend_{std::move(platform_backend)}, service_provider_{std::move(service_provider)},
           service_scope_factory_{service_provider_->get_required<ServiceScopeFactory>()},
           script_runtime_(service_provider_->get_required<ScriptRuntime>()),
           asset_manager_{service_provider_->get_required<AssetManager>()},
@@ -114,7 +114,13 @@ namespace retro
                 renderer->second->remove_viewport(viewport);
             });
     }
-
+    Engine::Engine(std::unique_ptr<PlatformBackend> platform_backend,
+                   std::unique_ptr<RendererFactory> renderer_factory,
+                   std::vector<std::unique_ptr<RenderPipeline>> pipelines)
+        : platform_backend_{std::move(platform_backend)}, renderer_factory_{std::move(renderer_factory)},
+          pipeline_manager_{std::move(pipelines)}
+    {
+    }
     void Engine::run(const std::u16string_view assembly_path, const std::u16string_view class_name)
     {
         TaskScheduler::Scope task_scope{&scheduler_};
