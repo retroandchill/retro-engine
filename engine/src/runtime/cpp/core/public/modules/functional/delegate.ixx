@@ -516,14 +516,42 @@ namespace retro
             return delegate;
         }
 
+        friend bool operator==(const Delegate &lhs, const Delegate &rhs) noexcept
+        {
+            if (lhs.ops_ == nullptr)
+            {
+                return rhs.ops_ == nullptr;
+            }
+
+            if (rhs.ops_ == nullptr)
+            {
+                return false;
+            }
+
+            if (lhs.ops_->type_info != rhs.ops_->type_info)
+            {
+                return false;
+            }
+
+            if (lhs.ops_->equals == nullptr)
+            {
+                return false;
+            }
+
+            return lhs.ops_->equals(lhs.storage_, rhs.storage_);
+        }
+
       private:
         struct OpsTable
         {
             std::size_t object_size{};
+            const std::type_info &type_info;
             Ret (*invoke)(const DelegateStorage &storage, Args... args) = nullptr;
             void (*copy)(DelegateStorage &dest, const DelegateStorage &src) = nullptr;
+            void (*move)(DelegateStorage &dest, DelegateStorage &src) = nullptr;
             void (*destroy)(DelegateStorage &) = nullptr;
             bool (*is_bound)(const DelegateStorage &) = nullptr;
+            bool (*equals)(const DelegateStorage &lhs, const DelegateStorage &rhs) = nullptr;
         };
 
         [[nodiscard]] constexpr bool is_bound_no_locks() const noexcept
@@ -558,7 +586,14 @@ namespace retro
 
             if (is_inline())
             {
-                std::memcpy(storage_.inline_buffer, other.storage_.inline_buffer, sizeof(storage_.inline_buffer));
+                if (ops_->move != nullptr)
+                {
+                    ops_->move(storage_, other.storage_);
+                }
+                else
+                {
+                    std::memcpy(storage_.inline_buffer, other.storage_.inline_buffer, sizeof(storage_.inline_buffer));
+                }
             }
             else
             {
@@ -597,10 +632,13 @@ namespace retro
         static OpsTable *get_ops_table()
         {
             static OpsTable ops_table{.object_size = sizeof(Functor),
+                                      .type_info = typeid(Functor),
                                       .invoke = invoke_functor<Functor>,
                                       .copy = get_copy_operation<Functor>(),
+                                      .move = get_move_operation<Functor>(),
                                       .destroy = get_delete_operation<Functor>(),
-                                      .is_bound = get_bound_check<Functor>()};
+                                      .is_bound = get_bound_check<Functor>(),
+                                      .equals = get_equality_operation<Functor>()};
             return &ops_table;
         }
 
@@ -611,6 +649,20 @@ namespace retro
             if constexpr (!std::is_trivially_copyable_v<Functor> || sizeof(Functor) > DELEGATE_INLINE_SIZE)
             {
                 return &copy_functor<Functor>;
+            }
+            else
+            {
+                return nullptr;
+            }
+        }
+
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static auto get_move_operation()
+        {
+            if constexpr (!std::is_trivially_copyable_v<Functor> && sizeof(Functor) < DELEGATE_INLINE_SIZE)
+            {
+                return &move_functor<Functor>;
             }
             else
             {
@@ -639,6 +691,20 @@ namespace retro
             if constexpr (WeakFunctionBindingLike<Functor>)
             {
                 return &is_functor_bound<Functor>;
+            }
+            else
+            {
+                return nullptr;
+            }
+        }
+
+        template <std::invocable<Args...> Functor>
+            requires std::convertible_to<std::invoke_result_t<Functor, Args...>, Ret>
+        static auto get_equality_operation()
+        {
+            if constexpr (std::equality_comparable<Functor>)
+            {
+                return &are_functors_equal<Functor>;
             }
             else
             {
@@ -675,6 +741,15 @@ namespace retro
         }
 
         template <typename Functor>
+            requires(sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+        static void move_functor(DelegateStorage &dest, DelegateStorage &source)
+        {
+            auto &src = *reinterpret_cast<Functor *>(source.inline_buffer);
+            std::construct_at(reinterpret_cast<Functor *>(dest.inline_buffer), std::move(src));
+            std::destroy_at(src);
+        }
+
+        template <typename Functor>
         static void delete_functor(DelegateStorage &obj)
         {
             if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
@@ -697,6 +772,20 @@ namespace retro
             else
             {
                 return static_cast<const Functor *>(obj.heap_object)->is_bound();
+            }
+        }
+
+        template <std::equality_comparable Functor>
+        static bool are_functors_equal(const DelegateStorage &lhs, const DelegateStorage &rhs)
+        {
+            if constexpr (sizeof(Functor) <= DELEGATE_INLINE_SIZE)
+            {
+                return *reinterpret_cast<const Functor *>(&lhs.inline_buffer) ==
+                       *reinterpret_cast<const Functor *>(&rhs.inline_buffer);
+            }
+            else
+            {
+                return *static_cast<const Functor *>(lhs.heap_object) == *static_cast<const Functor *>(rhs.heap_object);
             }
         }
 
@@ -895,6 +984,22 @@ namespace retro
 
             auto lock = this->write_lock();
             free_slot(handle.index());
+        }
+
+        void remove(const DelegateType &delegate)
+        {
+            if (!delegate.is_bound())
+                return;
+
+            auto lock = this->write_lock();
+            for (std::size_t i = 0; i < slots_.size(); ++i)
+            {
+                if (slots_[i].delegate != delegate)
+                    continue;
+
+                free_slot(i);
+                return;
+            }
         }
 
         void clear()

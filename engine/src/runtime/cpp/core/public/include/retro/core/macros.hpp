@@ -18,29 +18,3 @@
 #define EXPECT_ASSIGN(lhs, expr)                                                                                       \
     EXPECT(expr)                                                                                                       \
     lhs = *std::forward<decltype(RETRO_CONCAT(__try_res, __LINE__))>(RETRO_CONCAT(__try_res, __LINE__));
-
-#define DECLARE_OPAQUE_C_HANDLE(handle, type)                                                                          \
-    template <>                                                                                                        \
-    struct retro::CHandleTraits<handle>                                                                                \
-    {                                                                                                                  \
-        using CppType = type;                                                                                          \
-        static constexpr retro::CHandleType HandleType = retro::CHandleType::opaque;                                   \
-    };                                                                                                                 \
-    template <>                                                                                                        \
-    struct retro::CAliasableTraits<type>                                                                               \
-    {                                                                                                                  \
-        using CType = handle;                                                                                          \
-    };
-
-#define DECLARE_DEFINED_C_HANDLE(handle, type)                                                                         \
-    template <>                                                                                                        \
-    struct retro::CHandleTraits<handle>                                                                                \
-    {                                                                                                                  \
-        using CppType = type;                                                                                          \
-        static constexpr retro::CHandleType HandleType = retro::CHandleType::defined;                                  \
-    };                                                                                                                 \
-    template <>                                                                                                        \
-    struct retro::CAliasableTraits<type>                                                                               \
-    {                                                                                                                  \
-        using CType = handle;                                                                                          \
-    };

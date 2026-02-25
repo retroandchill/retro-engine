@@ -4,15 +4,15 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+#include "retro/core/exports.h"
 
-#include "retro/runtime/engine_c.h"
-
+import std;
 import retro.runtime.engine;
 
 extern "C"
 {
 
-    void retro_engine_request_shutdown(const int32_t exit_code)
+    RETRO_API void retro_engine_request_shutdown(const std::int32_t exit_code)
     {
         retro::Engine::instance().request_shutdown(exit_code);
     }

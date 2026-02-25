@@ -21,10 +21,7 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
-        public/include/retro/runtime/scene/scene_c.h
-        public/include/retro/runtime/engine_c.h
         private/assets/textures/texture.cpp
-        public/include/retro/runtime/assets/assets_c.h
 )
 
 set(RETRO_RUNTIME_MODULES

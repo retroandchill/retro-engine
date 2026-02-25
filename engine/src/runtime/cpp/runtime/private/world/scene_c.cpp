@@ -4,9 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include "retro/runtime/scene/scene_c.h"
-
-#include "retro/core/macros.hpp"
+#include "retro/core/exports.h"
 
 import retro.core.util.color;
 import retro.core.math.vector;
@@ -20,72 +18,59 @@ import retro.runtime.assets.textures.texture;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.runtime.engine;
-import retro.core.c_api;
 import std;
 
-DECLARE_OPAQUE_C_HANDLE(Retro_Scene, retro::Scene);
-DECLARE_OPAQUE_C_HANDLE(Retro_Viewport, retro::Viewport);
-DECLARE_OPAQUE_C_HANDLE(Retro_Node, retro::SceneNode);
-DECLARE_OPAQUE_C_HANDLE(Retro_Sprite, retro::Sprite);
-DECLARE_OPAQUE_C_HANDLE(Retro_Geometry, retro::GeometryObject);
-DECLARE_OPAQUE_C_HANDLE(Retro_Texture, retro::Texture);
-DECLARE_DEFINED_C_HANDLE(Retro_Vector2f, retro::Vector2f);
-DECLARE_DEFINED_C_HANDLE(Retro_Color, retro::Color);
-DECLARE_DEFINED_C_HANDLE(Retro_Vertex, retro::Vertex);
-DECLARE_DEFINED_C_HANDLE(Retro_ScreenLayout, retro::ScreenLayout);
-DECLARE_DEFINED_C_HANDLE(Retro_UVs, retro::UVs);
-
-using retro::from_c;
-using retro::to_c;
-
-namespace
+namespace retro
 {
-    retro::Transform2f from_c(const Retro_Transform2f &transform)
+    struct NativeTransform2f
     {
-        const retro::Scale2f scale{from_c(transform.scale)};
-        const retro::Quaternion2f rotation{transform.rotation};
+        Vector2f position{};
+        float rotation = 0;
+        Vector2f scale{};
+    };
 
-        const auto matrix = retro::Matrix2x2f{rotation} * retro::Matrix2x2f{scale};
-        return retro::Transform2f{matrix, from_c(transform.position)};
-    }
-
-    retro::CameraLayout from_c(const Retro_CameraLayout &layout)
+    struct NativeCameraLayout
     {
-        return retro::CameraLayout{.position = from_c(layout.position),
-                                   .pivot = from_c(layout.pivot),
-                                   .rotation = retro::Quaternion2f{layout.rotation},
-                                   .zoom = layout.zoom};
-    }
+        Vector2f position{};
+        Vector2f pivot{};
+        float rotation = 0;
+        float zoom = 0;
+    };
 
-    retro::GeometryType from_c(const Retro_GeometryType type) noexcept
+    namespace
     {
-        switch (type)
+        Transform2f from_c(const NativeTransform2f &transform)
         {
-            case Retro_GeometryType_Rectangle:
-                return retro::GeometryType::rectangle;
-            case Retro_GeometryType_Triangle:
-                return retro::GeometryType::triangle;
-            case Retro_GeometryType_Custom:
-                return retro::GeometryType::custom;
-            default:
-                return retro::GeometryType::none;
+            const Scale2f scale{transform.scale};
+            const Quaternion2f rotation{transform.rotation};
+
+            const auto matrix = Matrix2x2f{rotation} * Matrix2x2f{scale};
+            return Transform2f{matrix, transform.position};
         }
-    }
-} // namespace
+
+        CameraLayout from_c(const NativeCameraLayout &layout)
+        {
+            return CameraLayout{.position = layout.position,
+                                .pivot = layout.pivot,
+                                .rotation = Quaternion2f{layout.rotation},
+                                .zoom = layout.zoom};
+        }
+    } // namespace
+} // namespace retro
 
 extern "C"
 {
-    Retro_Scene *retro_scene_create()
+    RETRO_API retro::Scene *retro_scene_create()
     {
-        return std::addressof(to_c(retro::Engine::instance().scenes().create_scene()));
+        return std::addressof(retro::Engine::instance().scenes().create_scene());
     }
 
-    void retro_scene_destroy(Retro_Scene *scene)
+    RETRO_API void retro_scene_destroy(retro::Scene *scene)
     {
-        retro::Engine::instance().scenes().destroy_scene(*from_c(scene));
+        retro::Engine::instance().scenes().destroy_scene(*scene);
     }
 
-    Retro_Viewport *retro_viewport_create()
+    RETRO_API retro::Viewport *retro_viewport_create()
     {
 
         auto &viewport = retro::Engine::instance().viewports().create_viewport();
@@ -96,140 +81,123 @@ extern "C"
             viewport.set_window(primary_renderer->window());
         }
 
-        return std::addressof(to_c(viewport));
+        return std::addressof(viewport);
     }
 
-    void retro_viewport_destroy(Retro_Viewport *viewport)
+    RETRO_API void retro_viewport_destroy(retro::Viewport *viewport)
     {
-        retro::Engine::instance().viewports().destroy_viewport(*from_c(viewport));
+        retro::Engine::instance().viewports().destroy_viewport(*viewport);
     }
 
-    void retro_viewport_set_scene(Retro_Viewport *viewport, Retro_Scene *scene)
+    RETRO_API void retro_viewport_set_scene(retro::Viewport *viewport, retro::Scene *scene)
     {
-        from_c(viewport)->set_scene(from_c(scene));
+        viewport->set_scene(scene);
     }
 
-    void retro_viewport_set_screen_layout(Retro_Viewport *viewport, const Retro_ScreenLayout *layout)
+    RETRO_API void retro_viewport_set_screen_layout(retro::Viewport *viewport, const retro::ScreenLayout *layout)
     {
-        from_c(viewport)->set_screen_layout(from_c(*layout));
+        viewport->set_screen_layout(*layout);
     }
 
-    void retro_viewport_set_camera_layout(Retro_Viewport *viewport, const Retro_CameraLayout *layout)
+    RETRO_API void retro_viewport_set_camera_layout(retro::Viewport *viewport, const retro::NativeCameraLayout *layout)
     {
-        from_c(viewport)->set_camera_layout(from_c(*layout));
+        viewport->set_camera_layout(retro::from_c(*layout));
     }
 
-    void retro_viewport_set_z_order(Retro_Viewport *viewport, const int32_t z_order)
+    RETRO_API void retro_viewport_set_z_order(retro::Viewport *viewport, const std::int32_t z_order)
     {
-        from_c(viewport)->set_z_order(z_order);
+        viewport->set_z_order(z_order);
     }
 
-    void retro_node_dispose(Retro_Scene *scene, Retro_Node *node)
+    RETRO_API void retro_node_dispose(retro::Scene *scene, retro::SceneNode *node)
     {
-        from_c(scene)->destroy_node(*from_c(node));
+        scene->destroy_node(*node);
     }
 
-    void retro_node_set_transform(Retro_Node *node, const Retro_Transform2f *transform)
+    RETRO_API void retro_node_set_transform(retro::SceneNode *node, const retro::NativeTransform2f *transform)
     {
-        auto *scene_node = from_c(node);
-        scene_node->set_transform(from_c(*transform));
+        node->set_transform(retro::from_c(*transform));
     }
 
-    int32_t retro_node_set_z_order(Retro_Node *node, const int32_t z_order)
+    RETRO_API std::int32_t retro_node_set_z_order(retro::SceneNode *node, const std::int32_t z_order)
     {
-        auto *scene_node = from_c(node);
-        scene_node->set_z_order(z_order);
-        return scene_node->z_order();
+        node->set_z_order(z_order);
+        return node->z_order();
     }
 
-    void retro_node_attach_to_parent(Retro_Node *node, Retro_Node *parent)
+    RETRO_API void retro_node_attach_to_parent(retro::SceneNode *node, retro::SceneNode *parent)
     {
-        auto *parent_ptr = from_c(parent);
-        auto *scene_node = from_c(node);
-        scene_node->attach_to_parent(parent_ptr);
+        node->attach_to_parent(parent);
     }
 
-    void retro_node_detach_from_parent(Retro_Node *node)
+    RETRO_API void retro_node_detach_from_parent(retro::SceneNode *node)
     {
-        auto *scene_node = from_c(node);
-        scene_node->detach_from_parent();
+        node->detach_from_parent();
     }
 
-    Retro_Geometry *retro_geometry_create(Retro_Scene *scene)
+    RETRO_API retro::GeometryObject *retro_geometry_create(retro::Scene *scene)
     {
-        auto &geo = from_c(scene)->create_node<retro::GeometryObject>();
-        return to_c(&geo);
+        return std::addressof(scene->create_node<retro::GeometryObject>());
     }
 
-    void retro_geometry_set_type(Retro_Geometry *node, const Retro_GeometryType type)
+    RETRO_API void retro_geometry_set_type(retro::GeometryObject *node, const retro::GeometryType type)
     {
-        auto &geo = *from_c(node);
-        geo.set_geometry(from_c(type));
+        node->set_geometry(type);
     }
 
-    void retro_geometry_set_render_data(Retro_Geometry *node,
-                                        const Retro_Vertex *vertices,
-                                        const int32_t vertex_count,
-                                        uint32_t *indices,
-                                        const int32_t index_count)
+    RETRO_API void retro_geometry_set_render_data(retro::GeometryObject *node,
+                                                  const retro::Vertex *vertices,
+                                                  const std::int32_t vertex_count,
+                                                  std::uint32_t *indices,
+                                                  const std::int32_t index_count)
     {
-        auto &geo = *from_c(node);
-        geo.set_geometry(std::make_shared<const retro::Geometry>(
-            std::span{from_c(vertices), static_cast<std::size_t>(vertex_count)} | std::ranges::to<std::vector>(),
+        node->set_geometry(std::make_shared<const retro::Geometry>(
+            std::span{vertices, static_cast<std::size_t>(vertex_count)} | std::ranges::to<std::vector>(),
             std::span{indices, static_cast<std::size_t>(index_count)} | std::ranges::to<std::vector>()));
     }
 
-    void retro_geometry_set_color(Retro_Geometry *node, const Retro_Color color)
+    RETRO_API void retro_geometry_set_color(retro::GeometryObject *node, const retro::Color color)
     {
-        auto &geo = *from_c(node);
-        geo.set_color(from_c(color));
+        node->set_color(color);
     }
 
-    void retro_geometry_set_pivot(Retro_Geometry *node, const Retro_Vector2f pivot)
+    RETRO_API void retro_geometry_set_pivot(retro::GeometryObject *node, const retro::Vector2f pivot)
     {
-        auto &geo = *from_c(node);
-        geo.set_pivot(from_c(pivot));
+        node->set_pivot(pivot);
     }
 
-    void retro_geometry_set_size(Retro_Geometry *node, const Retro_Vector2f size)
+    RETRO_API void retro_geometry_set_size(retro::GeometryObject *node, const retro::Vector2f size)
     {
-        auto &geo = *from_c(node);
-        geo.set_size(from_c(size));
+        node->set_size(size);
     }
 
-    Retro_Sprite *retro_sprite_create(Retro_Scene *scene)
+    RETRO_API retro::Sprite *retro_sprite_create(retro::Scene *scene)
     {
-        auto &sprite = from_c(scene)->create_node<retro::Sprite>();
-        return to_c(&sprite);
+        return std::addressof(scene->create_node<retro::Sprite>());
     }
 
-    void retro_sprite_set_texture(Retro_Sprite *node, Retro_Texture *texture)
+    RETRO_API void retro_sprite_set_texture(retro::Sprite *node, retro::Texture *texture)
     {
-        auto &sprite = *from_c(node);
-        sprite.set_texture(retro::RefCountPtr(from_c(texture)));
+        node->set_texture(retro::RefCountPtr(texture));
     }
 
-    void retro_sprite_set_tint(Retro_Sprite *node, const Retro_Color tint)
+    RETRO_API void retro_sprite_set_tint(retro::Sprite *node, const retro::Color tint)
     {
-        auto &geo = *from_c(node);
-        geo.set_tint(from_c(tint));
+        node->set_tint(tint);
     }
 
-    void retro_sprite_set_pivot(Retro_Sprite *node, const Retro_Vector2f pivot)
+    RETRO_API void retro_sprite_set_pivot(retro::Sprite *node, const retro::Vector2f pivot)
     {
-        auto &geo = *from_c(node);
-        geo.set_pivot(from_c(pivot));
+        node->set_pivot(pivot);
     }
 
-    void retro_sprite_set_size(Retro_Sprite *node, const Retro_Vector2f size)
+    RETRO_API void retro_sprite_set_size(retro::Sprite *node, const retro::Vector2f size)
     {
-        auto &geo = *from_c(node);
-        geo.set_size(from_c(size));
+        node->set_size(size);
     }
 
-    void retro_sprite_set_uv_rect(Retro_Sprite *node, Retro_UVs uv_rect)
+    RETRO_API void retro_sprite_set_uv_rect(retro::Sprite *node, const retro::UVs uv_rect)
     {
-        auto &sprite = *from_c(node);
-        sprite.set_uvs(from_c(uv_rect));
+        node->set_uvs(uv_rect);
     }
 }

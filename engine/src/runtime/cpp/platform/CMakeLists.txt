@@ -9,7 +9,6 @@ set(RETRO_PLATFORM_SOURCES
 )
 
 set(RETRO_PLATFORM_HEADERS
-        public/include/retro/platform/backend_c.h
 )
 
 set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx)

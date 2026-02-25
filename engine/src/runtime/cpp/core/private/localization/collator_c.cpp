@@ -4,46 +4,39 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include "retro/core/localization/collator_c.h"
-
-#include "retro/core/macros.hpp"
+#include "retro/core/exports.h"
 
 import std;
-import retro.core.c_api;
 import retro.core.localization.icu;
 
-DECLARE_OPAQUE_C_HANDLE(Retro_Locale, icu::Locale);
-DECLARE_OPAQUE_C_HANDLE(Retro_Collator, icu::Collator);
-
-Retro_Collator *retro_create_collator(const Retro_Locale *locale)
+RETRO_API icu::Collator *retro_create_collator(const icu::Locale *locale)
 {
     UErrorCode status;
-    return retro::to_c(icu::Collator::createInstance(*retro::from_c(locale), status));
+    return icu::Collator::createInstance(*locale, status);
 }
 
-void retro_destroy_collator(Retro_Collator *collator)
+RETRO_API void retro_destroy_collator(const icu::Collator *collator)
 {
-    delete retro::from_c(collator);
+    delete collator;
 }
 
-Retro_Collator *retro_collator_clone(const Retro_Collator *collator)
+RETRO_API icu::Collator *retro_collator_clone(const icu::Collator *collator)
 {
-    return retro::to_c(retro::from_c(collator)->clone());
+    return collator->clone();
 }
 
-void retro_collator_set_strength(Retro_Collator *collator, int32_t strength)
+RETRO_API void retro_collator_set_strength(icu::Collator *collator, std::int32_t strength)
 {
-    retro::from_c(collator)->setStrength(static_cast<icu::Collator::ECollationStrength>(strength));
+    collator->setStrength(static_cast<icu::Collator::ECollationStrength>(strength));
 }
 
-int32_t retro_collator_compare(Retro_Collator *collator,
-                               const char16_t *lhs,
-                               const int32_t lhs_length,
-                               const char16_t *rhs,
-                               const int32_t rhs_length)
+RETRO_API std::int32_t retro_collator_compare(const icu::Collator *collator,
+                                              const char16_t *lhs,
+                                              const std::int32_t lhs_length,
+                                              const char16_t *rhs,
+                                              const std::int32_t rhs_length)
 {
-    const auto *collator_ptr = retro::from_c(collator);
     const icu::UnicodeString lhs_str{lhs, lhs_length};
     const icu::UnicodeString rhs_str{rhs, rhs_length};
-    return collator_ptr->compare(lhs_str, rhs_str);
+    return collator->compare(lhs_str, rhs_str);
 }

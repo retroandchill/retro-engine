@@ -24,17 +24,7 @@ set(RETRO_CORE_SOURCES private/strings/name.cpp
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
         public/include/retro/core/per_project_boilerplate.hpp
-        public/include/retro/core/strings/name_c.h
-        public/include/retro/core/math/vector_c.h
-        public/include/retro/core/math/color_c.h
         public/include/retro/core/macros.hpp
-        public/include/retro/core/localization/locale_c.h
-        public/include/retro/core/localization/decimal_format_c.h
-        public/include/retro/core/localization/date_format_c.h
-        public/include/retro/core/localization/calendar_c.h
-        public/include/retro/core/localization/time_zone_c.h
-        public/include/retro/core/localization/collator_c.h
-        public/include/retro/core/localization/plural_rules_c.h
 )
 
 set(RETRO_CORE_PRIVATE_MODULES
@@ -59,7 +49,6 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/di/metadata.ixx
         public/modules/util/exceptions.ixx
         public/modules/containers/inline_list.ixx
-        public/modules/c_api.ixx
         public/modules/util/noncopyable.ixx
         public/modules/type_traits/pointer.ixx
         public/modules/type_traits/range.ixx

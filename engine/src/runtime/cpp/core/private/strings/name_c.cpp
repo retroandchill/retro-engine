@@ -4,21 +4,12 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-#include "retro/core/strings/name_c.h"
-
-#include "retro/core/macros.hpp"
+#include "retro/core/exports.h"
 
 #include <boost/pool/pool_alloc.hpp>
 
 import std;
 import retro.core.strings.name;
-import retro.core.c_api;
-
-DECLARE_DEFINED_C_HANDLE(Retro_Name, retro::Name);
-DECLARE_DEFINED_C_HANDLE(Retro_NameId, retro::NameEntryId);
-
-using retro::from_c;
-using retro::to_c;
 
 namespace
 {
@@ -34,38 +25,38 @@ namespace
 
 extern "C"
 {
-    Retro_Name retro_name_lookup(const char16_t *name, const std::int32_t length, const Retro_FindType find_type)
+    RETRO_API retro::Name retro_name_lookup(const char16_t *name,
+                                            const std::int32_t length,
+                                            const retro::FindType find_type)
     {
-        const retro::Name name_value{std::u16string_view{name, static_cast<std::size_t>(length)},
-                                     static_cast<retro::FindType>(find_type)};
-        return to_c(name_value);
+        return retro::Name{std::u16string_view{name, static_cast<std::size_t>(length)}, find_type};
     }
 
-    bool retro_name_is_valid(const Retro_Name name)
+    RETRO_API bool retro_name_is_valid(const retro::Name name)
     {
-        return from_c(name).is_valid();
+        return name.is_valid();
     }
 
-    std::int32_t retro_name_compare(const Retro_Name lhs, const char16_t *rhs, const std::int32_t length)
+    RETRO_API std::int32_t retro_name_compare(const retro::Name lhs, const char16_t *rhs, const std::int32_t length)
     {
-        return strong_ordering_to_int(from_c(lhs) <=> std::u16string_view{rhs, static_cast<std::size_t>(length)});
+        return strong_ordering_to_int(lhs <=> std::u16string_view{rhs, static_cast<std::size_t>(length)});
     }
 
-    std::int32_t retro_name_compare_lexical(const Retro_NameId lhs_id,
-                                            const Retro_NameId rhs_id,
-                                            const Retro_NameCase nameCase)
+    RETRO_API std::int32_t retro_name_compare_lexical(const retro::NameEntryId lhs_id,
+                                                      const retro::NameEntryId rhs_id,
+                                                      const retro::NameCase name_case)
     {
-        if (static_cast<retro::NameCase>(nameCase) == retro::NameCase::case_sensitive)
+        if (name_case == retro::NameCase::case_sensitive)
         {
-            return strong_ordering_to_int(from_c(lhs_id).compare_lexical_case_sensitive(from_c(rhs_id)));
+            return strong_ordering_to_int(lhs_id.compare_lexical_case_sensitive(rhs_id));
         }
 
-        return strong_ordering_to_int(from_c(lhs_id).compare_lexical(from_c(rhs_id)));
+        return strong_ordering_to_int(lhs_id.compare_lexical(rhs_id));
     }
 
-    std::int32_t retro_name_to_string(const Retro_Name name, char16_t *buffer, const std::int32_t length)
+    RETRO_API std::int32_t retro_name_to_string(const retro::Name name, char16_t *buffer, const std::int32_t length)
     {
-        const auto utf16_string = from_c(name).to_string<char16_t>(boost::pool_allocator<char16_t>{});
+        const auto utf16_string = name.to_string<char16_t>(boost::pool_allocator<char16_t>{});
         const std::size_t string_length = std::min(utf16_string.size(), static_cast<std::size_t>(length));
         std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
         return static_cast<std::int32_t>(string_length);
