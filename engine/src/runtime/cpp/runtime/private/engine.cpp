@@ -18,6 +18,7 @@ import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.core.containers.optional;
 import retro.core.math.vector;
+import retro.platform.event;
 
 namespace retro
 {
@@ -50,10 +51,10 @@ namespace retro
             .add_singleton<AssetDecoder, TextureDecoder>();
     }
 
-    Engine::Engine(std::unique_ptr<PlatformBackend> platform_backend, std::shared_ptr<ServiceProvider> service_provider)
-        : platform_backend_{std::move(platform_backend)}, service_provider_{std::move(service_provider)},
+    Engine::Engine(std::shared_ptr<ServiceProvider> service_provider)
+        : service_provider_{std::move(service_provider)},
+          platform_backend_{service_provider_->get_required<PlatformBackend>()},
           service_scope_factory_{service_provider_->get_required<ServiceScopeFactory>()},
-          script_runtime_(service_provider_->get_required<ScriptRuntime>()),
           asset_manager_{service_provider_->get_required<AssetManager>()},
           pipeline_manager_{service_provider_->get_required<PipelineManager>()}
     {
@@ -114,23 +115,14 @@ namespace retro
                 renderer->second->remove_viewport(viewport);
             });
     }
-    Engine::Engine(std::unique_ptr<PlatformBackend> platform_backend,
-                   std::unique_ptr<RendererFactory> renderer_factory,
-                   std::vector<std::unique_ptr<RenderPipeline>> pipelines)
-        : platform_backend_{std::move(platform_backend)}, renderer_factory_{std::move(renderer_factory)},
-          pipeline_manager_{std::move(pipelines)}
-    {
-    }
-    void Engine::run(const std::u16string_view assembly_path, const std::u16string_view class_name)
+
+    void Engine::run()
     {
         TaskScheduler::Scope task_scope{&scheduler_};
         using clock = std::chrono::steady_clock;
         constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
         running_.store(true);
-
-        if (script_runtime_.start_scripts(assembly_path, class_name) != 0)
-            return;
 
         // FPS tracking state
         float fps_timer = 0.0f;
@@ -147,6 +139,7 @@ namespace retro
 
             if (!running_.load())
             {
+                get_logger().info("Engine shutting down...");
                 break;
             }
 
@@ -183,7 +176,7 @@ namespace retro
             }
         }
 
-        script_runtime_.tear_down();
+        // script_runtime_.tear_down();
         for (const auto &renderer : renderers_ | std::views::values)
         {
             renderer->wait_idle();
@@ -191,10 +184,53 @@ namespace retro
         asset_manager_.on_engine_shutdown();
     }
 
+    void Engine::run_platform_event_loop()
+    {
+        while (running_.load())
+        {
+            while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
+            {
+                std::visit(
+                    [&]<typename T>(const T &)
+                    {
+                        if constexpr (std::is_same_v<T, QuitEvent> || std::is_same_v<T, WindowCloseRequestedEvent>)
+                        {
+                            if (running_.load())
+                            {
+                                request_shutdown();
+                            }
+                        }
+                    },
+                    *event);
+
+                if (!running_.load())
+                {
+                    break;
+                }
+            }
+        }
+    }
+
     void Engine::request_shutdown(const std::int32_t exit_code)
     {
         exit_code_.store(exit_code);
         running_.store(false);
+    }
+
+    Window &Engine::create_new_window(const WindowDesc &window_desc)
+    {
+        const auto window = platform_backend_.create_window(window_desc);
+        add_window(*window);
+        return *window;
+    }
+    Optional<Window &> Engine::get_window(std::uint64_t window_id)
+    {
+        if (const auto it = renderers_.find(window_id); it != renderers_.end())
+        {
+            return it->second->window();
+        }
+
+        return std::nullopt;
     }
 
     void Engine::add_window(Window &window)
@@ -242,7 +278,7 @@ namespace retro
     void Engine::tick(const float delta_time)
     {
         scheduler_.pump();
-        script_runtime_.tick(delta_time);
+        // script_runtime_.tick(delta_time);
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst

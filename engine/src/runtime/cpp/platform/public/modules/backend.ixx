@@ -14,6 +14,7 @@ import std;
 import retro.core.containers.optional;
 import retro.platform.event;
 import retro.platform.window;
+import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {

@@ -89,7 +89,7 @@ namespace retro
     constexpr RefCountInternal ref_count_internal{};
 
     export template <typename T>
-        requires RefCounted<std::remove_cv_t<T>>
+        requires RefCounted<T>
     class RefCountPtr
     {
       public:
@@ -316,7 +316,7 @@ namespace retro
 
       private:
         template <typename U>
-            requires RefCounted<std::remove_cv_t<U>>
+            requires RefCounted<U>
         friend class RefCountPtr;
 
         T *ptr_ = nullptr;

@@ -16,7 +16,7 @@ import retro.core.math.vector;
 
 namespace retro
 {
-    export enum class WindowBackend
+    export enum class WindowBackend : std::uint8_t
     {
         sdl3
     };

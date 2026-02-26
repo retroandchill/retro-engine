@@ -53,6 +53,7 @@ set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/vulkan/components/viewport_renderer.cpp
         private/vulkan/components/surface.cpp
         private/vulkan/texture_manager.cpp
+        private/services_c.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )

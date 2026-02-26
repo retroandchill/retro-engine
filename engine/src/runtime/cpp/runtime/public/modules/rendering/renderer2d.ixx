@@ -70,12 +70,4 @@ namespace retro
         Renderer2D &renderer_;
     };
 
-    export class RendererFactory
-    {
-      public:
-        virtual ~RendererFactory() = default;
-
-        virtual std::unique_ptr<Renderer2D> create_renderer(Window &window) const = 0;
-    };
-
 } // namespace retro

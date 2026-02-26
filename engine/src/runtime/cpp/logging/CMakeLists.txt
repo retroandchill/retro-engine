@@ -8,7 +8,7 @@ set(RETRO_LOGGING_SOURCES private/logging.cpp
 set(RETRO_LOGGING_MODULES public/modules/logging.ixx
 )
 
-set(RETRO_LOGGING_HEADERS public/include/retro/logging/logger_c.h)
+set(RETRO_LOGGING_HEADERS )
 
 add_library(retro_logging ${RETRO_LOGGING_SOURCES} ${RETRO_LOGGING_MODULES} ${RETRO_LOGGING_HEADERS})
 

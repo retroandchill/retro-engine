@@ -87,60 +87,64 @@ extern "C"
         return locale->getVariant();
     }
 
-    std::int32_t retro_locale_get_display_language(const icu::Locale *locale,
-                                                   char16_t *buffer,
-                                                   const std::int32_t length)
+    RETRO_API std::int32_t retro_locale_get_display_language(const icu::Locale *locale,
+                                                             char16_t *buffer,
+                                                             const std::int32_t length)
     {
         icu::UnicodeString str;
         locale->getDisplayLanguage(str);
         return retro::write_to_output_buffer(str, std::span(buffer, length));
     }
 
-    std::int32_t retro_locale_get_display_region(const icu::Locale *locale, char16_t *buffer, const std::int32_t length)
+    RETRO_API std::int32_t retro_locale_get_display_region(const icu::Locale *locale,
+                                                           char16_t *buffer,
+                                                           const std::int32_t length)
     {
         icu::UnicodeString str;
         locale->getDisplayCountry(str);
         return retro::write_to_output_buffer(str, std::span(buffer, length));
     }
 
-    std::int32_t retro_locale_get_display_script(const icu::Locale *locale, char16_t *buffer, const std::int32_t length)
+    RETRO_API std::int32_t retro_locale_get_display_script(const icu::Locale *locale,
+                                                           char16_t *buffer,
+                                                           const std::int32_t length)
     {
         icu::UnicodeString str;
         locale->getDisplayScript(str);
         return retro::write_to_output_buffer(str, std::span(buffer, length));
     }
 
-    std::int32_t retro_locale_get_display_variant(const icu::Locale *locale,
-                                                  char16_t *buffer,
-                                                  const std::int32_t length)
+    RETRO_API std::int32_t retro_locale_get_display_variant(const icu::Locale *locale,
+                                                            char16_t *buffer,
+                                                            const std::int32_t length)
     {
         icu::UnicodeString str;
         locale->getDisplayVariant(str);
         return retro::write_to_output_buffer(str, std::span(buffer, length));
     }
 
-    std::uint8_t retro_locale_is_right_to_left(const icu::Locale *locale)
+    RETRO_API std::uint8_t retro_locale_is_right_to_left(const icu::Locale *locale)
     {
         return locale->isRightToLeft();
     }
 
-    std::uint32_t retro_locale_get_lcid(const icu::Locale *locale)
+    RETRO_API std::uint32_t retro_locale_get_lcid(const icu::Locale *locale)
     {
         return locale->getLCID();
     }
 
-    const icu::Locale *retro_get_available_locales(std::int32_t *count, std::int32_t *stride)
+    RETRO_API const icu::Locale *retro_get_available_locales(std::int32_t *count, std::int32_t *stride)
     {
         *stride = sizeof(icu::Locale);
         return icu::Locale::getAvailableLocales(*count);
     }
 
-    const char *const *retro_locale_get_available_languages()
+    RETRO_API const char *const *retro_locale_get_available_languages()
     {
         return icu::Locale::getISOLanguages();
     }
 
-    void retro_locale_set_default(const char *locale_name)
+    RETRO_API void retro_locale_set_default(const char *locale_name)
     {
         UErrorCode status;
         uloc_setDefault(locale_name, &status);

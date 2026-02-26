@@ -5,7 +5,7 @@
 set(RETRO_SCRIPTING_SOURCES private/backend/dotnet.cpp
         private/services.cpp)
 
-set(RETRO_SCRIPTING_PUBLIC_MODULES public/src/services.ixx)
+set(RETRO_SCRIPTING_PUBLIC_MODULES public/modules/services.ixx)
 
 set(RETRO_SCRIPTING_PRIVATE_MODULES private/backend/dotnet.ixx)
 
@@ -35,7 +35,8 @@ target_sources(retro_scripting PRIVATE
 
 find_package(unofficial-nethost CONFIG REQUIRED)
 target_link_libraries(retro_scripting PUBLIC
-        retro_core retro_runtime
+        retro_core
+        retro_runtime
         unofficial::nethost::nethost)
 
 add_dependencies(retro_scripting)

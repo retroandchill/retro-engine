@@ -22,23 +22,20 @@ import retro.runtime.assets.asset_manager;
 import retro.runtime.assets.asset_path;
 import retro.runtime.assets.asset_load_result;
 import retro.core.memory.ref_counted_ptr;
-import retro.platform.backend;
 import retro.platform.window;
 import retro.core.containers.optional;
 import retro.runtime.assets.asset;
 import retro.runtime.world.scene;
-import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.world.viewport;
+import retro.platform.backend;
 
 namespace retro
 {
     export class Engine
     {
       public:
-        RETRO_API explicit Engine(std::unique_ptr<PlatformBackend> platform_backend,
-                                  std::unique_ptr<RendererFactory> renderer_factory,
-                                  std::vector<std::unique_ptr<RenderPipeline>> pipelines);
+        RETRO_API explicit Engine(std::shared_ptr<ServiceProvider> service_provider);
 
         ~Engine() = default;
 
@@ -64,7 +61,9 @@ namespace retro
             instance_ = nullptr;
         }
 
-        RETRO_API void run(std::u16string_view assembly_path, std::u16string_view class_name);
+        RETRO_API void run();
+
+        RETRO_API void run_platform_event_loop();
 
         RETRO_API void request_shutdown(std::int32_t exit_code = 0);
 
@@ -72,6 +71,10 @@ namespace retro
         {
             return primary_renderer_;
         }
+
+        RETRO_API Window &create_new_window(const WindowDesc &window_desc);
+
+        RETRO_API Optional<Window &> get_window(std::uint64_t window_id);
 
         RETRO_API void add_window(Window &window);
 
@@ -103,12 +106,13 @@ namespace retro
 
         friend struct AssetPathHook;
 
-        std::unique_ptr<PlatformBackend> platform_backend_;
-        std::unique_ptr<RendererFactory> renderer_factory_;
+        std::shared_ptr<ServiceProvider> service_provider_{};
+        PlatformBackend &platform_backend_;
+        ServiceScopeFactory &service_scope_factory_;
         std::map<std::uint64_t, RendererRef> renderers_;
         Optional<Renderer2D &> primary_renderer_;
         AssetManager &asset_manager_;
-        PipelineManager pipeline_manager_;
+        PipelineManager &pipeline_manager_;
 
         std::atomic<std::int32_t> exit_code_{0};
         std::atomic<bool> running_{false};
@@ -136,4 +140,9 @@ namespace retro
     };
 
     export RETRO_API void add_engine_services(ServiceCollection &services);
+
+    export struct EngineConfigContext
+    {
+        ServiceCollection services;
+    };
 } // namespace retro
