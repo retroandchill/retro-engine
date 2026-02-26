@@ -1,4 +1,5 @@
-﻿using RetroEngine.Logging;
+﻿using RetroEngine.Host;
+using RetroEngine.Logging;
 
 namespace RetroEngine.Async;
 
@@ -21,16 +22,16 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
         try
         {
             var exitCode = await RunAsync(cancellationToken);
-            Engine.RequestShutdown(exitCode);
+            EngineHost.RequestShutdown(exitCode);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Engine.RequestShutdown();
+            EngineHost.RequestShutdown();
         }
         catch (Exception e)
         {
             Logger.Critical(e.ToString());
-            Engine.RequestShutdown(1);
+            EngineHost.RequestShutdown(1);
         }
     }
 

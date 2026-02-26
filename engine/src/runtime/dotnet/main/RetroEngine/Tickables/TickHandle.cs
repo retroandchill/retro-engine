@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using RetroEngine.Host;
+
 namespace RetroEngine.Tickables;
 
 public sealed class TickHandle : IDisposable
@@ -13,7 +15,7 @@ public sealed class TickHandle : IDisposable
     public TickHandle(ITickable tickable)
     {
         _tickable = tickable;
-        Engine.Instance.RegisterTickable(tickable);
+        EngineHost.Instance.RegisterTickable(tickable);
     }
 
     public void Dispose()
@@ -21,7 +23,7 @@ public sealed class TickHandle : IDisposable
         if (_disposed)
             return;
 
-        Engine.Instance.UnregisterTickable(_tickable);
+        EngineHost.Instance.UnregisterTickable(_tickable);
         _disposed = true;
     }
 }

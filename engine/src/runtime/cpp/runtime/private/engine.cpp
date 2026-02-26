@@ -252,6 +252,13 @@ namespace retro
         if (!primary_renderer_.has_value())
         {
             primary_renderer_ = *inserted->second;
+            for (auto &viewport : viewports_.viewports())
+            {
+                if (!viewport->window().has_value())
+                {
+                    viewport->set_window(primary_renderer_->window());
+                }
+            }
         }
     }
 

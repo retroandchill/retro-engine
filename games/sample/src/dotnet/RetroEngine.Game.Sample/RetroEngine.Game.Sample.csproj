@@ -15,4 +15,12 @@
       <ProjectReference Include="$(RetroEngineProj)" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ContentFiles Include="../../../content/**/*" />
+    </ItemGroup>
+
+    <Target Name="CopyContentFiles" AfterTargets="Build">
+        <Copy SourceFiles="@(ContentFiles)" DestinationFolder="$(OutputPath)/%(RecursiveDir)" />
+    </Target>
+
 </Project>

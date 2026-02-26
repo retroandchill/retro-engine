@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Logging;
 using RetroEngine.Platform;
@@ -48,6 +49,7 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         Interlocked.Exchange(ref _instance, this);
 
         _ = CultureManager.Instance;
+        AssetRegistry.RegisterDefaultAssetFactories();
 
         _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
@@ -138,6 +140,16 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    public void RegisterTickable(ITickable tickable)
+    {
+        _tickables.Add(tickable);
+    }
+
+    public void UnregisterTickable(ITickable tickable)
+    {
+        _tickables.Remove(tickable);
+    }
+
     [UnmanagedCallersOnly]
     private static void Tick(IntPtr userData, float deltaTime)
     {
@@ -153,6 +165,15 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         }
         synchronizationContext.Pump();
         FrameCount++;
+    }
+
+    public static void RequestShutdown(int exitCode = 0)
+    {
+        if (_instance is null)
+            throw new InvalidOperationException("Engine has not been initialized.");
+        _instance.Dispose();
+        Interlocked.Exchange(ref _instance, null);
+        NativeRequestShutdown(exitCode);
     }
 
     public void Dispose()
@@ -203,4 +224,7 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         int height,
         WindowFlags flags
     );
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_request_shutdown")]
+    private static partial void NativeRequestShutdown(int exitCode);
 }
