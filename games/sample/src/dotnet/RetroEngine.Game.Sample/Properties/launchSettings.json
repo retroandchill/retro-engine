@@ -1,10 +1,12 @@
 ﻿{
   "profiles": {
-    "retro_game (Dev-Debug)": {
+    "Run Game": {
       "commandName": "Executable",
-      "executablePath": "$(MSBuildProjectDirectory)\\..\\..\\..\\cmake-build-dev-debug\\bin\\retro_game.exe",
-      "workingDirectory": "$(MSBuildProjectDirectory)\\..\\..\\..\\cmake-build-dev-debug\\bin",
+      "executablePath": "$(SolutionDir)/games/sample/bin/$(BuildConfigName)/RetroEngine.Game.Sample.exe",
       "commandLineArgs": "",
+      "environmentVariables": {
+        "PATH": "$(SolutionDir)/engine/bin/$(BuildConfigName);%PATH%"
+      },
       "nativeDebugging": true
     }
   }

@@ -12,13 +12,48 @@ module;
 
 module retro.core.io.file_stream;
 
+import retro.core.containers.optional;
 import std;
 
 namespace retro
 {
+    namespace
+    {
+        Optional<std::filesystem::path> find_on_path(const std::filesystem::path &path)
+        {
+            if (std::filesystem::exists(path))
+            {
+                return path;
+            }
+
+            if (path.is_absolute())
+            {
+                return path;
+            }
+
+            // TODO: This is temporary until we get proper Path searching set up.
+            std::string_view path_env = std::getenv("PATH");
+            for (auto segment : path_env | std::views::split(';'))
+            {
+                std::string_view segment_view{segment.begin(), segment.end()};
+                auto candidate = std::filesystem::path{segment_view} / path;
+                if (exists(candidate))
+                {
+                    return std::move(candidate);
+                }
+            }
+
+            return std::nullopt;
+        }
+    } // namespace
+
     std::vector<std::byte> read_binary_file(const std::filesystem::path &path)
     {
-        std::ifstream file{path, std::ios::binary | std::ios::ate};
+        auto target_path = find_on_path(path);
+        if (!target_path.has_value())
+            throw std::runtime_error{"Shader file not found"};
+
+        std::ifstream file{*target_path, std::ios::binary | std::ios::ate};
         if (!file)
             throw std::runtime_error{"Failed to open shader file"};
 

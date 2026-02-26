@@ -119,7 +119,7 @@ namespace retro
     void Engine::run(const EngineCallbacks &callbacks)
     {
         TaskScheduler::Scope task_scope{&scheduler_};
-        using clock = std::chrono::steady_clock;
+        using Clock = std::chrono::steady_clock;
         constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
         running_.store(true);
@@ -131,11 +131,11 @@ namespace retro
         float fps_timer = 0.0f;
         std::uint64_t fps_frames = 0;
 
-        auto last_frame_start = clock::now();
+        auto last_frame_start = Clock::now();
 
         while (true)
         {
-            const auto frame_start = clock::now();
+            const auto frame_start = Clock::now();
             const std::chrono::duration<float> frame_delta = frame_start - last_frame_start;
             const float delta_time = frame_delta.count();
             last_frame_start = frame_start;
@@ -150,7 +150,7 @@ namespace retro
             render();
 
             // Measure how long the work actually took
-            const auto frame_end = clock::now();
+            const auto frame_end = Clock::now();
             const std::chrono::duration<float> work_time = frame_end - frame_start;
 
             // Sleep to hit target frame duration (if work was faster than target)
@@ -162,7 +162,7 @@ namespace retro
             }
 
             // FPS accumulation (based on actual frame length)
-            const auto frame_finish = clock::now();
+            const auto frame_finish = Clock::now();
             const std::chrono::duration<float> full_frame = frame_finish - frame_start;
             const float full_frame_seconds = full_frame.count();
 
