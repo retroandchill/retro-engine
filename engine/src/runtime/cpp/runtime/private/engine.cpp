@@ -116,13 +116,16 @@ namespace retro
             });
     }
 
-    void Engine::run()
+    void Engine::run(const EngineCallbacks &callbacks)
     {
         TaskScheduler::Scope task_scope{&scheduler_};
         using clock = std::chrono::steady_clock;
         constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
 
         running_.store(true);
+
+        if (callbacks.start() != 0)
+            return;
 
         // FPS tracking state
         float fps_timer = 0.0f;
@@ -142,7 +145,8 @@ namespace retro
                 break;
             }
 
-            tick(delta_time);
+            scheduler_.pump();
+            callbacks.tick(delta_time);
             render();
 
             // Measure how long the work actually took
@@ -175,7 +179,7 @@ namespace retro
             }
         }
 
-        // script_runtime_.tear_down();
+        callbacks.stop();
         for (const auto &renderer : renderers_ | std::views::values)
         {
             renderer->wait_idle();
@@ -272,12 +276,6 @@ namespace retro
     bool Engine::remove_asset_from_cache(const AssetPath &path) const
     {
         return asset_manager_.remove_asset_from_cache(path);
-    }
-
-    void Engine::tick(const float delta_time)
-    {
-        scheduler_.pump();
-        // script_runtime_.tick(delta_time);
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst

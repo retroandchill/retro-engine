@@ -5,6 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RetroEngine.Core.Async;
 using RetroEngine.Logging;
@@ -12,6 +13,7 @@ using RetroEngine.Platform;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
+using ZLinq;
 
 namespace RetroEngine.Host;
 
@@ -23,7 +25,6 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
     private bool _disposed;
     private Thread? _gameThread;
     private ulong _windowId;
-    private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
 
@@ -48,17 +49,7 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
 
         _ = CultureManager.Instance;
 
-        _gameThread = new Thread(() =>
-        {
-            _synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
-            SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
-
-            LocalizationManager.Instance.ThreadSync = _synchronizationContext;
-
-            NativeRun(_nativeEngine);
-
-            SynchronizationContext.SetSynchronizationContext(null);
-        });
+        _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
 
         _windowId = NativeCreateMainWindow(
@@ -73,6 +64,52 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    private record NativeCallbackPayload(
+        EngineHost Engine,
+        GameThreadSynchronizationContext SynchronizationContext,
+        IGameSession? Session
+    );
+
+    private unsafe void RunGameThread()
+    {
+        using var synchronizationContext = new GameThreadSynchronizationContext();
+        synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
+        SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+
+        LocalizationManager.Instance.ThreadSync = synchronizationContext;
+
+        var session = Services.GetService<IGameSession>();
+
+        var payload = new NativeCallbackPayload(this, synchronizationContext, session);
+        var handle = GCHandle.Alloc(payload);
+        try
+        {
+            NativeRun(_nativeEngine, GCHandle.ToIntPtr(handle), &StartCallback, &Tick, &StopCallback);
+        }
+        finally
+        {
+            handle.Free();
+        }
+
+        SynchronizationContext.SetSynchronizationContext(null);
+    }
+
+    [UnmanagedCallersOnly]
+    private static int StartCallback(IntPtr userData)
+    {
+        var payload = (NativeCallbackPayload)GCHandle.FromIntPtr(userData).Target!;
+        try
+        {
+            payload.Session?.Start();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex.ToString());
+            return -1;
+        }
+    }
+
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         await StartAsync(cancellationToken);
@@ -84,6 +121,13 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         await StopAsync(cancellationToken);
     }
 
+    [UnmanagedCallersOnly]
+    private static void StopCallback(IntPtr userData)
+    {
+        var payload = (NativeCallbackPayload)GCHandle.FromIntPtr(userData).Target!;
+        payload.Session?.Terminate();
+    }
+
     public Task StopAsync(CancellationToken cancellationToken = default)
     {
         if (_instance is null)
@@ -92,6 +136,23 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         _lifetime.NotifyStopped();
         Interlocked.Exchange(ref _instance, null);
         return Task.CompletedTask;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void Tick(IntPtr userData, float deltaTime)
+    {
+        var payload = (NativeCallbackPayload)GCHandle.FromIntPtr(userData).Target!;
+        payload.Engine.Tick(deltaTime, payload.SynchronizationContext);
+    }
+
+    private void Tick(float deltaTime, GameThreadSynchronizationContext synchronizationContext)
+    {
+        foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
+        {
+            tickable.Tick(deltaTime);
+        }
+        synchronizationContext.Pump();
+        FrameCount++;
     }
 
     public void Dispose()
@@ -105,7 +166,8 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         {
             disposable.Dispose();
         }
-        _synchronizationContext.Dispose();
+
+        CultureManager.Instance.Dispose();
     }
 
     public ValueTask DisposeAsync()
@@ -118,7 +180,13 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
     internal static partial void NativeDestroy(IntPtr engine);
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_engine_run")]
-    private static partial void NativeRun(IntPtr engine);
+    private static unsafe partial void NativeRun(
+        IntPtr engine,
+        IntPtr userData,
+        delegate* unmanaged<IntPtr, int> startCallback,
+        delegate* unmanaged<IntPtr, float, void> updateCallback,
+        delegate* unmanaged<IntPtr, void> stopCallback
+    );
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_engine_poll_platform_events")]
     private static partial void NativePollPlatformEvents(IntPtr engine);

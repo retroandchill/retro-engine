@@ -24,7 +24,11 @@ import retro.runtime.assets.textures.texture_decoder;
 namespace
 {
     using ConfigCallback = void (*)(retro::EngineConfigContext *, void *);
-}
+
+    using StartCallback = std::int32_t (*)(void *);
+    using UpdateCallback = void (*)(void *, float);
+    using StopCallback = void (*)(void *);
+} // namespace
 
 extern "C"
 {
@@ -69,9 +73,18 @@ extern "C"
         retro::Engine::shutdown();
     }
 
-    RETRO_API void retro_engine_run(retro::Engine *engine)
+    RETRO_API void retro_engine_run(retro::Engine *engine,
+                                    void *user_data,
+                                    StartCallback start_callback,
+                                    UpdateCallback update_callback,
+                                    StopCallback stop_callback)
     {
-        engine->run();
+        auto bound_start_callback = std::bind_front(start_callback, user_data);
+        auto bound_update_callback = std::bind_front(update_callback, user_data);
+        auto bound_stop_callback = std::bind_front(stop_callback, user_data);
+        engine->run(retro::EngineCallbacks{.start = bound_start_callback,
+                                           .tick = bound_update_callback,
+                                           .stop = bound_stop_callback});
     }
 
     RETRO_API void retro_engine_poll_platform_events(retro::Engine *engine)

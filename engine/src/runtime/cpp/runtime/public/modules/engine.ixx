@@ -29,9 +29,17 @@ import retro.runtime.world.scene;
 import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.world.viewport;
 import retro.platform.backend;
+import retro.core.functional.function_ref;
 
 namespace retro
 {
+    export struct EngineCallbacks
+    {
+        FunctionRef<std::int32_t()> start;
+        FunctionRef<void(float)> tick;
+        FunctionRef<void()> stop;
+    };
+
     export class Engine
     {
       public:
@@ -61,7 +69,7 @@ namespace retro
             instance_ = nullptr;
         }
 
-        RETRO_API void run();
+        RETRO_API void run(const EngineCallbacks &callbacks);
 
         RETRO_API void run_platform_event_loop();
 
@@ -99,7 +107,6 @@ namespace retro
         RETRO_API bool remove_asset_from_cache(const AssetPath &path) const;
 
       private:
-        void tick(float delta_time);
         void render();
 
         RETRO_API static Engine *instance_;
