@@ -139,7 +139,6 @@ namespace retro
 
             if (!running_.load())
             {
-                get_logger().info("Engine shutting down...");
                 break;
             }
 
