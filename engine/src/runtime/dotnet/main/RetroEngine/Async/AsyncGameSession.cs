@@ -1,4 +1,5 @@
 ﻿using RetroEngine.Logging;
+using Serilog;
 
 namespace RetroEngine.Async;
 
@@ -29,7 +30,7 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
         }
         catch (Exception e)
         {
-            Logger.Critical(e.ToString());
+            Log.Fatal(e, "Game session failed.");
             Engine.Instance.RequestShutdown(1);
         }
     }

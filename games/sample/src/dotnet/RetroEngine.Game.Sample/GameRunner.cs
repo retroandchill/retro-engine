@@ -8,6 +8,7 @@ using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Logging;
 using RetroEngine.World;
+using Serilog;
 
 namespace RetroEngine.Game.Sample;
 
@@ -21,7 +22,7 @@ public sealed class GameRunner : IGameSession
 
     public void Start()
     {
-        Logger.Info("Starting game runner.");
+        Log.Information("Starting game runner.");
 
         _scene1 = new Scene();
         _scene2 = new Scene();

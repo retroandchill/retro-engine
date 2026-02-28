@@ -12,6 +12,7 @@ using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization.Cultures;
+using Serilog;
 
 namespace RetroEngine;
 
@@ -30,6 +31,11 @@ public sealed partial class EngineBuilder
         ConfigureNative(ctx =>
         {
             NativeAddRenderingServices(ctx, WindowBackend.SDL3, RenderBackend.Vulkan);
+        });
+
+        Services.AddLogging(builder =>
+        {
+            builder.AddSerilog();
         });
     }
 

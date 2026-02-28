@@ -19,6 +19,8 @@
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+      <PackageReference Include="Microsoft.Extensions.Logging" />
+      <PackageReference Include="Serilog.Extensions.Logging" />
       <PackageReference Include="ZLinq" />
     </ItemGroup>
 </Project>

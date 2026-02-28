@@ -33,5 +33,6 @@
       <ProjectReference Include="$(RetroEngineEditorSourceGeneratorProj)"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false"/>
+      <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj" />
     </ItemGroup>
 </Project>

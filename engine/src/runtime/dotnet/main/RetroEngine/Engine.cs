@@ -15,6 +15,7 @@ using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
+using Serilog;
 using ZLinq;
 
 namespace RetroEngine;
@@ -92,7 +93,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private unsafe void RunGameThread()
     {
         using var synchronizationContext = new GameThreadSynchronizationContext();
-        synchronizationContext.UnhandledException += ex => Logger.Error(ex.ToString());
+        synchronizationContext.UnhandledException += ex => Log.Error(ex, "Unhandled exception in game thread.");
         SynchronizationContext.SetSynchronizationContext(synchronizationContext);
 
         LocalizationManager.Instance.ThreadSync = synchronizationContext;
@@ -124,7 +125,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            Logger.Error(ex.ToString());
+            Log.Error(ex, "Exception during session start");
             return -1;
         }
     }

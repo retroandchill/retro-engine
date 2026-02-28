@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using RetroEngine.Logging;
 using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
+using Serilog;
 
 namespace RetroEngine.Assets;
 
@@ -104,22 +105,22 @@ public static partial class AssetRegistry
         switch (error)
         {
             case AssetLoadError.BadAssetPath:
-                Logger.Error($"Bad asset path when loading asset '{path}'.");
+                Log.Error("Bad asset path when loading asset '{AssetPath}'.", path);
                 break;
             case AssetLoadError.InvalidAssetFormat:
-                Logger.Error($"Invalid asset format when loading asset '{path}'.");
+                Log.Error("Invalid asset format when loading asset '{AssetPath}'.", path);
                 break;
             case AssetLoadError.AmbiguousAssetPath:
-                Logger.Error($"Ambiguous asset path when loading asset '{path}'.");
+                Log.Error("Ambiguous asset path when loading asset '{AssetPath}'.", path);
                 break;
             case AssetLoadError.AssetNotFound:
-                Logger.Error($"Asset not found when loading asset '{path}'.");
+                Log.Error("Asset not found when loading asset '{AssetPath}'.", path);
                 break;
             case AssetLoadError.AssetTypeMismatch:
-                Logger.Error($"Asset type mismatch when loading asset '{path}'.");
+                Log.Error("Asset type mismatch when loading asset '{AssetPath}'.", path);
                 break;
             default:
-                Logger.Error($"Unknown asset load error when loading asset '{path}'.");
+                Log.Error("Unknown asset load error when loading asset '{AssetPath}'.", path);
                 break;
         }
         ;

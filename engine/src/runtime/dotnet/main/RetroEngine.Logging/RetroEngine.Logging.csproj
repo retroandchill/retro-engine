@@ -15,4 +15,7 @@
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
     </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Serilog.Enrichers.CallerInfo" />
+    </ItemGroup>
 </Project>

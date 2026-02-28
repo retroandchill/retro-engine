@@ -6,8 +6,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine;
 using RetroEngine.Game.Sample;
+using RetroEngine.Logging;
+using Serilog;
 
-Console.WriteLine(Environment.GetEnvironmentVariable("PATH"));
+Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
 
 var builder = new EngineBuilder();
 builder.Services.AddSingleton<IGameSession, GameRunner>();

@@ -12,6 +12,7 @@ module;
 
 export module retro.logging;
 
+import retro.core.strings.cstring_view;
 import retro.core.strings.encoding;
 import retro.core.type_traits.basic;
 import std;
@@ -101,8 +102,17 @@ namespace retro
     {
       public:
         explicit inline Logger(spdlog::logger *logger = spdlog::default_logger_raw(),
-                               std::source_location location = std::source_location::current())
-            : logger_(logger), location_(location)
+                               const std::source_location &location = std::source_location::current())
+            : logger_(logger),
+              location_(location.file_name(), static_cast<std::int32_t>(location.line()), location.function_name())
+        {
+        }
+
+        explicit inline Logger(spdlog::logger *logger,
+                               CStringView function_name,
+                               CStringView source_file,
+                               std::int32_t source_line)
+            : logger_(logger), location_(source_file.data(), source_line, function_name.data())
         {
         }
 
@@ -115,18 +125,14 @@ namespace retro
         template <Char T>
         void log(const LogLevel level, std::basic_string_view<T> message)
         {
-            const auto file_name = location_.file_name();
-            const auto line = location_.line();
-            const auto function_name = location_.function_name();
-            spdlog::source_loc loc(file_name, static_cast<std::int32_t>(line), function_name);
             if constexpr (std::is_same_v<T, char>)
             {
-                logger_->log(loc, to_spd_level(level), message);
+                logger_->log(location_, to_spd_level(level), message);
             }
             else
             {
                 auto log_string = convert_string<char>(message);
-                logger_->log(loc, to_spd_level(level), log_string);
+                logger_->log(location_, to_spd_level(level), log_string);
             }
         }
 
@@ -134,11 +140,7 @@ namespace retro
         void log(const LogLevel level, const std::format_string<Args...> fmt, Args &&...args)
         {
             auto message = std::format(fmt, std::forward<Args>(args)...);
-            const auto file_name = location_.file_name();
-            const auto line = location_.line();
-            const auto function_name = location_.function_name();
-            spdlog::source_loc loc(file_name, static_cast<std::int32_t>(line), function_name);
-            logger_->log(loc, to_spd_level(level), message);
+            logger_->log(location_, to_spd_level(level), message);
         }
 
         template <Char T>
@@ -251,14 +253,29 @@ namespace retro
 
       private:
         spdlog::logger *logger_ = spdlog::default_logger_raw();
-        std::source_location location_;
+        spdlog::source_loc location_;
     };
 
     export RETRO_API void init_logger();
 
     export inline Logger get_logger(spdlog::logger *logger = spdlog::default_logger_raw(),
-                                    std::source_location location = std::source_location::current())
+                                    const std::source_location &location = std::source_location::current())
     {
         return Logger(logger, location);
+    }
+
+    export inline Logger get_logger(spdlog::logger *logger,
+                                    const CStringView function_name,
+                                    const CStringView source_file,
+                                    const std::int32_t source_line)
+    {
+        return Logger(logger, function_name, source_file, source_line);
+    }
+
+    export inline Logger get_logger(const CStringView function_name,
+                                    const CStringView source_file,
+                                    const std::int32_t source_line)
+    {
+        return get_logger(spdlog::default_logger_raw(), function_name, source_file, source_line);
     }
 } // namespace retro

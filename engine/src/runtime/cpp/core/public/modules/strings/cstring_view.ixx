@@ -91,11 +91,13 @@ namespace retro
         {
         }
 
-        explicit(false) BasicCStringView(const std::basic_string<T> &str) noexcept : view_{str}
+        template <typename Traits, typename Allocator>
+        explicit(false) BasicCStringView(const std::basic_string<T, Traits, Allocator> &str) noexcept : view_{str}
         {
         }
 
-        explicit(false) BasicCStringView(std::basic_string<T> &&str) = delete;
+        template <typename Traits, typename Allocator>
+        explicit(false) BasicCStringView(std::basic_string<T, Traits, Allocator> &&str) = delete;
 
         [[nodiscard]] constexpr const_iterator begin() const noexcept
         {

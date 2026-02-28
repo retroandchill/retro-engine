@@ -184,9 +184,6 @@ namespace retro
 
             if (fps_timer >= 1.0f)
             {
-                const float fps = static_cast<float>(fps_frames) / fps_timer;
-                get_logger().info("FPS: {:.2f}", fps);
-
                 fps_timer = 0.0f;
                 fps_frames = 0;
             }
