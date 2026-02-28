@@ -746,7 +746,7 @@ namespace retro
         {
             auto &src = *reinterpret_cast<Functor *>(source.inline_buffer);
             std::construct_at(reinterpret_cast<Functor *>(dest.inline_buffer), std::move(src));
-            std::destroy_at(src);
+            std::destroy_at(source.inline_buffer);
         }
 
         template <typename Functor>
