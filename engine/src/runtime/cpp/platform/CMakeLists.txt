@@ -4,7 +4,6 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_PLATFORM_SOURCES
         private/backend.cpp
-        private/window.cpp
         private/backend_c.cpp
 )
 

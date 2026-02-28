@@ -72,8 +72,9 @@ namespace retro
 
                         if (old_window_ptr != nullptr)
                         {
-                            auto renderer = renderers_.find(old_window_ptr->id());
-                            if (renderer != renderers_.end())
+                            std::shared_lock lock{renderers_mutex_};
+                            if (const auto renderer = renderers_.find(old_window_ptr->id());
+                                renderer != renderers_.end())
                             {
                                 renderer->second->remove_viewport(vp);
                             }
@@ -81,6 +82,7 @@ namespace retro
 
                         if (new_window_ptr != nullptr)
                         {
+                            std::shared_lock lock{renderers_mutex_};
                             auto renderer = renderers_.find(new_window_ptr->id());
                             if (renderer != renderers_.end())
                             {
@@ -94,11 +96,21 @@ namespace retro
                 if (!window_id.has_value())
                     return;
 
-                const auto renderer = renderers_.find(*window_id);
-                if (renderer == renderers_.end())
+                auto get_renderer = [window_id, this] -> Optional<RendererRef>
+                {
+                    std::shared_lock lock{renderers_mutex_};
+                    const auto it = renderers_.find(*window_id);
+                    if (it == renderers_.end())
+                        return std::nullopt;
+
+                    return it->second;
+                };
+
+                const auto renderer = get_renderer();
+                if (!renderer.has_value())
                     return;
 
-                renderer->second->add_viewport(viewport);
+                (*renderer)->add_viewport(viewport);
             });
         viewports_.on_viewport_destroyed().add(
             [this](Viewport &viewport)
@@ -108,6 +120,7 @@ namespace retro
                 if (!window_id.has_value())
                     return;
 
+                std::shared_lock lock{renderers_mutex_};
                 const auto renderer = renderers_.find(*window_id);
                 if (renderer == renderers_.end())
                     return;
@@ -180,28 +193,44 @@ namespace retro
         }
 
         callbacks.stop();
-        for (const auto &renderer : renderers_ | std::views::values)
         {
-            renderer->wait_idle();
+            std::unique_lock lock{renderers_mutex_};
+            for (const auto &renderer : renderers_ | std::views::values)
+            {
+                renderer->wait_idle();
+            }
         }
         asset_manager_.on_engine_shutdown();
     }
 
-    void Engine::run_platform_event_loop()
+    std::int32_t Engine::run_platform_event_loop()
     {
         while (running_.load())
         {
             while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
             {
                 std::visit(
-                    [&]<typename T>(const T &)
+                    [&]<typename T>(const T &evt)
                     {
-                        if constexpr (std::is_same_v<T, QuitEvent> || std::is_same_v<T, WindowCloseRequestedEvent>)
+                        if constexpr (std::is_same_v<T, QuitEvent>)
                         {
                             if (running_.load())
                             {
                                 request_shutdown();
                             }
+                        }
+                        else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
+                        {
+                            Window *window = nullptr;
+                            {
+                                std::shared_lock lock{renderers_mutex_};
+                                auto renderer = renderers_.find(evt.window_id);
+                                if (renderer == renderers_.end())
+                                    return;
+                                window = std::addressof(renderer->second->window());
+                            }
+
+                            remove_window(*window);
                         }
                     },
                     *event);
@@ -212,6 +241,8 @@ namespace retro
                 }
             }
         }
+
+        return exit_code_.load();
     }
 
     void Engine::request_shutdown(const std::int32_t exit_code)
@@ -226,8 +257,9 @@ namespace retro
         add_window(*window);
         return *window;
     }
-    Optional<Window &> Engine::get_window(std::uint64_t window_id)
+    Optional<Window &> Engine::get_window(const std::uint64_t window_id)
     {
+        std::shared_lock lock{renderers_mutex_};
         if (const auto it = renderers_.find(window_id); it != renderers_.end())
         {
             return it->second->window();
@@ -238,8 +270,13 @@ namespace retro
 
     void Engine::add_window(Window &window)
     {
-        auto [inserted, success] =
-            renderers_.emplace(window.id(), RendererRef{window.shared_from_this(), service_scope_factory_});
+        auto create_renderer = [this, &window]
+        {
+            std::unique_lock lock{renderers_mutex_};
+            return renderers_.emplace(window.id(), RendererRef{window.shared_from_this(), service_scope_factory_});
+        };
+
+        auto [inserted, success] = create_renderer();
         if (!success)
         {
             get_logger().critical("Failed to add window {} to engine", window.id());
@@ -264,8 +301,27 @@ namespace retro
 
     void Engine::remove_window(const Window &window)
     {
+        const auto shared_window = window.shared_from_this();
         const auto id = window.id();
-        renderers_.erase(id);
+
+        auto get_renderer = [id, this] -> Optional<RendererRef>
+        {
+            std::shared_lock lock{renderers_mutex_};
+            const auto it = renderers_.find(id);
+            if (it == renderers_.end())
+                return std::nullopt;
+
+            return it->second;
+        };
+
+        // ReSharper disable once CppTooWideScopeInitStatement
+        const auto renderer = get_renderer();
+        if (!renderer.has_value())
+            return;
+        {
+            std::unique_lock lock{renderers_mutex_};
+            renderers_.erase(id);
+        }
 
         if (primary_renderer_.has_value() && primary_renderer_->window().id() == id)
         {
@@ -278,6 +334,8 @@ namespace retro
                 primary_renderer_.reset();
             }
         }
+
+        on_window_removed_(*shared_window);
     }
 
     bool Engine::remove_asset_from_cache(const AssetPath &path) const
@@ -288,6 +346,7 @@ namespace retro
     // ReSharper disable once CppMemberFunctionMayBeConst
     void Engine::render()
     {
+        std::shared_lock lock{renderers_mutex_};
         for (const auto &renderer : renderers_ | std::views::values)
         {
             renderer->begin_frame();

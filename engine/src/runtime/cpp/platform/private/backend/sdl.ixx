@@ -12,6 +12,7 @@ export module retro.platform.backend:sdl;
 
 import std;
 import retro.core.containers.optional;
+import retro.core.functional.overload;
 import retro.core.math.vector;
 import retro.core.strings.cstring_view;
 import retro.platform.backend;
@@ -168,6 +169,11 @@ namespace retro
             }
         }
 
+        [[nodiscard]] std::uint64_t id() const noexcept override
+        {
+            return SDL_GetWindowID(window_.get());
+        }
+
         [[nodiscard]] NativeWindowHandle native_handle() const noexcept override
         {
             return {.backend = WindowBackend::sdl3, .handle = window_.get()};
@@ -243,7 +249,7 @@ namespace retro
         Optional<Event> wait_for_event(std::chrono::milliseconds timeout) override
         {
             SDL_Event e{};
-            if (!SDL_WaitEventTimeout(&e, timeout.count()))
+            if (!SDL_WaitEventTimeout(&e, static_cast<std::int16_t>(timeout.count())))
             {
                 return std::nullopt;
             }

@@ -63,16 +63,10 @@ namespace retro
 
     export class Window : public std::enable_shared_from_this<Window>
     {
-      protected:
-        RETRO_API Window();
-
       public:
         virtual ~Window() = default;
 
-        [[nodiscard]] inline std::uint64_t id() const noexcept
-        {
-            return id_;
-        }
+        [[nodiscard]] virtual std::uint64_t id() const noexcept = 0;
 
         [[nodiscard]] virtual NativeWindowHandle native_handle() const noexcept = 0;
 
@@ -89,8 +83,5 @@ namespace retro
         {
             return size().y;
         }
-
-      private:
-        std::uint64_t id_;
     };
 } // namespace retro

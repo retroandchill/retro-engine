@@ -81,6 +81,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/di/service_scope.ixx
         public/modules/util/enum_class_flags.ixx
         public/modules/functional/function_ref.ixx
+        public/modules/functional/interop_function.ixx
 )
 
 add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})

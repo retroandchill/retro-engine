@@ -6,12 +6,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine;
 using RetroEngine.Game.Sample;
-using RetroEngine.Host;
 
 Console.WriteLine(Environment.GetEnvironmentVariable("PATH"));
 
-var builder = new EngineHostBuilder();
+var builder = new EngineBuilder();
 builder.Services.AddSingleton<IGameSession, GameRunner>();
 
 await using var host = builder.Build();
-await host.RunAsync();
+Environment.ExitCode = await host.RunAsync();

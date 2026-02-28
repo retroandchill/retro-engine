@@ -40,6 +40,8 @@ namespace retro
         FunctionRef<void()> stop;
     };
 
+    export using OnWindowRemoved = MulticastDelegate<void(const Window &)>;
+
     export class Engine
     {
       public:
@@ -71,7 +73,7 @@ namespace retro
 
         RETRO_API void run(const EngineCallbacks &callbacks);
 
-        RETRO_API void run_platform_event_loop();
+        RETRO_API std::int32_t run_platform_event_loop();
 
         RETRO_API void request_shutdown(std::int32_t exit_code = 0);
 
@@ -106,6 +108,11 @@ namespace retro
 
         RETRO_API bool remove_asset_from_cache(const AssetPath &path) const;
 
+        inline OnWindowRemoved::Event on_window_removed()
+        {
+            return on_window_removed_;
+        }
+
       private:
         void render();
 
@@ -116,6 +123,7 @@ namespace retro
         std::shared_ptr<ServiceProvider> service_provider_{};
         PlatformBackend &platform_backend_;
         ServiceScopeFactory &service_scope_factory_;
+        std::shared_mutex renderers_mutex_;
         std::map<std::uint64_t, RendererRef> renderers_;
         Optional<Renderer2D &> primary_renderer_;
         AssetManager &asset_manager_;
@@ -126,6 +134,8 @@ namespace retro
         SceneManager scenes_;
         ViewportManager viewports_;
         ManualTaskScheduler scheduler_{};
+
+        OnWindowRemoved on_window_removed_;
     };
 
     export struct EngineLifecycle

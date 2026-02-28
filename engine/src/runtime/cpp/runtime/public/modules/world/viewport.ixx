@@ -104,9 +104,9 @@ namespace retro
 
         void set_z_order(std::int32_t z_order) noexcept;
 
-        inline ZOrderChanged::RegistrationType on_z_order_changed()
+        inline ZOrderChanged::Event on_z_order_changed()
         {
-            return ZOrderChanged::RegistrationType{on_z_order_changed_};
+            return ZOrderChanged::Event{on_z_order_changed_};
         }
 
         [[nodiscard]] inline Optional<Scene &> scene() const noexcept
@@ -133,9 +133,9 @@ namespace retro
 
         void clear_window() noexcept;
 
-        inline WindowChanged::RegistrationType on_window_changed()
+        inline WindowChanged::Event on_window_changed()
         {
-            return WindowChanged::RegistrationType{on_window_changed_};
+            return WindowChanged::Event{on_window_changed_};
         }
 
       private:
@@ -164,14 +164,14 @@ namespace retro
             return viewports_;
         }
 
-        [[nodiscard]] inline OnViewportDelegate::RegistrationType on_viewport_created() noexcept
+        [[nodiscard]] inline OnViewportDelegate::Event on_viewport_created() noexcept
         {
-            return OnViewportDelegate::RegistrationType{on_viewport_created_};
+            return OnViewportDelegate::Event{on_viewport_created_};
         }
 
-        [[nodiscard]] inline OnViewportDelegate::RegistrationType on_viewport_destroyed() noexcept
+        [[nodiscard]] inline OnViewportDelegate::Event on_viewport_destroyed() noexcept
         {
-            return OnViewportDelegate::RegistrationType{on_viewport_destroyed_};
+            return OnViewportDelegate::Event{on_viewport_destroyed_};
         }
 
       private:

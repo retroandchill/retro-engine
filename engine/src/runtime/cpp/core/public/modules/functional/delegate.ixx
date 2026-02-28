@@ -873,7 +873,7 @@ namespace retro
     {
       public:
         using DelegateType = Delegate<void(Args...), Policy>;
-        using RegistrationType = MulticastDelegateRegistration<MulticastDelegate>;
+        using Event = MulticastDelegateRegistration<MulticastDelegate>;
 
         MulticastDelegate() = default;
 
@@ -1104,6 +1104,10 @@ namespace retro
         } -> std::same_as<DelegateHandle>;
     };
 
+    template <typename Delegate, typename... Args>
+    concept CanRemoveFromDelegate =
+        requires(Delegate &delegate, Args &&...args) { delegate.remove(std::forward<Args>(args)...); };
+
     export template <MulticastDelegateLike D>
     class ScopedDelegateSubscription;
 
@@ -1129,9 +1133,11 @@ namespace retro
             return delegate_.template add<Functor>(std::forward<BindArgs>(args)...);
         }
 
-        void remove(const DelegateHandle handle)
+        template <typename... Args>
+            requires CanRemoveFromDelegate<D, Args...>
+        void remove(Args &&...args)
         {
-            delegate_.remove(handle);
+            delegate_.remove(std::forward<Args>(args)...);
         }
 
       private:

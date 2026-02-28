@@ -5,8 +5,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Logging;
@@ -16,33 +16,31 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
 using ZLinq;
 
-namespace RetroEngine.Host;
+namespace RetroEngine;
 
-public sealed partial class EngineHost : IHost, IAsyncDisposable
+public sealed partial class Engine : IDisposable, IAsyncDisposable
 {
     public IServiceProvider Services { get; }
     private readonly IntPtr _nativeEngine;
-    private readonly EngineHostLifetime _lifetime;
     private bool _disposed;
     private Thread? _gameThread;
     private ulong _windowId;
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
 
-    private static EngineHost? _instance;
+    private static Engine? _instance;
 
-    public static EngineHost Instance =>
+    public static Engine Instance =>
         _instance ?? throw new InvalidOperationException("Engine has not been initialized.");
 
-    internal EngineHost(IntPtr nativeEngine, IServiceProvider services, EngineHostLifetime lifetime)
+    internal Engine(IntPtr nativeEngine, IServiceProvider services)
     {
         _nativeEngine = nativeEngine;
         Services = services;
-        _lifetime = lifetime;
     }
 
     [MemberNotNull(nameof(_gameThread))]
-    public Task StartAsync(CancellationToken cancellationToken = default)
+    public Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (_instance is not null)
             throw new InvalidOperationException("The engine is already running.");
@@ -54,20 +52,38 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
 
-        _windowId = NativeCreateMainWindow(
-            _nativeEngine,
-            "Retro Engine",
-            1280,
-            720,
-            WindowFlags.Resizable | WindowFlags.Vulkan
-        );
+        _windowId = CreateMainWindow("Retro Engine", 1280, 720, WindowFlags.Resizable | WindowFlags.Vulkan);
 
-        _lifetime.NotifyStarted();
+        OnWindowRemoved += windowId =>
+        {
+            if (windowId == _windowId)
+            {
+                RequestShutdown();
+            }
+        };
+
         return Task.CompletedTask;
     }
 
+    private ulong CreateMainWindow(string title, int width, int height, WindowFlags flags)
+    {
+        Span<byte> errorMessage = stackalloc byte[256];
+        var windowId = NativeCreateMainWindow(
+            _nativeEngine,
+            title,
+            width,
+            height,
+            flags,
+            errorMessage,
+            errorMessage.Length
+        );
+        return windowId != 0
+            ? windowId
+            : throw new PlatformNotSupportedException(Encoding.UTF8.GetString(errorMessage));
+    }
+
     private record NativeCallbackPayload(
-        EngineHost Engine,
+        Engine Engine,
         GameThreadSynchronizationContext SynchronizationContext,
         IGameSession? Session
     );
@@ -112,15 +128,15 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         }
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken = default)
+    public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
-        await StartAsync(cancellationToken);
+        await InitializeAsync(cancellationToken);
 
-        NativePollPlatformEvents(_nativeEngine);
+        var exitCode = NativePollPlatformEvents(_nativeEngine);
 
         _gameThread.Join();
 
-        await StopAsync(cancellationToken);
+        return exitCode;
     }
 
     [UnmanagedCallersOnly]
@@ -128,16 +144,6 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
     {
         var payload = (NativeCallbackPayload)GCHandle.FromIntPtr(userData).Target!;
         payload.Session?.Terminate();
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken = default)
-    {
-        if (_instance is null)
-            throw new InvalidOperationException("The engine is not running.");
-
-        _lifetime.NotifyStopped();
-        Interlocked.Exchange(ref _instance, null);
-        return Task.CompletedTask;
     }
 
     public void RegisterTickable(ITickable tickable)
@@ -167,19 +173,75 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         FrameCount++;
     }
 
-    public static void RequestShutdown(int exitCode = 0)
+    public void RequestShutdown(int exitCode = 0)
     {
-        if (_instance is null)
-            throw new InvalidOperationException("Engine has not been initialized.");
-        _instance.Dispose();
-        Interlocked.Exchange(ref _instance, null);
-        NativeRequestShutdown(exitCode);
+        NativeRequestShutdown(_nativeEngine, exitCode);
+    }
+
+    public event Action<ulong>? OnWindowRemoved
+    {
+        add
+        {
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeOnWindowRemovedAdd(
+                    _nativeEngine,
+                    GCHandle.ToIntPtr(handle),
+                    &InvokeWindowRemoved,
+                    &DisposeWindowRemoved,
+                    &EqualsWindowRemoved
+                );
+            }
+        }
+        remove
+        {
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeOnWindowRemovedRemove(
+                    _nativeEngine,
+                    GCHandle.ToIntPtr(handle),
+                    &InvokeWindowRemoved,
+                    &DisposeWindowRemoved,
+                    &EqualsWindowRemoved
+                );
+            }
+        }
+    }
+
+    [UnmanagedCallersOnly]
+    private static void InvokeWindowRemoved(IntPtr userData, ulong windowId)
+    {
+        var handle = GCHandle.FromIntPtr(userData);
+        var action = (Action<ulong>?)handle.Target;
+        action?.Invoke(windowId);
+    }
+
+    [UnmanagedCallersOnly]
+    private static void DisposeWindowRemoved(IntPtr userData)
+    {
+        var handle = GCHandle.FromIntPtr(userData);
+        handle.Free();
+    }
+
+    [UnmanagedCallersOnly]
+    private static byte EqualsWindowRemoved(IntPtr lhs, IntPtr rhs)
+    {
+        var lhsHandle = GCHandle.FromIntPtr(lhs);
+        var rhsHandle = GCHandle.FromIntPtr(rhs);
+        return Equals(lhsHandle.Target, rhsHandle.Target) ? (byte)1 : (byte)0;
     }
 
     public void Dispose()
     {
         if (_disposed)
             return;
+
+        if (ReferenceEquals(this, _instance))
+        {
+            Interlocked.Exchange(ref _instance, null);
+        }
 
         _disposed = true;
         NativeDestroy(_nativeEngine);
@@ -210,7 +272,7 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
     );
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_engine_poll_platform_events")]
-    private static partial void NativePollPlatformEvents(IntPtr engine);
+    private static partial int NativePollPlatformEvents(IntPtr engine);
 
     [LibraryImport(
         "retro_runtime",
@@ -222,9 +284,29 @@ public sealed partial class EngineHost : IHost, IAsyncDisposable
         string title,
         int width,
         int height,
-        WindowFlags flags
+        WindowFlags flags,
+        Span<byte> errorMessage,
+        int errorMessageLength
     );
 
     [LibraryImport("retro_runtime", EntryPoint = "retro_engine_request_shutdown")]
-    private static partial void NativeRequestShutdown(int exitCode);
+    private static partial void NativeRequestShutdown(IntPtr engine, int exitCode);
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_on_window_removed_add")]
+    private static unsafe partial void NativeOnWindowRemovedAdd(
+        IntPtr engine,
+        IntPtr callback,
+        delegate* unmanaged<IntPtr, ulong, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
+
+    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_on_window_removed_remove")]
+    private static unsafe partial void NativeOnWindowRemovedRemove(
+        IntPtr engine,
+        IntPtr callback,
+        delegate* unmanaged<IntPtr, ulong, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
 }

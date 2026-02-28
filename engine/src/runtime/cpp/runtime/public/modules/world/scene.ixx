@@ -68,14 +68,14 @@ namespace retro
             return scenes_;
         }
 
-        [[nodiscard]] inline OnSceneDelegate::RegistrationType on_viewport_created() noexcept
+        [[nodiscard]] inline OnSceneDelegate::Event on_viewport_created() noexcept
         {
-            return OnSceneDelegate::RegistrationType{on_scene_created_};
+            return OnSceneDelegate::Event{on_scene_created_};
         }
 
-        [[nodiscard]] inline OnSceneDelegate::RegistrationType on_viewport_destroyed() noexcept
+        [[nodiscard]] inline OnSceneDelegate::Event on_viewport_destroyed() noexcept
         {
-            return OnSceneDelegate::RegistrationType{on_scene_destroyed_};
+            return OnSceneDelegate::Event{on_scene_destroyed_};
         }
 
       private:

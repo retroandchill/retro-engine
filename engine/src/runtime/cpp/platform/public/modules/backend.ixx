@@ -52,6 +52,15 @@ namespace retro
         PlatformInitFlags flags = PlatformInitFlags::none;
     };
 
+    export struct PlatformError
+    {
+        std::string_view message;
+        std::int32_t code;
+    };
+
+    export template <typename T>
+    using PlatformResult = std::expected<T, PlatformError>;
+
     export class PlatformBackend
     {
       public:
