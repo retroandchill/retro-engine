@@ -11,7 +11,7 @@ option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
 option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
-option(RETRO_DOTNET_CONFIGURATION "What is the name of the .NET configuration" ON)
+set(RETRO_DOTNET_CONFIGURATION "Dev-Debug" CACHE STRING "What is the name of the .NET configuration")
 
 if(NOT RETRO_BUILD_SHARED)
     set(INTERMEDIATE_LIB_TYPE OBJECT)
