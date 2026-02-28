@@ -5,7 +5,8 @@
       "executablePath": "$(SolutionDir)/games/sample/bin/$(BuildConfigName)/RetroEngine.Game.Sample.exe",
       "commandLineArgs": "",
       "environmentVariables": {
-        "PATH": "$(SolutionDir)/engine/bin/$(BuildConfigName);%PATH%"
+        "PATH": "$(SolutionDir)/engine/bin/$(BuildConfigName);%PATH%",
+        "VK_LAYER_PATH": "$(SolutionDir)engine/build/$(BuildConfigName)/vcpkg_installed/x64-windows/bin"
       },
       "nativeDebugging": true
     }
