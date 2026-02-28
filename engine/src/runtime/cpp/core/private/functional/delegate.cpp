@@ -8,5 +8,13 @@ module retro.core.functional.delegate;
 
 namespace retro
 {
-    std::atomic<std::uint64_t> DelegateHandle::next_cookie_{1};
-}
+    namespace
+    {
+        std::atomic<std::uint64_t> next_cookie{1};
+    }
+
+    std::uint64_t DelegateHandle::generate_new_cookie() noexcept
+    {
+        return next_cookie.fetch_add(1, std::memory_order_relaxed);
+    }
+} // namespace retro

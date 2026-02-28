@@ -16,15 +16,8 @@ option(RETRO_DOTNET_CONFIGURATION "What is the name of the .NET configuration" O
 if(NOT RETRO_BUILD_SHARED)
     set(BUILD_SHARED_LIBS OFF)
 
-    # Configure vcpkg to use static triplets
-    if(WIN32)
-        set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
-        set(VCPKG_HOST_TRIPLET "x64-windows-static" CACHE STRING "")
-    elseif(APPLE)
-        set(VCPKG_TARGET_TRIPLET "x64-osx-static" CACHE STRING "")
-    else()
-        set(VCPKG_TARGET_TRIPLET "x64-linux-static" CACHE STRING "")
-    endif()
+    set(VCPKG_CRT_LINKAGE static)
+    set(VCPKG_LIBRARY_LINKAGE static)
 else()
     set(BUILD_SHARED_LIBS ON)
 endif()
@@ -79,6 +72,7 @@ endfunction()
 
 if (BUILD_TESTS)
     include(CTest)
+    include(GoogleTest)
     enable_testing()
 endif()
 

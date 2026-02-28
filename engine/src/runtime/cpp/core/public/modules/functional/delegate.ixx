@@ -830,17 +830,12 @@ namespace retro
             return DelegateHandle{};
         }
 
-        [[nodiscard]] static inline std::uint64_t generate_new_cookie() noexcept
-        {
-            return next_cookie_.fetch_add(1, std::memory_order_relaxed);
-        }
+        RETRO_API [[nodiscard]] static std::uint64_t generate_new_cookie() noexcept;
 
       private:
         std::uint64_t owner_cookie_{};
         std::uint32_t index_{};
         std::uint32_t generation_{};
-
-        RETRO_API static std::atomic<std::uint64_t> next_cookie_;
     };
 
     struct MulticastDelegateLifetimeHook

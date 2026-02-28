@@ -45,6 +45,8 @@ target_link_libraries(retro_core_tests PRIVATE
         GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
 )
 
+gtest_add_tests(TARGET retro_core_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 if(MSVC)
     target_compile_options(retro_core_tests PRIVATE /bigobj)
 endif()
