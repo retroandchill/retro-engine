@@ -13,6 +13,7 @@
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="11.3.11.14" />
     <PackageVersion Include="DotMake.CommandLine" Version="3.1.0" />
     <PackageVersion Include="Handlebars.Net" Version="2.1.6" />
+    <PackageVersion Include="Injectio" Version="5.1.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="MessagePack" Version="3.1.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.0.0" />

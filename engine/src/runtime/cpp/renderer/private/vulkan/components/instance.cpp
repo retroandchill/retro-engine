@@ -59,7 +59,7 @@ namespace retro
         {
             auto logger = get_logger();
 
-            LogLevel level = LogLevel::info;
+            auto level = LogLevel::info;
             if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
             {
                 level = LogLevel::error;

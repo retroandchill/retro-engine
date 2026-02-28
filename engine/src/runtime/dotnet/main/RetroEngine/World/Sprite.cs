@@ -8,6 +8,7 @@ using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Portable.Interop;
+using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.World;
 

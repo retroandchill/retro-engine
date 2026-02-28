@@ -17,6 +17,7 @@
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
+      <PackageReference Include="Injectio" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
       <PackageReference Include="Microsoft.Extensions.Logging" />

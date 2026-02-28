@@ -8,6 +8,7 @@ using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Tickables;
 using RetroEngine.World;
+using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.Game.Sample;
 

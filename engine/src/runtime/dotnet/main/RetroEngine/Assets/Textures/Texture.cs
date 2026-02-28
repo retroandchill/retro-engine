@@ -8,7 +8,7 @@ using RetroEngine.Core.Math;
 using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 
-namespace RetroEngine.Assets;
+namespace RetroEngine.Assets.Textures;
 
 public sealed partial class Texture : Asset
 {

@@ -38,7 +38,7 @@ public static partial class AssetRegistry
 
     public static void RegisterDefaultAssetFactories()
     {
-        Texture.RegisterAssetFactory();
+        Textures.Texture.RegisterAssetFactory();
     }
 
     public static void ClearAssetCache()

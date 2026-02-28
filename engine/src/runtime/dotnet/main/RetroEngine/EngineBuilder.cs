@@ -33,10 +33,7 @@ public sealed partial class EngineBuilder
             NativeAddRenderingServices(ctx, WindowBackend.SDL3, RenderBackend.Vulkan);
         });
 
-        Services.AddLogging(builder =>
-        {
-            builder.AddSerilog();
-        });
+        Services.AddLogging(builder => builder.AddSerilog()).AddRetroEngine();
     }
 
     [PublicAPI]

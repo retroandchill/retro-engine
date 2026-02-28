@@ -9,6 +9,7 @@ using RetroEngine.Core.Math;
 using RetroEngine.Logging;
 using RetroEngine.World;
 using Serilog;
+using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.Game.Sample;
 

@@ -15,7 +15,7 @@ namespace retro
 {
     namespace
     {
-        constexpr std::array PNG_HEADER = {std::byte{0x89},
+        constexpr std::array png_header = {std::byte{0x89},
                                            std::byte{0x50},
                                            std::byte{0x4E},
                                            std::byte{0x47},
@@ -28,13 +28,13 @@ namespace retro
     bool TextureDecoder::can_decode(const AssetDecodeContext &context, BufferedStream &stream) const
     {
         // TODO: For now we'll just support PNG images, but we may want to open it up to others later
-        auto peek_result = stream.peek(PNG_HEADER.size());
+        auto peek_result = stream.peek(png_header.size());
         if (!peek_result.has_value())
         {
             return false;
         }
 
-        return std::ranges::equal(*peek_result, PNG_HEADER);
+        return std::ranges::equal(*peek_result, png_header);
     }
 
     AssetLoadResult<RefCountPtr<Asset>> TextureDecoder::decode(const AssetDecodeContext &context,
