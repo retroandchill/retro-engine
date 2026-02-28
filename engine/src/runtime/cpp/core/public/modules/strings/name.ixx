@@ -190,9 +190,7 @@ namespace retro
     struct NameIndices
     {
         NameEntryId comparison_index;
-#if RETRO_WITH_CASE_PRESERVING_NAME
         NameEntryId display_index;
-#endif
     };
 
     class RETRO_API Name
@@ -230,28 +228,15 @@ namespace retro
         {
         }
 
-        constexpr Name(const NameEntryId comparison_index,
-                       const std::int32_t number
-#if RETRO_WITH_CASE_PRESERVING_NAME
-                       ,
-                       const NameEntryId display_index
-#endif
-                       )
-            : comparison_index_(comparison_index), number_(number)
-#if RETRO_WITH_CASE_PRESERVING_NAME
-              ,
-              display_index_(display_index)
-#endif
+        constexpr Name(const NameEntryId comparison_index, const std::int32_t number, const NameEntryId display_index)
+            : comparison_index_(comparison_index), number_(number), display_index_(display_index)
         {
         }
 
       private:
         inline explicit(false) Name(const LookupResult result)
-            : comparison_index_(result.indices.comparison_index), number_(result.number)
-#if RETRO_WITH_CASE_PRESERVING_NAME
-              ,
+            : comparison_index_(result.indices.comparison_index), number_(result.number),
               display_index_(result.indices.display_index)
-#endif
         {
         }
 
@@ -263,11 +248,7 @@ namespace retro
 
         [[nodiscard]] constexpr NameEntryId display_index() const
         {
-#if RETRO_WITH_CASE_PRESERVING_NAME
             return display_index_;
-#else
-            return comparison_index_;
-#endif
         }
 
         [[nodiscard]] constexpr std::int32_t number() const
@@ -368,9 +349,7 @@ namespace retro
 
         NameEntryId comparison_index_;
         std::int32_t number_ = NAME_NO_NUMBER_INTERNAL;
-#if RETRO_WITH_CASE_PRESERVING_NAME
         NameEntryId display_index_;
-#endif
     };
 
     export const RETRO_API std::vector<const NameEntry *> &debug_get_name_entries();

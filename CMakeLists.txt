@@ -10,7 +10,6 @@ option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
 
 option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
-option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
 set(RETRO_DOTNET_CONFIGURATION "Dev-Debug" CACHE STRING "What is the name of the .NET configuration")
 
 if(NOT RETRO_BUILD_SHARED)
@@ -34,12 +33,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_MODULE_STD ON)
 if (MSVC)
     add_compile_definitions(_UTF8)
-endif()
-
-if (RETRO_WITH_CASE_PRESERVING_NAME)
-    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
-else()
-    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
 endif()
 
 if (RETRO_WITH_EDITOR_DATA)

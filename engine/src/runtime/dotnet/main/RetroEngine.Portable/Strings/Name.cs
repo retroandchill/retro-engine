@@ -179,11 +179,7 @@ public readonly partial struct Name
     /// the correct case-sensitive string representation of the name.
     /// </summary>
     [UsedImplicitly]
-#if RETRO_WITH_CASE_PRESERVING_NAME
     public NameEntryId DisplayIndex { get; }
-#else
-    public NameEntryId DisplayIndex => ComparisonIndex;
-#endif
 
     /// <summary>
     /// Construct a new <see cref="Name"/> from a <see cref="ReadOnlySpan{char}"/>

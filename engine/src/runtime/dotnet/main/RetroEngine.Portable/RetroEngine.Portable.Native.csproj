@@ -8,7 +8,6 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <DefineConstants>$(DefineConstants);RETRO_NAME_BACKEND_NATIVE</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="$(RetroEnginePortableCommonProj)" />

@@ -158,13 +158,7 @@ namespace retro
 
             if (retro::compare<StringComparison::case_insensitive>(str, NONE_STRING) == std::strong_ordering::equal)
             {
-                return NameIndices
-                {
-                    .comparison_index = NameEntryId::none(),
-#if RETRO_WITH_CASE_PRESERVING_NAME
-                    .display_index = NameEntryId::none()
-#endif
-                };
+                return NameIndices{.comparison_index = NameEntryId::none(), .display_index = NameEntryId::none()};
             }
 
             return get_or_add_entry_internal(str, find_type);
@@ -217,7 +211,6 @@ namespace retro
                 const auto next_index = static_cast<std::uint32_t>(entries_.size());
                 const auto comparison_index =
                     comparison_entries_.find_or_add(str, std::bind_front(&NameTable::create_new_entry, this));
-#if RETRO_WITH_CASE_PRESERVING_NAME
                 if (comparison_index.value() == next_index)
                 {
                     const auto display_index =
@@ -228,15 +221,8 @@ namespace retro
 
                 const auto display_index =
                     display_entries_.find_or_add(str, std::bind_front(&NameTable::create_new_entry, this));
-#endif
 
-                return NameIndices
-                {
-                    .comparison_index = comparison_index,
-#if RETRO_WITH_CASE_PRESERVING_NAME
-                    .display_index = display_index
-#endif
-                };
+                return NameIndices{.comparison_index = comparison_index, .display_index = display_index};
             }
 
             std::shared_lock lock{mutex_};
@@ -244,20 +230,10 @@ namespace retro
                 .transform(
                     [&](NameEntryId comparison_index)
                     {
-                        return NameIndices
-                        {
-                            .comparison_index = comparison_index,
-#if RETRO_WITH_CASE_PRESERVING_NAME
-                            .display_index = display_entries_.find(str).value_or(comparison_index)
-#endif
-                        };
+                        return NameIndices{.comparison_index = comparison_index,
+                                           .display_index = display_entries_.find(str).value_or(comparison_index)};
                     })
-                .value_or(NameIndices {
-                    .comparison_index = NameEntryId::none(),
-#if RETRO_WITH_CASE_PRESERVING_NAME
-                    .display_index = NameEntryId::none()
-#endif
-                });
+                .value_or(NameIndices{.comparison_index = NameEntryId::none(), .display_index = NameEntryId::none()});
         }
 
         NameEntryId create_new_entry(const std::string_view str)
@@ -278,9 +254,7 @@ namespace retro
         mutable std::shared_mutex mutex_{};
         NameAllocator allocator_;
         NameTableSet<NameCase::ignore_case> comparison_entries_;
-#if RETRO_WITH_CASE_PRESERVING_NAME
         NameTableSet<NameCase::case_sensitive> display_entries_;
-#endif
         std::vector<const NameEntry *> entries_{};
     };
 
@@ -352,9 +326,7 @@ namespace retro
             return LookupResult{.indices =
                                     NameIndices{
                                         .comparison_index = NameEntryId::none(),
-#if RETRO_WITH_CASE_PRESERVING_NAME
                                         .display_index = NameEntryId::none(),
-#endif
                                     },
                                 .number = NAME_NO_NUMBER_INTERNAL};
         }
