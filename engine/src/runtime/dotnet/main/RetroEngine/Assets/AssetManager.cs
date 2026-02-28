@@ -5,12 +5,15 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
 
 [RegisterSingleton]
 public sealed class AssetManager(IEnumerable<IAssetDecoder> decoders)
 {
-    private readonly ImmutableArray<IAssetDecoder> _decoders = [.. decoders];
+    private readonly ImmutableDictionary<Name, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
+        x.AssetType
+    );
     private readonly ConcurrentDictionary<AssetPath, WeakReference<Asset>> _assetCache = new();
 }

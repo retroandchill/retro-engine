@@ -12,7 +12,7 @@ namespace RetroEngine.Assets.Textures;
 
 public sealed partial class Texture : Asset
 {
-    private static readonly Name TypeName = new("Texture");
+    internal static readonly Name TypeName = new("Texture");
 
     public int Width { get; }
     public int Height { get; }
