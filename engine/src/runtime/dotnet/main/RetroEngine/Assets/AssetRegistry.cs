@@ -5,8 +5,8 @@
 
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using RetroEngine.Interop;
 using RetroEngine.Logging;
-using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 using Serilog;
 

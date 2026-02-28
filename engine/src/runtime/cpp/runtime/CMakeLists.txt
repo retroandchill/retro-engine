@@ -58,10 +58,6 @@ target_include_directories(retro_runtime PUBLIC public/include)
 
 retro_add_boilerplate(retro_runtime)
 
-if(NOT RETRO_BUILD_SHARED)
-    target_compile_definitions(retro_runtime PUBLIC RETRO_STATIC)
-endif()
-
 target_sources(retro_runtime PUBLIC
         FILE_SET CXX_MODULES FILES
             ${RETRO_RUNTIME_MODULES}

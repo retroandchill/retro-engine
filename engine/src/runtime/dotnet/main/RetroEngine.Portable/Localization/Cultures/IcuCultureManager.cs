@@ -6,7 +6,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 

@@ -5,7 +5,7 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 

@@ -1,8 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="retro_interop" type="CLionNativeAppRunConfigurationType" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="retro_engine" TARGET_NAME="retro_interop" CONFIG_NAME="dev-debug" version="1" RUN_PATH="$PROJECT_DIR$/games/sample/bin/dev-debug/RetroEngine.Game.Sample.exe">
+  <configuration default="false" name="retro_interop" type="CLionNativeAppRunConfigurationType" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="retro_engine" TARGET_NAME="retro_interop" CONFIG_NAME="debug" version="1" RUN_PATH="$PROJECT_DIR$/games/sample/src/dotnet/RetroEngine.Game.Sample/bin/Debug/net10.0/RetroEngine.Game.Sample.exe">
     <envs>
-      <env name="PATH" value="$PROJECT_DIR$/engine/bin/dev-debug;$PATH$" />
-      <env name="VK_LAYER_PATH" value="$PROJECT_DIR$/engine/build/dev-debug/vcpkg_installed/x64-windows/bin" />
+      <env name="VK_LAYER_PATH" value="$PROJECT_DIR$/engine/build/debug/vcpkg_installed/x64-windows/bin" />
     </envs>
     <method v="2">
       <option name="CLION.COMPOUND.BUILD" enabled="true" />

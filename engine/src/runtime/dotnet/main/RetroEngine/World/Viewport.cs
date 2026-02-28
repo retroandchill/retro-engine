@@ -6,7 +6,7 @@
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 
 namespace RetroEngine.World;
 

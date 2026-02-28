@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MessagePack;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 using RetroEngine.Portable.Serialization.Json;
 using RetroEngine.Portable.Serialization.MessagePack;
 

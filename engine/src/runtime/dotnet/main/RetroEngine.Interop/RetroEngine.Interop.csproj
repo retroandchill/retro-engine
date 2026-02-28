@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+
+        <ConfigFolder Condition="'$(Configuration)' == 'Debug'">debug</ConfigFolder>
+        <ConfigFolder Condition="'$(Configuration)' == 'Release'">release</ConfigFolder>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(SolutionDir)engine\bin\$(ConfigFolder)\**\*" Pack="true" PackagePath="runtimes\">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <None Include="$(SolutionDir)engine\bin\$(ConfigFolder)\win-x64\**\*" Pack="false" PackagePath="\">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>

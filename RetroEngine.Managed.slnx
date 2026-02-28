@@ -1,50 +1,23 @@
 <Solution>
-  <Configurations>
-    <BuildType Name="Dev-Debug" />
-    <BuildType Name="Dev-Release" />
-    <BuildType Name="Pkg-Debug" />
-    <BuildType Name="Pkg-Release" />
-  </Configurations>
-  <Folder Name="/engine/">
-    <File Path="engine/Directory.Build.props" />
-  </Folder>
+  <Folder Name="/engine/" />
   <Folder Name="/engine/src/" />
   <Folder Name="/engine/src/editor/" />
   <Folder Name="/engine/src/editor/dotnet/" />
   <Folder Name="/engine/src/editor/dotnet/main/" />
   <Folder Name="/engine/src/editor/dotnet/main/dotnet/">
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
-      <Build Solution="Pkg-Debug|*" Project="false" />
-      <Build Solution="Pkg-Release|*" Project="false" />
-    </Project>
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
-      <BuildType Solution="Dev-Debug|*" Project="Debug" />
-      <BuildType Solution="Dev-Release|*" Project="Release" />
-      <BuildType Solution="Pkg-Debug|*" Project="Debug" />
-      <BuildType Solution="Pkg-Release|*" Project="Debug" />
-      <Build Solution="Pkg-Debug|*" Project="false" />
-      <Build Solution="Pkg-Release|*" Project="false" />
-    </Project>
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj">
-      <Build Solution="Pkg-Debug|*" Project="false" />
-      <Build Solution="Pkg-Release|*" Project="false" />
-    </Project>
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj" />
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj" />
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/" />
   <Folder Name="/engine/src/runtime/dotnet/" />
   <Folder Name="/engine/src/runtime/dotnet/main/">
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Core/RetroEngine.Core.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Interop/RetroEngine.Interop.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Logging/RetroEngine.Logging.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj">
-      <BuildType Project="Debug" />
-    </Project>
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj">
-      <BuildType Solution="Dev-Debug|*" Project="Debug" />
-      <BuildType Solution="Dev-Release|*" Project="Release" />
-      <BuildType Solution="Pkg-Debug|*" Project="Debug" />
-      <BuildType Solution="Pkg-Release|*" Project="Debug" />
-    </Project>
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.Native.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine/RetroEngine.csproj" />

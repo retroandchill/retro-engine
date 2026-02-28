@@ -6,8 +6,6 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release</Configurations>
-        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="coverlet.collector">

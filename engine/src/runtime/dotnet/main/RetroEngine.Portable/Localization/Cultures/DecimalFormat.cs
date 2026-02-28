@@ -4,7 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.Cultures;

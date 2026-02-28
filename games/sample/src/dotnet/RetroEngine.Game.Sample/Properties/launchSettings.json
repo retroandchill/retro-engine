@@ -1,12 +1,10 @@
 ﻿{
   "profiles": {
     "Run Game": {
-      "commandName": "Executable",
-      "executablePath": "$(SolutionDir)/games/sample/bin/$(BuildConfigName)/RetroEngine.Game.Sample.exe",
+      "commandName": "Project",
       "commandLineArgs": "",
       "environmentVariables": {
-        "PATH": "$(SolutionDir)/engine/bin/$(BuildConfigName);%PATH%",
-        "VK_LAYER_PATH": "$(SolutionDir)engine/build/$(BuildConfigName)/vcpkg_installed/x64-windows/bin"
+        "VK_LAYER_PATH": "$(SolutionDir)engine/build/$(Configuration)/vcpkg_installed/x64-windows/bin"
       },
       "nativeDebugging": true
     }

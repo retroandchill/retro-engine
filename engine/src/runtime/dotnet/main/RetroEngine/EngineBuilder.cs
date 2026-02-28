@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
-using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization.Cultures;
 using Serilog;
 

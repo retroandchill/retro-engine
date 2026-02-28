@@ -5,7 +5,7 @@
 
 using System.Numerics;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;

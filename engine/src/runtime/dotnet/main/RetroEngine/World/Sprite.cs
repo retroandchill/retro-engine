@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
-using RetroEngine.Portable.Interop;
+using RetroEngine.Interop;
 using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.World;

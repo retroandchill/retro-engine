@@ -6,14 +6,13 @@
         <AssemblyName>RetroEngine.Portable</AssemblyName>
         <RootNamespace>RetroEngine.Portable</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Configurations>Debug;Release;Dev-Debug;Dev-Release;Pkg-Debug;Pkg-Release;</Configurations>
-        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="$(RetroEnginePortableCommonProj)" />
         <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="$(RetroEngineInteropProj)" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />

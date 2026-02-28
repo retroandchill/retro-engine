@@ -86,10 +86,6 @@ target_include_directories(retro_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/pub
 
 retro_add_boilerplate(retro_renderer)
 
-if(NOT RETRO_BUILD_SHARED)
-    target_compile_definitions(retro_renderer PUBLIC RETRO_STATIC)
-endif()
-
 target_sources(retro_renderer PUBLIC
         FILE_SET retro_renderer_public
         TYPE CXX_MODULES FILES
