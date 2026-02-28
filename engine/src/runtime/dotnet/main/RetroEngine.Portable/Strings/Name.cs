@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MessagePack;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Serialization.Json;
 using RetroEngine.Portable.Serialization.MessagePack;
 
@@ -36,7 +37,6 @@ public readonly partial struct NameEntryId(uint value)
 
     public int CompareLexical(NameEntryId other, StringComparison comparison)
     {
-#if RETRO_NAME_BACKEND_NATIVE
         return NativeCompareLexical(
             this,
             other,
@@ -51,9 +51,6 @@ public readonly partial struct NameEntryId(uint value)
                 _ => throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null),
             }
         );
-#else
-        return NameTable.Instance.Compare(this, other, comparison);
-#endif
     }
 
     public int CompareTo(NameEntryId other)
@@ -96,12 +93,8 @@ public readonly partial struct NameEntryId(uint value)
         return (int)Value;
     }
 
-#if RETRO_NAME_BACKEND_NATIVE
-    private const string LibraryName = "retro_core";
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_name_compare_lexical")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare_lexical")]
     private static partial int NativeCompareLexical(NameEntryId lhs, NameEntryId rhs, NameCase nameCase);
-#endif
 }
 
 public enum NameCase : byte
@@ -163,10 +156,6 @@ public readonly partial struct Name
 
     private static int ExternalToNameInternal(int x) => x + 1;
 
-#if !RETRO_NAME_BACKEND_NATIVE
-    internal const string NoneString = "None";
-#endif
-
     /// <summary>
     /// Gets the comparison index for this <see cref="Name"/>. This is the primary value used for equality comparisons.
     /// </summary>
@@ -205,7 +194,6 @@ public readonly partial struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
-#if RETRO_NAME_BACKEND_NATIVE
         unsafe
         {
             fixed (char* namePtr = name)
@@ -213,13 +201,6 @@ public readonly partial struct Name
                 this = NativeLookup(namePtr, name.Length, findType);
             }
         }
-#else
-        (var indices, _number) = LookupName(name, findType);
-        ComparisonIndex = indices.ComparisonIndex;
-#if RETRO_WITH_CASE_PRESERVING_NAME
-        DisplayIndex = indices.DisplayIndex;
-#endif
-#endif
     }
 
     /// <summary>
@@ -261,11 +242,7 @@ public readonly partial struct Name
     /// <threadsafety>
     /// This property is thread-safe due to the immutable nature of the <see cref="Name"/> struct.
     /// </threadsafety>
-#if RETRO_NAME_BACKEND_NATIVE
     public bool IsValid => NativeIsValid(this);
-#else
-    public bool IsValid => NameTable.Instance.IsWithinBounds(ComparisonIndex);
-#endif
 
     /// <summary>
     /// Indicates whether the current <see cref="Name"/> instance represents a "none" or null-like state.
@@ -339,7 +316,6 @@ public readonly partial struct Name
     /// </returns>
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
-#if RETRO_NAME_BACKEND_NATIVE
         unsafe
         {
             fixed (char* rhsPtr = rhs)
@@ -347,12 +323,6 @@ public readonly partial struct Name
                 return NativeCompare(lhs, rhsPtr, rhs.Length) == 0;
             }
         }
-#else
-        var (number, newLength) = ParseNumber(rhs);
-        return NameTable.Instance.Compare(lhs.ComparisonIndex, rhs[..newLength], StringComparison.OrdinalIgnoreCase)
-                == 0
-            && number == lhs._number;
-#endif
     }
 
     /// <summary>
@@ -413,7 +383,6 @@ public readonly partial struct Name
     /// <inheritdoc />
     public override string ToString()
     {
-#if RETRO_NAME_BACKEND_NATIVE
         Span<char> buffer = stackalloc char[MaxLength];
         int newLength;
         unsafe
@@ -425,10 +394,6 @@ public readonly partial struct Name
         }
 
         return buffer[..newLength].ToString();
-#else
-        var baseString = NameTable.Instance.Get(DisplayIndex);
-        return _number != NoNumberInternal ? $"{baseString}_{NameInternalToExternal(_number)}" : baseString;
-#endif
     }
 
     /// <inheritdoc />
@@ -437,62 +402,16 @@ public readonly partial struct Name
         return HashCode.Combine(ComparisonIndex, _number);
     }
 
-#if !RETRO_NAME_BACKEND_NATIVE
-    private static (NameIndices Indices, int Number) LookupName(ReadOnlySpan<char> value, FindName findType)
-    {
-        if (value.Length == 0)
-            return (NameIndices.None, NoNumberInternal);
-
-        var (internalNumber, newLength) = ParseNumber(value);
-        var newSlice = value[..newLength];
-        var indices = NameTable.Instance.GetOrAddEntry(newSlice, findType);
-        return !indices.IsNone ? (indices, internalNumber) : (NameIndices.None, NoNumberInternal);
-    }
-
-    private static (int Number, int Length) ParseNumber(ReadOnlySpan<char> name)
-    {
-        var digits = 0;
-        for (var i = name.Length - 1; i >= 0; i--)
-        {
-            var character = name[i];
-            if (character is < '0' or > '9')
-                break;
-
-            digits++;
-        }
-
-        var firstDigit = name.Length - digits;
-        if (firstDigit == 0)
-            return (NoNumberInternal, name.Length);
-
-        const int maxDigits = 10;
-        if (
-            digits <= 0
-            || digits >= name.Length
-            || name[firstDigit - 1] != '_'
-            || digits > maxDigits
-            || digits != 1 && name[firstDigit] == '0'
-        )
-            return (NoNumberInternal, name.Length);
-
-        return int.TryParse(name.Slice(firstDigit, digits), out var number)
-            ? (ExternalToNameInternal(number), name.Length - (digits + 1))
-            : (NoNumberInternal, name.Length);
-    }
-#else
-    private const string LibraryName = "retro_core";
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_name_lookup")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup")]
     private static unsafe partial Name NativeLookup(char* name, int nameLength, FindName findType);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_name_is_valid")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_is_valid")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static unsafe partial bool NativeIsValid(Name name);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_name_compare")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare")]
     private static unsafe partial int NativeCompare(Name lhs, char* name, int nameLength);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_name_to_string")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string")]
     private static unsafe partial int NativeToString(Name name, char* buffer, int bufferLength);
-#endif
 }

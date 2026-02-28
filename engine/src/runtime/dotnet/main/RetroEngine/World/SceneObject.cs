@@ -5,6 +5,7 @@
 
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Math;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.World;
 
@@ -101,20 +102,18 @@ public abstract partial class SceneObject : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private const string LibraryName = "retro_runtime";
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_node_set_transform")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_transform")]
     private static partial void NativeSetTransform(IntPtr obj, in Transform transform);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_node_set_z_order")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_z_order")]
     private static partial int NativeSetZOrder(IntPtr obj, int zOrder);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_node_attach_to_parent")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_attach_to_parent")]
     private static partial void NativeAttachToParent(IntPtr obj, IntPtr parent);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_node_detach_from_parent")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_detach_from_parent")]
     private static partial void NativeDetachFromParent(IntPtr obj);
 
-    [LibraryImport(LibraryName, EntryPoint = "retro_node_dispose")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_dispose")]
     private static partial void NativeDispose(IntPtr obj);
 }

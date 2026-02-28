@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using RetroEngine.Assets;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.World;
 
@@ -89,21 +90,21 @@ public partial class Sprite : SceneObject
     public Sprite(SceneObject parent)
         : this(parent.Scene, parent) { }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_create")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(IntPtr scene, IntPtr id);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_texture")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_texture")]
     private static partial void NativeSetTexture(IntPtr id, IntPtr texture);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_tint")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_tint")]
     private static partial void NativeSetTint(IntPtr id, Color color);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_pivot")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_pivot")]
     private static partial void NativeSetPivot(IntPtr id, Vector2F pivot);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_size")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_size")]
     private static partial void NativeSetSize(IntPtr id, Vector2F size);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_sprite_set_uv_rect")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_uv_rect")]
     private static partial void NativeSetUVs(IntPtr id, UVs size);
 }

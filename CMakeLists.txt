@@ -14,11 +14,13 @@ option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field
 option(RETRO_DOTNET_CONFIGURATION "What is the name of the .NET configuration" ON)
 
 if(NOT RETRO_BUILD_SHARED)
+    set(INTERMEDIATE_LIB_TYPE OBJECT)
     set(BUILD_SHARED_LIBS OFF)
 
     set(VCPKG_CRT_LINKAGE static)
     set(VCPKG_LIBRARY_LINKAGE static)
 else()
+    set(INTERMEDIATE_LIB_TYPE SHARED)
     set(BUILD_SHARED_LIBS ON)
 endif()
 
@@ -61,13 +63,17 @@ if (NOT GLSLC_EXECUTABLE)
 endif ()
 
 function(retro_add_boilerplate TARGET_NAME)
-    set(BOILERPLATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_boilerplate.cpp")
-    configure_file(
-            "${CMAKE_SOURCE_DIR}/templates/per_project_boilerplate.cpp.in"
-            "${BOILERPLATE_FILE}"
-            @ONLY
-    )
-    target_sources(${TARGET_NAME} PRIVATE "${BOILERPLATE_FILE}")
+    get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+
+    if(TARGET_TYPE STREQUAL "EXECUTABLE" OR TARGET_TYPE STREQUAL "SHARED_LIBRARY")
+        set(BOILERPLATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_boilerplate.cpp")
+        configure_file(
+                "${CMAKE_SOURCE_DIR}/templates/per_project_boilerplate.cpp.in"
+                "${BOILERPLATE_FILE}"
+                @ONLY
+        )
+        target_sources(${TARGET_NAME} PRIVATE "${BOILERPLATE_FILE}")
+    endif()
 endfunction()
 
 if (BUILD_TESTS)

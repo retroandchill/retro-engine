@@ -168,19 +168,19 @@ internal sealed partial class DecimalFormat : IDisposable
         return format != IntPtr.Zero ? new DecimalFormat(format) : null;
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_decimal_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_decimal_format")]
     private static partial IntPtr NativeCreate(IntPtr locale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_percent_decimal_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_percent_decimal_format")]
     private static partial IntPtr NativeCreatePercent(IntPtr locale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_currency_decimal_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_currency_decimal_format")]
     private static partial IntPtr NativeCreateCurrency(IntPtr locale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_decimal_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_decimal_format")]
     private static partial void NativeDestroy(IntPtr nativeDecimalFormat);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_get_formatting_rules")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_decimal_format_get_formatting_rules")]
     private static partial NativeDecimalNumberFormattingRules NativeGetFormattingRules(IntPtr nativeDecimalFormat);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -191,7 +191,7 @@ internal sealed partial class DecimalFormat : IDisposable
         int NegativeSuffixLength
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_get_prefix_and_suffix_lengths")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_decimal_format_get_prefix_and_suffix_lengths")]
     private static partial DecimalFormatPrefixAndSuffixResult NativeGetPrefixAndSuffix(
         IntPtr nativeDecimalFormat,
         Span<char> positivePrefix,
@@ -204,20 +204,20 @@ internal sealed partial class DecimalFormat : IDisposable
         int negativeSuffixCapacity
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_set_is_grouping_used")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_decimal_format_set_is_grouping_used")]
     private static partial void NativeSetGroupingUsed(
         IntPtr nativeDecimalFormat,
         [MarshalAs(UnmanagedType.I1)] bool isGroupingUsed
     );
 
     [LibraryImport(
-        NativeLibraries.RetroCore,
+        NativeLibraries.RetroEngine,
         EntryPoint = "retro_decimal_format_set_currency_code",
         StringMarshalling = StringMarshalling.Utf16
     )]
     private static partial void NativeSetCurrencyCode(IntPtr nativeDecimalFormat, string? isGroupingUsed);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_decimal_format_set_digits")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_decimal_format_set_digits")]
     private static partial void NativeSetDigits(IntPtr nativeDecimalFormat, in NativeDecimalDigits digits);
 
     private void ReleaseUnmanagedResources()

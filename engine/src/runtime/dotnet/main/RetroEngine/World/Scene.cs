@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.World;
 
@@ -22,9 +23,9 @@ public sealed partial class Scene : IDisposable
         Disposed = true;
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_scene_create")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_create")]
     private static partial IntPtr NativeCreate();
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_scene_destroy")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 }

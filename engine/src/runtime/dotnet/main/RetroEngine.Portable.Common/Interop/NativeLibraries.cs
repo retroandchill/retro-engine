@@ -5,7 +5,7 @@
 
 namespace RetroEngine.Portable.Interop;
 
-internal static class NativeLibraries
+public static class NativeLibraries
 {
-    public const string RetroCore = "retro_core";
+    public const string RetroEngine = "retro_interop";
 }

@@ -68,19 +68,19 @@ internal sealed partial class TimeZone : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_unknown_time_zone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_get_unknown_time_zone")]
     private static partial IntPtr NativeGetUnknown();
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_default_time_zone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_default_time_zone")]
     private static partial IntPtr NativeCreateDefault();
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_time_zone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_time_zone")]
     private static partial IntPtr NativeCreate(ReadOnlySpan<char> id, int length);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_time_zone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_time_zone")]
     private static partial void NativeDestroy(IntPtr nativePtr);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_time_zone_get_canonical_id")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_time_zone_get_canonical_id")]
     private static partial int NativeGetCanonicalId(
         ReadOnlySpan<char> timeZoneId,
         int timeZoneIdLength,
@@ -88,6 +88,6 @@ internal sealed partial class TimeZone : IDisposable
         int resultLength
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_time_zone_get_id")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_time_zone_get_id")]
     private static partial int NativeGetId(IntPtr nativePtr, Span<char> result, int resultLength);
 }

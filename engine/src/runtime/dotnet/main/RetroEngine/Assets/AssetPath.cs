@@ -5,6 +5,7 @@
 
 using System.Numerics;
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
@@ -66,18 +67,18 @@ public readonly partial struct AssetPath : IEquatable<AssetPath>, IEqualityOpera
         return HashCode.Combine(PackageName, AssetName);
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_asset_path_from_string")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_from_string")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeFromString(ReadOnlySpan<char> path, int length, out AssetPath assetPath);
 
     private static bool NativeFromString(ReadOnlySpan<char> path, out AssetPath assetPath) =>
         NativeFromString(path, path.Length, out assetPath);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_asset_path_is_valid")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_is_valid")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeIsValid(in AssetPath path);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_asset_path_to_string")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_to_string")]
     private static partial int NativeToString(in AssetPath path, Span<char> buffer, int bufferLength);
 
     private static int NativeToString(in AssetPath path, Span<char> buffer) =>

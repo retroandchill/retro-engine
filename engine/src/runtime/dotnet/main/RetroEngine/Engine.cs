@@ -11,6 +11,7 @@ using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Logging;
 using RetroEngine.Platform;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
@@ -259,10 +260,10 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_destroy_engine")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_engine")]
     internal static partial void NativeDestroy(IntPtr engine);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_run")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_run")]
     private static unsafe partial void NativeRun(
         IntPtr engine,
         IntPtr userData,
@@ -271,11 +272,11 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         delegate* unmanaged<IntPtr, void> stopCallback
     );
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_poll_platform_events")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_poll_platform_events")]
     private static partial int NativePollPlatformEvents(IntPtr engine);
 
     [LibraryImport(
-        "retro_runtime",
+        NativeLibraries.RetroEngine,
         EntryPoint = "retro_engine_create_main_window",
         StringMarshalling = StringMarshalling.Utf8
     )]
@@ -289,10 +290,10 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         int errorMessageLength
     );
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_request_shutdown")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_request_shutdown")]
     private static partial void NativeRequestShutdown(IntPtr engine, int exitCode);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_on_window_removed_add")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_on_window_removed_add")]
     private static unsafe partial void NativeOnWindowRemovedAdd(
         IntPtr engine,
         IntPtr callback,
@@ -301,7 +302,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         delegate* unmanaged<IntPtr, IntPtr, byte> equals
     );
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_engine_on_window_removed_remove")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_on_window_removed_remove")]
     private static unsafe partial void NativeOnWindowRemovedRemove(
         IntPtr engine,
         IntPtr callback,

@@ -64,16 +64,16 @@ internal sealed partial class Collator : IDisposable, ICloneable
         return NativeStrColl(_collator, s1, s1.Length, s2, s2.Length);
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_collator")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_collator")]
     private static partial IntPtr NativeOpen(IntPtr locale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_collator")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_collator")]
     private static partial void NativeClose(IntPtr collator);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_clone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_collator_clone")]
     private static partial IntPtr NativeClone(IntPtr collator);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_compare")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_collator_compare")]
     private static partial CollationResult NativeStrColl(
         IntPtr collator,
         ReadOnlySpan<char> s1,
@@ -82,7 +82,7 @@ internal sealed partial class Collator : IDisposable, ICloneable
         int s2Len
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_collator_set_strength")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_collator_set_strength")]
     private static partial void NativeSetStrength(IntPtr collator, CollationStrength strength);
 
     private void ReleaseUnmanagedResources()

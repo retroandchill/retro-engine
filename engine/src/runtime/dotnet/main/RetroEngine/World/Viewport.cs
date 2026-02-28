@@ -6,6 +6,7 @@
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.World;
 
@@ -100,21 +101,21 @@ public sealed partial class Viewport : IDisposable
         Disposed = true;
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_create")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_create")]
     private static partial IntPtr NativeCreate();
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_destroy")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_scene")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_scene")]
     private static partial void NativeSetScene(IntPtr viewport, IntPtr scene);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_screen_layout")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_screen_layout")]
     private static partial void NativeSetScreenLayout(IntPtr viewport, in ScreenLayout layout);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_z_order")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_z_order")]
     private static partial void NativeSetZOrder(IntPtr viewport, int zOrder);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_viewport_set_camera_layout")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_camera_layout")]
     private static partial void NativeSetCameraLayout(IntPtr viewport, in CameraLayout layout);
 }

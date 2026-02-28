@@ -168,77 +168,77 @@ internal unsafe partial class Locale : IDisposable
         return realLength > buffer.Length ? buffer.ToString() : buffer[..realLength].ToString();
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_default_locale")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_get_default_locale")]
     private static partial IntPtr NativeGetDefault();
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_default_locale")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_default_locale")]
     private static partial IntPtr NativeCreateDefault();
 
     [LibraryImport(
-        NativeLibraries.RetroCore,
+        NativeLibraries.RetroEngine,
         EntryPoint = "retro_create_locale",
         StringMarshalling = StringMarshalling.Utf8
     )]
     private static partial IntPtr NativeOpen(string localeId);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_locale")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_locale")]
     private static partial void NativeClose(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_is_bogus")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_is_bogus")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeIsBogus(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_name")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_name")]
     private static partial byte* NativeGetName(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_display_name")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_display_name")]
     private static partial int NativeGetDisplayName(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_english_name")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_english_name")]
     private static partial int NativeGetEnglishName(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_three_letter_language_name")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_three_letter_language_name")]
     private static partial byte* NativeGetISO3Language(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_two_letter_language_name")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_two_letter_language_name")]
     private static partial byte* NativeGetLanguage(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_script")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_script")]
     private static partial byte* NativeGetScript(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_display_script")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_display_script")]
     private static partial int NativeGetDisplayScript(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_region")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_region")]
     private static partial byte* NativeGetCountry(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_display_region")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_display_region")]
     private static partial int NativeGetDisplayCountry(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_variant")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_variant")]
     private static partial byte* NativeGetVariant(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_display_variant")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_display_variant")]
     private static partial int NativeGetDisplayVariant(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_display_language")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_display_language")]
     private static partial int NativeGetDisplayLanguage(IntPtr nativeLocale, Span<char> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_is_right_to_left")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_is_right_to_left")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeIsRightToLeft(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_lcid")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_lcid")]
     private static partial uint NativeGetLCID(IntPtr nativeLocale);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_get_available_locales")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_get_available_locales")]
     private static partial IntPtr NativeGetAvailableLocales(out int count, out int stride);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_locale_get_available_languages")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_locale_get_available_languages")]
     private static partial byte** NativeGetISOLanguages();
 
     [LibraryImport(
-        NativeLibraries.RetroCore,
+        NativeLibraries.RetroEngine,
         EntryPoint = "retro_locale_set_default",
         StringMarshalling = StringMarshalling.Utf8
     )]

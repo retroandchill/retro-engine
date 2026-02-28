@@ -53,7 +53,6 @@ set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/vulkan/components/viewport_renderer.cpp
         private/vulkan/components/surface.cpp
         private/vulkan/texture_manager.cpp
-        private/services_c.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
@@ -76,7 +75,7 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         private/vulkan/texture_manager.ixx
 )
 
-add_library(retro_renderer
+add_library(retro_renderer ${INTERMEDIATE_LIB_TYPE}
         ${RETRO_RENDERER_SOURCES}
         ${RETRO_RENDERER_HEADERS}
         ${RETRO_RENDERER_PUBLIC_MODULES}

@@ -102,32 +102,32 @@ internal sealed partial class DateFormat : IDisposable
         return length > buffer.Length ? buffer.ToString() : buffer[..length].ToString();
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_date_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_date_format")]
     private static partial IntPtr NativeCreateDate(IntPtr locale, DateFormatStyle dateStyle);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_time_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_time_format")]
     private static partial IntPtr NativeCreateTime(IntPtr locale, DateFormatStyle timeStyle);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_date_time_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_date_time_format")]
     private static partial IntPtr NativeCreateDateTime(
         IntPtr locale,
         DateFormatStyle dateStyle,
         DateFormatStyle timeStyle
     );
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_custom_date_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_custom_date_format")]
     private static partial IntPtr NativeCreateCustom(IntPtr locale, ReadOnlySpan<char> pattern, int patternLength);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_date_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_date_format")]
     private static partial void NativeClose(IntPtr nativeDateFormat);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_time_zone")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_date_format_set_time_zone")]
     private static partial void NativeSetTimeZone(IntPtr nativeDateFormat, IntPtr nativeTimeZone);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_set_decimal_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_date_format_set_decimal_format")]
     private static partial void NativeSetNumberFormat(IntPtr nativeDateFormat, IntPtr nativeNumberFormat);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_date_format_format")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_date_format_format")]
     private static partial int NativeFormat(IntPtr nativeDateFormat, double date, Span<char> result, int maxResultSize);
 
     private void ReleaseUnmanagedResources()

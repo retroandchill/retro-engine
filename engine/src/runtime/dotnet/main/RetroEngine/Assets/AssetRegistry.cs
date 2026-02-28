@@ -6,6 +6,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using RetroEngine.Logging;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
@@ -124,9 +125,9 @@ public static partial class AssetRegistry
         ;
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_load_asset")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_load_asset")]
     private static partial IntPtr NativeLoad(in AssetPath path, out Name assetType, out AssetLoadError error);
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_release_asset")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_release_asset")]
     internal static partial void NativeRelease(IntPtr asset);
 }

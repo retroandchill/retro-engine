@@ -4,7 +4,6 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_PLATFORM_SOURCES
         private/backend.cpp
-        private/backend_c.cpp
 )
 
 set(RETRO_PLATFORM_HEADERS
@@ -20,7 +19,11 @@ set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/backend.ixx
 )
 
-add_library(retro_platform ${RETRO_PLATFORM_SOURCES} ${RETRO_PLATFORM_PUBLIC_MODULES} ${RETRO_PLATFORM_PRIVATE_MODULES} ${RETRO_PLATFORM_HEADERS})
+add_library(retro_platform ${INTERMEDIATE_LIB_TYPE}
+        ${RETRO_PLATFORM_SOURCES}
+        ${RETRO_PLATFORM_PUBLIC_MODULES}
+        ${RETRO_PLATFORM_PRIVATE_MODULES}
+        ${RETRO_PLATFORM_HEADERS})
 
 retro_add_boilerplate(retro_platform)
 

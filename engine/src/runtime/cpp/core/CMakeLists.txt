@@ -4,7 +4,6 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/io/file_stream.cpp
-        private/strings/name_c.cpp
         private/functional/delegate.cpp
         private/di/service_provider.cpp
         private/io/stream.cpp
@@ -13,13 +12,6 @@ set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/async/manual_task_scheduler.cpp
         private/di/service_collection.cpp
         private/di/scoped_service_provider.cpp
-        private/localization/locale_c.cpp
-        private/localization/decimal_format_c.cpp
-        private/localization/date_format_c.cpp
-        private/localization/calendar_c.cpp
-        private/localization/time_zone_c.cpp
-        private/localization/collator_c.cpp
-        private/localization/plural_rules_c.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -29,8 +21,6 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/di/scoped_service_provider.ixx
-        private/localization/icu.ixx
-        private/localization/buffers.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -84,7 +74,11 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/functional/interop_function.ixx
 )
 
-add_library(retro_core ${RETRO_CORE_SOURCES} ${RETRO_CORE_PUBLIC_MODULES} ${RETRO_CORE_PRIVATE_MODULES} ${RETRO_CORE_HEADERS})
+add_library(retro_core ${INTERMEDIATE_LIB_TYPE}
+        ${RETRO_CORE_SOURCES}
+        ${RETRO_CORE_PUBLIC_MODULES}
+        ${RETRO_CORE_PRIVATE_MODULES}
+        ${RETRO_CORE_HEADERS})
 
 retro_add_boilerplate(retro_core)
 
@@ -104,15 +98,12 @@ find_package(Boost REQUIRED COMPONENTS algorithm asio crc pool unordered uuid)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
-find_package(ICU COMPONENTS uc i18n REQUIRED)
 target_link_libraries(retro_core PRIVATE Boost::asio Boost::algorithm Boost::unordered Boost::pool
                                         Boost::crc
                                         Boost::uuid
                                         uni-algo::uni-algo
                                         fmt::fmt
-                                        gcem
-                                        ICU::uc
-                                        ICU::i18n)
+                                        gcem)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -5,6 +5,7 @@
 
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Math;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
@@ -27,6 +28,6 @@ public sealed partial class Texture : Asset
         AssetRegistry.RegisterAssetFactory(TypeName, ptr => new Texture(ptr));
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_texture_get_size")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_get_size")]
     private static partial Vector2I NativeGetSize(IntPtr texture);
 }

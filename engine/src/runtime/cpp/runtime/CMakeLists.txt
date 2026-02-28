@@ -4,12 +4,9 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/scene.cpp
-        private/world/scene_c.cpp
-        private/engine_c.cpp
         private/rendering/objects/geometry.cpp
         private/rendering/pipeline_manager.cpp
         private/assets/asset_manager.cpp
-        private/assets/assets_c.cpp
         private/rendering/objects/sprite.cpp
         private/assets/asset.cpp
         private/assets/filesystem_asset_source.cpp
@@ -32,7 +29,6 @@ set(RETRO_RUNTIME_MODULES
         public/modules/assets/textures/texture.ixx
         public/modules/engine.ixx
         public/modules/rendering/objects/sprite.ixx
-        public/modules/script_runtime.ixx
         public/modules/assets/asset_path.ixx
         public/modules/assets/asset.ixx
         public/modules/assets/filesystem_asset_source.ixx
@@ -52,7 +48,7 @@ set(RETRO_RUNTIME_MODULES
 )
 
 
-add_library(retro_runtime
+add_library(retro_runtime ${INTERMEDIATE_LIB_TYPE}
         ${RETRO_RUNTIME_SOURCES}
         ${RETRO_RUNTIME_MODULES}
         ${RETRO_RUNTIME_HEADERS}

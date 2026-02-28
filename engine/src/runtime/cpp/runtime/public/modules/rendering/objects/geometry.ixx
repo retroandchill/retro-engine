@@ -66,7 +66,7 @@ namespace retro
         [[nodiscard]] DrawCommand create_draw_command() const;
     };
 
-    export class GeometryObject final : public SceneNode
+    export class RETRO_API GeometryObject final : public SceneNode
     {
       public:
         using PipelineType = GeometryRenderPipeline;

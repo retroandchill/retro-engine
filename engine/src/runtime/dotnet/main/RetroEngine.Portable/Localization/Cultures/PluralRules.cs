@@ -60,15 +60,15 @@ internal sealed partial class PluralRules : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_plural_rules")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_plural_rules")]
     private static partial IntPtr NativeOpen(IntPtr locale, PluralType type);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_plural_rules")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_plural_rules")]
     private static partial void NativeClose(IntPtr rules);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_plural_rules_select_int32")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_plural_rules_select_int32")]
     private static partial int NativeSelect(IntPtr rules, int number, Span<char> keyword, int capacity);
 
-    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_plural_rules_select_float64")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_plural_rules_select_float64")]
     private static partial int NativeSelect(IntPtr rules, double number, Span<char> keyword, int capacity);
 }

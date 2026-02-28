@@ -4,6 +4,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using RetroEngine.Portable.Interop;
 
 namespace RetroEngine.Logging;
 
@@ -32,8 +33,6 @@ public static partial class Logger
 
     public static void Critical(ReadOnlySpan<char> message) => Log(LogLevel.Critical, message);
 
-    private const string LibraryName = "retro_logging";
-
-    [LibraryImport(LibraryName, EntryPoint = "retro_log")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_log")]
     private static unsafe partial void NativeLog(LogLevel level, char* message, int length);
 }

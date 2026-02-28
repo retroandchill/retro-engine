@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/exports.h"
+
 export module retro.runtime.assets.asset_path;
 
 import std;
@@ -15,7 +19,7 @@ namespace retro
 {
     export struct AssetPath
     {
-        static constexpr auto PACKAGE_SEPARATOR = ':';
+        RETRO_API static constexpr auto package_separator = ':';
 
         constexpr AssetPath() = default;
 
@@ -29,7 +33,7 @@ namespace retro
         explicit AssetPath(Range &&range)
         {
             std::size_t segments = 0;
-            for (auto &&inner_view : std::forward<Range>(range) | std::views::lazy_split(PACKAGE_SEPARATOR))
+            for (auto &&inner_view : std::forward<Range>(range) | std::views::lazy_split(package_separator))
             {
                 segments++;
 
@@ -79,7 +83,7 @@ namespace retro
         [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
         {
             auto target_string = package_name_.to_string<CharType>(allocator);
-            target_string.push_back(PACKAGE_SEPARATOR);
+            target_string.push_back(package_separator);
             asset_name_.append_string(target_string);
             return target_string;
         }
@@ -89,7 +93,7 @@ namespace retro
         void append_string(std::basic_string<CharType, std::char_traits<CharType>, Allocator> &target_string) const
         {
             package_name_.append_string(target_string);
-            target_string.push_back(PACKAGE_SEPARATOR);
+            target_string.push_back(package_separator);
             asset_name_.append_string(target_string);
         }
 

@@ -16,7 +16,6 @@ import std;
 import retro.core.di;
 import retro.core.async.manual_task_scheduler;
 import retro.core.functional.delegate;
-import retro.runtime.script_runtime;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.assets.asset_manager;
 import retro.runtime.assets.asset_path;

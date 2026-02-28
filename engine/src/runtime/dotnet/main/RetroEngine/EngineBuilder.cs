@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
+using RetroEngine.Portable.Interop;
 using RetroEngine.Portable.Localization.Cultures;
 
 namespace RetroEngine;
@@ -105,7 +106,7 @@ public sealed partial class EngineBuilder
         }
     }
 
-    [LibraryImport("retro_runtime", EntryPoint = "retro_create_engine")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_engine")]
     private static unsafe partial IntPtr CreateNativeEngine(
         PlatformBackendInfo platformInfo,
         delegate* unmanaged<IntPtr, IntPtr, void> configureCallback,
@@ -114,7 +115,7 @@ public sealed partial class EngineBuilder
         int errorMessageLength
     );
 
-    [LibraryImport("retro_renderer", EntryPoint = "retro_add_rendering_services")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_add_rendering_services")]
     private static partial void NativeAddRenderingServices(
         NativeConfigureContext ctx,
         WindowBackend windowBackend,
