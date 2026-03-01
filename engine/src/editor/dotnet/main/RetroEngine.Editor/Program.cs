@@ -15,7 +15,19 @@ internal static class Program
     {
         Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        var engineBuilder = new EngineBuilder();
+        using var engine = engineBuilder.Build();
+        _ = engine.InitializeAsync();
+
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        finally
+        {
+            engine.RequestShutdown();
+            engine.WaitForGameThread();
+        }
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.

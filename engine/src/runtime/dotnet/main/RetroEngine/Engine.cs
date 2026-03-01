@@ -277,6 +277,11 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         return Equals(lhsHandle.Target, rhsHandle.Target) ? (byte)1 : (byte)0;
     }
 
+    public void WaitForGameThread()
+    {
+        _gameThread?.Join();
+    }
+
     public void Dispose()
     {
         if (_disposed)
