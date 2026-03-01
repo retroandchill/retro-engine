@@ -64,6 +64,16 @@ namespace retro
         bool repeat = false;
     };
 
-    export using Event = std::
-        variant<QuitEvent, WindowCloseRequestedEvent, WindowResizedEvent, MouseMovedEvent, MouseButtonEvent, KeyEvent>;
+    export struct CallbackEvent
+    {
+        std::function<void()> callback;
+    };
+
+    export using Event = std::variant<QuitEvent,
+                                      WindowCloseRequestedEvent,
+                                      WindowResizedEvent,
+                                      MouseMovedEvent,
+                                      MouseButtonEvent,
+                                      KeyEvent,
+                                      CallbackEvent>;
 } // namespace retro

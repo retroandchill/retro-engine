@@ -12,10 +12,10 @@ namespace retro
     {
         std::scoped_lock lock{mutex_};
         queue_.push_back(
-            [h = std::move(coroutine)]
+            [coroutine]
             {
-                if (h && !h.done())
-                    h.resume();
+                if (coroutine && !coroutine.done())
+                    coroutine.resume();
             });
     }
 

@@ -57,7 +57,7 @@ namespace retro
     {
         std::int32_t width = 1280;
         std::int32_t height = 720;
-        CStringView title{"Game"};
+        std::string title{"Game"};
         WindowFlags flags = WindowFlags::resizable;
     };
 

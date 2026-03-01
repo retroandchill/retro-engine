@@ -5,12 +5,12 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Interop;
-using RetroEngine.Logging;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
@@ -54,34 +54,76 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
 
-        _windowId = CreateMainWindow("Retro Engine", 1280, 720, WindowFlags.Resizable | WindowFlags.Vulkan);
-
-        OnWindowRemoved += windowId =>
-        {
-            if (windowId == _windowId)
-            {
-                RequestShutdown();
-            }
-        };
-
         return Task.CompletedTask;
     }
 
-    private ulong CreateMainWindow(string title, int width, int height, WindowFlags flags)
+    public async Task CreateMainWindowAsync(
+        string title,
+        int width,
+        int height,
+        WindowFlags flags,
+        CancellationToken cancellationToken = default
+    )
     {
-        Span<byte> errorMessage = stackalloc byte[256];
-        var windowId = NativeCreateMainWindow(
-            _nativeEngine,
-            title,
-            width,
-            height,
-            flags,
-            errorMessage,
-            errorMessage.Length
-        );
-        return windowId != 0
-            ? windowId
-            : throw new PlatformNotSupportedException(Encoding.UTF8.GetString(errorMessage));
+        _windowId = await CreateWindowAsync(title, width, height, flags, cancellationToken);
+
+        OnWindowRemoved += windowId =>
+        {
+            if (windowId != _windowId)
+                return;
+
+            _windowId = 0;
+            RequestShutdown();
+        };
+    }
+
+    public async Task<ulong> CreateWindowAsync(
+        string title,
+        int width,
+        int height,
+        WindowFlags flags,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var tcs = new TaskCompletionSource<ulong>(cancellationToken);
+        var tcsHandle = GCHandle.Alloc(tcs);
+        try
+        {
+            unsafe
+            {
+                NativeCreateMainWindow(
+                    _nativeEngine,
+                    title,
+                    title.Length,
+                    width,
+                    height,
+                    flags,
+                    GCHandle.ToIntPtr(tcsHandle),
+                    &OnWindowCreated,
+                    &OnWindowError
+                );
+            }
+
+            return await tcs.Task;
+        }
+        finally
+        {
+            tcsHandle.Free();
+        }
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnWindowCreated(IntPtr userData, ulong windowId)
+    {
+        var tcs = (TaskCompletionSource<ulong>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetResult(windowId);
+    }
+
+    [UnmanagedCallersOnly]
+    private static unsafe void OnWindowError(IntPtr userData, byte* errorMessage)
+    {
+        var tcs = (TaskCompletionSource<ulong>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetException(new PlatformNotSupportedException(Utf8StringMarshaller.ConvertToManaged(errorMessage)));
     }
 
     private record NativeCallbackPayload(
@@ -276,19 +318,17 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_poll_platform_events")]
     private static partial int NativePollPlatformEvents(IntPtr engine);
 
-    [LibraryImport(
-        NativeLibraries.RetroEngine,
-        EntryPoint = "retro_engine_create_main_window",
-        StringMarshalling = StringMarshalling.Utf8
-    )]
-    private static partial ulong NativeCreateMainWindow(
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_create_main_window")]
+    private static unsafe partial void NativeCreateMainWindow(
         IntPtr engine,
-        string title,
+        ReadOnlySpan<char> title,
+        int tileLength,
         int width,
         int height,
         WindowFlags flags,
-        Span<byte> errorMessage,
-        int errorMessageLength
+        IntPtr userData,
+        delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
+        delegate* unmanaged<IntPtr, byte*, void> onError
     );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_request_shutdown")]

@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/macros.hpp"
+
 module retro.runtime.engine;
 
 import retro.logging;
@@ -196,7 +200,7 @@ namespace retro
 
     std::int32_t Engine::run_platform_event_loop()
     {
-        while (running_.load())
+        while (true)
         {
             while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
             {
@@ -223,6 +227,13 @@ namespace retro
 
                             remove_window(*window);
                         }
+                        else if constexpr (std::is_same_v<T, CallbackEvent>)
+                        {
+                            if (evt.callback)
+                            {
+                                evt.callback();
+                            }
+                        }
                     },
                     *event);
 
@@ -242,12 +253,13 @@ namespace retro
         running_.store(false);
     }
 
-    Window &Engine::create_new_window(const WindowDesc &window_desc)
+    Task<PlatformResult<std::shared_ptr<Window>>> Engine::create_new_window(WindowDesc window_desc)
     {
-        const auto window = platform_backend_.create_window(window_desc);
+        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
         add_window(*window);
-        return *window;
+        co_return std::move(window);
     }
+
     Optional<Window &> Engine::get_window(const std::uint64_t window_id)
     {
         std::shared_lock lock{renderers_mutex_};

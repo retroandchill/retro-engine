@@ -72,6 +72,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/util/enum_class_flags.ixx
         public/modules/functional/function_ref.ixx
         public/modules/functional/interop_function.ixx
+        public/modules/async/future.ixx
 )
 
 add_library(retro_core ${INTERMEDIATE_LIB_TYPE}
@@ -94,11 +95,12 @@ target_sources(retro_core PRIVATE
         TYPE CXX_MODULES FILES
         ${RETRO_CORE_PRIVATE_MODULES})
 
-find_package(Boost REQUIRED COMPONENTS algorithm asio crc pool unordered uuid)
+find_package(Boost REQUIRED COMPONENTS algorithm asio thread crc pool unordered uuid)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
 target_link_libraries(retro_core PRIVATE Boost::asio Boost::algorithm Boost::unordered Boost::pool
+                                        Boost::thread
                                         Boost::crc
                                         Boost::uuid
                                         uni-algo::uni-algo

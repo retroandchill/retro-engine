@@ -4,66 +4,59 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Logging;
+using RetroEngine.Platform;
 using RetroEngine.World;
 using Serilog;
 using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.Game.Sample;
 
-public sealed class GameRunner : IGameSession
+public sealed class GameRunner : AsyncGameSession
 {
-    private Scene _scene1 = null!;
-    private Scene _scene2 = null!;
-    private Viewport _viewport1 = null!;
-    private Viewport _viewport2 = null!;
-    private readonly List<IDisposable> _sceneObjects = [];
-
-    public void Start()
+    protected override async Task<int> RunAsync(CancellationToken cancellationToken)
     {
         Log.Information("Starting game runner.");
 
-        _scene1 = new Scene();
-        _scene2 = new Scene();
-        _viewport1 = new Viewport { Scene = _scene1, CameraPivot = new Vector2F(0.5f, 0.5f) };
-        _viewport2 = new Viewport
-        {
-            Scene = _scene2,
-            CameraPivot = new Vector2F(0.5f, 0.5f),
-            ZOrder = -1,
-        };
+        await Engine.Instance.CreateMainWindowAsync(
+            "Retro Engine",
+            1280,
+            720,
+            WindowFlags.Resizable | WindowFlags.Vulkan,
+            cancellationToken
+        );
+
+        using var scene1 = new Scene();
+        using var scene2 = new Scene();
+
+        using var viewport1 = new Viewport();
+        viewport1.Scene = scene1;
+        viewport1.CameraPivot = new Vector2F(0.5f, 0.5f);
+
+        using var viewport2 = new Viewport();
+        viewport2.Scene = scene2;
+        viewport2.CameraPivot = new Vector2F(0.5f, 0.5f);
+        viewport2.ZOrder = -1;
 
         var eeveeTexture = Asset.Load<Texture>(new AssetPath("graphics", "133.png"));
         if (eeveeTexture is null)
         {
-            return;
+            return 1;
         }
         var backgroundTexture = Asset.Load<Texture>(new AssetPath("graphics", "background.png"));
 
-        _sceneObjects.Add(
-            new SimpleFlipbook(_scene1, eeveeTexture, 10.0f) { Scale = new Vector2F(3, 3), Tint = new Color(1, 1, 1) }
-        );
-        _sceneObjects.Add(
-            new Sprite(_scene2)
-            {
-                Texture = backgroundTexture,
-                Pivot = new Vector2F(0.5f, 0.5f),
-                ZOrder = -100000,
-            }
-        );
-    }
+        using var flipbook = new SimpleFlipbook(scene1, eeveeTexture, 10.0f);
+        flipbook.Scale = new Vector2F(3, 3);
+        flipbook.Tint = new Color(1, 1, 1);
 
-    public void Stop()
-    {
-        _viewport1.Dispose();
-        _viewport2.Dispose();
-        _scene1.Dispose();
-        _scene2.Dispose();
-        foreach (var sceneObject in _sceneObjects)
-        {
-            sceneObject.Dispose();
-        }
+        using var sprite = new Sprite(scene2);
+        sprite.Texture = backgroundTexture;
+        sprite.Pivot = new Vector2F(0.5f, 0.5f);
+        sprite.ZOrder = -100000;
+
+        return 0;
     }
 }

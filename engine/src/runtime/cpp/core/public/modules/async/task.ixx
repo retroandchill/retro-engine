@@ -13,6 +13,7 @@ export module retro.core.async.task;
 import std;
 import retro.core.functional.delegate;
 import retro.core.async.task_scheduler;
+import retro.core.util.deferred;
 
 namespace retro
 {

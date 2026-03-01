@@ -10,6 +10,8 @@ import std;
 import retro.runtime.engine;
 import retro.core.di;
 import retro.core.functional.interop_function;
+import retro.core.async.task;
+import retro.core.strings.encoding;
 import retro.platform.backend;
 import retro.platform.window;
 import retro.runtime.rendering.pipeline_manager;
@@ -33,6 +35,9 @@ namespace
     using DeleteCallback = void (*)(void *);
     using EqualsCallback = bool (*)(void *, void *);
     using WindowRemovedCallback = void (*)(void *, std::uint64_t);
+
+    using WindowCreatedCallback = void (*)(void *, std::uint64_t);
+    using OnErrorCallback = void (*)(void *, const char *);
 
     struct WindowRemovedBinding
     {
@@ -96,36 +101,46 @@ extern "C"
         }
     }
 
-    RETRO_API std::uint64_t retro_engine_create_main_window(retro::Engine *engine,
-                                                            const char *window_title,
-                                                            std::int32_t width,
-                                                            std::int32_t height,
-                                                            retro::WindowFlags flags,
-                                                            char *error_message,
-                                                            std::int32_t error_message_length)
+    RETRO_API void retro_engine_create_main_window(retro::Engine *engine,
+                                                   const char16_t *window_title,
+                                                   const std::int32_t window_tile_length,
+                                                   const std::int32_t width,
+                                                   const std::int32_t height,
+                                                   const retro::WindowFlags flags,
+                                                   void *user_data,
+                                                   const WindowCreatedCallback created_callback,
+                                                   const OnErrorCallback error_callback)
     {
-        try
+        std::ignore = [=,
+                       desc =
+                           retro::WindowDesc{
+                               .width = width,
+                               .height = height,
+                               .title = retro::convert_string<char>(
+                                   std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                               .flags = flags,
+                           }] -> retro::Task<>
         {
-            auto &window = engine->create_new_window(
-                retro::WindowDesc{.width = width, .height = height, .title = window_title, .flags = flags});
-            return window.id();
-        }
-        catch (const std::exception &e)
-        {
-            std::string_view error_message_view{e.what()};
-            std::ranges::copy_n(error_message_view.begin(),
-                                std::min(error_message_length, static_cast<std::int32_t>(error_message_view.size())),
-                                error_message);
-            return 0;
-        }
-        catch (...)
-        {
-            std::string_view error_message_view{"Unknown error"};
-            std::ranges::copy_n(error_message_view.begin(),
-                                std::min(error_message_length, static_cast<std::int32_t>(error_message_view.size())),
-                                error_message);
-            return 0;
-        }
+            try
+            {
+
+                const auto window = co_await engine->create_new_window(desc);
+                if (!window.has_value())
+                {
+                    error_callback(user_data, window.error().message.data());
+                }
+
+                created_callback(user_data, window.value()->id());
+            }
+            catch (const std::exception &e)
+            {
+                error_callback(user_data, e.what());
+            }
+            catch (...)
+            {
+                error_callback(user_data, "Unknown error");
+            }
+        }();
     }
 
     RETRO_API void retro_destroy_engine(retro::Engine *engine)

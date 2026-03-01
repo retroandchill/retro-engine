@@ -11,10 +11,13 @@ module;
 export module retro.platform.backend;
 
 import std;
+import retro.core.async.task;
 import retro.core.containers.optional;
+import retro.core.memory.ref_counted_ptr;
+import retro.core.strings.cstring_view;
+import retro.core.util.enum_class_flags;
 import retro.platform.event;
 import retro.platform.window;
-import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -36,6 +39,9 @@ namespace retro
         camera = 1u << 7,
     };
 
+    export template <>
+    constexpr bool is_flag_enum<PlatformInitFlags> = true;
+
     export constexpr PlatformInitFlags operator|(PlatformInitFlags a, PlatformInitFlags b) noexcept
     {
         return static_cast<PlatformInitFlags>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
@@ -54,8 +60,7 @@ namespace retro
 
     export struct PlatformError
     {
-        std::string_view message;
-        std::int32_t code;
+        CStringView message;
     };
 
     export template <typename T>
@@ -68,12 +73,16 @@ namespace retro
 
         virtual ~PlatformBackend() = default;
 
-        virtual std::shared_ptr<Window> create_window(const WindowDesc &desc) = 0;
+        virtual PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) = 0;
+
+        virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) = 0;
 
         virtual Optional<Event> poll_event() = 0;
 
         virtual Optional<Event> wait_for_event() = 0;
 
         virtual Optional<Event> wait_for_event(std::chrono::milliseconds timeout) = 0;
+
+        virtual PlatformResult<void> push_event(Event event) = 0;
     };
 } // namespace retro

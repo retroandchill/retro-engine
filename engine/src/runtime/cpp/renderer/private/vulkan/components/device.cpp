@@ -136,7 +136,11 @@ namespace retro
         // selection from surface creation.
         const auto window =
             platform_backend.create_window(WindowDesc{.flags = WindowFlags::vulkan | WindowFlags::hidden});
-        auto surface = create_surface(*window, instance);
+        if (!window.has_value())
+        {
+            throw std::runtime_error{"VulkanDevice: failed to create hidden window"};
+        }
+        auto surface = create_surface(**window, instance);
         auto config = pick_physical_device(instance, surface.get());
         return std::make_unique<VulkanDevice>(config, create_device(config));
     }
