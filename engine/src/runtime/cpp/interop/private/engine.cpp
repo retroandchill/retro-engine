@@ -111,7 +111,10 @@ extern "C"
                                                    const WindowCreatedCallback created_callback,
                                                    const OnErrorCallback error_callback)
     {
-        std::ignore = [=,
+        std::ignore = [engine,
+                       user_data,
+                       created_callback,
+                       error_callback,
                        desc =
                            retro::WindowDesc{
                                .width = width,

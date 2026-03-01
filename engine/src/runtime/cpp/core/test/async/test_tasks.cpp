@@ -56,7 +56,7 @@ TEST(Task, AwaitingAlreadyCompletedTaskContinuesInlineNoSuspension)
 
     int step = 0;
 
-    auto parent = [&]() -> retro::Task<>
+    std::ignore = [&]() -> retro::Task<>
     {
         step = 1;
 
@@ -67,8 +67,6 @@ TEST(Task, AwaitingAlreadyCompletedTaskContinuesInlineNoSuspension)
         step = 2;
         co_return;
     }();
-
-    (void)parent;
 
     // If await_ready() short-circuits correctly, we should already be done without pumping.
     EXPECT_EQ(step, 2);
@@ -113,15 +111,13 @@ TEST(Task, ChildCompletionResumesParentContinuation)
         co_return;
     };
 
-    auto parent = [&]() -> retro::Task<>
+    std::ignore = [&]() -> retro::Task<>
     {
         step = 10;
         co_await child();
         step = 20;
         co_return;
     }();
-
-    (void)parent;
 
     // Parent starts and then should suspend awaiting child (child yields).
     EXPECT_TRUE((step == 1 || step == 10)); // ordering depends on symmetric transfer; both are acceptable here.

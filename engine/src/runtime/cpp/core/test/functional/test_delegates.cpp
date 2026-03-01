@@ -79,6 +79,7 @@ namespace
         {
             ++instance_count;
         }
+
         ~DeletionTracker()
         {
             --instance_count;
@@ -410,7 +411,7 @@ TEST(Delegate, CopyAssignment)
     EXPECT_EQ(LargeTrackingFunctor::instance_count, 0);
 }
 
-TEST(Delegate, HeapAllocation)
+TEST(Delegate, MoveAllocation)
 {
     EXPECT_EQ(DeletionTracker::instance_count, 0);
 

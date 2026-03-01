@@ -257,13 +257,10 @@ namespace retro
 
                 if constexpr (!std::is_void_v<T>)
                 {
-                    auto value = std::get<success_state>(std::move(coro.promise().result));
-                    coro.destroy();
-                    return value;
+                    return std::get<success_state>(std::move(coro.promise().result));
                 }
                 else
                 {
-                    coro.destroy();
                     return;
                 }
             }
@@ -279,26 +276,6 @@ namespace retro
 
       public:
         using promise_type = TaskPromise<T>;
-
-        Task(const Task &) = delete;
-        Task(Task &&other) noexcept : state_{std::exchange(other.state_, {})}
-        {
-        }
-
-        ~Task() noexcept
-        {
-            if (auto *coro = std::get_if<Handle>(&state_); coro != nullptr && *coro)
-                coro->destroy();
-        }
-
-        Task &operator=(const Task &) = delete;
-        Task &operator=(Task &&other) noexcept
-        {
-            if (auto *coro = std::get_if<Handle>(&state_); coro != nullptr && *coro)
-                coro->destroy();
-            state_ = std::exchange(other.state_, {});
-            return *this;
-        }
 
         template <std::convertible_to<T> U>
             requires(!std::is_void_v<T>)
