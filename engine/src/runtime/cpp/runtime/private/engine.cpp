@@ -190,13 +190,7 @@ namespace retro
         }
 
         callbacks.stop();
-        {
-            std::unique_lock lock{renderers_mutex_};
-            for (const auto &renderer : renderers_ | std::views::values)
-            {
-                renderer->wait_idle();
-            }
-        }
+        renderers_.clear();
         asset_manager_.on_engine_shutdown();
     }
 
@@ -333,10 +327,6 @@ namespace retro
         }
 
         on_window_removed_(*shared_window);
-
-        // We need to ensure the renderer is not actively in the middle of a render pass before
-        // Letting it go out of scope and get destroyed
-        renderer->get().wait_idle();
     }
 
     bool Engine::remove_asset_from_cache(const AssetPath &path) const

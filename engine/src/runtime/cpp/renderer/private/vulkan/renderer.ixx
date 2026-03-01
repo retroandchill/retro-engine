@@ -50,6 +50,8 @@ namespace retro
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
 
+        ~VulkanRenderer2D() override;
+
         VulkanRenderer2D &operator=(VulkanRenderer2D &&) = delete;
         VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
 

@@ -120,6 +120,11 @@ namespace retro
           pipeline_manager_{pipeline_manager}, viewport_factory_{viewport_factory}
     {
     }
+    VulkanRenderer2D::~VulkanRenderer2D()
+    {
+        // We need to ensure that there are no in-flight frames before any members are destroyed
+        device_.device().waitIdle();
+    }
 
     void VulkanRenderer2D::wait_idle()
     {
