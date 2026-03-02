@@ -44,7 +44,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     }
 
     [MemberNotNull(nameof(_gameThread))]
-    public Task InitializeAsync(CancellationToken cancellationToken = default)
+    public void Initialize()
     {
         if (_instance is not null)
             throw new InvalidOperationException("The engine is already running.");
@@ -55,8 +55,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
         _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
-
-        return Task.CompletedTask;
     }
 
     public async Task CreateMainWindowAsync(
@@ -174,9 +172,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
     }
 
-    public async Task<int> RunAsync(CancellationToken cancellationToken = default)
+    public int Run()
     {
-        await InitializeAsync(cancellationToken);
+        Initialize();
 
         var exitCode = NativeRunPlatformEventLoop(_nativeEngine);
 

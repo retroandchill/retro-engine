@@ -15,4 +15,4 @@ var builder = new EngineBuilder();
 builder.Services.AddSingleton<IGameSession, GameRunner>();
 
 await using var host = builder.Build();
-Environment.ExitCode = await host.RunAsync();
+Environment.ExitCode = await host.Run();
