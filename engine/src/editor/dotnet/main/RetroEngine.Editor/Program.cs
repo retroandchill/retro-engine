@@ -1,5 +1,7 @@
 ﻿using System;
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using RetroEngine.Logging;
 using Serilog;
 
@@ -16,23 +18,16 @@ internal static class Program
         Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
 
         var engineBuilder = new EngineBuilder();
-        using var engine = engineBuilder.Build();
-        _ = engine.InitializeAsync();
-
-        try
-        {
-            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-        }
-        finally
-        {
-            engine.RequestShutdown();
-            engine.WaitForGameThread();
-        }
+        BuildAvaloniaApp(engineBuilder).StartWithClassicDesktopLifetime(args);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    private static AppBuilder BuildAvaloniaApp()
+    private static AppBuilder BuildAvaloniaApp(EngineBuilder engineBuilder)
     {
-        return AppBuilder.Configure<App>().UsePlatformDetect().WithInterFont().LogToTrace();
+        return AppBuilder
+            .Configure(() => new App(engineBuilder.Build()))
+            .UsePlatformDetect()
+            .WithInterFont()
+            .LogToTrace();
     }
 }

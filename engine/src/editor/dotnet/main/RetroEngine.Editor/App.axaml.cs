@@ -11,11 +11,10 @@ using RetroEngine.Portable.Localization.Cultures;
 
 namespace RetroEngine.Editor;
 
-public class App : Application
+public class App(Engine engine) : Application
 {
     public override void Initialize()
     {
-        _ = CultureManager.Instance;
         AvaloniaXamlLoader.Load(this);
     }
 
@@ -33,9 +32,11 @@ public class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        CultureManager.Instance.Dispose();
+        engine.RequestShutdown();
+        engine.WaitForGameThread();
+        engine.Dispose();
     }
 
     private static void DisableAvaloniaDataAnnotationValidation()
