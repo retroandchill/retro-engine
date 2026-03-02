@@ -3,11 +3,13 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
 using RetroEngine.Core.Async;
 using RetroEngine.Interop;
@@ -20,7 +22,7 @@ using ZLinq;
 
 namespace RetroEngine;
 
-public sealed partial class Engine : IDisposable, IAsyncDisposable
+public sealed partial class Engine : IHost, IAsyncDisposable
 {
     public IServiceProvider Services { get; }
     private readonly IntPtr _nativeEngine;
@@ -30,6 +32,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
     private readonly TaskCompletionSource _gameThreadStarted = new();
+    private readonly EngineLifetime _lifetime = new();
 
     private static Engine? _instance;
 
@@ -38,14 +41,19 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     public static bool IsInitialized => _instance is not null;
 
-    internal Engine(IntPtr nativeEngine, IServiceProvider services)
+    internal Engine(
+        IntPtr nativeEngine,
+        IServiceCollection serviceCollection,
+        Func<IServiceCollection, IServiceProvider> serviceProviderFactory
+    )
     {
         _nativeEngine = nativeEngine;
-        Services = services;
+        serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
+        Services = serviceProviderFactory(serviceCollection);
     }
 
     [MemberNotNull(nameof(_gameThread))]
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (_instance is not null)
             throw new InvalidOperationException("The engine is already running.");
@@ -59,6 +67,14 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
         cancellationToken.Register(() => _gameThreadStarted.TrySetCanceled());
         await _gameThreadStarted.Task.ConfigureAwait(false);
+        _lifetime.NotifyStarted();
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        _gameThread?.Join();
+        _lifetime.NotifyStopped();
+        return Task.CompletedTask;
     }
 
     public async Task CreateMainWindowAsync(
@@ -160,6 +176,48 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         SynchronizationContext.SetSynchronizationContext(null);
     }
 
+    private void RunGameThread(float targetFps)
+    {
+        using var synchronizationContext = new GameThreadSynchronizationContext();
+        synchronizationContext.UnhandledException += ex => Log.Error(ex, "Unhandled exception in game thread.");
+        SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+
+        LocalizationManager.Instance.ThreadSync = synchronizationContext;
+
+        var stopWatch = new Stopwatch();
+
+        while (!_lifetime.ApplicationStopping.IsCancellationRequested)
+        {
+            try
+            {
+                var deltaTime = (float)stopWatch.Elapsed.TotalSeconds;
+                stopWatch.Restart();
+
+                if (!NativePumpTasks(_nativeEngine, -1, out var errorMessage))
+                {
+                    throw new PlatformNotSupportedException(errorMessage);
+                }
+
+                foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
+                {
+                    tickable.Tick(deltaTime);
+                }
+                synchronizationContext.Pump();
+                FrameCount++;
+
+                if (!NativeRender(_nativeEngine, out errorMessage))
+                {
+                    throw new PlatformNotSupportedException(errorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Exception during game thread loop.");
+                break;
+            }
+        }
+    }
+
     [UnmanagedCallersOnly]
     private static int StartCallback(IntPtr userData)
     {
@@ -177,15 +235,16 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
     }
 
-    public async Task<int> RunAsync(CancellationToken cancellationToken = default)
+    public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        await InitializeAsync(cancellationToken);
+        await StartAsync(cancellationToken);
 
-        var exitCode = NativeRunPlatformEventLoop(_nativeEngine);
+        while (!_lifetime.ApplicationStopping.IsCancellationRequested)
+        {
+            NativeWaitEvents(_nativeEngine);
+        }
 
-        _gameThread.Join();
-
-        return exitCode;
+        await StopAsync(cancellationToken);
     }
 
     public void PollPlatformEvents()
@@ -230,6 +289,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     public void RequestShutdown(int exitCode = 0)
     {
         NativeRequestShutdown(_nativeEngine, exitCode);
+        _lifetime.StopApplication();
     }
 
     public event Action<ulong>? OnWindowRemoved
@@ -330,8 +390,24 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         delegate* unmanaged<IntPtr, void> stopCallback
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_run_platform_event_loop")]
-    private static partial int NativeRunPlatformEventLoop(IntPtr engine);
+    [LibraryImport(
+        NativeLibraries.RetroEngine,
+        EntryPoint = "retro_engine_pump_tasks",
+        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
+    )]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativePumpTasks(IntPtr engine, int maxTasks, out string errorMessage);
+
+    [LibraryImport(
+        NativeLibraries.RetroEngine,
+        EntryPoint = "retro_engine_render",
+        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
+    )]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeRender(IntPtr engine, out string errorMessage);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_wait_platform_events")]
+    private static partial void NativeWaitEvents(IntPtr engine, long timeout = 10);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_poll_platform_events")]
     private static partial void NativePollPlatformEvents(IntPtr engine);

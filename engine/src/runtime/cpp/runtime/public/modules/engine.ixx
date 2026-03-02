@@ -31,6 +31,7 @@ import retro.runtime.world.viewport;
 import retro.platform.backend;
 import retro.platform.event;
 import retro.core.functional.function_ref;
+import retro.core.type_traits.range;
 
 namespace retro
 {
@@ -74,7 +75,11 @@ namespace retro
 
         RETRO_API void run(const EngineCallbacks &callbacks);
 
-        RETRO_API std::int32_t run_platform_event_loop();
+        RETRO_API void pump_tasks(std::size_t max = index_none<std::size_t>);
+
+        RETRO_API void render();
+
+        RETRO_API void wait_platform_event(std::chrono::milliseconds timeout);
 
         RETRO_API void poll_events_once();
 
@@ -117,7 +122,6 @@ namespace retro
         }
 
       private:
-        void render();
         void handle_platform_event(const Event &event);
 
         RETRO_API static Engine *instance_;

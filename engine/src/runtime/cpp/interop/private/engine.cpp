@@ -12,6 +12,7 @@ import retro.core.di;
 import retro.core.functional.interop_function;
 import retro.core.async.task;
 import retro.core.strings.encoding;
+import retro.interop.error_handling;
 import retro.platform.backend;
 import retro.platform.window;
 import retro.runtime.rendering.pipeline_manager;
@@ -60,8 +61,7 @@ extern "C"
     RETRO_API retro::Engine *retro_create_engine(const retro::PlatformBackendInfo platform_config,
                                                  const ConfigCallback config_callback,
                                                  void *user_data,
-                                                 char *error_message,
-                                                 std::int32_t error_message_length)
+                                                 const char **error_message)
     {
         try
         {
@@ -85,18 +85,12 @@ extern "C"
         }
         catch (const std::exception &e)
         {
-            std::string_view error_message_view{e.what()};
-            std::ranges::copy_n(error_message_view.begin(),
-                                std::min(error_message_length, static_cast<std::int32_t>(error_message_view.size())),
-                                error_message);
+            *error_message = e.what();
             return nullptr;
         }
         catch (...)
         {
-            std::string_view error_message_view{"Unknown error"};
-            std::ranges::copy_n(error_message_view.begin(),
-                                std::min(error_message_length, static_cast<std::int32_t>(error_message_view.size())),
-                                error_message);
+            *error_message = "Unknown error";
             return nullptr;
         }
     }
@@ -168,9 +162,49 @@ extern "C"
                                            .stop = bound_stop_callback});
     }
 
-    RETRO_API std::int32_t retro_engine_run_platform_event_loop(retro::Engine *engine)
+    RETRO_API bool retro_engine_pump_tasks(retro::Engine *engine,
+                                           const std::int32_t max_tasks,
+                                           const char **error_message)
     {
-        return engine->run_platform_event_loop();
+        try
+        {
+            engine->pump_tasks(static_cast<std::size_t>(max_tasks));
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            *error_message = e.what();
+            return false;
+        }
+        catch (...)
+        {
+            *error_message = "Unknown error";
+            return false;
+        }
+    }
+
+    RETRO_API bool retro_engine_render(retro::Engine *engine, const char **error_message)
+    {
+        try
+        {
+            engine->render();
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            *error_message = e.what();
+            return false;
+        }
+        catch (...)
+        {
+            *error_message = "Unknown error";
+            return false;
+        }
+    }
+
+    RETRO_API void retro_engine_wait_platform_events(retro::Engine *engine, std::int64_t timeout)
+    {
+        engine->wait_platform_event(std::chrono::milliseconds{timeout});
     }
 
     RETRO_API void retro_engine_poll_platform_events(retro::Engine *engine)

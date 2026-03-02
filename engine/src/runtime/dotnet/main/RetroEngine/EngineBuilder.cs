@@ -4,10 +4,15 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.Metrics;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization.Cultures;
@@ -15,11 +20,15 @@ using Serilog;
 
 namespace RetroEngine;
 
-public sealed partial class EngineBuilder
+public sealed partial class EngineBuilder : IHostApplicationBuilder
 {
     private readonly List<Action<NativeConfigureContext>> _configureActions = [];
 
+    public IDictionary<object, object> Properties { get; } = new Dictionary<object, object>();
     public IConfigurationManager Configuration { get; } = new ConfigurationManager();
+    public IHostEnvironment Environment { get; } = new HostEnvironment();
+    public ILoggingBuilder Logging { get; }
+    public IMetricsBuilder Metrics { get; }
 
     private Func<IServiceCollection, IServiceProvider> _serviceProviderFactory = services =>
         services.BuildServiceProvider();
@@ -27,6 +36,9 @@ public sealed partial class EngineBuilder
 
     public EngineBuilder()
     {
+        Logging = new LoggingBuilder(Services);
+        Metrics = new MetricsBuilder(Services);
+
         ConfigureNative(ctx =>
         {
             NativeAddRenderingServices(ctx, WindowBackend.SDL3, RenderBackend.Vulkan);
@@ -59,29 +71,28 @@ public sealed partial class EngineBuilder
     public Engine Build()
     {
         _ = CultureManager.Instance;
-        var serviceProvider = _serviceProviderFactory.Invoke(Services);
 
         var configureListHandle = GCHandle.Alloc(_configureActions);
         try
         {
             unsafe
             {
-                Span<byte> errorMessage = stackalloc byte[256];
                 var nativeEngine = CreateNativeEngine(
                     new PlatformBackendInfo(PlatformBackendKind.SDL3, PlatformInitFlags.Video),
                     &PerformNativeConfiguration,
                     GCHandle.ToIntPtr(configureListHandle),
-                    errorMessage,
-                    errorMessage.Length
+                    out var errorMessage
                 );
                 if (nativeEngine == IntPtr.Zero)
                 {
-                    throw new ApplicationException($"Failed to create engine: {Encoding.UTF8.GetString(errorMessage)}");
+                    throw new ApplicationException(
+                        $"Failed to create engine: {Utf8StringMarshaller.ConvertToManaged(errorMessage)}"
+                    );
                 }
 
                 try
                 {
-                    return new Engine(nativeEngine, serviceProvider);
+                    return new Engine(nativeEngine, Services, _serviceProviderFactory);
                 }
                 catch
                 {
@@ -108,13 +119,35 @@ public sealed partial class EngineBuilder
         }
     }
 
+    private sealed class HostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Development;
+        public string ApplicationName { get; set; } = AppDomain.CurrentDomain.FriendlyName;
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public IFileProvider ContentRootFileProvider { get; set; }
+
+        public HostEnvironment()
+        {
+            ContentRootFileProvider = new PhysicalFileProvider(ContentRootPath);
+        }
+    }
+
+    private sealed class LoggingBuilder(IServiceCollection services) : ILoggingBuilder
+    {
+        public IServiceCollection Services { get; } = services;
+    }
+
+    private sealed class MetricsBuilder(IServiceCollection services) : IMetricsBuilder
+    {
+        public IServiceCollection Services { get; } = services;
+    }
+
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_engine")]
     private static unsafe partial IntPtr CreateNativeEngine(
         PlatformBackendInfo platformInfo,
         delegate* unmanaged<IntPtr, IntPtr, void> configureCallback,
         IntPtr userData,
-        Span<byte> errorMessage,
-        int errorMessageLength
+        out byte* errorMessage
     );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_add_rendering_services")]

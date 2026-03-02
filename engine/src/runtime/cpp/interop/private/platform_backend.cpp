@@ -12,10 +12,8 @@ import retro.platform.backend;
 extern "C"
 {
     RETRO_API retro::PlatformBackend *retro_platform_backend_create(const retro::PlatformBackendInfo info,
-                                                                    char *error_message,
-                                                                    const std::int32_t error_message_length)
+                                                                    const char **error_message)
     {
-        std::span error_message_span{error_message, static_cast<std::size_t>(error_message_length)};
         try
         {
             auto backend = retro::PlatformBackend::create(info);
@@ -23,20 +21,12 @@ extern "C"
         }
         catch (std::exception &e)
         {
-            std::string_view error_message_view{e.what()};
-            std::ranges::copy_n(
-                error_message_view.begin(),
-                static_cast<std::ptrdiff_t>(std::min(error_message_span.size(), error_message_view.size())),
-                error_message_span.begin());
+            *error_message = e.what();
             return nullptr;
         }
         catch (...)
         {
-            constexpr std::string_view error_message_view{"Unknown error"};
-            std::ranges::copy_n(
-                error_message_view.begin(),
-                static_cast<std::ptrdiff_t>(std::min(error_message_span.size(), error_message_view.size())),
-                error_message_span.begin());
+            *error_message = "Unknown error";
             return nullptr;
         }
     }

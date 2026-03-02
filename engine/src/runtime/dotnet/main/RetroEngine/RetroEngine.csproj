@@ -18,6 +18,7 @@
       <PackageReference Include="Injectio" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Serilog.Extensions.Logging" />
       <PackageReference Include="ZLinq" />

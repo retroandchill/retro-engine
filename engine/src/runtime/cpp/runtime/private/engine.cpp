@@ -198,22 +198,38 @@ namespace retro
         asset_manager_.on_engine_shutdown();
     }
 
-    std::int32_t Engine::run_platform_event_loop()
+    void Engine::pump_tasks(const std::size_t max)
     {
-        while (running_.load())
+        scheduler_.pump(max);
+    }
+
+    // ReSharper disable once CppMemberFunctionMayBeConst
+    void Engine::render()
+    {
+        std::shared_lock lock{renderers_mutex_};
+        for (const auto &renderer : renderers_ | std::views::values)
         {
-            while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
+            renderer->begin_frame();
+
+            for (auto &viewport : viewports_.viewports())
             {
-                handle_platform_event(*event);
+                auto scene = viewport->scene();
+                if (!scene.has_value())
+                    continue;
 
-                if (!running_.load())
-                {
-                    break;
-                }
+                pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer->window().size(), *viewport);
             }
-        }
 
-        return exit_code_.load();
+            renderer->end_frame();
+        }
+    }
+
+    void Engine::wait_platform_event(const std::chrono::milliseconds timeout)
+    {
+        if (auto event = platform_backend_.wait_for_event(timeout))
+        {
+            handle_platform_event(*event);
+        }
     }
 
     void Engine::poll_events_once()
@@ -326,27 +342,6 @@ namespace retro
     bool Engine::remove_asset_from_cache(const AssetPath &path) const
     {
         return asset_manager_.remove_asset_from_cache(path);
-    }
-
-    // ReSharper disable once CppMemberFunctionMayBeConst
-    void Engine::render()
-    {
-        std::shared_lock lock{renderers_mutex_};
-        for (const auto &renderer : renderers_ | std::views::values)
-        {
-            renderer->begin_frame();
-
-            for (auto &viewport : viewports_.viewports())
-            {
-                auto scene = viewport->scene();
-                if (!scene.has_value())
-                    continue;
-
-                pipeline_manager_.collect_all_draw_calls(scene->nodes(), renderer->window().size(), *viewport);
-            }
-
-            renderer->end_frame();
-        }
     }
 
     void Engine::handle_platform_event(const Event &event)
