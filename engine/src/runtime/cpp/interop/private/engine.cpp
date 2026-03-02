@@ -111,6 +111,7 @@ extern "C"
                                                    const WindowCreatedCallback created_callback,
                                                    const OnErrorCallback error_callback)
     {
+        // NOLINTNEXTLINE
         std::ignore = [engine,
                        user_data,
                        created_callback,
@@ -167,9 +168,14 @@ extern "C"
                                            .stop = bound_stop_callback});
     }
 
+    RETRO_API std::int32_t retro_engine_run_platform_event_loop(retro::Engine *engine)
+    {
+        return engine->run_platform_event_loop();
+    }
+
     RETRO_API void retro_engine_poll_platform_events(retro::Engine *engine)
     {
-        engine->run_platform_event_loop();
+        engine->poll_events_once();
     }
 
     RETRO_API void retro_engine_request_shutdown(retro::Engine *engine, const std::int32_t exit_code)

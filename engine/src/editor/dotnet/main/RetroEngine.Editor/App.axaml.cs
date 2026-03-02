@@ -3,11 +3,8 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using RetroEngine.Editor.Core.Converters;
-using RetroEngine.Editor.ViewModels;
+using Avalonia.Threading;
 using RetroEngine.Editor.Views;
-using RetroEngine.Portable.Localization;
-using RetroEngine.Portable.Localization.Cultures;
 
 namespace RetroEngine.Editor;
 
@@ -20,6 +17,8 @@ public class App(Engine engine) : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        _ = engine.InitializeAsync();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.

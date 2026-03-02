@@ -35,6 +35,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     public static Engine Instance =>
         _instance ?? throw new InvalidOperationException("Engine has not been initialized.");
 
+    public static bool IsInitialized => _instance is not null;
+
     internal Engine(IntPtr nativeEngine, IServiceProvider services)
     {
         _nativeEngine = nativeEngine;
@@ -176,11 +178,16 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     {
         await InitializeAsync(cancellationToken);
 
-        var exitCode = NativePollPlatformEvents(_nativeEngine);
+        var exitCode = NativeRunPlatformEventLoop(_nativeEngine);
 
         _gameThread.Join();
 
         return exitCode;
+    }
+
+    public void PollPlatformEvents()
+    {
+        NativePollPlatformEvents(_nativeEngine);
     }
 
     [UnmanagedCallersOnly]
@@ -320,8 +327,11 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         delegate* unmanaged<IntPtr, void> stopCallback
     );
 
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_run_platform_event_loop")]
+    private static partial int NativeRunPlatformEventLoop(IntPtr engine);
+
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_poll_platform_events")]
-    private static partial int NativePollPlatformEvents(IntPtr engine);
+    private static partial void NativePollPlatformEvents(IntPtr engine);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_create_main_window")]
     private static unsafe partial void NativeCreateMainWindow(

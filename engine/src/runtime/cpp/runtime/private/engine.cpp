@@ -204,47 +204,34 @@ namespace retro
         {
             while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
             {
-                std::visit(
-                    [&]<typename T>(const T &evt)
-                    {
-                        if constexpr (std::is_same_v<T, QuitEvent>)
-                        {
-                            if (running_.load())
-                            {
-                                request_shutdown();
-                            }
-                        }
-                        else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
-                        {
-                            Window *window = nullptr;
-                            {
-                                std::shared_lock lock{renderers_mutex_};
-                                auto renderer = renderers_.find(evt.window_id);
-                                if (renderer == renderers_.end())
-                                    return;
-                                window = std::addressof(renderer->second->window());
-                            }
-
-                            remove_window(*window);
-                        }
-                        else if constexpr (std::is_same_v<T, CallbackEvent>)
-                        {
-                            if (evt.callback)
-                            {
-                                evt.callback();
-                            }
-                        }
-                    },
-                    *event);
+                handle_platform_event(*event);
 
                 if (!running_.load())
                 {
                     break;
                 }
             }
+
+            if (!running_.load())
+            {
+                break;
+            }
         }
 
         return exit_code_.load();
+    }
+
+    void Engine::poll_events_once()
+    {
+        while (auto event = platform_backend_.poll_event())
+        {
+            handle_platform_event(*event);
+
+            if (!running_.load())
+            {
+                break;
+            }
+        }
     }
 
     void Engine::request_shutdown(const std::int32_t exit_code)
@@ -365,5 +352,41 @@ namespace retro
 
             renderer->end_frame();
         }
+    }
+
+    void Engine::handle_platform_event(const Event &event)
+    {
+        std::visit(
+            [&]<typename T>(const T &evt)
+            {
+                if constexpr (std::is_same_v<T, QuitEvent>)
+                {
+                    if (Engine::running_.load())
+                    {
+                        Engine::request_shutdown();
+                    }
+                }
+                else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
+                {
+                    Window *window = nullptr;
+                    {
+                        std::shared_lock lock{Engine::renderers_mutex_};
+                        auto renderer = Engine::renderers_.find(evt.window_id);
+                        if (renderer == Engine::renderers_.end())
+                            return;
+                        window = std::addressof(renderer->second->window());
+                    }
+
+                    Engine::remove_window(*window);
+                }
+                else if constexpr (std::is_same_v<T, CallbackEvent>)
+                {
+                    if (evt.callback)
+                    {
+                        evt.callback();
+                    }
+                }
+            },
+            event);
     }
 } // namespace retro

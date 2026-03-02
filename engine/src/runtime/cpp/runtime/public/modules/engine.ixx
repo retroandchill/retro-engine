@@ -29,6 +29,7 @@ import retro.runtime.world.scene;
 import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.world.viewport;
 import retro.platform.backend;
+import retro.platform.event;
 import retro.core.functional.function_ref;
 
 namespace retro
@@ -75,6 +76,8 @@ namespace retro
 
         RETRO_API std::int32_t run_platform_event_loop();
 
+        RETRO_API void poll_events_once();
+
         RETRO_API void request_shutdown(std::int32_t exit_code = 0);
 
         [[nodiscard]] inline Optional<Renderer2D &> primary_renderer() const noexcept
@@ -115,6 +118,7 @@ namespace retro
 
       private:
         void render();
+        void handle_platform_event(const Event &event);
 
         RETRO_API static Engine *instance_;
 
