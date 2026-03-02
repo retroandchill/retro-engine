@@ -7,7 +7,6 @@ using RetroEngine.Assets;
 using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
-using RetroEngine.Logging;
 using RetroEngine.Platform;
 using RetroEngine.World;
 using Serilog;
@@ -57,6 +56,7 @@ public sealed class GameRunner : AsyncGameSession
         sprite.Pivot = new Vector2F(0.5f, 0.5f);
         sprite.ZOrder = -100000;
 
+        await Task.Delay(Timeout.Infinite, cancellationToken);
         return 0;
     }
 }

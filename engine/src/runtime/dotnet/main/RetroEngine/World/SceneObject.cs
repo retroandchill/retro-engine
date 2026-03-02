@@ -97,7 +97,7 @@ public abstract partial class SceneObject : IDisposable
         if (Disposed)
             return;
 
-        NativeDispose(NativeObject);
+        NativeDispose(Scene.NativeHandle, NativeObject);
         Disposed = true;
         GC.SuppressFinalize(this);
     }
@@ -115,5 +115,5 @@ public abstract partial class SceneObject : IDisposable
     private static partial void NativeDetachFromParent(IntPtr obj);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_dispose")]
-    private static partial void NativeDispose(IntPtr obj);
+    private static partial void NativeDispose(IntPtr scene, IntPtr obj);
 }

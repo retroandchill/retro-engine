@@ -29,6 +29,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private ulong _windowId;
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
+    private readonly TaskCompletionSource _gameThreadStarted = new();
 
     private static Engine? _instance;
 
@@ -44,7 +45,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     }
 
     [MemberNotNull(nameof(_gameThread))]
-    public void Initialize()
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (_instance is not null)
             throw new InvalidOperationException("The engine is already running.");
@@ -55,6 +56,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
         _gameThread = new Thread(RunGameThread);
         _gameThread.Start();
+
+        cancellationToken.Register(() => _gameThreadStarted.TrySetCanceled());
+        await _gameThreadStarted.Task.ConfigureAwait(false);
     }
 
     public async Task CreateMainWindowAsync(
@@ -162,6 +166,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         var payload = (NativeCallbackPayload)GCHandle.FromIntPtr(userData).Target!;
         try
         {
+            payload.Engine._gameThreadStarted.SetResult();
             payload.Session?.Start();
             return 0;
         }
@@ -172,9 +177,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
     }
 
-    public int Run()
+    public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
-        Initialize();
+        await InitializeAsync(cancellationToken);
 
         var exitCode = NativeRunPlatformEventLoop(_nativeEngine);
 

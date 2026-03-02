@@ -112,37 +112,37 @@ extern "C"
                                                    const OnErrorCallback error_callback)
     {
         // NOLINTNEXTLINE
-        std::ignore = [engine,
-                       user_data,
-                       created_callback,
-                       error_callback,
-                       desc =
-                           retro::WindowDesc{
-                               .width = width,
-                               .height = height,
-                               .title = retro::convert_string<char>(
-                                   std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
-                               .flags = flags,
-                           }] -> retro::Task<>
+        std::ignore = [&] -> retro::Task<>
         {
+            auto *local_engine = engine;
+            auto *local_user_data = user_data;
+            auto local_created_callback = created_callback;
+            auto local_error_callback = error_callback;
+            retro::WindowDesc desc{
+                .width = width,
+                .height = height,
+                .title = retro::convert_string<char>(
+                    std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                .flags = flags,
+            };
+
             try
             {
-
-                const auto window = co_await engine->create_new_window(desc);
+                const auto window = co_await local_engine->create_new_window(std::move(desc));
                 if (!window.has_value())
                 {
-                    error_callback(user_data, window.error().message.data());
+                    local_error_callback(local_user_data, window.error().message.data());
                 }
 
-                created_callback(user_data, window.value()->id());
+                local_created_callback(local_user_data, window.value()->id());
             }
             catch (const std::exception &e)
             {
-                error_callback(user_data, e.what());
+                local_error_callback(local_user_data, e.what());
             }
             catch (...)
             {
-                error_callback(user_data, "Unknown error");
+                local_error_callback(local_user_data, "Unknown error");
             }
         }();
     }

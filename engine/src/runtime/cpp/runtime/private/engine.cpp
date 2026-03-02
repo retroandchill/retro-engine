@@ -200,7 +200,7 @@ namespace retro
 
     std::int32_t Engine::run_platform_event_loop()
     {
-        while (true)
+        while (running_.load())
         {
             while (auto event = platform_backend_.wait_for_event(std::chrono::milliseconds(10)))
             {
@@ -210,11 +210,6 @@ namespace retro
                 {
                     break;
                 }
-            }
-
-            if (!running_.load())
-            {
-                break;
             }
         }
 
@@ -361,7 +356,7 @@ namespace retro
             {
                 if constexpr (std::is_same_v<T, QuitEvent>)
                 {
-                    if (Engine::running_.load())
+                    if (running_.load())
                     {
                         Engine::request_shutdown();
                     }
