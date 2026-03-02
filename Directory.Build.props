@@ -9,7 +9,7 @@
         <RetroEngineLoggingProj>$(EngineProjectsDir)/RetroEngine.Logging/RetroEngine.Logging.csproj</RetroEngineLoggingProj>
         <RetroEnginePlatformProj>$(EngineProjectsDir)/RetroEngine.Platform/RetroEngine.Platform.csproj</RetroEnginePlatformProj>
         <RetroEnginePortableProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.csproj</RetroEnginePortableProj>
-        <RetroEnginePortableNativeProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.Native.csproj</RetroEnginePortableNativeProj>
+        <RetroEnginePortableNativeProj>$(EngineProjectsDir)/RetroEngine.Portable.Native/RetroEngine.Portable.Native.csproj</RetroEnginePortableNativeProj>
         <RetroEnginePortableCommonProj>$(EngineProjectsDir)/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj</RetroEnginePortableCommonProj>
         <RetroEnginePortableExtensionsProj>$(EngineProjectsDir)/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj</RetroEnginePortableExtensionsProj>
         <RetroEnginePortableSourceGeneratorProj>$(EngineProjectsDir)/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj</RetroEnginePortableSourceGeneratorProj>

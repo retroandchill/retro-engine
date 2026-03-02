@@ -19,7 +19,7 @@
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.Native.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Native/RetroEngine.Portable.Native.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine/RetroEngine.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/dotnet/test/">
