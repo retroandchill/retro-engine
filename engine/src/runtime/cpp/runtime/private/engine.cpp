@@ -140,8 +140,6 @@ namespace retro
             }
 
             renderer->end_frame();
-
-            renderer->wait_idle();
         }
     }
 

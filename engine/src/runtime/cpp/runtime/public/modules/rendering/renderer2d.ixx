@@ -28,8 +28,6 @@ namespace retro
       public:
         virtual ~Renderer2D() = default;
 
-        virtual void wait_idle() = 0;
-
         virtual void begin_frame() = 0;
 
         virtual void end_frame() = 0;

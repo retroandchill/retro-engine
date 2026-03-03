@@ -127,14 +127,6 @@ namespace retro
         device_.device().waitIdle();
     }
 
-    void VulkanRenderer2D::wait_idle()
-    {
-        if (device_.device() != nullptr)
-        {
-            device_.device().waitIdle();
-        }
-    }
-
     void VulkanRenderer2D::begin_frame()
     {
         auto dev = device_.device();
@@ -213,6 +205,13 @@ namespace retro
         else if (result != vk::Result::eSuccess)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
+        }
+
+        const auto fence = sync_.in_flight(current_frame_);
+        if (device_.device().waitForFences(1, &fence, vk::True, std::numeric_limits<std::uint64_t>::max()) !=
+            vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to wait for presentation"};
         }
 
         current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
