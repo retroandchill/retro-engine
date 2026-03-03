@@ -55,6 +55,8 @@ namespace retro
         VulkanRenderer2D &operator=(VulkanRenderer2D &&) = delete;
         VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
 
+        void wait_for_current_frame() override;
+
         void begin_frame() override;
 
         void end_frame() override;

@@ -126,6 +126,15 @@ namespace retro
     void Engine::render()
     {
         std::shared_lock lock{renderers_mutex_};
+        if (renderers_.empty())
+        {
+            // If there are no active renderers to draw to then we run the risk of
+            // the game loop running continuously and using too much CPU, so in that case
+            // we're going to request the thread sleep for a bit
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            return;
+        }
+
         for (const auto &renderer : renderers_ | std::views::values)
         {
             renderer->begin_frame();
@@ -140,6 +149,14 @@ namespace retro
             }
 
             renderer->end_frame();
+        }
+
+        // We want to wait for the fences on all the renderers after the loop is done
+        // If we waited on each one before all frames gets submitted, it would end up
+        // blocking the game thread for too long if there are many surfaces.
+        for (const auto &renderer : renderers_ | std::views::values)
+        {
+            renderer->wait_for_current_frame();
         }
     }
 

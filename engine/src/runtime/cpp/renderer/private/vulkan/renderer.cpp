@@ -127,10 +127,21 @@ namespace retro
         device_.device().waitIdle();
     }
 
+    void VulkanRenderer2D::wait_for_current_frame()
+    {
+        const auto fence = sync_.in_flight(current_frame_);
+        if (device_.device().waitForFences(1, &fence, vk::True, std::numeric_limits<std::uint64_t>::max()) !=
+            vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to wait for presentation"};
+        }
+    }
+
     void VulkanRenderer2D::begin_frame()
     {
         auto dev = device_.device();
 
+        current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
         auto in_flight = sync_.in_flight(current_frame_);
         if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<std::uint64_t>::max()) ==
             vk::Result::eTimeout)
@@ -207,14 +218,6 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
         }
 
-        const auto fence = sync_.in_flight(current_frame_);
-        if (device_.device().waitForFences(1, &fence, vk::True, std::numeric_limits<std::uint64_t>::max()) !=
-            vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to wait for presentation"};
-        }
-
-        current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
         pipeline_manager_.clear_draw_queue();
         buffer_manager_.reset();
     }
