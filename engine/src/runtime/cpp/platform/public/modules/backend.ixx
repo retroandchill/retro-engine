@@ -18,6 +18,7 @@ import retro.core.strings.cstring_view;
 import retro.core.util.enum_class_flags;
 import retro.platform.event;
 import retro.platform.window;
+import retro.core.functional.delegate;
 
 namespace retro
 {

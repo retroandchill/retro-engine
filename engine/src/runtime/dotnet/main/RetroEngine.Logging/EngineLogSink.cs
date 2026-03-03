@@ -26,6 +26,7 @@ public sealed partial class EngineLogSink : ILogEventSink
         };
 
         var message = logEvent.RenderMessage();
+        var fullMessage = logEvent.Exception is not null ? $"{message}\n{logEvent.Exception}" : message;
 
         if (
             logEvent.Properties.GetValueOrDefault("Method") is ScalarValue { Value: string name }
@@ -33,11 +34,11 @@ public sealed partial class EngineLogSink : ILogEventSink
             && logEvent.Properties.GetValueOrDefault("LineNumber") is ScalarValue { Value: int line }
         )
         {
-            NativeLog(level, message, message.Length, name, name.Length, file, file.Length, line);
+            NativeLog(level, fullMessage, fullMessage.Length, name, name.Length, file, file.Length, line);
         }
         else
         {
-            NativeLog(level, message, message.Length);
+            NativeLog(level, fullMessage, fullMessage.Length);
         }
     }
 

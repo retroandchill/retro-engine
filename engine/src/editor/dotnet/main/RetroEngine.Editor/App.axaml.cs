@@ -17,7 +17,7 @@ public class App(Engine engine) : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        _ = engine.StartAsync();
+        engine.Start();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

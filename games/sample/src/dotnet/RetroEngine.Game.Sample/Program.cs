@@ -15,4 +15,4 @@ var builder = new EngineBuilder();
 builder.Services.AddSingleton<IGameSession, GameRunner>();
 
 await using var host = builder.Build();
-await host.RunAsync();
+host.Run();

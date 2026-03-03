@@ -9,7 +9,6 @@ set(RETRO_INTEROP_SOURCES
         private/assets.cpp
         private/name.cpp
         private/services.cpp
-        private/platform_backend.cpp
         private/localization/locale.cpp
         private/localization/decimal_format.cpp
         private/localization/date_format.cpp

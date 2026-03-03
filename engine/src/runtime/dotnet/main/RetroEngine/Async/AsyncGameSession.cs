@@ -22,7 +22,7 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
         try
         {
             var exitCode = await RunAsync(cancellationToken);
-            Engine.Instance.RequestShutdown(exitCode);
+            Engine.Instance.RequestShutdown();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -31,7 +31,7 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
         catch (Exception e)
         {
             Log.Fatal(e, "Game session failed.");
-            Engine.Instance.RequestShutdown(1);
+            Engine.Instance.RequestShutdown();
         }
     }
 

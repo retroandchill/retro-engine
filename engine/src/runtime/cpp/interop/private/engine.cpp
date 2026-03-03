@@ -12,7 +12,6 @@ import retro.core.di;
 import retro.core.functional.interop_function;
 import retro.core.async.task;
 import retro.core.strings.encoding;
-import retro.interop.error_handling;
 import retro.platform.backend;
 import retro.platform.window;
 import retro.runtime.rendering.pipeline_manager;
@@ -29,15 +28,12 @@ namespace
 {
     using ConfigCallback = void (*)(retro::EngineConfigContext *, void *);
 
-    using StartCallback = std::int32_t (*)(void *);
-    using UpdateCallback = void (*)(void *, float);
-    using StopCallback = void (*)(void *);
-
     using DeleteCallback = void (*)(void *);
     using EqualsCallback = bool (*)(void *, void *);
     using WindowRemovedCallback = void (*)(void *, std::uint64_t);
 
     using WindowCreatedCallback = void (*)(void *, std::uint64_t);
+    using ShutdownRequestedCallback = void (*)(void *);
     using OnErrorCallback = void (*)(void *, const char *);
 
     struct WindowRemovedBinding
@@ -65,6 +61,7 @@ extern "C"
     {
         try
         {
+            *error_message = nullptr;
             retro::EngineConfigContext context;
             context.services.add(retro::PlatformBackend::create(platform_config));
             context.services.add_singleton<retro::PipelineManager>()
@@ -148,20 +145,6 @@ extern "C"
         retro::Engine::shutdown();
     }
 
-    RETRO_API void retro_engine_run(retro::Engine *engine,
-                                    void *user_data,
-                                    StartCallback start_callback,
-                                    UpdateCallback update_callback,
-                                    StopCallback stop_callback)
-    {
-        auto bound_start_callback = std::bind_front(start_callback, user_data);
-        auto bound_update_callback = std::bind_front(update_callback, user_data);
-        auto bound_stop_callback = std::bind_front(stop_callback, user_data);
-        engine->run(retro::EngineCallbacks{.start = bound_start_callback,
-                                           .tick = bound_update_callback,
-                                           .stop = bound_stop_callback});
-    }
-
     RETRO_API bool retro_engine_pump_tasks(retro::Engine *engine,
                                            const std::int32_t max_tasks,
                                            const char **error_message)
@@ -169,6 +152,7 @@ extern "C"
         try
         {
             engine->pump_tasks(static_cast<std::size_t>(max_tasks));
+            *error_message = nullptr;
             return true;
         }
         catch (const std::exception &e)
@@ -183,11 +167,17 @@ extern "C"
         }
     }
 
+    RETRO_API void retro_engine_on_loop_exit(retro::Engine *engine)
+    {
+        engine->on_loop_exit();
+    }
+
     RETRO_API bool retro_engine_render(retro::Engine *engine, const char **error_message)
     {
         try
         {
             engine->render();
+            *error_message = nullptr;
             return true;
         }
         catch (const std::exception &e)
@@ -212,9 +202,16 @@ extern "C"
         engine->poll_events_once();
     }
 
-    RETRO_API void retro_engine_request_shutdown(retro::Engine *engine, const std::int32_t exit_code)
+    RETRO_API void retro_engine_on_shutdown_requested_add(retro::Engine *engine,
+                                                          void *user_data,
+                                                          const ShutdownRequestedCallback removed_callback,
+                                                          const DeleteCallback delete_callback,
+                                                          const EqualsCallback equals_callback)
     {
-        engine->request_shutdown(exit_code);
+        retro::InteropFunction<void()> function{removed_callback,
+                                                std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                                                equals_callback};
+        engine->on_shutdown_requested().add(std::move(function));
     }
 
     RETRO_API void retro_engine_on_window_removed_add(retro::Engine *engine,

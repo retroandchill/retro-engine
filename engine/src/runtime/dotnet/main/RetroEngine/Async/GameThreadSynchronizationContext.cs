@@ -6,7 +6,7 @@
 using System.Collections.Concurrent;
 using RetroEngine.Portable.Async;
 
-namespace RetroEngine.Core.Async;
+namespace RetroEngine.Async;
 
 public sealed class GameThreadSynchronizationContext : SynchronizationContext, IThreadSync, IDisposable
 {
@@ -130,7 +130,7 @@ public sealed class GameThreadSynchronizationContext : SynchronizationContext, I
                         TaskScheduler.Default
                     );
             },
-            action
+            (action, this)
         );
     }
 

@@ -44,7 +44,7 @@ namespace retro
         using Type = PointerElementT<std::remove_cvref_t<T>> &;
     };
 
-    template <MemberBindable T>
+    export template <MemberBindable T>
     using MemberBindingT = MemberBinding<T>::Type;
 
     template <WeakPtrLike T, typename Functor>
@@ -1092,7 +1092,7 @@ namespace retro
         } -> std::same_as<DelegateHandle>;
     };
 
-    template <typename Delegate, auto Functor, typename... Args>
+    export template <typename Delegate, auto Functor, typename... Args>
     concept ConstCanAddToDelegate = requires(Delegate &delegate, Args &&...args) {
         {
             delegate.template add<Functor>(std::forward<Args>(args)...)

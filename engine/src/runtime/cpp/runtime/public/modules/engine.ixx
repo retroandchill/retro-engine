@@ -35,14 +35,8 @@ import retro.core.type_traits.range;
 
 namespace retro
 {
-    export struct EngineCallbacks
-    {
-        FunctionRef<std::int32_t()> start;
-        FunctionRef<void(float)> tick;
-        FunctionRef<void()> stop;
-    };
-
     export using OnWindowRemoved = MulticastDelegate<void(const Window &)>;
+    export using OnShutdownRequested = MulticastDelegate<void()>;
 
     export class Engine
     {
@@ -73,17 +67,20 @@ namespace retro
             instance_ = nullptr;
         }
 
-        RETRO_API void run(const EngineCallbacks &callbacks);
-
         RETRO_API void pump_tasks(std::size_t max = index_none<std::size_t>);
 
         RETRO_API void render();
+
+        RETRO_API void on_loop_exit();
 
         RETRO_API void wait_platform_event(std::chrono::milliseconds timeout);
 
         RETRO_API void poll_events_once();
 
-        RETRO_API void request_shutdown(std::int32_t exit_code = 0);
+        inline OnShutdownRequested::Event on_shutdown_requested()
+        {
+            return on_shutdown_requested_;
+        }
 
         [[nodiscard]] inline Optional<Renderer2D &> primary_renderer() const noexcept
         {
@@ -91,8 +88,6 @@ namespace retro
         }
 
         RETRO_API Task<PlatformResult<std::shared_ptr<Window>>> create_new_window(WindowDesc window_desc);
-
-        RETRO_API Optional<Window &> get_window(std::uint64_t window_id);
 
         RETRO_API void add_window(Window &window);
 
@@ -122,7 +117,7 @@ namespace retro
         }
 
       private:
-        void handle_platform_event(const Event &event);
+        bool handle_platform_event(const Event &event);
 
         RETRO_API static Engine *instance_;
 
@@ -137,13 +132,12 @@ namespace retro
         AssetManager &asset_manager_;
         PipelineManager &pipeline_manager_;
 
-        std::atomic<std::int32_t> exit_code_{0};
-        std::atomic<bool> running_{false};
         SceneManager scenes_;
         ViewportManager viewports_;
         ManualTaskScheduler scheduler_{};
 
         OnWindowRemoved on_window_removed_;
+        OnShutdownRequested on_shutdown_requested_;
     };
 
     export struct EngineLifecycle

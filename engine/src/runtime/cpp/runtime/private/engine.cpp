@@ -26,22 +26,6 @@ import retro.platform.event;
 
 namespace retro
 {
-    static void precise_wait(const std::chrono::microseconds duration)
-    {
-        const auto start = std::chrono::steady_clock::now();
-        const auto end = start + duration;
-
-        if (duration > std::chrono::milliseconds(5))
-        {
-            std::this_thread::sleep_for(duration - std::chrono::milliseconds(5));
-        }
-
-        // Busy-wait for the remaining short duration to maximize precision
-        while (std::chrono::steady_clock::now() < end)
-        {
-            // Spin lock: do nothing, consume CPU cycles
-        }
-    }
 
     Engine *Engine::instance_{};
 
@@ -133,71 +117,6 @@ namespace retro
             });
     }
 
-    void Engine::run(const EngineCallbacks &callbacks)
-    {
-        TaskScheduler::Scope task_scope{&scheduler_};
-        using Clock = std::chrono::steady_clock;
-        constexpr float target_frame_time = 1.0f / 60.0f; // 60 FPS
-
-        running_.store(true);
-
-        if (callbacks.start() != 0)
-            return;
-
-        // FPS tracking state
-        float fps_timer = 0.0f;
-        std::uint64_t fps_frames = 0;
-
-        auto last_frame_start = Clock::now();
-
-        while (true)
-        {
-            const auto frame_start = Clock::now();
-            const std::chrono::duration<float> frame_delta = frame_start - last_frame_start;
-            const float delta_time = frame_delta.count();
-            last_frame_start = frame_start;
-
-            if (!running_.load())
-            {
-                break;
-            }
-
-            scheduler_.pump();
-            callbacks.tick(delta_time);
-            render();
-
-            // Measure how long the work actually took
-            const auto frame_end = Clock::now();
-            const std::chrono::duration<float> work_time = frame_end - frame_start;
-
-            // Sleep to hit target frame duration (if work was faster than target)
-            if (const float work_seconds = work_time.count(); work_seconds < target_frame_time)
-            {
-                const float remaining = target_frame_time - work_seconds;
-                precise_wait(
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<float>(remaining)));
-            }
-
-            // FPS accumulation (based on actual frame length)
-            const auto frame_finish = Clock::now();
-            const std::chrono::duration<float> full_frame = frame_finish - frame_start;
-            const float full_frame_seconds = full_frame.count();
-
-            fps_timer += full_frame_seconds;
-            ++fps_frames;
-
-            if (fps_timer >= 1.0f)
-            {
-                fps_timer = 0.0f;
-                fps_frames = 0;
-            }
-        }
-
-        callbacks.stop();
-        renderers_.clear();
-        asset_manager_.on_engine_shutdown();
-    }
-
     void Engine::pump_tasks(const std::size_t max)
     {
         scheduler_.pump(max);
@@ -221,7 +140,15 @@ namespace retro
             }
 
             renderer->end_frame();
+
+            renderer->wait_idle();
         }
+    }
+
+    void Engine::on_loop_exit()
+    {
+        renderers_.clear();
+        asset_manager_.on_engine_shutdown();
     }
 
     void Engine::wait_platform_event(const std::chrono::milliseconds timeout)
@@ -236,19 +163,12 @@ namespace retro
     {
         while (auto event = platform_backend_.poll_event())
         {
-            handle_platform_event(*event);
-
-            if (!running_.load())
+            if (!handle_platform_event(*event))
             {
+                // ReSharper disable once CppDFAUnreachableCode
                 break;
             }
         }
-    }
-
-    void Engine::request_shutdown(const std::int32_t exit_code)
-    {
-        exit_code_.store(exit_code);
-        running_.store(false);
     }
 
     Task<PlatformResult<std::shared_ptr<Window>>> Engine::create_new_window(WindowDesc window_desc)
@@ -256,17 +176,6 @@ namespace retro
         AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
         add_window(*window);
         co_return std::move(window);
-    }
-
-    Optional<Window &> Engine::get_window(const std::uint64_t window_id)
-    {
-        std::shared_lock lock{renderers_mutex_};
-        if (const auto it = renderers_.find(window_id); it != renderers_.end())
-        {
-            return it->second->window();
-        }
-
-        return std::nullopt;
     }
 
     void Engine::add_window(Window &window)
@@ -344,30 +253,28 @@ namespace retro
         return asset_manager_.remove_asset_from_cache(path);
     }
 
-    void Engine::handle_platform_event(const Event &event)
+    bool Engine::handle_platform_event(const Event &event)
     {
-        std::visit(
+        return std::visit(
             [&]<typename T>(const T &evt)
             {
                 if constexpr (std::is_same_v<T, QuitEvent>)
                 {
-                    if (running_.load())
-                    {
-                        Engine::request_shutdown();
-                    }
+                    on_shutdown_requested_();
+                    return false;
                 }
                 else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
                 {
                     Window *window = nullptr;
                     {
-                        std::shared_lock lock{Engine::renderers_mutex_};
-                        auto renderer = Engine::renderers_.find(evt.window_id);
-                        if (renderer == Engine::renderers_.end())
-                            return;
+                        std::shared_lock lock{renderers_mutex_};
+                        auto renderer = renderers_.find(evt.window_id);
+                        if (renderer == renderers_.end())
+                            return true;
                         window = std::addressof(renderer->second->window());
                     }
 
-                    Engine::remove_window(*window);
+                    remove_window(*window);
                 }
                 else if constexpr (std::is_same_v<T, CallbackEvent>)
                 {
@@ -376,6 +283,8 @@ namespace retro
                         evt.callback();
                     }
                 }
+
+                return true;
             },
             event);
     }

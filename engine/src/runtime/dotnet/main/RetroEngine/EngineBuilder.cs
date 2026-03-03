@@ -5,7 +5,6 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
-using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
