@@ -19,6 +19,7 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
 using Serilog;
 using ZLinq;
+using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine;
 
@@ -300,7 +301,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _gameThread?.Join();
     }
 
-    public void Dispose()
+    [CreateSyncVersion]
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
@@ -312,16 +314,10 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
         _disposed = true;
         _synchronizationContext?.Dispose();
-        _host.Dispose();
+        await _host.DisposeAsync();
 
         CultureManager.Instance.Dispose();
         NativeDestroy(_nativeEngine);
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        Dispose();
-        return ValueTask.CompletedTask;
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_engine")]
