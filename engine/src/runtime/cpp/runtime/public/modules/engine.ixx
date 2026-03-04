@@ -104,9 +104,15 @@ namespace retro
         }
 
         template <std::derived_from<Asset> T = Asset>
-        AssetLoadResult<RefCountPtr<T>> load_asset(const AssetPath &path)
+        Optional<T &> load_asset_from_cache(const AssetPath &path)
         {
-            return asset_manager_.load_asset<T>(path);
+            return asset_manager_.load_from_cache<T>(path);
+        }
+
+        template <std::derived_from<Asset> T = Asset>
+        Optional<RefCountPtr<T>> load_asset(const AssetPath &path, std::span<const std::byte> buffer)
+        {
+            return asset_manager_.load_asset<T>(path, buffer);
         }
 
         RETRO_API bool remove_asset_from_cache(const AssetPath &path) const;

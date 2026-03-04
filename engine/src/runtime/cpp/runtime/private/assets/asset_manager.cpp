@@ -14,7 +14,9 @@ import retro.core.io.buffered_stream;
 
 namespace retro
 {
-    AssetLoadResult<RefCountPtr<Asset>> AssetManager::load_asset_internal(const AssetPath &path)
+    Optional<RefCountPtr<Asset>> AssetManager::load_asset_internal(const AssetPath &path,
+                                                                   std::type_index type_index,
+                                                                   std::span<const std::byte> buffer)
     {
         {
             std::shared_lock lock{asset_cache_mutex_};
@@ -24,24 +26,30 @@ namespace retro
             }
         }
 
-        return asset_source_.open_stream(path).and_then([this, path](const std::unique_ptr<Stream> &stream)
-                                                        { return load_asset_from_stream(path, *stream); });
-    }
-
-    AssetLoadResult<RefCountPtr<Asset>> AssetManager::load_asset_from_stream(const AssetPath &path, Stream &stream)
-    {
-        BufferedStream buffered_stream{stream};
-        for (const AssetDecodeContext context{.path = path};
-             const auto &decoder : decoders_ | std::views::filter([&context, &buffered_stream](const AssetDecoder *d)
-                                                                  { return d->can_decode(context, buffered_stream); }))
+        auto decoder = decoders_.find(type_index);
+        if (decoder != decoders_.end())
         {
-            EXPECT_ASSIGN(auto decoded, decoder->decode(context, buffered_stream));
-            std::unique_lock lock{asset_cache_mutex_};
-            asset_cache_[path] = decoded.get();
-            return std::move(decoded);
+            get_logger().error("Asset type {} is not supported", type_index.name());
+            return std::nullopt;
         }
 
-        return std::unexpected{AssetLoadError::invalid_asset_format};
+        const AssetDecodeContext context{.path = path, .bytes = buffer};
+        auto decoded = decoder->second->decode(context);
+        if (!decoded.has_value())
+        {
+            return std::nullopt;
+        }
+
+        std::unique_lock lock{asset_cache_mutex_};
+        asset_cache_[path] = decoded->get();
+        return std::move(decoded);
+    }
+
+    AssetManager::AssetManager(const std::vector<AssetDecoder *> &decoders)
+        : decoders_{std::from_range,
+                    decoders | std::views::transform([](AssetDecoder *decode)
+                                                     { return std::make_pair(decode->asset_type(), decode); })}
+    {
     }
 
     bool AssetManager::remove_asset_from_cache(const AssetPath &path)
@@ -59,5 +67,16 @@ namespace retro
         }
 
         asset_cache_.clear();
+    }
+
+    Asset *AssetManager::load_asset_from_cache(const AssetPath &path)
+    {
+        std::shared_lock lock{asset_cache_mutex_};
+        if (const auto existing_asset = asset_cache_.find(path); existing_asset != asset_cache_.end())
+        {
+            return existing_asset->second;
+        }
+
+        return nullptr;
     }
 } // namespace retro

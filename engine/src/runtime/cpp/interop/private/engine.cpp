@@ -18,10 +18,8 @@ import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
-import retro.runtime.assets.asset_source;
 import retro.runtime.assets.asset_manager;
 import retro.runtime.assets.asset_decoder;
-import retro.runtime.assets.filesystem_asset_source;
 import retro.runtime.assets.textures.texture_decoder;
 
 namespace
@@ -67,7 +65,6 @@ extern "C"
             context.services.add_singleton<retro::PipelineManager>()
                 .add_singleton<retro::RenderPipeline, retro::GeometryRenderPipeline>()
                 .add_singleton<retro::RenderPipeline, retro::SpriteRenderPipeline>()
-                .add_singleton<retro::AssetSource, retro::FileSystemAssetSource>()
                 .add_singleton<retro::AssetManager>()
                 .add_singleton<retro::AssetDecoder, retro::TextureDecoder>();
 

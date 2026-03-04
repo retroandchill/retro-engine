@@ -13,48 +13,23 @@ import retro.logging;
 
 namespace retro
 {
-    namespace
+    Optional<RefCountPtr<Asset>> TextureDecoder::decode(const AssetDecodeContext &context)
     {
-        constexpr std::array png_header = {std::byte{0x89},
-                                           std::byte{0x50},
-                                           std::byte{0x4E},
-                                           std::byte{0x47},
-                                           std::byte{0x0D},
-                                           std::byte{0x0A},
-                                           std::byte{0x1A},
-                                           std::byte{0x0A}};
-    }
-
-    bool TextureDecoder::can_decode(const AssetDecodeContext &context, BufferedStream &stream) const
-    {
-        // TODO: For now we'll just support PNG images, but we may want to open it up to others later
-        auto peek_result = stream.peek(png_header.size());
-        if (!peek_result.has_value())
-        {
-            return false;
-        }
-
-        return std::ranges::equal(*peek_result, png_header);
-    }
-
-    AssetLoadResult<RefCountPtr<Asset>> TextureDecoder::decode(const AssetDecodeContext &context,
-                                                               BufferedStream &stream)
-    {
-        return stream.read_all()
-            .transform_error([](StreamError) { return AssetLoadError::invalid_asset_format; })
-            .and_then([](const std::vector<std::byte> &bytes) { return load_image_data(bytes); })
+        return load_image_data(context.bytes)
             .transform([this](const ImageData &image_data) { return manager_.upload_texture(image_data); })
             .transform([&context](std::unique_ptr<TextureRenderData> &&render_data)
                        { return make_ref_counted<Texture>(context.path, std::move(render_data)); });
     }
 
-    AssetLoadResult<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept
+    Optional<ImageData> TextureDecoder::load_image_data(const std::span<const std::byte> bytes) noexcept
     {
-        return ImageData::create_from_memory(bytes).transform_error(
-            [](const std::string_view &error)
-            {
-                get_logger().error(error);
-                return AssetLoadError::invalid_asset_format;
-            });
+        auto result = ImageData::create_from_memory(bytes);
+        if (!result.has_value())
+        {
+            get_logger().error("Failed to load image data: {}", result.error());
+            return std::nullopt;
+        }
+
+        return *std::move(result);
     }
 } // namespace retro

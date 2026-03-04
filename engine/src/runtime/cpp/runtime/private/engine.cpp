@@ -13,9 +13,7 @@ module retro.runtime.engine;
 import retro.logging;
 import retro.core.async.task_scheduler;
 import retro.runtime.rendering.pipeline_manager;
-import retro.runtime.assets.asset_source;
 import retro.runtime.assets.asset_decoder;
-import retro.runtime.assets.filesystem_asset_source;
 import retro.runtime.assets.textures.texture_decoder;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
@@ -34,7 +32,6 @@ namespace retro
         services.add_singleton<PipelineManager>()
             .add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline>()
-            .add_singleton<AssetSource, FileSystemAssetSource>()
             .add_singleton<AssetManager>()
             .add_singleton<AssetDecoder, TextureDecoder>();
     }

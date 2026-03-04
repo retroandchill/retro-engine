@@ -340,35 +340,35 @@ namespace retro
     }
 
     export template <RefCounted T, RefCounted U>
-        requires CanStaticCast<T *, U *>
-    constexpr RefCountPtr<U> static_pointer_cast(const RefCountPtr<T> &ptr) noexcept
+        requires CanStaticCast<U *, T *>
+    constexpr RefCountPtr<T> static_pointer_cast(const RefCountPtr<U> &ptr) noexcept
     {
-        auto *p = static_cast<U *>(ptr.get());
-        return RefCountPtr<U>{p};
+        auto *p = static_cast<T *>(ptr.get());
+        return RefCountPtr<T>{p};
     }
 
     export template <RefCounted T, RefCounted U>
-        requires CanStaticCast<T *, U *>
+        requires CanStaticCast<U *, T *>
     constexpr RefCountPtr<U> static_pointer_cast(RefCountPtr<T> &&ptr) noexcept
     {
-        auto *p = static_cast<U *>(ptr.release(ref_count_internal));
-        return RefCountPtr<U>{ref_count_internal, p};
+        auto *p = static_cast<T *>(ptr.release(ref_count_internal));
+        return RefCountPtr<T>{ref_count_internal, p};
     }
 
     export template <RefCounted T, RefCounted U>
         requires std::derived_from<T, U> || std::derived_from<U, T>
-    constexpr RefCountPtr<U> dynamic_pointer_cast(const RefCountPtr<T> &ptr) noexcept
+    constexpr RefCountPtr<T> dynamic_pointer_cast(const RefCountPtr<U> &ptr) noexcept
     {
-        auto *p = dynamic_cast<U *>(ptr.get());
-        return RefCountPtr<U>{p};
+        auto *p = dynamic_cast<T *>(ptr.get());
+        return RefCountPtr<T>{p};
     }
 
     export template <RefCounted T, RefCounted U>
         requires std::derived_from<T, U> || std::derived_from<U, T>
-    constexpr RefCountPtr<U> dynamic_pointer_cast(RefCountPtr<T> &&ptr) noexcept
+    constexpr RefCountPtr<T> dynamic_pointer_cast(RefCountPtr<U> &&ptr) noexcept
     {
-        auto *p = dynamic_cast<U *>(ptr.release(ref_count_internal));
-        return RefCountPtr<U>{ref_count_internal, p};
+        auto *p = dynamic_cast<T *>(ptr.release(ref_count_internal));
+        return RefCountPtr<T>{ref_count_internal, p};
     }
 } // namespace retro
 

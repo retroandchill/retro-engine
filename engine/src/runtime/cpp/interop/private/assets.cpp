@@ -56,25 +56,49 @@ extern "C"
         return static_cast<std::int32_t>(string_length);
     }
 
-    RETRO_API retro::Asset *retro_load_asset(const retro::AssetPath *path,
-                                             retro::Name *out_asset_type,
-                                             retro::AssetLoadError *out_error)
-    {
-        auto result = retro::Engine::instance().load_asset(*path);
-        if (!result.has_value())
-        {
-            *out_error = result.error();
-            return nullptr;
-        }
-
-        *out_asset_type = (*result)->asset_type();
-        (*result)->retain();
-        return result->get();
-    }
-
     RETRO_API void retro_release_asset(const retro::Asset *asset)
     {
         asset->release();
+    }
+
+    RETRO_API retro::Texture *retro_texture_load_existing(const retro::AssetPath *path,
+                                                          std::int32_t *width,
+                                                          std::int32_t *height)
+    {
+        const auto asset = retro::Engine::instance().load_asset_from_cache<retro::Texture>(*path);
+        if (!asset.has_value())
+        {
+            *width = 0;
+            *height = 0;
+            return nullptr;
+        }
+
+        *width = asset->width();
+        *height = asset->height();
+        asset->retain();
+        return std::addressof(*asset);
+    }
+
+    RETRO_API retro::Texture *retro_texture_load(const retro::AssetPath *path,
+                                                 const std::byte *buffer,
+                                                 std::int32_t buffer_length,
+                                                 std::int32_t *width,
+                                                 std::int32_t *height)
+    {
+        std::span buffer_span{buffer, static_cast<std::size_t>(buffer_length)};
+        auto loaded_texture = retro::Engine::instance().load_asset<retro::Texture>(*path, buffer_span);
+        if (!loaded_texture.has_value())
+        {
+            *width = 0;
+            *height = 0;
+            return nullptr;
+        }
+
+        const auto asset = *std::move(loaded_texture);
+        *width = asset->width();
+        *height = asset->height();
+        asset->retain();
+        return asset.get();
     }
 
     RETRO_API retro::CVector2i retro_texture_get_size(const retro::Texture *texture)

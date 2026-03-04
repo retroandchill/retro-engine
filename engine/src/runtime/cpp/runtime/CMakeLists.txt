@@ -9,7 +9,6 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/assets/asset_manager.cpp
         private/rendering/objects/sprite.cpp
         private/assets/asset.cpp
-        private/assets/filesystem_asset_source.cpp
         private/assets/textures/texture_decoder.cpp
         private/rendering/texture_manager.cpp
         private/world/scene_node.cpp
@@ -31,9 +30,7 @@ set(RETRO_RUNTIME_MODULES
         public/modules/rendering/objects/sprite.ixx
         public/modules/assets/asset_path.ixx
         public/modules/assets/asset.ixx
-        public/modules/assets/filesystem_asset_source.ixx
         public/modules/rendering/texture_manager.ixx
-        public/modules/assets/asset_source.ixx
         public/modules/assets/asset_decoder.ixx
         public/modules/assets/asset_load_result.ixx
         public/modules/assets/textures/texture_decoder.ixx

@@ -35,6 +35,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private readonly EngineHost _host;
     private GameThreadSynchronizationContext? _synchronizationContext;
 
+    private readonly AssetManager _assetManager;
+
     private static Engine? _instance;
 
     public IThreadSync ThreadSync =>
@@ -54,6 +56,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
         _host = new EngineHost(this, serviceProviderFactory(serviceCollection), _lifetime);
+        _assetManager = _host.Services.GetRequiredService<AssetManager>();
     }
 
     [MemberNotNull(nameof(_gameThread))]
@@ -64,9 +67,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         Interlocked.Exchange(ref _instance, this);
 
         _ = CultureManager.Instance;
-        AssetRegistry.RegisterDefaultAssetFactories();
 
-        _gameThread = new Thread(RunGameThread);
+        _gameThread = new Thread(RunGameThread) { Name = "Game Thread" };
         _gameThread.Start();
 
         unsafe
@@ -299,6 +301,12 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     public void WaitForGameThread()
     {
         _gameThread?.Join();
+    }
+
+    [CreateSyncVersion]
+    public ValueTask<Asset?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
+    {
+        return _assetManager.LoadAssetAsync(path, cancellationToken);
     }
 
     [CreateSyncVersion]

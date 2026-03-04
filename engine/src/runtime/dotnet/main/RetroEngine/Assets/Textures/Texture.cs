@@ -3,31 +3,21 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Runtime.InteropServices;
-using RetroEngine.Core.Math;
-using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets.Textures;
 
-public sealed partial class Texture : Asset
+public sealed class Texture : NativeAsset
 {
     internal static readonly Name TypeName = new("Texture");
 
     public int Width { get; }
     public int Height { get; }
 
-    private Texture(IntPtr handle)
-        : base(handle)
+    internal Texture(AssetPath path, IntPtr handle, int width, int height)
+        : base(path, handle)
     {
-        (Width, Height) = NativeGetSize(handle);
+        Width = width;
+        Height = height;
     }
-
-    internal static void RegisterAssetFactory()
-    {
-        AssetRegistry.RegisterAssetFactory(TypeName, ptr => new Texture(ptr));
-    }
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_get_size")]
-    private static partial Vector2I NativeGetSize(IntPtr texture);
 }

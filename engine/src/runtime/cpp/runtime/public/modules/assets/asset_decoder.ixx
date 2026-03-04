@@ -8,26 +8,40 @@ export module retro.runtime.assets.asset_decoder;
 
 import retro.runtime.assets.asset_path;
 
+import std;
 import retro.runtime.assets.asset;
 import retro.runtime.assets.asset_load_result;
 import retro.core.memory.ref_counted_ptr;
 import retro.core.io.buffered_stream;
+import retro.core.strings.name;
+import retro.core.containers.optional;
 
 namespace retro
 {
     export struct AssetDecodeContext
     {
         AssetPath path{};
+        std::span<const std::byte> bytes;
     };
 
     export class AssetDecoder
     {
+      protected:
+        explicit inline AssetDecoder(const std::type_index asset_type) noexcept : asset_type_{asset_type}
+        {
+        }
+
       public:
         virtual ~AssetDecoder() = default;
 
-        [[nodiscard]] virtual bool can_decode(const AssetDecodeContext &context, BufferedStream &stream) const = 0;
+        inline std::type_index asset_type() const noexcept
+        {
+            return asset_type_;
+        }
 
-        virtual AssetLoadResult<RefCountPtr<Asset>> decode(const AssetDecodeContext &context,
-                                                           BufferedStream &stream) = 0;
+        virtual Optional<RefCountPtr<Asset>> decode(const AssetDecodeContext &context) = 0;
+
+      private:
+        std::type_index asset_type_;
     };
 } // namespace retro
