@@ -99,40 +99,42 @@ extern "C"
                                                    const WindowCreatedCallback created_callback,
                                                    const OnErrorCallback error_callback)
     {
-        // NOLINTNEXTLINE
-        std::ignore = [&] -> retro::Task<>
+        std::ignore = [](retro::WindowDesc &&desc,
+                         retro::Engine *local_engine,
+                         void *local_user_data,
+                         const WindowCreatedCallback on_created,
+                         const OnErrorCallback on_error) -> retro::Task<>
         {
-            auto *local_engine = engine;
-            auto *local_user_data = user_data;
-            auto local_created_callback = created_callback;
-            auto local_error_callback = error_callback;
-            retro::WindowDesc desc{
-                .width = width,
-                .height = height,
-                .title = retro::convert_string<char>(
-                    std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
-                .flags = flags,
-            };
-
             try
             {
                 const auto window = co_await local_engine->create_new_window(std::move(desc));
                 if (!window.has_value())
                 {
-                    local_error_callback(local_user_data, window.error().message.data());
+                    on_error(local_user_data, window.error().message.data());
                 }
 
-                local_created_callback(local_user_data, window.value()->id());
+                on_created(local_user_data, window.value()->id());
             }
             catch (const std::exception &e)
             {
-                local_error_callback(local_user_data, e.what());
+                on_error(local_user_data, e.what());
             }
             catch (...)
             {
-                local_error_callback(local_user_data, "Unknown error");
+                on_error(local_user_data, "Unknown error");
             }
-        }();
+        }(
+            retro::WindowDesc{
+                .width = width,
+                .height = height,
+                .title = retro::convert_string<char>(
+                    std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                .flags = flags,
+            },
+            engine,
+            user_data,
+            created_callback,
+            error_callback);
     }
 
     RETRO_API void retro_destroy_engine(retro::Engine *engine)

@@ -4,13 +4,13 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.Assets.Textures;
 using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Platform;
 using RetroEngine.World;
 using Serilog;
-using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.Game.Sample;
 
