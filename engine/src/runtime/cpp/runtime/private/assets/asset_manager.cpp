@@ -27,7 +27,7 @@ namespace retro
         }
 
         auto decoder = decoders_.find(type_index);
-        if (decoder != decoders_.end())
+        if (decoder == decoders_.end())
         {
             get_logger().error("Asset type {} is not supported", type_index.name());
             return std::nullopt;

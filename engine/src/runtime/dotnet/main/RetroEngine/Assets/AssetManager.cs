@@ -12,12 +12,15 @@ using Zomp.SyncMethodGenerator;
 namespace RetroEngine.Assets;
 
 [RegisterSingleton]
-public sealed partial class AssetManager(ILogger<AssetManager> logger, IEnumerable<IAssetDecoder> decoders)
+public sealed partial class AssetManager(
+    ILogger<AssetManager> logger,
+    IEnumerable<IAssetPackage> packages,
+    IEnumerable<IAssetDecoder> decoders
+)
 {
-    private readonly ImmutableDictionary<Name, IAssetPackage> _packages = ImmutableDictionary<
-        Name,
-        IAssetPackage
-    >.Empty;
+    private readonly ImmutableDictionary<Name, IAssetPackage> _packages = packages.ToImmutableDictionary(x =>
+        x.PackageName
+    );
 
     private readonly ImmutableDictionary<Name, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
         x.AssetType

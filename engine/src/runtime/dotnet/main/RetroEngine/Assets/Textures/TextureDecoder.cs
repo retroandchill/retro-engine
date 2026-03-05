@@ -33,17 +33,10 @@ public partial class TextureDecoder : IAssetDecoder
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
         var bytes = memoryStream.ToArray();
-        var nativeTexture = NativeCreate(
-            context.Path,
-            bytes,
-            bytes.Length,
-            out var width,
-            out var height,
-            out var error
-        );
+        var nativeTexture = NativeCreate(context.Path, bytes, bytes.Length, out var width, out var height);
         return nativeTexture != IntPtr.Zero
             ? new Texture(context.Path, nativeTexture, width, height)
-            : throw new InvalidOperationException(error);
+            : throw new InvalidOperationException("Failed to load texture from stream.");
     }
 
     [LibraryImport(
@@ -53,17 +46,12 @@ public partial class TextureDecoder : IAssetDecoder
     )]
     private static partial IntPtr NativeLoad(in AssetPath path, out int width, out int height);
 
-    [LibraryImport(
-        NativeLibraries.RetroEngine,
-        EntryPoint = "retro_texture_create",
-        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
-    )]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load")]
     private static partial IntPtr NativeCreate(
         in AssetPath path,
         ReadOnlySpan<byte> bytes,
         int length,
         out int width,
-        out int height,
-        out string? error
+        out int height
     );
 }

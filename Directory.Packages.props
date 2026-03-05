@@ -35,6 +35,7 @@
     <PackageVersion Include="StaticViewLocator" Version="0.3.0" />
     <PackageVersion Include="Superpower" Version="3.1.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.1" />
+    <PackageVersion Include="System.IO.Abstractions" Version="22.1.0" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.3" />
     <PackageVersion Include="System.Text.Json" Version="10.0.1" />
     <PackageVersion Include="TimeZoneNames" Version="7.0.0" />
