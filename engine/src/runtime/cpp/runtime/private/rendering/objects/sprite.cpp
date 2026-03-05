@@ -24,6 +24,25 @@ namespace retro
         };
     }
 
+    class SpriteDrawCommandSource final : public DrawCommandSource
+    {
+      public:
+        explicit SpriteDrawCommandSource(std::pmr::vector<SpriteBatch> &&batches) : batches_(std::move(batches))
+        {
+        }
+
+        [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override
+        {
+            auto *resource = batches_.get_allocator().resource();
+            return batches_ |
+                   std::views::transform([](const SpriteBatch &batch) { return batch.create_draw_command(); }) |
+                   std::ranges::to<std::pmr::vector<DrawCommand>>(resource);
+        }
+
+      private:
+        std::pmr::vector<SpriteBatch> batches_;
+    };
+
     std::type_index SpriteRenderPipeline::component_type() const
     {
         return typeid(Sprite);
@@ -113,6 +132,55 @@ namespace retro
             viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
             instances.push_back(instance);
         }
+    }
+
+    SmallUniquePtr<DrawCommandSource> SpriteRenderPipeline::collect_draw_calls_source(
+        const SceneNodeList &nodes,
+        const Vector2u viewport_size,
+        const Viewport &viewport,
+        std::pmr::memory_resource &memory_resource)
+    {
+        std::pmr::unordered_map<const Texture *, SpriteBatch> batches{&memory_resource};
+        for (const auto *node : nodes.nodes_of_type<Sprite>())
+        {
+            auto *texture = node->texture().get();
+            if (texture == nullptr)
+                continue;
+
+            const auto &transform = node->transform();
+
+            SpriteInstanceData instance{.transform = transform.matrix(),
+                                        .translation = transform.translation(),
+                                        .z_order = node->z_order(),
+                                        .pivot = node->pivot(),
+                                        .size = node->size(),
+                                        .min_uv = node->uvs().min,
+                                        .max_uv = node->uvs().max,
+                                        .tint = node->tint()};
+
+            if (auto it = batches.find(texture); it == batches.end())
+            {
+                auto [pair, inserted] =
+                    batches.emplace(texture,
+                                    SpriteBatch{
+                                        .texture = texture,
+                                        .instances = std::pmr::vector<SpriteInstanceData>{&memory_resource},
+                                        .viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size),
+                                    });
+
+                pair->second.instances.push_back(instance);
+            }
+            else
+            {
+                auto &[draw_texture, instances, viewport_draw_info] = batches[texture];
+                draw_texture = texture;
+                viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
+                instances.push_back(instance);
+            }
+        }
+
+        return make_unique_small<SpriteDrawCommandSource>(
+            std::move(batches) | std::views::values | std::ranges::to<std::pmr::vector<SpriteBatch>>(&memory_resource));
     }
 
     void SpriteRenderPipeline::execute(RenderContext &context, const Viewport &viewport)

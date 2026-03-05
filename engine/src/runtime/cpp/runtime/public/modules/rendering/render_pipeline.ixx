@@ -13,6 +13,7 @@ import retro.runtime.world.scene_node;
 import retro.runtime.world.viewport;
 import retro.core.math.vector;
 import retro.core.di;
+import retro.core.memory.small_unique_ptr;
 
 namespace retro
 {
@@ -38,6 +39,12 @@ namespace retro
         virtual void collect_draw_calls(const SceneNodeList &nodes,
                                         Vector2u viewport_size,
                                         const Viewport &viewport) = 0;
+
+        virtual SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
+            const SceneNodeList &nodes,
+            Vector2u viewport_size,
+            const Viewport &viewport,
+            std::pmr::memory_resource &memory_resource) = 0;
 
         virtual void execute(RenderContext &context, const Viewport &viewport) = 0;
     };

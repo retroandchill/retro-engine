@@ -47,6 +47,25 @@ namespace retro
         };
     }
 
+    class GeometryDrawCommandSource final : public DrawCommandSource
+    {
+      public:
+        explicit GeometryDrawCommandSource(std::pmr::vector<GeometryBatch> &&batches) : batches_(std::move(batches))
+        {
+        }
+
+        [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override
+        {
+            auto *resource = batches_.get_allocator().resource();
+            return batches_ |
+                   std::views::transform([](const GeometryBatch &batch) { return batch.create_draw_command(); }) |
+                   std::ranges::to<std::pmr::vector<DrawCommand>>(resource);
+        }
+
+      private:
+        std::pmr::vector<GeometryBatch> batches_;
+    };
+
     void GeometryObject::set_geometry(GeometryType type)
     {
         switch (type)
@@ -150,6 +169,55 @@ namespace retro
             batch.viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
             batch.instances.push_back(instance);
         }
+    }
+
+    SmallUniquePtr<DrawCommandSource> GeometryRenderPipeline::collect_draw_calls_source(
+        const SceneNodeList &nodes,
+        Vector2u viewport_size,
+        const Viewport &viewport,
+        std::pmr::memory_resource &memory_resource)
+    {
+        std::pmr::unordered_map<const Geometry *, GeometryBatch> geometry_batches{&memory_resource};
+        for (const auto *node : nodes.nodes_of_type<GeometryObject>())
+        {
+            auto *geometry = node->geometry().get();
+            if (geometry == nullptr)
+                continue;
+
+            const auto &transform = node->transform();
+
+            GeometryInstanceData instance{.transform = transform.matrix(),
+                                          .translation = transform.translation(),
+                                          .z_order = node->z_order(),
+                                          .pivot = node->pivot(),
+                                          .size = node->size(),
+                                          .color = node->color(),
+                                          .has_texture = 0};
+
+            if (auto it = geometry_batches.find(geometry); it == geometry_batches.end())
+            {
+                auto [pair, inserted] = geometry_batches.emplace(
+                    geometry,
+                    GeometryBatch{
+                        .geometry = geometry,
+                        .instances = std::pmr::vector<GeometryInstanceData>{&memory_resource},
+                        .viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size),
+                    });
+
+                pair->second.instances.push_back(instance);
+            }
+            else
+            {
+                auto &batch = it->second;
+                batch.geometry = geometry;
+                batch.viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
+                batch.instances.push_back(instance);
+            }
+        }
+
+        return make_unique_small<GeometryDrawCommandSource>(
+            std::move(geometry_batches) | std::views::values |
+            std::ranges::to<std::pmr::vector<GeometryBatch>>(&memory_resource));
     }
 
     void GeometryRenderPipeline::execute(RenderContext &context, const Viewport &viewport)

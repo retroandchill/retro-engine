@@ -22,6 +22,7 @@ import retro.runtime.world.scene;
 import retro.runtime.world.viewport;
 import retro.runtime.world.scene_node;
 import retro.runtime.assets.textures.texture;
+import retro.core.memory.small_unique_ptr;
 
 namespace retro
 {
@@ -48,7 +49,7 @@ namespace retro
     export struct SpriteBatch
     {
         const Texture *texture = nullptr;
-        std::vector<SpriteInstanceData> instances;
+        std::pmr::vector<SpriteInstanceData> instances;
         ViewportDrawInfo viewport_draw_info{};
 
         [[nodiscard]] DrawCommand create_draw_command() const;
@@ -127,6 +128,12 @@ namespace retro
         void clear_draw_queue() override;
 
         void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport) override;
+
+        SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
+            const SceneNodeList &nodes,
+            Vector2u viewport_size,
+            const Viewport &viewport,
+            std::pmr::memory_resource &memory_resource) override;
 
         void execute(RenderContext &context, const Viewport &viewport) override;
 

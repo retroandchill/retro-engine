@@ -26,4 +26,12 @@ namespace retro
         std::size_t index_count{};
         std::size_t instance_count{};
     };
+
+    export class DrawCommandSource
+    {
+      public:
+        virtual ~DrawCommandSource() = default;
+
+        [[nodiscard]] virtual std::pmr::vector<DrawCommand> get_draw_commands() const noexcept = 0;
+    };
 } // namespace retro
