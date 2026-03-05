@@ -10,13 +10,15 @@ module;
 
 export module retro.runtime.rendering.pipeline_manager;
 
+import std;
 import retro.core.di;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;
 import retro.runtime.world.scene_node;
 import retro.runtime.world.viewport;
-import std;
+import retro.core.memory.small_unique_ptr;
+import retro.runtime.rendering.draw_command;
 
 namespace retro
 {
@@ -41,6 +43,12 @@ namespace retro
         }
 
         void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport);
+
+        std::pmr::vector<SmallUniquePtr<DrawCommandSource>> collect_draw_commands_sources(
+            const SceneNodeList &nodes,
+            Vector2u viewport_size,
+            const Viewport &viewport,
+            std::pmr::memory_resource &memory_resource);
 
       private:
         std::map<std::type_index, PipelineUsage> pipelines_{};

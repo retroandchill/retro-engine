@@ -57,6 +57,8 @@ namespace retro
 
         void wait_for_current_frame() override;
 
+        std::pmr::memory_resource &get_next_frame_memory_resource() override;
+
         void begin_frame() override;
 
         void end_frame() override;

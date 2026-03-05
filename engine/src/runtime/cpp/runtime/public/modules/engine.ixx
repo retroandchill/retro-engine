@@ -69,6 +69,8 @@ namespace retro
 
         RETRO_API void pump_tasks(std::size_t max = index_none<std::size_t>);
 
+        RETRO_API void sync_renderer_state();
+
         RETRO_API void render();
 
         RETRO_API void on_loop_exit();

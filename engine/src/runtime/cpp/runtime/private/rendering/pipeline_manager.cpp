@@ -29,4 +29,18 @@ namespace retro
             pipeline->collect_draw_calls(nodes, viewport_size, viewport);
         }
     }
+    std::pmr::vector<SmallUniquePtr<DrawCommandSource>> PipelineManager::collect_draw_commands_sources(
+        const SceneNodeList &nodes,
+        Vector2u viewport_size,
+        const Viewport &viewport,
+        std::pmr::memory_resource &memory_resource)
+    {
+        return pipelines_ | std::views::values |
+               std::views::filter([](const PipelineUsage &usage) { return usage.usage_count > 0; }) |
+               std::views::transform(&PipelineUsage::pipeline) |
+               std::views::transform(
+                   [&nodes, &viewport_size, &viewport, &memory_resource](RenderPipeline *pipeline)
+                   { return pipeline->collect_draw_calls_source(nodes, viewport_size, viewport, memory_resource); }) |
+               std::ranges::to<std::pmr::vector<SmallUniquePtr<DrawCommandSource>>>(&memory_resource);
+    }
 } // namespace retro

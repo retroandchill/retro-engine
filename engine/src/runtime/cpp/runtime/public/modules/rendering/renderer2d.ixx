@@ -30,6 +30,8 @@ namespace retro
 
         virtual void wait_for_current_frame() = 0;
 
+        virtual std::pmr::memory_resource &get_next_frame_memory_resource() = 0;
+
         virtual void begin_frame() = 0;
 
         virtual void end_frame() = 0;

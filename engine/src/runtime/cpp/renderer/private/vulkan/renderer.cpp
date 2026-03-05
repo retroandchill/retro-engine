@@ -137,9 +137,15 @@ namespace retro
         }
     }
 
+    std::pmr::memory_resource &VulkanRenderer2D::get_next_frame_memory_resource()
+    {
+        // TODO: For now just return the default one
+        return *std::pmr::get_default_resource();
+    }
+
     void VulkanRenderer2D::begin_frame()
     {
-        auto dev = device_.device();
+        const auto dev = device_.device();
 
         current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
         auto in_flight = sync_.in_flight(current_frame_);

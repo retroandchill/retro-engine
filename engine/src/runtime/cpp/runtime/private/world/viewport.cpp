@@ -26,6 +26,25 @@ namespace retro
                      .height = static_cast<std::uint32_t>(relative_height)};
     }
 
+    namespace
+    {
+        std::uint64_t next_viewport_id = 0;
+
+        std::uint64_t generate_viewport_id() noexcept
+        {
+            while (next_viewport_id++ == 0)
+            {
+            }
+
+            return next_viewport_id;
+        }
+    } // namespace
+
+    Viewport::Viewport(const ScreenLayout &layout, const std::int32_t z_order)
+        : id_{generate_viewport_id()}, screen_layout_{layout}, z_order_{z_order}
+    {
+    }
+
     void Viewport::set_z_order(const std::int32_t z_order) noexcept
     {
         z_order_ = z_order;

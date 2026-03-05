@@ -21,6 +21,8 @@ import retro.runtime.rendering.objects.sprite;
 import retro.core.containers.optional;
 import retro.core.math.vector;
 import retro.platform.event;
+import retro.core.memory.small_unique_ptr;
+import retro.runtime.rendering.draw_command;
 
 namespace retro
 {
@@ -117,6 +119,25 @@ namespace retro
     void Engine::pump_tasks(const std::size_t max)
     {
         scheduler_.pump(max);
+    }
+
+    void Engine::sync_renderer_state()
+    {
+        for (const auto &renderer : renderers_ | std::views::values)
+        {
+            auto &memory_resource = renderer->get_next_frame_memory_resource();
+            for (auto &viewport : viewports_.viewports())
+            {
+                auto scene = viewport->scene();
+                if (!scene.has_value())
+                    continue;
+
+                auto draw_call_sources = pipeline_manager_.collect_draw_commands_sources(scene->nodes(),
+                                                                                         renderer->window().size(),
+                                                                                         *viewport,
+                                                                                         memory_resource);
+            }
+        }
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst

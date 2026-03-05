@@ -72,9 +72,11 @@ namespace retro
         using WindowChanged =
             MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
 
-        inline Viewport(const ScreenLayout &layout, const std::int32_t z_order)
-            : screen_layout_{layout}, z_order_{z_order}
+        Viewport(const ScreenLayout &layout, std::int32_t z_order);
+
+        [[nodiscard]] inline std::uint64_t id() const noexcept
         {
+            return id_;
         }
 
         [[nodiscard]] inline const ScreenLayout &screen_layout() const noexcept
@@ -141,6 +143,7 @@ namespace retro
       private:
         friend class ViewportManager;
 
+        std::uint64_t id_;
         ScreenLayout screen_layout_;
         CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
