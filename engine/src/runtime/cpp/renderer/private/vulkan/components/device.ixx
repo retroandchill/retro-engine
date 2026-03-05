@@ -35,21 +35,29 @@ namespace retro
         {
             return device_.get();
         }
-        [[nodiscard]] inline vk::Queue graphics_queue() const noexcept
-        {
-            return graphics_queue_;
-        }
-        [[nodiscard]] inline vk::Queue present_queue() const noexcept
-        {
-            return present_queue_;
-        }
+
         [[nodiscard]] inline std::uint32_t graphics_family_index() const noexcept
         {
             return graphics_family_index_;
         }
+
         [[nodiscard]] inline std::uint32_t present_family_index() const noexcept
         {
             return present_family_index_;
+        }
+
+        template <std::invocable<vk::Queue> Functor>
+        decltype(auto) submit_to_graphics_queue(Functor &&functor) const
+        {
+            std::scoped_lock graphics_queue_lock(graphics_queue_mutex_);
+            return std::invoke(std::forward<Functor>(functor), graphics_queue_);
+        }
+
+        template <std::invocable<vk::Queue> Functor>
+        decltype(auto) submit_to_present_queue(Functor &&functor) const
+        {
+            std::scoped_lock graphics_queue_lock(present_queue_mutex_);
+            return std::invoke(std::forward<Functor>(functor), present_queue_);
         }
 
       private:
@@ -59,5 +67,8 @@ namespace retro
         std::uint32_t present_family_index_{std::numeric_limits<std::uint32_t>::max()};
         vk::Queue graphics_queue_{};
         vk::Queue present_queue_{};
+
+        mutable std::mutex graphics_queue_mutex_;
+        mutable std::mutex present_queue_mutex_;
     };
 } // namespace retro

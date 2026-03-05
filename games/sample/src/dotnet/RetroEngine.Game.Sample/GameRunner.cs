@@ -40,12 +40,15 @@ public sealed class GameRunner : AsyncGameSession
         viewport2.CameraPivot = new Vector2F(0.5f, 0.5f);
         viewport2.ZOrder = -1;
 
-        var eeveeTexture = Asset.Load<Texture>(new AssetPath("graphics", "133.png"));
+        var eeveeTexture = await Asset.LoadAsync<Texture>(new AssetPath("graphics", "133.png"), cancellationToken);
         if (eeveeTexture is null)
         {
             return 1;
         }
-        var backgroundTexture = Asset.Load<Texture>(new AssetPath("graphics", "background.png"));
+        var backgroundTexture = await Asset.LoadAsync<Texture>(
+            new AssetPath("graphics", "background.png"),
+            cancellationToken
+        );
 
         using var flipbook = new SimpleFlipbook(scene1, eeveeTexture, 10.0f);
         flipbook.Scale = new Vector2F(3, 3);

@@ -195,10 +195,14 @@ namespace retro
                                          .signalSemaphoreCount = signal_semaphores.size(),
                                          .pSignalSemaphores = signal_semaphores.data()};
 
-        if (device_.graphics_queue().submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
-        }
+        device_.submit_to_graphics_queue(
+            [&submit_info, in_flight](vk::Queue graphics_queue)
+            {
+                if (graphics_queue.submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
+                {
+                    throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
+                }
+            });
 
         std::array swapchains = {swapchain_.handle()};
 
@@ -208,15 +212,19 @@ namespace retro
                                         .pSwapchains = swapchains.data(),
                                         .pImageIndices = &image_index_};
 
-        if (const auto result = device_.present_queue().presentKHR(&present_info);
-            result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
-        {
-            recreate_swapchain();
-        }
-        else if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
-        }
+        device_.submit_to_present_queue(
+            [this, &present_info](vk::Queue present_queue)
+            {
+                if (const auto result = present_queue.presentKHR(&present_info);
+                    result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+                {
+                    recreate_swapchain();
+                }
+                else if (result != vk::Result::eSuccess)
+                {
+                    throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
+                }
+            });
 
         pipeline_manager_.clear_draw_queue();
         buffer_manager_.reset();

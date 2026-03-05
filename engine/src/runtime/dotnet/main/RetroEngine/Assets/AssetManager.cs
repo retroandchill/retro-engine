@@ -26,19 +26,10 @@ public sealed partial class AssetManager(
         x.AssetType
     );
 
-    private readonly ConcurrentDictionary<AssetPath, Task<Asset?>> _loadingTasks = new();
+    private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
     private readonly ConcurrentDictionary<AssetPath, WeakReference<Asset>> _assetCache = new();
 
-    public Asset? LoadAsset(AssetPath path)
-    {
-        if (_assetCache.TryGetValue(path, out var asset) && asset.TryGetTarget(out var cachedAsset))
-        {
-            return cachedAsset;
-        }
-
-        return LoadAssetInternal(path);
-    }
-
+    [CreateSyncVersion]
     public async ValueTask<Asset?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
         if (_assetCache.TryGetValue(path, out var asset) && asset.TryGetTarget(out var cachedAsset))
@@ -46,53 +37,58 @@ public sealed partial class AssetManager(
             return cachedAsset;
         }
 
-        var loadTask = _loadingTasks.GetOrAdd(path, _ => LoadAssetInternalAsync(path, cancellationToken));
+        var semaphore = _loadingSemaphores.GetOrAdd(path, _ => new SemaphoreSlim(1));
+#if SYNC_ONLY
+        semaphore.Wait();
+#else
+        await semaphore.WaitAsync(cancellationToken);
+#endif
+
         try
         {
-            return await loadTask;
+            if (_assetCache.TryGetValue(path, out asset) && asset.TryGetTarget(out cachedAsset))
+            {
+                return cachedAsset;
+            }
+
+            if (!_packages.TryGetValue(path.PackageName, out var package))
+            {
+                logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
+                return null;
+            }
+
+            if (!package.HasAsset(path.AssetName))
+            {
+                logger.LogWarning(
+                    "Asset '{AssetName}' not found in package '{PackageName}'",
+                    path.AssetName,
+                    path.PackageName
+                );
+                return null;
+            }
+
+            var assetType = await package.GetAssetTypeAsync(path.AssetName, cancellationToken);
+            if (!_decoders.TryGetValue(assetType, out var decoder))
+            {
+                logger.LogError("No decoder found for asset type '{AssetType}'", assetType);
+                return null;
+            }
+
+            var decodeContext = new AssetDecodeContext(path);
+            if (decoder.TryLoadFromNativeCache(decodeContext, out cachedAsset))
+            {
+                _assetCache[path] = new WeakReference<Asset>(cachedAsset);
+                return cachedAsset;
+            }
+
+            await using var assetStream = package.OpenAsset(path.AssetName);
+            var decoded = await decoder.DecodeAsync(decodeContext, assetStream, cancellationToken);
+            _assetCache[path] = new WeakReference<Asset>(decoded);
+            return decoded;
         }
         finally
         {
-            _loadingTasks.TryRemove(path, out _);
+            semaphore.Release();
         }
-    }
-
-    [CreateSyncVersion]
-    private async Task<Asset?> LoadAssetInternalAsync(AssetPath path, CancellationToken cancellationToken)
-    {
-        if (!_packages.TryGetValue(path.PackageName, out var package))
-        {
-            logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
-            return null;
-        }
-
-        if (!package.HasAsset(path.AssetName))
-        {
-            logger.LogWarning(
-                "Asset '{AssetName}' not found in package '{PackageName}'",
-                path.AssetName,
-                path.PackageName
-            );
-            return null;
-        }
-
-        var assetType = await package.GetAssetTypeAsync(path.AssetName, cancellationToken);
-        if (!_decoders.TryGetValue(assetType, out var decoder))
-        {
-            logger.LogError("No decoder found for asset type '{AssetType}'", assetType);
-            return null;
-        }
-
-        var decodeContext = new AssetDecodeContext(path);
-        if (decoder.TryLoadFromNativeCache(decodeContext, out var cachedAsset))
-        {
-            _assetCache[path] = new WeakReference<Asset>(cachedAsset);
-            return cachedAsset;
-        }
-
-        await using var assetStream = package.OpenAsset(path.AssetName);
-        var decoded = await decoder.DecodeAsync(decodeContext, assetStream, cancellationToken);
-        _assetCache[path] = new WeakReference<Asset>(decoded);
-        return decoded;
     }
 }

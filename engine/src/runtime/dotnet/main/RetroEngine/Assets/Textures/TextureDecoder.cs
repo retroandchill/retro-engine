@@ -31,7 +31,7 @@ public partial class TextureDecoder : IAssetDecoder
     )
     {
         using var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream, cancellationToken);
+        await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
         var bytes = memoryStream.ToArray();
         var nativeTexture = NativeCreate(context.Path, bytes, bytes.Length, out var width, out var height);
         return nativeTexture != IntPtr.Zero

@@ -47,14 +47,16 @@ namespace retro
     export class VulkanTextureManager final : public TextureManager
     {
       public:
-        using Dependencies = TypeList<VulkanDevice &, vk::CommandPool>;
+        using Dependencies = TypeList<VulkanDevice &>;
 
-        VulkanTextureManager(VulkanDevice &device, vk::CommandPool command_pool);
+        VulkanTextureManager(VulkanDevice &device);
 
         std::unique_ptr<TextureRenderData> upload_texture(const ImageData &image_data) override;
 
       private:
-        [[nodiscard]] vk::UniqueCommandBuffer begin_one_shot_commands() const;
+        vk::CommandPool get_thread_command_pool() const;
+
+        [[nodiscard]] vk::UniqueCommandBuffer begin_one_shot_commands(vk::CommandPool command_pool) const;
         void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
 
         static void transition_image_layout(vk::CommandBuffer cmd,
@@ -63,7 +65,9 @@ namespace retro
                                             vk::ImageLayout new_layout);
 
         VulkanDevice &device_;
-        vk::CommandPool command_pool_;
         vk::UniqueSampler linear_sampler_;
+
+        mutable std::shared_mutex thread_pools_mutex_;
+        mutable std::unordered_map<std::thread::id, vk::UniqueCommandPool> thread_pools_;
     };
 } // namespace retro

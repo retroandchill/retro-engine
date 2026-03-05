@@ -42,13 +42,15 @@ namespace retro
         }
     } // namespace
 
-    VulkanTextureManager::VulkanTextureManager(VulkanDevice &device, const vk::CommandPool command_pool)
-        : device_{device}, command_pool_{command_pool}, linear_sampler_{create_linear_sampler(device_.device())}
+    VulkanTextureManager::VulkanTextureManager(VulkanDevice &device)
+        : device_{device}, linear_sampler_{create_linear_sampler(device_.device())}
     {
     }
 
     std::unique_ptr<TextureRenderData> VulkanTextureManager::upload_texture(const ImageData &image_data)
     {
+        auto command_pool = get_thread_command_pool();
+
         auto device = device_.device();
         auto image_size = image_data.bytes().size();
         auto image_format = vk::Format::eR8G8B8A8Srgb;
@@ -102,7 +104,7 @@ namespace retro
 
         // Perform the copy + transitions
         {
-            vk::UniqueCommandBuffer cmd = begin_one_shot_commands();
+            vk::UniqueCommandBuffer cmd = begin_one_shot_commands(command_pool);
 
             transition_image_layout(cmd.get(),
                                     image.get(),
@@ -153,12 +155,36 @@ namespace retro
                                                          image_data.height());
     }
 
-    vk::UniqueCommandBuffer VulkanTextureManager::begin_one_shot_commands() const
+    vk::CommandPool VulkanTextureManager::get_thread_command_pool() const
+    {
+        auto thread_id = std::this_thread::get_id();
+
+        {
+            std::shared_lock lock{thread_pools_mutex_};
+
+            auto it = thread_pools_.find(thread_id);
+            if (it != thread_pools_.end())
+            {
+                return it->second.get();
+            }
+        }
+
+        std::unique_lock lock{thread_pools_mutex_};
+        auto device = device_.device();
+
+        vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                            .queueFamilyIndex = device_.graphics_family_index()};
+
+        auto &pool = thread_pools_[thread_id] = device.createCommandPoolUnique(pool_info);
+        return pool.get();
+    }
+
+    vk::UniqueCommandBuffer VulkanTextureManager::begin_one_shot_commands(vk::CommandPool command_pool) const
     {
         const auto device = device_.device();
 
         const vk::CommandBufferAllocateInfo alloc_info{
-            .commandPool = command_pool_,
+            .commandPool = command_pool,
             .level = vk::CommandBufferLevel::ePrimary,
             .commandBufferCount = 1,
         };
@@ -189,10 +215,14 @@ namespace retro
             .pCommandBuffers = &raw_cmd,
         };
 
-        if (device_.graphics_queue().submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to submit one-shot command buffer"};
-        }
+        device_.submit_to_graphics_queue(
+            [&submit_info, &fence](vk::Queue graphics_queue)
+            {
+                if (graphics_queue.submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
+                {
+                    throw std::runtime_error{"VulkanRenderer2D: failed to submit one-shot command buffer"};
+                }
+            });
 
         // Simple and safe for asset loading. If you later want async streaming, swap this for a timeline semaphore.
         if (device.waitForFences(1, &fence.get(), vk::True, std::numeric_limits<std::uint64_t>::max()) !=
