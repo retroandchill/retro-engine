@@ -24,25 +24,6 @@ namespace retro
         };
     }
 
-    class SpriteDrawCommandSource final : public DrawCommandSource
-    {
-      public:
-        explicit SpriteDrawCommandSource(std::pmr::vector<SpriteBatch> &&batches) : batches_(std::move(batches))
-        {
-        }
-
-        [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override
-        {
-            auto *resource = batches_.get_allocator().resource();
-            return batches_ |
-                   std::views::transform([](const SpriteBatch &batch) { return batch.create_draw_command(); }) |
-                   std::ranges::to<std::pmr::vector<DrawCommand>>(resource);
-        }
-
-      private:
-        std::pmr::vector<SpriteBatch> batches_;
-    };
-
     std::type_index SpriteRenderPipeline::component_type() const
     {
         return typeid(Sprite);
@@ -179,8 +160,8 @@ namespace retro
             }
         }
 
-        return make_unique_small<SpriteDrawCommandSource>(
-            std::move(batches) | std::views::values | std::ranges::to<std::pmr::vector<SpriteBatch>>(&memory_resource));
+        return DrawCommandSource::from(std::move(batches) | std::views::values |
+                                       std::ranges::to<std::pmr::vector<SpriteBatch>>(&memory_resource));
     }
 
     void SpriteRenderPipeline::execute(RenderContext &context, const Viewport &viewport)

@@ -9,6 +9,7 @@ export module retro.runtime.rendering.draw_command;
 import std;
 import retro.runtime.rendering.texture_manager;
 import retro.core.containers.inline_list;
+import retro.core.memory.small_unique_ptr;
 
 namespace retro
 {
@@ -27,11 +28,49 @@ namespace retro
         std::size_t instance_count{};
     };
 
+    template <typename T>
+    concept DrawCommandData = requires(const T &data) {
+        {
+            data.create_draw_command()
+        } -> std::convertible_to<DrawCommand>;
+    };
+
     export class DrawCommandSource
     {
       public:
         virtual ~DrawCommandSource() = default;
 
+        template <DrawCommandData T>
+            requires std::same_as<T, std::remove_cvref_t<T>>
+        static SmallUniquePtr<DrawCommandSource> from(std::pmr::vector<T> data);
+
         [[nodiscard]] virtual std::pmr::vector<DrawCommand> get_draw_commands() const noexcept = 0;
     };
+
+    template <DrawCommandData T>
+        requires std::same_as<T, std::remove_cvref_t<T>>
+    class DrawCommandSourceImpl final : public DrawCommandSource
+    {
+      public:
+        explicit DrawCommandSourceImpl(std::pmr::vector<T> data) : data_(std::move(data))
+        {
+        }
+
+        [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override
+        {
+            auto *resource = data_.get_allocator().resource();
+            return data_ | std::views::transform([](const auto &data) { return data.create_draw_command(); }) |
+                   std::ranges::to<std::pmr::vector<DrawCommand>>(resource);
+        }
+
+      private:
+        std::pmr::vector<T> data_;
+    };
+
+    template <DrawCommandData T>
+        requires std::same_as<T, std::remove_cvref_t<T>>
+    SmallUniquePtr<DrawCommandSource> DrawCommandSource::from(std::pmr::vector<T> data)
+    {
+        return make_unique_small<DrawCommandSourceImpl<T>>(std::move(data));
+    }
 } // namespace retro

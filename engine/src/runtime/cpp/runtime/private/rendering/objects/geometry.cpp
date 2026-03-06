@@ -47,25 +47,6 @@ namespace retro
         };
     }
 
-    class GeometryDrawCommandSource final : public DrawCommandSource
-    {
-      public:
-        explicit GeometryDrawCommandSource(std::pmr::vector<GeometryBatch> &&batches) : batches_(std::move(batches))
-        {
-        }
-
-        [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override
-        {
-            auto *resource = batches_.get_allocator().resource();
-            return batches_ |
-                   std::views::transform([](const GeometryBatch &batch) { return batch.create_draw_command(); }) |
-                   std::ranges::to<std::pmr::vector<DrawCommand>>(resource);
-        }
-
-      private:
-        std::pmr::vector<GeometryBatch> batches_;
-    };
-
     void GeometryObject::set_geometry(GeometryType type)
     {
         switch (type)
@@ -215,9 +196,8 @@ namespace retro
             }
         }
 
-        return make_unique_small<GeometryDrawCommandSource>(
-            std::move(geometry_batches) | std::views::values |
-            std::ranges::to<std::pmr::vector<GeometryBatch>>(&memory_resource));
+        return DrawCommandSource::from(std::move(geometry_batches) | std::views::values |
+                                       std::ranges::to<std::pmr::vector<GeometryBatch>>(&memory_resource));
     }
 
     void GeometryRenderPipeline::execute(RenderContext &context, const Viewport &viewport)
