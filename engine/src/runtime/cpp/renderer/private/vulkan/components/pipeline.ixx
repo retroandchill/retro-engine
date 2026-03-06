@@ -21,17 +21,17 @@ namespace retro
     {
       public:
         inline VulkanRenderPipeline(RenderPipeline &pipeline,
-                                    vk::Device device,
+                                    VulkanDevice &device,
                                     const VulkanSwapchain &swapchain,
                                     vk::RenderPass render_pass)
-            : device_{device}, pipeline_{std::addressof(pipeline)}
+            : device_{&device}, pipeline_{std::addressof(pipeline)}
         {
             recreate(device, swapchain);
         }
 
         void clear_draw_queue();
 
-        void recreate(vk::Device device, const VulkanSwapchain &swapchain);
+        void recreate(VulkanDevice &device, const VulkanSwapchain &swapchain);
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
@@ -40,16 +40,17 @@ namespace retro
                              VulkanBufferManager &buffer_manager);
 
       private:
-        [[nodiscard]] vk::UniquePipelineLayout create_pipeline_layout(vk::Device device);
+        [[nodiscard]] vk::UniquePipelineLayout create_pipeline_layout(VulkanDevice &device);
 
-        vk::UniquePipeline create_graphics_pipeline(vk::Device device,
+        vk::UniquePipeline create_graphics_pipeline(VulkanDevice &device,
                                                     vk::PipelineLayout layout,
-                                                    const VulkanSwapchain &swapchain);
+                                                    const VulkanSwapchain &swapchain) const;
 
-        static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
+        static vk::UniqueShaderModule create_shader_module(const VulkanDevice &device,
+                                                           const std::filesystem::path &path);
 
         RenderPipeline *pipeline_;
-        vk::Device device_;
+        VulkanDevice *device_;
         vk::UniquePipelineLayout pipeline_layout_;
         vk::UniqueDescriptorSetLayout descriptor_set_layout_;
         vk::UniquePipeline graphics_pipeline_;
@@ -58,10 +59,10 @@ namespace retro
     export class VulkanPipelineManager
     {
       public:
-        using Dependencies = TypeList<VulkanDevice>;
+        using Dependencies = TypeList<VulkanDevice &>;
 
-        explicit inline VulkanPipelineManager(const VulkanDevice &device)
-            : device_{device.device()}, cache_{device_.createPipelineCacheUnique(vk::PipelineCacheCreateInfo{})}
+        explicit inline VulkanPipelineManager(VulkanDevice &device)
+            : device_{device}, cache_{device_.create_pipeline_cache()}
         {
         }
 
@@ -81,7 +82,7 @@ namespace retro
         void clear_draw_queue();
 
       private:
-        vk::Device device_;
+        VulkanDevice &device_;
         vk::UniquePipelineCache cache_;
 
         std::vector<VulkanRenderPipeline> pipelines_;

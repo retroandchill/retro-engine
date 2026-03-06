@@ -7,6 +7,8 @@
 export module retro.renderer.vulkan.components.swapchain;
 
 import vulkan_hpp;
+import retro.platform.window;
+import retro.renderer.vulkan.components.device;
 
 namespace retro
 {
@@ -36,7 +38,10 @@ namespace retro
     export class VulkanSwapchain
     {
       public:
-        explicit VulkanSwapchain(const SwapchainConfig &config);
+        explicit VulkanSwapchain(vk::SurfaceKHR surface,
+                                 VulkanDevice &device,
+                                 std::uint32_t width,
+                                 std::uint32_t height);
 
         [[nodiscard]] inline vk::SwapchainKHR handle() const noexcept
         {
@@ -62,7 +67,12 @@ namespace retro
             return image_resources_;
         }
 
+        void recreate(std::uint32_t width, std::uint32_t height);
+
       private:
+        vk::SurfaceKHR surface_;
+        VulkanDevice &device_;
+
         vk::UniqueSwapchainKHR swapchain_{};
         vk::UniqueRenderPass render_pass_;
         std::vector<VulkanImageResources> image_resources_;

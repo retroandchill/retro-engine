@@ -104,7 +104,7 @@ namespace retro
     class VulkanRenderContext final : public RenderContext
     {
       public:
-        inline VulkanRenderContext(vk::Device device,
+        inline VulkanRenderContext(VulkanDevice &device,
                                    vk::Pipeline pipeline,
                                    const vk::CommandBuffer cmd,
                                    vk::PipelineLayout pipeline_layout,
@@ -196,12 +196,10 @@ namespace retro
             if (layout.descriptor_bindings.empty())
                 return;
 
-            vk::DescriptorSetAllocateInfo alloc_info{};
-            alloc_info.descriptorPool = descriptor_pool_;
-            alloc_info.descriptorSetCount = static_cast<std::uint32_t>(layout.descriptor_bindings.size());
-            alloc_info.pSetLayouts = &descriptor_set_layout_;
-
-            auto descriptor_sets = device_.allocateDescriptorSets(alloc_info);
+            auto descriptor_sets =
+                device_.create_descriptor_sets(descriptor_pool_,
+                                               static_cast<std::uint32_t>(layout.descriptor_bindings.size()),
+                                               descriptor_set_layout_);
 
             InlineList<vk::DescriptorBufferInfo, draw_array_size> buffer_infos;
             InlineList<vk::DescriptorImageInfo, draw_array_size> image_infos;
@@ -247,7 +245,7 @@ namespace retro
                            command.descriptor_sets[i]);
             }
 
-            device_.updateDescriptorSets(writes.size(), writes.data(), 0, nullptr);
+            device_.update_descriptor_sets(writes);
 
             // Bind the descriptor set to the graphics pipeline
             cmd_.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
@@ -283,7 +281,7 @@ namespace retro
                                command.push_constants.data());
         }
 
-        vk::Device device_{};
+        VulkanDevice &device_;
         vk::Pipeline pipeline_;
         vk::CommandBuffer cmd_{};
         vk::PipelineLayout pipeline_layout_{};
@@ -298,7 +296,7 @@ namespace retro
         pipeline_->clear_draw_queue();
     }
 
-    void VulkanRenderPipeline::recreate(vk::Device device, const VulkanSwapchain &swapchain)
+    void VulkanRenderPipeline::recreate(VulkanDevice &device, const VulkanSwapchain &swapchain)
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain);
@@ -311,7 +309,7 @@ namespace retro
                                                const vk::DescriptorPool descriptor_pool,
                                                VulkanBufferManager &buffer_manager)
     {
-        VulkanRenderContext context{device_,
+        VulkanRenderContext context{*device_,
                                     graphics_pipeline_.get(),
                                     cmd,
                                     pipeline_layout_.get(),
@@ -322,7 +320,7 @@ namespace retro
         pipeline_->execute(context, viewport);
     }
 
-    vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(const vk::Device device)
+    vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(VulkanDevice &device)
     {
         auto &shader_layout = pipeline_->shaders();
 
@@ -339,7 +337,7 @@ namespace retro
 
         const vk::DescriptorSetLayoutCreateInfo layout_info{.bindingCount = static_cast<std::uint32_t>(bindings.size()),
                                                             .pBindings = bindings.data()};
-        descriptor_set_layout_ = device.createDescriptorSetLayoutUnique(layout_info);
+        descriptor_set_layout_ = device.create_descriptor_set_layout(layout_info);
         std::array layouts = {descriptor_set_layout_.get()};
 
         InlineList<vk::PushConstantRange, 1> push_constant_ranges;
@@ -355,12 +353,12 @@ namespace retro
             .pSetLayouts = layouts.data(),
             .pushConstantRangeCount = static_cast<std::uint32_t>(push_constant_ranges.size()),
             .pPushConstantRanges = push_constant_ranges.data()};
-        return device.createPipelineLayoutUnique(pipeline_layout_info);
+        return device.create_pipeline_layout(pipeline_layout_info);
     }
 
-    vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(vk::Device device,
+    vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(VulkanDevice &device,
                                                                       vk::PipelineLayout layout,
-                                                                      const VulkanSwapchain &swapchain)
+                                                                      const VulkanSwapchain &swapchain) const
     {
         auto &shader_layout = pipeline_->shaders();
 
@@ -475,28 +473,19 @@ namespace retro
                                                      .renderPass = swapchain.render_pass(),
                                                      .subpass = 0};
 
-        auto [result, pipeline] = device.createGraphicsPipelineUnique(nullptr, pipeline_info);
-        if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
-        }
-
-        return std::move(pipeline);
+        return device.create_graphics_pipeline(nullptr, pipeline_info);
     }
 
-    vk::UniqueShaderModule VulkanRenderPipeline::create_shader_module(const vk::Device device,
+    vk::UniqueShaderModule VulkanRenderPipeline::create_shader_module(const VulkanDevice &device,
                                                                       const std::filesystem::path &path)
     {
-        const auto bytes = read_binary_file(path);
-        const auto *code = reinterpret_cast<const std::uint32_t *>(bytes.data());
-
-        if (bytes.size() % sizeof(std::uint32_t) != 0)
+        auto result = device.create_shader_module(path);
+        if (!result.has_value())
         {
-            throw std::runtime_error{"SPIR-V file size is not a multiple of 4 bytes"};
+            throw std::runtime_error{"Failed to create shader module: " + path.string()};
         }
 
-        const vk::ShaderModuleCreateInfo info{.codeSize = bytes.size(), .pCode = code};
-        return device.createShaderModuleUnique(info);
+        return *std::move(result);
     }
 
     void VulkanPipelineManager::recreate_pipelines(const VulkanSwapchain &swapchain)

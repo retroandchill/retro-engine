@@ -16,34 +16,8 @@ import retro.renderer.vulkan.components.buffer_manager;
 
 namespace retro
 {
-    namespace
-    {
-        vk::UniqueSampler create_linear_sampler(const vk::Device device)
-        {
-            constexpr vk::SamplerCreateInfo sampler_info{
-                .magFilter = vk::Filter::eNearest,
-                .minFilter = vk::Filter::eNearest,
-                .mipmapMode = vk::SamplerMipmapMode::eNearest,
-                .addressModeU = vk::SamplerAddressMode::eClampToEdge,
-                .addressModeV = vk::SamplerAddressMode::eClampToEdge,
-                .addressModeW = vk::SamplerAddressMode::eClampToEdge,
-                .mipLodBias = 0.0f,
-                .anisotropyEnable = vk::False,
-                .maxAnisotropy = 1.0f,
-                .compareEnable = vk::False,
-                .compareOp = vk::CompareOp::eAlways,
-                .minLod = 0.0f,
-                .maxLod = 0.0f,
-                .borderColor = vk::BorderColor::eIntOpaqueBlack,
-                .unnormalizedCoordinates = vk::False,
-            };
-
-            return device.createSamplerUnique(sampler_info);
-        }
-    } // namespace
-
     VulkanTextureManager::VulkanTextureManager(VulkanDevice &device)
-        : device_{device}, linear_sampler_{create_linear_sampler(device_.device())}
+        : device_{device}, linear_sampler_{device_.create_linear_sampler()}
     {
     }
 
@@ -51,7 +25,6 @@ namespace retro
     {
         auto command_pool = get_thread_command_pool();
 
-        auto device = device_.device();
         auto image_size = image_data.bytes().size();
         auto image_format = vk::Format::eR8G8B8A8Srgb;
 
@@ -59,23 +32,8 @@ namespace retro
                                           .usage = vk::BufferUsageFlagBits::eTransferSrc,
                                           .sharingMode = vk::SharingMode::eExclusive};
 
-        auto staging_buffer = device.createBufferUnique(staging_info);
-
-        auto mem_req = device.getBufferMemoryRequirements(staging_buffer.get());
-
-        vk::MemoryAllocateInfo alloc_info{
-            .allocationSize = mem_req.size,
-            .memoryTypeIndex =
-                find_memory_type(device_.physical_device(),
-                                 mem_req.memoryTypeBits,
-                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
-
-        auto staging_memory = device.allocateMemoryUnique(alloc_info);
-        device.bindBufferMemory(staging_buffer.get(), staging_memory.get(), 0);
-
-        auto *data = device.mapMemory(staging_memory.get(), 0, mem_req.size);
-        std::memcpy(data, image_data.bytes().data(), image_size);
-        device.unmapMemory(staging_memory.get());
+        auto staging_buffer = device_.create_staging_buffer(image_size);
+        staging_buffer.copy_to_buffer(image_data.bytes());
 
         vk::ImageCreateInfo image_info{.imageType = vk::ImageType::e2D,
                                        .format = image_format,
@@ -90,17 +48,8 @@ namespace retro
                                        .sharingMode = vk::SharingMode::eExclusive,
                                        .initialLayout = vk::ImageLayout::eUndefined};
 
-        auto image = device.createImageUnique(image_info);
-        auto img_mem_req = device.getImageMemoryRequirements(image.get());
-
-        vk::MemoryAllocateInfo img_alloc_info{.allocationSize = img_mem_req.size,
-                                              .memoryTypeIndex =
-                                                  find_memory_type(device_.physical_device(),
-                                                                   img_mem_req.memoryTypeBits,
-                                                                   vk::MemoryPropertyFlagBits::eDeviceLocal)};
-
-        auto img_memory = device.allocateMemoryUnique(img_alloc_info);
-        device.bindImageMemory(image.get(), img_memory.get(), 0);
+        auto image = device_.create_image(image_info);
+        auto img_memory = device_.allocate_image_memory(image.get());
 
         // Perform the copy + transitions
         {
@@ -145,7 +94,7 @@ namespace retro
                                           .subresourceRange =
                                               vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
 
-        vk::UniqueImageView image_view = device.createImageViewUnique(view_info);
+        vk::UniqueImageView image_view = device_.create_image_view(view_info);
 
         return std::make_unique<VulkanTextureRenderData>(std::move(image),
                                                          std::move(img_memory),
@@ -170,26 +119,20 @@ namespace retro
         }
 
         std::unique_lock lock{thread_pools_mutex_};
-        auto device = device_.device();
 
-        vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                                            .queueFamilyIndex = device_.graphics_family_index()};
-
-        auto &pool = thread_pools_[thread_id] = device.createCommandPoolUnique(pool_info);
+        auto &pool = thread_pools_[thread_id] = device_.create_command_pool();
         return pool.get();
     }
 
     vk::UniqueCommandBuffer VulkanTextureManager::begin_one_shot_commands(vk::CommandPool command_pool) const
     {
-        const auto device = device_.device();
-
         const vk::CommandBufferAllocateInfo alloc_info{
             .commandPool = command_pool,
             .level = vk::CommandBufferLevel::ePrimary,
             .commandBufferCount = 1,
         };
 
-        auto buffers = device.allocateCommandBuffersUnique(alloc_info);
+        auto buffers = device_.create_command_buffers(alloc_info);
         vk::UniqueCommandBuffer cmd = std::move(buffers.front());
 
         const vk::CommandBufferBeginInfo begin_info{
@@ -204,12 +147,9 @@ namespace retro
     {
         cmd->end();
 
-        auto device = device_.device();
+        auto fence = device_.create_fence();
 
-        vk::FenceCreateInfo fence_info{};
-        vk::UniqueFence fence = device.createFenceUnique(fence_info);
-
-        vk::CommandBuffer raw_cmd = cmd.get();
+        auto raw_cmd = cmd.get();
         vk::SubmitInfo submit_info{
             .commandBufferCount = 1,
             .pCommandBuffers = &raw_cmd,
@@ -224,12 +164,7 @@ namespace retro
                 }
             });
 
-        // Simple and safe for asset loading. If you later want async streaming, swap this for a timeline semaphore.
-        if (device.waitForFences(1, &fence.get(), vk::True, std::numeric_limits<std::uint64_t>::max()) !=
-            vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed waiting for one-shot fence"};
-        }
+        device_.wait_for_fences(fence.get());
     }
 
     void VulkanTextureManager::transition_image_layout(vk::CommandBuffer cmd,

@@ -30,12 +30,10 @@ namespace retro
         : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, swapchain_(swapchain),
           command_pool_(command_pool), pipeline_manager_{pipeline_manager}, viewport_factory_{viewport_factory}
     {
-        auto command_buffers = device_.device().allocateCommandBuffersUnique(
-            vk::CommandBufferAllocateInfo{.commandPool = command_pool,
-                                          .level = vk::CommandBufferLevel::ePrimary,
-                                          .commandBufferCount = max_frames_in_flight});
-
-        constexpr vk::SemaphoreCreateInfo sem_info{};
+        auto command_buffers =
+            device_.create_command_buffers(vk::CommandBufferAllocateInfo{.commandPool = command_pool,
+                                                                         .level = vk::CommandBufferLevel::ePrimary,
+                                                                         .commandBufferCount = max_frames_in_flight});
 
         constexpr vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
 
@@ -51,26 +49,22 @@ namespace retro
         for (auto [index, element] : frame_resources_ | std::views::enumerate)
         {
             element.command_buffer = std::move(command_buffers[index]);
-            element.image_available = device_.device().createSemaphoreUnique(sem_info);
-            element.in_flight = device_.device().createFenceUnique(fence_info);
-            element.descriptor_pool = device_.device().createDescriptorPoolUnique(pool_info);
+            element.image_available = device_.create_semaphore();
+            element.in_flight = device_.create_fence(fence_info);
+            element.descriptor_pool = device_.create_descriptor_pool(pool_info);
         }
     }
 
     VulkanRenderer2D::~VulkanRenderer2D()
     {
         // We need to ensure that there are no in-flight frames before any members are destroyed
-        device_.device().waitIdle();
+        device_.wait_idle();
     }
 
     void VulkanRenderer2D::wait_for_current_frame()
     {
         const auto fence = frame_resources_.at(current_frame_).in_flight.get();
-        if (device_.device().waitForFences(1, &fence, vk::True, std::numeric_limits<std::uint64_t>::max()) !=
-            vk::Result::eSuccess)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to wait for presentation"};
-        }
+        device_.wait_for_fences(fence);
     }
 
     std::pmr::memory_resource &VulkanRenderer2D::get_next_frame_memory_resource()
@@ -85,23 +79,17 @@ namespace retro
 
     void VulkanRenderer2D::begin_frame()
     {
-        const auto dev = device_.device();
-
         current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
         auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
-        if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<std::uint64_t>::max()) ==
-            vk::Result::eTimeout)
-        {
-            throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
-        }
+        device_.wait_for_fences(in_flight);
 
-        dev.resetDescriptorPool(frame_resources_.at(current_frame_).descriptor_pool.get());
+        device_.reset_descriptor_pool(frame_resources_.at(current_frame_).descriptor_pool.get());
 
-        auto result = dev.acquireNextImageKHR(swapchain_.handle(),
-                                              std::numeric_limits<std::uint64_t>::max(),
-                                              frame_resources_.at(current_frame_).image_available.get(),
-                                              nullptr,
-                                              &image_index_);
+        auto result = device_.acquire_next_image(swapchain_.handle(),
+                                                 std::numeric_limits<std::uint64_t>::max(),
+                                                 frame_resources_.at(current_frame_).image_available.get(),
+                                                 nullptr,
+                                                 image_index_);
 
         if (result == vk::Result::eErrorOutOfDateKHR)
         {
@@ -114,7 +102,7 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
 
-        dev.resetFences({in_flight});
+        device_.reset_fences(in_flight);
     }
 
     void VulkanRenderer2D::end_frame()
@@ -206,29 +194,6 @@ namespace retro
                       { return std::addressof(v->viewport()) == std::addressof(viewport); });
     }
 
-    vk::UniqueSampler VulkanRenderer2D::create_linear_sampler() const
-    {
-        constexpr vk::SamplerCreateInfo sampler_info{
-            .magFilter = vk::Filter::eNearest,
-            .minFilter = vk::Filter::eNearest,
-            .mipmapMode = vk::SamplerMipmapMode::eNearest,
-            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
-            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
-            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
-            .mipLodBias = 0.0f,
-            .anisotropyEnable = vk::False,
-            .maxAnisotropy = 1.0f,
-            .compareEnable = vk::False,
-            .compareOp = vk::CompareOp::eAlways,
-            .minLod = 0.0f,
-            .maxLod = 0.0f,
-            .borderColor = vk::BorderColor::eIntOpaqueBlack,
-            .unnormalizedCoordinates = vk::False,
-        };
-
-        return device_.device().createSamplerUnique(sampler_info);
-    }
-
     void VulkanRenderer2D::recreate_swapchain()
     {
         // Query new size from window_
@@ -236,16 +201,9 @@ namespace retro
         if (w == 0 || h == 0)
             return;
 
-        device_.device().waitIdle();
+        device_.wait_idle();
 
-        swapchain_ = VulkanSwapchain{SwapchainConfig{.physical_device = device_.physical_device(),
-                                                     .device = device_.device(),
-                                                     .surface = surface_,
-                                                     .graphics_family = device_.graphics_family_index(),
-                                                     .present_family = device_.present_family_index(),
-                                                     .width = w,
-                                                     .height = h,
-                                                     .old_swapchain = swapchain_.handle()}};
+        swapchain_.recreate(w, h);
         pipeline_manager_.recreate_pipelines(swapchain_);
     }
 

@@ -6,8 +6,6 @@
  */
 export module retro.renderer.vulkan.components.buffer_manager;
 
-import retro.renderer.vulkan.components.device;
-import retro.core.di;
 import vulkan_hpp;
 
 namespace retro
@@ -22,27 +20,20 @@ namespace retro
     export class VulkanBufferManager
     {
       public:
-        constexpr static std::size_t DEFAULT_POOL_SIZE = 1024 * 1024 * 10;
-
-        using Dependencies = TypeList<VulkanDevice>;
-
-        explicit VulkanBufferManager(const VulkanDevice &device, std::size_t pool_size = DEFAULT_POOL_SIZE);
+        explicit VulkanBufferManager(vk::UniqueBuffer buffer,
+                                     vk::UniqueDeviceMemory memory,
+                                     void *mapped_ptr,
+                                     std::size_t pool_size);
 
         TransientAllocation allocate_transient(std::size_t size, vk::BufferUsageFlags usage);
 
         void reset();
 
       private:
-        vk::PhysicalDevice physical_device_;
-        vk::Device device_;
         vk::UniqueBuffer buffer_;
         vk::UniqueDeviceMemory memory_;
         void *mapped_ptr_ = nullptr;
-        std::size_t pool_size_{DEFAULT_POOL_SIZE};
+        std::size_t pool_size_ = 0;
         std::size_t current_offset_ = 0;
     };
-
-    export std::uint32_t find_memory_type(vk::PhysicalDevice physical_device,
-                                          const std::uint32_t type_filter,
-                                          vk::MemoryPropertyFlags properties);
 } // namespace retro

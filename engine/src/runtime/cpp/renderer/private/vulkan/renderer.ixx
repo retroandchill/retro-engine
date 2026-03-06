@@ -89,8 +89,6 @@ namespace retro
         void remove_viewport(Viewport &viewport) override;
 
       private:
-        [[nodiscard]] vk::UniqueSampler create_linear_sampler() const;
-
         void recreate_swapchain();
         void record_command_buffer(vk::CommandBuffer cmd, std::uint32_t image_index);
 

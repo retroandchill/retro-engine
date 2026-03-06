@@ -18,7 +18,7 @@ namespace retro
 {
     namespace
     {
-        vk::UniqueRenderPass create_render_pass(const vk::Device device,
+        vk::UniqueRenderPass create_render_pass(VulkanDevice &device,
                                                 const vk::Format color_format,
                                                 const vk::SampleCountFlagBits samples)
         {
@@ -69,15 +69,24 @@ namespace retro
                                              .dependencyCount = 1,
                                              .pDependencies = &dependency};
 
-            return device.createRenderPassUnique(rp_info);
+            return device.create_render_pass(rp_info);
         }
     } // namespace
 
-    VulkanSwapchain::VulkanSwapchain(const SwapchainConfig &config)
+    VulkanSwapchain::VulkanSwapchain(const vk::SurfaceKHR surface,
+                                     VulkanDevice &device,
+                                     const std::uint32_t width,
+                                     const std::uint32_t height)
+        : surface_{surface}, device_{device}
     {
-        const auto capabilities = config.physical_device.getSurfaceCapabilitiesKHR(config.surface);
+        recreate(width, height);
+    }
 
-        const vk::Extent2D desired_extent{config.width, config.height};
+    void VulkanSwapchain::recreate(std::uint32_t width, std::uint32_t height)
+    {
+        const auto capabilities = device_.get_surface_capabilities(surface_);
+
+        const vk::Extent2D desired_extent{width, height};
 
         vk::Extent2D actual_extent{std::clamp<std::uint32_t>(desired_extent.width,
                                                              capabilities.minImageExtent.width,
@@ -86,7 +95,7 @@ namespace retro
                                                              capabilities.minImageExtent.height,
                                                              capabilities.maxImageExtent.height)};
 
-        const auto formats = config.physical_device.getSurfaceFormatsKHR(config.surface);
+        const auto formats = device_.get_surface_formats(surface_);
         if (formats.empty())
         {
             throw std::runtime_error{"VulkanSwapchain: no surface formats"};
@@ -102,8 +111,7 @@ namespace retro
             }
         }
 
-        if (const auto present_modes = config.physical_device.getSurfacePresentModesKHR(config.surface);
-            present_modes.empty())
+        if (const auto present_modes = device_.get_surface_preset_modes(surface_); present_modes.empty())
         {
             throw std::runtime_error{"VulkanSwapchain: no present modes"};
         }
@@ -117,7 +125,7 @@ namespace retro
         }
 
         vk::SwapchainCreateInfoKHR ci{
-            .surface = config.surface,
+            .surface = surface_,
             .minImageCount = image_count,
             .imageFormat = chosen_format.format,
             .imageColorSpace = chosen_format.colorSpace,
@@ -126,11 +134,11 @@ namespace retro
             .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         };
 
-        // ReSharper disable once CppDFAUnreadVariable
-        // ReSharper disable once CppDFAUnusedValue
-        std::array queue_family_indices = {config.graphics_family, config.present_family};
+        const auto graphics_family = device_.graphics_family();
+        const auto present_family = device_.present_family();
+        const std::array queue_family_indices = {graphics_family, present_family};
 
-        if (config.graphics_family != config.present_family)
+        if (graphics_family != present_family)
         {
             ci.imageSharingMode = vk::SharingMode::eConcurrent;
             ci.queueFamilyIndexCount = queue_family_indices.size();
@@ -145,20 +153,20 @@ namespace retro
         ci.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
         ci.presentMode = chosen_present_mode;
         ci.clipped = vk::True;
-        ci.oldSwapchain = config.old_swapchain;
+        ci.oldSwapchain = swapchain_.get();
 
-        swapchain_ = config.device.createSwapchainKHRUnique(ci);
+        swapchain_ = device_.create_swapchain(ci);
 
         format_ = chosen_format.format;
         extent_ = actual_extent;
 
-        render_pass_ = create_render_pass(config.device, format_, vk::SampleCountFlagBits::e1);
+        render_pass_ = create_render_pass(device_, format_, vk::SampleCountFlagBits::e1);
         image_resources_ =
-            config.device.getSwapchainImagesKHR(swapchain_.get()) |
+            device_.get_swapchain_images(swapchain_.get()) |
             std::views::transform(
-                [this, &config, &actual_extent](const vk::Image image)
+                [this, &actual_extent](const vk::Image image)
                 {
-                    auto depth_image = config.device.createImageUnique(
+                    auto depth_image = device_.create_image(
                         vk::ImageCreateInfo{.imageType = vk::ImageType::e2D,
                                             .format = vk::Format::eD32Sfloat,
                                             .extent = {actual_extent.width, actual_extent.height, 1},
@@ -170,19 +178,9 @@ namespace retro
                                             .sharingMode = vk::SharingMode::eExclusive,
                                             .initialLayout = vk::ImageLayout::eUndefined});
 
-                    // ReSharper disable once CppDFAUnreadVariable
-                    // ReSharper disable once CppDFAUnusedValue
-                    auto mem_req = config.device.getImageMemoryRequirements(depth_image.get());
-                    vk::MemoryAllocateInfo alloc_info{.allocationSize = mem_req.size,
-                                                      .memoryTypeIndex =
-                                                          find_memory_type(config.physical_device,
-                                                                           mem_req.memoryTypeBits,
-                                                                           vk::MemoryPropertyFlagBits::eDeviceLocal)};
+                    auto depth_memory = device_.allocate_image_memory(depth_image.get());
 
-                    auto depth_memory = config.device.allocateMemoryUnique(alloc_info);
-                    config.device.bindImageMemory(depth_image.get(), depth_memory.get(), 0);
-
-                    auto color_view = config.device.createImageViewUnique(vk::ImageViewCreateInfo{
+                    auto color_view = device_.create_image_view(vk::ImageViewCreateInfo{
                         .image = image,
                         .viewType = vk::ImageViewType::e2D,
                         .format = format_,
@@ -193,7 +191,7 @@ namespace retro
                         .subresourceRange = vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
                     });
 
-                    auto depth_view = config.device.createImageViewUnique(vk::ImageViewCreateInfo{
+                    auto depth_view = device_.create_image_view(vk::ImageViewCreateInfo{
                         .image = depth_image.get(),
                         .viewType = vk::ImageViewType::e2D,
                         .format = vk::Format::eD32Sfloat,
@@ -218,9 +216,8 @@ namespace retro
                                                 .depth_image = std::move(depth_image),
                                                 .depth_image_memory = std::move(depth_memory),
                                                 .depth_image_view = std::move(depth_view),
-                                                .render_finished =
-                                                    config.device.createSemaphoreUnique(vk::SemaphoreCreateInfo{}),
-                                                .framebuffer = config.device.createFramebufferUnique(fb_info)};
+                                                .render_finished = device_.create_semaphore(),
+                                                .framebuffer = device_.create_framebuffer(fb_info)};
                 }) |
             std::ranges::to<std::vector>();
     }

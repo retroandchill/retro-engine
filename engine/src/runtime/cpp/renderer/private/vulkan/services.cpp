@@ -32,31 +32,16 @@ namespace retro
             .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
             .add_scoped([](const Window &window, VulkanInstance &instance) { return instance.create_surface(window); })
             .add_scoped(
-                [](const Window &window, const vk::SurfaceKHR surface, const VulkanDevice &device)
+                [](const Window &window, const vk::SurfaceKHR surface, VulkanDevice &device)
                 {
-                    return std::make_unique<VulkanSwapchain>(SwapchainConfig{
-                        .physical_device = device.physical_device(),
-                        .device = device.device(),
-                        .surface = surface,
-                        .graphics_family = device.graphics_family_index(),
-                        .present_family = device.present_family_index(),
-                        .width = window.width(),
-                        .height = window.height(),
-                    });
+                    auto [width, height] = window.size();
+                    return std::make_unique<VulkanSwapchain>(surface, device, width, height);
                 })
             .add_singleton([](const VulkanInstance &instance, PlatformBackend &platform_backend)
                            { return VulkanDevice::create(instance, platform_backend); })
-            .add_singleton<VulkanBufferManager>()
+            .add_singleton([](const VulkanDevice &device) { return device.create_buffer_manager(); })
             .add_scoped<VulkanPipelineManager>()
-            .add_singleton(
-                [](const VulkanDevice &device)
-                {
-                    const vk::CommandPoolCreateInfo pool_info{.flags =
-                                                                  vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                                                              .queueFamilyIndex = device.graphics_family_index()};
-
-                    return device.device().createCommandPoolUnique(pool_info);
-                })
+            .add_singleton([](const VulkanDevice &device) { return device.create_command_pool(); })
             .add_scoped<ViewportRendererFactory>();
     }
 } // namespace retro

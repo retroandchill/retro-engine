@@ -15,6 +15,7 @@ module retro.renderer.vulkan.components.device;
 import retro.core.containers.optional;
 import retro.platform.window;
 import retro.renderer.vulkan.components.surface;
+import retro.core.io.file_stream;
 
 namespace retro
 {
@@ -121,6 +122,13 @@ namespace retro
         }
     } // namespace
 
+    void VulkanStagingBuffer::copy_to_buffer(const std::span<const std::byte> buffer)
+    {
+        auto *data = device_.mapMemory(memory_.get(), 0, size_);
+        std::memcpy(data, buffer.data(), buffer.size());
+        device_.unmapMemory(memory_.get());
+    }
+
     VulkanDevice::VulkanDevice(const VulkanDeviceConfig &config, vk::UniqueDevice device)
         : physical_device_{config.physical_device}, device_{std::move(device)},
           graphics_family_index_{config.graphics_family}, present_family_index_{config.present_family},
@@ -143,5 +151,144 @@ namespace retro
         auto surface = instance.create_surface(**window);
         auto config = pick_physical_device(instance, surface.get());
         return std::make_unique<VulkanDevice>(config, create_device(config));
+    }
+
+    vk::UniquePipeline VulkanDevice::create_graphics_pipeline(const vk::PipelineCache cache,
+                                                              const vk::GraphicsPipelineCreateInfo &create_info) const
+    {
+        auto [result, pipeline] = device_->createGraphicsPipelineUnique(cache, create_info);
+        if (result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
+        }
+
+        return std::move(pipeline);
+    }
+
+    StreamResult<vk::UniqueShaderModule> VulkanDevice::create_shader_module(const std::filesystem::path &path) const
+    {
+        return FileStream::open(path, FileOpenMode::read_only)
+            .and_then([this](const std::unique_ptr<FileStream> &stream) { return create_shader_module(*stream); });
+    }
+
+    StreamResult<vk::UniqueShaderModule> VulkanDevice::create_shader_module(Stream &stream) const
+    {
+        return stream.read_all().and_then(
+            [this](std::span<const std::byte> bytes) -> StreamResult<vk::UniqueShaderModule>
+            {
+                const auto *code = reinterpret_cast<const std::uint32_t *>(bytes.data());
+
+                if (bytes.size() % sizeof(std::uint32_t) != 0)
+                {
+                    return std::unexpected{StreamError::invalid_argument};
+                }
+
+                const vk::ShaderModuleCreateInfo info{.codeSize = bytes.size(), .pCode = code};
+                return device_->createShaderModuleUnique(info);
+            });
+    }
+
+    VulkanBufferManager VulkanDevice::create_buffer_manager(const std::size_t pool_size) const
+    {
+        const vk::BufferCreateInfo buffer_info{
+            .size = pool_size,
+            .usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer |
+                     vk::BufferUsageFlagBits::eStorageBuffer,
+        };
+        auto buffer = device_->createBufferUnique(buffer_info);
+
+        const auto mem_reqs = device_->getBufferMemoryRequirements(buffer.get());
+
+        const vk::MemoryAllocateInfo alloc_info{
+            .allocationSize = mem_reqs.size,
+            .memoryTypeIndex =
+                find_memory_type(mem_reqs.memoryTypeBits,
+                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+
+        auto memory = device_->allocateMemoryUnique(alloc_info);
+        device_->bindBufferMemory(buffer.get(), memory.get(), 0);
+        const auto mapped_ptr = device_->mapMemory(memory.get(), 0, pool_size);
+        return VulkanBufferManager(std::move(buffer), std::move(memory), mapped_ptr, pool_size);
+    }
+
+    VulkanStagingBuffer VulkanDevice::create_staging_buffer(vk::DeviceSize size) const
+    {
+        const vk::BufferCreateInfo staging_info{.size = size,
+                                                .usage = vk::BufferUsageFlagBits::eTransferSrc,
+                                                .sharingMode = vk::SharingMode::eExclusive};
+
+        auto staging_buffer = device_->createBufferUnique(staging_info);
+
+        const auto mem_req = device_->getBufferMemoryRequirements(staging_buffer.get());
+
+        const vk::MemoryAllocateInfo alloc_info{
+            .allocationSize = mem_req.size,
+            .memoryTypeIndex =
+                find_memory_type(mem_req.memoryTypeBits,
+                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)};
+
+        auto staging_memory = device_->allocateMemoryUnique(alloc_info);
+        device_->bindBufferMemory(staging_buffer.get(), staging_memory.get(), 0);
+        return VulkanStagingBuffer{device_.get(), std::move(staging_buffer), std::move(staging_memory), mem_req.size};
+    }
+
+    std::uint32_t VulkanDevice::find_memory_type(const std::uint32_t type_filter,
+                                                 vk::MemoryPropertyFlags properties) const
+    {
+        const auto mem_properties = physical_device_.getMemoryProperties();
+
+        for (std::uint32_t i = 0; i < mem_properties.memoryTypeCount; ++i)
+        {
+            if (type_filter & (1 << i) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties)
+            {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
+    }
+
+    vk::UniqueCommandPool VulkanDevice::create_command_pool() const
+    {
+        const vk::CommandPoolCreateInfo pool_info{.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                  .queueFamilyIndex = graphics_family_index_};
+
+        return device_->createCommandPoolUnique(pool_info);
+    }
+
+    vk::UniqueSampler VulkanDevice::create_linear_sampler() const
+    {
+        constexpr vk::SamplerCreateInfo sampler_info{
+            .magFilter = vk::Filter::eNearest,
+            .minFilter = vk::Filter::eNearest,
+            .mipmapMode = vk::SamplerMipmapMode::eNearest,
+            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+            .mipLodBias = 0.0f,
+            .anisotropyEnable = vk::False,
+            .maxAnisotropy = 1.0f,
+            .compareEnable = vk::False,
+            .compareOp = vk::CompareOp::eAlways,
+            .minLod = 0.0f,
+            .maxLod = 0.0f,
+            .borderColor = vk::BorderColor::eIntOpaqueBlack,
+            .unnormalizedCoordinates = vk::False,
+        };
+
+        return device_->createSamplerUnique(sampler_info);
+    }
+
+    vk::UniqueDeviceMemory VulkanDevice::allocate_image_memory(const vk::Image image) const
+    {
+        const auto img_mem_req = device_->getImageMemoryRequirements(image);
+
+        const vk::MemoryAllocateInfo img_alloc_info{
+            .allocationSize = img_mem_req.size,
+            .memoryTypeIndex = find_memory_type(img_mem_req.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
+
+        auto img_memory = device_->allocateMemoryUnique(img_alloc_info);
+        device_->bindImageMemory(image, img_memory.get(), 0);
+        return img_memory;
     }
 } // namespace retro
