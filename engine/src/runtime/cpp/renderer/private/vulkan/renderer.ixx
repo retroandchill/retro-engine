@@ -21,6 +21,7 @@ import retro.core.math.vector;
 import retro.platform.window;
 import vulkan_hpp;
 import std;
+import retro.runtime.rendering.draw_command;
 
 namespace retro
 {
@@ -58,6 +59,8 @@ namespace retro
         void wait_for_current_frame() override;
 
         std::pmr::memory_resource &get_next_frame_memory_resource() override;
+
+        void push_next_frame_draw_commands(std::pmr::vector<DrawCommandSet> draw_command_sets) override;
 
         void begin_frame() override;
 

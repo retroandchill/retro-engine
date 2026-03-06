@@ -44,11 +44,10 @@ namespace retro
 
         void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport);
 
-        std::pmr::vector<SmallUniquePtr<DrawCommandSource>> collect_draw_commands_sources(
-            const SceneNodeList &nodes,
-            Vector2u viewport_size,
-            const Viewport &viewport,
-            std::pmr::memory_resource &memory_resource);
+        DrawCommandSet collect_draw_commands_sources(const SceneNodeList &nodes,
+                                                     Vector2u viewport_size,
+                                                     const Viewport &viewport,
+                                                     std::pmr::memory_resource &memory_resource);
 
       private:
         std::map<std::type_index, PipelineUsage> pipelines_{};

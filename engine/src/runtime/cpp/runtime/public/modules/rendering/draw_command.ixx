@@ -10,6 +10,7 @@ import std;
 import retro.runtime.rendering.texture_manager;
 import retro.core.containers.inline_list;
 import retro.core.memory.small_unique_ptr;
+import retro.runtime.world.viewport;
 
 namespace retro
 {
@@ -73,4 +74,11 @@ namespace retro
     {
         return make_unique_small<DrawCommandSourceImpl<T>>(std::move(data));
     }
+
+    export struct DrawCommandSet
+    {
+        ScreenLayout layout;
+        std::int32_t z_order;
+        std::pmr::vector<SmallUniquePtr<DrawCommandSource>> sources;
+    };
 } // namespace retro

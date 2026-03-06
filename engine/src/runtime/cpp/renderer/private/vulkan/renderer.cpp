@@ -143,6 +143,10 @@ namespace retro
         return *std::pmr::get_default_resource();
     }
 
+    void VulkanRenderer2D::push_next_frame_draw_commands(std::pmr::vector<DrawCommandSet> draw_command_sets)
+    {
+    }
+
     void VulkanRenderer2D::begin_frame()
     {
         const auto dev = device_.device();

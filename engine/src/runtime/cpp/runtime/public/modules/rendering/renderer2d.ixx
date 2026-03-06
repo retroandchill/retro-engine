@@ -20,6 +20,7 @@ import retro.core.di;
 import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.world.viewport;
+import retro.runtime.rendering.draw_command;
 
 namespace retro
 {
@@ -31,6 +32,8 @@ namespace retro
         virtual void wait_for_current_frame() = 0;
 
         virtual std::pmr::memory_resource &get_next_frame_memory_resource() = 0;
+
+        virtual void push_next_frame_draw_commands(std::pmr::vector<DrawCommandSet> draw_command_sets) = 0;
 
         virtual void begin_frame() = 0;
 

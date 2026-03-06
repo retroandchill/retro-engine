@@ -123,20 +123,33 @@ namespace retro
 
     void Engine::sync_renderer_state()
     {
+        // ReSharper disable once CppDFAUnreadVariable
+        // ReSharper disable once CppDFAUnusedValue
+        constexpr auto get_scene_data =
+            [](const std::unique_ptr<Viewport> &viewport) -> Optional<std::pair<Viewport &, Scene &>>
+        {
+            const auto scene = viewport->scene();
+            if (!scene.has_value())
+                return std::nullopt;
+
+            return std::pair<Viewport &, Scene &>{*viewport, *scene};
+        };
+
         for (const auto &renderer : renderers_ | std::views::values)
         {
             auto &memory_resource = renderer->get_next_frame_memory_resource();
-            for (auto &viewport : viewports_.viewports())
-            {
-                auto scene = viewport->scene();
-                if (!scene.has_value())
-                    continue;
-
-                auto draw_call_sources = pipeline_manager_.collect_draw_commands_sources(scene->nodes(),
-                                                                                         renderer->window().size(),
-                                                                                         *viewport,
-                                                                                         memory_resource);
-            }
+            renderer->push_next_frame_draw_commands(
+                viewports_.viewports() | std::views::transform(get_scene_data) | std::views::join |
+                std::views::transform(
+                    [this, &memory_resource, &renderer](auto &pair)
+                    {
+                        auto [viewport, scene] = pair;
+                        return pipeline_manager_.collect_draw_commands_sources(scene.nodes(),
+                                                                               renderer->window().size(),
+                                                                               viewport,
+                                                                               memory_resource);
+                    }) |
+                std::ranges::to<std::pmr::vector<DrawCommandSet>>(&memory_resource));
         }
     }
 
