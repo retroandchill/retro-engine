@@ -1,5 +1,5 @@
 /**
- * @file swapchain.cpp
+ * @file presenter.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -10,12 +10,13 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
-module retro.renderer.vulkan.components.swapchain;
+#include <cassert>
 
-import retro.renderer.vulkan.components.buffer_manager;
+module retro.renderer.vulkan.components.presenter;
 
 namespace retro
 {
+
     namespace
     {
         vk::UniqueRenderPass create_render_pass(VulkanDevice &device,
@@ -73,16 +74,152 @@ namespace retro
         }
     } // namespace
 
-    VulkanSwapchain::VulkanSwapchain(const vk::SurfaceKHR surface,
+    VulkanPresenter::VulkanPresenter(Window &window,
+                                     const vk::SurfaceKHR surface,
                                      VulkanDevice &device,
-                                     const std::uint32_t width,
-                                     const std::uint32_t height)
-        : surface_{surface}, device_{device}
+                                     const vk::CommandPool command_pool,
+                                     VulkanPipelineManager &pipeline_manager)
+        : window_{window}, surface_{surface}, device_{device}, command_pool_{command_pool},
+          pipeline_manager_{pipeline_manager}
     {
-        recreate(width, height);
+        auto [width, height] = window.size();
+        create_swapchain(width, height);
+
+        auto command_buffers =
+            device_.create_command_buffers(vk::CommandBufferAllocateInfo{.commandPool = command_pool,
+                                                                         .level = vk::CommandBufferLevel::ePrimary,
+                                                                         .commandBufferCount = max_frames_in_flight});
+
+        constexpr vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
+
+        std::array pool_sizes = {
+            vk::DescriptorPoolSize{vk::DescriptorType::eStorageBuffer, 256},
+            vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 256},
+        };
+        const vk::DescriptorPoolCreateInfo pool_info{.maxSets = 256,
+                                                     .poolSizeCount = pool_sizes.size(),
+                                                     .pPoolSizes = pool_sizes.data()};
+
+        assert(command_buffers.size() == frame_resources_.size());
+        for (auto [index, element] : frame_resources_ | std::views::enumerate)
+        {
+            element.command_buffer = std::move(command_buffers[index]);
+            element.image_available = device_.create_semaphore();
+            element.in_flight = device_.create_fence(fence_info);
+            element.descriptor_pool = device_.create_descriptor_pool(pool_info);
+        }
     }
 
-    void VulkanSwapchain::recreate(std::uint32_t width, std::uint32_t height)
+    void VulkanPresenter::wait_for_current_frame()
+    {
+        const auto fence = frame_resources_.at(current_frame_).in_flight.get();
+        device_.wait_for_fences(fence);
+    }
+
+    void VulkanPresenter::begin_frame()
+    {
+        current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
+        const auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
+        device_.wait_for_fences(in_flight);
+        Deferred fence_reset{[this, in_flight]
+                             {
+                                 device_.reset_fences(in_flight);
+                             }};
+
+        device_.reset_descriptor_pool(frame_resources_.at(current_frame_).descriptor_pool.get());
+
+        const auto result = device_.acquire_next_image(swapchain_.get(),
+                                                       std::numeric_limits<std::uint64_t>::max(),
+                                                       frame_resources_.at(current_frame_).image_available.get(),
+                                                       nullptr,
+                                                       image_index_);
+
+        if (result == vk::Result::eErrorOutOfDateKHR)
+        {
+            recreate_swapchain();
+            return;
+        }
+
+        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
+        {
+            throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
+        }
+    }
+
+    void VulkanPresenter::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)
+    {
+
+        pipeline_manager_.create_pipeline(type, pipeline, extent_, render_pass_.get());
+    }
+
+    void VulkanPresenter::remove_render_pipeline(const std::type_index type) const
+    {
+        pipeline_manager_.destroy_pipeline(type);
+    }
+
+    void VulkanPresenter::recreate_swapchain()
+    {
+        // Query new size from window_
+        const auto [w, h] = window_.size();
+        if (w == 0 || h == 0)
+            return;
+
+        device_.wait_idle();
+        create_swapchain(w, h);
+        pipeline_manager_.recreate_pipelines(extent_, render_pass_.get());
+    }
+
+    void VulkanPresenter::submit_render_and_present(const vk::Fence in_flight, vk::CommandBuffer cmd)
+    {
+        std::array wait_semaphores = {frame_resources_.at(current_frame_).image_available.get()};
+        std::array wait_stages = {
+            static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
+
+        // Signal semaphore is now per-image
+        const vk::Semaphore render_finished_semaphore = image_resources_[image_index_].render_finished.get();
+        std::array signal_semaphores = {render_finished_semaphore};
+
+        const vk::SubmitInfo submit_info{.waitSemaphoreCount = wait_semaphores.size(),
+                                         .pWaitSemaphores = wait_semaphores.data(),
+                                         .pWaitDstStageMask = wait_stages.data(),
+                                         .commandBufferCount = 1,
+                                         .pCommandBuffers = &cmd,
+                                         .signalSemaphoreCount = signal_semaphores.size(),
+                                         .pSignalSemaphores = signal_semaphores.data()};
+
+        device_.submit_to_graphics_queue(
+            [&submit_info, in_flight](vk::Queue graphics_queue)
+            {
+                if (graphics_queue.submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
+                {
+                    throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
+                }
+            });
+
+        std::array swapchains = {swapchain_.get()};
+
+        vk::PresentInfoKHR present_info{.waitSemaphoreCount = signal_semaphores.size(),
+                                        .pWaitSemaphores = signal_semaphores.data(),
+                                        .swapchainCount = swapchains.size(),
+                                        .pSwapchains = swapchains.data(),
+                                        .pImageIndices = &image_index_};
+
+        device_.submit_to_present_queue(
+            [this, &present_info](vk::Queue present_queue)
+            {
+                if (const auto result = present_queue.presentKHR(&present_info);
+                    result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+                {
+                    recreate_swapchain();
+                }
+                else if (result != vk::Result::eSuccess)
+                {
+                    throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
+                }
+            });
+    }
+
+    void VulkanPresenter::create_swapchain(std::uint32_t width, std::uint32_t height)
     {
         const auto capabilities = device_.get_surface_capabilities(surface_);
 

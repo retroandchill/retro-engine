@@ -11,8 +11,8 @@ import retro.core.di;
 import retro.core.math.vector;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.device;
-import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.pipeline;
+import retro.renderer.vulkan.components.presenter;
 import retro.runtime.world.viewport;
 
 namespace retro
@@ -23,7 +23,7 @@ namespace retro
         ViewportRenderer(const Viewport &viewport,
                          VulkanDevice &device,
                          vk::SurfaceKHR surface,
-                         const VulkanSwapchain &swapchain,
+                         const VulkanPresenter &presenter,
                          VulkanBufferManager &buffer_manager,
                          VulkanPipelineManager &pipeline_manager);
 
@@ -40,7 +40,7 @@ namespace retro
         const Viewport &viewport_;
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
-        const VulkanSwapchain &swapchain_;
+        const VulkanPresenter &presenter_;
         VulkanBufferManager &buffer_manager_;
         VulkanPipelineManager &pipeline_manager_;
     };
@@ -49,11 +49,11 @@ namespace retro
     {
       public:
         using Dependencies =
-            TypeList<VulkanDevice &, vk::SurfaceKHR, VulkanSwapchain &, VulkanBufferManager &, VulkanPipelineManager &>;
+            TypeList<VulkanDevice &, vk::SurfaceKHR, VulkanPresenter &, VulkanBufferManager &, VulkanPipelineManager &>;
 
         ViewportRendererFactory(VulkanDevice &device,
                                 vk::SurfaceKHR surface,
-                                const VulkanSwapchain &swapchain,
+                                const VulkanPresenter &presenter,
                                 VulkanBufferManager &buffer_manager,
                                 VulkanPipelineManager &pipeline_manager);
 
@@ -62,7 +62,7 @@ namespace retro
       private:
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
-        const VulkanSwapchain &swapchain_;
+        const VulkanPresenter &presenter_;
         VulkanBufferManager &buffer_manager_;
         VulkanPipelineManager &pipeline_manager_;
     };

@@ -11,7 +11,6 @@ import retro.core.math.vector;
 import retro.core.di;
 import vulkan_hpp;
 import retro.renderer.vulkan.components.device;
-import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.runtime.world.viewport;
 
@@ -22,16 +21,16 @@ namespace retro
       public:
         inline VulkanRenderPipeline(RenderPipeline &pipeline,
                                     VulkanDevice &device,
-                                    const VulkanSwapchain &swapchain,
-                                    vk::RenderPass render_pass)
+                                    const vk::Extent2D extent,
+                                    const vk::RenderPass render_pass)
             : device_{&device}, pipeline_{std::addressof(pipeline)}
         {
-            recreate(device, swapchain);
+            recreate(device, extent, render_pass);
         }
 
         void clear_draw_queue();
 
-        void recreate(VulkanDevice &device, const VulkanSwapchain &swapchain);
+        void recreate(VulkanDevice &device, vk::Extent2D extent, vk::RenderPass render_pass);
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
@@ -44,7 +43,8 @@ namespace retro
 
         vk::UniquePipeline create_graphics_pipeline(VulkanDevice &device,
                                                     vk::PipelineLayout layout,
-                                                    const VulkanSwapchain &swapchain) const;
+                                                    vk::Extent2D extent,
+                                                    vk::RenderPass render_pass) const;
 
         static vk::UniqueShaderModule create_shader_module(const VulkanDevice &device,
                                                            const std::filesystem::path &path);
@@ -66,11 +66,11 @@ namespace retro
         {
         }
 
-        void recreate_pipelines(const VulkanSwapchain &swapchain);
+        void recreate_pipelines(vk::Extent2D extent, vk::RenderPass render_pass);
 
         void create_pipeline(std::type_index type,
                              RenderPipeline &pipeline,
-                             const VulkanSwapchain &swapchain,
+                             vk::Extent2D extent,
                              vk::RenderPass render_pass);
         void destroy_pipeline(std::type_index type);
 

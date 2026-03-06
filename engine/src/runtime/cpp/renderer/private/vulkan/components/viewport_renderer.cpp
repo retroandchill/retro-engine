@@ -11,10 +11,10 @@ namespace retro
     ViewportRenderer::ViewportRenderer(const Viewport &viewport,
                                        VulkanDevice &device,
                                        const vk::SurfaceKHR surface,
-                                       const VulkanSwapchain &swapchain,
+                                       const VulkanPresenter &presenter,
                                        VulkanBufferManager &buffer_manager,
                                        VulkanPipelineManager &pipeline_manager)
-        : viewport_{viewport}, surface_{surface}, device_{device}, swapchain_{swapchain},
+        : viewport_{viewport}, surface_{surface}, device_{device}, presenter_{presenter},
           buffer_manager_{buffer_manager}, pipeline_manager_{pipeline_manager}
     {
     }
@@ -43,11 +43,11 @@ namespace retro
     }
 
     ViewportRendererFactory::ViewportRendererFactory(VulkanDevice &device,
-                                                     vk::SurfaceKHR surface,
-                                                     const VulkanSwapchain &swapchain,
+                                                     const vk::SurfaceKHR surface,
+                                                     const VulkanPresenter &presenter,
                                                      VulkanBufferManager &buffer_manager,
                                                      VulkanPipelineManager &pipeline_manager)
-        : surface_{surface}, device_{device}, swapchain_{swapchain}, buffer_manager_{buffer_manager},
+        : surface_{surface}, device_{device}, presenter_{presenter}, buffer_manager_{buffer_manager},
           pipeline_manager_{pipeline_manager}
     {
     }
@@ -57,7 +57,7 @@ namespace retro
         return std::make_unique<ViewportRenderer>(viewport,
                                                   device_,
                                                   surface_,
-                                                  swapchain_,
+                                                  presenter_,
                                                   buffer_manager_,
                                                   pipeline_manager_);
     }

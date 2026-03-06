@@ -296,10 +296,10 @@ namespace retro
         pipeline_->clear_draw_queue();
     }
 
-    void VulkanRenderPipeline::recreate(VulkanDevice &device, const VulkanSwapchain &swapchain)
+    void VulkanRenderPipeline::recreate(VulkanDevice &device, vk::Extent2D extent, vk::RenderPass render_pass)
     {
         pipeline_layout_ = create_pipeline_layout(device);
-        graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain);
+        graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), extent, render_pass);
         pipeline_->clear_draw_queue();
     }
 
@@ -355,10 +355,10 @@ namespace retro
             .pPushConstantRanges = push_constant_ranges.data()};
         return device.create_pipeline_layout(pipeline_layout_info);
     }
-
     vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(VulkanDevice &device,
                                                                       vk::PipelineLayout layout,
-                                                                      const VulkanSwapchain &swapchain) const
+                                                                      vk::Extent2D extent,
+                                                                      vk::RenderPass render_pass) const
     {
         auto &shader_layout = pipeline_->shaders();
 
@@ -412,12 +412,12 @@ namespace retro
 
         vk::Viewport viewport{.x = 0.0f,
                               .y = 0.0f,
-                              .width = static_cast<float>(swapchain.extent().width),
-                              .height = static_cast<float>(swapchain.extent().height),
+                              .width = static_cast<float>(extent.width),
+                              .height = static_cast<float>(extent.height),
                               .minDepth = 0.0f,
                               .maxDepth = 1.0f};
 
-        vk::Rect2D scissor{.offset = {.x = 0, .y = 0}, .extent = swapchain.extent()};
+        vk::Rect2D scissor{.offset = {.x = 0, .y = 0}, .extent = extent};
 
         vk::PipelineViewportStateCreateInfo viewport_state{.viewportCount = 1,
                                                            .pViewports = &viewport,
@@ -470,7 +470,7 @@ namespace retro
                                                      .pDepthStencilState = &depth_stencil,
                                                      .pColorBlendState = &color_blending,
                                                      .layout = layout,
-                                                     .renderPass = swapchain.render_pass(),
+                                                     .renderPass = render_pass,
                                                      .subpass = 0};
 
         return device.create_graphics_pipeline(nullptr, pipeline_info);
@@ -488,20 +488,20 @@ namespace retro
         return *std::move(result);
     }
 
-    void VulkanPipelineManager::recreate_pipelines(const VulkanSwapchain &swapchain)
+    void VulkanPipelineManager::recreate_pipelines(vk::Extent2D extent, vk::RenderPass render_pass)
     {
         for (auto &pipeline : pipelines_)
         {
-            pipeline.recreate(device_, swapchain);
+            pipeline.recreate(device_, extent, render_pass);
         }
     }
 
     void VulkanPipelineManager::create_pipeline(std::type_index type,
                                                 RenderPipeline &pipeline,
-                                                const VulkanSwapchain &swapchain,
+                                                vk::Extent2D extent,
                                                 vk::RenderPass render_pass)
     {
-        pipelines_.emplace_back(pipeline, device_, swapchain, render_pass);
+        pipelines_.emplace_back(pipeline, device_, extent, render_pass);
         pipeline_indices_.emplace(type, pipelines_.size() - 1);
     }
 

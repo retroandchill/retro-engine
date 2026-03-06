@@ -11,7 +11,7 @@ import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.world.viewport;
 import retro.renderer.vulkan.components.device;
-import retro.renderer.vulkan.components.swapchain;
+import retro.renderer.vulkan.components.presenter;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
 import retro.renderer.vulkan.components.viewport_renderer;
@@ -45,7 +45,7 @@ namespace retro
         using Dependencies = TypeList<Window &,
                                       vk::SurfaceKHR,
                                       VulkanDevice &,
-                                      VulkanSwapchain &,
+                                      VulkanPresenter &,
                                       VulkanBufferManager &,
                                       vk::CommandPool,
                                       VulkanPipelineManager &,
@@ -54,7 +54,7 @@ namespace retro
         explicit VulkanRenderer2D(Window &window,
                                   vk::SurfaceKHR surface,
                                   VulkanDevice &device,
-                                  VulkanSwapchain &swapchain,
+                                  VulkanPresenter &presenter,
                                   VulkanBufferManager &buffer_manager,
                                   vk::CommandPool command_pool,
                                   VulkanPipelineManager &pipeline_manager,
@@ -89,21 +89,14 @@ namespace retro
         void remove_viewport(Viewport &viewport) override;
 
       private:
-        void recreate_swapchain();
-        void record_command_buffer(vk::CommandBuffer cmd, std::uint32_t image_index);
-
         Window &window_;
 
         vk::SurfaceKHR surface_;
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
-        VulkanSwapchain &swapchain_;
+        VulkanPresenter &presenter_;
         vk::CommandPool command_pool_;
-        std::array<VulkanFrameResources, max_frames_in_flight> frame_resources_;
         VulkanPipelineManager &pipeline_manager_;
-
-        std::uint32_t current_frame_ = 0;
-        std::uint32_t image_index_ = 0;
 
         ViewportRendererFactory &viewport_factory_;
         std::vector<std::unique_ptr<ViewportRenderer>> viewports_;

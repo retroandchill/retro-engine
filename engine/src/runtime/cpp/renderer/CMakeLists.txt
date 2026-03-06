@@ -44,7 +44,6 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
 set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/vulkan/components/pipeline.cpp
         private/vulkan/components/device.cpp
-        private/vulkan/components/swapchain.cpp
         private/vulkan/components/buffer_manager.cpp
         private/services.cpp
         private/vulkan/services.cpp
@@ -52,6 +51,7 @@ set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/vulkan/components/viewport_renderer.cpp
         private/vulkan/components/surface.cpp
         private/vulkan/texture_manager.cpp
+        private/vulkan/components/presenter.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
@@ -64,13 +64,13 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         private/vulkan/renderer.ixx
         private/vulkan/components/pipeline.ixx
         private/vulkan/components/device.ixx
-        private/vulkan/components/swapchain.ixx
         private/vulkan/components/buffer_manager.ixx
         private/vulkan/services.ixx
         private/vulkan/components/instance.ixx
         private/vulkan/components/viewport_renderer.ixx
         private/vulkan/components/surface.ixx
         private/vulkan/texture_manager.ixx
+        private/vulkan/components/presenter.ixx
 )
 
 add_library(retro_renderer ${INTERMEDIATE_LIB_TYPE}
