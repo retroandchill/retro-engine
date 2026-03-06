@@ -12,22 +12,19 @@ module retro.renderer.vulkan.components.surface;
 
 namespace retro
 {
-    vk::UniqueSurfaceKHR create_surface(const Window &viewport, const VulkanInstance &instance)
+    vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance)
     {
         switch (auto [backend, handle] = viewport.native_handle(); backend)
         {
             case WindowBackend::sdl3:
                 {
                     vk::SurfaceKHR::CType surface;
-                    if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle),
-                                                  instance.handle(),
-                                                  nullptr,
-                                                  &surface))
+                    if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle), instance, nullptr, &surface))
                     {
                         throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
                     }
 
-                    return vk::UniqueSurfaceKHR{surface, instance.handle()};
+                    return vk::UniqueSurfaceKHR{surface, instance};
                 }
         }
 

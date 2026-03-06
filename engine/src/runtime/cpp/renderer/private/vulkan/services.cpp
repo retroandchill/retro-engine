@@ -30,7 +30,7 @@ namespace retro
         services.add_scoped<Renderer2D, VulkanRenderer2D>()
             .add_singleton<TextureManager, VulkanTextureManager>()
             .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
-            .add_scoped<&create_surface>()
+            .add_scoped([](const Window &window, VulkanInstance &instance) { return instance.create_surface(window); })
             .add_scoped(
                 [](const Window &window, const vk::SurfaceKHR surface, const VulkanDevice &device)
                 {

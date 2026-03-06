@@ -75,7 +75,7 @@ namespace retro
 
         VulkanDeviceConfig pick_physical_device(const VulkanInstance &instance, const vk::SurfaceKHR surface)
         {
-            for (const auto devices = instance.handle().enumeratePhysicalDevices(); const auto dev : devices)
+            for (const auto devices = instance.enumerate_physical_devices(); const auto dev : devices)
             {
                 auto result = find_graphics_and_present_families(dev, surface);
                 if (!result.has_value())
@@ -140,7 +140,7 @@ namespace retro
         {
             throw std::runtime_error{"VulkanDevice: failed to create hidden window"};
         }
-        auto surface = create_surface(**window, instance);
+        auto surface = instance.create_surface(**window);
         auto config = pick_physical_device(instance, surface.get());
         return std::make_unique<VulkanDevice>(config, create_device(config));
     }
