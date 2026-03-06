@@ -22,7 +22,6 @@ import retro.renderer.vulkan.components.viewport_renderer;
 import retro.renderer.vulkan.components.pipeline;
 import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.surface;
-import retro.renderer.vulkan.components.sync;
 
 namespace retro
 {

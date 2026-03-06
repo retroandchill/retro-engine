@@ -42,7 +42,6 @@ add_custom_command(TARGET renderer_shaders POST_BUILD
 )
 
 set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
-        private/vulkan/components/sync.cpp
         private/vulkan/components/pipeline.cpp
         private/vulkan/components/device.cpp
         private/vulkan/components/swapchain.cpp
@@ -63,7 +62,6 @@ set(RETRO_RENDERER_PUBLIC_MODULES
 
 set(RETRO_RENDERER_PRIVATE_MODULES
         private/vulkan/renderer.ixx
-        private/vulkan/components/sync.ixx
         private/vulkan/components/pipeline.ixx
         private/vulkan/components/device.ixx
         private/vulkan/components/swapchain.ixx

@@ -22,6 +22,17 @@ namespace retro
         vk::SwapchainKHR old_swapchain = nullptr;
     };
 
+    export struct VulkanImageResources
+    {
+        vk::Image color_image;
+        vk::UniqueImageView color_image_view;
+        vk::UniqueImage depth_image;
+        vk::UniqueDeviceMemory depth_image_memory;
+        vk::UniqueImageView depth_image_view;
+        vk::UniqueSemaphore render_finished;
+        vk::UniqueFramebuffer framebuffer;
+    };
+
     export class VulkanSwapchain
     {
       public:
@@ -31,6 +42,12 @@ namespace retro
         {
             return swapchain_.get();
         }
+
+        [[nodiscard]] inline vk::RenderPass render_pass() const noexcept
+        {
+            return render_pass_.get();
+        }
+
         [[nodiscard]] inline vk::Format format() const noexcept
         {
             return format_;
@@ -40,25 +57,15 @@ namespace retro
             return extent_;
         }
 
-        [[nodiscard]] inline std::span<const vk::UniqueImageView> color_image_views() const noexcept
+        [[nodiscard]] inline std::span<const VulkanImageResources> image_resources() const noexcept
         {
-            return color_image_views_;
-        }
-
-        [[nodiscard]] inline std::span<const vk::UniqueImageView> depth_image_views() const noexcept
-        {
-            return depth_image_views_;
+            return image_resources_;
         }
 
       private:
-        void create_image_views(vk::Device device);
-
         vk::UniqueSwapchainKHR swapchain_{};
-        std::vector<vk::Image> color_images_;
-        std::vector<vk::UniqueImageView> color_image_views_;
-        std::vector<vk::UniqueImage> depth_images_;
-        std::vector<vk::UniqueDeviceMemory> depth_image_memory_;
-        std::vector<vk::UniqueImageView> depth_image_views_;
+        vk::UniqueRenderPass render_pass_;
+        std::vector<VulkanImageResources> image_resources_;
         vk::Format format_{vk::Format::eUndefined};
         vk::Extent2D extent_{};
     };

@@ -42,6 +42,9 @@ namespace retro
         } -> std::same_as<std::size_t>;
     };
 
+    template <typename T>
+    concept ResetableArena = Arena<T> && requires(T arena) { arena.reset(); };
+
     export class SingleArena
     {
       public:
@@ -292,5 +295,54 @@ namespace retro
     {
         return ArenaAllocator<T, Allocator>(allocator);
     }
+
+    export template <Arena T>
+    class ArenaMemoryResource final : public std::pmr::memory_resource
+    {
+      public:
+        template <std::convertible_to<T> U>
+        constexpr explicit ArenaMemoryResource(U &&arena) : arena_(std::forward<U>(arena))
+        {
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        constexpr explicit ArenaMemoryResource(std::in_place_t, Args &&...args) : arena_(std::forward<Args>(args)...)
+        {
+        }
+
+      protected:
+        void *do_allocate(size_t bytes, size_t align) override
+        {
+            return arena_.allocate(bytes, align);
+        }
+
+        void do_deallocate(void *ptr, size_t bytes, size_t align) override
+        {
+            // No-op for arena allocators
+        }
+
+        [[nodiscard]] bool do_is_equal(const memory_resource &other) const noexcept override
+        {
+            // Arena's a unique objects so they will never be equal
+            return false;
+        }
+
+        void reset() noexcept
+            requires ResetableArena<T>
+        {
+            arena_.reset();
+        }
+
+      private:
+        T arena_;
+    };
+
+    export using SingleArenaMemoryResource = ArenaMemoryResource<SingleArena>;
+
+    export using MultiArenaMemoryResource = ArenaMemoryResource<MultiArena>;
+
+    export template <std::size_t Size>
+    using InlineArenaMemoryResource = ArenaMemoryResource<InlineArena<Size>>;
 
 } // namespace retro

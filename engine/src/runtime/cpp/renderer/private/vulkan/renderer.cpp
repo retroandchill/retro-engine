@@ -10,6 +10,8 @@ module;
 #include <vulkan/vulkan.hpp>
 #endif
 
+#include <cassert>
+
 module retro.renderer.vulkan.renderer;
 
 import retro.logging;
@@ -17,86 +19,6 @@ import vulkan_hpp;
 
 namespace retro
 {
-    namespace
-    {
-        vk::UniqueRenderPass create_render_pass(const vk::Device device,
-                                                const vk::Format color_format,
-                                                const vk::SampleCountFlagBits samples)
-        {
-            const vk::AttachmentDescription color_attachment{.format = color_format,
-                                                             .samples = samples,
-                                                             .loadOp = vk::AttachmentLoadOp::eClear,
-                                                             .storeOp = vk::AttachmentStoreOp::eStore,
-                                                             .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-                                                             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                                                             .initialLayout = vk::ImageLayout::eUndefined,
-                                                             .finalLayout = vk::ImageLayout::ePresentSrcKHR};
-
-            const vk::AttachmentDescription depth_attachment{.format = vk::Format::eD32Sfloat,
-                                                             .samples = samples,
-                                                             .loadOp = vk::AttachmentLoadOp::eClear,
-                                                             .storeOp = vk::AttachmentStoreOp::eDontCare,
-                                                             .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-                                                             .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                                                             .initialLayout = vk::ImageLayout::eUndefined,
-                                                             .finalLayout =
-                                                                 vk::ImageLayout::eDepthStencilAttachmentOptimal};
-
-            std::array attachments = {color_attachment, depth_attachment};
-
-            vk::AttachmentReference color_ref{.attachment = 0, .layout = vk::ImageLayout::eColorAttachmentOptimal};
-            vk::AttachmentReference depth_ref{.attachment = 1,
-                                              .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal};
-
-            vk::SubpassDescription subpass{.pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-                                           .colorAttachmentCount = 1,
-                                           .pColorAttachments = &color_ref,
-                                           .pDepthStencilAttachment = &depth_ref};
-
-            vk::SubpassDependency dependency{.srcSubpass = vk::SubpassExternal,
-                                             .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-                                                             vk::PipelineStageFlagBits::eEarlyFragmentTests,
-                                             .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-                                                             vk::PipelineStageFlagBits::eEarlyFragmentTests,
-                                             .srcAccessMask = vk::AccessFlagBits::eNone,
-                                             .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite |
-                                                              vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-                                             .dependencyFlags = vk::DependencyFlagBits::eByRegion};
-
-            vk::RenderPassCreateInfo rp_info{.attachmentCount = attachments.size(),
-                                             .pAttachments = attachments.data(),
-                                             .subpassCount = 1,
-                                             .pSubpasses = &subpass,
-                                             .dependencyCount = 1,
-                                             .pDependencies = &dependency};
-
-            return device.createRenderPassUnique(rp_info);
-        }
-
-        std::vector<vk::UniqueFramebuffer> create_framebuffers(vk::Device device,
-                                                               vk::RenderPass render_pass,
-                                                               const VulkanSwapchain &swapchain)
-        {
-            return std::views::zip(swapchain.color_image_views(), swapchain.depth_image_views()) |
-                   std::views::transform(
-                       [device, render_pass, &swapchain](
-                           const std::tuple<const vk::UniqueImageView &, const vk::UniqueImageView &> &images)
-                       {
-                           std::array attachments = {std::get<0>(images).get(), std::get<1>(images).get()};
-
-                           const vk::FramebufferCreateInfo fb_info{.renderPass = render_pass,
-                                                                   .attachmentCount = attachments.size(),
-                                                                   .pAttachments = attachments.data(),
-                                                                   .width = swapchain.extent().width,
-                                                                   .height = swapchain.extent().height,
-                                                                   .layers = 1};
-
-                           return device.createFramebufferUnique(fb_info);
-                       }) |
-                   std::ranges::to<std::vector>();
-        }
-    } // namespace
-
     VulkanRenderer2D::VulkanRenderer2D(Window &window,
                                        const vk::SurfaceKHR surface,
                                        VulkanDevice &device,
@@ -106,19 +28,33 @@ namespace retro
                                        VulkanPipelineManager &pipeline_manager,
                                        ViewportRendererFactory &viewport_factory)
         : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, swapchain_(swapchain),
-          render_pass_(create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1)),
-          framebuffers_(create_framebuffers(device_.device(), render_pass_.get(), swapchain_)),
-          command_pool_(command_pool), command_buffers_{device_.device().allocateCommandBuffersUnique(
-                                           vk::CommandBufferAllocateInfo{.commandPool = command_pool,
-                                                                         .level = vk::CommandBufferLevel::ePrimary,
-                                                                         .commandBufferCount = max_frames_in_flight})},
-          sync_(SyncConfig{
-              .device = device_.device(),
-              .frames_in_flight = max_frames_in_flight,
-              .swapchain_image_count = static_cast<std::uint32_t>(swapchain_.color_image_views().size()),
-          }),
-          pipeline_manager_{pipeline_manager}, viewport_factory_{viewport_factory}
+          command_pool_(command_pool), pipeline_manager_{pipeline_manager}, viewport_factory_{viewport_factory}
     {
+        auto command_buffers = device_.device().allocateCommandBuffersUnique(
+            vk::CommandBufferAllocateInfo{.commandPool = command_pool,
+                                          .level = vk::CommandBufferLevel::ePrimary,
+                                          .commandBufferCount = max_frames_in_flight});
+
+        constexpr vk::SemaphoreCreateInfo sem_info{};
+
+        constexpr vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
+
+        std::array pool_sizes = {
+            vk::DescriptorPoolSize{vk::DescriptorType::eStorageBuffer, 256},
+            vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 256},
+        };
+        const vk::DescriptorPoolCreateInfo pool_info{.maxSets = 256,
+                                                     .poolSizeCount = pool_sizes.size(),
+                                                     .pPoolSizes = pool_sizes.data()};
+
+        assert(command_buffers.size() == frame_resources_.size());
+        for (auto [index, element] : frame_resources_ | std::views::enumerate)
+        {
+            element.command_buffer = std::move(command_buffers[index]);
+            element.image_available = device_.device().createSemaphoreUnique(sem_info);
+            element.in_flight = device_.device().createFenceUnique(fence_info);
+            element.descriptor_pool = device_.device().createDescriptorPoolUnique(pool_info);
+        }
     }
 
     VulkanRenderer2D::~VulkanRenderer2D()
@@ -129,7 +65,7 @@ namespace retro
 
     void VulkanRenderer2D::wait_for_current_frame()
     {
-        const auto fence = sync_.in_flight(current_frame_);
+        const auto fence = frame_resources_.at(current_frame_).in_flight.get();
         if (device_.device().waitForFences(1, &fence, vk::True, std::numeric_limits<std::uint64_t>::max()) !=
             vk::Result::eSuccess)
         {
@@ -152,18 +88,18 @@ namespace retro
         const auto dev = device_.device();
 
         current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
-        auto in_flight = sync_.in_flight(current_frame_);
+        auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
         if (dev.waitForFences(1, &in_flight, vk::True, std::numeric_limits<std::uint64_t>::max()) ==
             vk::Result::eTimeout)
         {
             throw std::runtime_error{"VulkanRenderer2D: failed to wait for fence"};
         }
 
-        dev.resetDescriptorPool(sync_.descriptor_pool(current_frame_));
+        dev.resetDescriptorPool(frame_resources_.at(current_frame_).descriptor_pool.get());
 
         auto result = dev.acquireNextImageKHR(swapchain_.handle(),
                                               std::numeric_limits<std::uint64_t>::max(),
-                                              sync_.image_available(current_frame_),
+                                              frame_resources_.at(current_frame_).image_available.get(),
                                               nullptr,
                                               &image_index_);
 
@@ -183,18 +119,19 @@ namespace retro
 
     void VulkanRenderer2D::end_frame()
     {
-        const auto in_flight = sync_.in_flight(current_frame_);
-        auto cmd = command_buffers_[current_frame_].get();
+        const auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
+        auto cmd = frame_resources_.at(current_frame_).command_buffer.get();
 
         cmd.reset();
         record_command_buffer(cmd, image_index_);
 
-        std::array wait_semaphores = {sync_.image_available(current_frame_)};
+        std::array wait_semaphores = {frame_resources_.at(current_frame_).image_available.get()};
         std::array wait_stages = {
             static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
 
         // Signal semaphore is now per-image
-        const vk::Semaphore render_finished_semaphore = sync_.render_finished(image_index_);
+        const vk::Semaphore render_finished_semaphore =
+            swapchain_.image_resources()[image_index_].render_finished.get();
         std::array signal_semaphores = {render_finished_semaphore};
 
         const vk::SubmitInfo submit_info{.waitSemaphoreCount = wait_semaphores.size(),
@@ -247,7 +184,7 @@ namespace retro
 
     void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)
     {
-        pipeline_manager_.create_pipeline(type, pipeline, swapchain_, render_pass_.get());
+        pipeline_manager_.create_pipeline(type, pipeline, swapchain_, swapchain_.render_pass());
     }
 
     void VulkanRenderer2D::remove_render_pipeline(const std::type_index type)
@@ -309,9 +246,7 @@ namespace retro
                                                      .width = w,
                                                      .height = h,
                                                      .old_swapchain = swapchain_.handle()}};
-        render_pass_ = create_render_pass(device_.device(), swapchain_.format(), vk::SampleCountFlagBits::e1);
-        framebuffers_ = create_framebuffers(device_.device(), render_pass_.get(), swapchain_);
-        pipeline_manager_.recreate_pipelines(swapchain_, render_pass_.get());
+        pipeline_manager_.recreate_pipelines(swapchain_);
     }
 
     void VulkanRenderer2D::record_command_buffer(const vk::CommandBuffer cmd, const std::uint32_t image_index)
@@ -339,8 +274,8 @@ namespace retro
         auto [screen_width, screen_height] = swapchain_.extent();
 
         const vk::RenderPassBeginInfo rp_info{
-            .renderPass = render_pass_.get(),
-            .framebuffer = framebuffers_.at(image_index).get(),
+            .renderPass = swapchain_.render_pass(),
+            .framebuffer = swapchain_.image_resources()[image_index].framebuffer.get(),
             .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = 0, .y = 0},
                                      .extent = vk::Extent2D{.width = screen_width, .height = screen_height}},
             .clearValueCount = clear_values.size(),
@@ -352,7 +287,7 @@ namespace retro
         {
             viewport->render_viewport(cmd,
                                       Vector2u{screen_width, screen_height},
-                                      sync_.descriptor_pool(current_frame_));
+                                      frame_resources_.at(current_frame_).descriptor_pool.get());
         }
 
         cmd.endRenderPass();

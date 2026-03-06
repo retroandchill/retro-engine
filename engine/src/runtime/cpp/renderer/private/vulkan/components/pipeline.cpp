@@ -298,12 +298,10 @@ namespace retro
         pipeline_->clear_draw_queue();
     }
 
-    void VulkanRenderPipeline::recreate(vk::Device device,
-                                        const VulkanSwapchain &swapchain,
-                                        const vk::RenderPass render_pass)
+    void VulkanRenderPipeline::recreate(vk::Device device, const VulkanSwapchain &swapchain)
     {
         pipeline_layout_ = create_pipeline_layout(device);
-        graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain, render_pass);
+        graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), swapchain);
         pipeline_->clear_draw_queue();
     }
 
@@ -362,8 +360,7 @@ namespace retro
 
     vk::UniquePipeline VulkanRenderPipeline::create_graphics_pipeline(vk::Device device,
                                                                       vk::PipelineLayout layout,
-                                                                      const VulkanSwapchain &swapchain,
-                                                                      vk::RenderPass render_pass)
+                                                                      const VulkanSwapchain &swapchain)
     {
         auto &shader_layout = pipeline_->shaders();
 
@@ -475,7 +472,7 @@ namespace retro
                                                      .pDepthStencilState = &depth_stencil,
                                                      .pColorBlendState = &color_blending,
                                                      .layout = layout,
-                                                     .renderPass = render_pass,
+                                                     .renderPass = swapchain.render_pass(),
                                                      .subpass = 0};
 
         auto [result, pipeline] = device.createGraphicsPipelineUnique(nullptr, pipeline_info);
@@ -502,11 +499,11 @@ namespace retro
         return device.createShaderModuleUnique(info);
     }
 
-    void VulkanPipelineManager::recreate_pipelines(const VulkanSwapchain &swapchain, const vk::RenderPass render_pass)
+    void VulkanPipelineManager::recreate_pipelines(const VulkanSwapchain &swapchain)
     {
         for (auto &pipeline : pipelines_)
         {
-            pipeline.recreate(device_, swapchain, render_pass);
+            pipeline.recreate(device_, swapchain);
         }
     }
 

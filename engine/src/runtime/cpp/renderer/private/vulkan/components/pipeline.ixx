@@ -26,12 +26,12 @@ namespace retro
                                     vk::RenderPass render_pass)
             : device_{device}, pipeline_{std::addressof(pipeline)}
         {
-            recreate(device, swapchain, render_pass);
+            recreate(device, swapchain);
         }
 
         void clear_draw_queue();
 
-        void recreate(vk::Device device, const VulkanSwapchain &swapchain, vk::RenderPass render_pass);
+        void recreate(vk::Device device, const VulkanSwapchain &swapchain);
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
@@ -44,8 +44,7 @@ namespace retro
 
         vk::UniquePipeline create_graphics_pipeline(vk::Device device,
                                                     vk::PipelineLayout layout,
-                                                    const VulkanSwapchain &swapchain,
-                                                    vk::RenderPass render_pass);
+                                                    const VulkanSwapchain &swapchain);
 
         static vk::UniqueShaderModule create_shader_module(vk::Device device, const std::filesystem::path &path);
 
@@ -66,7 +65,7 @@ namespace retro
         {
         }
 
-        void recreate_pipelines(const VulkanSwapchain &swapchain, vk::RenderPass render_pass);
+        void recreate_pipelines(const VulkanSwapchain &swapchain);
 
         void create_pipeline(std::type_index type,
                              RenderPipeline &pipeline,

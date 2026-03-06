@@ -10,7 +10,6 @@ import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.world.viewport;
-import retro.renderer.vulkan.components.sync;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.swapchain;
 import retro.renderer.vulkan.components.buffer_manager;
@@ -22,9 +21,22 @@ import retro.platform.window;
 import vulkan_hpp;
 import std;
 import retro.runtime.rendering.draw_command;
+import retro.core.memory.arena_allocator;
 
 namespace retro
 {
+    struct VulkanFrameResources
+    {
+        static constexpr std::size_t arena_size = 20 * 1024 * 1024;
+
+        vk::UniqueCommandBuffer command_buffer;
+        SingleArenaMemoryResource memory_resource{std::in_place, arena_size};
+
+        vk::UniqueSemaphore image_available;
+        vk::UniqueFence in_flight;
+        vk::UniqueDescriptorPool descriptor_pool;
+    };
+
     export class VulkanRenderer2D final : public Renderer2D
     {
       public:
@@ -88,11 +100,8 @@ namespace retro
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
         VulkanSwapchain &swapchain_;
-        vk::UniqueRenderPass render_pass_;
-        std::vector<vk::UniqueFramebuffer> framebuffers_;
         vk::CommandPool command_pool_;
-        std::vector<vk::UniqueCommandBuffer> command_buffers_;
-        VulkanSyncObjects sync_;
+        std::array<VulkanFrameResources, max_frames_in_flight> frame_resources_;
         VulkanPipelineManager &pipeline_manager_;
 
         std::uint32_t current_frame_ = 0;
