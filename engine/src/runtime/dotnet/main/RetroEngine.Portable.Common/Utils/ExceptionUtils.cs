@@ -8,6 +8,9 @@ using System.Runtime.CompilerServices;
 
 namespace RetroEngine.Portable.Utils;
 
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class InheritConstructorsAttribute : Attribute;
+
 public static class ExceptionUtils
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

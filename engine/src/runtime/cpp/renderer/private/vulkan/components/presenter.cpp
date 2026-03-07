@@ -14,6 +14,8 @@ module;
 
 module retro.renderer.vulkan.components.presenter;
 
+import retro.runtime.exceptions;
+
 namespace retro
 {
 
@@ -161,7 +163,7 @@ namespace retro
 
         if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
         {
-            throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
+            throw GraphicsException{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
     }
     void VulkanPresenter::submit_and_present()
@@ -192,7 +194,7 @@ namespace retro
             {
                 if (graphics_queue.submit(1, &submit_info, in_flight) != vk::Result::eSuccess)
                 {
-                    throw std::runtime_error{"VulkanRenderer2D: failed to submit draw command buffer"};
+                    throw GraphicsException{"VulkanRenderer2D: failed to submit draw command buffer"};
                 }
             });
 
@@ -214,7 +216,7 @@ namespace retro
                 }
                 else if (result != vk::Result::eSuccess)
                 {
-                    throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
+                    throw GraphicsException{"VulkanRenderer2D: failed to present swapchain image"};
                 }
             });
     }
@@ -318,7 +320,7 @@ namespace retro
         const auto formats = device_.get_surface_formats(surface_);
         if (formats.empty())
         {
-            throw std::runtime_error{"VulkanSwapchain: no surface formats"};
+            throw GraphicsException{"VulkanSwapchain: no surface formats"};
         }
 
         auto chosen_format = formats[0];
@@ -333,7 +335,7 @@ namespace retro
 
         if (const auto present_modes = device_.get_surface_preset_modes(surface_); present_modes.empty())
         {
-            throw std::runtime_error{"VulkanSwapchain: no present modes"};
+            throw GraphicsException{"VulkanSwapchain: no present modes"};
         }
 
         auto chosen_present_mode = vk::PresentModeKHR::eFifo; // always available

@@ -5,9 +5,10 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
+using RetroEngine.Portable.SourceGenerator.Unions;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 
 public enum MethodParameterModifier : byte
 {

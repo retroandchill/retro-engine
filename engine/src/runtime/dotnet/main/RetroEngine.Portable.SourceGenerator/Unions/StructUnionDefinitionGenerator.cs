@@ -6,11 +6,13 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
+using RetroEngine.Portable.SourceGenerator.Common;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
+using RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
-using RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
 using RetroEngine.Portable.SourceGenerator.Unions.Extensions;
-using TypeInfo = RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing.TypeInfo;
-using TypeKind = RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating.TypeKind;
+using TypeInfo = RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing.TypeInfo;
+using TypeKind = RetroEngine.Portable.SourceGenerator.Common.CodeGenerating.TypeKind;
 
 namespace RetroEngine.Portable.SourceGenerator.Unions;
 

@@ -5,25 +5,26 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using RetroEngine.Portable.SourceGenerator.Common;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
+using RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
+using RetroEngine.Portable.SourceGenerator.Common.Extensions;
 using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
-using RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
 using RetroEngine.Portable.SourceGenerator.Unions.Extensions;
 using RetroEngine.Portable.Utils;
-using TypeInfo = RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing.TypeInfo;
+using TypeInfo = RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing.TypeInfo;
 
 namespace RetroEngine.Portable.SourceGenerator.Unions;
 
-public sealed class UnionCodeGenerator(
-    TypeCodeWriter typeCodeWriter,
-    IUnionDefinitionGeneratorFactory unionDefinitionGeneratorFactory
-) : IUnionCodeGenerator
+public sealed class UnionCodeGenerator(IUnionDefinitionGeneratorFactory unionDefinitionGeneratorFactory)
+    : IUnionCodeGenerator
 {
     private static readonly string ThrowIfNullMethod =
         $"{typeof(ExceptionUtils).FullName}.{nameof(ExceptionUtils.ThrowIfNull)}";
 
     public string Name => "Union";
 
-    public string GenerateCode(UnionInfo unionInfo, INamedTypeSymbol unionTypeSymbol)
+    public string GenerateCode(UnionInfo unionInfo)
     {
         using var codeWriter = CodeWriter.CreateWithDefaultLines();
 
@@ -38,11 +39,11 @@ public sealed class UnionCodeGenerator(
                     unionDefinitionGenerator,
                     unionInfo
                 ).Generate();
-                typeCodeWriter.WriteType(unionTypeDefinition, innerBlock);
+                TypeCodeWriter.WriteType(unionTypeDefinition, innerBlock);
 
                 foreach (var typeDefinition in unionDefinitionGenerator.GetAdditionalTypes())
                 {
-                    typeCodeWriter.WriteType(typeDefinition, innerBlock);
+                    TypeCodeWriter.WriteType(typeDefinition, innerBlock);
                 }
             }
         );

@@ -6,7 +6,7 @@
 using System.Text;
 using RetroEngine.Portable.SourceGenerator.Unions.Extensions;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions;
+namespace RetroEngine.Portable.SourceGenerator.Common;
 
 public sealed class CodeWriter : IDisposable
 {

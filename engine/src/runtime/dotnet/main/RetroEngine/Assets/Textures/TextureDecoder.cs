@@ -39,11 +39,7 @@ public partial class TextureDecoder : IAssetDecoder
             : throw new InvalidOperationException("Failed to load texture from stream.");
     }
 
-    [LibraryImport(
-        NativeLibraries.RetroEngine,
-        EntryPoint = "retro_texture_load_existing",
-        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
-    )]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load_existing")]
     private static partial IntPtr NativeLoad(in AssetPath path, out int width, out int height);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load")]

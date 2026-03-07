@@ -19,6 +19,7 @@ import retro.renderer.vulkan.components.buffer_manager;
 import retro.platform.backend;
 import retro.core.type_traits.basic;
 import retro.core.io.stream;
+import retro.runtime.exceptions;
 
 namespace retro
 {
@@ -242,7 +243,7 @@ namespace retro
         {
             if (device_->waitForFences(fences.size(), fences.data(), wait_all, timeout) != vk::Result::eSuccess)
             {
-                throw std::runtime_error{"VulkanRenderer2D: failed waiting for fences"};
+                throw GraphicsException{"VulkanRenderer2D: failed waiting for fences"};
             }
         }
 
@@ -255,7 +256,7 @@ namespace retro
         {
             if (const auto result = device_->resetFences(fences.size(), fences.data()); result != vk::Result::eSuccess)
             {
-                throw std::runtime_error{"VulkanRenderer2D: failed resetting fences"};
+                throw GraphicsException{"VulkanRenderer2D: failed resetting fences"};
             }
         }
 

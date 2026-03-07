@@ -5,8 +5,17 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using RetroEngine.Portable.SourceGenerator.Unions;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
+
+public enum OtherConstructorKind : byte
+{
+    Base,
+    This,
+}
+
+public readonly record struct OtherConstructorCall(OtherConstructorKind Kind, ImmutableArray<string> Arguments);
 
 public sealed record ConstructorDefinition
 {
@@ -16,5 +25,7 @@ public sealed record ConstructorDefinition
 
     public ImmutableArray<MethodParameter> Parameters { get; init; } = [];
 
-    public required Action<ConstructorDefinition, CodeWriter> BodyWriter { get; init; }
+    public OtherConstructorCall? OtherConstructorCall { get; init; }
+
+    public Action<ConstructorDefinition, CodeWriter>? BodyWriter { get; init; }
 }

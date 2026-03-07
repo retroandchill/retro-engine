@@ -13,6 +13,7 @@ module;
 module retro.renderer.vulkan.texture_manager;
 
 import retro.renderer.vulkan.components.buffer_manager;
+import retro.runtime.exceptions;
 
 namespace retro
 {
@@ -160,7 +161,7 @@ namespace retro
             {
                 if (graphics_queue.submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
                 {
-                    throw std::runtime_error{"VulkanRenderer2D: failed to submit one-shot command buffer"};
+                    throw GraphicsException{"VulkanRenderer2D: failed to submit one-shot command buffer"};
                 }
             });
 
@@ -194,7 +195,7 @@ namespace retro
         }
         else
         {
-            throw std::runtime_error{"VulkanRenderer2D: unsupported image layout transition"};
+            throw GraphicsException{"VulkanRenderer2D: unsupported image layout transition"};
         }
 
         vk::ImageMemoryBarrier barrier{

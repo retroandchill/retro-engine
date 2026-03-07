@@ -13,6 +13,7 @@ module;
 module retro.core.io.file_stream;
 
 import retro.core.containers.optional;
+import retro.core.util.exceptions;
 import std;
 
 namespace retro
@@ -51,11 +52,11 @@ namespace retro
     {
         auto target_path = find_on_path(path);
         if (!target_path.has_value())
-            throw std::runtime_error{"Shader file not found"};
+            throw IoException{"Shader file not found"};
 
         std::ifstream file{*target_path, std::ios::binary | std::ios::ate};
         if (!file)
-            throw std::runtime_error{"Failed to open shader file"};
+            throw IoException{"Failed to open shader file"};
 
         const auto size = static_cast<size_t>(file.tellg());
         std::vector<std::byte> data(size);

@@ -6,7 +6,7 @@
 using System.Runtime.InteropServices;
 using RetroEngine.Portable.Utils;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 
 [StructLayout(LayoutKind.Explicit)]
 internal readonly struct BlittableTypeKindData

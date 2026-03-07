@@ -5,9 +5,9 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using TypeInfo = RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing.TypeInfo;
+using TypeInfo = RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing.TypeInfo;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 
 public sealed record TypeDefinition
 {

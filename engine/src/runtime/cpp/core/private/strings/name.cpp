@@ -239,7 +239,7 @@ namespace retro
         NameEntryId create_new_entry(const std::string_view str)
         {
             if (str.size() > MAX_NAME_LENGTH)
-                throw std::runtime_error{"Name too long"};
+                throw std::length_error{"Name too long"};
 
             const std::size_t byte_size = (str.size() + 1) * sizeof(char);
             auto &header = allocator_.allocate_with_tail<NameEntryHeader>(byte_size, str.size());

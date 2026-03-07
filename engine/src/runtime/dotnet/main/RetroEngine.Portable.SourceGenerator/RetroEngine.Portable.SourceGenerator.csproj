@@ -23,7 +23,7 @@
 
     <ItemGroup>
       <Compile Include="..\RetroEngine.Portable.Common\Utils\ExceptionUtils.cs">
-        <Link>Unions\Extensions\ExceptionUtils.cs</Link>
+        <Link>Common\Extensions\ExceptionUtils.cs</Link>
       </Compile>
       <Compile Include="..\RetroEngine.Portable.Common\Utils\UnionAttribute.cs">
         <Link>Unions\Attributes\UnionAttribute.cs</Link>

@@ -16,6 +16,7 @@ module;
 module retro.renderer.vulkan.components.instance;
 
 import retro.logging;
+import retro.platform.exceptions;
 
 namespace retro
 {
@@ -31,7 +32,7 @@ namespace retro
                         auto *names = SDL_Vulkan_GetInstanceExtensions(&count);
                         if (names == nullptr)
                         {
-                            throw std::runtime_error("SDL_Vulkan_GetInstanceExtensions failed");
+                            throw PlatformException(SDL_GetError());
                         }
 
                         return std::span{names, count};

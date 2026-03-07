@@ -9,6 +9,9 @@
     <ItemGroup>
         <ProjectReference Include="$(RetroEngineCoreProj)" />
         <ProjectReference Include="$(RetroEngineLoggingProj)" />
+        <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
     </ItemGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
         <ProjectReference Include="$(RetroEnginePortableNativeProj)" />

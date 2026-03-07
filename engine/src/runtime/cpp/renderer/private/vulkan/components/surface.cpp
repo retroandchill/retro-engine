@@ -10,6 +10,8 @@ module;
 
 module retro.renderer.vulkan.components.surface;
 
+import retro.runtime.exceptions;
+
 namespace retro
 {
     vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance)
@@ -21,13 +23,13 @@ namespace retro
                     vk::SurfaceKHR::CType surface;
                     if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle), instance, nullptr, &surface))
                     {
-                        throw std::runtime_error{"VulkanSurface: SDL_Vulkan_CreateSurface failed"};
+                        throw GraphicsException{SDL_GetError()};
                     }
 
                     return vk::UniqueSurfaceKHR{surface, instance};
                 }
         }
 
-        throw std::runtime_error{"Unsupported window backend"};
+        throw std::invalid_argument{"Unsupported window backend"};
     }
 } // namespace retro

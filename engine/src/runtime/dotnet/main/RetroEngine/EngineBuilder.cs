@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,12 +81,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
                     GCHandle.ToIntPtr(configureListHandle),
                     out var errorMessage
                 );
-                if (nativeEngine == IntPtr.Zero)
-                {
-                    throw new ApplicationException(
-                        $"Failed to create engine: {Utf8StringMarshaller.ConvertToManaged(errorMessage)}"
-                    );
-                }
+                errorMessage.ThrowIfError();
 
                 try
                 {
@@ -146,7 +140,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         PlatformBackendInfo platformInfo,
         delegate* unmanaged<IntPtr, IntPtr, void> configureCallback,
         IntPtr userData,
-        out byte* errorMessage
+        out InteropError errorMessage
     );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_add_rendering_services")]

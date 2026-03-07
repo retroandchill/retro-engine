@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
 using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
 using RetroEngine.Portable.Utils;
 

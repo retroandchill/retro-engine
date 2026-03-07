@@ -42,6 +42,7 @@ set(RETRO_RUNTIME_MODULES
         public/modules/world/viewport.ixx
         public/modules/rendering/layout/margin.ixx
         public/modules/rendering/layout/anchors.ixx
+        public/modules/exceptions.ixx
 )
 
 

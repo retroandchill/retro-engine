@@ -88,7 +88,7 @@ namespace retro
                 return VulkanDeviceConfig{dev, graphics_family, present_family};
             }
 
-            throw std::runtime_error{"VulkanDevice: failed to find a suitable GPU"};
+            throw GraphicsException{"VulkanDevice: failed to find a suitable GPU"};
         }
 
         vk::UniqueDevice create_device(const VulkanDeviceConfig &config)
@@ -146,7 +146,7 @@ namespace retro
             platform_backend.create_window(WindowDesc{.flags = WindowFlags::vulkan | WindowFlags::hidden});
         if (!window.has_value())
         {
-            throw std::runtime_error{"VulkanDevice: failed to create hidden window"};
+            throw GraphicsException{"VulkanDevice: failed to create hidden window"};
         }
         auto surface = instance.create_surface(**window);
         auto config = pick_physical_device(instance, surface.get());
@@ -159,7 +159,7 @@ namespace retro
         auto [result, pipeline] = device_->createGraphicsPipelineUnique(cache, create_info);
         if (result != vk::Result::eSuccess)
         {
-            throw std::runtime_error{"VulkanRenderer2D: failed to create graphics pipeline"};
+            throw GraphicsException{"VulkanRenderer2D: failed to create graphics pipeline"};
         }
 
         return std::move(pipeline);
@@ -245,7 +245,7 @@ namespace retro
             }
         }
 
-        throw std::runtime_error("VulkanBufferManager: failed to find suitable memory type!");
+        throw GraphicsException("VulkanBufferManager: failed to find suitable memory type!");
     }
 
     vk::UniqueCommandPool VulkanDevice::create_command_pool() const

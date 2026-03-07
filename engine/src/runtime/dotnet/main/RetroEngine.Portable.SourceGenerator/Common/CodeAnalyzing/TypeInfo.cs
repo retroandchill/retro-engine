@@ -5,30 +5,26 @@
 
 using System.Runtime.InteropServices;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
 
-public sealed partial class TypeInfo : IEquatable<TypeInfo>
+public sealed class TypeInfo(
+    string? ns,
+    TypeInfo? containingType,
+    string name,
+    string fullyQualifiedName,
+    TypeInfo.TypeKind kind
+) : IEquatable<TypeInfo>
 {
-    private readonly bool _isReferenceType;
-    private readonly string _fullyQualifiedName;
+    private readonly bool _isReferenceType = kind.Match(_ => true, (_, _) => false, () => true);
+    private readonly string _fullyQualifiedName = fullyQualifiedName;
 
-    public string Name { get; }
+    public string Name { get; } = name;
 
-    public string? Namespace { get; }
+    public string? Namespace { get; } = ns;
 
-    public TypeInfo? ContainingType { get; }
+    public TypeInfo? ContainingType { get; } = containingType;
 
-    public TypeKind Kind { get; }
-
-    public TypeInfo(string? @namespace, TypeInfo? containingType, string name, string fullyQualifiedName, TypeKind kind)
-    {
-        Name = name;
-        Namespace = @namespace;
-        ContainingType = containingType;
-        Kind = kind;
-        _fullyQualifiedName = fullyQualifiedName;
-        _isReferenceType = kind.Match(_ => true, (_, _) => false, () => true);
-    }
+    public TypeKind Kind { get; } = kind;
 
     public string GetFullyQualifiedName(bool isRefNullable) =>
         _isReferenceType && isRefNullable ? $"{_fullyQualifiedName}?" : _fullyQualifiedName;

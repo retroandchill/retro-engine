@@ -5,6 +5,8 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
+using TypeInfo = RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing.TypeInfo;
 
 namespace RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
 

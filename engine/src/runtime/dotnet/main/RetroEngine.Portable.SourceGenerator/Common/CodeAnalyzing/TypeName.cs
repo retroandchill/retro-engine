@@ -3,23 +3,17 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
 
-public readonly struct TypeName : IEquatable<TypeName>
+public readonly struct TypeName(TypeInfo typeInfo, bool isRefNullable) : IEquatable<TypeName>
 {
-    private readonly bool _isRefNullable;
+    private readonly bool _isRefNullable = isRefNullable;
 
-    public CodeAnalyzing.TypeInfo TypeInfo { get; }
+    public TypeInfo TypeInfo { get; } = typeInfo;
 
     public string Name => TypeInfo.Name;
 
     public string FullyQualifiedName => TypeInfo.GetFullyQualifiedName(_isRefNullable);
-
-    public TypeName(CodeAnalyzing.TypeInfo typeInfo, bool isRefNullable)
-    {
-        TypeInfo = typeInfo;
-        _isRefNullable = isRefNullable;
-    }
 
     public bool Equals(TypeName other) => _isRefNullable == other._isRefNullable && TypeInfo.Equals(other.TypeInfo);
 

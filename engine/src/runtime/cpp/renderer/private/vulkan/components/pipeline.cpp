@@ -20,6 +20,7 @@ import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
 import retro.runtime.rendering.texture_manager;
 import retro.renderer.vulkan.texture_manager;
+import retro.runtime.exceptions;
 
 namespace retro
 {
@@ -497,7 +498,7 @@ namespace retro
         auto result = device.create_shader_module(path);
         if (!result.has_value())
         {
-            throw std::runtime_error{"Failed to create shader module: " + path.string()};
+            throw GraphicsException{"Failed to create shader module: " + path.string()};
         }
 
         return *std::move(result);

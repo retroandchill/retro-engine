@@ -4,10 +4,12 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Microsoft.CodeAnalysis;
+using RetroEngine.Portable.SourceGenerator.Common;
+using RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
+using RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
-using RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
-using TypeInfo = RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing.TypeInfo;
-using TypeKind = RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating.TypeKind;
+using TypeInfo = RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing.TypeInfo;
+using TypeKind = RetroEngine.Portable.SourceGenerator.Common.CodeGenerating.TypeKind;
 
 namespace RetroEngine.Portable.SourceGenerator.Unions;
 

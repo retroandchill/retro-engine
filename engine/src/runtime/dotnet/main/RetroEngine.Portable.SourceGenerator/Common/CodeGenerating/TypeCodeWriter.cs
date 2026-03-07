@@ -5,13 +5,11 @@
 
 using RetroEngine.Portable.SourceGenerator.Unions.Extensions;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeGenerating;
 
-public sealed class TypeCodeWriter
+public static class TypeCodeWriter
 {
-#pragma warning disable CA1822
-    public void WriteType(TypeDefinition typeDefinition, CodeWriter codeWriter)
-#pragma warning restore CA1822
+    public static void WriteType(TypeDefinition typeDefinition, CodeWriter codeWriter)
     {
         foreach (var attribute in typeDefinition.Attributes)
         {
@@ -176,7 +174,7 @@ public sealed class TypeCodeWriter
     {
         WriteConstructorDeclaration(constructorDefinition, typeDefinition, typeBodyBlock);
         using var constructorBodyBlock = typeBodyBlock.NewBlock();
-        constructorDefinition.BodyWriter(constructorDefinition, constructorBodyBlock);
+        constructorDefinition.BodyWriter?.Invoke(constructorDefinition, constructorBodyBlock);
     }
 
     private static void WriteConstructorDeclaration(
@@ -194,7 +192,27 @@ public sealed class TypeCodeWriter
             .Add(typeDefinition.NameWithoutGenerics)
             .ToString();
 
-        typeBodyBlock.AppendLine($"{declarationStr}({ToParametersString(constructorDefinition.Parameters)})");
+        string otherConstructorCall;
+        if (constructorDefinition.OtherConstructorCall is not null)
+        {
+            var (type, args) = constructorDefinition.OtherConstructorCall.Value;
+            var prefix = type switch
+            {
+                OtherConstructorKind.Base => "base",
+                OtherConstructorKind.This => "this",
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+
+            otherConstructorCall = $" : {prefix}({string.Join(", ", args)})";
+        }
+        else
+        {
+            otherConstructorCall = string.Empty;
+        }
+
+        typeBodyBlock.AppendLine(
+            $"{declarationStr}({ToParametersString(constructorDefinition.Parameters)}){otherConstructorCall}"
+        );
     }
 
     private static void WriteMethod(MethodDefinition methodDefinition, CodeWriter typeBodyBlock)

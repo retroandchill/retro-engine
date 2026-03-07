@@ -4,8 +4,9 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
 
-namespace RetroEngine.Portable.SourceGenerator.Unions.CodeAnalyzing;
+namespace RetroEngine.Portable.SourceGenerator.Common.CodeAnalyzing;
 
 public static class TypeInfos
 {

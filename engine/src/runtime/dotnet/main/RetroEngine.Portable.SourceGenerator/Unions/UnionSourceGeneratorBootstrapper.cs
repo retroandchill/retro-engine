@@ -44,7 +44,7 @@ public static class UnionSourceGeneratorBootstrapper
                         return;
                     }
 
-                    var code = unionCodeGenerator.GenerateCode(unionInfo, typeSymbol);
+                    var code = unionCodeGenerator.GenerateCode(unionInfo);
                     if (string.IsNullOrEmpty(code))
                     {
                         return;

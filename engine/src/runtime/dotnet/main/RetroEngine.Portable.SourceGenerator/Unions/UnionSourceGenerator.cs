@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Microsoft.CodeAnalysis;
-using RetroEngine.Portable.SourceGenerator.Unions.CodeGenerating;
 
 namespace RetroEngine.Portable.SourceGenerator.Unions;
 
@@ -14,6 +13,6 @@ public sealed class UnionSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context) =>
         UnionSourceGeneratorBootstrapper.Bootstrap(
             context,
-            new UnionCodeGenerator(new TypeCodeWriter(), new UnionDefinitionGeneratorFactory())
+            new UnionCodeGenerator(new UnionDefinitionGeneratorFactory())
         );
 }

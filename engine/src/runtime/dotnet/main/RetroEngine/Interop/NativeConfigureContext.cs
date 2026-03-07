@@ -17,3 +17,12 @@ public readonly ref struct NativeConfigureContext
         NativeObject = nativeObject;
     }
 }
+
+[CustomMarshaller(typeof(NativeConfigureContext), MarshalMode.ManagedToUnmanagedIn, typeof(ManagedToNative))]
+public static class NativeConfigureContextMarshaller
+{
+    public static class ManagedToNative
+    {
+        public static IntPtr ConvertToUnmanaged(NativeConfigureContext context) => context.NativeObject;
+    }
+}

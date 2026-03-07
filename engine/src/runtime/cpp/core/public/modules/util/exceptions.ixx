@@ -10,7 +10,31 @@ import std;
 
 namespace retro
 {
-    export class NotImplementedException final : std::exception
+    export class IoException : public std::runtime_error
+    {
+      public:
+        using std::runtime_error::runtime_error;
+    };
+
+    export class ResourceException : public std::runtime_error
+    {
+      public:
+        using std::runtime_error::runtime_error;
+    };
+
+    export class InvalidStateException final : public std::logic_error
+    {
+      public:
+        using std::logic_error::logic_error;
+    };
+
+    export class UnsupportedOperationException final : public std::logic_error
+    {
+      public:
+        using std::logic_error::logic_error;
+    };
+
+    export class NotImplementedException final : public std::exception
     {
       public:
         [[nodiscard]] inline const char *what() const noexcept override

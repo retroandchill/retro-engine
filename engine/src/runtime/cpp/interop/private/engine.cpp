@@ -21,6 +21,7 @@ import retro.runtime.rendering.objects.sprite;
 import retro.runtime.assets.asset_manager;
 import retro.runtime.assets.asset_decoder;
 import retro.runtime.assets.textures.texture_decoder;
+import retro.interop.interop_error;
 
 namespace
 {
@@ -55,38 +56,29 @@ extern "C"
     RETRO_API retro::Engine *retro_create_engine(const retro::PlatformBackendInfo platform_config,
                                                  const ConfigCallback config_callback,
                                                  void *user_data,
-                                                 const char **error_message)
+                                                 retro::InteropError *error_message)
     {
-        try
-        {
-            *error_message = nullptr;
-            retro::EngineConfigContext context;
-            context.services.add(retro::PlatformBackend::create(platform_config));
-            context.services.add_singleton<retro::PipelineManager>()
-                .add_singleton<retro::RenderPipeline, retro::GeometryRenderPipeline>()
-                .add_singleton<retro::RenderPipeline, retro::SpriteRenderPipeline>()
-                .add_singleton<retro::AssetManager>()
-                .add_singleton<retro::AssetDecoder, retro::TextureDecoder>();
-
-            if (config_callback != nullptr)
+        return retro::try_execute(
+            [&]
             {
-                config_callback(std::addressof(context), user_data);
-            }
+                retro::EngineConfigContext context;
+                context.services.add(retro::PlatformBackend::create(platform_config));
+                context.services.add_singleton<retro::PipelineManager>()
+                    .add_singleton<retro::RenderPipeline, retro::GeometryRenderPipeline>()
+                    .add_singleton<retro::RenderPipeline, retro::SpriteRenderPipeline>()
+                    .add_singleton<retro::AssetManager>()
+                    .add_singleton<retro::AssetDecoder, retro::TextureDecoder>();
 
-            auto engine = std::make_unique<retro::Engine>(context.services.create_service_provider());
-            retro::Engine::initialize(*engine);
-            return engine.release();
-        }
-        catch (const std::exception &e)
-        {
-            *error_message = e.what();
-            return nullptr;
-        }
-        catch (...)
-        {
-            *error_message = "Unknown error";
-            return nullptr;
-        }
+                if (config_callback != nullptr)
+                {
+                    config_callback(std::addressof(context), user_data);
+                }
+
+                auto engine = std::make_unique<retro::Engine>(context.services.create_service_provider());
+                retro::Engine::initialize(*engine);
+                return engine.release();
+            },
+            *error_message);
     }
 
     RETRO_API void retro_engine_create_main_window(retro::Engine *engine,
@@ -146,24 +138,9 @@ extern "C"
 
     RETRO_API bool retro_engine_pump_tasks(retro::Engine *engine,
                                            const std::int32_t max_tasks,
-                                           const char **error_message)
+                                           retro::InteropError *error_message)
     {
-        try
-        {
-            engine->pump_tasks(static_cast<std::size_t>(max_tasks));
-            *error_message = nullptr;
-            return true;
-        }
-        catch (const std::exception &e)
-        {
-            *error_message = e.what();
-            return false;
-        }
-        catch (...)
-        {
-            *error_message = "Unknown error";
-            return false;
-        }
+        return retro::try_execute([&] { engine->pump_tasks(static_cast<std::size_t>(max_tasks)); }, *error_message);
     }
 
     RETRO_API void retro_engine_on_loop_exit(retro::Engine *engine)
@@ -171,24 +148,9 @@ extern "C"
         engine->on_loop_exit();
     }
 
-    RETRO_API bool retro_engine_render(retro::Engine *engine, const char **error_message)
+    RETRO_API bool retro_engine_render(retro::Engine *engine, retro::InteropError *error_message)
     {
-        try
-        {
-            engine->render();
-            *error_message = nullptr;
-            return true;
-        }
-        catch (const std::exception &e)
-        {
-            *error_message = e.what();
-            return false;
-        }
-        catch (...)
-        {
-            *error_message = "Unknown error";
-            return false;
-        }
+        return retro::try_execute([&] { engine->render(); }, *error_message);
     }
 
     RETRO_API void retro_engine_wait_platform_events(retro::Engine *engine, std::int64_t timeout)

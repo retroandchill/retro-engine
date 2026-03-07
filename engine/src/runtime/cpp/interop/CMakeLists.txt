@@ -22,12 +22,22 @@ set(RETRO_INTEROP_PRIVATE_MODULES
         private/localization/buffers.ixx
 )
 
+set(RETRO_INTEROP_PUBLIC_MODULES
+        public/interop_error.ixx
+)
+
 add_library(retro_interop SHARED
         ${RETRO_INTEROP_SOURCES}
         ${RETRO_INTEROP_PRIVATE_MODULES}
+        ${RETRO_INTEROP_PUBLIC_MODULES}
 )
 
 retro_add_boilerplate(retro_interop)
+
+target_sources(retro_interop PUBLIC
+        FILE_SET retro_interop_public_modules
+        TYPE CXX_MODULES FILES
+        ${RETRO_INTEROP_PUBLIC_MODULES})
 
 target_sources(retro_interop PRIVATE
         FILE_SET retro_interop_private_modules

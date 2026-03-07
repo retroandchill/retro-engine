@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
@@ -185,10 +186,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
                 Tick(deltaTime);
 
-                if (!NativeRender(_nativeEngine, out var errorMessage))
-                {
-                    throw new PlatformNotSupportedException(errorMessage);
-                }
+                _ = NativeRender(_nativeEngine, out var errorMessage);
+                errorMessage.ThrowIfError();
             }
             catch (Exception ex)
             {
@@ -202,10 +201,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     private void Tick(float deltaTime)
     {
-        if (!NativePumpTasks(_nativeEngine, -1, out var errorMessage))
-        {
-            throw new PlatformNotSupportedException(errorMessage);
-        }
+        _ = NativePumpTasks(_nativeEngine, -1, out var errorMessage);
+        errorMessage.ThrowIfError();
 
         foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
         {
@@ -331,21 +328,15 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_engine")]
     internal static partial void NativeDestroy(IntPtr engine);
 
-    [LibraryImport(
-        NativeLibraries.RetroEngine,
-        EntryPoint = "retro_engine_pump_tasks",
-        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
-    )]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_pump_tasks")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativePumpTasks(IntPtr engine, int maxTasks, out string errorMessage);
+    [MustUseReturnValue]
+    private static partial bool NativePumpTasks(IntPtr engine, int maxTasks, out InteropError errorMessage);
 
-    [LibraryImport(
-        NativeLibraries.RetroEngine,
-        EntryPoint = "retro_engine_render",
-        StringMarshallingCustomType = typeof(UnownedCharMarshaller)
-    )]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_render")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeRender(IntPtr engine, out string errorMessage);
+    [MustUseReturnValue]
+    private static partial bool NativeRender(IntPtr engine, out InteropError errorMessage);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_on_loop_exit")]
     private static partial void NativeOnLoopExit(IntPtr engine);
