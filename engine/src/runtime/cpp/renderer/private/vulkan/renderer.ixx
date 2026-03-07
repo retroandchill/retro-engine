@@ -68,13 +68,13 @@ namespace retro
         VulkanRenderer2D &operator=(VulkanRenderer2D &&) = delete;
         VulkanRenderer2D &operator=(const VulkanRenderer2D &) = delete;
 
+        void request_stop() override;
+
         void wait_for_current_frame() override;
 
         void queue_frame_for_render(RenderQueueFn factory) override;
 
-        void begin_frame() override;
-
-        void end_frame() override;
+        void render_next_available_frame() override;
 
         [[nodiscard]] Window &window() const override;
 
@@ -95,6 +95,7 @@ namespace retro
         VulkanPresenter &presenter_;
         vk::CommandPool command_pool_;
         VulkanPipelineManager &pipeline_manager_;
+        std::stop_source renderer_teardown_source_;
 
         ViewportRendererFactory &viewport_factory_;
         std::vector<std::unique_ptr<ViewportRenderer>> viewports_;

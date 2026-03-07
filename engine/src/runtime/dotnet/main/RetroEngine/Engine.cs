@@ -29,6 +29,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private readonly IntPtr _nativeEngine;
     private bool _disposed;
     private Thread? _gameThread;
+    private Thread? _renderThread;
     private ulong _windowId;
     private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
@@ -70,6 +71,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _ = CultureManager.Instance;
 
         _gameThread = new Thread(RunGameThread) { Name = "Game Thread" };
+        _renderThread = new Thread(RunRenderThread) { Name = "Render Thread" };
+
+        _renderThread.Start();
         _gameThread.Start();
 
         unsafe
@@ -85,6 +89,12 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
     }
 
+    private void WaitUntilStopped()
+    {
+        _gameThread?.Join();
+        _renderThread?.Join();
+    }
+
     public void Run()
     {
         Start();
@@ -94,7 +104,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
             NativeWaitEvents(_nativeEngine);
         }
 
-        _gameThread?.Join();
+        WaitUntilStopped();
     }
 
     public async Task CreateMainWindowAsync(
@@ -186,7 +196,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
                 Tick(deltaTime);
 
-                _ = NativeRender(_nativeEngine, out var errorMessage);
+                _ = NativeSyncRenderState(_nativeEngine, out var errorMessage);
                 errorMessage.ThrowIfError();
             }
             catch (Exception ex)
@@ -197,6 +207,15 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
 
         NativeOnLoopExit(_nativeEngine);
+    }
+
+    private void RunRenderThread()
+    {
+        while (!_lifetime.ApplicationStopped.IsCancellationRequested)
+        {
+            _ = NativeRender(_nativeEngine, out var errorMessage);
+            errorMessage.ThrowIfError();
+        }
     }
 
     private void Tick(float deltaTime)
@@ -334,6 +353,11 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private static partial bool NativePumpTasks(IntPtr engine, int maxTasks, out InteropError errorMessage);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_render")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    [MustUseReturnValue]
+    private static partial bool NativeSyncRenderState(IntPtr engine, out InteropError errorMessage);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_sync_render_state")]
     [return: MarshalAs(UnmanagedType.I1)]
     [MustUseReturnValue]
     private static partial bool NativeRender(IntPtr engine, out InteropError errorMessage);

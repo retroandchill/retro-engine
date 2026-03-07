@@ -37,6 +37,11 @@ namespace retro
         device_.wait_idle();
     }
 
+    void VulkanRenderer2D::request_stop()
+    {
+        renderer_teardown_source_.request_stop();
+    }
+
     void VulkanRenderer2D::wait_for_current_frame()
     {
         presenter_.wait_for_current_frame();
@@ -44,23 +49,20 @@ namespace retro
 
     void VulkanRenderer2D::queue_frame_for_render(RenderQueueFn factory)
     {
-        presenter_.queue_frame_for_render(factory);
+        presenter_.queue_frame_for_render(factory, renderer_teardown_source_.get_token());
     }
-
-    void VulkanRenderer2D::begin_frame()
+    void VulkanRenderer2D::render_next_available_frame()
     {
+
         presenter_.begin_frame();
-    }
 
-    void VulkanRenderer2D::end_frame()
-    {
         Deferred reset_frame_data{[this]
                                   {
                                       pipeline_manager_.clear_draw_queue();
                                       buffer_manager_.reset();
                                   }};
 
-        presenter_.submit_and_present();
+        presenter_.submit_and_present(renderer_teardown_source_.get_token());
     }
 
     Window &VulkanRenderer2D::window() const

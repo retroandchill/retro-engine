@@ -126,6 +126,7 @@ namespace retro
 
       private:
         bool handle_platform_event(const Event &event);
+        [[nodiscard]] std::vector<RendererRef> get_current_renderers() const;
 
         RETRO_API static Engine *instance_;
 
@@ -134,7 +135,7 @@ namespace retro
         std::shared_ptr<ServiceProvider> service_provider_{};
         PlatformBackend &platform_backend_;
         ServiceScopeFactory &service_scope_factory_;
-        std::shared_mutex renderers_mutex_;
+        mutable std::shared_mutex renderers_mutex_;
         std::map<std::uint64_t, RendererRef> renderers_;
         Optional<Renderer2D &> primary_renderer_;
         AssetManager &asset_manager_;

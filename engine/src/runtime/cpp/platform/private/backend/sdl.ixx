@@ -99,7 +99,7 @@ namespace retro
     {
         inline void operator()(SDL_Window *window) const noexcept
         {
-            SDL_DestroyWindow(window);
+            SDL_RunOnMainThread([](void *data) { SDL_DestroyWindow(static_cast<SDL_Window *>(data)); }, window, false);
         }
     };
 

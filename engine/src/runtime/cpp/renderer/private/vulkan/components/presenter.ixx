@@ -69,11 +69,11 @@ namespace retro
 
         void wait_for_current_frame();
 
-        void queue_frame_for_render(RenderQueueFn factory);
+        void queue_frame_for_render(RenderQueueFn factory, const std::stop_token &stop_token);
 
         void begin_frame();
 
-        void submit_and_present();
+        void submit_and_present(const std::stop_token &stop_token);
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline);
 
@@ -82,7 +82,7 @@ namespace retro
         void recreate_swapchain();
 
       private:
-        void record_command_buffer(vk::CommandBuffer cmd);
+        void record_command_buffer(vk::CommandBuffer cmd, const std::stop_token &stop_token);
 
         void create_swapchain(std::uint32_t width, std::uint32_t height);
 

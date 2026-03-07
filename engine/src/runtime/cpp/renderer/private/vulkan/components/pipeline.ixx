@@ -27,7 +27,7 @@ namespace retro
                                     VulkanBufferManager &buffer_manager,
                                     const vk::Extent2D extent,
                                     const vk::RenderPass render_pass)
-            : device_{device}, pipeline_{pipeline}, buffer_manager_{buffer_manager_}
+            : device_{device}, pipeline_{pipeline}, buffer_manager_{buffer_manager}
         {
             recreate(device, extent, render_pass);
         }

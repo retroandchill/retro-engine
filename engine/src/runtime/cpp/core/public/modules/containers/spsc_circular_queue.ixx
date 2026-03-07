@@ -25,6 +25,45 @@ namespace retro
         {
             free_slots_.acquire();
 
+            produce_internal(std::forward<Functor>(functor));
+        }
+
+        template <std::invocable<T &> Functor>
+        void produce(Functor &&functor, const std::stop_token &st)
+        {
+            while (!free_slots_.try_acquire_for(std::chrono::milliseconds(100)))
+            {
+                if (st.stop_requested())
+                    return;
+            }
+
+            produce_internal(std::forward<Functor>(functor));
+        }
+
+        template <std::invocable<T &> Functor>
+        void consume(Functor &&functor)
+        {
+            ready_slots_.acquire();
+
+            consume_internal(std::forward<Functor>(functor));
+        }
+
+        template <std::invocable<T &> Functor>
+        void consume(Functor &&functor, const std::stop_token &st)
+        {
+            while (!ready_slots_.try_acquire_for(std::chrono::milliseconds(100)))
+            {
+                if (st.stop_requested())
+                    return;
+            }
+
+            consume_internal(std::forward<Functor>(functor));
+        }
+
+      private:
+        template <std::invocable<T &> Functor>
+        void produce_internal(Functor &&functor)
+        {
             auto &slot = slots_[write_index_];
             try
             {
@@ -42,10 +81,8 @@ namespace retro
         }
 
         template <std::invocable<T &> Functor>
-        void consume(Functor &&functor)
+        void consume_internal(Functor &&functor)
         {
-            ready_slots_.acquire();
-
             auto &slot = slots_[read_index_];
             try
             {
@@ -62,7 +99,6 @@ namespace retro
             free_slots_.release();
         }
 
-      private:
         std::array<T, Capacity> slots_;
         std::size_t write_index_ = 0;
         std::size_t read_index_ = 0;

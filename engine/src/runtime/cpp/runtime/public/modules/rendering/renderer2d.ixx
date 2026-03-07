@@ -32,13 +32,13 @@ namespace retro
       public:
         virtual ~Renderer2D() = default;
 
+        virtual void request_stop() = 0;
+
         virtual void wait_for_current_frame() = 0;
 
         virtual void queue_frame_for_render(RenderQueueFn factory) = 0;
 
-        virtual void begin_frame() = 0;
-
-        virtual void end_frame() = 0;
+        virtual void render_next_available_frame() = 0;
 
         virtual void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) = 0;
 

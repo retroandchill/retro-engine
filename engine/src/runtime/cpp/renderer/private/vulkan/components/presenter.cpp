@@ -125,7 +125,7 @@ namespace retro
         device_.wait_for_fences(fence);
     }
 
-    void VulkanPresenter::queue_frame_for_render(RenderQueueFn factory)
+    void VulkanPresenter::queue_frame_for_render(RenderQueueFn factory, const std::stop_token &stop_token)
     {
         pending_frame_slots_.produce(
             [factory](PendingFrameSlot &slot)
@@ -134,7 +134,8 @@ namespace retro
                 std::ranges::sort(slot.pending_commands,
                                   [](const DrawCommandSet &lhs, const DrawCommandSet &rhs)
                                   { return lhs.z_order < rhs.z_order; });
-            });
+            },
+            stop_token);
     }
 
     void VulkanPresenter::begin_frame()
@@ -166,12 +167,12 @@ namespace retro
             throw GraphicsException{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
     }
-    void VulkanPresenter::submit_and_present()
+    void VulkanPresenter::submit_and_present(const std::stop_token &stop_token)
     {
         const auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
         auto cmd = frame_resources_.at(current_frame_).command_buffer.get();
         cmd.reset();
-        record_command_buffer(cmd);
+        record_command_buffer(cmd, stop_token);
 
         std::array wait_semaphores = {frame_resources_.at(current_frame_).image_available.get()};
         std::array wait_stages = {
@@ -243,7 +244,7 @@ namespace retro
         create_swapchain(w, h);
         pipeline_manager_.recreate_pipelines(extent_, render_pass_.get());
     }
-    void VulkanPresenter::record_command_buffer(vk::CommandBuffer cmd)
+    void VulkanPresenter::record_command_buffer(vk::CommandBuffer cmd, const std::stop_token &stop_token)
     {
         constexpr vk::CommandBufferBeginInfo begin_info{};
 
@@ -301,7 +302,8 @@ namespace retro
 
                     pipeline_manager_.bind_and_render(cmd, framebuffer_size, draw_command.sources, descriptor_pool);
                 }
-            });
+            },
+            stop_token);
     }
 
     void VulkanPresenter::create_swapchain(std::uint32_t width, std::uint32_t height)

@@ -148,6 +148,11 @@ extern "C"
         engine->on_loop_exit();
     }
 
+    RETRO_API bool retro_engine_sync_render_state(retro::Engine *engine, retro::InteropError *error)
+    {
+        return retro::try_execute([&] { engine->sync_renderer_state(); }, *error);
+    }
+
     RETRO_API bool retro_engine_render(retro::Engine *engine, retro::InteropError *error_message)
     {
         return retro::try_execute([&] { engine->render(); }, *error_message);
