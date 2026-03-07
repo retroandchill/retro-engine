@@ -129,19 +129,10 @@ namespace retro
 
         [[nodiscard]] const ShaderLayout &shaders() const override;
 
-        void clear_draw_queue() override;
-
-        void collect_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport) override;
-
         SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
             const SceneNodeList &nodes,
             Vector2u viewport_size,
             const Viewport &viewport,
             std::pmr::memory_resource &memory_resource) override;
-
-        void execute(RenderContext &context, const Viewport &viewport) override;
-
-      private:
-        std::unordered_map<const Viewport *, std::unordered_map<Texture *, SpriteBatch>> batches_;
     };
 } // namespace retro

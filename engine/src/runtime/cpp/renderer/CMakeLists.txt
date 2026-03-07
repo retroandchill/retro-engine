@@ -48,7 +48,6 @@ set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/services.cpp
         private/vulkan/services.cpp
         private/vulkan/components/instance.cpp
-        private/vulkan/components/viewport_renderer.cpp
         private/vulkan/components/surface.cpp
         private/vulkan/texture_manager.cpp
         private/vulkan/components/presenter.cpp
@@ -67,7 +66,6 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         private/vulkan/components/buffer_manager.ixx
         private/vulkan/services.ixx
         private/vulkan/components/instance.ixx
-        private/vulkan/components/viewport_renderer.ixx
         private/vulkan/components/surface.ixx
         private/vulkan/texture_manager.ixx
         private/vulkan/components/presenter.ixx

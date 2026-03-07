@@ -32,14 +32,7 @@ namespace retro
             recreate(device, extent, render_pass);
         }
 
-        void clear_draw_queue();
-
         void recreate(VulkanDevice &device, vk::Extent2D extent, vk::RenderPass render_pass);
-
-        void bind_and_render(vk::CommandBuffer cmd,
-                             Vector2u viewport_size,
-                             const Viewport &viewport,
-                             vk::DescriptorPool descriptor_pool);
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
@@ -81,19 +74,13 @@ namespace retro
                              RenderPipeline &pipeline,
                              vk::Extent2D extent,
                              vk::RenderPass render_pass);
-        void destroy_pipeline(std::type_index type);
 
-        void bind_and_render(vk::CommandBuffer cmd,
-                             Vector2u viewport_size,
-                             const Viewport &viewport,
-                             vk::DescriptorPool descriptor_pool);
+        void destroy_pipeline(std::type_index type);
 
         void bind_and_render(vk::CommandBuffer cmd,
                              Vector2u viewport_size,
                              std::span<const SmallUniquePtr<DrawCommandSource>> draw_command_sources,
                              vk::DescriptorPool descriptor_pool);
-
-        void clear_draw_queue();
 
       private:
         VulkanDevice &device_;

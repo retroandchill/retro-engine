@@ -24,10 +24,9 @@ namespace retro
                                        VulkanPresenter &presenter,
                                        VulkanBufferManager &buffer_manager,
                                        const vk::CommandPool command_pool,
-                                       VulkanPipelineManager &pipeline_manager,
-                                       ViewportRendererFactory &viewport_factory)
+                                       VulkanPipelineManager &pipeline_manager)
         : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, presenter_(presenter),
-          command_pool_(command_pool), pipeline_manager_{pipeline_manager}, viewport_factory_{viewport_factory}
+          command_pool_(command_pool), pipeline_manager_{pipeline_manager}
     {
     }
 
@@ -58,7 +57,6 @@ namespace retro
 
         Deferred reset_frame_data{[this]
                                   {
-                                      pipeline_manager_.clear_draw_queue();
                                       buffer_manager_.reset();
                                   }};
 
@@ -78,20 +76,6 @@ namespace retro
     void VulkanRenderer2D::remove_render_pipeline(const std::type_index type)
     {
         presenter_.remove_render_pipeline(type);
-    }
-
-    void VulkanRenderer2D::add_viewport(Viewport &viewport)
-    {
-        viewports_.emplace_back(viewport_factory_.create(viewport));
-        viewport.on_z_order_changed().add([this](Viewport &, std::int32_t) { viewports_sorted_ = false; });
-        viewports_sorted_ = false;
-    }
-
-    void VulkanRenderer2D::remove_viewport(Viewport &viewport)
-    {
-        std::erase_if(viewports_,
-                      [&](const std::unique_ptr<ViewportRenderer> &v)
-                      { return std::addressof(v->viewport()) == std::addressof(viewport); });
     }
 
 } // namespace retro

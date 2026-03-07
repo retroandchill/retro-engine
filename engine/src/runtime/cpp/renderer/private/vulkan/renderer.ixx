@@ -14,7 +14,6 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.presenter;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
-import retro.renderer.vulkan.components.viewport_renderer;
 import retro.core.di;
 import retro.core.math.vector;
 import retro.platform.window;
@@ -48,8 +47,7 @@ namespace retro
                                       VulkanPresenter &,
                                       VulkanBufferManager &,
                                       vk::CommandPool,
-                                      VulkanPipelineManager &,
-                                      ViewportRendererFactory &>;
+                                      VulkanPipelineManager &>;
 
         explicit VulkanRenderer2D(Window &window,
                                   vk::SurfaceKHR surface,
@@ -57,8 +55,7 @@ namespace retro
                                   VulkanPresenter &presenter,
                                   VulkanBufferManager &buffer_manager,
                                   vk::CommandPool command_pool,
-                                  VulkanPipelineManager &pipeline_manager,
-                                  ViewportRendererFactory &viewport_factory);
+                                  VulkanPipelineManager &pipeline_manager);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -82,10 +79,6 @@ namespace retro
 
         void remove_render_pipeline(std::type_index type) override;
 
-        void add_viewport(Viewport &viewport) override;
-
-        void remove_viewport(Viewport &viewport) override;
-
       private:
         Window &window_;
 
@@ -96,9 +89,5 @@ namespace retro
         vk::CommandPool command_pool_;
         VulkanPipelineManager &pipeline_manager_;
         std::stop_source renderer_teardown_source_;
-
-        ViewportRendererFactory &viewport_factory_;
-        std::vector<std::unique_ptr<ViewportRenderer>> viewports_;
-        bool viewports_sorted_ = false;
     };
 } // namespace retro

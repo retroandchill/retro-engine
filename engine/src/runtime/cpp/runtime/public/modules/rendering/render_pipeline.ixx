@@ -17,14 +17,6 @@ import retro.core.memory.small_unique_ptr;
 
 namespace retro
 {
-    export class RenderContext
-    {
-      public:
-        virtual ~RenderContext() = default;
-
-        virtual void draw(std::span<const DrawCommand> command, const ShaderLayout &layout) = 0;
-    };
-
     export class RenderPipeline
     {
       public:
@@ -34,19 +26,11 @@ namespace retro
 
         [[nodiscard]] virtual const ShaderLayout &shaders() const = 0;
 
-        virtual void clear_draw_queue() = 0;
-
-        virtual void collect_draw_calls(const SceneNodeList &nodes,
-                                        Vector2u viewport_size,
-                                        const Viewport &viewport) = 0;
-
         virtual SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
             const SceneNodeList &nodes,
             Vector2u viewport_size,
             const Viewport &viewport,
             std::pmr::memory_resource &memory_resource) = 0;
-
-        virtual void execute(RenderContext &context, const Viewport &viewport) = 0;
     };
 
 } // namespace retro

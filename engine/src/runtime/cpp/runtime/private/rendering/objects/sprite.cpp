@@ -81,40 +81,6 @@ namespace retro
         return layout;
     }
 
-    void SpriteRenderPipeline::clear_draw_queue()
-    {
-        batches_.clear();
-    }
-
-    void SpriteRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
-                                                  const Vector2u viewport_size,
-                                                  const Viewport &viewport)
-    {
-        auto &batch_for_viewport = batches_[std::addressof(viewport)];
-        for (const auto *node : nodes.nodes_of_type<Sprite>())
-        {
-            auto *texture = node->texture().get();
-            if (texture == nullptr)
-                continue;
-
-            const auto &transform = node->transform();
-
-            SpriteInstanceData instance{.transform = transform.matrix(),
-                                        .translation = transform.translation(),
-                                        .z_order = node->z_order(),
-                                        .pivot = node->pivot(),
-                                        .size = node->size(),
-                                        .min_uv = node->uvs().min,
-                                        .max_uv = node->uvs().max,
-                                        .tint = node->tint()};
-
-            auto &[draw_texture, instances, viewport_draw_info] = batch_for_viewport[texture];
-            draw_texture = texture;
-            viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
-            instances.push_back(instance);
-        }
-    }
-
     SmallUniquePtr<DrawCommandSource> SpriteRenderPipeline::collect_draw_calls_source(
         const SceneNodeList &nodes,
         const Vector2u viewport_size,
@@ -162,25 +128,5 @@ namespace retro
 
         return DrawCommandSource::from(std::move(batches) | std::views::values |
                                        std::ranges::to<std::pmr::vector<SpriteBatch>>(&memory_resource));
-    }
-
-    void SpriteRenderPipeline::execute(RenderContext &context, const Viewport &viewport)
-    {
-        const auto it = batches_.find(std::addressof(viewport));
-        if (it == batches_.end())
-            return;
-
-        const auto &viewport_batches = it->second;
-        std::vector<SpriteBatch> batches;
-        std::vector<DrawCommand> draw_calls;
-        batches.reserve(viewport_batches.size());
-        draw_calls.reserve(viewport_batches.size());
-        for (auto &batch : viewport_batches | std::views::values)
-        {
-            auto &moved_batch = batches.emplace_back(std::move(batch));
-            draw_calls.emplace_back(moved_batch.create_draw_command());
-        }
-
-        context.draw(draw_calls, shaders());
     }
 } // namespace retro

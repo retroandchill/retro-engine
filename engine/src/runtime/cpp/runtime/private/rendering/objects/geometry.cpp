@@ -120,38 +120,6 @@ namespace retro
         return layout;
     }
 
-    void GeometryRenderPipeline::clear_draw_queue()
-    {
-        geometry_batches_.clear();
-    }
-
-    void GeometryRenderPipeline::collect_draw_calls(const SceneNodeList &nodes,
-                                                    const Vector2u viewport_size,
-                                                    const Viewport &viewport)
-    {
-        for (const auto *node : nodes.nodes_of_type<GeometryObject>())
-        {
-            auto *geometry = node->geometry().get();
-            if (geometry == nullptr)
-                continue;
-
-            const auto &transform = node->transform();
-
-            GeometryInstanceData instance{.transform = transform.matrix(),
-                                          .translation = transform.translation(),
-                                          .z_order = node->z_order(),
-                                          .pivot = node->pivot(),
-                                          .size = node->size(),
-                                          .color = node->color(),
-                                          .has_texture = 0};
-
-            auto &batch = geometry_batches_[geometry];
-            batch.geometry = geometry;
-            batch.viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
-            batch.instances.push_back(instance);
-        }
-    }
-
     SmallUniquePtr<DrawCommandSource> GeometryRenderPipeline::collect_draw_calls_source(
         const SceneNodeList &nodes,
         Vector2u viewport_size,
@@ -198,20 +166,5 @@ namespace retro
 
         return DrawCommandSource::from(std::move(geometry_batches) | std::views::values |
                                        std::ranges::to<std::pmr::vector<GeometryBatch>>(&memory_resource));
-    }
-
-    void GeometryRenderPipeline::execute(RenderContext &context, const Viewport &viewport)
-    {
-        std::vector<GeometryBatch> batches;
-        std::vector<DrawCommand> draw_calls;
-        batches.reserve(geometry_batches_.size());
-        draw_calls.reserve(geometry_batches_.size());
-        for (auto &batch : geometry_batches_ | std::views::values)
-        {
-            auto &moved_batch = batches.emplace_back(std::move(batch));
-            draw_calls.emplace_back(moved_batch.create_draw_command());
-        }
-
-        context.draw(draw_calls, shaders());
     }
 } // namespace retro

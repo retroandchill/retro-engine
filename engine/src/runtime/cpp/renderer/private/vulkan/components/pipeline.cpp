@@ -102,7 +102,7 @@ namespace retro
         std::uint32_t index_offset{};
     };
 
-    class VulkanRenderContext final : public RenderContext
+    class VulkanRenderContext
     {
       public:
         inline VulkanRenderContext(VulkanDevice &device,
@@ -119,7 +119,7 @@ namespace retro
         {
         }
 
-        void draw(const std::span<const DrawCommand> draw_commands, const ShaderLayout &layout) override
+        void draw(const std::span<const DrawCommand> draw_commands, const ShaderLayout &layout)
         {
             cmd_.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
 
@@ -292,32 +292,10 @@ namespace retro
         Vector2u viewport_size_{};
     };
 
-    void VulkanRenderPipeline::clear_draw_queue()
-    {
-        pipeline_.clear_draw_queue();
-    }
-
     void VulkanRenderPipeline::recreate(VulkanDevice &device, vk::Extent2D extent, vk::RenderPass render_pass)
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), extent, render_pass);
-        pipeline_.clear_draw_queue();
-    }
-
-    void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
-                                               const Vector2u viewport_size,
-                                               const Viewport &viewport,
-                                               const vk::DescriptorPool descriptor_pool)
-    {
-        VulkanRenderContext context{device_,
-                                    graphics_pipeline_.get(),
-                                    cmd,
-                                    pipeline_layout_.get(),
-                                    descriptor_set_layout_.get(),
-                                    descriptor_pool,
-                                    buffer_manager_,
-                                    viewport_size};
-        pipeline_.execute(context, viewport);
     }
 
     auto VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
@@ -525,17 +503,6 @@ namespace retro
         pipelines_.erase(type);
     }
 
-    void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd,
-                                                const Vector2u viewport_size,
-                                                const Viewport &viewport,
-                                                const vk::DescriptorPool descriptor_pool)
-    {
-        for (auto &pipeline : pipelines_ | std::views::values)
-        {
-            pipeline.bind_and_render(cmd, viewport_size, viewport, descriptor_pool);
-        }
-    }
-
     void VulkanPipelineManager::bind_and_render(
         const vk::CommandBuffer cmd,
         const Vector2u viewport_size,
@@ -547,14 +514,6 @@ namespace retro
             auto &pipeline = pipelines_.at(source->component_type());
             auto draw_commands = source->get_draw_commands();
             pipeline.bind_and_render(cmd, viewport_size, draw_commands, descriptor_pool);
-        }
-    }
-
-    void VulkanPipelineManager::clear_draw_queue()
-    {
-        for (auto &pipeline : pipelines_ | std::views::values)
-        {
-            pipeline.clear_draw_queue();
         }
     }
 } // namespace retro

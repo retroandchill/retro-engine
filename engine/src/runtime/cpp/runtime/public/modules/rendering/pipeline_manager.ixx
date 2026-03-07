@@ -42,12 +42,10 @@ namespace retro
                                                       { return std::make_pair(entry.first, entry.second.pipeline); });
         }
 
-        void collect_all_draw_calls(const SceneNodeList &nodes, Vector2u viewport_size, const Viewport &viewport);
-
-        DrawCommandSet collect_draw_commands_sources(const SceneNodeList &nodes,
-                                                     Vector2u viewport_size,
-                                                     const Viewport &viewport,
-                                                     std::pmr::memory_resource &memory_resource);
+        DrawCommandSet collect_draw_command_sources(const SceneNodeList &nodes,
+                                                    Vector2u viewport_size,
+                                                    const Viewport &viewport,
+                                                    std::pmr::memory_resource &memory_resource);
 
       private:
         std::map<std::type_index, PipelineUsage> pipelines_{};

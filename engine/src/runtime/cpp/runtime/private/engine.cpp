@@ -45,75 +45,6 @@ namespace retro
           asset_manager_{service_provider_->get_required<AssetManager>()},
           pipeline_manager_{service_provider_->get_required<PipelineManager>()}
     {
-        viewports_.on_viewport_created().add(
-            [this](Viewport &viewport)
-            {
-                viewport.on_window_changed().add(
-                    [this](Viewport &vp, const std::weak_ptr<Window> &old_win, const std::weak_ptr<Window> &new_win)
-                    {
-                        const auto old_window_ptr = old_win.lock();
-                        const auto new_window_ptr = new_win.lock();
-
-                        if (old_window_ptr == new_window_ptr)
-                            return;
-
-                        if (old_window_ptr != nullptr)
-                        {
-                            std::shared_lock lock{renderers_mutex_};
-                            if (const auto renderer = renderers_.find(old_window_ptr->id());
-                                renderer != renderers_.end())
-                            {
-                                renderer->second->remove_viewport(vp);
-                            }
-                        }
-
-                        if (new_window_ptr != nullptr)
-                        {
-                            std::shared_lock lock{renderers_mutex_};
-                            auto renderer = renderers_.find(new_window_ptr->id());
-                            if (renderer != renderers_.end())
-                            {
-                                renderer->second->add_viewport(vp);
-                            }
-                        }
-                    });
-
-                const auto window_id =
-                    viewport.window().transform([](const std::shared_ptr<Window> &window) { return window->id(); });
-                if (!window_id.has_value())
-                    return;
-
-                auto get_renderer = [window_id, this] -> Optional<RendererRef>
-                {
-                    std::shared_lock lock{renderers_mutex_};
-                    const auto it = renderers_.find(*window_id);
-                    if (it == renderers_.end())
-                        return std::nullopt;
-
-                    return it->second;
-                };
-
-                const auto renderer = get_renderer();
-                if (!renderer.has_value())
-                    return;
-
-                (*renderer)->add_viewport(viewport);
-            });
-        viewports_.on_viewport_destroyed().add(
-            [this](Viewport &viewport)
-            {
-                const auto window_id =
-                    viewport.window().transform([](const std::shared_ptr<Window> &window) { return window->id(); });
-                if (!window_id.has_value())
-                    return;
-
-                std::shared_lock lock{renderers_mutex_};
-                const auto renderer = renderers_.find(*window_id);
-                if (renderer == renderers_.end())
-                    return;
-
-                renderer->second->remove_viewport(viewport);
-            });
     }
 
     void Engine::pump_tasks(const std::size_t max)
@@ -156,10 +87,10 @@ namespace retro
                                [this, &resource, &renderer](auto &pair)
                                {
                                    auto [viewport, scene] = pair;
-                                   return pipeline_manager_.collect_draw_commands_sources(scene.nodes(),
-                                                                                          renderer->window().size(),
-                                                                                          viewport,
-                                                                                          resource);
+                                   return pipeline_manager_.collect_draw_command_sources(scene.nodes(),
+                                                                                         renderer->window().size(),
+                                                                                         viewport,
+                                                                                         resource);
                                }) |
                            std::ranges::to<std::pmr::vector<DrawCommandSet>>(&resource);
                 });

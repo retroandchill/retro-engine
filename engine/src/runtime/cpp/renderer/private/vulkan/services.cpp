@@ -18,7 +18,6 @@ import retro.renderer.vulkan.texture_manager;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.presenter;
-import retro.renderer.vulkan.components.viewport_renderer;
 import retro.renderer.vulkan.components.pipeline;
 import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.surface;
@@ -36,7 +35,6 @@ namespace retro
                            { return VulkanDevice::create(instance, platform_backend); })
             .add_singleton([](const VulkanDevice &device) { return device.create_buffer_manager(); })
             .add_scoped<VulkanPipelineManager>()
-            .add_singleton([](const VulkanDevice &device) { return device.create_command_pool(); })
-            .add_scoped<ViewportRendererFactory>();
+            .add_singleton([](const VulkanDevice &device) { return device.create_command_pool(); });
     }
 } // namespace retro

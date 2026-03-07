@@ -45,10 +45,6 @@ namespace retro
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
         [[nodiscard]] virtual Window &window() const = 0;
-
-        virtual void add_viewport(Viewport &viewport) = 0;
-
-        virtual void remove_viewport(Viewport &viewport) = 0;
     };
 
     export class RETRO_API RendererRef
