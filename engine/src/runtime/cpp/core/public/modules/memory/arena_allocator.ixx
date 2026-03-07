@@ -311,6 +311,12 @@ namespace retro
         {
         }
 
+        void reset() noexcept
+            requires ResetableArena<T>
+        {
+            arena_.reset();
+        }
+
       protected:
         void *do_allocate(size_t bytes, size_t align) override
         {
@@ -326,12 +332,6 @@ namespace retro
         {
             // Arena's a unique objects so they will never be equal
             return false;
-        }
-
-        void reset() noexcept
-            requires ResetableArena<T>
-        {
-            arena_.reset();
         }
 
       private:

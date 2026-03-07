@@ -14,12 +14,12 @@ namespace retro
 {
     DrawCommand SpriteBatch::create_draw_command() const
     {
-        constexpr std::size_t INDICES_PER_SPRITE = 6;
+        constexpr std::size_t indices_per_sprite = 6;
         return DrawCommand{
             .instance_buffers = {as_bytes(std::span{instances})},
             .descriptor_sets = {texture->render_data()},
             .push_constants = as_bytes(std::span{&viewport_draw_info, 1}),
-            .index_count = INDICES_PER_SPRITE,
+            .index_count = indices_per_sprite,
             .instance_count = instances.size(),
         };
     }

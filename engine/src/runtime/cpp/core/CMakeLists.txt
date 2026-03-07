@@ -73,6 +73,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/functional/function_ref.ixx
         public/modules/functional/interop_function.ixx
         public/modules/async/future.ixx
+        public/modules/containers/spsc_circular_queue.ixx
 )
 
 add_library(retro_core ${INTERMEDIATE_LIB_TYPE}

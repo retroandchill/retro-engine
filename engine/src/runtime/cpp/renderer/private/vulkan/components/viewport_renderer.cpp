@@ -39,7 +39,7 @@ namespace retro
         cmd.setViewport(0, vp);
         cmd.setScissor(0, scissor);
 
-        pipeline_manager_.bind_and_render(cmd, framebuffer_size, viewport_, descriptor_pool, buffer_manager_);
+        pipeline_manager_.bind_and_render(cmd, framebuffer_size, viewport_, descriptor_pool);
     }
 
     ViewportRendererFactory::ViewportRendererFactory(VulkanDevice &device,

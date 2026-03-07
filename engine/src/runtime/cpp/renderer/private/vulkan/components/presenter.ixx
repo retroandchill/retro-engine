@@ -16,6 +16,10 @@ import retro.platform.window;
 import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
 import retro.core.util.deferred;
+import retro.runtime.rendering.renderer2d;
+import retro.core.containers.optional;
+import retro.runtime.rendering.draw_command;
+import retro.core.containers.spsc_circular_queue;
 
 namespace retro
 {
@@ -32,21 +36,20 @@ namespace retro
 
     struct VulkanFrameResources
     {
-        static constexpr std::size_t arena_size = 20 * 1024 * 1024;
-
         vk::UniqueCommandBuffer command_buffer;
-        SingleArenaMemoryResource memory_resource{std::in_place, arena_size};
-
         vk::UniqueSemaphore image_available;
         vk::UniqueFence in_flight;
         vk::UniqueDescriptorPool descriptor_pool;
     };
 
-    export struct VulkanSubmitContext
+    struct PendingFrameSlot
     {
-        vk::CommandBuffer command_buffer;
-        Vector2u screen_size;
-        vk::DescriptorPool descriptor_pool;
+        static constexpr std::size_t arena_size = 20 * 1024 * 1024;
+
+        SingleArenaMemoryResource memory_resource{std::in_place, arena_size};
+        std::pmr::vector<DrawCommandSet> pending_commands{&memory_resource};
+
+        void reset() noexcept;
     };
 
     export class VulkanPresenter
@@ -66,18 +69,11 @@ namespace retro
 
         void wait_for_current_frame();
 
+        void queue_frame_for_render(RenderQueueFn factory);
+
         void begin_frame();
 
-        template <std::invocable<VulkanSubmitContext> Functor>
-        void submit_and_present(Functor &&functor)
-        {
-            const auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
-            auto cmd = frame_resources_.at(current_frame_).command_buffer.get();
-            cmd.reset();
-            record_command_buffer(cmd, std::forward<Functor>(functor));
-
-            submit_render_and_present(in_flight, cmd);
-        }
+        void submit_and_present();
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline);
 
@@ -86,50 +82,7 @@ namespace retro
         void recreate_swapchain();
 
       private:
-        template <std::invocable<VulkanSubmitContext> Functor>
-        void record_command_buffer(vk::CommandBuffer cmd, Functor &&functor)
-        {
-            constexpr vk::CommandBufferBeginInfo begin_info{};
-
-            cmd.begin(begin_info);
-            Deferred end_cmd{[cmd]
-                             {
-                                 cmd.end();
-                             }};
-
-            // ReSharper disable once CppDFAUnusedValue
-            // ReSharper disable once CppDFAUnreadVariable
-            vk::ClearValue color_clear_value{.color =
-                                                 vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
-            vk::ClearValue depth_clear_value{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f}};
-
-            std::array clear_values = {color_clear_value, depth_clear_value};
-
-            auto [screen_width, screen_height] = extent_;
-
-            const vk::RenderPassBeginInfo rp_info{
-                .renderPass = render_pass_.get(),
-                .framebuffer = image_resources_[image_index_].framebuffer.get(),
-                .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = 0, .y = 0},
-                                         .extent = vk::Extent2D{.width = screen_width, .height = screen_height}},
-                .clearValueCount = clear_values.size(),
-                .pClearValues = clear_values.data()};
-
-            cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
-            Deferred end_rp{[cmd]
-                            {
-                                cmd.endRenderPass();
-                            }};
-
-            std::invoke(std::forward<Functor>(functor),
-                        VulkanSubmitContext{
-                            .command_buffer = cmd,
-                            .screen_size = {screen_width, screen_height},
-                            .descriptor_pool = frame_resources_.at(current_frame_).descriptor_pool.get(),
-                        });
-        }
-
-        void submit_render_and_present(vk::Fence in_flight, vk::CommandBuffer cmd);
+        void record_command_buffer(vk::CommandBuffer cmd);
 
         void create_swapchain(std::uint32_t width, std::uint32_t height);
 
@@ -146,6 +99,7 @@ namespace retro
 
         std::vector<VulkanImageResources> image_resources_;
         std::array<VulkanFrameResources, max_frames_in_flight> frame_resources_;
+        SpscCircularQueue<PendingFrameSlot, 3> pending_frame_slots_;
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;

@@ -42,14 +42,9 @@ namespace retro
         presenter_.wait_for_current_frame();
     }
 
-    std::pmr::memory_resource &VulkanRenderer2D::get_next_frame_memory_resource()
+    void VulkanRenderer2D::queue_frame_for_render(RenderQueueFn factory)
     {
-        // TODO: For now just return the default one
-        return *std::pmr::get_default_resource();
-    }
-
-    void VulkanRenderer2D::push_next_frame_draw_commands(std::pmr::vector<DrawCommandSet> draw_command_sets)
-    {
+        presenter_.queue_frame_for_render(factory);
     }
 
     void VulkanRenderer2D::begin_frame()
@@ -65,23 +60,7 @@ namespace retro
                                       buffer_manager_.reset();
                                   }};
 
-        if (!viewports_sorted_)
-        {
-            using PtrType = std::unique_ptr<ViewportRenderer>;
-            std::ranges::sort(viewports_,
-                              [](const PtrType &a, const PtrType &b)
-                              { return a->viewport().z_order() < b->viewport().z_order(); });
-            viewports_sorted_ = true;
-        }
-
-        presenter_.submit_and_present(
-            [this](const VulkanSubmitContext &ctx)
-            {
-                for (const auto &viewport : viewports_)
-                {
-                    viewport->render_viewport(ctx.command_buffer, ctx.screen_size, ctx.descriptor_pool);
-                }
-            });
+        presenter_.submit_and_present();
     }
 
     Window &VulkanRenderer2D::window() const

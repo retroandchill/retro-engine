@@ -21,9 +21,12 @@ import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.world.viewport;
 import retro.runtime.rendering.draw_command;
+import retro.core.functional.function_ref;
 
 namespace retro
 {
+    export using RenderQueueFn = FunctionRef<std::pmr::vector<DrawCommandSet>(std::pmr::memory_resource &)>;
+
     export class Renderer2D
     {
       public:
@@ -31,9 +34,7 @@ namespace retro
 
         virtual void wait_for_current_frame() = 0;
 
-        virtual std::pmr::memory_resource &get_next_frame_memory_resource() = 0;
-
-        virtual void push_next_frame_draw_commands(std::pmr::vector<DrawCommandSet> draw_command_sets) = 0;
+        virtual void queue_frame_for_render(RenderQueueFn factory) = 0;
 
         virtual void begin_frame() = 0;
 

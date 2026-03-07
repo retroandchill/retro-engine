@@ -57,8 +57,12 @@ namespace retro
         std::uint32_t has_texture{};
     };
 
+    export class GeometryObject;
+
     export struct GeometryBatch
     {
+        using ComponentType = GeometryObject;
+
         const Geometry *geometry{};
         std::pmr::vector<GeometryInstanceData> instances{};
         std::uint32_t texture_handle{};
@@ -67,7 +71,7 @@ namespace retro
         [[nodiscard]] DrawCommand create_draw_command() const;
     };
 
-    export class RETRO_API GeometryObject final : public SceneNode
+    class RETRO_API GeometryObject final : public SceneNode
     {
       public:
         using PipelineType = GeometryRenderPipeline;

@@ -11,6 +11,7 @@ import retro.runtime.rendering.texture_manager;
 import retro.core.containers.inline_list;
 import retro.core.memory.small_unique_ptr;
 import retro.runtime.world.viewport;
+import retro.core.strings.name;
 
 namespace retro
 {
@@ -34,12 +35,15 @@ namespace retro
         {
             data.create_draw_command()
         } -> std::convertible_to<DrawCommand>;
+        typename T::ComponentType;
     };
 
     export class DrawCommandSource
     {
       public:
         virtual ~DrawCommandSource() = default;
+
+        [[nodiscard]] virtual std::type_index component_type() const noexcept = 0;
 
         template <DrawCommandData T>
             requires std::same_as<T, std::remove_cvref_t<T>>
@@ -55,6 +59,11 @@ namespace retro
       public:
         explicit DrawCommandSourceImpl(std::pmr::vector<T> data) : data_(std::move(data))
         {
+        }
+
+        [[nodiscard]] std::type_index component_type() const noexcept override
+        {
+            return typeid(T::ComponentType);
         }
 
         [[nodiscard]] std::pmr::vector<DrawCommand> get_draw_commands() const noexcept override

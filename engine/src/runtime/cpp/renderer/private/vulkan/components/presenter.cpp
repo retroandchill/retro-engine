@@ -74,6 +74,13 @@ namespace retro
         }
     } // namespace
 
+    void PendingFrameSlot::reset() noexcept
+    {
+        memory_resource.reset();
+        pending_commands.clear();
+        pending_commands.shrink_to_fit();
+    }
+
     VulkanPresenter::VulkanPresenter(Window &window,
                                      const vk::SurfaceKHR surface,
                                      VulkanDevice &device,
@@ -116,6 +123,18 @@ namespace retro
         device_.wait_for_fences(fence);
     }
 
+    void VulkanPresenter::queue_frame_for_render(RenderQueueFn factory)
+    {
+        pending_frame_slots_.produce(
+            [factory](PendingFrameSlot &slot)
+            {
+                slot.pending_commands = factory(slot.memory_resource);
+                std::ranges::sort(slot.pending_commands,
+                                  [](const DrawCommandSet &lhs, const DrawCommandSet &rhs)
+                                  { return lhs.z_order < rhs.z_order; });
+            });
+    }
+
     void VulkanPresenter::begin_frame()
     {
         current_frame_ = (current_frame_ + 1) % max_frames_in_flight;
@@ -145,32 +164,13 @@ namespace retro
             throw std::runtime_error{"VulkanRenderer2D: failed to acquire swapchain image"};
         }
     }
-
-    void VulkanPresenter::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)
+    void VulkanPresenter::submit_and_present()
     {
+        const auto in_flight = frame_resources_.at(current_frame_).in_flight.get();
+        auto cmd = frame_resources_.at(current_frame_).command_buffer.get();
+        cmd.reset();
+        record_command_buffer(cmd);
 
-        pipeline_manager_.create_pipeline(type, pipeline, extent_, render_pass_.get());
-    }
-
-    void VulkanPresenter::remove_render_pipeline(const std::type_index type) const
-    {
-        pipeline_manager_.destroy_pipeline(type);
-    }
-
-    void VulkanPresenter::recreate_swapchain()
-    {
-        // Query new size from window_
-        const auto [w, h] = window_.size();
-        if (w == 0 || h == 0)
-            return;
-
-        device_.wait_idle();
-        create_swapchain(w, h);
-        pipeline_manager_.recreate_pipelines(extent_, render_pass_.get());
-    }
-
-    void VulkanPresenter::submit_render_and_present(const vk::Fence in_flight, vk::CommandBuffer cmd)
-    {
         std::array wait_semaphores = {frame_resources_.at(current_frame_).image_available.get()};
         std::array wait_stages = {
             static_cast<vk::PipelineStageFlags>(vk::PipelineStageFlagBits::eColorAttachmentOutput)};
@@ -215,6 +215,89 @@ namespace retro
                 else if (result != vk::Result::eSuccess)
                 {
                     throw std::runtime_error{"VulkanRenderer2D: failed to present swapchain image"};
+                }
+            });
+    }
+
+    void VulkanPresenter::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)
+    {
+
+        pipeline_manager_.create_pipeline(type, pipeline, extent_, render_pass_.get());
+    }
+
+    void VulkanPresenter::remove_render_pipeline(const std::type_index type) const
+    {
+        pipeline_manager_.destroy_pipeline(type);
+    }
+
+    void VulkanPresenter::recreate_swapchain()
+    {
+        // Query new size from window_
+        const auto [w, h] = window_.size();
+        if (w == 0 || h == 0)
+            return;
+
+        device_.wait_idle();
+        create_swapchain(w, h);
+        pipeline_manager_.recreate_pipelines(extent_, render_pass_.get());
+    }
+    void VulkanPresenter::record_command_buffer(vk::CommandBuffer cmd)
+    {
+        constexpr vk::CommandBufferBeginInfo begin_info{};
+
+        cmd.begin(begin_info);
+        Deferred end_cmd{[cmd]
+                         {
+                             cmd.end();
+                         }};
+
+        // ReSharper disable once CppDFAUnusedValue
+        // ReSharper disable once CppDFAUnreadVariable
+        vk::ClearValue color_clear_value{.color = vk::ClearColorValue{.float32 = std::array{0.0f, 0.0f, 0.0f, 1.0f}}};
+        vk::ClearValue depth_clear_value{.depthStencil = vk::ClearDepthStencilValue{.depth = 1.0f}};
+
+        std::array clear_values = {color_clear_value, depth_clear_value};
+
+        auto [screen_width, screen_height] = extent_;
+
+        const vk::RenderPassBeginInfo rp_info{
+            .renderPass = render_pass_.get(),
+            .framebuffer = image_resources_[image_index_].framebuffer.get(),
+            .renderArea = vk::Rect2D{.offset = vk::Offset2D{.x = 0, .y = 0},
+                                     .extent = vk::Extent2D{.width = screen_width, .height = screen_height}},
+            .clearValueCount = clear_values.size(),
+            .pClearValues = clear_values.data()};
+
+        cmd.beginRenderPass(rp_info, vk::SubpassContents::eInline);
+        Deferred end_rp{[cmd]
+                        {
+                            cmd.endRenderPass();
+                        }};
+
+        pending_frame_slots_.consume(
+            [this, cmd, screen_width, screen_height](PendingFrameSlot &slot)
+            {
+                Vector2u framebuffer_size{screen_width, screen_height};
+                auto descriptor_pool = frame_resources_.at(current_frame_).descriptor_pool.get();
+                for (auto &draw_command : slot.pending_commands)
+                {
+                    auto [x, y, width, height] = draw_command.layout.to_screen_rect(framebuffer_size);
+
+                    // Set viewport and scissor for this viewport only
+                    const vk::Viewport vp{.x = static_cast<float>(x),
+                                          .y = static_cast<float>(y),
+                                          .width = static_cast<float>(width),
+                                          .height = static_cast<float>(height),
+                                          .minDepth = 0.0f,
+                                          .maxDepth = 1.0f};
+
+                    const vk::Rect2D scissor{.offset = vk::Offset2D{.x = x, .y = y},
+                                             .extent = vk::Extent2D{.width = width, .height = height}};
+
+                    cmd.setViewport(0, vp);
+                    cmd.setScissor(0, scissor);
+
+                    pipeline_manager_.bind_and_render(cmd, framebuffer_size, draw_command.sources, descriptor_pool);
                 }
             });
     }

@@ -293,36 +293,51 @@ namespace retro
 
     void VulkanRenderPipeline::clear_draw_queue()
     {
-        pipeline_->clear_draw_queue();
+        pipeline_.clear_draw_queue();
     }
 
     void VulkanRenderPipeline::recreate(VulkanDevice &device, vk::Extent2D extent, vk::RenderPass render_pass)
     {
         pipeline_layout_ = create_pipeline_layout(device);
         graphics_pipeline_ = create_graphics_pipeline(device, pipeline_layout_.get(), extent, render_pass);
-        pipeline_->clear_draw_queue();
+        pipeline_.clear_draw_queue();
     }
 
     void VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
                                                const Vector2u viewport_size,
                                                const Viewport &viewport,
-                                               const vk::DescriptorPool descriptor_pool,
-                                               VulkanBufferManager &buffer_manager)
+                                               const vk::DescriptorPool descriptor_pool)
     {
-        VulkanRenderContext context{*device_,
+        VulkanRenderContext context{device_,
                                     graphics_pipeline_.get(),
                                     cmd,
                                     pipeline_layout_.get(),
                                     descriptor_set_layout_.get(),
                                     descriptor_pool,
-                                    buffer_manager,
+                                    buffer_manager_,
                                     viewport_size};
-        pipeline_->execute(context, viewport);
+        pipeline_.execute(context, viewport);
+    }
+
+    auto VulkanRenderPipeline::bind_and_render(const vk::CommandBuffer cmd,
+                                               const Vector2u viewport_size,
+                                               const std::span<const DrawCommand> draw_commands,
+                                               const vk::DescriptorPool descriptor_pool) -> void
+    {
+        VulkanRenderContext context{device_,
+                                    graphics_pipeline_.get(),
+                                    cmd,
+                                    pipeline_layout_.get(),
+                                    descriptor_set_layout_.get(),
+                                    descriptor_pool,
+                                    buffer_manager_,
+                                    viewport_size};
+        context.draw(draw_commands, pipeline_.shaders());
     }
 
     vk::UniquePipelineLayout VulkanRenderPipeline::create_pipeline_layout(VulkanDevice &device)
     {
-        auto &shader_layout = pipeline_->shaders();
+        auto &shader_layout = pipeline_.shaders();
 
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         bindings.reserve(shader_layout.descriptor_bindings.size());
@@ -360,7 +375,7 @@ namespace retro
                                                                       vk::Extent2D extent,
                                                                       vk::RenderPass render_pass) const
     {
-        auto &shader_layout = pipeline_->shaders();
+        auto &shader_layout = pipeline_.shaders();
 
         std::vector<vk::VertexInputBindingDescription> binding_descriptions;
         std::vector<vk::VertexInputAttributeDescription> attribute_descriptions;
@@ -490,7 +505,7 @@ namespace retro
 
     void VulkanPipelineManager::recreate_pipelines(vk::Extent2D extent, vk::RenderPass render_pass)
     {
-        for (auto &pipeline : pipelines_)
+        for (auto &pipeline : pipelines_ | std::views::values)
         {
             pipeline.recreate(device_, extent, render_pass);
         }
@@ -501,34 +516,42 @@ namespace retro
                                                 vk::Extent2D extent,
                                                 vk::RenderPass render_pass)
     {
-        pipelines_.emplace_back(pipeline, device_, extent, render_pass);
-        pipeline_indices_.emplace(type, pipelines_.size() - 1);
+        pipelines_.emplace(type, VulkanRenderPipeline{pipeline, device_, buffer_manager_, extent, render_pass});
     }
 
     void VulkanPipelineManager::destroy_pipeline(const std::type_index type)
     {
-        if (const auto it = pipeline_indices_.find(type); it != pipeline_indices_.end())
-        {
-            pipelines_.erase(std::next(pipelines_.begin(), static_cast<std::ptrdiff_t>(it->second)));
-            pipeline_indices_.erase(type);
-        }
+        pipelines_.erase(type);
     }
 
     void VulkanPipelineManager::bind_and_render(const vk::CommandBuffer cmd,
                                                 const Vector2u viewport_size,
                                                 const Viewport &viewport,
-                                                const vk::DescriptorPool descriptor_pool,
-                                                VulkanBufferManager &buffer_manager)
+                                                const vk::DescriptorPool descriptor_pool)
     {
-        for (auto &pipeline : pipelines_)
+        for (auto &pipeline : pipelines_ | std::views::values)
         {
-            pipeline.bind_and_render(cmd, viewport_size, viewport, descriptor_pool, buffer_manager);
+            pipeline.bind_and_render(cmd, viewport_size, viewport, descriptor_pool);
+        }
+    }
+
+    void VulkanPipelineManager::bind_and_render(
+        const vk::CommandBuffer cmd,
+        const Vector2u viewport_size,
+        const std::span<const SmallUniquePtr<DrawCommandSource>> draw_command_sources,
+        const vk::DescriptorPool descriptor_pool)
+    {
+        for (auto &source : draw_command_sources)
+        {
+            auto &pipeline = pipelines_.at(source->component_type());
+            auto draw_commands = source->get_draw_commands();
+            pipeline.bind_and_render(cmd, viewport_size, draw_commands, descriptor_pool);
         }
     }
 
     void VulkanPipelineManager::clear_draw_queue()
     {
-        for (auto &pipeline : pipelines_)
+        for (auto &pipeline : pipelines_ | std::views::values)
         {
             pipeline.clear_draw_queue();
         }

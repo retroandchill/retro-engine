@@ -46,8 +46,12 @@ namespace retro
         alignas(16) Color tint{1, 1, 1, 1};
     };
 
+    export class Sprite;
+
     export struct SpriteBatch
     {
+        using ComponentType = Sprite;
+
         const Texture *texture = nullptr;
         std::pmr::vector<SpriteInstanceData> instances;
         ViewportDrawInfo viewport_draw_info{};
@@ -55,7 +59,7 @@ namespace retro
         [[nodiscard]] DrawCommand create_draw_command() const;
     };
 
-    export class Sprite final : public SceneNode
+    class Sprite final : public SceneNode
     {
       public:
         using PipelineType = SpriteRenderPipeline;
