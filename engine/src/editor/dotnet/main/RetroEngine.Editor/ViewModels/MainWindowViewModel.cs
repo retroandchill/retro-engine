@@ -8,9 +8,9 @@ namespace RetroEngine.Editor.ViewModels;
 [ViewModelFor<MainWindow>]
 public partial class MainWindowViewModel : ObservableObject
 {
-    public IViewModel Content
+    public IViewModel? Content
     {
         get;
         set => SetProperty(ref field, value);
-    } = new ProjectOpenWindowViewModel();
+    }
 }

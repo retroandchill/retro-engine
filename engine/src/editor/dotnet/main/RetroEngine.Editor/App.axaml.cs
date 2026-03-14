@@ -1,17 +1,21 @@
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RetroEngine.Editor.Core.Data;
 using RetroEngine.Editor.Core.Services;
+using RetroEngine.Editor.ViewModels;
 using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
 
 public class App(Engine engine) : Application
 {
+    private readonly INavigationService _navigationService = engine.Services.GetRequiredService<INavigationService>();
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -19,7 +23,19 @@ public class App(Engine engine) : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var contextFactory = engine.Services.GetRequiredService<IDbContextFactory<CachedDbContext>>();
+        using (var context = contextFactory.CreateDbContext())
+        {
+            context.Database.Migrate();
+        }
+
         engine.Start();
+
+        var mainWindowViewModel = new MainWindowViewModel { Content = _navigationService.CurrentViewModel };
+        _navigationService.ViewModelChanged += (_, args) =>
+        {
+            mainWindowViewModel.Content = args.ViewModel;
+        };
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -27,8 +43,11 @@ public class App(Engine engine) : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
-            desktop.MainWindow = new MainWindow();
+
+            desktop.MainWindow = new MainWindow { DataContext = mainWindowViewModel };
         }
+
+        _navigationService.ShowProjectOpen();
 
         base.OnFrameworkInitializationCompleted();
     }

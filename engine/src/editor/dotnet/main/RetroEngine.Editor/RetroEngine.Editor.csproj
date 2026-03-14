@@ -25,6 +25,10 @@
         <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
         <PackageReference Include="Dock.Serializer.SystemTextJson" />
         <PackageReference Include="IconPacks.Avalonia" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>

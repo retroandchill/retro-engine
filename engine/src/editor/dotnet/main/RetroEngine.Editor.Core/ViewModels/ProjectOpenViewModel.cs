@@ -15,7 +15,7 @@ namespace RetroEngine.Editor.Core.ViewModels;
 public sealed record ProjectOpenWindowTab(Text Header, object? Content);
 
 [ViewModelFor<ProjectOpenView>]
-public partial class ProjectOpenWindowViewModel : ObservableObject
+public partial class ProjectOpenViewModel : ObservableObject
 {
     private const string TextNamespace = "RetroEngine.Editor.ViewModels.ProjectOpenWindowViewModel";
 

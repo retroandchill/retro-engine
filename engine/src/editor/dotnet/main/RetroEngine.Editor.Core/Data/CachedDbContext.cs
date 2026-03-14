@@ -21,11 +21,18 @@ public sealed class CachedDbContext : DbContext
     [RegisterServices]
     internal static void RegisterCachedDbContext(IServiceCollection services)
     {
-        services.AddDbContext<CachedDbContext>(options =>
+        services.AddPooledDbContextFactory<CachedDbContext>(ApplyDbSettings);
+    }
+
+    internal static void ApplyDbSettings(DbContextOptionsBuilder optionsBuilder)
+    {
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var dbPath = Path.Combine(appDataPath, "RetroEngine", "Editor", "cache.sqlite");
+        var dirName = Path.GetDirectoryName(dbPath);
+        if (!string.IsNullOrWhiteSpace(dirName) && !Directory.Exists(dirName))
         {
-            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var dbPath = Path.Combine(appDataPath, "RetroEngine", "Editor", "cache.db");
-            options.UseSqlite($"Data Source={dbPath};").UseSnakeCaseNamingConvention();
-        });
+            Directory.CreateDirectory(dirName);
+        }
+        optionsBuilder.UseSqlite($"Data Source={dbPath};").UseSnakeCaseNamingConvention();
     }
 }

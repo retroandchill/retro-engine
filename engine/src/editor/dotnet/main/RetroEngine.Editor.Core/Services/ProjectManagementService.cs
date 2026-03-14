@@ -5,23 +5,44 @@
 
 using Microsoft.EntityFrameworkCore;
 using RetroEngine.Editor.Core.Data;
-using RetroEngine.Editor.Core.Data.Entities;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
 
 namespace RetroEngine.Editor.Core.Services;
 
-[RegisterScoped]
-public sealed class ProjectManagementService(IProjectDescriptorSerializer serializer, CachedDbContext dbContext)
+[RegisterSingleton]
+public sealed class ProjectManagementService(
+    IProjectDescriptorSerializer serializer,
+    IDbContextFactory<CachedDbContext> dbContextFactory
+) : IProjectManagementService
 {
-    private ProjectDescriptorFile? _currentProjectFile;
+    private ProjectDescriptorFile? CurrentProjectFile
+    {
+        get;
+        set
+        {
+            field = value;
+            if (value is not null)
+            {
+                ProjectOpened?.Invoke(this, new ProjectOpenedEventArgs(value.Value.Descriptor));
+            }
+            else
+            {
+                ProjectClosed?.Invoke(this, new ProjectClosedEventArgs());
+            }
+        }
+    }
 
-    public ProjectDescriptor? CurrentProject => _currentProjectFile?.Descriptor;
+    public ProjectDescriptor? CurrentProject => CurrentProjectFile?.Descriptor;
+
+    public event EventHandler<ProjectOpenedEventArgs>? ProjectOpened;
+    public event EventHandler<ProjectClosedEventArgs>? ProjectClosed;
 
     public async ValueTask<IEnumerable<RecentProjectInfo>> GetRecentProjectsAsync(
         int maxNumber = 10,
         CancellationToken cancellationToken = default
     )
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await dbContext
             .RecentProjects.OrderByDescending(p => p.LastOpened)
             .Take(maxNumber)
@@ -48,28 +69,28 @@ public sealed class ProjectManagementService(IProjectDescriptorSerializer serial
     public async Task CreateNewProjectAsync(string path, CancellationToken cancellationToken = default)
     {
         var projectDescriptor = await serializer.CreateNewProjectAsync(path, cancellationToken);
-        _currentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
+        CurrentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
     }
 
     public async Task OpenProjectAsync(string path, CancellationToken cancellationToken = default)
     {
         var projectDescriptor = await serializer.OpenProjectFileAsync(path, cancellationToken);
-        _currentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
+        CurrentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
     }
 
     public void CloseProject()
     {
-        _currentProjectFile = null;
+        CurrentProjectFile = null;
     }
 
     public async Task SaveCurrentProjectAsync(CancellationToken cancellationToken = default)
     {
-        if (_currentProjectFile is null)
+        if (CurrentProjectFile is null)
         {
             throw new InvalidOperationException("No project is currently open.");
         }
 
-        var (descriptor, path) = _currentProjectFile.Value;
+        var (descriptor, path) = CurrentProjectFile.Value;
         await serializer.SaveProjectFileAsync(descriptor, path, cancellationToken);
     }
 }

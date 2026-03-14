@@ -53,5 +53,6 @@ public sealed class JsonProjectDescriptorSerializer(IFileSystem fileSystem, IOpt
     )
     {
         await using var stream = fileSystem.FileStream.New(path, FileMode.Open);
+        await JsonSerializer.SerializeAsync(stream, projectDescriptor, _options, cancellationToken);
     }
 }

@@ -6,10 +6,10 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.ProjectOpenView">
     <Design.DataContext>
-        <viewModels1:ProjectOpenWindowViewModel/>
+        <viewModels1:ProjectOpenViewModel/>
     </Design.DataContext>
 
-    <TabControl TabStripPlacement="Left" x:DataType="viewModels1:ProjectOpenWindowViewModel" ItemsSource="{Binding Tabs}">
+    <TabControl TabStripPlacement="Left" x:DataType="viewModels1:ProjectOpenViewModel" ItemsSource="{Binding Tabs}">
         <TabControl.ItemTemplate>
             <DataTemplate DataType="viewModels1:ProjectOpenWindowTab">
                 <TextBlock Text="{Binding Header}"/>
