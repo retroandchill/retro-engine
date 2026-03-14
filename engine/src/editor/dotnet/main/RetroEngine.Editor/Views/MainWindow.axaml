@@ -20,9 +20,6 @@
         <vm:MainWindowViewModel/>
     </Window.DataContext>
 
-    <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
-        <menus:DynamicMenuView DataContext="{Binding Toolbar}" DockPanel.Dock="Top"/>
-        <views:MainDockingArea/>
-    </DockPanel>
+    <ContentControl Content="{Binding Content}"/>
 
 </Window>

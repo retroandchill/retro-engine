@@ -27,7 +27,7 @@ public class App(Engine engine) : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
-            desktop.MainWindow = new ProjectOpenWindow();
+            desktop.MainWindow = new MainWindow();
         }
 
         base.OnFrameworkInitializationCompleted();

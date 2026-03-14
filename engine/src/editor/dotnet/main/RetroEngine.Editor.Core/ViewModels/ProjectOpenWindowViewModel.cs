@@ -7,14 +7,14 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
-using RetroEngine.Editor.Views;
+using RetroEngine.Editor.Core.Views;
 using RetroEngine.Portable.Localization;
 
-namespace RetroEngine.Editor.ViewModels;
+namespace RetroEngine.Editor.Core.ViewModels;
 
 public sealed record ProjectOpenWindowTab(Text Header, object? Content);
 
-[ViewModelFor<ProjectOpenWindow>]
+[ViewModelFor<ProjectOpenView>]
 public partial class ProjectOpenWindowViewModel : ObservableObject
 {
     private const string TextNamespace = "RetroEngine.Editor.ViewModels.ProjectOpenWindowViewModel";
