@@ -11,7 +11,14 @@
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="Dock.Model.Avalonia" />
+      <PackageReference Include="EFCore.NamingConventions" />
+      <PackageReference Include="IconPacks.Avalonia" />
+      <PackageReference Include="Injectio" />
       <PackageReference Include="JetBrains.Annotations" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+      <PackageReference Include="Microsoft.Extensions.Options" />
+      <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
       <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false"/>

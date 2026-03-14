@@ -37,6 +37,8 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private readonly EngineHost _host;
     private GameThreadSynchronizationContext? _synchronizationContext;
 
+    public IServiceProvider Services => _host.Services;
+
     private readonly AssetManager _assetManager;
 
     private static Engine? _instance;

@@ -1,0 +1,29 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:RetroEngine.Editor.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="RetroEngine.Editor.Views.ProjectOpenWindow"
+        Title="ProjectOpenWindow">
+    <Design.DataContext>
+        <viewModels:ProjectOpenWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.DataContext>
+        <viewModels:ProjectOpenWindowViewModel/>
+    </Window.DataContext>
+
+    <TabControl TabStripPlacement="Left" x:DataType="viewModels:ProjectOpenWindowViewModel" ItemsSource="{Binding Tabs}">
+        <TabControl.ItemTemplate>
+            <DataTemplate DataType="viewModels:ProjectOpenWindowTab">
+                <TextBlock Text="{Binding Header}"/>
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+            <DataTemplate DataType="viewModels:ProjectOpenWindowTab">
+                <ContentControl Content="{Binding Content}"/>
+            </DataTemplate>
+        </TabControl.ContentTemplate>
+    </TabControl>
+</Window>

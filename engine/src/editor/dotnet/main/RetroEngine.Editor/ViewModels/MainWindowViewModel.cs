@@ -1,10 +1,8 @@
-﻿using System.Collections.ObjectModel;
-using Avalonia.Input;
+﻿using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels.Menus;
-using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Views;
 using RetroEngine.Portable.Localization;
 

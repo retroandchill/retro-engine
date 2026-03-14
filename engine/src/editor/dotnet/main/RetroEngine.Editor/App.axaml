@@ -16,5 +16,6 @@
     <Application.Styles>
         <FluentTheme/>
         <DockFluentTheme />
+        <StyleInclude Source="avares://IconPacks.Avalonia/Icons.axaml" />
     </Application.Styles>
 </Application>

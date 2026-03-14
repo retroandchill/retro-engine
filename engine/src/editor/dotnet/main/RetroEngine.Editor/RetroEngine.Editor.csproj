@@ -24,6 +24,7 @@
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
         <PackageReference Include="Dock.Serializer.SystemTextJson" />
+        <PackageReference Include="IconPacks.Avalonia" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,9 +1,11 @@
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
@@ -25,7 +27,7 @@ public class App(Engine engine) : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
-            desktop.MainWindow = new MainWindow();
+            desktop.MainWindow = new ProjectOpenWindow();
         }
 
         base.OnFrameworkInitializationCompleted();
