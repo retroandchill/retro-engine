@@ -1,67 +1,89 @@
 {
-  "name" : "retro-engine",
-  "version" : "0.1.0",
-  "description" : "A retro game engine",
-  "dependencies" : [ {
-    "name" : "sdl3",
-    "default-features" : false,
-    "features" : [ "vulkan" ],
-    "version>=" : "3.2.28"
-  }, {
-    "name" : "nethost",
-    "version>=" : "8.0.3"
-  }, {
-    "name" : "fmt",
-    "version>=" : "12.1.0"
-  }, {
-    "name" : "vulkan-sdk-components",
-    "version>=" : "1.4.328.0"
-  }, {
-    "name" : "boost-dll",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-uuid",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "spdlog",
-    "version>=" : "1.16.0#1",
-    "default-features" : false
-  }, {
-    "name" : "boost-optional",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "uni-algo",
-    "version>=" : "1.2.0"
-  }, {
-    "name" : "boost-unordered",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-pool",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-asio",
-    "version>=" : "1.90.0#1"
-  }, {
-    "name" : "gcem",
-    "version>=" : "1.18.0"
-  }, {
-    "name" : "stb",
-    "version>=" : "2024-07-29#1"
-  }, {
-    "name" : "gtest",
-    "version>=" : "1.17.0#2"
-  }, {
-    "name" : "boost-crc",
-    "version>=" : "1.90.0#1"
-  }, {
-    "name" : "icu",
-    "version>=" : "78.2"
-  }, {
-    "name" : "boost-algorithm",
-    "version>=" : "1.90.0#1"
-  }, {
-    "name" : "boost-thread",
-    "version>=" : "1.90.0#1"
-  } ],
-  "builtin-baseline" : "de46587b4beaa638743916fe5674825cecfb48b3"
+  "name": "retro-engine",
+  "version": "0.1.0",
+  "description": "A retro game engine",
+  "dependencies": [
+    {
+      "name": "sdl3",
+      "default-features": false,
+      "features": [
+        "vulkan"
+      ],
+      "version>=": "3.4.2"
+    },
+    {
+      "name": "nethost",
+      "version>=": "8.0.3"
+    },
+    {
+      "name": "fmt",
+      "version>=": "12.1.0"
+    },
+    {
+      "name": "vulkan-sdk-components",
+      "version>=": "1.4.341.0"
+    },
+    {
+      "name": "boost-dll",
+      "version>=": "1.90.0"
+    },
+    {
+      "name": "boost-uuid",
+      "version>=": "1.90.0"
+    },
+    {
+      "name": "spdlog",
+      "version>=": "1.16.0#1",
+      "default-features": false
+    },
+    {
+      "name": "boost-optional",
+      "version>=": "1.90.0"
+    },
+    {
+      "name": "uni-algo",
+      "version>=": "1.2.0"
+    },
+    {
+      "name": "boost-unordered",
+      "version>=": "1.90.0"
+    },
+    {
+      "name": "boost-pool",
+      "version>=": "1.90.0"
+    },
+    {
+      "name": "boost-asio",
+      "version>=": "1.90.0#1"
+    },
+    {
+      "name": "gcem",
+      "version>=": "1.18.0"
+    },
+    {
+      "name": "stb",
+      "version>=": "2024-07-29#1"
+    },
+    {
+      "name": "gtest",
+      "version>=": "1.17.0#2"
+    },
+    {
+      "name": "boost-crc",
+      "version>=": "1.90.0#1"
+    },
+    {
+      "name": "icu",
+      "version>=": "78.2"
+    },
+    {
+      "name": "boost-algorithm",
+      "version>=": "1.90.0#1"
+    },
+    {
+      "name": "boost-thread",
+      "version>=": "1.90.0#1"
+    }
+  ],
+  "builtin-baseline": "de46587b4beaa638743916fe5674825cecfb48b3"
 }
