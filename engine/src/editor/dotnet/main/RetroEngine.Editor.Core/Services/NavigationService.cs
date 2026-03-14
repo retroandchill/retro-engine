@@ -3,12 +3,14 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using Avalonia.Utilities;
+using RetroEngine.Editor.Core.Services.Factories;
 using RetroEngine.Editor.Core.ViewModels;
 
 namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton]
-public sealed class NavigationService : INavigationService
+public sealed class NavigationService(IProjectOpenViewModelFactory projectOpenViewModelFactory) : INavigationService
 {
     public IViewModel? CurrentViewModel
     {
@@ -24,7 +26,7 @@ public sealed class NavigationService : INavigationService
 
     public void ShowProjectOpen()
     {
-        CurrentViewModel = new ProjectOpenViewModel();
+        CurrentViewModel = projectOpenViewModelFactory.Create();
     }
 
     public void ShowMainEditor()

@@ -22,7 +22,7 @@ internal static class Program
         Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
 
         var engineBuilder = new EngineBuilder();
-        engineBuilder.Services.AddRetroEngineEditorCore();
+        engineBuilder.Services.AddRetroEngineEditorCore().AddRetroEngineEditor();
 
         return AppBuilder
             .Configure(() => new App(engineBuilder.Build()))

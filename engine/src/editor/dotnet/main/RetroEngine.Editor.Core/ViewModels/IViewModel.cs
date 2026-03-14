@@ -9,5 +9,7 @@ namespace RetroEngine.Editor.Core.ViewModels;
 
 public interface IViewModel
 {
+    Type ViewType { get; }
+
     Control CreateView();
 }

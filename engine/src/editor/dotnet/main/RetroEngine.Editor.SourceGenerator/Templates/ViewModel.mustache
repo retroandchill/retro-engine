@@ -6,6 +6,8 @@ namespace {{Namespace}};
 
 partial {{ClassType}} {{ClassName}} : IViewModel
 {
+    public Type ViewType => typeof({{ViewName}});
+
     public Control CreateView()
     {
         return new {{ViewName}}();

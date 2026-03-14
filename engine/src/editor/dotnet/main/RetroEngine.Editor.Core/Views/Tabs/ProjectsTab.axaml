@@ -18,7 +18,7 @@
             <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Watermark="{Binding SearchText}">
 
             </TextBox>
-            <Button Grid.Column="2" >
+            <Button Grid.Column="2" Command="{Binding NewProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <iconPacks:PackIconCodicons Kind="NewFile"
                                                 Width="20"
@@ -26,7 +26,7 @@
                     <TextBlock VerticalAlignment="Center" Text="{Binding NewProjectText}"/>
                 </StackPanel>
             </Button>
-            <Button Grid.Column="3" >
+            <Button Grid.Column="3" Command="{Binding OpenProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <iconPacks:PackIconCodicons Kind="FolderOpened"
                                                 Width="20"

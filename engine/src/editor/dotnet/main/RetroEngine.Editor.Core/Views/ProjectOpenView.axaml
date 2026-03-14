@@ -11,12 +11,12 @@
 
     <TabControl TabStripPlacement="Left" x:DataType="viewModels1:ProjectOpenViewModel" ItemsSource="{Binding Tabs}">
         <TabControl.ItemTemplate>
-            <DataTemplate DataType="viewModels1:ProjectOpenWindowTab">
+            <DataTemplate DataType="viewModels1:ProjectOpenViewTab">
                 <TextBlock Text="{Binding Header}"/>
             </DataTemplate>
         </TabControl.ItemTemplate>
         <TabControl.ContentTemplate>
-            <DataTemplate DataType="viewModels1:ProjectOpenWindowTab">
+            <DataTemplate DataType="viewModels1:ProjectOpenViewTab">
                 <ContentControl Content="{Binding Content}"/>
             </DataTemplate>
         </TabControl.ContentTemplate>

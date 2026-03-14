@@ -1,10 +1,13 @@
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using HanumanInstitute.MvvmDialogs;
+using HanumanInstitute.MvvmDialogs.Avalonia;
+using Injectio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RetroEngine.Editor.Core;
 using RetroEngine.Editor.Core.Data;
 using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.ViewModels;
@@ -71,5 +74,21 @@ public class App(Engine engine) : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+
+    [RegisterServices]
+    internal static void RegisterDialogService(IServiceCollection services)
+    {
+        services
+            .AddSingleton<IDialogManager, DialogManager>()
+            .AddSingleton<IDialogFactory, DialogFactory>(_ => new DialogFactory())
+            .AddSingleton<IDialogService, DialogService>()
+            .AddSingleton(
+                IDialogService (provider) =>
+                    new DialogService(
+                        provider.GetRequiredService<IDialogManager>(),
+                        viewModelFactory: Activator.CreateInstance
+                    )
+            );
     }
 }

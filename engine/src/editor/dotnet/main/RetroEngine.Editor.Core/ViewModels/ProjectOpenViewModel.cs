@@ -12,13 +12,10 @@ using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
-public sealed record ProjectOpenWindowTab(Text Header, object? Content);
+public readonly record struct ProjectOpenViewTab(Text Header, object? Content);
 
 [ViewModelFor<ProjectOpenView>]
 public partial class ProjectOpenViewModel : ObservableObject
 {
-    private const string TextNamespace = "RetroEngine.Editor.ViewModels.ProjectOpenWindowViewModel";
-
-    public ObservableCollection<ProjectOpenWindowTab> Tabs { get; } =
-    [new(Text.AsLocalizable(TextNamespace, "ProjectsTabHeader", "Projects"), new RecentProjectsViewModel())];
+    public ObservableCollection<ProjectOpenViewTab> Tabs { get; } = [];
 }
