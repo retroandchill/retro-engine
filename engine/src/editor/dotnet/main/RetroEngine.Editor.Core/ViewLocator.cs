@@ -15,12 +15,9 @@ public class ViewLocator : IViewLocator, IDataTemplate
 {
     public ViewDefinition Locate(object viewModel)
     {
-        if (viewModel is not IViewModel vm)
-        {
-            throw new TypeLoadException("View not found.");
-        }
-
-        return new ViewDefinition(vm.ViewType, () => vm.CreateView());
+        return viewModel is IViewModel vm
+            ? new ViewDefinition(vm.ViewType, () => vm.CreateView())
+            : throw new TypeLoadException("View not found.");
     }
 
     public object Create(object viewModel)
