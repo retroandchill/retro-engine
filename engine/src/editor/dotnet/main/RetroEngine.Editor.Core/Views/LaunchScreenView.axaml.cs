@@ -7,9 +7,9 @@ using Avalonia.Controls;
 
 namespace RetroEngine.Editor.Core.Views;
 
-public partial class ProjectOpenView : UserControl
+public partial class LaunchScreenView : UserControl
 {
-    public ProjectOpenView()
+    public LaunchScreenView()
     {
         InitializeComponent();
     }

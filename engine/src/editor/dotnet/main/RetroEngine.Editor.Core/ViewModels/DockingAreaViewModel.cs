@@ -9,6 +9,7 @@ using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
+[RegisterTransient(Registration = RegistrationStrategy.Self)]
 public sealed class MainDockingAreaViewModel
 {
     public ObservableCollection<SampleDocumentModel> Documents { get; } = [];

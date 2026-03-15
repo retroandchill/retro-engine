@@ -1,9 +1,6 @@
-using System;
 using Avalonia.Controls;
-using RetroEngine.Editor.ViewModels;
-using Serilog;
 
-namespace RetroEngine.Editor.Views;
+namespace RetroEngine.Editor.Core.Views;
 
 public partial class MainWindow : Window
 {

@@ -3,21 +3,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels1="clr-namespace:RetroEngine.Editor.Core.ViewModels"
+             xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.ProjectOpenView">
-    <Design.DataContext>
-        <viewModels1:ProjectOpenViewModel/>
-    </Design.DataContext>
+             x:Class="RetroEngine.Editor.Core.Views.LaunchScreenView"
+             d:DataContext="{extensions:DesignResolve {x:Type viewModels1:LaunchScreenViewModel}}">
 
-    <TabControl TabStripPlacement="Left" x:DataType="viewModels1:ProjectOpenViewModel" ItemsSource="{Binding Tabs}">
+    <TabControl TabStripPlacement="Left" x:DataType="viewModels1:LaunchScreenViewModel" ItemsSource="{Binding Tabs}">
         <TabControl.ItemTemplate>
-            <DataTemplate DataType="viewModels1:ProjectOpenViewTab">
+            <DataTemplate DataType="viewModels1:ILaunchScreenTabViewModel">
                 <TextBlock Text="{Binding Header}"/>
             </DataTemplate>
         </TabControl.ItemTemplate>
         <TabControl.ContentTemplate>
-            <DataTemplate DataType="viewModels1:ProjectOpenViewTab">
-                <ContentControl Content="{Binding Content}"/>
+            <DataTemplate DataType="viewModels1:ILaunchScreenTabViewModel">
+                <ContentControl Content="{Binding}"/>
             </DataTemplate>
         </TabControl.ContentTemplate>
     </TabControl>

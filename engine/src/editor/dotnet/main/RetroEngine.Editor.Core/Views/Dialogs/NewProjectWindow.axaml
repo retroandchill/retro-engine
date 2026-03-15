@@ -1,0 +1,41 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Dialogs"
+        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+        xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
+        mc:Ignorable="d" d:DesignWidth="600"
+        SizeToContent="Height"
+        Width="600"
+        x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
+        Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
+        d:DataContext="{extensions:DesignResolve {x:Type dialogs:NewProjectWindowViewModel}}">
+
+    <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,*" ColumnSpacing="10" RowSpacing="20">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectFolderText, Project Folder}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel"   Text="{Binding ProjectFolder}"/>
+            <Button Grid.Row="0" Grid.Column="2">
+                <iconPacks:PackIconCodicons Kind="Folder"
+                                            Width="16"
+                                            Height="16" VerticalAlignment="Center"/>
+            </Button>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectNameText, Project Name}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel"   Text="{Binding ProjectName}"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" x:DataType="dialogs:NewProjectWindowViewModel" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <iconPacks:PackIconCodicons Kind="Error"
+                                            Width="20"
+                                            Height="20" VerticalAlignment="Center"
+                                            Foreground="DarkRed"/>
+                <TextBlock Foreground="DarkRed" x:DataType="dialogs:NewProjectWindowViewModel"  Text="{Binding ErrorText}"/>
+            </StackPanel>
+            <Button Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel" Command="{Binding CreateProjectCommand}" IsEnabled="{Binding CanCreate}">
+                <TextBlock Text="{extensions:LocalizedText NewProjectWindow, CreateButtonText, Create}"/>
+            </Button>
+        </Grid>
+    </StackPanel>
+</Window>
