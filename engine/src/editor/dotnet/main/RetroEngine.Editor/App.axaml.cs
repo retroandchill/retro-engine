@@ -1,6 +1,4 @@
-using System.IO.Abstractions;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
@@ -9,17 +7,17 @@ using HanumanInstitute.MvvmDialogs.Avalonia;
 using Injectio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RetroEngine.Editor.Core;
 using RetroEngine.Editor.Core.Data;
-using RetroEngine.Editor.Core.Extensions;
-using RetroEngine.Editor.Core.ViewModels;
-using RetroEngine.Editor.Core.Views;
+using RetroEngine.Editor.Core.Services;
+using RetroEngine.Editor.ViewModels;
+using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
 
-public sealed class App : Application, IDisposable
+public class App(Engine engine) : Application
 {
-    private Engine? _engine;
-    private MainWindowViewModel? _mainWindow;
+    private readonly INavigationService _navigationService = engine.Services.GetRequiredService<INavigationService>();
 
     public override void Initialize()
     {
@@ -28,27 +26,19 @@ public sealed class App : Application, IDisposable
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (!Design.IsDesignMode)
+        var contextFactory = engine.Services.GetRequiredService<IDbContextFactory<CachedDbContext>>();
+        using (var context = contextFactory.CreateDbContext())
         {
-            var engineBuilder = new EngineBuilder();
-            engineBuilder.Services.AddRetroEngineEditorCore().AddRetroEngineEditor();
-
-            _engine = engineBuilder.Build();
-            DesignResolve.ServiceProvider = _engine.Services;
-            _mainWindow = _engine.Services.GetRequiredService<MainWindowViewModel>();
-
-            var contextFactory = _engine.Services.GetRequiredService<IDbContextFactory<CachedDbContext>>();
-            using (var context = contextFactory.CreateDbContext())
-            {
-                context.Database.Migrate();
-            }
-
-            _engine.Start();
+            context.Database.Migrate();
         }
-        else
+
+        engine.Start();
+
+        var mainWindowViewModel = new MainWindowViewModel { Content = _navigationService.CurrentViewModel };
+        _navigationService.ViewModelChanged += (_, args) =>
         {
-            DesignResolve.ServiceProvider = CreateDesignTimeServices();
-        }
+            mainWindowViewModel.Content = args.ViewModel;
+        };
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -57,32 +47,19 @@ public sealed class App : Application, IDisposable
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
 
-            desktop.MainWindow = new MainWindow { DataContext = _mainWindow };
+            desktop.MainWindow = new MainWindow { DataContext = mainWindowViewModel };
         }
 
-        _mainWindow?.ShowProjectOpen();
+        _navigationService.ShowProjectOpen();
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static ServiceProvider CreateDesignTimeServices()
-    {
-        var serviceCollection = new ServiceCollection();
-        serviceCollection
-            .AddLogging()
-            .AddSingleton<IFileSystem, FileSystem>()
-            .AddRetroEngineEditorCore()
-            .AddRetroEngineEditor();
-        return serviceCollection.BuildServiceProvider();
-    }
-
     private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        if (_engine is null)
-            return;
-
-        _engine.RequestShutdown();
-        _engine.WaitForGameThread();
+        engine.RequestShutdown();
+        engine.WaitForGameThread();
+        engine.Dispose();
     }
 
     private static void DisableAvaloniaDataAnnotationValidation()
@@ -99,11 +76,6 @@ public sealed class App : Application, IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        _engine?.Dispose();
-    }
-
     [RegisterServices]
     internal static void RegisterDialogService(IServiceCollection services)
     {
@@ -115,7 +87,7 @@ public sealed class App : Application, IDisposable
                 IDialogService (provider) =>
                     new DialogService(
                         provider.GetRequiredService<IDialogManager>(),
-                        viewModelFactory: provider.GetRequiredService
+                        viewModelFactory: Activator.CreateInstance
                     )
             );
     }

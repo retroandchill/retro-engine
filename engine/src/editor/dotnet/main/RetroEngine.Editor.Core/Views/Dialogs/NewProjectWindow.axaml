@@ -9,13 +9,15 @@
         SizeToContent="Height"
         Width="600"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
-        Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
-        d:DataContext="{extensions:DesignResolve {x:Type dialogs:NewProjectWindowViewModel}}">
+        Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}">
+    <Design.DataContext>
+        <dialogs:NewProjectWindowViewModel/>
+    </Design.DataContext>
 
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,*" ColumnSpacing="10" RowSpacing="20">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectFolderText, Project Folder}"/>
-            <TextBox Grid.Row="0" Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel"   Text="{Binding ProjectFolder}"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ProjectFolder}"/>
             <Button Grid.Row="0" Grid.Column="2">
                 <iconPacks:PackIconCodicons Kind="Folder"
                                             Width="16"
@@ -23,17 +25,17 @@
             </Button>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectNameText, Project Name}"/>
-            <TextBox Grid.Row="1" Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel"   Text="{Binding ProjectName}"/>
+            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ProjectName}"/>
         </Grid>
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" x:DataType="dialogs:NewProjectWindowViewModel" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
                 <iconPacks:PackIconCodicons Kind="Error"
                                             Width="20"
                                             Height="20" VerticalAlignment="Center"
                                             Foreground="DarkRed"/>
-                <TextBlock Foreground="DarkRed" x:DataType="dialogs:NewProjectWindowViewModel"  Text="{Binding ErrorText}"/>
+                <TextBlock Foreground="DarkRed" Text="{Binding ErrorText}"/>
             </StackPanel>
-            <Button Grid.Column="1" x:DataType="dialogs:NewProjectWindowViewModel" Command="{Binding CreateProjectCommand}" IsEnabled="{Binding CanCreate}">
+            <Button Grid.Column="1" Command="{Binding CreateProjectCommand}" IsEnabled="{Binding CanCreate}">
                 <TextBlock Text="{extensions:LocalizedText NewProjectWindow, CreateButtonText, Create}"/>
             </Button>
         </Grid>

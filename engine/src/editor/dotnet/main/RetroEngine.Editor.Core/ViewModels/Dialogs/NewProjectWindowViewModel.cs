@@ -7,7 +7,7 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
-using Microsoft.Extensions.Logging;
+using HanumanInstitute.MvvmDialogs.Avalonia;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Dialogs;
 using RetroEngine.Portable.Localization;
@@ -15,23 +15,21 @@ using RetroEngine.Portable.Localization;
 namespace RetroEngine.Editor.Core.ViewModels.Dialogs;
 
 [ViewModelFor<NewProjectWindow>]
-[RegisterTransient(Registration = RegistrationStrategy.Self)]
 public sealed partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
 {
     private readonly IFileSystem _fileSystem;
-    private readonly IDialogService _dialogService;
-    private readonly ILogger<NewProjectWindowViewModel> _logger;
+
+    public NewProjectWindowViewModel()
+    {
+        _fileSystem = new FileSystem();
+
+        UpdateCanCreateValue();
+    }
 
     /// <inheritdoc/>
-    public NewProjectWindowViewModel(
-        IFileSystem fileSystem,
-        IDialogService dialogService,
-        ILogger<NewProjectWindowViewModel> logger
-    )
+    public NewProjectWindowViewModel(IFileSystem fileSystem)
     {
         _fileSystem = fileSystem;
-        _dialogService = dialogService;
-        _logger = logger;
         UpdateCanCreateValue();
     }
 
@@ -54,6 +52,8 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
             UpdateCanCreateValue();
         }
     } = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+    public Action? OnProjectFolderSelectRequested;
 
     public string ProjectName
     {
@@ -106,26 +106,7 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
     }
 
     [RelayCommand]
-    private void SelectProjectFolder()
-    {
-        SelectProjectFolderAsync()
-            .ContinueWith(t =>
-            {
-                if (t.IsFaulted)
-                {
-                    _logger.LogError(t.Exception, "Failed to select project folder.");
-                }
-            });
-    }
-
-    private async Task SelectProjectFolderAsync()
-    {
-        var targetFolder = await _dialogService.ShowOpenFolderDialogAsync(this);
-        if (targetFolder is null)
-            return;
-
-        ProjectFolder = targetFolder.Path.ToString();
-    }
+    private void SelectProjectFolder() => OnProjectFolderSelectRequested?.Invoke();
 
     [RelayCommand]
     private void CreateProject()

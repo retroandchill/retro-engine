@@ -5,10 +5,12 @@
              xmlns:viewModels1="clr-namespace:RetroEngine.Editor.Core.ViewModels"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.LaunchScreenView"
-             d:DataContext="{extensions:DesignResolve {x:Type viewModels1:LaunchScreenViewModel}}">
+             x:Class="RetroEngine.Editor.Core.Views.LaunchScreenView">
+    <Design.DataContext>
+        <viewModels1:LaunchScreenViewModel/>
+    </Design.DataContext>
 
-    <TabControl TabStripPlacement="Left" x:DataType="viewModels1:LaunchScreenViewModel" ItemsSource="{Binding Tabs}">
+    <TabControl TabStripPlacement="Left" ItemsSource="{Binding Tabs}">
         <TabControl.ItemTemplate>
             <DataTemplate DataType="viewModels1:ILaunchScreenTabViewModel">
                 <TextBlock Text="{Binding Header}"/>

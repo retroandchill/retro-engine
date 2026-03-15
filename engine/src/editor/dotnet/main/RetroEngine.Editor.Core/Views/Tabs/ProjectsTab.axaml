@@ -6,8 +6,10 @@
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.Tabs.ProjectsTab"
-             d:DataContext="{extensions:DesignResolve {x:Type tabs:RecentProjectsViewModel}}">
+             x:Class="RetroEngine.Editor.Core.Views.Tabs.ProjectsTab">
+    <Design.DataContext>
+        <tabs:RecentProjectsViewModel/>
+    </Design.DataContext>
 
     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="15,0">
@@ -17,7 +19,7 @@
             <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Watermark="{extensions:LocalizedText ProjectsTab, SearchText, Search Projects}">
 
             </TextBox>
-            <Button Grid.Column="2" x:DataType="tabs:RecentProjectsViewModel" Command="{Binding NewProjectCommand}">
+            <Button Grid.Column="2" Command="{Binding NewProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <iconPacks:PackIconCodicons Kind="NewFile"
                                                 Width="20"
@@ -25,7 +27,7 @@
                     <TextBlock VerticalAlignment="Center" Text="{extensions:LocalizedText ProjectsTab, NewProject, New Project}"/>
                 </StackPanel>
             </Button>
-            <Button Grid.Column="3" x:DataType="tabs:RecentProjectsViewModel" Command="{Binding OpenProjectCommand}">
+            <Button Grid.Column="3" Command="{Binding OpenProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <iconPacks:PackIconCodicons Kind="FolderOpened"
                                                 Width="20"

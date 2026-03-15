@@ -46,18 +46,10 @@
         <DependentUpon>ProjectOpenView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Views\MainWindow.axaml.cs">
-        <DependentUpon>MainWindow.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
     </ItemGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="RetroEngine.Editor"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <AvaloniaResource Include="Assets\avalonia-logo.ico" />
     </ItemGroup>
 
 </Project>

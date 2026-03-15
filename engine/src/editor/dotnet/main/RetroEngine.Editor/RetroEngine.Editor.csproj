@@ -40,9 +40,4 @@
       <ProjectReference Include="$(RetroEngineLoggingProj)" />
       <ProjectReference Include="$(RetroEngineProj)" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="ViewModels\" />
-      <Folder Include="Views\" />
-    </ItemGroup>
 </Project>

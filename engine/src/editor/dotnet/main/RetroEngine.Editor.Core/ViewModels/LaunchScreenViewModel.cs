@@ -12,14 +12,14 @@ using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
-public interface ILaunchScreenTabViewModel
+public interface ILaunchScreenTabViewModel : IViewModel
 {
     Text Header { get; }
 }
 
 [ViewModelFor<LaunchScreenView>]
 [RegisterTransient(Registration = RegistrationStrategy.Self)]
-public partial class LaunchScreenViewModel(IEnumerable<ILaunchScreenTabViewModel> tabs) : ObservableObject
+public partial class LaunchScreenViewModel() : ObservableObject
 {
-    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [.. tabs];
+    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [];
 }
