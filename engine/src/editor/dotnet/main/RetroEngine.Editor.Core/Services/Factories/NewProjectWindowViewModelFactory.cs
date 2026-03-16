@@ -19,27 +19,11 @@ public class NewProjectWindowViewModelFactory(
 {
     public override NewProjectWindowViewModel Create()
     {
-        var viewModel = new NewProjectWindowViewModel(fileSystem);
-        viewModel.OnProjectFolderSelectRequested += () =>
+        var viewModel = new NewProjectWindowViewModel(fileSystem)
         {
-            SelectProjectFolderAsync(viewModel)
-                .ContinueWith(t =>
-                {
-                    if (t.IsFaulted)
-                    {
-                        logger.LogError(t.Exception, "Failed to select project folder.");
-                    }
-                });
+            ShowOpenFolderDialogAsync = async (vm) => await dialogService.ShowOpenFolderDialogAsync(vm),
         };
+        viewModel.OnProjectFolderError += ex => logger.LogError(ex, "Error selecting project folder");
         return viewModel;
-    }
-
-    private async Task SelectProjectFolderAsync(NewProjectWindowViewModel viewModel)
-    {
-        var targetFolder = await dialogService.ShowOpenFolderDialogAsync(viewModel);
-        if (targetFolder is null)
-            return;
-
-        viewModel.ProjectFolder = targetFolder.Path.ToString();
     }
 }

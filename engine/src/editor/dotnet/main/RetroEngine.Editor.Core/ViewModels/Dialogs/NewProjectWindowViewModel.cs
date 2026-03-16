@@ -7,12 +7,14 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
-using HanumanInstitute.MvvmDialogs.Avalonia;
+using HanumanInstitute.MvvmDialogs.FileSystem;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Dialogs;
 using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels.Dialogs;
+
+public delegate ValueTask<IDialogStorageFolder?> ShowOpenFolderDialogAsyncDelegate(NewProjectWindowViewModel viewModel);
 
 [ViewModelFor<NewProjectWindow>]
 public sealed partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
@@ -43,6 +45,14 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
 
     public event EventHandler? RequestClose;
 
+    public event Action<Exception>? OnProjectFolderError;
+
+    private readonly ShowOpenFolderDialogAsyncDelegate? _showOpenFolderDialogAsync;
+    public ShowOpenFolderDialogAsyncDelegate? ShowOpenFolderDialogAsync
+    {
+        init => _showOpenFolderDialogAsync = value;
+    }
+
     public string ProjectFolder
     {
         get;
@@ -52,8 +62,6 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
             UpdateCanCreateValue();
         }
     } = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-    public Action? OnProjectFolderSelectRequested;
 
     public string ProjectName
     {
@@ -106,7 +114,31 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
     }
 
     [RelayCommand]
-    private void SelectProjectFolder() => OnProjectFolderSelectRequested?.Invoke();
+    private void SelectProjectFolder()
+    {
+        SelectProjectFolderAsync()
+            .ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    OnProjectFolderError?.Invoke(t.Exception);
+                }
+            });
+    }
+
+    private async Task SelectProjectFolderAsync()
+    {
+        if (_showOpenFolderDialogAsync is null)
+        {
+            return;
+        }
+
+        var targetFolder = await _showOpenFolderDialogAsync(this);
+        if (targetFolder is null)
+            return;
+
+        ProjectFolder = targetFolder.Path.ToString();
+    }
 
     [RelayCommand]
     private void CreateProject()

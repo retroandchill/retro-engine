@@ -14,13 +14,13 @@ public interface IViewModelFactory
     IViewModel Create();
 }
 
-public interface IViewModelFactory<out TViewModel>
+public interface IViewModelFactory<out TViewModel> : IViewModelFactory
     where TViewModel : IViewModel
 {
     TViewModel Create();
 }
 
-public abstract class ViewModelFactory<TViewModel> : IViewModelFactory, IViewModelFactory<TViewModel>
+public abstract class ViewModelFactory<TViewModel> : IViewModelFactory<TViewModel>
     where TViewModel : IViewModel
 {
     public Type ViewModelType => typeof(TViewModel);

@@ -85,10 +85,13 @@ public class App(Engine engine) : Application
             .AddSingleton<IDialogService, DialogService>()
             .AddSingleton(
                 IDialogService (provider) =>
-                    new DialogService(
+                {
+                    var viewModelProvider = provider.GetRequiredService<ViewModelProvider>();
+                    return new DialogService(
                         provider.GetRequiredService<IDialogManager>(),
-                        viewModelFactory: Activator.CreateInstance
-                    )
+                        viewModelFactory: viewModelProvider.Create
+                    );
+                }
             );
     }
 }
