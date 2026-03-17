@@ -3,14 +3,17 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.IO.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using RetroEngine.Editor.Core.Data;
+using RetroEngine.Editor.Core.Data.Entities;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
 
 namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton]
 public sealed class ProjectManagementService(
+    IFileSystem fileSystem,
     IProjectDescriptorSerializer serializer,
     IDbContextFactory<CachedDbContext> dbContextFactory
 ) : IProjectManagementService
@@ -70,6 +73,19 @@ public sealed class ProjectManagementService(
     {
         var projectDescriptor = await serializer.CreateNewProjectAsync(path, cancellationToken);
         CurrentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
+
+        var pathName = fileSystem.Path.GetFileNameWithoutExtension(path);
+        var projectName = fileSystem.Path.GetFileName(pathName);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        dbContext.RecentProjects.Add(
+            new RecentProject
+            {
+                Path = path,
+                Name = projectName,
+                LastOpened = DateTime.Now,
+            }
+        );
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task OpenProjectAsync(string path, CancellationToken cancellationToken = default)

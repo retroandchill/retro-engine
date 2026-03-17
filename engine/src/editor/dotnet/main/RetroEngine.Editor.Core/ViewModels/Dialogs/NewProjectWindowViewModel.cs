@@ -7,31 +7,32 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
-using HanumanInstitute.MvvmDialogs.FileSystem;
+using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Dialogs;
 using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels.Dialogs;
 
-public delegate ValueTask<IDialogStorageFolder?> ShowOpenFolderDialogAsyncDelegate(NewProjectWindowViewModel viewModel);
-
 [ViewModelFor<NewProjectWindow>]
-public sealed partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
+[RegisterTransient(Duplicate = DuplicateStrategy.Append)]
+public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
 {
     private readonly IFileSystem _fileSystem;
+    private readonly IDialogService _dialogService;
+    private readonly ILogger<NewProjectWindowViewModel> _logger;
 
-    public NewProjectWindowViewModel()
-    {
-        _fileSystem = new FileSystem();
-
-        UpdateCanCreateValue();
-    }
-
-    /// <inheritdoc/>
-    public NewProjectWindowViewModel(IFileSystem fileSystem)
+    [UsedImplicitly]
+    public NewProjectWindowViewModel(
+        IFileSystem fileSystem,
+        IDialogService dialogService,
+        ILogger<NewProjectWindowViewModel> logger
+    )
     {
         _fileSystem = fileSystem;
+        _dialogService = dialogService;
+        _logger = logger;
         UpdateCanCreateValue();
     }
 
@@ -44,14 +45,6 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
     }
 
     public event EventHandler? RequestClose;
-
-    public event Action<Exception>? OnProjectFolderError;
-
-    private readonly ShowOpenFolderDialogAsyncDelegate? _showOpenFolderDialogAsync;
-    public ShowOpenFolderDialogAsyncDelegate? ShowOpenFolderDialogAsync
-    {
-        init => _showOpenFolderDialogAsync = value;
-    }
 
     public string ProjectFolder
     {
@@ -121,19 +114,14 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
             {
                 if (t.IsFaulted)
                 {
-                    OnProjectFolderError?.Invoke(t.Exception);
+                    _logger.LogError(t.Exception, "Failed to select project folder.");
                 }
             });
     }
 
     private async Task SelectProjectFolderAsync()
     {
-        if (_showOpenFolderDialogAsync is null)
-        {
-            return;
-        }
-
-        var targetFolder = await _showOpenFolderDialogAsync(this);
+        var targetFolder = await _dialogService.ShowOpenFolderDialogAsync(this);
         if (targetFolder is null)
             return;
 
@@ -147,3 +135,5 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
 }
+
+internal sealed class DesignNewProjectWindowViewModel() : NewProjectWindowViewModel(new FileSystem(), null!, null!);

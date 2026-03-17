@@ -13,7 +13,7 @@ module;
 module retro.renderer.vulkan.renderer;
 
 import retro.logging;
-import vulkan_hpp;
+import vulkan;
 import retro.core.util.deferred;
 
 namespace retro

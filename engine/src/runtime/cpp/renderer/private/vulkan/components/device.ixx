@@ -12,7 +12,7 @@ module;
 
 export module retro.renderer.vulkan.components.device;
 
-import vulkan_hpp;
+import vulkan;
 import retro.core.di;
 import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.buffer_manager;

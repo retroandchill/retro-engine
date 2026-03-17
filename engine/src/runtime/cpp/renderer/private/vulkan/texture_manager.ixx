@@ -6,7 +6,7 @@
  */
 export module retro.renderer.vulkan.texture_manager;
 
-import vulkan_hpp;
+import vulkan;
 import retro.runtime.rendering.texture_manager;
 import retro.renderer.vulkan.components.device;
 import retro.core.di;

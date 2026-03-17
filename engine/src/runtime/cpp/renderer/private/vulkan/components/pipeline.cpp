@@ -12,7 +12,7 @@ module;
 
 module retro.renderer.vulkan.components.pipeline;
 
-import vulkan_hpp;
+import vulkan;
 import retro.core.io.file_stream;
 import retro.core.containers.inline_list;
 import retro.core.functional.overload;

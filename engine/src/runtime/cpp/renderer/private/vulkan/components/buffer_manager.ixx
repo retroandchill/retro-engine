@@ -6,7 +6,7 @@
  */
 export module retro.renderer.vulkan.components.buffer_manager;
 
-import vulkan_hpp;
+import vulkan;
 
 namespace retro
 {

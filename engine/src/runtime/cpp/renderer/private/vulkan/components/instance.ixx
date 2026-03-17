@@ -12,7 +12,7 @@ module;
 
 export module retro.renderer.vulkan.components.instance;
 
-import vulkan_hpp;
+import vulkan;
 import retro.platform.window;
 import retro.renderer.vulkan.components.surface;
 

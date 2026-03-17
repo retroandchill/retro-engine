@@ -11,7 +11,7 @@
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
         Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}">
     <Design.DataContext>
-        <dialogs:NewProjectWindowViewModel/>
+        <dialogs:DesignNewProjectWindowViewModel/>
     </Design.DataContext>
 
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
@@ -32,8 +32,8 @@
                 <iconPacks:PackIconCodicons Kind="Error"
                                             Width="20"
                                             Height="20" VerticalAlignment="Center"
-                                            Foreground="DarkRed"/>
-                <TextBlock Foreground="DarkRed" Text="{Binding ErrorText}"/>
+                                            Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
+                <TextBlock Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Text="{Binding ErrorText}"/>
             </StackPanel>
             <Button Grid.Column="1" Command="{Binding CreateProjectCommand}" IsEnabled="{Binding CanCreate}">
                 <TextBlock Text="{extensions:LocalizedText NewProjectWindow, CreateButtonText, Create}"/>

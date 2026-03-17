@@ -8,10 +8,10 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ProjectsTab">
     <Design.DataContext>
-        <tabs:RecentProjectsViewModel/>
+        <tabs:DesignRecentProjectsViewModel/>
     </Design.DataContext>
 
-    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="15,0">
             <iconPacks:PackIconCodicons Kind="Search"
                                         Width="20"
@@ -37,8 +37,23 @@
             </Button>
         </Grid>
         <Separator/>
-        <StackPanel Margin="25, 0">
+        <ItemsControl ItemsSource="{Binding RecentProjects}" Margin="0,10,0,0" HorizontalAlignment="Stretch">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Margin="25, 0" TextElement.FontSize="16" Spacing="10" HorizontalAlignment="Stretch"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
 
-        </StackPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Button Background="Transparent" HorizontalAlignment="Stretch">
+                        <Grid RowDefinitions="Auto,*" ColumnDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="5">
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path}" FontSize="12" Foreground="{DynamicResource SystemControlDisabledBaseMediumLowBrush}"/>
+                        </Grid>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </StackPanel>
 </UserControl>

@@ -9,7 +9,7 @@ export module retro.renderer.vulkan.components.pipeline;
 import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
 import retro.core.di;
-import vulkan_hpp;
+import vulkan;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.runtime.world.viewport;

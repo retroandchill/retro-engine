@@ -6,7 +6,7 @@
  */
 module retro.renderer.vulkan.services;
 
-import vulkan_hpp;
+import vulkan;
 import retro.logging;
 import retro.core.type_traits.callable;
 import retro.runtime.rendering.renderer2d;

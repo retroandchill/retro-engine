@@ -17,7 +17,7 @@ import retro.renderer.vulkan.components.pipeline;
 import retro.core.di;
 import retro.core.math.vector;
 import retro.platform.window;
-import vulkan_hpp;
+import vulkan;
 import std;
 import retro.runtime.rendering.draw_command;
 import retro.core.memory.arena_allocator;

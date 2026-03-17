@@ -6,7 +6,7 @@
  */
 export module retro.renderer.vulkan.components.surface;
 
-import vulkan_hpp;
+import vulkan;
 import retro.platform.window;
 
 namespace retro

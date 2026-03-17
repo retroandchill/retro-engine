@@ -7,17 +7,16 @@ using HanumanInstitute.MvvmDialogs.Avalonia;
 using Injectio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RetroEngine.Editor.Core;
 using RetroEngine.Editor.Core.Data;
-using RetroEngine.Editor.Core.Services;
-using RetroEngine.Editor.ViewModels;
+using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
 
 public class App(Engine engine) : Application
 {
-    private readonly INavigationService _navigationService = engine.Services.GetRequiredService<INavigationService>();
+    private readonly IMainWindowViewModel _mainWindowViewModel =
+        engine.Services.GetRequiredService<IMainWindowViewModel>();
 
     public override void Initialize()
     {
@@ -34,12 +33,6 @@ public class App(Engine engine) : Application
 
         engine.Start();
 
-        var mainWindowViewModel = new MainWindowViewModel { Content = _navigationService.CurrentViewModel };
-        _navigationService.ViewModelChanged += (_, args) =>
-        {
-            mainWindowViewModel.Content = args.ViewModel;
-        };
-
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
@@ -47,10 +40,10 @@ public class App(Engine engine) : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
 
-            desktop.MainWindow = new MainWindow { DataContext = mainWindowViewModel };
+            desktop.MainWindow = new MainWindow { DataContext = _mainWindowViewModel };
         }
 
-        _navigationService.ShowProjectOpen();
+        _mainWindowViewModel.ShowProjectOpen();
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -85,13 +78,10 @@ public class App(Engine engine) : Application
             .AddSingleton<IDialogService, DialogService>()
             .AddSingleton(
                 IDialogService (provider) =>
-                {
-                    var viewModelProvider = provider.GetRequiredService<ViewModelProvider>();
-                    return new DialogService(
+                    new DialogService(
                         provider.GetRequiredService<IDialogManager>(),
-                        viewModelFactory: viewModelProvider.Create
-                    );
-                }
+                        viewModelFactory: provider.GetRequiredService
+                    )
             );
     }
 }

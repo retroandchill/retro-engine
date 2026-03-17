@@ -7,10 +7,10 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.LaunchScreenView">
     <Design.DataContext>
-        <viewModels1:LaunchScreenViewModel/>
+        <viewModels1:DesignLaunchScreenViewModel/>
     </Design.DataContext>
 
-    <TabControl TabStripPlacement="Left" ItemsSource="{Binding Tabs}">
+    <TabControl TabStripPlacement="Left" ItemsSource="{Binding Tabs}" >
         <TabControl.ItemTemplate>
             <DataTemplate DataType="viewModels1:ILaunchScreenTabViewModel">
                 <TextBlock Text="{Binding Header}"/>

@@ -5,6 +5,7 @@
 
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Core.Views;
@@ -15,11 +16,33 @@ namespace RetroEngine.Editor.Core.ViewModels;
 public interface ILaunchScreenTabViewModel : IViewModel
 {
     Text Header { get; }
+
+    Task OnDisplayedAsync(CancellationToken cancellationToken);
 }
 
 [ViewModelFor<LaunchScreenView>]
-[RegisterTransient(Registration = RegistrationStrategy.Self)]
-public partial class LaunchScreenViewModel() : ObservableObject
+[RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
+public partial class LaunchScreenViewModel(
+    IEnumerable<ILaunchScreenTabViewModel> launchScreenTabViewModels,
+    ILogger<LaunchScreenViewModel> logger
+) : ObservableObject
 {
-    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [];
+    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [.. launchScreenTabViewModels];
+
+    public async Task OnDisplayedAsync(CancellationToken cancellationToken = default)
+    {
+        await foreach (
+            var task in Task.WhenEach(Tabs.Select(x => x.OnDisplayedAsync(cancellationToken)))
+                .WithCancellation(cancellationToken)
+        )
+        {
+            if (task.IsFaulted)
+            {
+                logger.LogError(task.Exception, "Failed to display tab.");
+            }
+        }
+    }
 }
+
+internal sealed class DesignLaunchScreenViewModel()
+    : LaunchScreenViewModel([new DesignRecentProjectsViewModel()], null!);
