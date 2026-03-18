@@ -7,9 +7,9 @@ using Avalonia.Controls;
 
 namespace RetroEngine.Editor.Core.Views.Tabs;
 
-public partial class ProjectsTab : UserControl
+public partial class RecentProjectsTab : UserControl
 {
-    public ProjectsTab()
+    public RecentProjectsTab()
     {
         InitializeComponent();
     }

@@ -25,6 +25,8 @@ public interface IProjectManagementService
         CancellationToken cancellationToken = default
     );
 
+    Task RemoveRecentProjectAsync(string path, CancellationToken cancellationToken = default);
+
     Task CreateNewProjectAsync(string path, CancellationToken cancellationToken = default);
 
     Task OpenProjectAsync(string path, CancellationToken cancellationToken = default);

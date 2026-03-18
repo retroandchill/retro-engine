@@ -69,6 +69,12 @@ public sealed class ProjectManagementService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task RemoveRecentProjectAsync(string path, CancellationToken cancellationToken = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await dbContext.RecentProjects.Where(x => x.Path == path).ExecuteDeleteAsync(cancellationToken);
+    }
+
     public async Task CreateNewProjectAsync(string path, CancellationToken cancellationToken = default)
     {
         var projectDescriptor = await serializer.CreateNewProjectAsync(path, cancellationToken);
@@ -92,6 +98,26 @@ public sealed class ProjectManagementService(
     {
         var projectDescriptor = await serializer.OpenProjectFileAsync(path, cancellationToken);
         CurrentProjectFile = new ProjectDescriptorFile(projectDescriptor, path);
+
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var project = await dbContext.RecentProjects.SingleOrDefaultAsync(p => p.Path == path, cancellationToken);
+        if (project is not null)
+        {
+            project.LastOpened = DateTime.Now;
+        }
+        else
+        {
+            dbContext.RecentProjects.Add(
+                new RecentProject
+                {
+                    Path = path,
+                    Name = fileSystem.Path.GetFileNameWithoutExtension(path),
+                    LastOpened = DateTime.Now,
+                }
+            );
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public void CloseProject()

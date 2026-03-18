@@ -8,6 +8,7 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
+using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
@@ -18,7 +19,7 @@ using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
-[ViewModelFor<ProjectsTab>]
+[ViewModelFor<RecentProjectsTab>]
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public partial class RecentProjectsViewModel(
     IProjectManagementService projectManagementService,
@@ -46,41 +47,132 @@ public partial class RecentProjectsViewModel(
     }
 
     [RelayCommand]
-    private void NewProject()
+    private async Task NewProject()
     {
-        NewProjectAsync()
-            .ContinueWith(t =>
+        try
+        {
+            var viewModel = dialogService.CreateViewModel<NewProjectWindowViewModel>();
+            var result = await dialogService.ShowDialogAsync(mainWindow, viewModel);
+            if (result is not true)
             {
-                if (t.IsFaulted)
-                {
-                    logger.LogError(t.Exception, "Failed to create new project.");
-                }
-            });
+                return;
+            }
+
+            var targetFolder = fileSystem.Path.Combine(viewModel.ProjectFolder, viewModel.ProjectName);
+            if (!fileSystem.Directory.Exists(targetFolder))
+            {
+                fileSystem.Directory.CreateDirectory(targetFolder);
+            }
+
+            var projectFileName = $"{viewModel.ProjectName}.reproj";
+            var projectPath = fileSystem.Path.Combine(targetFolder, projectFileName);
+            await projectManagementService.CreateNewProjectAsync(projectPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create new project.");
+
+            await dialogService.ShowMessageBoxAsync(
+                mainWindow,
+                new MessageBoxSettings() { Icon = MessageBoxImage.Error, Content = "Failed to create new project." }
+            );
+
+            return;
+        }
+
+        mainWindow.ShowMainEditor();
     }
 
-    private async Task NewProjectAsync()
+    [RelayCommand]
+    private async Task OpenProject()
     {
-        var viewModel = dialogService.CreateViewModel<NewProjectWindowViewModel>();
-        var result = await dialogService.ShowDialogAsync(mainWindow, viewModel);
-        if (result is not true)
+        var file = await dialogService.ShowOpenFileDialogAsync(
+            mainWindow,
+            new OpenFileDialogSettings { Filters = [new FileFilter("RetroEngine Project", "reproj")] }
+        );
+
+        if (file is null)
         {
             return;
         }
 
-        var targetFolder = fileSystem.Path.Combine(viewModel.ProjectFolder, viewModel.ProjectName);
-        if (!fileSystem.Directory.Exists(targetFolder))
+        await OpenProject(file.LocalPath);
+    }
+
+    private async Task OpenProject(string path)
+    {
+        try
         {
-            fileSystem.Directory.CreateDirectory(targetFolder);
+            await projectManagementService.OpenProjectAsync(path);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to open project.");
+
+            await dialogService.ShowMessageBoxAsync(
+                mainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = "Failed to open project." }
+            );
+
+            return;
         }
 
-        var projectFileName = $"{viewModel.ProjectName}.reproj";
-        var projectPath = fileSystem.Path.Combine(targetFolder, projectFileName);
-        await projectManagementService.CreateNewProjectAsync(projectPath);
+        mainWindow.ShowMainEditor();
     }
 
     [RelayCommand]
-    private void OpenProject() { }
+    private async Task OpenRecentProject(RecentProjectInfo project)
+    {
+        if (project.Exists)
+        {
+            await OpenProject(project.Path);
+        }
+        else
+        {
+            var selection = await dialogService.ShowMessageBoxAsync(
+                mainWindow,
+                new MessageBoxSettings
+                {
+                    Icon = MessageBoxImage.Error,
+                    Content = "Project file not found, would you like to delete it from the recent projects list?",
+                    Button = MessageBoxButton.YesNo,
+                }
+            );
+
+            if (selection is not true)
+                return;
+
+            await DeleteRecentProject(project);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteRecentProject(RecentProjectInfo project)
+    {
+        try
+        {
+            RecentProjects.Remove(project);
+            await projectManagementService.RemoveRecentProjectAsync(project.Path);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to delete recent project.");
+        }
+    }
 }
 
-internal sealed class DesignRecentProjectsViewModel()
-    : RecentProjectsViewModel(null!, null!, new FileSystem(), null!, null!);
+internal sealed class DesignRecentProjectsViewModel : RecentProjectsViewModel
+{
+    public DesignRecentProjectsViewModel()
+        : base(null!, null!, new FileSystem(), null!, null!)
+    {
+        RecentProjects.Add(
+            new RecentProjectInfo
+            {
+                Id = 1,
+                Name = "Design Project",
+                Path = "C:\\DesignProject.reproj",
+            }
+        );
+    }
+}

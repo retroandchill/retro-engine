@@ -1,15 +1,17 @@
-﻿// // @file ProjectOpenWindow.axaml.cs
+﻿// // @file LevelEditorTab.axaml.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 
-namespace RetroEngine.Editor.Core.Views;
+namespace RetroEngine.Editor.Core.Views.Tabs;
 
-public partial class LaunchScreenView : UserControl
+public partial class LevelEditorView : UserControl
 {
-    public LaunchScreenView()
+    public LevelEditorView()
     {
         InitializeComponent();
     }

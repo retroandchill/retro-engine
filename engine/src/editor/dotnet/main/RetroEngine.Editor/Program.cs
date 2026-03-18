@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -22,7 +23,14 @@ internal static class Program
         Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
 
         var engineBuilder = new EngineBuilder();
-        engineBuilder.Services.AddRetroEngineEditorCore().AddRetroEngineEditor();
+        engineBuilder
+            .Services.Configure<JsonSerializerOptions>(options =>
+            {
+                options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.WriteIndented = true;
+            })
+            .AddRetroEngineEditorCore()
+            .AddRetroEngineEditor();
 
         return AppBuilder
             .Configure(() => new App(engineBuilder.Build()))

@@ -26,6 +26,7 @@ public partial class MainWindowViewModel(IServiceProvider serviceProvider) : Obs
 
     public void ShowMainEditor()
     {
-        throw new NotImplementedException();
+        var mainEditor = serviceProvider.GetRequiredService<MainEditorViewModel>();
+        Content = mainEditor;
     }
 }

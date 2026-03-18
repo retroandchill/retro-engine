@@ -12,6 +12,7 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda, java, objective-c]
+        exclude: ^third_party/.*
 
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.2

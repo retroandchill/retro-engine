@@ -7,7 +7,9 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views;
+using RetroEngine.Editor.Core.Views.Menus;
 using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels.Menus;
@@ -42,7 +44,8 @@ public sealed record DynamicMenuSeparator : IDynamicMenuItem
     public string Header => "-";
 }
 
-public sealed class DynamicMenuViewModel : ObservableObject
+[ViewModelFor<DynamicMenuView>]
+public sealed partial class DynamicMenuViewModel : ObservableObject
 {
     public required ObservableCollection<DynamicSubMenuItem> Items { get; init; }
 }

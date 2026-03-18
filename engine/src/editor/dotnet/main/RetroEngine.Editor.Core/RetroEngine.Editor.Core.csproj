@@ -11,6 +11,7 @@
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="Dock.Model.Avalonia" />
+      <PackageReference Include="Dock.Model.Mvvm" />
       <PackageReference Include="EFCore.NamingConventions" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia" />
       <PackageReference Include="IconPacks.Avalonia" />
