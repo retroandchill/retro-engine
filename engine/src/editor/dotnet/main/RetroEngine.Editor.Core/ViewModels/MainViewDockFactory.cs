@@ -23,7 +23,7 @@ public class MainViewDockFactory : Factory
 
     public override IRootDock CreateLayout()
     {
-        var viewport = new ViewportViewModel();
+        var viewport = new SceneViewModel();
         var outliner = new OutlinerViewModel();
         var detailsPanel = new DetailsPanelViewModel();
         var contentBrowser = new ContentBrowserViewModel();

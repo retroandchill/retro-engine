@@ -9,9 +9,9 @@ using Avalonia.Markup.Xaml;
 
 namespace RetroEngine.Editor.Core.Views;
 
-public partial class ViewportView : UserControl
+public partial class SceneView : UserControl
 {
-    public ViewportView()
+    public SceneView()
     {
         InitializeComponent();
     }
