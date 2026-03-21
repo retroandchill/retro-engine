@@ -19,8 +19,8 @@ public class RootDock : DockBase, IRootDock, ILocalTarget
     /// </summary>
     public RootDock()
     {
-        ShowWindows = new RelayCommand(() => _navigateAdapter.ShowWindows());
-        ExitWindows = new RelayCommand(() => _navigateAdapter.ExitWindows());
+        ShowWindows = new RelayCommand(() => NavigateAdapter.ShowWindows());
+        ExitWindows = new RelayCommand(() => NavigateAdapter.ExitWindows());
     }
 
     /// <inheritdoc/>

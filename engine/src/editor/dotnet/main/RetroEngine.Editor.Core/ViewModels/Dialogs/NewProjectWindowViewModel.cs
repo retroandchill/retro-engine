@@ -38,11 +38,8 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
 
     private const string TextNamespace = "RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindowViewModel";
 
-    public bool? DialogResult
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial bool? DialogResult { get; private set; }
 
     public event EventHandler? RequestClose;
 
@@ -66,17 +63,11 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
         }
     } = "NewProject";
 
-    public Text? ErrorText
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial Text? ErrorText { get; private set; }
 
-    public bool CanCreate
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    } = false;
+    [ObservableProperty]
+    public partial bool CanCreate { get; private set; } = false;
 
     private void UpdateCanCreateValue()
     {

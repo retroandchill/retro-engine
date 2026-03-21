@@ -11,14 +11,8 @@ using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels.Menus;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Core.Views;
-using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
-
-public interface IMainEditorTabViewModel : IViewModel
-{
-    Text Title { get; }
-}
 
 [ViewModelFor<MainEditorView>]
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
@@ -32,17 +26,11 @@ public partial class MainEditorViewModel : ObservableObject
         Layout = layout;
     }
 
-    public DynamicMenuViewModel Menu
-    {
-        get;
-        private set => SetProperty(ref field, value);
-    } = new() { Items = [] };
+    [ObservableProperty]
+    public partial DynamicMenuViewModel Menu { get; set; } = new() { Items = [] };
 
-    public IRootDock? Layout
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial IRootDock? Layout { get; set; }
 }
 
 internal sealed class DesignMainEditorViewModel : MainEditorViewModel;

@@ -4,18 +4,16 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.RetroEngine.Core;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class DockDock : DockBase, IDockDock
+public partial class DockDock : DockBase, IDockDock
 {
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool LastChildFill
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool LastChildFill { get; set; } = true;
 }

@@ -11,7 +11,7 @@ using RetroEngine.Portable.Localization;
 
 namespace Dock.Model.RetroEngine.Core;
 
-public abstract class DockableBase
+public abstract partial class DockableBase
     : ObservableObject,
         ILocalizedDockable,
         IDockSelectorInfo,
@@ -20,12 +20,9 @@ public abstract class DockableBase
     private TrackingAdapter TrackingAdapter { get; } = new();
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public string Id
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = string.Empty;
+    public partial string Id { get; set; } = string.Empty;
 
     string IDockable.Title
     {
@@ -33,76 +30,49 @@ public abstract class DockableBase
         set => Title = value;
     }
 
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public Text Title
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial Text Title { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public object? Context
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial object? Context { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public IDockable? Owner
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IDockable? Owner { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public IDockable? OriginalOwner
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IDockable? OriginalOwner { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public IFactory? Factory
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IFactory? Factory { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsEmpty
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool IsEmpty { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsCollapsable
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool IsCollapsable { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double Proportion
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double Proportion { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockMode Dock
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DockMode.Center;
+    public partial DockMode Dock { get; set; } = DockMode.Center;
 
     /// <inheritdoc/>
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
@@ -122,116 +92,74 @@ public abstract class DockableBase
     } = DockingWindowState.Docked;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int Column
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = 0;
+    public partial int Column { get; set; } = 0;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int Row
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = 0;
+    public partial int Row { get; set; } = 0;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int ColumnSpan
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = 1;
+    public partial int ColumnSpan { get; set; } = 1;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int RowSpan
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = 1;
+    public partial int RowSpan { get; set; } = 1;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsSharedSizeScope
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool IsSharedSizeScope { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double CollapsedProportion
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double CollapsedProportion { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double MinWidth
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double MinWidth { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double MaxWidth
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double MaxWidth { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double MinHeight
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double MinHeight { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double MaxHeight
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = double.NaN;
+    public partial double MaxHeight { get; set; } = double.NaN;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanClose
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanClose { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanPin
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanPin { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool KeepPinnedDockableVisible
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool KeepPinnedDockableVisible { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public PinnedDockDisplayMode? PinnedDockDisplayModeOverride
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial PinnedDockDisplayMode? PinnedDockDisplayModeOverride { get; set; }
 
     /// <inheritdoc/>
     [DataMember(IsRequired = false, EmitDefaultValue = false)]
@@ -255,92 +183,59 @@ public abstract class DockableBase
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanFloat
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanFloat { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanDrag
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanDrag { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanDrop
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanDrop { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanDockAsDocument
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanDockAsDocument { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = false)]
-    public DockCapabilityOverrides? DockCapabilityOverrides
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial DockCapabilityOverrides? DockCapabilityOverrides { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsModified
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = false;
+    public partial bool IsModified { get; set; } = false;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public string? DockGroup
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial string? DockGroup { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockOperationMask AllowedDockOperations
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DockOperationMask.All;
+    public partial DockOperationMask AllowedDockOperations { get; set; } = DockOperationMask.All;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockOperationMask AllowedDropOperations
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DockOperationMask.All;
+    public partial DockOperationMask AllowedDropOperations { get; set; } = DockOperationMask.All;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool ShowInSelector
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool ShowInSelector { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public string? SelectorTitle
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial string? SelectorTitle { get; set; }
 
     /// <inheritdoc/>
     public string GetControlRecyclingId() => Id;

@@ -4,45 +4,34 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine.Core;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class ToolDock : DockBase, IToolDock
+public partial class ToolDock : DockBase, IToolDock
 {
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public Alignment Alignment
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = Alignment.Unset;
+    public partial Alignment Alignment { get; set; } = Alignment.Unset;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsExpanded
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool IsExpanded { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool AutoHide
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool AutoHide { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public GripMode GripMode
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = GripMode.Visible;
+    public partial GripMode GripMode { get; set; } = GripMode.Visible;
 
     /// <summary>
     /// Adds the specified tool to this dock and makes it active and focused.

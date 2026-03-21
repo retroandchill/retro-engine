@@ -5,15 +5,19 @@
 
 using System.Runtime.Serialization;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine.Core;
+using RetroEngine.Portable.Localization;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class DocumentDock : DockBase, IDocumentDock, IDocumentDockFactory
+public partial class DocumentDock : DockBase, IDocumentDock, IDocumentDockFactory
 {
+    private const string TextNamespace = "Dock.Model.RetroEngine.Controls.DocumentDock";
+
     /// <summary>
     /// Initializes new instance of the <see cref="DocumentDock"/> class.
     /// </summary>
@@ -27,12 +31,9 @@ public class DocumentDock : DockBase, IDocumentDock, IDocumentDockFactory
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanCreateDocument
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool CanCreateDocument { get; set; }
 
     /// <inheritdoc/>
     [IgnoreDataMember]
@@ -61,52 +62,37 @@ public class DocumentDock : DockBase, IDocumentDock, IDocumentDockFactory
     public Func<IDockable>? DocumentFactory { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool EnableWindowDrag
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool EnableWindowDrag { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DocumentLayoutMode LayoutMode
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DocumentLayoutMode.Tabbed;
+    public partial DocumentLayoutMode LayoutMode { get; set; } = DocumentLayoutMode.Tabbed;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DocumentTabLayout TabsLayout
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DocumentTabLayout.Top;
+    public partial DocumentTabLayout TabsLayout { get; set; } = DocumentTabLayout.Top;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DocumentCloseButtonShowMode CloseButtonShowMode
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DocumentCloseButtonShowMode.Always;
+    public partial DocumentCloseButtonShowMode CloseButtonShowMode { get; set; } = DocumentCloseButtonShowMode.Always;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public object? EmptyContent
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = "No documents open";
+    public partial object? EmptyContent { get; set; } =
+        Text.AsLocalizable(TextNamespace, "NoDocuments", "No documents open");
 
     private void CreateNewDocument()
     {
-        if (DocumentFactory is { } factory)
-        {
-            var document = factory();
-            AddDocument(document);
-        }
+        if (DocumentFactory is not { } factory)
+            return;
+        var document = factory();
+        AddDocument(document);
     }
 
     private void CascadeDocumentsExecute()

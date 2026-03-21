@@ -4,19 +4,17 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine.Core;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class GridDockSplitter : DockableBase, IGridDockSplitter
+public partial class GridDockSplitter : DockableBase, IGridDockSplitter
 {
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public GridResizeDirection ResizeDirection
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial GridResizeDirection ResizeDirection { get; set; }
 }

@@ -12,7 +12,7 @@ using RetroEngine.Portable.Localization;
 
 namespace Dock.Model.RetroEngine.Core;
 
-public class DockWindow : ObservableObject, ILocalizedDockWindow
+public partial class DockWindow : ObservableObject, ILocalizedDockWindow
 {
     private readonly HostAdapter _hostAdapter;
 
@@ -25,60 +25,39 @@ public class DockWindow : ObservableObject, ILocalizedDockWindow
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public string Id
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = nameof(IDockWindow);
+    public partial string Id { get; set; } = nameof(IDockWindow);
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = true, EmitDefaultValue = true)]
-    public double X
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial double X { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = true, EmitDefaultValue = true)]
-    public double Y
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial double Y { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = true, EmitDefaultValue = true)]
-    public double Width
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial double Width { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = true, EmitDefaultValue = true)]
-    public double Height
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial double Height { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockWindowState WindowState
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DockWindowState.Normal;
+    public partial DockWindowState WindowState { get; set; } = DockWindowState.Normal;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool Topmost
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool Topmost { get; set; }
 
     string IDockWindow.Title
     {
@@ -86,76 +65,49 @@ public class DockWindow : ObservableObject, ILocalizedDockWindow
         set => Title = value;
     }
 
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public Text Title
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = nameof(IDockWindow);
+    public partial Text Title { get; set; } = nameof(IDockWindow);
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockWindowOwnerMode OwnerMode
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = DockWindowOwnerMode.Default;
+    public partial DockWindowOwnerMode OwnerMode { get; set; } = DockWindowOwnerMode.Default;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public IDockWindow? ParentWindow
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IDockWindow? ParentWindow { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsModal
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool IsModal { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool? ShowInTaskbar
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool? ShowInTaskbar { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public IDockable? Owner
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IDockable? Owner { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public IFactory? Factory
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IFactory? Factory { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public IRootDock? Layout
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IRootDock? Layout { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [IgnoreDataMember]
-    public IHostWindow? Host
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IHostWindow? Host { get; set; }
 
     /// <inheritdoc/>
     public virtual bool OnClose()

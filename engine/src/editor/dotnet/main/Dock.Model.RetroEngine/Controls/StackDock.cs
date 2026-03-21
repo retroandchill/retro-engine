@@ -4,27 +4,22 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine.Core;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class StackDock : DockBase, IStackDock
+public partial class StackDock : DockBase, IStackDock
 {
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public Orientation Orientation
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial Orientation Orientation { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public double Spacing
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial double Spacing { get; set; }
 }

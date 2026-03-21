@@ -4,37 +4,29 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine.Core;
 
 namespace Dock.Model.RetroEngine.Controls;
 
-public class Document : DockableBase, IMdiDocument, IDockingWindowState
+public partial class Document : DockableBase, IMdiDocument, IDockingWindowState
 {
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public DockRect MdiBounds
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial DockRect MdiBounds { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public MdiWindowState MdiState
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = MdiWindowState.Normal;
+    public partial MdiWindowState MdiState { get; set; } = MdiWindowState.Normal;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int MdiZIndex
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial int MdiZIndex { get; set; }
 
     /// <inheritdoc/>
     [IgnoreDataMember]

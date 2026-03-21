@@ -5,35 +5,33 @@
 
 using System.Runtime.Serialization;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.Adapters;
 using Dock.Model.Core;
 
 namespace Dock.Model.RetroEngine.Core;
 
-public class DockBase : DockableBase, IDock
+public partial class DockBase : DockableBase, IDock
 {
-    internal readonly INavigateAdapter _navigateAdapter;
+    internal INavigateAdapter NavigateAdapter { get; }
 
     /// <summary>
     /// Initializes new instance of the <see cref="DockBase"/> class.
     /// </summary>
     protected DockBase()
     {
-        _navigateAdapter = new NavigateAdapter(this);
-        GoBack = new RelayCommand(() => _navigateAdapter.GoBack());
-        GoForward = new RelayCommand(() => _navigateAdapter.GoForward());
-        Navigate = new RelayCommand<object>(root => _navigateAdapter.Navigate(root, true));
-        Close = new RelayCommand(() => _navigateAdapter.Close());
+        NavigateAdapter = new NavigateAdapter(this);
+        GoBack = new RelayCommand(() => NavigateAdapter.GoBack());
+        GoForward = new RelayCommand(() => NavigateAdapter.GoForward());
+        Navigate = new RelayCommand<object>(root => NavigateAdapter.Navigate(root, true));
+        Close = new RelayCommand(() => NavigateAdapter.Close());
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public IList<IDockable>? VisibleDockables
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IList<IDockable>? VisibleDockables { get; set; }
 
     /// <inheritdoc/>
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
@@ -50,12 +48,9 @@ public class DockBase : DockableBase, IDock
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public IDockable? DefaultDockable
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial IDockable? DefaultDockable { get; set; }
 
     /// <inheritdoc/>
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
@@ -70,44 +65,32 @@ public class DockBase : DockableBase, IDock
     }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool IsActive
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial bool IsActive { get; set; }
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public int OpenedDockablesCount
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = 0;
+    public partial int OpenedDockablesCount { get; set; } = 0;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = true)]
-    public bool CanCloseLastDockable
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+    public partial bool CanCloseLastDockable { get; set; } = true;
 
     /// <inheritdoc/>
+    [ObservableProperty]
     [DataMember(IsRequired = false, EmitDefaultValue = false)]
-    public DockCapabilityPolicy? DockCapabilityPolicy
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    public partial DockCapabilityPolicy? DockCapabilityPolicy { get; set; }
 
     /// <inheritdoc/>
     [IgnoreDataMember]
-    public bool CanGoBack => _navigateAdapter.CanGoBack;
+    public bool CanGoBack => NavigateAdapter.CanGoBack;
 
     /// <inheritdoc/>
     [IgnoreDataMember]
-    public bool CanGoForward => _navigateAdapter.CanGoForward;
+    public bool CanGoForward => NavigateAdapter.CanGoForward;
 
     /// <inheritdoc/>
     [IgnoreDataMember]

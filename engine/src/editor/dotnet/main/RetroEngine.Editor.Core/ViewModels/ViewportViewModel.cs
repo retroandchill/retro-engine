@@ -10,4 +10,4 @@ using RetroEngine.Editor.Core.Views;
 namespace RetroEngine.Editor.Core.ViewModels;
 
 [ViewModelFor<ViewportView>]
-public partial class ViewportViewModel : Document;
+public partial class ViewportViewModel : Document { }
