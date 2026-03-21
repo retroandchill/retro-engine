@@ -8,7 +8,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.RecentProjectsTab">
     <Design.DataContext>
-        <tabs:DesignRecentProjectsViewModel/>
+        <tabs:RecentProjectsViewModel/>
     </Design.DataContext>
 
     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0">

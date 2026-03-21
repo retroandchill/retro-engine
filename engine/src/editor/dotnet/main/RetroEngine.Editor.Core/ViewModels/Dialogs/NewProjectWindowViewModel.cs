@@ -7,34 +7,28 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
-using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Dialogs;
 using RetroEngine.Portable.Localization;
+using RetroEngine.Utils;
 
 namespace RetroEngine.Editor.Core.ViewModels.Dialogs;
 
 [ViewModelFor<NewProjectWindow>]
-[RegisterTransient(Duplicate = DuplicateStrategy.Append)]
-public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
+public sealed partial class NewProjectWindowViewModel : ObservableObject, IModalDialogViewModel, ICloseable
 {
-    private readonly IFileSystem _fileSystem;
-    private readonly IDialogService _dialogService;
-    private readonly ILogger<NewProjectWindowViewModel> _logger;
-
-    [UsedImplicitly]
-    public NewProjectWindowViewModel(
-        IFileSystem fileSystem,
-        IDialogService dialogService,
-        ILogger<NewProjectWindowViewModel> logger
-    )
+    public IFileSystem FileSystem
     {
-        _fileSystem = fileSystem;
-        _dialogService = dialogService;
-        _logger = logger;
-        UpdateCanCreateValue();
-    }
+        get;
+        init
+        {
+            field = value;
+            UpdateCanCreateValue();
+        }
+    } = IFileSystem.Default;
+    public required IDialogService DialogService { get; init; }
+    public ILogger? Logger { get; init; }
 
     private const string TextNamespace = "RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindowViewModel";
 
@@ -74,7 +68,7 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
         if (
             string.IsNullOrWhiteSpace(ProjectFolder)
             || string.IsNullOrWhiteSpace(ProjectName)
-            || !_fileSystem.Directory.Exists(ProjectFolder)
+            || !FileSystem.Directory.Exists(ProjectFolder)
         )
         {
             CanCreate = false;
@@ -82,10 +76,10 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
             return;
         }
 
-        var projectPath = _fileSystem.Path.Combine(ProjectFolder, ProjectName);
+        var projectPath = FileSystem.Path.Combine(ProjectFolder, ProjectName);
         if (
-            _fileSystem.Directory.Exists(projectPath)
-            && _fileSystem.Directory.EnumerateFileSystemEntries(projectPath).Any()
+            FileSystem.Directory.Exists(projectPath)
+            && FileSystem.Directory.EnumerateFileSystemEntries(projectPath).Any()
         )
         {
             CanCreate = false;
@@ -105,14 +99,14 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
             {
                 if (t.IsFaulted)
                 {
-                    _logger.LogError(t.Exception, "Failed to select project folder.");
+                    Logger?.LogError(t.Exception, "Failed to select project folder.");
                 }
             });
     }
 
     private async Task SelectProjectFolderAsync()
     {
-        var targetFolder = await _dialogService.ShowOpenFolderDialogAsync(this);
+        var targetFolder = await DialogService.ShowOpenFolderDialogAsync(this);
         if (targetFolder is null)
             return;
 
@@ -126,5 +120,3 @@ public partial class NewProjectWindowViewModel : ObservableObject, IModalDialogV
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
 }
-
-internal sealed class DesignNewProjectWindowViewModel() : NewProjectWindowViewModel(new FileSystem(), null!, null!);

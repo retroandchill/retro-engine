@@ -11,7 +11,7 @@
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
         Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}">
     <Design.DataContext>
-        <dialogs:DesignNewProjectWindowViewModel/>
+        <dialogs:NewProjectWindowViewModel/>
     </Design.DataContext>
 
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">

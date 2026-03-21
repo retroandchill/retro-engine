@@ -16,29 +16,33 @@ using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Dialogs;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
+using RetroEngine.Utils;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
 [ViewModelFor<RecentProjectsTab>]
-[RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public partial class RecentProjectsViewModel(
-    IProjectManagementService projectManagementService,
-    IDialogService dialogService,
-    IFileSystem fileSystem,
-    IMainWindowViewModel mainWindow,
-    ILogger<RecentProjectsViewModel> logger
-) : ObservableObject, ILaunchScreenTabViewModel
+public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchScreenTabViewModel
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.Views.Tabs.RecentProjectsViewModel";
     private static readonly Text HeaderText = Text.AsLocalizable(TextNamespace, "Projects", "Projects");
 
     public ObservableCollection<RecentProjectInfo> RecentProjects { get; } = [];
 
+    public required IProjectManagementService ProjectManagementService { get; init; }
+
+    public required IDialogService DialogService { get; init; }
+
+    public IFileSystem FileSystem { get; init; } = IFileSystem.Default;
+
+    public required INavigationService NavigationService { get; init; }
+
+    public ILogger? Logger { get; init; }
+
     public Text Header => HeaderText;
 
     public async Task OnDisplayedAsync(CancellationToken cancellationToken)
     {
-        var projects = await projectManagementService.GetRecentProjectsAsync(cancellationToken: cancellationToken);
+        var projects = await ProjectManagementService.GetRecentProjectsAsync(cancellationToken: cancellationToken);
         RecentProjects.Clear();
         foreach (var project in projects)
         {
@@ -51,43 +55,43 @@ public partial class RecentProjectsViewModel(
     {
         try
         {
-            var viewModel = dialogService.CreateViewModel<NewProjectWindowViewModel>();
-            var result = await dialogService.ShowDialogAsync(mainWindow, viewModel);
+            var viewModel = DialogService.CreateViewModel<NewProjectWindowViewModel>();
+            var result = await DialogService.ShowDialogAsync(NavigationService.MainWindow, viewModel);
             if (result is not true)
             {
                 return;
             }
 
-            var targetFolder = fileSystem.Path.Combine(viewModel.ProjectFolder, viewModel.ProjectName);
-            if (!fileSystem.Directory.Exists(targetFolder))
+            var targetFolder = FileSystem.Path.Combine(viewModel.ProjectFolder, viewModel.ProjectName);
+            if (!FileSystem.Directory.Exists(targetFolder))
             {
-                fileSystem.Directory.CreateDirectory(targetFolder);
+                FileSystem.Directory.CreateDirectory(targetFolder);
             }
 
             var projectFileName = $"{viewModel.ProjectName}.reproj";
-            var projectPath = fileSystem.Path.Combine(targetFolder, projectFileName);
-            await projectManagementService.CreateNewProjectAsync(projectPath);
+            var projectPath = FileSystem.Path.Combine(targetFolder, projectFileName);
+            await ProjectManagementService.CreateNewProjectAsync(projectPath);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to create new project.");
+            Logger?.LogError(ex, "Failed to create new project.");
 
-            await dialogService.ShowMessageBoxAsync(
-                mainWindow,
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
                 new MessageBoxSettings() { Icon = MessageBoxImage.Error, Content = "Failed to create new project." }
             );
 
             return;
         }
 
-        mainWindow.ShowMainEditor();
+        NavigationService.ShowMainEditor();
     }
 
     [RelayCommand]
     private async Task OpenProject()
     {
-        var file = await dialogService.ShowOpenFileDialogAsync(
-            mainWindow,
+        var file = await DialogService.ShowOpenFileDialogAsync(
+            NavigationService.MainWindow,
             new OpenFileDialogSettings { Filters = [new FileFilter("RetroEngine Project", "reproj")] }
         );
 
@@ -103,21 +107,21 @@ public partial class RecentProjectsViewModel(
     {
         try
         {
-            await projectManagementService.OpenProjectAsync(path);
+            await ProjectManagementService.OpenProjectAsync(path);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to open project.");
+            Logger?.LogError(ex, "Failed to open project.");
 
-            await dialogService.ShowMessageBoxAsync(
-                mainWindow,
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
                 new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = "Failed to open project." }
             );
 
             return;
         }
 
-        mainWindow.ShowMainEditor();
+        NavigationService.ShowMainEditor();
     }
 
     [RelayCommand]
@@ -129,8 +133,8 @@ public partial class RecentProjectsViewModel(
         }
         else
         {
-            var selection = await dialogService.ShowMessageBoxAsync(
-                mainWindow,
+            var selection = await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
                 new MessageBoxSettings
                 {
                     Icon = MessageBoxImage.Error,
@@ -152,27 +156,11 @@ public partial class RecentProjectsViewModel(
         try
         {
             RecentProjects.Remove(project);
-            await projectManagementService.RemoveRecentProjectAsync(project.Path);
+            await ProjectManagementService.RemoveRecentProjectAsync(project.Path);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to delete recent project.");
+            Logger?.LogError(ex, "Failed to delete recent project.");
         }
-    }
-}
-
-internal sealed class DesignRecentProjectsViewModel : RecentProjectsViewModel
-{
-    public DesignRecentProjectsViewModel()
-        : base(null!, null!, new FileSystem(), null!, null!)
-    {
-        RecentProjects.Add(
-            new RecentProjectInfo
-            {
-                Id = 1,
-                Name = "Design Project",
-                Path = "C:\\DesignProject.reproj",
-            }
-        );
     }
 }

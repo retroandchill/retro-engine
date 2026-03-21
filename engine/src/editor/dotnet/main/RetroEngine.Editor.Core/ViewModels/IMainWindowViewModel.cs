@@ -9,7 +9,5 @@ namespace RetroEngine.Editor.Core.ViewModels;
 
 public interface IMainWindowViewModel : IViewModel, INotifyPropertyChanged
 {
-    void ShowProjectOpen();
-
-    void ShowMainEditor();
+    public IViewModel? Content { get; set; }
 }

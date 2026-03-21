@@ -21,13 +21,11 @@ public interface ILaunchScreenTabViewModel : IViewModel
 }
 
 [ViewModelFor<LaunchScreenView>]
-[RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public partial class LaunchScreenViewModel(
-    IEnumerable<ILaunchScreenTabViewModel> launchScreenTabViewModels,
-    ILogger<LaunchScreenViewModel> logger
-) : ObservableObject
+public sealed partial class LaunchScreenViewModel : ObservableObject
 {
-    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [.. launchScreenTabViewModels];
+    public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [];
+
+    public ILogger? Logger { get; init; }
 
     public async Task OnDisplayedAsync(CancellationToken cancellationToken = default)
     {
@@ -38,11 +36,8 @@ public partial class LaunchScreenViewModel(
         {
             if (task.IsFaulted)
             {
-                logger.LogError(task.Exception, "Failed to display tab.");
+                Logger?.LogError(task.Exception, "Failed to display tab.");
             }
         }
     }
 }
-
-internal sealed class DesignLaunchScreenViewModel()
-    : LaunchScreenViewModel([new DesignRecentProjectsViewModel()], null!);

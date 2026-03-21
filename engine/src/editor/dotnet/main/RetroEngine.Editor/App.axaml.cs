@@ -8,6 +8,7 @@ using Injectio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Editor.Core.Data;
+using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Views;
 
@@ -15,8 +16,7 @@ namespace RetroEngine.Editor;
 
 public class App(Engine engine) : Application
 {
-    private readonly IMainWindowViewModel _mainWindowViewModel =
-        engine.Services.GetRequiredService<IMainWindowViewModel>();
+    private readonly INavigationService _navigationService = engine.Services.GetRequiredService<INavigationService>();
 
     public override void Initialize()
     {
@@ -40,10 +40,10 @@ public class App(Engine engine) : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
 
-            desktop.MainWindow = new MainWindow { DataContext = _mainWindowViewModel };
+            desktop.MainWindow = new MainWindow { DataContext = _navigationService.MainWindow };
         }
 
-        _mainWindowViewModel.ShowProjectOpen();
+        _navigationService.ShowProjectOpen();
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -78,10 +78,13 @@ public class App(Engine engine) : Application
             .AddSingleton<IDialogService, DialogService>()
             .AddSingleton(
                 IDialogService (provider) =>
-                    new DialogService(
+                {
+                    var viewModelProvider = provider.GetRequiredService<ViewModelProvider>();
+                    return new DialogService(
                         provider.GetRequiredService<IDialogManager>(),
-                        viewModelFactory: provider.GetRequiredService
-                    )
+                        viewModelFactory: viewModelProvider.CreateViewModel
+                    );
+                }
             );
     }
 }
