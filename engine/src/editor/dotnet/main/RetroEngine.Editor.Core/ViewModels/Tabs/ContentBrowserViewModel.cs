@@ -21,15 +21,42 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
 
     private IFileSystemWatcher? _fileSystemWatcher;
 
-    [ObservableProperty]
-    public partial string? Name { get; private set; }
+    private string _name = "";
+    private string _parentPath = "";
+    private string _fullPath = "";
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (_name == value)
+                return;
+
+            var oldFullPath = _fullPath;
+            var newFullPath = _fileSystem.Path.Combine(_parentPath, value);
+            try
+            {
+                _fileSystem.Directory.Move(oldFullPath, newFullPath);
+            }
+            catch
+            {
+                return;
+            }
+
+            SetProperty(ref _name, value);
+            SetProperty(ref _fullPath, newFullPath, nameof(Path));
+        }
+    }
 
     public required string Path
     {
-        get;
+        get => _fullPath;
         set
         {
-            SetProperty(ref field, value);
+            SetProperty(ref _fullPath, value);
+            SetProperty(ref _name, _fileSystem.Path.GetFileName(value), nameof(Name));
+            _parentPath = _fileSystem.Path.GetDirectoryName(value) ?? "";
             Name = _fileSystem.Path.GetFileName(value);
 
             _fileSystemWatcher?.Dispose();
@@ -62,6 +89,9 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
     }
 
     [ObservableProperty]
+    public partial bool IsRenaming { get; set; }
+
+    [ObservableProperty]
     public partial bool IsExpanded { get; set; }
 
     [ObservableProperty]
@@ -71,7 +101,7 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
 
     private ContentBrowserFolder CreateContentBrowserFolder(string directory)
     {
-        return new ContentBrowserFolder(fileSystem) { Path = directory };
+        return new ContentBrowserFolder(_fileSystem) { Path = directory };
     }
 
     private IEnumerable<ContentBrowserFolder> GetContentBrowserFolders()
@@ -83,7 +113,10 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
     private void NewFolder() { }
 
     [RelayCommand]
-    private void Rename() { }
+    private void Rename()
+    {
+        IsRenaming = true;
+    }
 }
 
 [ViewModelFor<ContentBrowserView>]
