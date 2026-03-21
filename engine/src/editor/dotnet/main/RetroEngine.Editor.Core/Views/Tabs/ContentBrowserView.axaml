@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView">
     <Design.DataContext>
@@ -30,6 +31,16 @@
                     <TreeView.ItemTemplate>
                         <TreeDataTemplate ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
+                                                  Command="{Binding NewFolderCommand}"/>
+                                        <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
+                                                  GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
+                                                  Command="{Binding RenameCommand}"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+
                                 <iconPacks:PackIconCodicons Kind="Folder"
                                                             Width="16"
                                                             Height="16" VerticalAlignment="Center"/>

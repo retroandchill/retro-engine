@@ -64,6 +64,9 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
 
+    [ObservableProperty]
+    public partial bool CanEdit { get; set; } = true;
+
     public ObservableCollection<ContentBrowserFolder> Children { get; } = [];
 
     private ContentBrowserFolder CreateContentBrowserFolder(string directory)
@@ -75,6 +78,12 @@ public sealed partial class ContentBrowserFolder(IFileSystem? fileSystem = null)
     {
         return _fileSystem.Directory.GetDirectories(Path).Select(CreateContentBrowserFolder);
     }
+
+    [RelayCommand]
+    private void NewFolder() { }
+
+    [RelayCommand]
+    private void Rename() { }
 }
 
 [ViewModelFor<ContentBrowserView>]

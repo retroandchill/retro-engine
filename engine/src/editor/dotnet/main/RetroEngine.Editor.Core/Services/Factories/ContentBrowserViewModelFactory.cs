@@ -22,21 +22,12 @@ public sealed class ContentBrowserViewModelFactory(
             return browser;
 
         var directoryName = fileSystem.Path.GetDirectoryName(projectManagementService.CurrentProjectPath)!;
-        foreach (var folder in GetContentBrowserFolders(directoryName))
+        var contentFolder = fileSystem.Path.Combine(directoryName, "content");
+        if (fileSystem.Directory.Exists(contentFolder))
         {
-            browser.Folders.Add(folder);
+            browser.Folders.Add(new ContentBrowserFolder(fileSystem) { Path = contentFolder, CanEdit = false });
         }
 
         return browser;
-    }
-
-    private IEnumerable<ContentBrowserFolder> GetContentBrowserFolders(string path)
-    {
-        return fileSystem.Directory.GetDirectories(path).Select(CreateContentBrowserFolder);
-    }
-
-    private ContentBrowserFolder CreateContentBrowserFolder(string directory)
-    {
-        return new ContentBrowserFolder(fileSystem) { Path = directory };
     }
 }
