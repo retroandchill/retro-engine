@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Editor.Core.Data;
 using RetroEngine.Editor.Core.Services;
-using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Views;
 
 namespace RetroEngine.Editor;
@@ -41,6 +40,14 @@ public class App(Engine engine) : Application
             desktop.Exit += OnExit;
 
             desktop.MainWindow = new MainWindow { DataContext = _navigationService.MainWindow };
+
+            desktop.MainWindow.Closing += (_, _) =>
+            {
+                if (_navigationService.MainWindow.Content is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            };
         }
 
         _navigationService.ShowProjectOpen();

@@ -9,5 +9,5 @@ namespace RetroEngine.Editor.Core.ViewModels;
 
 public interface IMainWindowViewModel : IViewModel, INotifyPropertyChanged
 {
-    public IViewModel? Content { get; set; }
+    public object? Content { get; set; }
 }

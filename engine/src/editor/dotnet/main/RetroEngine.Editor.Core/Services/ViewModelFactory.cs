@@ -7,8 +7,6 @@ namespace RetroEngine.Editor.Core.Services;
 
 public interface IViewModelFactory
 {
-    Type ViewModelType { get; }
-
     object CreateViewModel();
 }
 
