@@ -8,10 +8,11 @@ using RetroEngine.Editor.Core.ViewModels;
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class MainEditorViewModelFactory : ViewModelFactory<MainEditorViewModel>
+public sealed class MainEditorViewModelFactory(ViewModelProvider viewModelProvider)
+    : ViewModelFactory<MainEditorViewModel>
 {
     public override MainEditorViewModel CreateViewModel()
     {
-        return new MainEditorViewModel();
+        return new MainEditorViewModel { ViewModelProvider = viewModelProvider };
     }
 }

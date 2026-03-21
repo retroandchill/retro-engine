@@ -6,6 +6,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using RetroEngine.Editor.Core.Attributes;
+using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Menus;
 using RetroEngine.Editor.Core.Views;
 
@@ -15,12 +16,15 @@ namespace RetroEngine.Editor.Core.ViewModels;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed partial class MainEditorViewModel : ObservableObject
 {
-    public MainEditorViewModel()
+    public required ViewModelProvider ViewModelProvider
     {
-        var mainViewDockFactory = new MainViewDockFactory();
-        var layout = mainViewDockFactory.CreateLayout();
-        mainViewDockFactory.InitLayout(layout);
-        Layout = layout;
+        init
+        {
+            var mainViewDockFactory = new MainViewDockFactory(value);
+            var layout = mainViewDockFactory.CreateLayout();
+            mainViewDockFactory.InitLayout(layout);
+            Layout = layout;
+        }
     }
 
     [ObservableProperty]

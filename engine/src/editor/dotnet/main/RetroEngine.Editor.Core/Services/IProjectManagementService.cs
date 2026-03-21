@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Utilities;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
 
@@ -14,6 +15,10 @@ public readonly record struct ProjectClosedEventArgs;
 
 public interface IProjectManagementService
 {
+    [NotNullIfNotNull(nameof(CurrentProject))]
+    string? CurrentProjectPath { get; }
+
+    [NotNullIfNotNull(nameof(CurrentProjectPath))]
     ProjectDescriptor? CurrentProject { get; }
 
     event EventHandler<ProjectOpenedEventArgs>? ProjectOpened;

@@ -2,7 +2,43 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView">
-    Welcome to Avalonia!
+    <Design.DataContext>
+        <tabs:ContentBrowserViewModel/>
+    </Design.DataContext>
+
+    <SplitView IsPaneOpen="{Binding NavigationPanelOpen}"
+               DisplayMode="CompactInline"
+               OpenPaneLength="256">
+        <SplitView.Pane>
+            <Grid RowDefinitions="Auto,*">
+                <Button Grid.Row="0" Content="{iconPacks:Codicons ThreeBars}" Command="{Binding ToggleNavigationPanelCommand}"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"/>
+                <TreeView Grid.Row="1" ItemsSource="{Binding Folders}"
+                          SelectedItem="{Binding SelectedFolder}"
+                          IsVisible="{Binding NavigationPanelOpen}">
+                    <TreeView.Styles>
+                        <Style Selector="TreeViewItem">
+                            <Setter x:DataType="tabs:ContentBrowserFolder" Property="IsExpanded" Value="{Binding IsExpanded}"/>
+                        </Style>
+                    </TreeView.Styles>
+
+                    <TreeView.ItemTemplate>
+                        <TreeDataTemplate ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <iconPacks:PackIconCodicons Kind="Folder"
+                                                            Width="16"
+                                                            Height="16" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}"/>
+                            </StackPanel>
+                        </TreeDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Grid>
+        </SplitView.Pane>
+    </SplitView>
 </UserControl>

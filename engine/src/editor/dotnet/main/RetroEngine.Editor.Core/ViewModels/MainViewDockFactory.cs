@@ -9,12 +9,14 @@ using Dock.Model.Core;
 using Dock.Model.RetroEngine;
 using Dock.Model.RetroEngine.Controls;
 using Dock.Settings;
+using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
-public class MainViewDockFactory : Factory
+[RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
+public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : Factory
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.MainViewDockFactory";
 
@@ -26,7 +28,7 @@ public class MainViewDockFactory : Factory
         var viewport = new SceneViewModel();
         var outliner = new OutlinerViewModel();
         var detailsPanel = new DetailsPanelViewModel();
-        var contentBrowser = new ContentBrowserViewModel();
+        var contentBrowser = viewModelProvider.CreateViewModel<ContentBrowserViewModel>();
 
         const string levelEditorDockGroup = "LevelEditor";
 

@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using RetroEngine.Editor.Core.Data;
@@ -35,6 +36,10 @@ public sealed class ProjectManagementService(
         }
     }
 
+    [NotNullIfNotNull(nameof(CurrentProject))]
+    public string? CurrentProjectPath => CurrentProjectFile?.FilePath;
+
+    [NotNullIfNotNull(nameof(CurrentProjectPath))]
     public ProjectDescriptor? CurrentProject => CurrentProjectFile?.Descriptor;
 
     public event EventHandler<ProjectOpenedEventArgs>? ProjectOpened;
