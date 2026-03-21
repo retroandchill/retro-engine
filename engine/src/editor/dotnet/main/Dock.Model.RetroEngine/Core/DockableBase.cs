@@ -1,4 +1,4 @@
-// // @file DockableTabBase.cs
+﻿// // @file DockableBase.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -9,9 +9,13 @@ using Dock.Model.Adapters;
 using Dock.Model.Core;
 using RetroEngine.Portable.Localization;
 
-namespace RetroEngine.Editor.Core.ViewModels.Tabs;
+namespace Dock.Model.RetroEngine.Core;
 
-public abstract class DockableTabBase : ObservableObject, IDockable, IDockSelectorInfo, IDockableDockingRestrictions
+public abstract class DockableBase
+    : ObservableObject,
+        ILocalizedDockable,
+        IDockSelectorInfo,
+        IDockableDockingRestrictions
 {
     private TrackingAdapter TrackingAdapter { get; } = new();
 

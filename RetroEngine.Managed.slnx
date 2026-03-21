@@ -5,6 +5,7 @@
   <Folder Name="/engine/src/editor/dotnet/" />
   <Folder Name="/engine/src/editor/dotnet/main/" />
   <Folder Name="/engine/src/editor/dotnet/main/dotnet/">
+    <Project Path="engine/src/editor/dotnet/main/Dock.Model.RetroEngine/Dock.Model.RetroEngine.csproj" />
     <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj" />
     <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj" />
     <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj" />

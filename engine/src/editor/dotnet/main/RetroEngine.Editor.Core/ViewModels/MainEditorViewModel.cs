@@ -24,13 +24,11 @@ public interface IMainEditorTabViewModel : IViewModel
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public partial class MainEditorViewModel : ObservableObject
 {
-    private readonly DockFactory _dockFactory;
-
     public MainEditorViewModel()
     {
-        _dockFactory = new DockFactory();
-        var layout = _dockFactory.CreateLayout();
-        _dockFactory.InitLayout(layout);
+        var mainViewDockFactory = new MainViewDockFactory();
+        var layout = mainViewDockFactory.CreateLayout();
+        mainViewDockFactory.InitLayout(layout);
         Layout = layout;
     }
 

@@ -10,8 +10,6 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
-      <PackageReference Include="Dock.Model.Avalonia" />
-      <PackageReference Include="Dock.Model.Mvvm" />
       <PackageReference Include="EFCore.NamingConventions" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia" />
       <PackageReference Include="IconPacks.Avalonia" />
@@ -32,6 +30,7 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
         <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
+        <ProjectReference Include="..\Dock.Model.RetroEngine\Dock.Model.RetroEngine.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
@@ -47,6 +46,7 @@
         <DependentUpon>ProjectOpenView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Remove="ViewModels\ILocalizedDockable.cs" />
     </ItemGroup>
 
     <ItemGroup>
