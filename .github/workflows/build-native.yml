@@ -35,6 +35,10 @@ jobs:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
           vcpkgJsonGlob: 'vcpkg.json'
 
+      - name: Install Linux Build Dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt install autoconf autoconf-archive automake libtool
+
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
         with:
