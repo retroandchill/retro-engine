@@ -9,18 +9,17 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }} (${{ matrix.architecture }})
-    runs-on: ${{ matrix.os }}-${{ matrix.architecture }}
+    name: Build (${{ matrix.architecture }})
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         os:
           - ubuntu-latest
+          - ubuntu-latest-arm
           - windows-latest
-        architecture:
-          - x64
-          - arm64
+          - windows-latest-arm
 
     steps:
       - name: Checkout
