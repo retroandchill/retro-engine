@@ -17,9 +17,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - ubuntu-latest-arm
           - windows-latest
-          - windows-latest-arm
 
     steps:
       - name: Checkout
@@ -36,7 +34,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-          vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
+          vcpkgJsonGlob: '**/vcpkg.json'
 
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
