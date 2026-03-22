@@ -34,7 +34,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-          vcpkgJsonGlob: '**/vcpkg.json'
+          vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
 
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
