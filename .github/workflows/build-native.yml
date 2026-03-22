@@ -29,15 +29,15 @@ jobs:
       - name: Install CMake
         uses: lukka/get-cmake@latest
 
+      - name: Install Linux Build Dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt install autoconf autoconf-archive automake libtool
+
       - name: Setup VCPKG
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-          vcpkgJsonGlob: 'vcpkg.json'
-
-      - name: Install Linux Build Dependencies
-        if: runner.os == 'Linux'
-        run: sudo apt install autoconf autoconf-archive automake libtool
+          vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
 
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
