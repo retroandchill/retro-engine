@@ -3,10 +3,11 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RetroEngineVersion>0.1.0</RetroEngineVersion>
         <IsPackable>true</IsPackable>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <RootNamespace>RetroEngine.Portable</RootNamespace>
+        <Version>1.0.0-dev.4</Version>
+        <RetroEngineVersion>1.0.0-dev.4</RetroEngineVersion>
     </PropertyGroup>
     <ItemGroup>
         <None Include="RetroEngine.Portable.targets" Pack="true" PackagePath="buildTransitive\" />

@@ -6,6 +6,8 @@
         <AssemblyName>RetroEngine.Portable</AssemblyName>
         <RootNamespace>RetroEngine.Portable</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Version>1.0.0-dev.4</Version>
+        <PackageId>RetroEngine.Portable.Native</PackageId>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="$(RetroEnginePortableCommonProj)" />

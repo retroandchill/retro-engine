@@ -107,6 +107,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static implicit operator Text(string? sourceString) => new(sourceString ?? string.Empty);
 
+    public static implicit operator string(Text text) => text.ToString();
+
     public static Text AsNumber<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, INumber<T>
     {

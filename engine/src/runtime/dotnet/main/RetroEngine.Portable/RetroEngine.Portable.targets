@@ -3,7 +3,7 @@
         <RetroEngineBackend Condition="'$(RetroEngineBackend)' == ''">Native</RetroEngineBackend>
     </PropertyGroup>
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <PackageReference Include="RetroEngine.Portable.Native" Version="$(RetroEngineVersion)" />
+        <PackageReference Include="RetroEngine.Portable.Native" />
     </ItemGroup>
     <!--
     Custom: user is responsible for referencing their own backend package
