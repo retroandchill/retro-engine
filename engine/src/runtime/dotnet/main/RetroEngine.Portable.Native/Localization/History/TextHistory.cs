@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using RetroEngine.Portable.Concurrency;
 
 namespace RetroEngine.Portable.Localization.History;
@@ -36,6 +37,19 @@ internal abstract class TextHistory : ITextData
     public virtual IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text) => [];
 
     public virtual HistoricTextNumericData? GetHistoricNumericData(Text text) => null;
+
+    public virtual bool ReadFromBuffer(
+        ReadOnlySpan<char> buffer,
+        string? textNamespace,
+        string? textKey,
+        out ReadOnlySpan<char> remaining
+    )
+    {
+        remaining = default;
+        return false;
+    }
+
+    public virtual bool WriteToBuffer(StringBuilder buffer) => false;
 
     public void UpdateDisplayStringIfOutOfDate()
     {

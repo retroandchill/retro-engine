@@ -27,9 +27,9 @@ public record NumberFormattingOptions
     private const int DoubleMax10Exp = 308;
     private const int DoubleDigits10Exp = 15;
 
-    public bool AlwaysSign { get; init; } = false;
+    public bool AlwaysSign { get; init; }
     public bool UseGrouping { get; init; } = true;
-    public bool IndicateNearlyInteger { get; init; } = false;
+    public bool IndicateNearlyInteger { get; init; }
     public RoundingMode RoundingMode { get; init; } = RoundingMode.HalfToEven;
     public int MinimumIntegralDigits { get; init; } = 1;
     public int MaximumIntegralDigits { get; init; } = DoubleMax10Exp + DoubleDigits10Exp + 1;
@@ -38,4 +38,108 @@ public record NumberFormattingOptions
 
     public static NumberFormattingOptions DefaultWithGrouping { get; } = new() { UseGrouping = true };
     public static NumberFormattingOptions DefaultWithoutGrouping { get; } = new() { UseGrouping = false };
+}
+
+internal readonly record struct NumberFormattingOptionsBuilder
+{
+    private static readonly NumberFormattingOptions Default = new();
+
+    private readonly bool _edited;
+    public bool? AlwaysSign
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public bool? UseGrouping
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public bool? IndicateNearlyInteger
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public RoundingMode? RoundingMode
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public int? MinimumIntegralDigits
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public int? MaximumIntegralDigits
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public int? MinimumFractionalDigits
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public int? MaximumFractionalDigits
+    {
+        get;
+        init
+        {
+            field = value;
+            _edited = true;
+        }
+    }
+
+    public NumberFormattingOptions Build()
+    {
+        if (!_edited)
+            return Default;
+
+        return new NumberFormattingOptions
+        {
+            AlwaysSign = AlwaysSign ?? Default.AlwaysSign,
+            UseGrouping = UseGrouping ?? Default.UseGrouping,
+            IndicateNearlyInteger = IndicateNearlyInteger ?? Default.IndicateNearlyInteger,
+            RoundingMode = RoundingMode ?? Default.RoundingMode,
+            MinimumIntegralDigits = MinimumIntegralDigits ?? Default.MinimumIntegralDigits,
+            MaximumIntegralDigits = MaximumIntegralDigits ?? Default.MaximumIntegralDigits,
+            MinimumFractionalDigits = MinimumFractionalDigits ?? Default.MinimumFractionalDigits,
+            MaximumFractionalDigits = MaximumFractionalDigits ?? Default.MaximumFractionalDigits,
+        };
+    }
 }

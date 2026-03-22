@@ -87,6 +87,55 @@ public readonly partial struct FormatArg
         FastDecimalFormat.NumberToString(value, formattingRules, formattingOptions, builder);
     }
 
+    public string ToExportedString()
+    {
+        var stringBuilder = new StringBuilder();
+        ToExportedString(stringBuilder);
+        return stringBuilder.ToString();
+    }
+
+    public void ToExportedString(StringBuilder builder)
+    {
+        Match(
+            builder,
+            (b, x) => b.Append(x),
+            (b, x) => b.Append(x).Append('u'),
+            (b, x) => b.Append(x).Append('f'),
+            (b, x) => b.Append(x),
+            (b, x) => TextStringHelper.WriteToBuffer(b, x, true),
+            (b, x) => b.WriteScopedEnum("ETextGender::", x)
+        );
+    }
+
+    public static bool FromExportedString(
+        ReadOnlySpan<char> buffer,
+        out FormatArg value,
+        out ReadOnlySpan<char> remaining
+    )
+    {
+        const string textGenderMarker = "ETextGender::";
+
+        if (!buffer.ReadScopedEnum(textGenderMarker, out TextGender localGender, out buffer))
+        {
+            value = Gender(localGender);
+            remaining = default;
+            return false;
+        }
+
+        if (
+            !buffer.ReadNumber(out value, out buffer)
+            || !TextStringHelper.ReadFromBuffer(buffer, out var localText, out buffer, requiresQuotes: true)
+        )
+        {
+            remaining = default;
+            return false;
+        }
+
+        value = Text(localText);
+        remaining = buffer;
+        return true;
+    }
+
     public static implicit operator FormatArg(sbyte value) => Signed(value);
 
     public static implicit operator FormatArg(short value) => Signed(value);
