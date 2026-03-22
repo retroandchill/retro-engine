@@ -27,9 +27,6 @@ jobs:
       - name: Install CMake
         uses: lukka/get-cmake@latest
 
-      - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v5
-
       - name: Setup VCPKG
         uses: lukka/run-vcpkg@v11
 
