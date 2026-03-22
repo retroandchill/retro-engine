@@ -27,9 +27,13 @@ jobs:
 
       - name: Setup VCPKG
         uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
+          vcpkgJsonGlob: 'vcpkg.json'
 
-      - name: Configure
-        run: cmake --preset release
-
-      - name: Build
-        run: cmake --build --preset release
+      - name: Run CMake with vcpkg.json manifest
+        uses: lukka/run-cmake@v10
+        with:
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          configurePreset: release
+          buildPreset: release
