@@ -11,10 +11,8 @@ namespace RetroEngine.Portable.Localization.History;
 
 internal sealed class TextHistoryNamedFormat : TextHistoryGenerated
 {
-    private readonly TextFormat _sourceFormat = TextFormat.Empty;
+    private readonly TextFormat _sourceFormat;
     private readonly ImmutableDictionary<string, FormatArg> _args = [];
-
-    public TextHistoryNamedFormat() { }
 
     public TextHistoryNamedFormat(
         string displayString,

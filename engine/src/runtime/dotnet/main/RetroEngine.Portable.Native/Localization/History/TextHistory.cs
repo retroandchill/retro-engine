@@ -8,6 +8,22 @@ using RetroEngine.Portable.Concurrency;
 
 namespace RetroEngine.Portable.Localization.History;
 
+internal interface ITextHistory : ITextData
+{
+    static virtual bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer) => false;
+
+    static virtual ITextData? ReadFromBuffer(
+        ReadOnlySpan<char> buffer,
+        string? textNamespace,
+        string? textKey,
+        out ReadOnlySpan<char> remaining
+    )
+    {
+        remaining = default;
+        return null;
+    }
+}
+
 internal abstract class TextHistory : ITextData
 {
     private readonly ReaderWriterLockSlim _lock = new();
@@ -37,19 +53,6 @@ internal abstract class TextHistory : ITextData
     public virtual IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text) => [];
 
     public virtual HistoricTextNumericData? GetHistoricNumericData(Text text) => null;
-
-    public static bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer) => false;
-
-    public virtual bool ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
-    {
-        remaining = default;
-        return false;
-    }
 
     public virtual bool WriteToBuffer(StringBuilder buffer) => false;
 

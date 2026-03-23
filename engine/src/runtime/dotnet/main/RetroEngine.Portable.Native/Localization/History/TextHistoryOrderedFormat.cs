@@ -8,19 +8,14 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated
+internal sealed class TextHistoryOrderedFormat(
+    string displayString,
+    TextFormat sourceFormat,
+    ImmutableArray<FormatArg> args
+) : TextHistoryGenerated(displayString)
 {
-    private readonly TextFormat _sourceFormat = TextFormat.Empty;
-    private readonly ImmutableArray<FormatArg> _args = [];
-
-    public TextHistoryOrderedFormat() { }
-
-    public TextHistoryOrderedFormat(string displayString, TextFormat sourceFormat, ImmutableArray<FormatArg> args)
-        : base(displayString)
-    {
-        _sourceFormat = sourceFormat;
-        _args = [.. args];
-    }
+    private readonly TextFormat _sourceFormat = sourceFormat;
+    private readonly ImmutableArray<FormatArg> _args = [.. args];
 
     public TextHistoryOrderedFormat(string displayString, TextFormat sourceFormat, IReadOnlyList<FormatArg> args)
         : this(displayString, sourceFormat, [.. args]) { }

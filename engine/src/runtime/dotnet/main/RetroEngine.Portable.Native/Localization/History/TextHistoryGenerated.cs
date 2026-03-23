@@ -9,9 +9,6 @@ internal abstract class TextHistoryGenerated(string displayString) : TextHistory
 {
     private string _displayString = displayString;
 
-    public TextHistoryGenerated()
-        : this("") { }
-
     public sealed override TextId TextId => TextId.Empty;
     public override string DisplayString => _displayString;
 

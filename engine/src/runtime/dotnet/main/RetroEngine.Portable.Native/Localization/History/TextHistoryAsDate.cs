@@ -8,29 +8,17 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsDate : TextHistoryGenerated
+internal sealed class TextHistoryAsDate(
+    string displayString,
+    DateTimeOffset dateTime,
+    DateTimeFormatStyle formatStyle,
+    string? timeZoneId,
+    Culture? targetCulture
+) : TextHistoryGenerated(displayString)
 {
-    private readonly DateTimeOffset _sourceDateTime;
-    private readonly DateTimeFormatStyle _formatStyle;
-    private readonly string? _timeZoneId;
-    private readonly Culture? _targetCulture;
-
-    public TextHistoryAsDate() { }
-
-    public TextHistoryAsDate(
-        string displayString,
-        DateTimeOffset dateTime,
-        DateTimeFormatStyle formatStyle,
-        string? timeZoneId,
-        Culture? targetCulture
-    )
-        : base(displayString)
-    {
-        _sourceDateTime = dateTime;
-        _formatStyle = formatStyle;
-        _timeZoneId = timeZoneId;
-        _targetCulture = targetCulture;
-    }
+    private readonly DateTimeOffset _sourceDateTime = dateTime;
+    private readonly DateTimeFormatStyle _formatStyle = formatStyle;
+    private readonly Culture? _targetCulture = targetCulture;
 
     public override string BuildInvariantDisplayString()
     {
@@ -52,6 +40,6 @@ internal sealed class TextHistoryAsDate : TextHistoryGenerated
 
     private string BuildDateTimeDisplayString(Culture culture)
     {
-        return TextChronoFormatter.AsDate(_sourceDateTime, _formatStyle, _timeZoneId, culture);
+        return TextChronoFormatter.AsDate(_sourceDateTime, _formatStyle, timeZoneId, culture);
     }
 }

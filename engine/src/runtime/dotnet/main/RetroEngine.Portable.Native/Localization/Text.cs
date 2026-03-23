@@ -76,7 +76,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     internal TextFlag Flags { get; private init; }
 
-    private static readonly ITextData EmptyTextData = new TextHistoryBase();
+    private static readonly ITextData EmptyTextData = new TextHistorySimple();
 
     public static readonly Text Empty = new(EmptyTextData);
 
@@ -98,12 +98,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     internal Text(string sourceString, TextKey @namespace, TextKey key, TextFlag flags = TextFlag.None)
     {
-        TextData = new TextHistoryBase(new TextId(@namespace, key), sourceString);
+        TextData = new TextHistorySimple(new TextId(@namespace, key), sourceString);
         Flags = flags;
     }
 
     public Text(string sourceString)
-        : this(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
+        : this(new TextHistorySimple(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
 
     public static implicit operator Text(string? sourceString) => new(sourceString ?? string.Empty);
 
@@ -274,7 +274,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static Text AsCultureInvariant(string sourceString)
     {
-        return new Text(new TextHistoryBase(TextId.Empty, sourceString), TextFlag.CultureInvariant);
+        return new Text(new TextHistorySimple(TextId.Empty, sourceString), TextFlag.CultureInvariant);
     }
 
     public Text AsCultureInvariant()
@@ -295,7 +295,9 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static Text? FindTextInLiveTable(TextKey @namespace, TextKey key, string? sourceString = null)
     {
         var foundString = LocalizationManager.Instance.FindDisplayString(@namespace, key, sourceString);
-        return foundString is not null ? new Text(new TextHistoryBase(new TextId(@namespace, key), foundString)) : null;
+        return foundString is not null
+            ? new Text(new TextHistorySimple(new TextId(@namespace, key), foundString))
+            : null;
     }
 
     public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)

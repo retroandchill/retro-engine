@@ -3,34 +3,23 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Numerics;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal abstract class TextHistoryFormatNumber : TextHistoryGenerated
+internal abstract class TextHistoryFormatNumber(
+    string displayString,
+    FormatNumericArg sourceValue,
+    NumberFormattingOptions? formattingOptions,
+    Culture? targetCulture
+) : TextHistoryGenerated(displayString)
 {
-    protected FormatNumericArg SourceValue { get; set; }
+    protected FormatNumericArg SourceValue { get; } = sourceValue;
 
-    protected NumberFormattingOptions? FormattingOptions { get; set; }
+    protected NumberFormattingOptions? FormattingOptions { get; } = formattingOptions;
 
-    protected Culture? TargetCulture { get; set; }
-
-    public TextHistoryFormatNumber() { }
-
-    public TextHistoryFormatNumber(
-        string displayString,
-        FormatNumericArg sourceValue,
-        NumberFormattingOptions? formattingOptions,
-        Culture? targetCulture
-    )
-        : base(displayString)
-    {
-        SourceValue = sourceValue;
-        FormattingOptions = formattingOptions;
-        TargetCulture = targetCulture;
-    }
+    protected Culture? TargetCulture { get; } = targetCulture;
 
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
     {

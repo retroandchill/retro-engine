@@ -17,8 +17,6 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated
     private readonly string? _timeZoneId;
     private readonly Culture? _targetCulture;
 
-    public TextHistoryAsDateTime() { }
-
     public TextHistoryAsDateTime(
         string displayString,
         DateTimeOffset dateTime,

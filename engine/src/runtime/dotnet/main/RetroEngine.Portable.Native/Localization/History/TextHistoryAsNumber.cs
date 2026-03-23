@@ -10,18 +10,13 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber
+internal sealed class TextHistoryAsNumber(
+    string displayString,
+    FormatNumericArg sourceValue,
+    NumberFormattingOptions? formattingOptions,
+    Culture? targetCulture
+) : TextHistoryFormatNumber(displayString, sourceValue, formattingOptions, targetCulture), ITextHistory
 {
-    public TextHistoryAsNumber() { }
-
-    public TextHistoryAsNumber(
-        string displayString,
-        FormatNumericArg sourceValue,
-        NumberFormattingOptions? formattingOptions,
-        Culture? targetCulture
-    )
-        : base(displayString, sourceValue, formattingOptions, targetCulture) { }
-
     protected override string BuildLocalizedDisplayString()
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
@@ -36,31 +31,27 @@ internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber
         return BuildNumericDisplayString(formattingRules);
     }
 
-    public override bool ReadFromBuffer(
+    public static bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer)
+    {
+        return buffer.PeekMarker(TextStringificationUtil.LocGenNumberMarker);
+    }
+
+    public static ITextData? ReadFromBuffer(
         ReadOnlySpan<char> buffer,
         string? textNamespace,
         string? textKey,
         out ReadOnlySpan<char> remaining
     )
     {
-        if (
-            !buffer.ReadNumberOrPercent(
-                TextStringificationUtil.LocGenNumberMarker,
-                out var sourceValue,
-                out var formattingOptions,
-                out var targetCulture,
-                out remaining
-            )
+        return buffer.ReadNumberOrPercent(
+            TextStringificationUtil.LocGenNumberMarker,
+            out var sourceValue,
+            out var formattingOptions,
+            out var targetCulture,
+            out remaining
         )
-        {
-            return false;
-        }
-
-        SourceValue = sourceValue;
-        FormattingOptions = formattingOptions;
-        TargetCulture = targetCulture;
-        MarkDisplayStringOutOfDate();
-        return true;
+            ? new TextHistoryAsNumber("", sourceValue, formattingOptions, targetCulture)
+            : null;
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)
