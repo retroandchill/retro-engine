@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using LinkDotNet.StringBuilder;
@@ -101,7 +102,7 @@ internal static class TextStringificationUtil
             return true;
         }
 
-        public bool ReadNumber(out FormatArg value, out ReadOnlySpan<char> remaining)
+        public bool ReadNumber(out FormatNumericArg value, out ReadOnlySpan<char> remaining)
         {
             const string validNumericCharacters = "+-0123456789.ful";
             const string suffixNumericCharacters = "ful";
@@ -363,9 +364,7 @@ internal static class TextStringificationUtil
                     signed => (int?)signed,
                     unsigned => (int)unsigned,
                     floating => (int)floating,
-                    doubleFloating => (int)doubleFloating,
-                    _ => null,
-                    _ => null
+                    doubleFloating => (int)doubleFloating
                 );
                 if (matched is null)
                 {
@@ -448,6 +447,94 @@ internal static class TextStringificationUtil
             if (!buffer.SkipWhitespaceAndCharacter(')', out buffer))
             {
                 remaining = default;
+                return false;
+            }
+
+            remaining = buffer;
+            return true;
+        }
+
+        public bool ReadNumberOrPercent(
+            ReadOnlySpan<char> tokenMarker,
+            out FormatNumericArg value,
+            out NumberFormattingOptions? formattingOptions,
+            out Culture? targetCulture,
+            out ReadOnlySpan<char> remaining
+        )
+        {
+            value = default;
+            formattingOptions = null;
+            remaining = default;
+            targetCulture = null;
+
+            if (!buffer.PeekMarker(tokenMarker))
+            {
+                return false;
+            }
+
+            buffer = buffer[tokenMarker.Length..];
+
+            var isCustom = buffer.PeekMarker(CustomSuffix);
+            if (isCustom)
+            {
+                buffer = buffer[CustomSuffix.Length..];
+            }
+            else if (buffer.PeekMarker(GroupedSuffix))
+            {
+                buffer = buffer[GroupedSuffix.Length..];
+                formattingOptions = NumberFormattingOptions.DefaultWithGrouping;
+            }
+            else if (buffer.PeekMarker(UngroupedSuffix))
+            {
+                buffer = buffer[UngroupedSuffix.Length..];
+                formattingOptions = NumberFormattingOptions.DefaultWithoutGrouping;
+            }
+            else
+            {
+                formattingOptions = null;
+            }
+
+            if (buffer.SkipWhitespaceAndCharacter('(', out buffer))
+            {
+                return false;
+            }
+
+            buffer = buffer.SkipWhitespace();
+            if (buffer.ReadNumber(out var numericValue, out buffer))
+            {
+                return false;
+            }
+            value = numericValue;
+
+            if (isCustom)
+            {
+                if (buffer.SkipWhitespaceAndCharacter(',', out buffer))
+                {
+                    return false;
+                }
+
+                buffer = buffer.SkipWhitespace();
+                if (!buffer.ReadNumberFormattingOptions(out formattingOptions, out buffer))
+                {
+                    return false;
+                }
+            }
+
+            if (!buffer.SkipWhitespaceAndCharacter(',', out buffer))
+            {
+                return false;
+            }
+
+            buffer = buffer.SkipWhitespace();
+            if (!buffer.ReadQuotedString(out var cultureName, out buffer))
+            {
+                return false;
+            }
+
+            targetCulture = string.IsNullOrEmpty(cultureName) ? null : CultureManager.Instance.GetCulture(cultureName);
+
+            if (!buffer.SkipWhitespaceAndCharacter(')', out buffer))
+            {
                 return false;
             }
 

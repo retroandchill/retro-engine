@@ -9,20 +9,19 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
-    where T : unmanaged, INumber<T>
+internal abstract class TextHistoryFormatNumber : TextHistoryGenerated
 {
-    protected T SourceValue { get; }
+    protected FormatNumericArg SourceValue { get; set; }
 
-    protected NumberFormattingOptions? FormattingOptions { get; }
+    protected NumberFormattingOptions? FormattingOptions { get; set; }
 
-    protected Culture? TargetCulture { get; }
+    protected Culture? TargetCulture { get; set; }
 
     public TextHistoryFormatNumber() { }
 
     public TextHistoryFormatNumber(
         string displayString,
-        T sourceValue,
+        FormatNumericArg sourceValue,
         NumberFormattingOptions? formattingOptions,
         Culture? targetCulture
     )
@@ -35,7 +34,7 @@ internal abstract class TextHistoryFormatNumber<T> : TextHistoryGenerated
 
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
     {
-        return other is TextHistoryFormatNumber<T> otherNumber
+        return other is TextHistoryFormatNumber otherNumber
             && GetType() == other.GetType()
             && SourceValue == otherNumber.SourceValue
             && FormattingOptions == otherNumber.FormattingOptions

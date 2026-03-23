@@ -38,6 +38,8 @@ internal abstract class TextHistory : ITextData
 
     public virtual HistoricTextNumericData? GetHistoricNumericData(Text text) => null;
 
+    public static bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer) => false;
+
     public virtual bool ReadFromBuffer(
         ReadOnlySpan<char> buffer,
         string? textNamespace,

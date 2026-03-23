@@ -4,19 +4,19 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Numerics;
+using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsPercent<T> : TextHistoryFormatNumber<T>
-    where T : unmanaged, INumber<T>
+internal sealed class TextHistoryAsPercent : TextHistoryFormatNumber
 {
     public TextHistoryAsPercent() { }
 
     public TextHistoryAsPercent(
         string displayString,
-        T sourceValue,
+        FormatNumericArg sourceValue,
         NumberFormattingOptions? formattingOptions,
         Culture? targetCulture
     )
@@ -36,8 +36,46 @@ internal sealed class TextHistoryAsPercent<T> : TextHistoryFormatNumber<T>
         return BuildNumericDisplayString(formattingRules, 100);
     }
 
+    public override bool ReadFromBuffer(
+        ReadOnlySpan<char> buffer,
+        string? textNamespace,
+        string? textKey,
+        out ReadOnlySpan<char> remaining
+    )
+    {
+        if (
+            !buffer.ReadNumberOrPercent(
+                TextStringificationUtil.LocGenPercentMarker,
+                out var sourceValue,
+                out var formattingOptions,
+                out var targetCulture,
+                out remaining
+            )
+        )
+        {
+            return false;
+        }
+
+        SourceValue = sourceValue;
+        FormattingOptions = formattingOptions;
+        TargetCulture = targetCulture;
+        MarkDisplayStringOutOfDate();
+        return true;
+    }
+
+    public override bool WriteToBuffer(StringBuilder buffer)
+    {
+        buffer.WriteNumberOrPercent(
+            TextStringificationUtil.LocGenPercentMarker,
+            SourceValue,
+            FormattingOptions,
+            TargetCulture
+        );
+        return true;
+    }
+
     public override HistoricTextNumericData? GetHistoricNumericData(Text text)
     {
-        return new HistoricTextNumericData(NumberFormatType.Percent, FormatNumericArg.FromNumber(SourceValue));
+        return new HistoricTextNumericData(NumberFormatType.Percent, SourceValue);
     }
 }

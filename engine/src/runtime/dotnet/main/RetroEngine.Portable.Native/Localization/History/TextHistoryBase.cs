@@ -4,8 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
-using System.Text.Json;
-using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization.History;
@@ -30,6 +28,12 @@ internal class TextHistoryBase : TextHistory
     public override string DisplayString => _localized ?? _source;
     public override string? LocalizedString => _localized;
 
+    public static new bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer)
+    {
+        return buffer.PeekMarker(TextStringificationUtil.NsLocTextMarker)
+            || buffer.PeekMarker(TextStringificationUtil.LocTextMarker);
+    }
+
     public override bool ReadFromBuffer(
         ReadOnlySpan<char> buffer,
         string? textNamespace,
@@ -48,13 +52,7 @@ internal class TextHistoryBase : TextHistory
             }
 
             buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var ns, out buffer))
-            {
-                remaining = default;
-                return false;
-            }
-
-            if (!buffer.SkipWhitespaceAndCharacter(',', out buffer))
+            if (!buffer.ReadQuotedString(out var ns, out buffer) || !buffer.SkipWhitespaceAndCharacter(',', out buffer))
             {
                 remaining = default;
                 return false;

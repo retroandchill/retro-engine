@@ -115,25 +115,26 @@ public readonly partial struct FormatArg
     {
         const string textGenderMarker = "ETextGender::";
 
-        if (!buffer.ReadScopedEnum(textGenderMarker, out TextGender localGender, out buffer))
+        if (buffer.ReadScopedEnum(textGenderMarker, out TextGender localGender, out remaining))
         {
             value = Gender(localGender);
-            remaining = default;
-            return false;
+            return true;
         }
 
-        if (
-            !buffer.ReadNumber(out value, out buffer)
-            || !TextStringHelper.ReadFromBuffer(buffer, out var localText, out buffer, requiresQuotes: true)
-        )
+        if (buffer.ReadNumber(out var numericValue, out remaining))
         {
-            remaining = default;
-            return false;
+            value = numericValue;
+            return true;
         }
 
-        value = Text(localText);
-        remaining = buffer;
-        return true;
+        if (TextStringHelper.ReadFromBuffer(buffer, out var localText, out remaining, requiresQuotes: true))
+        {
+            value = Text(localText);
+            return true;
+        }
+
+        value = default;
+        return false;
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);
@@ -164,13 +165,15 @@ public readonly partial struct FormatArg
 
     public static implicit operator FormatArg(FormatNumericArg arg)
     {
-        return arg.Match(Signed, Unsigned, Float, Double);
+        return arg.IsDefault ? default : arg.Match(Signed, Unsigned, Float, Double);
     }
 }
 
 [Union]
 public readonly partial struct FormatNumericArg
 {
+    internal bool IsDefault => Index == 0;
+
     [UnionCase]
     public static partial FormatNumericArg Signed(long value);
 
@@ -201,4 +204,24 @@ public readonly partial struct FormatNumericArg
             _ => throw new ArgumentException($"Cannot convert {value} to a number"),
         };
     }
+
+    public static implicit operator FormatNumericArg(sbyte value) => Signed(value);
+
+    public static implicit operator FormatNumericArg(short value) => Signed(value);
+
+    public static implicit operator FormatNumericArg(int value) => Signed(value);
+
+    public static implicit operator FormatNumericArg(long value) => Signed(value);
+
+    public static implicit operator FormatNumericArg(byte value) => Unsigned(value);
+
+    public static implicit operator FormatNumericArg(ushort value) => Unsigned(value);
+
+    public static implicit operator FormatNumericArg(uint value) => Unsigned(value);
+
+    public static implicit operator FormatNumericArg(ulong value) => Unsigned(value);
+
+    public static implicit operator FormatNumericArg(float value) => Float(value);
+
+    public static implicit operator FormatNumericArg(double value) => Double(value);
 }

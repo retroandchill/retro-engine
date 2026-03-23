@@ -119,7 +119,10 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
             numberFormattingRules,
             options ?? numberFormattingRules.DefaultFormattingOptions
         );
-        return new Text(new TextHistoryAsNumber<T>(nativeString, value, options, targetCulture), TextFlag.Transient);
+        return new Text(
+            new TextHistoryAsNumber(nativeString, FormatNumericArg.FromNumber(value), options, targetCulture),
+            TextFlag.Transient
+        );
     }
 
     public static Text AsPercent<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
@@ -132,7 +135,10 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
             numberFormattingRules,
             options ?? numberFormattingRules.DefaultFormattingOptions
         );
-        return new Text(new TextHistoryAsPercent<T>(nativeString, value, options, targetCulture), TextFlag.Transient);
+        return new Text(
+            new TextHistoryAsPercent(nativeString, FormatNumericArg.FromNumber(value), options, targetCulture),
+            TextFlag.Transient
+        );
     }
 
     public static Text AsCurrency<T>(
@@ -151,7 +157,13 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
             options ?? numberFormattingRules.DefaultFormattingOptions
         );
         return new Text(
-            new TextHistoryAsCurrency<T>(nativeString, value, currencyCode, options, targetCulture),
+            new TextHistoryAsCurrency(
+                nativeString,
+                FormatNumericArg.FromNumber(value),
+                currencyCode,
+                options,
+                targetCulture
+            ),
             TextFlag.Transient
         );
     }

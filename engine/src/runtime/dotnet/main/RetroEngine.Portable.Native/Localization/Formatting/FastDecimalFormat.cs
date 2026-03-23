@@ -516,6 +516,21 @@ public static class FastDecimalFormat
         }
     }
 
+    public static string NumberToString(
+        FormatNumericArg value,
+        DecimalNumberFormattingRules rules,
+        NumberFormattingOptions options
+    )
+    {
+        return value.Match(
+            (rules, options),
+            (t, i) => NumberToString(i, t.rules, t.options),
+            (t, i) => NumberToString(i, t.rules, t.options),
+            (t, i) => NumberToString(i, t.rules, t.options),
+            (t, i) => NumberToString(i, t.rules, t.options)
+        );
+    }
+
     public static string NumberToString<T>(
         T value,
         DecimalNumberFormattingRules rules,
@@ -526,5 +541,11 @@ public static class FastDecimalFormat
         var builder = new StringBuilder();
         NumberToString(value, rules, formattingOptions, builder);
         return builder.ToString();
+    }
+
+    public static ulong Pow10(int exponent)
+    {
+        var clampedExponent = Math.Min(exponent, MaxFractionalPrintLength);
+        return Pow10Table[clampedExponent];
     }
 }
