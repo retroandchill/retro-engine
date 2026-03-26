@@ -262,9 +262,6 @@ public static class TextExporterUtils
 
     private static TextParser<T> NumberFormatOption<T>(string marker, TextParser<T> readOption)
     {
-        return Character
-            .EqualTo('.')
-            .Optional()
-            .IgnoreThen(Span.EqualTo(marker).IgnoreThen(readOption.Between(OpenParen, CloseParen)));
+        return Span.EqualTo(marker).IgnoreThen(readOption.Between(OpenParen, CloseParen));
     }
 }
