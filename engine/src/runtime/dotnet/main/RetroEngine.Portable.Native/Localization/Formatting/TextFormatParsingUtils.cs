@@ -11,7 +11,7 @@ namespace RetroEngine.Portable.Localization.Formatting;
 
 internal static class TextFormatParsingUtils
 {
-    public static TextParser<Unit> Whitespace { get; } = Character.WhiteSpace.Many().Value(Unit.Value);
+    public static TextParser<Unit> Whitespace { get; } = Character.WhiteSpace.IgnoreMany();
 
     // [A-Za-z][A-Za-z0-9_]*
     public static TextParser<string> Identifier { get; } =

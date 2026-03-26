@@ -7,6 +7,7 @@ using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Utils;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -30,43 +31,38 @@ internal sealed class TextHistoryAsCurrency(
         return buffer.PeekMarker(TextStringificationUtil.LocGenCurrencyMarker);
     }
 
-    public static ITextData? ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
+    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
         var culture = CultureManager.Instance.CurrentLocale;
         remaining = default;
-        if (!buffer.PeekMarker(TextStringificationUtil.LocGenCurrencyMarker))
+        if (!str.PeekMarker(TextStringificationUtil.LocGenCurrencyMarker))
             return null;
 
-        buffer = buffer[TextStringificationUtil.LocGenCurrencyMarker.Length..];
+        str = str[TextStringificationUtil.LocGenCurrencyMarker.Length..];
 
-        if (!buffer.SkipWhitespaceAndCharacter('(', out buffer))
+        if (!str.SkipWhitespaceAndCharacter('(', out str))
             return null;
 
-        buffer = buffer.SkipWhitespace();
-        if (!buffer.ReadNumber(out var numericValue, out buffer))
+        str = str.SkipWhitespace();
+        if (!str.ReadNumber(out var numericValue, out str))
             return null;
 
-        if (!buffer.SkipWhitespaceAndCharacter(',', out buffer))
+        if (!str.SkipWhitespaceAndCharacter(',', out str))
             return null;
 
-        buffer = buffer.SkipWhitespace();
-        if (!buffer.ReadQuotedString(out var currencyCode, out buffer))
+        str = str.SkipWhitespace();
+        if (!str.ReadQuotedString(out var currencyCode, out str))
             return null;
 
-        if (!buffer.SkipWhitespaceAndCharacter(',', out buffer))
+        if (!str.SkipWhitespaceAndCharacter(',', out str))
             return null;
 
-        buffer = buffer.SkipWhitespace();
-        if (!buffer.ReadQuotedString(out var cultureName, out buffer))
+        str = str.SkipWhitespace();
+        if (!str.ReadQuotedString(out var cultureName, out str))
             return null;
         var targetCulture = string.IsNullOrEmpty(cultureName) ? null : CultureManager.Instance.GetCulture(cultureName);
 
-        if (!buffer.SkipWhitespaceAndCharacter(')', out buffer))
+        if (!str.SkipWhitespaceAndCharacter(')', out str))
             return null;
 
         var baseValue = numericValue.Match(i => i, u => u, f => f, d => d);
@@ -75,7 +71,7 @@ internal sealed class TextHistoryAsCurrency(
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         numericValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
 
-        remaining = buffer;
+        remaining = str;
         return new TextHistoryAsCurrency("", numericValue, currencyCode, formattingOptions, targetCulture);
     }
 

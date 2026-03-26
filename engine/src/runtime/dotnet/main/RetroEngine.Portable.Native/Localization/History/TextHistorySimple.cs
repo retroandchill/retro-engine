@@ -4,7 +4,11 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using RetroEngine.Portable.Localization.Exporting;
 using RetroEngine.Portable.Utils;
+using Superpower;
+using Superpower.Model;
+using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -21,102 +25,79 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             || buffer.PeekMarker(TextStringificationUtil.LocTextMarker);
     }
 
-    public static ITextData? ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
+    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = Span.EqualTo(
+            TextStringificationUtil.NsLocTextMarker
+        )
+        .IgnoreThen(
+            Parse.Sequence(
+                TextExporterUtils.QuotedString,
+                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString),
+                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString)
+            )
+        )
+        .Between(TextExporterUtils.OpenParen, TextExporterUtils.CloseParen)
+        .AtEnd()
+        .Select(r =>
+        {
+            var (ns, key, source) = r;
+
+            if (string.IsNullOrEmpty(key))
+            {
+                key = Guid.NewGuid().ToString();
+            }
+
+            return (ns, key, source);
+        });
+
+    private static readonly TextParser<(string Key, string Source)> LoctextParser = Span.EqualTo(
+            TextStringificationUtil.LocTextMarker
+        )
+        .IgnoreThen(
+            Parse.Sequence(
+                TextExporterUtils.QuotedString,
+                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString)
+            )
+        )
+        .Between(TextExporterUtils.OpenParen, TextExporterUtils.CloseParen)
+        .AtEnd()
+        .Select(r =>
+        {
+            var (key, source) = r;
+
+            if (string.IsNullOrEmpty(key))
+            {
+                key = Guid.NewGuid().ToString();
+            }
+
+            return (key, source);
+        });
+
+    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
-        if (buffer.PeekMarker(TextStringificationUtil.NsLocTextMarker))
+        var nsLocTextResult = NsLoctextParser.TryParse(str);
+        if (nsLocTextResult.HasValue)
         {
-            buffer = buffer[TextStringificationUtil.NsLocTextMarker.Length..];
-
-            if (!buffer.SkipWhitespaceAndCharacter('(', out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var ns, out buffer) || !buffer.SkipWhitespaceAndCharacter(',', out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var key, out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var source, out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            if (!buffer.SkipWhitespaceAndCharacter(')', out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(key))
-            {
-                key = Guid.NewGuid().ToString();
-            }
-
-            remaining = buffer;
-            return new TextHistorySimple(new TextId(ns, key), source);
+            var (ns, key, source) = nsLocTextResult.Value;
+            return Result.Value<ITextData>(
+                new TextHistorySimple(new TextId(ns, key), source),
+                nsLocTextResult.Location,
+                nsLocTextResult.Remainder
+            );
         }
 
-        if (buffer.PeekMarker(TextStringificationUtil.LocTextMarker))
+        var loctextResult = LoctextParser.TryParse(str);
+        // ReSharper disable once InvertIf
+        if (loctextResult.HasValue)
         {
-            buffer = buffer[TextStringificationUtil.LocTextMarker.Length..];
-
-            if (!buffer.SkipWhitespaceAndCharacter('(', out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var key, out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            buffer = buffer.SkipWhitespace();
-            if (!buffer.ReadQuotedString(out var source, out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            if (!buffer.SkipWhitespaceAndCharacter(')', out buffer))
-            {
-                remaining = default;
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(key))
-            {
-                key = Guid.NewGuid().ToString();
-            }
-
-            var ns = textNamespace ?? "";
-
-            remaining = buffer;
-            return new TextHistorySimple(new TextId(ns, key), source);
+            var (key, source) = loctextResult.Value;
+            return Result.Value<ITextData>(
+                new TextHistorySimple(new TextId(textNamespace ?? string.Empty, key), source),
+                loctextResult.Location,
+                loctextResult.Remainder
+            );
         }
 
-        remaining = default;
-        return null;
+        return Result.Empty<ITextData>(new TextSpan(str));
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

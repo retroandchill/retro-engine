@@ -27,4 +27,9 @@
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">
         <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshalling"/>
     </ItemGroup>
+
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DefineConstants>$(DefineConstants);CHECKED</DefineConstants>
+    </PropertyGroup>
 </Project>

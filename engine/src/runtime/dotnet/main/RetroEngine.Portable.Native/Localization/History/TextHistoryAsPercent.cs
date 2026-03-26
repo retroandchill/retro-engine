@@ -5,7 +5,10 @@
 
 using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
+using RetroEngine.Portable.Localization.Exporting;
 using RetroEngine.Portable.Localization.Formatting;
+using Superpower;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -35,22 +38,13 @@ internal sealed class TextHistoryAsPercent(
         return buffer.PeekMarker(TextStringificationUtil.LocGenPercentMarker);
     }
 
-    public static ITextData? ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
+    private static readonly TextParser<ITextData> Parser = TextExporterUtils
+        .NumberOrPercent(TextStringificationUtil.LocGenPercentMarker)
+        .Select(ITextData (r) => new TextHistoryAsPercent("", r.Arg, r.Options, r.Culture));
+
+    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
-        return buffer.ReadNumberOrPercent(
-            TextStringificationUtil.LocGenPercentMarker,
-            out var sourceValue,
-            out var formattingOptions,
-            out var targetCulture,
-            out remaining
-        )
-            ? new TextHistoryAsPercent("", sourceValue, formattingOptions, targetCulture)
-            : null;
+        return Parser.TryParse(str);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

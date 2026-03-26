@@ -6,7 +6,10 @@
 using System.Numerics;
 using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
+using RetroEngine.Portable.Localization.Exporting;
 using RetroEngine.Portable.Localization.Formatting;
+using Superpower;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -36,22 +39,13 @@ internal sealed class TextHistoryAsNumber(
         return buffer.PeekMarker(TextStringificationUtil.LocGenNumberMarker);
     }
 
-    public static ITextData? ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
+    private static readonly TextParser<ITextData> Parser = TextExporterUtils
+        .NumberOrPercent(TextStringificationUtil.LocGenNumberMarker)
+        .Select(ITextData (r) => new TextHistoryAsNumber("", r.Arg, r.Options, r.Culture));
+
+    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
-        return buffer.ReadNumberOrPercent(
-            TextStringificationUtil.LocGenNumberMarker,
-            out var sourceValue,
-            out var formattingOptions,
-            out var targetCulture,
-            out remaining
-        )
-            ? new TextHistoryAsNumber("", sourceValue, formattingOptions, targetCulture)
-            : null;
+        return Parser.TryParse(str);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using LinkDotNet.StringBuilder;
+
 namespace RetroEngine.Portable.Utils;
 
 public static class StringUtils
@@ -69,7 +71,35 @@ public static class StringUtils
 
     public static string ReplaceQuotesWithEscapedQuotes(this string str)
     {
-        return str.Contains('\"', StringComparison.Ordinal) ? str.Replace("\"", "\\\"") : str;
+        var quoteCount = str.Count(c => c == '"');
+        if (quoteCount == 0)
+            return str;
+
+        using var builder = new ValueStringBuilder(str.Length + quoteCount);
+
+        var escaped = false;
+        var remaining = str.AsSpan();
+        while (!remaining.IsEmpty)
+        {
+            var c = remaining[0];
+            if (escaped)
+            {
+                escaped = false;
+            }
+            else if (c == '\\')
+            {
+                escaped = true;
+            }
+            else if (c == '"')
+            {
+                builder.Append('\\');
+            }
+
+            builder.Append(c);
+            remaining = remaining[1..];
+        }
+
+        return builder.ToString();
     }
 
     extension(char)

@@ -5,6 +5,7 @@
 
 using System.Text;
 using RetroEngine.Portable.Concurrency;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -12,15 +13,9 @@ internal interface ITextHistory : ITextData
 {
     static virtual bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer) => false;
 
-    static virtual ITextData? ReadFromBuffer(
-        ReadOnlySpan<char> buffer,
-        string? textNamespace,
-        string? textKey,
-        out ReadOnlySpan<char> remaining
-    )
+    static virtual Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
-        remaining = default;
-        return null;
+        return Result.Empty<ITextData>(new TextSpan(str));
     }
 }
 
