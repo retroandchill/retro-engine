@@ -6,7 +6,9 @@
 using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
+using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
+using Superpower;
 using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
@@ -26,53 +28,39 @@ internal sealed class TextHistoryAsCurrency(
         return BuildNumericDisplayString(formattingRules);
     }
 
-    public static bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer)
-    {
-        return buffer.PeekMarker(TextStringificationUtil.LocGenCurrencyMarker);
-    }
+    private static readonly TextParser<(FormatNumericArg, string, Culture?)> Parser = Parse.Sequence(
+        TextParsers
+            .Marker(Markers.LocGenCurrency)
+            .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
+            .IgnoreThen(TextParsers.Whitespace)
+            .IgnoreThen(TextParsers.Number),
+        TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString),
+        TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.CultureFromName)
+    );
 
     public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
         var culture = CultureManager.Instance.CurrentLocale;
-        remaining = default;
-        if (!str.PeekMarker(TextStringificationUtil.LocGenCurrencyMarker))
-            return null;
 
-        str = str[TextStringificationUtil.LocGenCurrencyMarker.Length..];
+        var result = Parser.TryParse(str);
+        if (!result.HasValue)
+        {
+            return Result.CastEmpty<(FormatNumericArg, string, Culture?), ITextData>(result);
+        }
 
-        if (!str.SkipWhitespaceAndCharacter('(', out str))
-            return null;
+        var (sourceValue, currencyCode, targetCulture) = result.Value;
 
-        str = str.SkipWhitespace();
-        if (!str.ReadNumber(out var numericValue, out str))
-            return null;
-
-        if (!str.SkipWhitespaceAndCharacter(',', out str))
-            return null;
-
-        str = str.SkipWhitespace();
-        if (!str.ReadQuotedString(out var currencyCode, out str))
-            return null;
-
-        if (!str.SkipWhitespaceAndCharacter(',', out str))
-            return null;
-
-        str = str.SkipWhitespace();
-        if (!str.ReadQuotedString(out var cultureName, out str))
-            return null;
-        var targetCulture = string.IsNullOrEmpty(cultureName) ? null : CultureManager.Instance.GetCulture(cultureName);
-
-        if (!str.SkipWhitespaceAndCharacter(')', out str))
-            return null;
-
-        var baseValue = numericValue.Match(i => i, u => u, f => f, d => d);
+        var baseValue = sourceValue.Match(i => i, u => u, f => f, d => d);
 
         var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
         var formattingOptions = formattingRules.DefaultFormattingOptions;
-        numericValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
+        var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
 
-        remaining = str;
-        return new TextHistoryAsCurrency("", numericValue, currencyCode, formattingOptions, targetCulture);
+        return Result.Value<ITextData>(
+            new TextHistoryAsCurrency("", dividedValue, currencyCode, formattingOptions, targetCulture),
+            result.Location,
+            result.Remainder
+        );
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

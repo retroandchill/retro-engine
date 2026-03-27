@@ -1,17 +1,15 @@
-﻿// // @file TextExporterUtils.cs
+﻿// // @file StringLiteral.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using LinkDotNet.StringBuilder;
-using RetroEngine.Portable.Localization.Cultures;
-using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Utils;
 using Superpower;
 using Superpower.Model;
 using Superpower.Parsers;
 
-namespace RetroEngine.Portable.Localization.Exporting;
+namespace RetroEngine.Portable.Parsers;
 
 [Union]
 public readonly partial struct Piece
@@ -23,7 +21,7 @@ public readonly partial struct Piece
     public static partial Piece Double(char c1, char c2);
 }
 
-public static class TextExporterUtils
+public static class StringLiteral
 {
     private static readonly string[] ExpectedOctal = ["octal"];
 
@@ -177,91 +175,8 @@ public static class TextExporterUtils
             return builder.ToString();
         });
 
-    public static readonly TextParser<string> QuotedString = EscapedString.Between(
+    public static readonly TextParser<string> UnrealStyle = EscapedString.Between(
         Character.EqualTo('"'),
         Character.EqualTo('"')
     );
-
-    public static readonly TextParser<Unit> Comma = Character
-        .EqualTo(',')
-        .Between(Span.WhiteSpace, Span.WhiteSpace)
-        .Value(Unit.Value);
-
-    public static readonly TextParser<Unit> OpenParen = Character
-        .EqualTo('(')
-        .Between(Span.WhiteSpace, Span.WhiteSpace)
-        .Value(Unit.Value);
-
-    public static readonly TextParser<Unit> CloseParen = Span
-        .WhiteSpace.IgnoreThen(Character.EqualTo(')'))
-        .Value(Unit.Value);
-
-    private static readonly TextParser<FormatNumericArg> Integer = Numerics
-        .Integer.Select(c => long.Parse(c.AsReadOnlySpan()))
-        .Select(FormatNumericArg.Signed);
-
-    private static readonly TextParser<FormatNumericArg> Unsigned = Parse
-        .Sequence(Numerics.Integer, Character.EqualTo('u'))
-        .Select(c => long.Parse(c.Item1.AsReadOnlySpan()))
-        .Select(FormatNumericArg.Signed);
-
-    private static readonly TextParser<TextSpan> Decimal = Span.MatchedBy(
-        Parse.Sequence(Numerics.Integer, Character.EqualTo('.').IgnoreThen(Numerics.Natural).OptionalOrDefault())
-    );
-
-    private static readonly TextParser<FormatNumericArg> Float = Parse
-        .Sequence(Decimal, Character.EqualTo('f'))
-        .Select(c => float.Parse(c.Item1.AsReadOnlySpan()))
-        .Select(FormatNumericArg.Float);
-
-    private static readonly TextParser<FormatNumericArg> Double = Decimal
-        .Select(c => double.Parse(c.AsReadOnlySpan()))
-        .Select(FormatNumericArg.Double);
-
-    public static readonly TextParser<FormatNumericArg> Number = Float.Or(Double).Or(Unsigned).Or(Integer);
-
-    private static readonly TextParser<NumberFormattingOptions> NumberFormatOptions;
-
-    public readonly record struct NumberOrPercentParse(
-        FormatNumericArg Arg,
-        NumberFormattingOptions? Options,
-        Culture? Culture
-    );
-
-    private static TextParser<Culture?> CultureByName = QuotedString.Select(c =>
-        !string.IsNullOrEmpty(c) ? CultureManager.Instance.GetCulture(c) : null
-    );
-
-    private static readonly TextParser<NumberOrPercentParse> CustomFormat = Span.EqualTo(
-            TextStringificationUtil.CustomSuffix
-        )
-        .IgnoreThen(
-            Parse
-                .Sequence(Number, Comma.IgnoreThen(NumberFormatOptions), Comma.IgnoreThen(CultureByName))
-                .Between(OpenParen, CloseParen)
-        )
-        .Select(r => new NumberOrPercentParse(r.Item1, r.Item2, r.Item3));
-
-    private static readonly TextParser<NumberOrPercentParse> NonCustomFormat = Parse
-        .Sequence(
-            Span.EqualTo(TextStringificationUtil.GroupedSuffix)
-                .Value((NumberFormattingOptions?)NumberFormattingOptions.DefaultWithGrouping)
-                .Or(
-                    Span.EqualTo(TextStringificationUtil.UngroupedSuffix)
-                        .Value((NumberFormattingOptions?)NumberFormattingOptions.DefaultWithoutGrouping)
-                )
-                .OptionalOrDefault(),
-            Parse.Sequence(Number, Comma.IgnoreThen(CultureByName)).Between(OpenParen, CloseParen)
-        )
-        .Select(c => new NumberOrPercentParse(c.Item2.Item1, c.Item1, c.Item2.Item2));
-
-    public static TextParser<NumberOrPercentParse> NumberOrPercent(string tokenMarker)
-    {
-        return Span.EqualTo(tokenMarker).IgnoreThen(CustomFormat.Or(NonCustomFormat));
-    }
-
-    private static TextParser<T> NumberFormatOption<T>(string marker, TextParser<T> readOption)
-    {
-        return Span.EqualTo(marker).IgnoreThen(readOption.Between(OpenParen, CloseParen));
-    }
 }

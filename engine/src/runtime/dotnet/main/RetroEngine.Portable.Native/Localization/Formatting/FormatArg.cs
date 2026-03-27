@@ -6,7 +6,10 @@
 using System.Numerics;
 using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
+using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
+using Superpower;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -107,34 +110,15 @@ public readonly partial struct FormatArg
         );
     }
 
-    public static bool FromExportedString(
-        ReadOnlySpan<char> buffer,
-        out FormatArg value,
-        out ReadOnlySpan<char> remaining
-    )
+    private static readonly TextParser<FormatArg> Parser = TextParsers
+        .ScopedEnum<TextGender>("ETextGender::")
+        .Select(Gender)
+        .Try()
+        .Or(TextParsers.Number.Select(a => (FormatArg)a).Try().Or(TextParsers.QuotedText.Select(Text)));
+
+    public static Result<FormatArg> FromExportedString(string str)
     {
-        const string textGenderMarker = "ETextGender::";
-
-        if (buffer.ReadScopedEnum(textGenderMarker, out TextGender localGender, out remaining))
-        {
-            value = Gender(localGender);
-            return true;
-        }
-
-        if (buffer.ReadNumber(out var numericValue, out remaining))
-        {
-            value = numericValue;
-            return true;
-        }
-
-        if (TextStringHelper.ReadFromBuffer(buffer, out var localText, out remaining, requiresQuotes: true))
-        {
-            value = Text(localText);
-            return true;
-        }
-
-        value = default;
-        return false;
+        return Parser.TryParse(str);
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);

@@ -4,7 +4,8 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
-using RetroEngine.Portable.Localization.Exporting;
+using RetroEngine.Portable.Localization.Stringification;
+using RetroEngine.Portable.Parsers;
 using RetroEngine.Portable.Utils;
 using Superpower;
 using Superpower.Model;
@@ -19,23 +20,17 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
 
-    public static bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer)
-    {
-        return buffer.PeekMarker(TextStringificationUtil.NsLocTextMarker)
-            || buffer.PeekMarker(TextStringificationUtil.LocTextMarker);
-    }
-
-    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = Span.EqualTo(
-            TextStringificationUtil.NsLocTextMarker
-        )
+    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = TextParsers
+        .Marker(Markers.NsLocText)
+        .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
         .IgnoreThen(
             Parse.Sequence(
-                TextExporterUtils.QuotedString,
-                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString),
-                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString)
+                TextParsers.Whitespace.IgnoreThen(TextParsers.QuotedString),
+                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString),
+                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString)
             )
         )
-        .Between(TextExporterUtils.OpenParen, TextExporterUtils.CloseParen)
+        .FollowedBy(TextParsers.WhitespaceAndCloseParen)
         .AtEnd()
         .Select(r =>
         {
@@ -49,16 +44,16 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             return (ns, key, source);
         });
 
-    private static readonly TextParser<(string Key, string Source)> LoctextParser = Span.EqualTo(
-            TextStringificationUtil.LocTextMarker
-        )
+    private static readonly TextParser<(string Key, string Source)> LoctextParser = TextParsers
+        .Marker(Markers.LocText)
+        .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
         .IgnoreThen(
             Parse.Sequence(
-                TextExporterUtils.QuotedString,
-                TextExporterUtils.Comma.IgnoreThen(TextExporterUtils.QuotedString)
+                TextParsers.Whitespace.IgnoreThen(TextParsers.QuotedString),
+                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString)
             )
         )
-        .Between(TextExporterUtils.OpenParen, TextExporterUtils.CloseParen)
+        .FollowedBy(TextParsers.WhitespaceAndCloseParen)
         .AtEnd()
         .Select(r =>
         {

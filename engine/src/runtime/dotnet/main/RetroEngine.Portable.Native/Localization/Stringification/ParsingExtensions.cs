@@ -5,7 +5,7 @@
 
 using Superpower.Model;
 
-namespace RetroEngine.Portable.Localization.Exporting;
+namespace RetroEngine.Portable.Localization.Stringification;
 
 public static class ParsingExtensions
 {

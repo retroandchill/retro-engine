@@ -40,15 +40,15 @@ public record NumberFormattingOptions
     public static NumberFormattingOptions DefaultWithoutGrouping { get; } = new() { UseGrouping = false };
 }
 
-internal readonly record struct NumberFormattingOptionsBuilder
+internal struct NumberFormattingOptionsBuilder
 {
     private static readonly NumberFormattingOptions Default = new();
 
-    private readonly bool _edited;
+    private bool _edited;
     public bool? AlwaysSign
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -58,7 +58,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public bool? UseGrouping
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -68,7 +68,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public bool? IndicateNearlyInteger
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -78,7 +78,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public RoundingMode? RoundingMode
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -88,7 +88,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public int? MinimumIntegralDigits
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -98,7 +98,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public int? MaximumIntegralDigits
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -108,7 +108,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public int? MinimumFractionalDigits
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;
@@ -118,7 +118,7 @@ internal readonly record struct NumberFormattingOptionsBuilder
     public int? MaximumFractionalDigits
     {
         get;
-        init
+        set
         {
             field = value;
             _edited = true;

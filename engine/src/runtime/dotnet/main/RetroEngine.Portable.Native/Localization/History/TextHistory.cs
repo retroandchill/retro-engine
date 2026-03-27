@@ -11,8 +11,6 @@ namespace RetroEngine.Portable.Localization.History;
 
 internal interface ITextHistory : ITextData
 {
-    static virtual bool ShouldReadFromBuffer(ReadOnlySpan<char> buffer) => false;
-
     static virtual Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
         return Result.Empty<ITextData>(new TextSpan(str));
