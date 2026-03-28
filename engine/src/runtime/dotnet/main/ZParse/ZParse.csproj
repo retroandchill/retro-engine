@@ -21,4 +21,8 @@
       <PackageReference Include="ZLinq" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="ZParse.Test"/>
+    </ItemGroup>
+
 </Project>

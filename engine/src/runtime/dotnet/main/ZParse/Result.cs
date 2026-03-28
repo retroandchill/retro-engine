@@ -141,6 +141,7 @@ public readonly ref struct Result<T>
 
         builder.Append(", expected ");
         builder.AppendFriendlyList(Expectations);
+        builder.Append('.');
     }
 }
 
@@ -188,39 +189,39 @@ public static class Result
         return new Result<T>(value, input, remainder, false);
     }
 
+    /// <summary>
+    /// Convert an empty result to another type.
+    /// </summary>
+    /// <param name="result">The result to convert</param>
+    /// <typeparam name="TOther">The target type</typeparam>
+    /// <typeparam name="T">The source type</typeparam>
+    /// <returns>A result of type <typeparamref name="TOther"/> carrying the same information as <paramref name="result"/>.</returns>
+    public static Result<TOther> CastEmpty<T, TOther>(Result<T> result)
+        where T : allows ref struct
+        where TOther : allows ref struct
+    {
+        return new Result<TOther>(result.Remainder, result.Expectations, result.Backtrack);
+    }
+
+    /// <summary>
+    /// Combine two empty results.
+    /// </summary>
+    /// <param name="other">The other result to combine with</param>
     /// <param name="result">The result to convert</param>
     /// <typeparam name="T">The source type</typeparam>
-    extension<T>(Result<T> result)
+    /// <returns>A result of type <typeparamref name="T"/> carrying information from both results.</returns>
+    public static Result<T> CombineEmpty<T>(Result<T> result, Result<T> other)
         where T : allows ref struct
     {
-        /// <summary>
-        /// Convert an empty result to another type.
-        /// </summary>
-        /// <typeparam name="TOther">The target type</typeparam>
-        /// <returns>A result of type <typeparamref name="TOther"/> carrying the same information as <paramref name="result"/>.</returns>
-        public Result<TOther> CastEmpty<TOther>()
-            where TOther : allows ref struct
-        {
-            return new Result<TOther>(result.Remainder, result.Expectations, result.Backtrack);
-        }
+        if (result.Remainder != other.Remainder)
+            return other;
 
-        /// <summary>
-        /// Combine two empty results.
-        /// </summary>
-        /// <param name="other">The other result to combine with</param>
-        /// <returns>A result of type <typeparamref name="T"/> carrying information from both results.</returns>
-        public Result<T> CombineEmpty(Result<T> other)
-        {
-            if (result.Remainder != other.Remainder)
-                return other;
+        var expectations = result.Expectations;
+        if (expectations.IsDefaultOrEmpty)
+            expectations = other.Expectations;
+        else if (!other.Expectations.IsDefaultOrEmpty)
+            expectations = expectations.AddRange(other.Expectations);
 
-            var expectations = result.Expectations;
-            if (expectations.IsDefaultOrEmpty)
-                expectations = other.Expectations;
-            else if (!other.Expectations.IsDefaultOrEmpty)
-                expectations = expectations.AddRange(other.Expectations);
-
-            return new Result<T>(other.Remainder, expectations, other.Backtrack);
-        }
+        return new Result<T>(other.Remainder, expectations, other.Backtrack);
     }
 }

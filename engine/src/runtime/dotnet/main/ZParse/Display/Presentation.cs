@@ -190,4 +190,26 @@ internal static class Presentation
             builder.Append('`');
         }
     }
+
+    public static string FormatLiteral(char literal)
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = new ValueStringBuilder(buffer);
+        builder.AppendLiteral(literal);
+        return builder.ToString();
+    }
+
+    public static string FormatLiteral(ReadOnlySpan<char> literal)
+    {
+        var builder = new ValueStringBuilder();
+        try
+        {
+            builder.AppendLiteral(literal);
+            return builder.ToString();
+        }
+        finally
+        {
+            builder.Dispose();
+        }
+    }
 }

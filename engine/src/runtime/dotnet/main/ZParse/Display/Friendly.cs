@@ -29,7 +29,7 @@ internal static class Friendly
         }
 
         [OverloadResolutionPriority(int.MaxValue)]
-        public void AppendFriendlyList(ReadOnlySpan<string> items)
+        public void AppendFriendlyList(scoped ReadOnlySpan<string> items)
         {
             // Keep the order stable
             var unique = items.AsValueEnumerable().Distinct().ToList();
@@ -59,6 +59,20 @@ internal static class Friendly
                     builder.Append(items.Last());
                     break;
             }
+        }
+    }
+
+    public static string List(IEnumerable<string> items)
+    {
+        var builder = new ValueStringBuilder();
+        try
+        {
+            builder.AppendFriendlyList(items);
+            return builder.ToString();
+        }
+        finally
+        {
+            builder.Dispose();
         }
     }
 }
