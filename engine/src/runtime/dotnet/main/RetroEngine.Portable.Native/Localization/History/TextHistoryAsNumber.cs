@@ -13,13 +13,18 @@ using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsNumber(
-    string displayString,
-    FormatNumericArg sourceValue,
-    NumberFormattingOptions? formattingOptions,
-    Culture? targetCulture
-) : TextHistoryFormatNumber(displayString, sourceValue, formattingOptions, targetCulture), ITextHistory
+internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistory
 {
+    public TextHistoryAsNumber(
+        FormatNumericArg sourceValue,
+        NumberFormattingOptions? formattingOptions,
+        Culture? targetCulture
+    )
+        : base(sourceValue, formattingOptions, targetCulture)
+    {
+        UpdateDisplayString();
+    }
+
     protected override string BuildLocalizedDisplayString()
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
@@ -36,7 +41,7 @@ internal sealed class TextHistoryAsNumber(
 
     private static readonly TextParser<ITextData> Parser = TextParsers
         .NumberOrPercent(Markers.LocGenNumber)
-        .Select(ITextData (r) => new TextHistoryAsNumber("", r.Value, r.Options, r.TargetCulture));
+        .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
 
     public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {

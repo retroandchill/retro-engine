@@ -29,13 +29,13 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         string? timeZoneId,
         Culture? targetCulture
     )
-        : base(displayString)
     {
         _sourceDateTime = dateTime;
         _dateFormatStyle = dateFormatStyle;
         _timeFormatStyle = timeFormatStyle;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;
+        UpdateDisplayString();
     }
 
     public TextHistoryAsDateTime(
@@ -45,12 +45,12 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         string? timeZoneId,
         Culture? targetCulture
     )
-        : base(displayString)
     {
         _sourceDateTime = dateTime;
         _customPattern = pattern;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;
+        UpdateDisplayString();
     }
 
     private TextHistoryAsDateTime(
@@ -62,7 +62,6 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         string timeZoneId,
         Culture? targetCulture
     )
-        : base(displayString)
     {
         _sourceDateTime = dateTime;
         _dateFormatStyle = dateFormatStyle;
@@ -70,6 +69,7 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         _customPattern = pattern;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;
+        UpdateDisplayString();
     }
 
     public override string BuildInvariantDisplayString()

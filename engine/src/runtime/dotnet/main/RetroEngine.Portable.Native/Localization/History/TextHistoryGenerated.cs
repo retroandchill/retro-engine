@@ -5,9 +5,9 @@
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal abstract class TextHistoryGenerated(string displayString) : TextHistory
+internal abstract class TextHistoryGenerated : TextHistory
 {
-    private string _displayString = displayString;
+    private string _displayString = "";
 
     public sealed override TextId TextId => TextId.Empty;
     public override string DisplayString => _displayString;

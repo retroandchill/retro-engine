@@ -97,7 +97,7 @@ public sealed class TextFormatter
     )
     {
         var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
-        return new Text(new TextHistoryNamedFormat(resultString, format, arguments), TextFlag.Transient);
+        return new Text(new TextHistoryNamedFormat(format, arguments), TextFlag.Transient);
     }
 
     public static Text Format(
@@ -119,7 +119,7 @@ public sealed class TextFormatter
     )
     {
         var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
-        return new Text(new TextHistoryOrderedFormat(resultString, format, arguments), TextFlag.Transient);
+        return new Text(new TextHistoryOrderedFormat(format, arguments), TextFlag.Transient);
     }
 
     public static Text Format(
@@ -130,7 +130,7 @@ public sealed class TextFormatter
     )
     {
         var resultString = FormatStr(format, arguments.AsSpan(), rebuildText, rebuildAsSource);
-        return new Text(new TextHistoryOrderedFormat(resultString, format, arguments), TextFlag.Transient);
+        return new Text(new TextHistoryOrderedFormat(format, arguments), TextFlag.Transient);
     }
 
     public static Text Format(
@@ -141,7 +141,7 @@ public sealed class TextFormatter
     )
     {
         var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
-        return new Text(new TextHistoryOrderedFormat(resultString, format, [.. arguments]), TextFlag.Transient);
+        return new Text(new TextHistoryOrderedFormat(format, [.. arguments]), TextFlag.Transient);
     }
 
     public static string FormatStr(

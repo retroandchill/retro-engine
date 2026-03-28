@@ -9,11 +9,10 @@ using RetroEngine.Portable.Localization.Formatting;
 namespace RetroEngine.Portable.Localization.History;
 
 internal abstract class TextHistoryFormatNumber(
-    string displayString,
     FormatNumericArg sourceValue,
     NumberFormattingOptions? formattingOptions,
     Culture? targetCulture
-) : TextHistoryGenerated(displayString)
+) : TextHistoryGenerated
 {
     protected FormatNumericArg SourceValue { get; } = sourceValue;
 

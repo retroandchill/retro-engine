@@ -12,17 +12,26 @@ using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsDate(
-    string displayString,
-    DateTimeOffset dateTime,
-    DateTimeFormatStyle formatStyle,
-    string? timeZoneId,
-    Culture? targetCulture
-) : TextHistoryGenerated(displayString), ITextHistory
+internal sealed class TextHistoryAsDate : TextHistoryGenerated, ITextHistory
 {
-    private readonly DateTimeOffset _sourceDateTime = dateTime;
-    private readonly DateTimeFormatStyle _formatStyle = formatStyle;
-    private readonly Culture? _targetCulture = targetCulture;
+    private readonly DateTimeOffset _sourceDateTime;
+    private readonly DateTimeFormatStyle _formatStyle;
+    private readonly Culture? _targetCulture;
+    private readonly string? _timeZoneId;
+
+    public TextHistoryAsDate(
+        DateTimeOffset dateTime,
+        DateTimeFormatStyle formatStyle,
+        string? timeZoneId,
+        Culture? targetCulture
+    )
+    {
+        _timeZoneId = timeZoneId;
+        _sourceDateTime = dateTime;
+        _formatStyle = formatStyle;
+        _targetCulture = targetCulture;
+        UpdateDisplayString();
+    }
 
     public override string BuildInvariantDisplayString()
     {
@@ -31,7 +40,7 @@ internal sealed class TextHistoryAsDate(
 
     private static readonly TextParser<ITextData> Parser = TextParsers
         .DateTime(Markers.LocGenDate, true, false)
-        .Select(ITextData (r) => new TextHistoryAsDate("", r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
+        .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
 
     public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
@@ -40,7 +49,15 @@ internal sealed class TextHistoryAsDate(
 
     public override bool WriteToBuffer(StringBuilder buffer)
     {
-        buffer.WriteDateTime(Markers.LocGenDate, _sourceDateTime, _formatStyle, null, null, timeZoneId, _targetCulture);
+        buffer.WriteDateTime(
+            Markers.LocGenDate,
+            _sourceDateTime,
+            _formatStyle,
+            null,
+            null,
+            _timeZoneId,
+            _targetCulture
+        );
         return true;
     }
 
@@ -59,6 +76,6 @@ internal sealed class TextHistoryAsDate(
 
     private string BuildDateTimeDisplayString(Culture culture)
     {
-        return TextChronoFormatter.AsDate(_sourceDateTime, _formatStyle, timeZoneId, culture);
+        return TextChronoFormatter.AsDate(_sourceDateTime, _formatStyle, _timeZoneId, culture);
     }
 }

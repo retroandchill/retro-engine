@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -112,15 +111,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static Text AsNumber<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, INumber<T>
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var numberFormattingRules = culture.DecimalNumberFormattingRules;
-        var nativeString = FastDecimalFormat.NumberToString(
-            value,
-            numberFormattingRules,
-            options ?? numberFormattingRules.DefaultFormattingOptions
-        );
         return new Text(
-            new TextHistoryAsNumber(nativeString, FormatNumericArg.FromNumber(value), options, targetCulture),
+            new TextHistoryAsNumber(FormatNumericArg.FromNumber(value), options, targetCulture),
             TextFlag.Transient
         );
     }
@@ -128,15 +120,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     public static Text AsPercent<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
         where T : unmanaged, IFloatingPoint<T>
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var numberFormattingRules = culture.PercentNumberFormattingRules;
-        var nativeString = FastDecimalFormat.NumberToString(
-            value,
-            numberFormattingRules,
-            options ?? numberFormattingRules.DefaultFormattingOptions
-        );
         return new Text(
-            new TextHistoryAsPercent(nativeString, FormatNumericArg.FromNumber(value), options, targetCulture),
+            new TextHistoryAsPercent(FormatNumericArg.FromNumber(value), options, targetCulture),
             TextFlag.Transient
         );
     }
@@ -149,21 +134,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     )
         where T : unmanaged, INumber<T>
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var numberFormattingRules = culture.GetCurrencyFormattingRules(currencyCode);
-        var nativeString = FastDecimalFormat.NumberToString(
-            value,
-            numberFormattingRules,
-            options ?? numberFormattingRules.DefaultFormattingOptions
-        );
         return new Text(
-            new TextHistoryAsCurrency(
-                nativeString,
-                FormatNumericArg.FromNumber(value),
-                currencyCode,
-                options,
-                targetCulture
-            ),
+            new TextHistoryAsCurrency(FormatNumericArg.FromNumber(value), currencyCode, options, targetCulture),
             TextFlag.Transient
         );
     }
@@ -175,12 +147,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var nativeString = TextChronoFormatter.AsDate(dateTime, format, timeZoneId, culture);
-        return new Text(
-            new TextHistoryAsDate(nativeString, dateTime, format, timeZoneId, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsDate(dateTime, format, timeZoneId, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsTime(
@@ -190,12 +157,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var nativeString = TextChronoFormatter.AsTime(dateTime, format, timeZoneId, culture);
-        return new Text(
-            new TextHistoryAsTime(nativeString, dateTime, format, timeZoneId, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsTime(dateTime, format, timeZoneId, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsDateTime(
@@ -375,18 +337,16 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public Text ToLower()
     {
-        var resultString = TextTransformer.ToUpper(ToString());
         return new Text(
-            new TextHistoryTransformed(resultString, this, TextHistoryTransformed.TransformType.ToLower),
+            new TextHistoryTransformed(this, TextHistoryTransformed.TransformType.ToLower),
             TextFlag.Transient
         );
     }
 
     public Text ToUpper()
     {
-        var resultString = TextTransformer.ToUpper(ToString());
         return new Text(
-            new TextHistoryTransformed(resultString, this, TextHistoryTransformed.TransformType.ToUpper),
+            new TextHistoryTransformed(this, TextHistoryTransformed.TransformType.ToUpper),
             TextFlag.Transient
         );
     }
@@ -475,25 +435,6 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
         return thisIsInvariant
             && otherIsInvariant & ToString().Equals(other.ToString(), StringComparison.InvariantCultureIgnoreCase);
-    }
-
-    private static CompareOptions GetCompareOptions(TextComparisonLevel level)
-    {
-        return level switch
-        {
-            TextComparisonLevel.CultureDefault => CompareOptions.None,
-            TextComparisonLevel.IgnoreCaseAccentWidth => CompareOptions.IgnoreCase
-                | CompareOptions.IgnoreNonSpace
-                | CompareOptions.IgnoreKanaType
-                | CompareOptions.IgnoreWidth,
-            TextComparisonLevel.IgnoreCase => CompareOptions.IgnoreCase
-                | CompareOptions.IgnoreKanaType
-                | CompareOptions.IgnoreWidth,
-            TextComparisonLevel.CultureSensitive => CompareOptions.None,
-            TextComparisonLevel.CultureSensitiveWithPunctuation => CompareOptions.StringSort,
-            TextComparisonLevel.Ordinal => CompareOptions.Ordinal,
-            _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
-        };
     }
 
     public override int GetHashCode()

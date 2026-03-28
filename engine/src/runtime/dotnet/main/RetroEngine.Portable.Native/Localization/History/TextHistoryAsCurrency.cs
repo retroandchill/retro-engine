@@ -13,18 +13,26 @@ using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsCurrency(
-    string displayString,
-    FormatNumericArg sourceValue,
-    string? currencyCode,
-    NumberFormattingOptions? formattingOptions,
-    Culture? targetCulture
-) : TextHistoryFormatNumber(displayString, sourceValue, formattingOptions, targetCulture), ITextHistory
+internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHistory
 {
+    private readonly string? _currencyCode;
+
+    public TextHistoryAsCurrency(
+        FormatNumericArg sourceValue,
+        string? currencyCode,
+        NumberFormattingOptions? formattingOptions,
+        Culture? targetCulture
+    )
+        : base(sourceValue, formattingOptions, targetCulture)
+    {
+        _currencyCode = currencyCode;
+        UpdateDisplayString();
+    }
+
     protected override string BuildLocalizedDisplayString()
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
-        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         return BuildNumericDisplayString(formattingRules);
     }
 
@@ -57,7 +65,7 @@ internal sealed class TextHistoryAsCurrency(
         var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
 
         return Result.Value<ITextData>(
-            new TextHistoryAsCurrency("", dividedValue, currencyCode, formattingOptions, targetCulture),
+            new TextHistoryAsCurrency(dividedValue, currencyCode, formattingOptions, targetCulture),
             result.Location,
             result.Remainder
         );
@@ -69,14 +77,14 @@ internal sealed class TextHistoryAsCurrency(
 
         var dividedValue = SourceValue.Match(i => i, u => u, f => f, d => d);
 
-        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         var baseValue = (long)(dividedValue * FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits));
 
         buffer.Append("LOCGEN_CURRENCY(");
         FormatArg.Signed(baseValue).ToExportedString(buffer);
         buffer.Append(", \"");
-        buffer.Append(currencyCode?.ReplaceQuotesWithEscapedQuotes());
+        buffer.Append(_currencyCode?.ReplaceQuotesWithEscapedQuotes());
         buffer.Append("\", \"");
         if (TargetCulture is not null)
         {
@@ -90,7 +98,7 @@ internal sealed class TextHistoryAsCurrency(
     public override string BuildInvariantDisplayString()
     {
         var culture = CultureManager.Instance.InvariantCulture;
-        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         return BuildNumericDisplayString(formattingRules);
     }
 }

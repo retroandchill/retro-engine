@@ -5,11 +5,7 @@
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryTransformed(
-    string displayString,
-    Text sourceText,
-    TextHistoryTransformed.TransformType transformType
-) : TextHistoryGenerated(displayString), ITextHistory
+internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistory
 {
     public enum TransformType
     {
@@ -17,8 +13,15 @@ internal sealed class TextHistoryTransformed(
         ToLower,
     }
 
-    private readonly Text _sourceText = sourceText;
-    private readonly TransformType _transformType = transformType;
+    private readonly Text _sourceText;
+    private readonly TransformType _transformType;
+
+    public TextHistoryTransformed(Text sourceText, TransformType transformType)
+    {
+        _sourceText = sourceText;
+        _transformType = transformType;
+        UpdateDisplayString();
+    }
 
     public override string BuildInvariantDisplayString()
     {

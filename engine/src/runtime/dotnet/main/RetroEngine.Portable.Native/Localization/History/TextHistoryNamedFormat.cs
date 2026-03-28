@@ -12,17 +12,13 @@ namespace RetroEngine.Portable.Localization.History;
 internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistory
 {
     private readonly TextFormat _sourceFormat;
-    private readonly ImmutableDictionary<string, FormatArg> _args = [];
+    private readonly ImmutableDictionary<string, FormatArg> _args;
 
-    public TextHistoryNamedFormat(
-        string displayString,
-        TextFormat sourceFormat,
-        ImmutableDictionary<string, FormatArg> args
-    )
-        : base(displayString)
+    public TextHistoryNamedFormat(TextFormat sourceFormat, ImmutableDictionary<string, FormatArg> args)
     {
         _sourceFormat = sourceFormat;
         _args = args;
+        UpdateDisplayString();
     }
 
     public TextHistoryNamedFormat(
@@ -30,7 +26,7 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
         TextFormat sourceFormat,
         IReadOnlyDictionary<string, FormatArg> args
     )
-        : this(displayString, sourceFormat, args.ToImmutableDictionary()) { }
+        : this(sourceFormat, args.ToImmutableDictionary()) { }
 
     public override string BuildInvariantDisplayString()
     {

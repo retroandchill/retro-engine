@@ -12,13 +12,18 @@ using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsPercent(
-    string displayString,
-    FormatNumericArg sourceValue,
-    NumberFormattingOptions? formattingOptions,
-    Culture? targetCulture
-) : TextHistoryFormatNumber(displayString, sourceValue, formattingOptions, targetCulture), ITextHistory
+internal sealed class TextHistoryAsPercent : TextHistoryFormatNumber, ITextHistory
 {
+    public TextHistoryAsPercent(
+        FormatNumericArg sourceValue,
+        NumberFormattingOptions? formattingOptions,
+        Culture? targetCulture
+    )
+        : base(sourceValue, formattingOptions, targetCulture)
+    {
+        UpdateDisplayString();
+    }
+
     protected override string BuildLocalizedDisplayString()
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
@@ -35,7 +40,7 @@ internal sealed class TextHistoryAsPercent(
 
     private static readonly TextParser<ITextData> Parser = TextParsers
         .NumberOrPercent(Markers.LocGenPercent)
-        .Select(ITextData (r) => new TextHistoryAsNumber("", r.Value, r.Options, r.TargetCulture));
+        .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
 
     public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
     {
