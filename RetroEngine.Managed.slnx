@@ -22,11 +22,9 @@
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Native/RetroEngine.Portable.Native.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine/RetroEngine.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/ZParse/ZParse.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/dotnet/test/">
     <Project Path="engine/src/runtime/dotnet/test/RetroEngine.Portable.Test/RetroEngine.Portable.Test.csproj" />
-    <Project Path="engine/src/runtime/dotnet/test/ZParse.Test/ZParse.Test.csproj" />
   </Folder>
   <Folder Name="/games/" />
   <Folder Name="/games/sample/" />
