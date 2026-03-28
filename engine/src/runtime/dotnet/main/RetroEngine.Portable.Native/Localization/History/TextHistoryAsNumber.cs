@@ -45,12 +45,7 @@ internal sealed class TextHistoryAsNumber(
 
     public override bool WriteToBuffer(StringBuilder buffer)
     {
-        buffer.WriteNumberOrPercent(
-            TextStringificationUtil.LocGenNumberMarker,
-            SourceValue,
-            FormattingOptions,
-            TargetCulture
-        );
+        buffer.WriteNumberOrPercent(Markers.LocGenNumber, SourceValue, FormattingOptions, TargetCulture);
         return true;
     }
 

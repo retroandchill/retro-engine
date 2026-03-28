@@ -9,7 +9,7 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryNamedFormat : TextHistoryGenerated
+internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistory
 {
     private readonly TextFormat _sourceFormat;
     private readonly ImmutableDictionary<string, FormatArg> _args = [];

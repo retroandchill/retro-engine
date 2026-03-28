@@ -267,6 +267,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         }
     }
 
+    public const string InvariantTimeZone = "Etc/Unknown";
+
     public static Text FromName(Name name)
     {
         return new Text(name.ToString());

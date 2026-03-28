@@ -12,6 +12,12 @@ using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.Stringification;
 
+using CustomDateFormatParser = TextParser<(
+    DateTimeFormatStyle DateStyle,
+    DateTimeFormatStyle TimeStyle,
+    string? Format
+)>;
+
 public readonly record struct NumberParseResult(
     FormatNumericArg Value,
     NumberFormattingOptions? Options,
@@ -23,7 +29,7 @@ public readonly record struct DateTimeParseResult(
     DateTimeFormatStyle DateStyle,
     DateTimeFormatStyle TimeStyle,
     string? CustomPattern,
-    string? TimeZone,
+    string TimeZone,
     Culture? TargetCulture
 );
 
@@ -120,26 +126,32 @@ public static class TextParsers
         nameof(NumberFormattingOptions.AlwaysSign),
         BoolOption
     );
+
     private static readonly TextParser<bool> UseGrouping = CustomOption(
         nameof(NumberFormattingOptions.UseGrouping),
         BoolOption
     );
+
     private static readonly TextParser<RoundingMode> RoundingMode = CustomOption(
         nameof(NumberFormattingOptions.RoundingMode),
         RoundingModeOption
     );
+
     private static readonly TextParser<int> MinimumIntegralDigits = CustomOption(
         nameof(NumberFormattingOptions.MinimumIntegralDigits),
         NumericOption
     );
+
     private static readonly TextParser<int> MaximumIntegralDigits = CustomOption(
         nameof(NumberFormattingOptions.MaximumIntegralDigits),
         NumericOption
     );
+
     private static readonly TextParser<int> MinimumFractionalDigits = CustomOption(
         nameof(NumberFormattingOptions.MinimumFractionalDigits),
         NumericOption
     );
+
     private static readonly TextParser<int> MaximumFractionalDigits = CustomOption(
         nameof(NumberFormattingOptions.MaximumFractionalDigits),
         NumericOption
@@ -254,9 +266,117 @@ public static class TextParsers
         "EDateTimeStyle::"
     );
 
-    public static TextParser<DateTimeParseResult> DateTime(string marker)
+    private static readonly TextParser<DateTimeFormatStyle> DateTimeArg = WhitespaceAndComma
+        .IgnoreThen(Whitespace)
+        .IgnoreThen(DateTimeStyle);
+
+    private static readonly TextParser<(bool IsCustom, string? TimeZone)> DateTimeSuffix = Parse.Sequence(
+        Marker(Markers.CustomSuffix).Value(true).OptionalOrDefault(),
+        Marker(Markers.LocalSuffix)
+            .Value((string?)Text.InvariantTimeZone)
+            .Or(Marker(Markers.UtcSuffix).Value((string?)null))
+    );
+
+    private static readonly TextParser<string> QuotedStringArg = WhitespaceAndComma
+        .IgnoreThen(Whitespace)
+        .IgnoreThen(QuotedString);
+
+    private static readonly CustomDateFormatParser CustomDateFormat = QuotedStringArg.Select(s =>
+        (DateTimeFormatStyle.Custom, DateTimeFormatStyle.Custom, (string?)s)
+    );
+
+    private static readonly CustomDateFormatParser DateOnlyFormat = DateTimeArg.Select(s =>
+        (s, DateTimeFormatStyle.Default, (string?)null)
+    );
+
+    private static readonly CustomDateFormatParser TimeOnlyFormat = DateTimeArg.Select(s =>
+        (DateTimeFormatStyle.Default, s, (string?)null)
+    );
+
+    private static readonly CustomDateFormatParser FullDateTimeFormat = Parse
+        .Sequence(DateTimeArg, DateTimeArg)
+        .Select((t) => (t.Item1, t.Item1, (string?)null));
+
+    private static readonly TextParser<(bool IsCustom, string? TimeZone, DateTimeOffset DateTime)> DateTimeInfo = Parse
+        .Sequence(
+            DateTimeSuffix,
+            WhitespaceAndOpenParen
+                .IgnoreThen(Whitespace)
+                .IgnoreThen(Numerics.IntegerInt64)
+                .Select(DateTimeOffset.FromUnixTimeMilliseconds)
+        )
+        .Select(t => (t.Item1.IsCustom, t.Item1.TimeZone, DateTime: t.Item2));
+
+    public static TextParser<DateTimeParseResult> DateTime(string marker, bool includeDate, bool includeTime)
     {
-        throw new NotImplementedException();
+        if (!includeDate && !includeTime)
+            throw new ArgumentException("At least one of includeDate or includeTime must be true");
+
+        var parseBasicData = Marker(marker)
+            .IgnoreThen(DateTimeInfo)
+            .SelectMany(
+                t =>
+                {
+                    if (t.IsCustom)
+                    {
+                        return CustomDateFormat;
+                    }
+
+                    if (includeDate && includeTime)
+                    {
+                        return FullDateTimeFormat;
+                    }
+
+                    return includeDate ? DateOnlyFormat : TimeOnlyFormat;
+                },
+                (prefix, format) =>
+                    (
+                        prefix.IsCustom,
+                        prefix.TimeZone,
+                        prefix.DateTime,
+                        format.DateStyle,
+                        format.TimeStyle,
+                        format.Format
+                    )
+            );
+
+        return input =>
+        {
+            var initialInfo = parseBasicData(input);
+            if (!initialInfo.HasValue)
+                return Result.CastEmpty<
+                    (bool, string?, DateTimeOffset, DateTimeFormatStyle, DateTimeFormatStyle, string?),
+                    DateTimeParseResult
+                >(initialInfo);
+
+            var (isCustom, timeZone, dateTime, dateStyle, timeStyle, format) = initialInfo.Value;
+            var remainder = initialInfo.Remainder;
+
+            if (timeZone is null)
+            {
+                var timeZoneResult = QuotedStringArg(remainder);
+                if (!timeZoneResult.HasValue)
+                    return Result.CastEmpty<string, DateTimeParseResult>(timeZoneResult);
+
+                timeZone = timeZoneResult.Value;
+                remainder = timeZoneResult.Remainder;
+            }
+
+            var cultureResult = QuotedStringArg(remainder);
+            if (!cultureResult.HasValue)
+                return Result.CastEmpty<string, DateTimeParseResult>(cultureResult);
+
+            var closeParentResult = WhitespaceAndCloseParen(remainder);
+            if (!closeParentResult.HasValue)
+                return Result.CastEmpty<char, DateTimeParseResult>(closeParentResult);
+
+            var culture = CultureManager.Instance.GetCulture(cultureResult.Value);
+            return Result.Value(
+                new DateTimeParseResult(dateTime, dateStyle, timeStyle, format, timeZone, culture),
+                initialInfo.Location,
+                remainder
+            );
+        };
     }
 
     public static TextParser<Text> ExportedText => throw new NotImplementedException();

@@ -12,7 +12,7 @@ internal sealed class TextHistoryOrderedFormat(
     string displayString,
     TextFormat sourceFormat,
     ImmutableArray<FormatArg> args
-) : TextHistoryGenerated(displayString)
+) : TextHistoryGenerated(displayString), ITextHistory
 {
     private readonly TextFormat _sourceFormat = sourceFormat;
     private readonly ImmutableArray<FormatArg> _args = [.. args];

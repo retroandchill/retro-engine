@@ -9,33 +9,13 @@ using System.Text;
 using LinkDotNet.StringBuilder;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
+using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
 
 namespace RetroEngine.Portable.Localization;
 
 internal static class TextStringificationUtil
 {
-    public const string TextMarker = "TEXT";
-    public const string InvTextMarker = "INVTEXT";
-    public const string NsLocTextMarker = "NSLOCTEXT";
-    public const string LocTextMarker = "LOCTEXT";
-    public const string LocTableMarker = "LOCTABLE";
-    public const string LocGenNumberMarker = "LOCGEN_NUMBER";
-    public const string LocGenPercentMarker = "LOCGEN_PERCENT";
-    public const string LocGenCurrencyMarker = "LOCGEN_CURRENCY";
-    public const string LocGenDateMarker = "LOCGEN_DATE";
-    public const string LocGenTimeMarker = "LOCGEN_TIME";
-    public const string LocGenDateTimeMarker = "LOCGEN_DATETIME";
-    public const string LocGenToLowerMarker = "LOCGEN_TOLOWER";
-    public const string LocGenToUpperMarker = "LOCGEN_TOUPPER";
-    public const string LocGenFormatOrderedMarker = "LOCGEN_FORMAT_ORDERED";
-    public const string LocGenFormatNamedMarker = "LOCGEN_FORMAT_NAMED";
-    public const string GroupedSuffix = "_GROUPED";
-    public const string UngroupedSuffix = "_UNGROUPED";
-    public const string CustomSuffix = "_CUSTOM";
-    public const string UtcSuffix = "_UTC";
-    public const string LocalSuffix = "_LOCAL";
-
     private static readonly NumberFormattingOptions DefaultNumberFormatOptions = new();
 
     extension(StringBuilder buffer)
@@ -144,16 +124,16 @@ internal static class TextStringificationUtil
             {
                 if (formattingOptions.Equals(NumberFormattingOptions.DefaultWithGrouping))
                 {
-                    suffix = GroupedSuffix;
+                    suffix = Markers.GroupedSuffix;
                 }
                 else if (formattingOptions.Equals(NumberFormattingOptions.DefaultWithoutGrouping))
                 {
-                    suffix = UngroupedSuffix;
+                    suffix = Markers.UngroupedSuffix;
                 }
                 else
                 {
                     customOptions.WriteNumberFormattingOptions(formattingOptions);
-                    suffix = customOptions.Length > 0 ? CustomSuffix : "";
+                    suffix = customOptions.Length > 0 ? Markers.CustomSuffix : "";
                 }
             }
             else
@@ -163,6 +143,69 @@ internal static class TextStringificationUtil
 
             buffer.Append(tokenMarker).Append(suffix).Append('(');
             sourceValue.ToExportedString(buffer);
+        }
+
+        public void WriteDateTime(
+            string marker,
+            DateTimeOffset dateTime,
+            DateTimeFormatStyle? dateStyle,
+            DateTimeFormatStyle? timeStyle,
+            string? customPattern,
+            string? timeZoneId,
+            Culture? targetCulture
+        )
+        {
+            var isCustom = dateStyle == DateTimeFormatStyle.Custom;
+            var isInvariant = timeZoneId == Text.InvariantTimeZone;
+
+            buffer.Append(marker);
+            if (isCustom)
+            {
+                buffer.Append(Markers.CustomSuffix);
+            }
+            buffer.Append(isInvariant ? Markers.LocalSuffix : Markers.UtcSuffix);
+            buffer.Append('(');
+            buffer.Append(dateTime.ToUnixTimeMilliseconds());
+            if (isCustom)
+            {
+                buffer.Append(", \"");
+                buffer.Append(customPattern?.ReplaceQuotesWithEscapedQuotes());
+                buffer.Append('"');
+            }
+            else
+            {
+                if (dateStyle is not null)
+                {
+                    buffer.Append(", ");
+                    WriteDateTimeStyle(buffer, dateStyle.Value);
+                }
+
+                if (timeStyle is null)
+                    return;
+
+                buffer.Append(", ");
+                WriteDateTimeStyle(buffer, timeStyle.Value);
+            }
+
+            if (!isInvariant)
+            {
+                buffer.Append(", \"");
+                buffer.Append(timeZoneId?.ReplaceQuotesWithEscapedQuotes());
+                buffer.Append('"');
+            }
+
+            buffer.Append(", \"");
+            if (targetCulture is not null)
+            {
+                buffer.Append(targetCulture.Name.ReplaceQuotesWithEscapedQuotes());
+            }
+            buffer.Append("\")");
+            return;
+
+            void WriteDateTimeStyle(StringBuilder builder, DateTimeFormatStyle style)
+            {
+                builder.WriteScopedEnum("EDateTimeStyle::", style);
+            }
         }
     }
 }

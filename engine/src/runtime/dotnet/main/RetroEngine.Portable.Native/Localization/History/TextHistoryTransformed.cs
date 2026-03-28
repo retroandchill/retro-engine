@@ -9,7 +9,7 @@ internal sealed class TextHistoryTransformed(
     string displayString,
     Text sourceText,
     TextHistoryTransformed.TransformType transformType
-) : TextHistoryGenerated(displayString)
+) : TextHistoryGenerated(displayString), ITextHistory
 {
     public enum TransformType
     {
