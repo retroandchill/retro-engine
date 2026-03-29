@@ -217,8 +217,8 @@ public sealed partial class LocalizationManager
         using var scope = _textRevisionLock.EnterReadScope();
 
         return new TextRevisions(
-            _localTextRevisions.GetValueOrDefault(textId),
-            !textId.IsEmpty ? _textRevisionCounter : (ushort)0
+            _textRevisionCounter,
+            !textId.IsEmpty ? _localTextRevisions.GetValueOrDefault(textId) : (ushort)0
         );
     }
 

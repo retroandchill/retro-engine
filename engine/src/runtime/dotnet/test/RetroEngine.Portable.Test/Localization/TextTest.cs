@@ -3,6 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using RetroEngine.Portable.Collections.Immutable;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
@@ -44,102 +47,114 @@ public class TextTest
         var testIdenticalStr2 = Loctext("TestIdenticalStr2", "Str2");
 
         using var scope = Assert.EnterMultipleScope();
-        AssertEqual(testIdenticalStr1, testIdenticalStr1, TextIdenticalModeFlags.None, true);
-        AssertEqual(testIdenticalStr1, testIdenticalStr2, TextIdenticalModeFlags.None, false);
-        AssertEqual(
+        TestIdentical(testIdenticalStr1, testIdenticalStr1, TextIdenticalModeFlags.None, true);
+        TestIdentical(testIdenticalStr1, testIdenticalStr2, TextIdenticalModeFlags.None, false);
+        TestIdentical(
             testIdenticalStr1,
             testIdenticalStr1,
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             true
         );
-        AssertEqual(
+        TestIdentical(
             testIdenticalStr1,
             testIdenticalStr2,
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
 
-        AssertEqual(
+        TestIdentical(
             Text.AsCultureInvariant("Wooble"),
             Text.AsCultureInvariant("Wooble"),
             TextIdenticalModeFlags.None,
             false
         );
-        AssertEqual(new Text("Wooble"), new Text("Wooble"), TextIdenticalModeFlags.None, false);
-        AssertEqual(
+        TestIdentical(new Text("Wooble"), new Text("Wooble"), TextIdenticalModeFlags.None, false);
+        TestIdentical(
             Text.AsCultureInvariant("Wooble"),
             Text.AsCultureInvariant("Wooble"),
             TextIdenticalModeFlags.LexicalCompareInvariants,
             true
         );
-        AssertEqual(new Text("Wooble"), new Text("Wooble"), TextIdenticalModeFlags.LexicalCompareInvariants, true);
-        AssertEqual(
+        TestIdentical(new Text("Wooble"), new Text("Wooble"), TextIdenticalModeFlags.LexicalCompareInvariants, true);
+        TestIdentical(
             Text.AsCultureInvariant("Wooble"),
             Text.AsCultureInvariant("Wooble2"),
             TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
-        AssertEqual(new Text("Wooble"), new Text("Wooble2"), TextIdenticalModeFlags.LexicalCompareInvariants, false);
+        TestIdentical(new Text("Wooble"), new Text("Wooble2"), TextIdenticalModeFlags.LexicalCompareInvariants, false);
 
-        AssertEqual(
+        TestIdentical(
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             TextIdenticalModeFlags.None,
             false
         );
-        AssertEqual(
+        TestIdentical(
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             true
         );
-        AssertEqual(
+        TestIdentical(
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText1),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
-        AssertEqual(
+        TestIdentical(
             Text.Format(Loctext("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             Text.Format(Loctext("TestIdenticalPattern2", "This takes an arg {0}!"), ArgText0),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
 
-        AssertEqual(Text.AsDate(testDate), Text.AsDate(testDate), TextIdenticalModeFlags.None, false);
-        AssertEqual(Text.AsDate(testDate), Text.AsDate(testDate), TextIdenticalModeFlags.DeepCompare, true);
-        AssertEqual(Text.AsTime(testDate), Text.AsTime(testDate), TextIdenticalModeFlags.None, false);
-        AssertEqual(Text.AsTime(testDate), Text.AsTime(testDate), TextIdenticalModeFlags.DeepCompare, true);
-        AssertEqual(Text.AsDateTime(testDate), Text.AsDateTime(testDate), TextIdenticalModeFlags.None, false);
-        AssertEqual(Text.AsDateTime(testDate), Text.AsDateTime(testDate), TextIdenticalModeFlags.DeepCompare, true);
+        TestIdentical(Text.AsDate(testDate), Text.AsDate(testDate), TextIdenticalModeFlags.None, false);
+        TestIdentical(Text.AsDate(testDate), Text.AsDate(testDate), TextIdenticalModeFlags.DeepCompare, true);
+        TestIdentical(Text.AsTime(testDate), Text.AsTime(testDate), TextIdenticalModeFlags.None, false);
+        TestIdentical(Text.AsTime(testDate), Text.AsTime(testDate), TextIdenticalModeFlags.DeepCompare, true);
+        TestIdentical(Text.AsDateTime(testDate), Text.AsDateTime(testDate), TextIdenticalModeFlags.None, false);
+        TestIdentical(Text.AsDateTime(testDate), Text.AsDateTime(testDate), TextIdenticalModeFlags.DeepCompare, true);
 
-        AssertEqual(Text.AsNumber(testNumber1), Text.AsNumber(testNumber1), TextIdenticalModeFlags.None, false);
-        AssertEqual(Text.AsNumber(testNumber1), Text.AsNumber(testNumber1), TextIdenticalModeFlags.DeepCompare, true);
-        AssertEqual(Text.AsNumber(testNumber1), Text.AsNumber(testNumber2), TextIdenticalModeFlags.None, false);
-        AssertEqual(Text.AsNumber(testNumber1), Text.AsNumber(testNumber2), TextIdenticalModeFlags.DeepCompare, false);
+        TestIdentical(Text.AsNumber(testNumber1), Text.AsNumber(testNumber1), TextIdenticalModeFlags.None, false);
+        TestIdentical(Text.AsNumber(testNumber1), Text.AsNumber(testNumber1), TextIdenticalModeFlags.DeepCompare, true);
+        TestIdentical(Text.AsNumber(testNumber1), Text.AsNumber(testNumber2), TextIdenticalModeFlags.None, false);
+        TestIdentical(
+            Text.AsNumber(testNumber1),
+            Text.AsNumber(testNumber2),
+            TextIdenticalModeFlags.DeepCompare,
+            false
+        );
 
-        AssertEqual(testIdenticalStr1.ToUpper(), testIdenticalStr1.ToUpper(), TextIdenticalModeFlags.None, false);
-        AssertEqual(testIdenticalStr1.ToUpper(), testIdenticalStr1.ToUpper(), TextIdenticalModeFlags.DeepCompare, true);
-        AssertEqual(testIdenticalStr1.ToUpper(), testIdenticalStr1.ToLower(), TextIdenticalModeFlags.None, false);
-        AssertEqual(
+        TestIdentical(testIdenticalStr1.ToUpper(), testIdenticalStr1.ToUpper(), TextIdenticalModeFlags.None, false);
+        TestIdentical(
+            testIdenticalStr1.ToUpper(),
+            testIdenticalStr1.ToUpper(),
+            TextIdenticalModeFlags.DeepCompare,
+            true
+        );
+        TestIdentical(testIdenticalStr1.ToUpper(), testIdenticalStr1.ToLower(), TextIdenticalModeFlags.None, false);
+        TestIdentical(
             testIdenticalStr1.ToUpper(),
             testIdenticalStr1.ToLower(),
             TextIdenticalModeFlags.DeepCompare,
             false
         );
-        AssertEqual(testIdenticalStr1.ToUpper(), testIdenticalStr2.ToUpper(), TextIdenticalModeFlags.None, false);
-        AssertEqual(
+        TestIdentical(testIdenticalStr1.ToUpper(), testIdenticalStr2.ToUpper(), TextIdenticalModeFlags.None, false);
+        TestIdentical(
             testIdenticalStr1.ToUpper(),
             testIdenticalStr2.ToUpper(),
             TextIdenticalModeFlags.DeepCompare,
             false
         );
+    }
 
-        return;
-
-        static void AssertEqual(Text a, Text b, TextIdenticalModeFlags flags, bool expected)
+    private static void TestIdentical(Text a, Text b, TextIdenticalModeFlags flags, bool expected)
+    {
+        var actualResult = a.IdenticalTo(b, flags);
+        if (actualResult != expected)
         {
-            Assert.That(a.IdenticalTo(b, flags), expected ? Is.True : Is.False);
+            Assert.Fail($"new Text(\"{a}\").IdenticalTo(new Text(\"{b}\")) expected={expected} actual={actualResult}");
         }
     }
 
@@ -354,5 +369,217 @@ public class TextTest
                 )
             )
         );
+    }
+
+    [Test]
+    public void CanGetFormatPatternParameterNames()
+    {
+        using var scope = Assert.EnterMultipleScope();
+        var testText = Text.AsCultureInvariant("My name is {Name}.");
+        TestPatternParameterEnumeration(testText, "Name");
+
+        testText = Text.AsCultureInvariant("My age is {Age}.");
+        TestPatternParameterEnumeration(testText, "Age");
+
+        testText = Text.AsCultureInvariant("If my age is {Age}, I have been alive for {Age} year(s).");
+        TestPatternParameterEnumeration(testText, "Age");
+
+        testText = Text.AsCultureInvariant("{0} - {1} - {2} - {3}");
+        TestPatternParameterEnumeration(testText, "0", "1", "2", "3");
+
+        testText = Text.AsCultureInvariant("My name is {Name}. My age is {Age}. My gender is {Gender}.");
+        TestPatternParameterEnumeration(testText, "Name", "Age", "Gender");
+    }
+
+    private static void TestPatternParameterEnumeration(Text pattern, params ReadOnlySpan<string> expectedParameters)
+    {
+        Text.Format(pattern, ArgText0, ArgText1, ArgText2, ArgText3);
+        var parameters = Text.GetFormatPatternParameters(pattern).ToImmutableArray();
+        if (expectedParameters.SequenceEqual(parameters.AsSpan()))
+            return;
+
+        var actualParametersString = string.Join(", ", parameters);
+        var expectedParametersString = string.Join(", ", expectedParameters);
+        Assert.Fail(
+            $"\"{pattern}\" contains parameters ({actualParametersString}) but expected ({expectedParametersString})."
+        );
+    }
+
+    [Test]
+    public void CanCompareEquivalentCharactersInDifferentCases()
+    {
+        using var scope = Assert.EnterMultipleScope();
+
+        TestCompareEqual("a", "A", TextComparisonLevel.IgnoreCaseAccentWidth); // Basic sanity check
+        TestCompareEqual("a", "a", TextComparisonLevel.CultureSensitive); // Basic sanity check
+        TestCompareEqual("A", "A", TextComparisonLevel.CultureSensitive); // Basic sanity check
+
+        // Test equivalence
+        TestCompareEqual("ss", "\x00DF", TextComparisonLevel.IgnoreCaseAccentWidth); // Lowercase Sharp s
+        TestCompareEqual("SS", "\x1E9E", TextComparisonLevel.IgnoreCaseAccentWidth); // Uppercase Sharp S
+        TestCompareEqual("ae", "\x00E6", TextComparisonLevel.IgnoreCaseAccentWidth); // Lowercase ae
+        TestCompareEqual("AE", "\x00C6", TextComparisonLevel.IgnoreCaseAccentWidth); // Uppercase AE
+
+        // Test accentuation
+        TestCompareEqual("u", "\x00FC", TextComparisonLevel.IgnoreCaseAccentWidth); // Lowercase u with dieresis
+        TestCompareEqual("U", "\x00DC", TextComparisonLevel.IgnoreCaseAccentWidth); // Uppercase U with dieresis
+
+        return;
+
+        void TestCompareEqual(string a, string b, TextComparisonLevel level)
+        {
+            if (!new Text(a).Equals(new Text(b), level))
+            {
+                Assert.Fail($"Expected {a} to be equal to {b} at level {level}");
+            }
+        }
+    }
+
+    [Test]
+    public void SortingIsAffectedByCulture()
+    {
+        using var scope = Assert.EnterMultipleScope();
+
+        if (CultureManager.Instance.SetCurrentCulture("fr"))
+        {
+            ReadOnlySpan<Text> correctedSortedValues =
+            [
+                Text.AsCultureInvariant("cote"),
+                Text.AsCultureInvariant("cot\u00e9"),
+                Text.AsCultureInvariant("c\u00f4te"),
+                Text.AsCultureInvariant("c\u00f4t\u00e9"),
+            ];
+
+            Span<Text> unsortedValues =
+            [
+                correctedSortedValues[1],
+                correctedSortedValues[3],
+                correctedSortedValues[2],
+                correctedSortedValues[0],
+            ];
+
+            unsortedValues.Sort();
+
+            if (!unsortedValues.SequenceEqual(correctedSortedValues))
+            {
+                Assert.Fail("Sort order is wrong for culture 'fr'.");
+            }
+        }
+        else
+        {
+            Assert.Warn("Internationalization data for culture 'fr' not found.");
+        }
+
+        if (CultureManager.Instance.SetCurrentCulture("fr-CA"))
+        {
+            ReadOnlySpan<Text> correctedSortedValues =
+            [
+                Text.AsCultureInvariant("cote"),
+                Text.AsCultureInvariant("côte"),
+                Text.AsCultureInvariant("coté"),
+                Text.AsCultureInvariant("côté"),
+            ];
+
+            Span<Text> unsortedValues =
+            [
+                correctedSortedValues[1],
+                correctedSortedValues[3],
+                correctedSortedValues[2],
+                correctedSortedValues[0],
+            ];
+
+            unsortedValues.Sort();
+
+            if (!unsortedValues.SequenceEqual(correctedSortedValues))
+            {
+                Assert.Fail("Sort order is wrong for culture 'fr-CA'.");
+            }
+        }
+        else
+        {
+            Assert.Warn("Internationalization data for culture 'fr-CA' not found.");
+        }
+    }
+
+    [Test]
+    public async Task CultureAffectsFormatting()
+    {
+        var args = new OrderedDictionary<string, FormatArg>
+        {
+            ["String1"] = Loctext("RebuildFTextTest1_Lorem", "Lorem"),
+            ["String2"] = Loctext("RebuildFTextTest1_Ipsum", "Ipsum"),
+        };
+        var formattedTest1 = Text.Format(Loctext("RebuildNamedText1", "{String1} \"Lorem Ipsum\" {String2}"), args);
+
+        var argsOrdered = ImmutableArray.Create<FormatArg>(
+            Loctext("RebuildFTextTest1_Lorem", "Lorem"),
+            Loctext("RebuildFTextTest1_Ipsum", "Ipsum")
+        );
+        var formattedTestOrdered1 = Text.Format(Loctext("RebuildOrderedText1", "{0} \"Lorem Ipsum\" {1}"), argsOrdered);
+
+        var asNumberTest1 = Text.AsNumber(5.5421);
+
+        var asPercentTest1 = Text.AsPercent(0.925);
+        var asCurrencyTest1 = Text.AsCurrency(10025, "USD");
+
+        DateTimeOffset dateTimeInfo = new DateTime(2080, 8, 20, 9, 33, 22, DateTimeKind.Utc);
+        var asDateTimeTest1 = Text.AsDateTime(dateTimeInfo, timeZoneId: "UTC");
+
+        var argLayers2 = new OrderedDictionary<string, FormatArg>()
+        {
+            ["NamedLayer1"] = formattedTest1,
+            ["OrderedLayer1"] = formattedTestOrdered1,
+            ["FTextNumber"] = asNumberTest1,
+            ["Number"] = 5010.89221,
+            ["DateTime"] = asDateTimeTest1,
+            ["Percent"] = asPercentTest1,
+            ["Currency"] = asCurrencyTest1,
+        };
+        var formattedTestLayer2 = Text.Format(
+            Loctext(
+                "RebuildTextLayer2",
+                "{NamedLayer1} | {OrderedLayer1} | {FTextNumber} | {Number} | {DateTime} | {Percent} | {Currency}"
+            ),
+            argLayers2
+        );
+
+        formattedTestLayer2.BuildSourceString();
+
+        var task = new TaskCompletionSource();
+        var completeTask = () => task.SetResult();
+        LocalizationManager.Instance.OnTextRevisionChanged += completeTask;
+        try
+        {
+            // Swap to French-Canadian to check if rebuilding works
+            CultureManager.Instance.SetCurrentCulture("fr-CA");
+
+            await task.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+            _ = formattedTestLayer2.ToString();
+
+            using var scope = Assert.EnterMultipleScope();
+            CompareToFrenchCanadian(asNumberTest1, Text.AsNumber(5.5421));
+            CompareToFrenchCanadian(asPercentTest1, Text.AsPercent(0.925));
+            CompareToFrenchCanadian(asCurrencyTest1, Text.AsCurrency(10025, "USD"));
+            CompareToFrenchCanadian(asDateTimeTest1, Text.AsDateTime(dateTimeInfo, timeZoneId: "UTC"));
+        }
+        finally
+        {
+            LocalizationManager.Instance.OnTextRevisionChanged -= completeTask;
+        }
+
+        return;
+
+        static void CompareToFrenchCanadian(
+            Text localized,
+            Text invariant,
+            [CallerArgumentExpression(nameof(localized))] string caller = "???"
+        )
+        {
+            if (localized.CompareTo(invariant) != 0)
+            {
+                Assert.Fail($"{caller} did not rebuild correct in French-Canadian\nValue: {localized}");
+            }
+        }
     }
 }

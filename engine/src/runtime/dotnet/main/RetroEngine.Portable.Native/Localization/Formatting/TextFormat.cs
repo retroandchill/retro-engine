@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text;
 using LinkDotNet.StringBuilder;
 using RetroEngine.Portable.Localization.Stringification;
@@ -40,7 +41,7 @@ public sealed class TextFormat
     private string _sourceExpression = "";
     private readonly TextFormatFlags _formatFlags;
     private readonly Lock _compiledDataLock = new();
-    private readonly List<FormatSegment> _compiledSegments = [];
+    private ImmutableArray<FormatSegment> _compiledSegments = [];
     private TextSnapshot _compiledTextSnapshot;
     private int _baseFormatStringLength;
     private int _formatArgumentEstimateMultiplier;
@@ -67,6 +68,41 @@ public sealed class TextFormat
         {
             using var scope = _compiledDataLock.EnterScope();
             return ExpressionType != CompiledExpressionType.Invalid;
+        }
+    }
+
+    public IEnumerable<string> FormatArgumentNames
+    {
+        get
+        {
+            ImmutableArray<FormatSegment> segments;
+            using (_compiledDataLock.EnterScope())
+            {
+                segments = _compiledSegments;
+            }
+
+            if (ExpressionType == CompiledExpressionType.Invalid)
+                yield break;
+
+            var nameSeen = new HashSet<string>();
+            foreach (var token in segments)
+            {
+                if (!token.TryGetPlaceholderData(out var key, out var modifier))
+                    continue;
+
+                if (nameSeen.Add(key.Name))
+                {
+                    yield return key.Name;
+                }
+
+                if (modifier is null)
+                    continue;
+
+                foreach (var argName in modifier.FormatArgumentNames.Where(nameSeen.Add))
+                {
+                    yield return argName;
+                }
+            }
         }
     }
 
@@ -188,7 +224,7 @@ public sealed class TextFormat
 
         ConditionalCompile();
 
-        if (_compiledSegments.Count == 0)
+        if (_compiledSegments.Length == 0)
         {
             return _sourceExpression;
         }
@@ -242,7 +278,7 @@ public sealed class TextFormat
 
     private void Compile()
     {
-        _compiledSegments.Clear();
+        _compiledSegments = _compiledSegments.Clear();
         if (_sourceType == SourceType.Text)
         {
             _sourceExpression = _sourceText.ToString();
@@ -271,7 +307,7 @@ public sealed class TextFormat
             return;
         }
 
-        _compiledSegments.AddRange(segments.Value);
+        _compiledSegments = [.. segments.Value];
 
         foreach (var token in _compiledSegments)
         {

@@ -28,9 +28,11 @@ public enum TextPluralForm : byte
     Other,
 }
 
-[InlineArray(6)]
+[InlineArray(Size)]
 internal struct PluralFormsArray
 {
+    public const int Size = 6;
+
     public TextFormat Format0;
 }
 
@@ -121,6 +123,17 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     public (bool UsesFormatArgs, int Length) EstimateLength()
     {
         return (_doPluralFormsUseFormatArgs, _longestPluralFormStringLength);
+    }
+
+    public IEnumerable<string> FormatArgumentNames
+    {
+        get
+        {
+            return Enumerable
+                .Range(0, PluralFormsArray.Size)
+                .SelectMany(i => _pluralForms[i].FormatArgumentNames)
+                .Distinct();
+        }
     }
 
     public void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)

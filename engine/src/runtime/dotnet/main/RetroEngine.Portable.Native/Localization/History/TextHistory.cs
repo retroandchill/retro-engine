@@ -25,6 +25,7 @@ internal abstract class TextHistory : ITextData
     public abstract string DisplayString { get; }
     public virtual string? LocalizedString => null;
 
+    private TextRevisions _revisions;
     public TextRevisions Revisions
     {
         get
@@ -32,7 +33,6 @@ internal abstract class TextHistory : ITextData
             using var scope = _lock.EnterReadScope();
             return field;
         }
-        private set;
     }
 
     public TextHistory History => this;
@@ -57,9 +57,9 @@ internal abstract class TextHistory : ITextData
         var currentRevision = LocalizationManager.Instance.GetTextRevisions(TextId);
 
         using var scope = _lock.EnterWriteScope();
-        if (Revisions == currentRevision)
+        if (_revisions == currentRevision)
             return;
-        Revisions = currentRevision;
+        _revisions = currentRevision;
         UpdateDisplayString();
     }
 
@@ -70,13 +70,13 @@ internal abstract class TextHistory : ITextData
     protected void MarkDisplayStringOutOfDate()
     {
         using var scope = _lock.EnterWriteScope();
-        Revisions = new TextRevisions(0, 0);
+        _revisions = new TextRevisions(0, 0);
     }
 
     protected void MarkDisplayStringUpToDate()
     {
         var canUpdate = CanUpdateDisplayString;
         using var scope = _lock.EnterWriteScope();
-        Revisions = canUpdate ? LocalizationManager.Instance.GetTextRevisions(TextId) : new TextRevisions(0, 0);
+        _revisions = canUpdate ? LocalizationManager.Instance.GetTextRevisions(TextId) : new TextRevisions(0, 0);
     }
 }

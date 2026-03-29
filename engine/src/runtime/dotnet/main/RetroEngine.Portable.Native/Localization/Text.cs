@@ -108,36 +108,32 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static implicit operator string(Text text) => text.ToString();
 
-    public static Text AsNumber<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
-        where T : unmanaged, INumber<T>
+    public static Text AsNumber(
+        FormatNumericArg value,
+        NumberFormattingOptions? options = null,
+        Culture? targetCulture = null
+    )
     {
-        return new Text(
-            new TextHistoryAsNumber(FormatNumericArg.FromNumber(value), options, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsNumber(value, options, targetCulture), TextFlag.Transient);
     }
 
-    public static Text AsPercent<T>(T value, NumberFormattingOptions? options = null, Culture? targetCulture = null)
-        where T : unmanaged, IFloatingPoint<T>
+    public static Text AsPercent(
+        FormatNumericArg value,
+        NumberFormattingOptions? options = null,
+        Culture? targetCulture = null
+    )
     {
-        return new Text(
-            new TextHistoryAsPercent(FormatNumericArg.FromNumber(value), options, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsPercent(value, options, targetCulture), TextFlag.Transient);
     }
 
-    public static Text AsCurrency<T>(
-        T value,
+    public static Text AsCurrency(
+        FormatNumericArg value,
         string? currencyCode = null,
         NumberFormattingOptions? options = null,
         Culture? targetCulture = null
     )
-        where T : unmanaged, INumber<T>
     {
-        return new Text(
-            new TextHistoryAsCurrency(FormatNumericArg.FromNumber(value), currencyCode, options, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsCurrency(value, currencyCode, options, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsDate(
@@ -264,6 +260,11 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
             : null;
     }
 
+    public static IEnumerable<string> GetFormatPatternParameters(TextFormat format)
+    {
+        return format.FormatArgumentNames;
+    }
+
     public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)
     {
         return TextFormatter.Format(format, arguments);
@@ -374,6 +375,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public override string ToString()
     {
+        Rebuild();
         return TextData.DisplayString;
     }
 
@@ -488,6 +490,6 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     internal void Rebuild()
     {
-        TextData.History.UpdateDisplayString();
+        TextData.History.UpdateDisplayStringIfOutOfDate();
     }
 }

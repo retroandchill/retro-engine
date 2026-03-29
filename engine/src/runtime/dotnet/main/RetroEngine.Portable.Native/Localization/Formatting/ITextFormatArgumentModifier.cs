@@ -17,6 +17,8 @@ public interface ITextFormatArgumentModifier
 
     (bool UsesFormatArgs, int Length) EstimateLength();
 
+    IEnumerable<string> FormatArgumentNames { get; }
+
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
