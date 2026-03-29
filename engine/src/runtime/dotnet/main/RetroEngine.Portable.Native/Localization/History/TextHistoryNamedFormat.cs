@@ -21,11 +21,7 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
         UpdateDisplayString();
     }
 
-    public TextHistoryNamedFormat(
-        string displayString,
-        TextFormat sourceFormat,
-        IReadOnlyDictionary<string, FormatArg> args
-    )
+    public TextHistoryNamedFormat(TextFormat sourceFormat, IReadOnlyDictionary<string, FormatArg> args)
         : this(sourceFormat, args.ToImmutableDictionary()) { }
 
     public override string BuildInvariantDisplayString()

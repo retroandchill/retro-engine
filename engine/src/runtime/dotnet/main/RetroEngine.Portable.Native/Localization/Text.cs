@@ -266,28 +266,28 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)
     {
-        return TextFormatter.Format(format, arguments, false, false);
+        return TextFormatter.Format(format, arguments);
     }
 
     public static Text Format(TextFormat format, ImmutableDictionary<string, FormatArg> arguments)
     {
-        return TextFormatter.Format(format, arguments, false, false);
+        return TextFormatter.Format(format, arguments);
     }
 
     public static Text Format(TextFormat format, IReadOnlyList<FormatArg> arguments)
     {
-        return TextFormatter.Format(format, arguments, false, false);
+        return TextFormatter.Format(format, arguments);
     }
 
     public static Text Format(TextFormat format, ImmutableArray<FormatArg> arguments)
     {
-        return TextFormatter.Format(format, arguments, false, false);
+        return TextFormatter.Format(format, arguments);
     }
 
     [OverloadResolutionPriority(1)]
     public static Text Format(TextFormat format, params ReadOnlySpan<FormatArg> arguments)
     {
-        return TextFormatter.Format(format, arguments, false, false);
+        return TextFormatter.Format(format, arguments);
     }
 
     public static Text Join(Text separator, IEnumerable<FormatArg> elements)
@@ -332,7 +332,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         }
 
         var namedFormatPattern = AsCultureInvariant(formatPattern.ToString());
-        return TextFormatter.Format(namedFormatPattern, namedArgs, false, false);
+        return TextFormatter.Format(namedFormatPattern, namedArgs);
     }
 
     public Text ToLower()

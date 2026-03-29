@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using RetroEngine.Portable.Localization.History;
+using Superpower.Model;
 using ZLinq;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -54,7 +55,7 @@ internal readonly ref struct TextFormatContext<T>(
     public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
-public delegate ITextFormatArgumentModifier? GetTextArgumentModifier(string fullString, string name, string argsString);
+public delegate Result<ITextFormatArgumentModifier> GetTextArgumentModifier(TextSpan fullString, TextSpan argsString);
 
 public sealed class TextFormatter
 {
@@ -64,11 +65,11 @@ public sealed class TextFormatter
     {
         _argumentModifiers.TryAdd(
             "plural",
-            (f, _, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Cardinal, a)
+            (f, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Cardinal, a)
         );
         _argumentModifiers.TryAdd(
             "ordinal",
-            (f, _, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Ordinal, a)
+            (f, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Ordinal, a)
         );
     }
 
@@ -89,58 +90,28 @@ public sealed class TextFormatter
         return _argumentModifiers.GetValueOrDefault(keyword);
     }
 
-    public static Text Format(
-        TextFormat format,
-        ImmutableDictionary<string, FormatArg> arguments,
-        bool rebuildText,
-        bool rebuildAsSource
-    )
+    public static Text Format(TextFormat format, ImmutableDictionary<string, FormatArg> arguments)
     {
-        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
         return new Text(new TextHistoryNamedFormat(format, arguments), TextFlag.Transient);
     }
 
-    public static Text Format(
-        TextFormat format,
-        IReadOnlyDictionary<string, FormatArg> arguments,
-        bool rebuildText,
-        bool rebuildAsSource
-    )
+    public static Text Format(TextFormat format, IReadOnlyDictionary<string, FormatArg> arguments)
     {
-        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
-        return new Text(new TextHistoryNamedFormat(resultString, format, arguments), TextFlag.Transient);
+        return new Text(new TextHistoryNamedFormat(format, arguments), TextFlag.Transient);
     }
 
-    public static Text Format(
-        TextFormat format,
-        IReadOnlyList<FormatArg> arguments,
-        bool rebuildText,
-        bool rebuildAsSource
-    )
+    public static Text Format(TextFormat format, IReadOnlyList<FormatArg> arguments)
     {
-        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
         return new Text(new TextHistoryOrderedFormat(format, arguments), TextFlag.Transient);
     }
 
-    public static Text Format(
-        TextFormat format,
-        ImmutableArray<FormatArg> arguments,
-        bool rebuildText,
-        bool rebuildAsSource
-    )
+    public static Text Format(TextFormat format, ImmutableArray<FormatArg> arguments)
     {
-        var resultString = FormatStr(format, arguments.AsSpan(), rebuildText, rebuildAsSource);
         return new Text(new TextHistoryOrderedFormat(format, arguments), TextFlag.Transient);
     }
 
-    public static Text Format(
-        TextFormat format,
-        ReadOnlySpan<FormatArg> arguments,
-        bool rebuildText,
-        bool rebuildAsSource
-    )
+    public static Text Format(TextFormat format, ReadOnlySpan<FormatArg> arguments)
     {
-        var resultString = FormatStr(format, arguments, rebuildText, rebuildAsSource);
         return new Text(new TextHistoryOrderedFormat(format, [.. arguments]), TextFlag.Transient);
     }
 
@@ -156,7 +127,7 @@ public sealed class TextFormatter
             format,
             TextFormatContext.Create(
                 arguments,
-                (args, key, _) => args.TryGetValue(key.Name, out var arg) ? arg : null,
+                (args, key, _) => args.TryGetValue(key.Name, out var arg) ? arg : (FormatArg?)null,
                 estimatedArgLength,
                 rebuildText,
                 rebuildAsSource

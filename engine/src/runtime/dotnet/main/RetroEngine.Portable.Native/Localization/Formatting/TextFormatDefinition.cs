@@ -3,10 +3,31 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using RetroEngine.Portable.Localization.Stringification;
+using RetroEngine.Portable.Parsers;
+using RetroEngine.Portable.Utils;
 using Superpower;
+using Superpower.Model;
 using Superpower.Parsers;
+using Superpower.Tokenizers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
+
+[Union]
+internal readonly partial struct TextFormatToken
+{
+    [UnionCase]
+    public static partial TextFormatToken StringLiteral();
+
+    [UnionCase]
+    public static partial TextFormatToken Argument(TextSpan name);
+
+    [UnionCase]
+    public static partial TextFormatToken ArgumentModifier(ITextFormatArgumentModifier? modifier);
+
+    [UnionCase]
+    public static partial TextFormatToken EscapeCharacter(char character);
+}
 
 public sealed class TextFormatDefinition
 {
@@ -15,7 +36,54 @@ public sealed class TextFormatDefinition
     public char ArgEndChar { get; }
     public char ArgModChar { get; }
 
-    public TextParser<IReadOnlyList<FormatSegment>> Format { get; }
+    internal Tokenizer<TextFormatToken> Tokenizer { get; }
+
+    private static readonly TextParser<TextSpan> ParametersList = input =>
+    {
+        var next = input.ConsumeChar();
+        if (!next.HasValue)
+            return Result.Empty<TextSpan>(input);
+
+        var quoteChar = '\0';
+        var numConsecutiveSlashes = 0;
+
+        var remainder = input;
+        do
+        {
+            var c = next.Value;
+            if (c == ')' && quoteChar == '\0')
+                break;
+
+            remainder = next.Remainder;
+            if (c == '"')
+            {
+                if (c == quoteChar)
+                {
+                    if (numConsecutiveSlashes % 2 == 0)
+                    {
+                        quoteChar = '\0';
+                    }
+                }
+                else
+                {
+                    quoteChar = c;
+                }
+            }
+
+            if (c == '\\')
+            {
+                ++numConsecutiveSlashes;
+            }
+            else
+            {
+                numConsecutiveSlashes = 0;
+            }
+
+            next = remainder.ConsumeChar();
+        } while (next.HasValue);
+
+        return Result.Value(input.Until(remainder), input, remainder);
+    };
 
     public static TextFormatDefinition Default { get; } = new();
 
@@ -31,90 +99,52 @@ public sealed class TextFormatDefinition
         ArgEndChar = argEndChar;
         ArgModChar = argModChar;
 
-        var escapedChar = Character
+        var notArgEnd = Character.Except(ArgEndChar);
+
+        var parseArgument = Span.MatchedBy(notArgEnd.IgnoreThen(notArgEnd.IgnoreMany()))
+            .Between(Character.EqualTo(ArgStartChar), Character.EqualTo(ArgEndChar))
+            .Select(TextFormatToken.Argument);
+
+        var argumentIdentifier = Character
+            .EqualTo(ArgModChar)
+            .IgnoreThen(Span.MatchedBy(TextParsers.AlphaNumeric.IgnoreThen(TextParsers.AlphaNumeric.IgnoreMany())))
+            .Text();
+
+        var textParameters = ParametersList.Between(Character.EqualTo('('), Character.EqualTo(')'));
+
+        TextParser<TextFormatToken> argumentModifier = input =>
+        {
+            var identifierResult = argumentIdentifier(input);
+            if (!identifierResult.HasValue)
+                return Result.CastEmpty<string, TextFormatToken>(identifierResult);
+
+            var remainder = identifierResult.Remainder;
+            var identifier = identifierResult.Value;
+
+            var getterDelegate = TextFormatter.Instance.FindArgumentModifier(identifier);
+            if (getterDelegate is null)
+                return Result.Empty<TextFormatToken>(input);
+
+            var argsList = textParameters(remainder);
+            if (!argsList.HasValue)
+                return Result.CastEmpty<TextSpan, TextFormatToken>(argsList);
+
+            var args = argsList.Value;
+            var result = getterDelegate(input, args);
+            return result.HasValue
+                ? Result.Value(TextFormatToken.ArgumentModifier(result.Value), input, result.Remainder)
+                : Result.CastEmpty<ITextFormatArgumentModifier, TextFormatToken>(result);
+        };
+
+        var escapeCharacter = Character
             .EqualTo(EscapeChar)
-            .SelectMany(_ => Character.In(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar), (_, ch) => ch);
-        var placeholderSegment = PlaceholderWithOptionalModifier(
-            ArgStartChar,
-            ArgEndChar,
-            ArgModChar,
-            escapedChar,
-            EscapeChar,
-            TextFormatter.Instance
-        );
-        var literalChar = escapedChar.Or(
-            Character.Except(c => c == ArgStartChar || c == EscapeChar || c == ArgModChar, "literal character")
-        );
-        var literalSegment = literalChar
-            .AtLeastOnce()
-            .Select(chars => new string(chars.ToArray()))
-            .Select(FormatSegment.Literal);
-        var segment = placeholderSegment.Or(literalSegment);
-        Format = segment.Many().Select(IReadOnlyList<FormatSegment> (segments) => segments);
-    }
+            .IgnoreThen(Character.In(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar))
+            .Select(TextFormatToken.EscapeCharacter);
 
-    private static GetTextArgumentModifier? RegisteredModifierParser(TextFormatter formatter, string keyword)
-    {
-        return formatter.FindArgumentModifier(keyword);
-    }
+        var literal = Character
+            .AnyChar.IgnoreThen(Character.ExceptIn(EscapeChar, ArgStartChar).IgnoreMany())
+            .Value(TextFormatToken.StringLiteral());
 
-    private static TextParser<ITextFormatArgumentModifier?> ArgModifierParser(
-        string fullString,
-        char argModChar,
-        TextFormatter formatter
-    )
-    {
-        return Character
-            .EqualTo(argModChar)
-            .SelectMany(
-                _ =>
-                    TextFormatParsingUtils.Identifier.Between(
-                        TextFormatParsingUtils.Whitespace,
-                        TextFormatParsingUtils.Whitespace
-                    ),
-                (bar, name) => (bar, name)
-            )
-            .SelectMany(_ => TextFormatParsingUtils.ParenRawString, (t, args) => (fullString, t.name, args))
-            .Select(t => RegisteredModifierParser(formatter, t.name)?.Invoke(t.fullString, t.name, t.args));
-    }
-
-    private static TextParser<FormatSegment> PlaceholderWithOptionalModifier(
-        char argStartChar,
-        char argEndChar,
-        char argModChar,
-        TextParser<char> escapedChar,
-        char escapeChar,
-        TextFormatter formatter
-    )
-    {
-        return PlaceholderKeyParser(argStartChar, argEndChar, escapedChar, escapeChar)
-            .SelectMany(s => ArgModifierParser(s, argModChar, formatter).OptionalOrDefault(), BuildPlaceholder);
-    }
-
-    private static TextParser<string> PlaceholderKeyParser(
-        char argStartChar,
-        char argEndChar,
-        TextParser<char> escapedChar,
-        char escapeChar
-    )
-    {
-        return Character
-            .EqualTo(argStartChar)
-            .SelectMany(
-                _ =>
-                    escapedChar
-                        .Or(Character.Matching(c => c != argEndChar && c != escapeChar, "placeholder character"))
-                        .Many(),
-                (open, keyChars) => new { open, keyChars }
-            )
-            .SelectMany(_ => Character.EqualTo(argEndChar), (@t, _) => new string(t.keyChars.ToArray()));
-    }
-
-    private static FormatSegment BuildPlaceholder(string raw, ITextFormatArgumentModifier? modifier)
-    {
-        var key = raw.Trim();
-        return !string.IsNullOrEmpty(key)
-            ? FormatSegment.Placeholder(key, modifier)
-            : throw new FormatException("Invalid placeholder format.");
+        Tokenizer = new DynamicTokenizer<TextFormatToken>(parseArgument, argumentModifier, escapeCharacter, literal);
     }
 }

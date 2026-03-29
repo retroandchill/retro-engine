@@ -15,4 +15,9 @@ internal static class ParsingExtensions
             ? span.Source.AsSpan(span.Position.Absolute, span.Length)
             : throw new InvalidOperationException("TextSpan must have a source to be converted to a ReadOnlySpan.");
     }
+
+    extension(char)
+    {
+        public static bool IsIdentifierCharacter(char c) => char.IsLetterOrDigit(c) || c == '_';
+    }
 }

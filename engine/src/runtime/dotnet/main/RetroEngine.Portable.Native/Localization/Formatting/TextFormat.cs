@@ -4,7 +4,11 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using LinkDotNet.StringBuilder;
+using RetroEngine.Portable.Localization.Stringification;
 using Superpower;
+using Superpower.Model;
+using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -65,6 +69,61 @@ public sealed class TextFormat
             return ExpressionType != CompiledExpressionType.Invalid;
         }
     }
+
+    private static readonly TokenListParser<TextFormatToken, FormatSegment> LiteralTokenParser = input =>
+    {
+        var next = input.ConsumeToken();
+        if (!next.HasValue)
+            return TokenListParserResult.Empty<TextFormatToken, FormatSegment>(input);
+
+        using var builder = new ValueStringBuilder();
+        var remaining = input;
+        do
+        {
+            if (next.Value.Kind.TryGetStringLiteralData())
+            {
+                builder.Append(next.Value.Span.AsReadOnlySpan());
+            }
+            else if (next.Value.Kind.TryGetEscapeCharacterData(out var ch))
+            {
+                builder.Append(ch);
+            }
+            else
+            {
+                break;
+            }
+
+            remaining = next.Remainder;
+            next = remaining.ConsumeToken();
+        } while (next.HasValue);
+
+        return remaining != input
+            ? TokenListParserResult.Value(FormatSegment.Literal(builder.ToString()), input, remaining)
+            : TokenListParserResult.Empty<TextFormatToken, FormatSegment>(input);
+    };
+
+    private static readonly TokenListParser<TextFormatToken, FormatSegment> ArgTokenParser = Parse
+        .Sequence(
+            Token
+                .Matching((TextFormatToken t) => t.IsArgument, "argument token")
+                .Select(t => t.Kind.TryGetArgumentData(out var arg) ? arg : throw new InvalidOperationException()),
+            Token
+                .Matching((TextFormatToken t) => t.IsArgumentModifier, "argument modifier token")
+                .Select(t =>
+                    t.Kind.TryGetArgumentModifierData(out var mod) ? mod : throw new InvalidOperationException()
+                )
+                .OptionalOrDefault()
+        )
+        .Select(t =>
+        {
+            var (argument, modifier) = t;
+            return FormatSegment.Placeholder(new PlaceholderKey(argument.ToStringValue()), modifier ?? null);
+        });
+
+    private static readonly TokenListParser<TextFormatToken, FormatSegment[]> ValidFormatSegments = LiteralTokenParser
+        .Or(ArgTokenParser)
+        .Many()
+        .AtEnd();
 
     public static TextFormat Empty { get; } = new(Text.Empty);
 
@@ -193,16 +252,26 @@ public sealed class TextFormat
         _expressionType = CompiledExpressionType.Simple;
         _baseFormatStringLength = 0;
         _formatArgumentEstimateMultiplier = 1;
-        var result = PatternDefinition.Format.TryParse(_sourceExpression);
-        var validExpression = result.HasValue;
-        if (!validExpression)
+        var tokenList = PatternDefinition.Tokenizer.TryTokenize(_sourceExpression);
+        if (!tokenList.HasValue)
         {
             _expressionType = CompiledExpressionType.Invalid;
-            _lastErrorMessage = result.ErrorMessage;
+            _lastErrorMessage = tokenList.FormatErrorMessageFragment();
             return;
         }
 
-        _compiledSegments.AddRange(result.Value);
+        if (tokenList.Value.IsAtEnd)
+            return;
+
+        var segments = ValidFormatSegments.TryParse(tokenList.Value);
+        if (!segments.HasValue)
+        {
+            _expressionType = CompiledExpressionType.Invalid;
+            _lastErrorMessage = segments.FormatErrorMessageFragment();
+            return;
+        }
+
+        _compiledSegments.AddRange(segments.Value);
 
         foreach (var token in _compiledSegments)
         {

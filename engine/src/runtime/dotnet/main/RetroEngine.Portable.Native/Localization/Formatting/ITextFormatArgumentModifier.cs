@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using Superpower;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -19,10 +20,9 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
-    protected static ImmutableOrderedDictionary<string, string>? ParseKeyValueArgs(string argsString)
+    protected static Result<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TextSpan argsString)
     {
-        var result = KeyValueArgsParser.TryParse(argsString);
-        return result.HasValue ? result.Value : null;
+        return KeyValueArgsParser(argsString);
     }
 
     protected static ImmutableArray<string>? ParseStringArray(string argsString)

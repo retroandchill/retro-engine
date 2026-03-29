@@ -3,10 +3,12 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using RetroEngine.Portable.Localization.Cultures;
+using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -40,15 +42,18 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     private readonly bool _doPluralFormsUseFormatArgs;
     private readonly PluralFormsArray _pluralForms;
 
-    public static ITextFormatArgumentModifier? Create(
-        string modifierPattern,
+    public static Result<ITextFormatArgumentModifier> Create(
+        TextSpan modifierPattern,
         TextPluralType pluralType,
-        string argsString
+        TextSpan argsString
     )
     {
-        var args = ITextFormatArgumentModifier.ParseKeyValueArgs(argsString);
-        if (args is null)
-            return null;
+        var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(argsString);
+        if (argsResult.HasValue)
+            return Result.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
+                argsResult
+            );
+        var args = argsResult.Value;
 
         var doPluralFormsUseFormatArgs = false;
         var longestPluralFormStringLength = 0;
@@ -65,15 +70,24 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
             builder.Add(key, textFormat);
         }
 
-        return builder.Count == args.Count
-            ? new PluralFormatArgumentModifier(
+        if (builder.Count == args.Count)
+        {
+            return Result.Value<ITextFormatArgumentModifier>(
+                new PluralFormatArgumentModifier(
+                    modifierPattern.ToStringValue(),
+                    pluralType,
+                    builder.ToImmutable(),
+                    longestPluralFormStringLength,
+                    doPluralFormsUseFormatArgs
+                ),
                 modifierPattern,
-                pluralType,
-                builder.ToImmutable(),
-                longestPluralFormStringLength,
-                doPluralFormsUseFormatArgs
-            )
-            : null;
+                argsString.Skip(argsString.Length)
+            );
+        }
+
+        var errorMessage =
+            $"Invalid number of arguments in plural format modifier. Expected {args.Count}, got {builder.Count}.";
+        return Result.Empty<ITextFormatArgumentModifier>(modifierPattern, errorMessage);
     }
 
     private PluralFormatArgumentModifier(
