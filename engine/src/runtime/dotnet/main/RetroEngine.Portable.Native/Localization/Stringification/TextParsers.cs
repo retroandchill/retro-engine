@@ -18,13 +18,13 @@ using CustomDateFormatParser = TextParser<(
     string? Format
 )>;
 
-public readonly record struct NumberParseResult(
+internal readonly record struct NumberParseResult(
     FormatNumericArg Value,
     NumberFormattingOptions? Options,
     Culture? TargetCulture
 );
 
-public readonly record struct DateTimeParseResult(
+internal readonly record struct DateTimeParseResult(
     DateTimeOffset Value,
     DateTimeFormatStyle DateStyle,
     DateTimeFormatStyle TimeStyle,
@@ -33,12 +33,8 @@ public readonly record struct DateTimeParseResult(
     Culture? TargetCulture
 );
 
-public static class TextParsers
+internal static class TextParsers
 {
-    public static TextParser<TextSpan> Marker(string marker) => Span.EqualTo(marker);
-
-    public static TextParser<TextSpan> InsensitiveMarker(string marker) => Span.EqualToIgnoreCase(marker);
-
     public static readonly TextParser<Unit> Whitespace = Character.WhiteSpace.IgnoreMany();
 
     public static TextParser<char> WhitespaceAndCharacter(char character)
@@ -80,7 +76,7 @@ public static class TextParsers
         Character.LetterOrDigit.Or(Character.EqualTo('_')).IgnoreMany()
     );
 
-    public static readonly TextParser<string> QuotedString = Marker(Markers.Text)
+    public static readonly TextParser<string> QuotedString = Span.EqualTo(Markers.Text)
         .IgnoreThen(WhitespaceAndOpenParen)
         .IgnoreThen(StringLiteral.UnrealStyle)
         .FollowedBy(WhitespaceAndCloseParen)
@@ -90,7 +86,7 @@ public static class TextParsers
     public static TextParser<T> ScopedEnum<T>(string scopeName)
         where T : struct, Enum
     {
-        return Marker(scopeName)
+        return Span.EqualTo(scopeName)
             .IgnoreThen(AlphaNumeric)
             .Apply(value =>
                 Enum.TryParse<T>(value.AsReadOnlySpan(), out var result)
@@ -101,7 +97,7 @@ public static class TextParsers
 
     public static TextParser<T> NumberFormattingOption<T>(string optionFunctionName, TextParser<T> readOption)
     {
-        return Marker(optionFunctionName)
+        return Span.EqualTo(optionFunctionName)
             .IgnoreThen(WhitespaceAndOpenParen)
             .IgnoreThen(Whitespace)
             .IgnoreThen(readOption)
@@ -233,7 +229,7 @@ public static class TextParsers
 
     private static readonly TextParser<NumberParseResult> CustomFormatSuffix = Parse
         .Sequence(
-            Marker(Markers.CustomSuffix).IgnoreThen(WhitespaceAndOpenParen).IgnoreThen(Number),
+            Span.EqualTo(Markers.CustomSuffix).IgnoreThen(WhitespaceAndOpenParen).IgnoreThen(Number),
             WhitespaceAndComma.IgnoreThen(Whitespace).IgnoreThen(NumberFormatOptions),
             WhitespaceAndComma.IgnoreThen(Whitespace).IgnoreThen(CultureFromName).FollowedBy(WhitespaceAndCloseParen)
         )
@@ -241,10 +237,10 @@ public static class TextParsers
 
     private static readonly TextParser<NumberParseResult> StandardFormatSuffix = Parse
         .Sequence(
-            Marker(Markers.GroupedSuffix)
+            Span.EqualTo(Markers.GroupedSuffix)
                 .Value((NumberFormattingOptions?)NumberFormattingOptions.DefaultWithGrouping)
                 .Or(
-                    Marker(Markers.UngroupedSuffix)
+                    Span.EqualTo(Markers.UngroupedSuffix)
                         .Value((NumberFormattingOptions?)NumberFormattingOptions.DefaultWithoutGrouping)
                 )
                 .OptionalOrDefault(),
@@ -271,10 +267,10 @@ public static class TextParsers
         .IgnoreThen(DateTimeStyle);
 
     private static readonly TextParser<(bool IsCustom, string? TimeZone)> DateTimeSuffix = Parse.Sequence(
-        Marker(Markers.CustomSuffix).Value(true).OptionalOrDefault(),
-        Marker(Markers.LocalSuffix)
+        Span.EqualTo(Markers.CustomSuffix).Value(true).OptionalOrDefault(),
+        Span.EqualTo(Markers.LocalSuffix)
             .Value((string?)Text.InvariantTimeZone)
-            .Or(Marker(Markers.UtcSuffix).Value((string?)null))
+            .Or(Span.EqualTo(Markers.UtcSuffix).Value((string?)null))
     );
 
     private static readonly TextParser<string> QuotedStringArg = WhitespaceAndComma
@@ -312,7 +308,7 @@ public static class TextParsers
         if (!includeDate && !includeTime)
             throw new ArgumentException("At least one of includeDate or includeTime must be true");
 
-        var parseBasicData = Marker(marker)
+        var parseBasicData = Span.EqualTo(marker)
             .IgnoreThen(DateTimeInfo)
             .SelectMany(
                 t =>
@@ -381,5 +377,5 @@ public static class TextParsers
 
     public static TextParser<Text> ExportedText => throw new NotImplementedException();
 
-    public static TextParser<Text> QuotedText => throw new NotImplementedException();
+    public static TextParser<Text> QuotedText => input => TextStringHelper.ReadFromBuffer(input, requiresQuotes: true);
 }

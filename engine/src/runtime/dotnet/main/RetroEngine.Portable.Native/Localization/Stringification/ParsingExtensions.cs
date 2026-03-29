@@ -7,7 +7,7 @@ using Superpower.Model;
 
 namespace RetroEngine.Portable.Localization.Stringification;
 
-public static class ParsingExtensions
+internal static class ParsingExtensions
 {
     public static ReadOnlySpan<char> AsReadOnlySpan(this TextSpan span)
     {

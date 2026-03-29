@@ -9,13 +9,13 @@ using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization;
 
-public sealed record HistoricTextFormatData(
+internal sealed record HistoricTextFormatData(
     Text FormattedText,
     TextFormat SourceFormat,
     ImmutableDictionary<string, FormatArg> Args
 );
 
-public readonly record struct HistoricTextNumericData(NumberFormatType FormatType, FormatNumericArg SourceValue)
+internal readonly record struct HistoricTextNumericData(NumberFormatType FormatType, FormatNumericArg SourceValue)
 {
     public HistoricTextNumericData()
         : this(NumberFormatType.Number, FormatNumericArg.Signed(0)) { }

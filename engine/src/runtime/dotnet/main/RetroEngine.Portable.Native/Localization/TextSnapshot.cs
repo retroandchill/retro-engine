@@ -5,22 +5,12 @@
 
 namespace RetroEngine.Portable.Localization;
 
-internal readonly struct TextSnapshot
+internal readonly struct TextSnapshot(Text text)
 {
-    private readonly ITextData? _textData;
-    private readonly string? _localizedString;
-    private readonly TextRevisions _revisions;
-    private readonly TextFlag _flags;
-
-    public TextSnapshot() { }
-
-    public TextSnapshot(Text text)
-    {
-        _textData = text.TextData;
-        _localizedString = text.TextData.History.DisplayString;
-        _revisions = GetHistoryForText(text);
-        _flags = text.Flags;
-    }
+    private readonly ITextData? _textData = text.TextData;
+    private readonly string? _localizedString = text.TextData.History.DisplayString;
+    private readonly TextRevisions _revisions = GetHistoryForText(text);
+    private readonly TextFlag _flags = text.Flags;
 
     public bool IsIdenticalTo(Text text)
     {

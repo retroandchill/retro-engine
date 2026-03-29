@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using RetroEngine.Portable.Localization.Cultures;
+
 namespace RetroEngine.Portable.Localization.History;
 
 internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistory
@@ -58,8 +60,8 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistor
 
         return _transformType switch
         {
-            TransformType.ToUpper => TextTransformer.ToUpper(_sourceText.ToString()),
-            TransformType.ToLower => TextTransformer.ToLower(_sourceText.ToString()),
+            TransformType.ToUpper => _sourceText.ToString().ToUpper(CultureManager.Instance.CurrentLocale.CultureInfo),
+            TransformType.ToLower => _sourceText.ToString().ToLower(CultureManager.Instance.CurrentLocale.CultureInfo),
             _ => throw new ArgumentOutOfRangeException(nameof(_transformType), _transformType, null),
         };
     }

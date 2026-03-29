@@ -43,9 +43,9 @@ internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistor
         .NumberOrPercent(Markers.LocGenNumber)
         .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
 
-    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
+    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
     {
-        return Parser.TryParse(str);
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

@@ -20,8 +20,9 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
 
-    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = TextParsers
-        .Marker(Markers.NsLocText)
+    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = Span.EqualTo(
+            Markers.NsLocText
+        )
         .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
         .IgnoreThen(
             Parse.Sequence(
@@ -44,8 +45,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             return (ns, key, source);
         });
 
-    private static readonly TextParser<(string Key, string Source)> LoctextParser = TextParsers
-        .Marker(Markers.LocText)
+    private static readonly TextParser<(string Key, string Source)> LoctextParser = Span.EqualTo(Markers.LocText)
         .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
         .IgnoreThen(
             Parse.Sequence(
@@ -67,9 +67,9 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             return (key, source);
         });
 
-    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
+    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
     {
-        var nsLocTextResult = NsLoctextParser.TryParse(str);
+        var nsLocTextResult = NsLoctextParser(input);
         if (nsLocTextResult.HasValue)
         {
             var (ns, key, source) = nsLocTextResult.Value;
@@ -80,7 +80,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             );
         }
 
-        var loctextResult = LoctextParser.TryParse(str);
+        var loctextResult = LoctextParser(input);
         // ReSharper disable once InvertIf
         if (loctextResult.HasValue)
         {
@@ -92,7 +92,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
             );
         }
 
-        return Result.Empty<ITextData>(new TextSpan(str));
+        return Result.Empty<ITextData>(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

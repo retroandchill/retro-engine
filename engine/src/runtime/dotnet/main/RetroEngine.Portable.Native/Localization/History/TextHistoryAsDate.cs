@@ -42,9 +42,9 @@ internal sealed class TextHistoryAsDate : TextHistoryGenerated, ITextHistory
         .DateTime(Markers.LocGenDate, true, false)
         .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
 
-    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
+    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
     {
-        return Parser.TryParse(str);
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

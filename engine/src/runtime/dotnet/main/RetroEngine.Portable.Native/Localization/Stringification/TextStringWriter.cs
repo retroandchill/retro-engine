@@ -3,18 +3,14 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Text;
-using LinkDotNet.StringBuilder;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
-using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
 
-namespace RetroEngine.Portable.Localization;
+namespace RetroEngine.Portable.Localization.Stringification;
 
-internal static class TextStringificationUtil
+internal static class TextStringWriter
 {
     private static readonly NumberFormattingOptions DefaultNumberFormatOptions = new();
 

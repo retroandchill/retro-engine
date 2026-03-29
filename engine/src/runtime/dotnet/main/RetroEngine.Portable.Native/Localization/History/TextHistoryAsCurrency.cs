@@ -10,6 +10,7 @@ using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
 using Superpower;
 using Superpower.Model;
+using Superpower.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -37,8 +38,7 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
     }
 
     private static readonly TextParser<(FormatNumericArg, string, Culture?)> Parser = Parse.Sequence(
-        TextParsers
-            .Marker(Markers.LocGenCurrency)
+        Span.EqualTo(Markers.LocGenCurrency)
             .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
             .IgnoreThen(TextParsers.Whitespace)
             .IgnoreThen(TextParsers.Number),
@@ -46,11 +46,11 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
         TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.CultureFromName)
     );
 
-    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
+    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
     {
         var culture = CultureManager.Instance.CurrentLocale;
 
-        var result = Parser.TryParse(str);
+        var result = Parser(input);
         if (!result.HasValue)
         {
             return Result.CastEmpty<(FormatNumericArg, string, Culture?), ITextData>(result);

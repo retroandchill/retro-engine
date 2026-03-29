@@ -5,7 +5,7 @@
 
 namespace RetroEngine.Portable.Localization.Stringification;
 
-public static class Markers
+internal static class Markers
 {
     public const string Text = "TEXT";
     public const string InvText = "INVTEXT";

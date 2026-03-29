@@ -92,9 +92,9 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
                 )
         );
 
-    public static Result<ITextData> ReadFromBuffer(string str, string? textNamespace, string? textKey)
+    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
     {
-        return Parser.TryParse(str);
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)
