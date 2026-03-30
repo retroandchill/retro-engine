@@ -38,13 +38,13 @@ public readonly ref struct TokenResult<T>
         After = after;
     }
 
-    internal TokenResult(ReadOnlySpan<char> input, TokenPosition before, TokenPosition afte)
+    internal TokenResult(ReadOnlySpan<char> input, TokenPosition before, TokenPosition after)
     {
         IsSuccess = false;
         Value = default!;
         Input = input;
         Before = before;
-        After = before;
+        After = after;
     }
 }
 

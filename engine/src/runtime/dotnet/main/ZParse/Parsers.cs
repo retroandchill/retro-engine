@@ -14,7 +14,7 @@ public static class Parsers
             if (input.IsAtEnd)
                 return TokenResult.Empty<Unit>(input);
 
-            var next = input.ParseNext();
+            var next = input.Advance();
             if (!next.IsSuccess)
                 return TokenResult.Empty<Unit>(input);
 
@@ -45,7 +45,7 @@ public static class Parsers
                 if (shouldStop)
                     break;
 
-                next = input.ParseNext();
+                next = input.Advance();
             } while (next.IsSuccess);
 
             return remaining != input
@@ -61,7 +61,7 @@ public static class Parsers
             var remainder = input;
             foreach (var c in symbol)
             {
-                var next = remainder.ParseNext();
+                var next = remainder.Advance();
                 if (!next.IsSuccess || next.Value != c)
                     return TokenResult.Empty<Unit>(input);
 
@@ -79,7 +79,7 @@ public static class Parsers
             var remainder = input;
             foreach (var c in symbol)
             {
-                var next = remainder.ParseNext();
+                var next = remainder.Advance();
                 if (!next.IsSuccess || char.ToUpper(next.Value) != char.ToUpper(c))
                     return TokenResult.Empty<Unit>(input);
 
@@ -91,13 +91,13 @@ public static class Parsers
 
         public TokenResult<char> ParseChar(char c)
         {
-            var next = input.ParseNext();
+            var next = input.Advance();
             return next.IsSuccess && next.Value == c ? next : TokenResult.Empty<char>(input);
         }
 
         public TokenResult<Unit> ParseWhitespace()
         {
-            var next = input.ParseNext();
+            var next = input.Advance();
             if (!next.IsSuccess || !char.IsWhiteSpace(next.Value))
                 return TokenResult.Empty<Unit>(input, next.Remainder);
 
@@ -105,7 +105,7 @@ public static class Parsers
             do
             {
                 remainder = next.Remainder;
-                next = remainder.ParseNext();
+                next = remainder.Advance();
             } while (next.IsSuccess && char.IsWhiteSpace(next.Value));
 
             return TokenResult.Success(Unit.Value, input, remainder);
@@ -113,7 +113,7 @@ public static class Parsers
 
         public TokenResult<Unit> ParseOptionalWhitespace()
         {
-            var next = input.ParseNext();
+            var next = input.Advance();
             if (!next.IsSuccess || !char.IsWhiteSpace(next.Value))
                 return TokenResult.Success(Unit.Value, input, input);
 
@@ -121,7 +121,7 @@ public static class Parsers
             do
             {
                 remainder = next.Remainder;
-                next = remainder.ParseNext();
+                next = remainder.Advance();
             } while (next.IsSuccess && char.IsWhiteSpace(next.Value));
 
             return TokenResult.Success(Unit.Value, input, remainder);
@@ -132,7 +132,7 @@ public static class Parsers
             var remainder = input;
             for (var i = 0; i < characterCount; i++)
             {
-                var next = remainder.ParseNext();
+                var next = remainder.Advance();
                 if (!next.IsSuccess)
                     return TokenResult.Empty<Unit>(input, remainder);
 

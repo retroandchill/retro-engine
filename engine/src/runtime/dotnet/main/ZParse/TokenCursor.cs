@@ -34,7 +34,7 @@ public readonly ref struct TokenCursor : IEquatable<TokenCursor>
         Position = position;
     }
 
-    public TokenResult<char> ParseNext()
+    public TokenResult<char> Advance()
     {
         if (IsAtEnd)
             return TokenResult.Empty<char>(this);
@@ -42,6 +42,11 @@ public readonly ref struct TokenCursor : IEquatable<TokenCursor>
         var nextChar = Input[Position.Index];
 
         return TokenResult.Success(nextChar, this, new TokenCursor(Input, Position.Advance(nextChar)));
+    }
+
+    public TokenCursor Reset()
+    {
+        return new TokenCursor(Input, TokenPosition.Start);
     }
 
     public bool Equals(TokenCursor other)
