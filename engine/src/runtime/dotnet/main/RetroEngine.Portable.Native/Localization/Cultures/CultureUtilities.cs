@@ -141,7 +141,7 @@ public static class CultureUtilities
 
             startIndex = endIndex + 1;
             endIndex = startIndex;
-        } while (nameTagEndIndex < nameTag.Length);
+        } while (endIndex < nameTag.Length);
 
         var nameKeywordArgs = nameKeywords.Split(';');
 

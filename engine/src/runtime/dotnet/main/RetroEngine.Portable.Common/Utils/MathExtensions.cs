@@ -55,6 +55,22 @@ public static class MathExtensions
             return integralValue + (Math.IsNearlyEqual(fractionalValue, half, tolerance) ? half : fractionalValue);
         }
 
+        public static T RoundHalfEven<T>(T f)
+            where T : unmanaged, IFloatingPoint<T>
+        {
+            f = Math.TruncateToHalfIfClose(f);
+
+            var oneHalf = T.CreateChecked(0.5f);
+            var isNegative = f < T.Zero;
+            var isEven = ulong.CreateTruncating(T.Floor(isNegative ? T.NegativeOne * f : f)) % 2 == 0;
+            if (isEven)
+            {
+                return isNegative ? T.Floor(f + oneHalf) : T.Ceiling(f - oneHalf);
+            }
+
+            return isNegative ? T.Ceiling(f - oneHalf) : T.Floor(f + oneHalf);
+        }
+
         public static T RoundHalfFromZero<T>(T f)
             where T : unmanaged, IFloatingPoint<T>
         {
@@ -77,6 +93,18 @@ public static class MathExtensions
             }
 
             return fractionalValue > T.CreateChecked(0.5f) ? integralValue + T.One : integralValue;
+        }
+
+        public static T RoundToZero<T>(T f)
+            where T : unmanaged, IFloatingPoint<T>
+        {
+            return f < T.Zero ? T.Ceiling(f) : T.Floor(f);
+        }
+
+        public static T RoundFromZero<T>(T f)
+            where T : unmanaged, IFloatingPoint<T>
+        {
+            return f < T.Zero ? T.Floor(f) : T.Ceiling(f);
         }
     }
 }

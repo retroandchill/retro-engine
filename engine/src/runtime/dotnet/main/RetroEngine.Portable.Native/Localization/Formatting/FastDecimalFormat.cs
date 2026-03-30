@@ -291,11 +291,11 @@ public static class FastDecimalFormat
 
         valueToRound = roundingMode switch
         {
-            RoundingMode.HalfToEven => Math.Round(valueToRound, MidpointRounding.ToEven),
+            RoundingMode.HalfToEven => Math.RoundHalfEven(valueToRound),
             RoundingMode.HalfFromZero => Math.RoundHalfFromZero(valueToRound),
             RoundingMode.HalfToZero => Math.RoundHalfToZero(valueToRound),
-            RoundingMode.FromZero => Math.Round(valueToRound, MidpointRounding.AwayFromZero),
-            RoundingMode.ToZero => Math.Round(valueToRound, MidpointRounding.ToZero),
+            RoundingMode.FromZero => Math.RoundFromZero(valueToRound),
+            RoundingMode.ToZero => Math.RoundToZero(valueToRound),
             RoundingMode.ToNegativeInfinity => Math.Round(valueToRound, MidpointRounding.ToNegativeInfinity),
             RoundingMode.ToPositiveInfinity => Math.Round(valueToRound, MidpointRounding.ToPositiveInfinity),
             _ => throw new ArgumentOutOfRangeException(nameof(roundingMode), roundingMode, null),
@@ -307,7 +307,7 @@ public static class FastDecimalFormat
         }
 
         var valueOverflowTest = isNegative ? -valueToRound : valueToRound;
-        if (!(valueOverflowTest > Pow10Table[decimalPlacesToRoundTo]))
+        if (!(valueOverflowTest >= Pow10Table[decimalPlacesToRoundTo]))
             return (integralPart, valueToRound);
 
         if (isNegative)

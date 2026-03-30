@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using RetroEngine.Portable.Collections.Immutable;
@@ -11,6 +12,16 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Test.Localization;
+
+using RoundingModeTuple = (
+    string HalfToEven,
+    string HalfFromZero,
+    string HalfToZero,
+    string FromZero,
+    string ToZero,
+    string ToNegativeInfinity,
+    string ToPositiveInfinity
+);
 
 public class TextTest
 {
@@ -581,5 +592,113 @@ public class TextTest
                 Assert.Fail($"{caller} did not rebuild correct in French-Canadian\nValue: {localized}");
             }
         }
+    }
+
+    private static readonly ImmutableArray<double> InputValues =
+    [
+        1000.1224,
+        1000.1225,
+        1000.1226,
+        1000.1234,
+        1000.1235,
+        1000.1236,
+        1000.1244,
+        1000.1245,
+        1000.1246,
+        1000.1254,
+        1000.1255,
+        1000.1256,
+        -1000.1224,
+        -1000.1225,
+        -1000.1226,
+        -1000.1234,
+        -1000.1235,
+        -1000.1236,
+        -1000.1244,
+        -1000.1245,
+        -1000.1246,
+        -1000.1254,
+        -1000.1255,
+        -1000.1256,
+    ];
+
+    private static readonly ImmutableArray<RoundingModeTuple> RoundingModeOutputValues =
+    [
+        ("1000.122", "1000.122", "1000.122", "1000.123", "1000.122", "1000.122", "1000.123"),
+        ("1000.122", "1000.123", "1000.122", "1000.123", "1000.122", "1000.122", "1000.123"),
+        ("1000.123", "1000.123", "1000.123", "1000.123", "1000.122", "1000.122", "1000.123"),
+        ("1000.123", "1000.123", "1000.123", "1000.124", "1000.123", "1000.123", "1000.124"),
+        ("1000.124", "1000.124", "1000.123", "1000.124", "1000.123", "1000.123", "1000.124"),
+        ("1000.124", "1000.124", "1000.124", "1000.124", "1000.123", "1000.123", "1000.124"),
+        ("1000.124", "1000.124", "1000.124", "1000.125", "1000.124", "1000.124", "1000.125"),
+        ("1000.124", "1000.125", "1000.124", "1000.125", "1000.124", "1000.124", "1000.125"),
+        ("1000.125", "1000.125", "1000.125", "1000.125", "1000.124", "1000.124", "1000.125"),
+        ("1000.125", "1000.125", "1000.125", "1000.126", "1000.125", "1000.125", "1000.126"),
+        ("1000.126", "1000.126", "1000.125", "1000.126", "1000.125", "1000.125", "1000.126"),
+        ("1000.126", "1000.126", "1000.126", "1000.126", "1000.125", "1000.125", "1000.126"),
+        ("-1000.122", "-1000.122", "-1000.122", "-1000.123", "-1000.122", "-1000.123", "-1000.122"),
+        ("-1000.122", "-1000.123", "-1000.122", "-1000.123", "-1000.122", "-1000.123", "-1000.122"),
+        ("-1000.123", "-1000.123", "-1000.123", "-1000.123", "-1000.122", "-1000.123", "-1000.122"),
+        ("-1000.123", "-1000.123", "-1000.123", "-1000.124", "-1000.123", "-1000.124", "-1000.123"),
+        ("-1000.124", "-1000.124", "-1000.123", "-1000.124", "-1000.123", "-1000.124", "-1000.123"),
+        ("-1000.124", "-1000.124", "-1000.124", "-1000.124", "-1000.123", "-1000.124", "-1000.123"),
+        ("-1000.124", "-1000.124", "-1000.124", "-1000.125", "-1000.124", "-1000.125", "-1000.124"),
+        ("-1000.124", "-1000.125", "-1000.124", "-1000.125", "-1000.124", "-1000.125", "-1000.124"),
+        ("-1000.125", "-1000.125", "-1000.125", "-1000.125", "-1000.124", "-1000.125", "-1000.124"),
+        ("-1000.125", "-1000.125", "-1000.125", "-1000.126", "-1000.125", "-1000.126", "-1000.125"),
+        ("-1000.126", "-1000.126", "-1000.125", "-1000.126", "-1000.125", "-1000.126", "-1000.125"),
+        ("-1000.126", "-1000.126", "-1000.126", "-1000.126", "-1000.125", "-1000.126", "-1000.125"),
+    ];
+
+    private static IEnumerable RoundModeTestData()
+    {
+        return InputValues
+            .Zip(RoundingModeOutputValues)
+            .SelectMany(tuple =>
+            {
+                return new[]
+                {
+                    (tuple.First, RoundingMode.HalfToEven, tuple.Second.HalfToEven),
+                    (tuple.First, RoundingMode.HalfFromZero, tuple.Second.HalfFromZero),
+                    (tuple.First, RoundingMode.HalfToZero, tuple.Second.HalfToZero),
+                    (tuple.First, RoundingMode.FromZero, tuple.Second.FromZero),
+                    (tuple.First, RoundingMode.ToZero, tuple.Second.ToZero),
+                    (tuple.First, RoundingMode.ToNegativeInfinity, tuple.Second.ToNegativeInfinity),
+                    (tuple.First, RoundingMode.ToPositiveInfinity, tuple.Second.ToPositiveInfinity),
+                };
+            })
+            .Concat([
+                (1000.12459, RoundingMode.HalfToEven, "1000.125"),
+                (1000.124549, RoundingMode.HalfToEven, "1000.125"),
+                (1000.124551, RoundingMode.HalfToEven, "1000.125"),
+                (1000.12451, RoundingMode.HalfToEven, "1000.125"),
+                (1000.1245000001, RoundingMode.HalfToEven, "1000.124"),
+                (1000.12450000000001, RoundingMode.HalfToEven, "1000.124"),
+                (512.9999, RoundingMode.HalfToEven, "513"),
+                (-512.9999, RoundingMode.HalfToEven, "-513"),
+            ])
+            .Select(t => new TestCaseData(t.Item1, t.Item2, t.Item3)
+            {
+                TestName = $"RoundMode={t.Item2} Input={t.Item1}",
+            });
+    }
+
+    [Test]
+    [TestCaseSource(nameof(RoundModeTestData))]
+    public void TextRoundingModesBehaveCorrectly(double input, RoundingMode roundingMode, string expectedOutput)
+    {
+        using var scope = Assert.EnterMultipleScope();
+
+        CultureManager.Instance.SetCurrentCulture("en");
+
+        var formattingOptions = new NumberFormattingOptions
+        {
+            UseGrouping = false,
+            MinimumFractionalDigits = 0,
+            MaximumFractionalDigits = 3,
+            RoundingMode = roundingMode,
+        };
+
+        Assert.That(Text.AsNumber(input, formattingOptions).ToString(), Is.EqualTo(expectedOutput));
     }
 }
