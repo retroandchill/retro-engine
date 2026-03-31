@@ -245,6 +245,7 @@ public sealed class TextFormat
                     if (currentArgument is not null)
                     {
                         arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                        currentArgument = null;
                     }
 
                     builder.Append(token.Text);
@@ -255,6 +256,7 @@ public sealed class TextFormat
                     if (currentArgument is not null)
                     {
                         arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                        currentArgument = null;
                     }
 
                     builder.Append(escapeChar);
@@ -270,7 +272,7 @@ public sealed class TextFormat
 
                     _expressionType = CompiledExpressionType.Complex;
 
-                    currentArgument = new PlaceholderKey(arg.ToString());
+                    currentArgument = new PlaceholderKey(arg);
                 }
                 else if (token.Value.TryGetArgumentModifierData(out var argMod))
                 {
@@ -295,6 +297,16 @@ public sealed class TextFormat
                         _baseFormatStringLength += token.Text.Length + 1;
                     }
                 }
+            }
+
+            if (builder.Length > 0)
+            {
+                arrayBuilder.Add(FormatSegment.Literal(builder.ToString()));
+            }
+
+            if (currentArgument is not null)
+            {
+                arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
             }
 
             if (_expressionType != CompiledExpressionType.Invalid)

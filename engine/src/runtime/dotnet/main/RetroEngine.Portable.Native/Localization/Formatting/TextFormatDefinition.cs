@@ -93,18 +93,21 @@ public sealed class TextFormatDefinition
         if (compileTextArgumentModifier == null)
             return TokenResult.CastEmpty<char, TextFormatToken>(openParen);
 
-        var parameterState = (QuoteChar: '\0', NumConsecutiveSlashes: 0);
         var parameters = ProcessArgumentModifierParameters(openParen.Remainder);
 
         if (!parameters.HasValue)
             return TokenResult.CastEmpty<Unit, TextFormatToken>(parameters);
+
+        var closeParen = parameters.Remainder.ParseChar(')');
+        if (!closeParen.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(closeParen);
 
         var createdItem = compileTextArgumentModifier(parameters.TokenText);
         if (createdItem.HasValue)
             return TokenResult.Success(
                 TextFormatToken.ArgumentModifier(createdItem.Value),
                 input,
-                parameters.Remainder
+                closeParen.Remainder
             );
 
         var innerPosition = createdItem.Remainder.Position;
@@ -119,28 +122,32 @@ public sealed class TextFormatDefinition
         if (!next.HasValue)
             return TokenResult.CastEmpty<char, Unit>(next);
 
-        TokenCursor remainder;
+        var remainder = input;
         var quoteChar = '\0';
         var numConsecutiveSlashes = 0;
         do
         {
-            remainder = next.Remainder;
             var c = next.Value;
             if (c == ')' && quoteChar == '\0')
             {
                 break;
             }
 
-            if (c == '"' && c == quoteChar)
+            remainder = next.Remainder;
+            switch (c)
             {
-                if (numConsecutiveSlashes % 2 == 0)
+                case '"' when c == quoteChar:
                 {
-                    quoteChar = '\0';
+                    if (numConsecutiveSlashes % 2 == 0)
+                    {
+                        quoteChar = '\0';
+                    }
+
+                    break;
                 }
-            }
-            else if (c == '"')
-            {
-                quoteChar = c;
+                case '"':
+                    quoteChar = c;
+                    break;
             }
 
             if (c == '\\')
@@ -167,7 +174,7 @@ public sealed class TextFormatDefinition
         var remainder = next.Remainder;
         next = remainder.ParseCharIn(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar);
         return next.HasValue
-            ? TokenResult.Success(TextFormatToken.EscapeCharacter(next.Value), input, remainder)
+            ? TokenResult.Success(TextFormatToken.EscapeCharacter(next.Value), input, next.Remainder)
             : TokenResult.CastEmpty<char, TextFormatToken>(next);
     }
 

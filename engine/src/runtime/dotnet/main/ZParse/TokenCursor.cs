@@ -150,7 +150,7 @@ public readonly ref struct TokenCursor : IEquatable<TokenCursor>
         do
         {
             remainder = next.Remainder;
-            next = Advance();
+            next = remainder.Advance();
         } while (next.HasValue && char.IsIdentifier(next.Value));
 
         return TokenResult.Success(Unit.Value, this, remainder);

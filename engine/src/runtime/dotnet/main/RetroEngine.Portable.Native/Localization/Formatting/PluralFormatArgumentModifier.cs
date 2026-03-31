@@ -49,7 +49,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     {
         var cursor = new TokenCursor(parametersPattern);
         var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
-        if (argsResult.HasValue)
+        if (!argsResult.HasValue)
             return TokenResult.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
                 argsResult
             );
