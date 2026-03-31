@@ -39,7 +39,7 @@ public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<
                 throw new ParseException(_cursor.Position, "Unexpected error when parsing token.", ex);
             }
 
-            if (!result.IsSuccess)
+            if (!result.HasValue)
                 continue;
 
             _cursor = result.Remainder;

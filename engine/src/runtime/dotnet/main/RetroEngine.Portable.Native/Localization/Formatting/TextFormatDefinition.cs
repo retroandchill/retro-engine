@@ -6,10 +6,8 @@
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Parsers;
 using RetroEngine.Portable.Utils;
-using Superpower;
-using Superpower.Model;
-using Superpower.Parsers;
 using Superpower.Tokenizers;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -20,7 +18,7 @@ internal readonly partial struct TextFormatToken
     public static partial TextFormatToken StringLiteral();
 
     [UnionCase]
-    public static partial TextFormatToken Argument(TextSpan name);
+    public static partial TextFormatToken Argument(string name);
 
     [UnionCase]
     public static partial TextFormatToken ArgumentModifier(ITextFormatArgumentModifier? modifier);
@@ -36,54 +34,7 @@ public sealed class TextFormatDefinition
     public char ArgEndChar { get; }
     public char ArgModChar { get; }
 
-    internal Tokenizer<TextFormatToken> Tokenizer { get; }
-
-    private static readonly TextParser<TextSpan> ParametersList = input =>
-    {
-        var next = input.ConsumeChar();
-        if (!next.HasValue)
-            return Result.Empty<TextSpan>(input);
-
-        var quoteChar = '\0';
-        var numConsecutiveSlashes = 0;
-
-        var remainder = input;
-        do
-        {
-            var c = next.Value;
-            if (c == ')' && quoteChar == '\0')
-                break;
-
-            remainder = next.Remainder;
-            if (c == '"')
-            {
-                if (c == quoteChar)
-                {
-                    if (numConsecutiveSlashes % 2 == 0)
-                    {
-                        quoteChar = '\0';
-                    }
-                }
-                else
-                {
-                    quoteChar = c;
-                }
-            }
-
-            if (c == '\\')
-            {
-                ++numConsecutiveSlashes;
-            }
-            else
-            {
-                numConsecutiveSlashes = 0;
-            }
-
-            next = remainder.ConsumeChar();
-        } while (next.HasValue);
-
-        return Result.Value(input.Until(remainder), input, remainder);
-    };
+    internal TokenDefinitions<TextFormatToken> Definitions { get; }
 
     public static TextFormatDefinition Default { get; } = new();
 
@@ -98,53 +49,143 @@ public sealed class TextFormatDefinition
         ArgStartChar = argStartChar;
         ArgEndChar = argEndChar;
         ArgModChar = argModChar;
-
-        var notArgEnd = Character.Except(ArgEndChar);
-
-        var parseArgument = Span.MatchedBy(notArgEnd.IgnoreThen(notArgEnd.IgnoreMany()))
-            .Between(Character.EqualTo(ArgStartChar), Character.EqualTo(ArgEndChar))
-            .Select(TextFormatToken.Argument);
-
-        var argumentIdentifier = Character
-            .EqualTo(ArgModChar)
-            .IgnoreThen(Span.MatchedBy(TextParsers.AlphaNumeric.IgnoreThen(TextParsers.AlphaNumeric.IgnoreMany())))
-            .Text();
-
-        var textParameters = ParametersList.Between(Character.EqualTo('('), Character.EqualTo(')'));
-
-        TextParser<TextFormatToken> argumentModifier = input =>
-        {
-            var identifierResult = argumentIdentifier(input);
-            if (!identifierResult.HasValue)
-                return Result.CastEmpty<string, TextFormatToken>(identifierResult);
-
-            var remainder = identifierResult.Remainder;
-            var identifier = identifierResult.Value;
-
-            var getterDelegate = TextFormatter.Instance.FindArgumentModifier(identifier);
-            if (getterDelegate is null)
-                return Result.Empty<TextFormatToken>(input);
-
-            var argsList = textParameters(remainder);
-            if (!argsList.HasValue)
-                return Result.CastEmpty<TextSpan, TextFormatToken>(argsList);
-
-            var args = argsList.Value;
-            var result = getterDelegate(input, args);
-            return result.HasValue
-                ? Result.Value(TextFormatToken.ArgumentModifier(result.Value), input, result.Remainder)
-                : Result.CastEmpty<ITextFormatArgumentModifier, TextFormatToken>(result);
-        };
-
-        var escapeCharacter = Character
-            .EqualTo(EscapeChar)
-            .IgnoreThen(Character.In(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar))
-            .Select(TextFormatToken.EscapeCharacter);
-
-        var literal = Character
-            .AnyChar.IgnoreThen(Character.ExceptIn(EscapeChar, ArgStartChar).IgnoreMany())
-            .Value(TextFormatToken.StringLiteral());
-
-        Tokenizer = new DynamicTokenizer<TextFormatToken>(parseArgument, argumentModifier, escapeCharacter, literal);
+        Definitions = new TokenDefinitions<TextFormatToken>([
+            ParseArgument,
+            ParseArgumentModifier,
+            ParseEscapeCharacter,
+            ParseStringLiteral,
+        ]);
     }
+
+    private TokenResult<TextFormatToken> ParseArgument(TokenCursor input)
+    {
+        var openingChar = input.ParseChar(ArgStartChar);
+        if (!openingChar.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(openingChar);
+
+        var identifier = openingChar.Remainder.ParseUntilChar(ArgEndChar);
+        if (!identifier.HasValue)
+            return TokenResult.CastEmpty<Unit, TextFormatToken>(identifier);
+
+        var endChar = identifier.Remainder.ParseChar(ArgEndChar);
+        if (!endChar.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(endChar);
+
+        return TokenResult.Success(TextFormatToken.Argument(identifier.TokenText.ToString()), input, endChar.Remainder);
+    }
+
+    private TokenResult<TextFormatToken> ParseArgumentModifier(TokenCursor input)
+    {
+        var pipeToken = input.ParseChar(ArgModChar);
+        if (!pipeToken.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(pipeToken);
+
+        var identifier = pipeToken.Remainder.ParseIdentifier();
+        if (!identifier.HasValue)
+            return TokenResult.CastEmpty<Unit, TextFormatToken>(identifier);
+
+        var openParen = identifier.Remainder.ParseChar('(');
+        if (!openParen.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(openParen);
+
+        var identifierName = identifier.TokenText.ToString();
+        var compileTextArgumentModifier = TextFormatter.Instance.FindArgumentModifier(identifierName);
+        if (compileTextArgumentModifier == null)
+            return TokenResult.CastEmpty<char, TextFormatToken>(openParen);
+
+        var parameterState = (QuoteChar: '\0', NumConsecutiveSlashes: 0);
+        var parameters = ProcessArgumentModifierParameters(openParen.Remainder);
+
+        if (!parameters.HasValue)
+            return TokenResult.CastEmpty<Unit, TextFormatToken>(parameters);
+
+        var createdItem = compileTextArgumentModifier(parameters.TokenText);
+        if (createdItem.HasValue)
+            return TokenResult.Success(
+                TextFormatToken.ArgumentModifier(createdItem.Value),
+                input,
+                parameters.Remainder
+            );
+
+        var innerPosition = createdItem.Remainder.Position;
+        var compositePosition = parameters.Cursor.Position + innerPosition;
+        var newRemainder = new TokenCursor(parameters.Cursor.Input, compositePosition);
+        return TokenResult.Empty<TextFormatToken>(input, newRemainder);
+    }
+
+    private static TokenResult<Unit> ProcessArgumentModifierParameters(TokenCursor input)
+    {
+        var next = input.Advance();
+        if (!next.HasValue)
+            return TokenResult.CastEmpty<char, Unit>(next);
+
+        TokenCursor remainder;
+        var quoteChar = '\0';
+        var numConsecutiveSlashes = 0;
+        do
+        {
+            remainder = next.Remainder;
+            var c = next.Value;
+            if (c == ')' && quoteChar == '\0')
+            {
+                break;
+            }
+
+            if (c == '"' && c == quoteChar)
+            {
+                if (numConsecutiveSlashes % 2 == 0)
+                {
+                    quoteChar = '\0';
+                }
+            }
+            else if (c == '"')
+            {
+                quoteChar = c;
+            }
+
+            if (c == '\\')
+            {
+                ++numConsecutiveSlashes;
+            }
+            else
+            {
+                numConsecutiveSlashes = 0;
+            }
+
+            next = remainder.Advance();
+        } while (next.HasValue);
+
+        return TokenResult.Success(Unit.Value, input, remainder);
+    }
+
+    private TokenResult<TextFormatToken> ParseEscapeCharacter(TokenCursor input)
+    {
+        var next = input.ParseChar(EscapeChar);
+        if (!next.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(next);
+
+        var remainder = next.Remainder;
+        next = remainder.ParseCharIn(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar);
+        return next.HasValue
+            ? TokenResult.Success(TextFormatToken.EscapeCharacter(next.Value), input, remainder)
+            : TokenResult.CastEmpty<char, TextFormatToken>(next);
+    }
+
+    private TokenResult<TextFormatToken> ParseStringLiteral(TokenCursor input)
+    {
+        var next = input.Advance();
+        if (!next.HasValue)
+            return TokenResult.CastEmpty<char, TextFormatToken>(next);
+
+        TokenCursor remainder;
+        do
+        {
+            remainder = next.Remainder;
+            next = remainder.Advance();
+        } while (next.HasValue && !IsLiteralBreakCharacter(next.Value));
+
+        return TokenResult.Success(TextFormatToken.StringLiteral(), input, remainder);
+    }
+
+    private bool IsLiteralBreakCharacter(char c) => c == EscapeChar || c == ArgStartChar;
 }

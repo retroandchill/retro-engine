@@ -13,7 +13,7 @@ public static class Combinators
         public TokenResult<TResult> Select<TResult>(Func<T, ReadOnlySpan<char>, TResult> selector)
             where TResult : allows ref struct
         {
-            return result.IsSuccess
+            return result.HasValue
                 ? TokenResult.Success(selector(result.Value, result.TokenText), result.Cursor, result.Remainder)
                 : TokenResult.CastEmpty<T, TResult>(result);
         }
@@ -21,14 +21,14 @@ public static class Combinators
         public TokenResult<TResult> SelectMany<TResult>(Func<T, ReadOnlySpan<char>, TokenResult<TResult>> selector)
             where TResult : allows ref struct
         {
-            return result.IsSuccess
+            return result.HasValue
                 ? selector(result.Value, result.TokenText)
                 : TokenResult.CastEmpty<T, TResult>(result);
         }
 
         public TokenResult<T> Where(Func<T, ReadOnlySpan<char>, bool> predicate)
         {
-            if (!result.IsSuccess || predicate(result.Value, result.TokenText))
+            if (!result.HasValue || predicate(result.Value, result.TokenText))
                 return result;
 
             return TokenResult.Empty<T>(result.Cursor, result.Remainder);

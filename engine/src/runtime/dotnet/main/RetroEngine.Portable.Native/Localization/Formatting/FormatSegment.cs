@@ -14,7 +14,11 @@ public readonly partial struct FormatSegment
     public static partial FormatSegment Literal(string text);
 
     [UnionCase]
-    public static partial FormatSegment Placeholder(PlaceholderKey key, ITextFormatArgumentModifier? modifier);
+    public static partial FormatSegment Placeholder(
+        PlaceholderKey key,
+        string? modifierPattern,
+        ITextFormatArgumentModifier? modifier
+    );
 }
 
 public readonly record struct PlaceholderKey

@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using RetroEngine.Portable.Localization.History;
 using Superpower.Model;
 using ZLinq;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -55,7 +56,7 @@ internal readonly ref struct TextFormatContext<T>(
     public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
-public delegate Result<ITextFormatArgumentModifier> GetTextArgumentModifier(TextSpan fullString, TextSpan argsString);
+public delegate TokenResult<ITextFormatArgumentModifier> GetTextArgumentModifier(ReadOnlySpan<char> paramArgs);
 
 public sealed class TextFormatter
 {
@@ -63,14 +64,8 @@ public sealed class TextFormatter
 
     private TextFormatter()
     {
-        _argumentModifiers.TryAdd(
-            "plural",
-            (f, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Cardinal, a)
-        );
-        _argumentModifiers.TryAdd(
-            "ordinal",
-            (f, a) => PluralFormatArgumentModifier.Create(f, TextPluralType.Ordinal, a)
-        );
+        _argumentModifiers.TryAdd("plural", a => PluralFormatArgumentModifier.Create(a, TextPluralType.Cardinal));
+        _argumentModifiers.TryAdd("ordinal", a => PluralFormatArgumentModifier.Create(a, TextPluralType.Ordinal));
     }
 
     public static TextFormatter Instance { get; } = new();

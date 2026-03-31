@@ -87,7 +87,7 @@ public sealed class TextFormat
             var nameSeen = new HashSet<string>();
             foreach (var token in segments)
             {
-                if (!token.TryGetPlaceholderData(out var key, out var modifier))
+                if (!token.TryGetPlaceholderData(out var key, out _, out var modifier))
                     continue;
 
                 if (nameSeen.Add(key.Name))
@@ -105,61 +105,6 @@ public sealed class TextFormat
             }
         }
     }
-
-    private static readonly TokenListParser<TextFormatToken, FormatSegment> LiteralTokenParser = input =>
-    {
-        var next = input.ConsumeToken();
-        if (!next.HasValue)
-            return TokenListParserResult.Empty<TextFormatToken, FormatSegment>(input);
-
-        using var builder = new ValueStringBuilder();
-        var remaining = input;
-        do
-        {
-            if (next.Value.Kind.TryGetStringLiteralData())
-            {
-                builder.Append(next.Value.Span.AsReadOnlySpan());
-            }
-            else if (next.Value.Kind.TryGetEscapeCharacterData(out var ch))
-            {
-                builder.Append(ch);
-            }
-            else
-            {
-                break;
-            }
-
-            remaining = next.Remainder;
-            next = remaining.ConsumeToken();
-        } while (next.HasValue);
-
-        return remaining != input
-            ? TokenListParserResult.Value(FormatSegment.Literal(builder.ToString()), input, remaining)
-            : TokenListParserResult.Empty<TextFormatToken, FormatSegment>(input);
-    };
-
-    private static readonly TokenListParser<TextFormatToken, FormatSegment> ArgTokenParser = Parse
-        .Sequence(
-            Token
-                .Matching((TextFormatToken t) => t.IsArgument, "argument token")
-                .Select(t => t.Kind.TryGetArgumentData(out var arg) ? arg : throw new InvalidOperationException()),
-            Token
-                .Matching((TextFormatToken t) => t.IsArgumentModifier, "argument modifier token")
-                .Select(t =>
-                    t.Kind.TryGetArgumentModifierData(out var mod) ? mod : throw new InvalidOperationException()
-                )
-                .OptionalOrDefault()
-        )
-        .Select(t =>
-        {
-            var (argument, modifier) = t;
-            return FormatSegment.Placeholder(new PlaceholderKey(argument.ToStringValue()), modifier ?? null);
-        });
-
-    private static readonly TokenListParser<TextFormatToken, FormatSegment[]> ValidFormatSegments = LiteralTokenParser
-        .Or(ArgTokenParser)
-        .Many()
-        .AtEnd();
 
     public static TextFormat Empty { get; } = new(Text.Empty);
 
@@ -239,7 +184,7 @@ public sealed class TextFormat
             segment.Match(
                 context,
                 (_, str) => resultBuilder.Append(str),
-                (ctx, key, mod) =>
+                (ctx, key, pattern, mod) =>
                 {
                     // ReSharper disable once AccessToModifiedClosure
                     var possibleArg = ctx.ResolveArg(key, argumentIndex);
@@ -254,7 +199,7 @@ public sealed class TextFormat
                             else
                             {
                                 resultBuilder.Append(PatternDefinition.ArgModChar);
-                                resultBuilder.Append(mod.ModifierPattern);
+                                resultBuilder.Append(pattern);
                             }
                         }
                         else
@@ -288,50 +233,79 @@ public sealed class TextFormat
         _expressionType = CompiledExpressionType.Simple;
         _baseFormatStringLength = 0;
         _formatArgumentEstimateMultiplier = 1;
-        var tokenList = PatternDefinition.Tokenizer.TryTokenize(_sourceExpression);
-        if (!tokenList.HasValue)
+        try
         {
-            _expressionType = CompiledExpressionType.Invalid;
-            _lastErrorMessage = tokenList.FormatErrorMessageFragment();
-            return;
-        }
-
-        if (tokenList.Value.IsAtEnd)
-            return;
-
-        var segments = ValidFormatSegments.TryParse(tokenList.Value);
-        if (!segments.HasValue)
-        {
-            _expressionType = CompiledExpressionType.Invalid;
-            _lastErrorMessage = segments.FormatErrorMessageFragment();
-            return;
-        }
-
-        _compiledSegments = [.. segments.Value];
-
-        foreach (var token in _compiledSegments)
-        {
-            token.Match(
-                this,
-                (self, str) => self._baseFormatStringLength += str.Length,
-                (self, _, modifier) =>
+            var arrayBuilder = ImmutableArray.CreateBuilder<FormatSegment>();
+            using var builder = new ValueStringBuilder();
+            PlaceholderKey? currentArgument = null;
+            foreach (var token in PatternDefinition.Definitions.GetTokens(_sourceExpression))
+            {
+                if (token.Value.IsStringLiteral)
                 {
-                    self._expressionType = CompiledExpressionType.Complex;
-                    if (modifier is null)
-                        return;
+                    if (currentArgument is not null)
+                    {
+                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                    }
+
+                    builder.Append(token.Text);
+                    _baseFormatStringLength += token.Text.Length;
+                }
+                else if (token.Value.TryGetEscapeCharacterData(out var escapeChar))
+                {
+                    if (currentArgument is not null)
+                    {
+                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                    }
+
+                    builder.Append(escapeChar);
+                    _baseFormatStringLength++;
+                }
+                else if (token.Value.TryGetArgumentData(out var arg))
+                {
+                    if (builder.Length > 0)
+                    {
+                        arrayBuilder.Add(FormatSegment.Literal(builder.ToString()));
+                        builder.Clear();
+                    }
+
+                    _expressionType = CompiledExpressionType.Complex;
+
+                    currentArgument = new PlaceholderKey(arg.ToString());
+                }
+                else if (token.Value.TryGetArgumentModifierData(out var argMod))
+                {
+                    if (currentArgument is null)
+                    {
+                        _expressionType = CompiledExpressionType.Invalid;
+                        _lastErrorMessage = "Argument modifier without argument.";
+                        break;
+                    }
+
+                    arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, token.Text.ToString(), argMod));
+                    currentArgument = null;
 
                     if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
                     {
-                        var (argModUsesFormatArgs, argModLength) = modifier.EstimateLength();
-                        self._baseFormatStringLength += argModLength;
-                        self._formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
+                        var (argModUsesFormatArgs, argModLength) = argMod!.EstimateLength();
+                        _baseFormatStringLength += argModLength;
+                        _formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
                     }
                     else
                     {
-                        self._baseFormatStringLength += modifier.ModifierPattern.Length + 1;
+                        _baseFormatStringLength += token.Text.Length + 1;
                     }
                 }
-            );
+            }
+
+            if (_expressionType != CompiledExpressionType.Invalid)
+            {
+                _compiledSegments = arrayBuilder.ToImmutable();
+            }
+        }
+        catch (ParseException e)
+        {
+            _expressionType = CompiledExpressionType.Invalid;
+            _lastErrorMessage = e.Message;
         }
     }
 

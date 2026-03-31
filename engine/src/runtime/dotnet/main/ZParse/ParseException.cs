@@ -7,15 +7,15 @@ namespace ZParse;
 
 public sealed class ParseException : Exception
 {
-    public TokenPosition Position { get; }
+    public TextPosition Position { get; }
 
-    public ParseException(TokenPosition position, string message)
+    public ParseException(TextPosition position, string message)
         : base(message)
     {
         Position = position;
     }
 
-    public ParseException(TokenPosition position, string message, Exception innerException)
+    public ParseException(TextPosition position, string message, Exception innerException)
         : base(message, innerException)
     {
         Position = position;

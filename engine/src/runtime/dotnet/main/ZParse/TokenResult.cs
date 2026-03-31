@@ -13,15 +13,15 @@ public readonly struct Unit
 public readonly ref struct TokenResult<T>
     where T : allows ref struct
 {
-    public bool IsSuccess { get; }
+    public bool HasValue { get; }
 
-    public T Value => IsSuccess ? field : throw new InvalidOperationException("No value available.");
+    public T Value => HasValue ? field : throw new InvalidOperationException("No value available.");
 
     public ReadOnlySpan<char> Input { get; }
 
-    public TokenPosition Before { get; }
+    public TextPosition Before { get; }
 
-    public TokenPosition After { get; }
+    public TextPosition After { get; }
 
     public ReadOnlySpan<char> TokenText => Input.Slice(Before.Index, After.Index - Before.Index);
 
@@ -29,18 +29,18 @@ public readonly ref struct TokenResult<T>
 
     public TokenCursor Remainder => new(Input, After);
 
-    internal TokenResult(T value, ReadOnlySpan<char> input, TokenPosition before, TokenPosition after)
+    internal TokenResult(T value, ReadOnlySpan<char> input, TextPosition before, TextPosition after)
     {
-        IsSuccess = true;
+        HasValue = true;
         Value = value;
         Input = input;
         Before = before;
         After = after;
     }
 
-    internal TokenResult(ReadOnlySpan<char> input, TokenPosition before, TokenPosition after)
+    internal TokenResult(ReadOnlySpan<char> input, TextPosition before, TextPosition after)
     {
-        IsSuccess = false;
+        HasValue = false;
         Value = default!;
         Input = input;
         Before = before;

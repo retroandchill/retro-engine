@@ -15,6 +15,7 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
         <ProjectReference Include="$(RetroEngineInteropProj)" />
+        <ProjectReference Include="..\ZParse\ZParse.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />

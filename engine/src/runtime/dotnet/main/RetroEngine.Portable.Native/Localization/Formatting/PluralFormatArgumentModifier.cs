@@ -3,12 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using RetroEngine.Portable.Localization.Cultures;
-using Superpower.Model;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -38,21 +37,20 @@ internal struct PluralFormsArray
 
 internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
 {
-    public string ModifierPattern { get; }
     private readonly TextPluralType _pluralType;
     private readonly int _longestPluralFormStringLength;
     private readonly bool _doPluralFormsUseFormatArgs;
     private readonly PluralFormsArray _pluralForms;
 
-    public static Result<ITextFormatArgumentModifier> Create(
-        TextSpan modifierPattern,
-        TextPluralType pluralType,
-        TextSpan argsString
+    public static TokenResult<ITextFormatArgumentModifier> Create(
+        ReadOnlySpan<char> parametersPattern,
+        TextPluralType pluralType
     )
     {
-        var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(argsString);
+        var cursor = new TokenCursor(parametersPattern);
+        var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
         if (argsResult.HasValue)
-            return Result.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
+            return TokenResult.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
                 argsResult
             );
         var args = argsResult.Value;
@@ -74,26 +72,22 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
 
         if (builder.Count == args.Count)
         {
-            return Result.Value<ITextFormatArgumentModifier>(
+            return TokenResult.Success<ITextFormatArgumentModifier>(
                 new PluralFormatArgumentModifier(
-                    modifierPattern.ToStringValue(),
                     pluralType,
                     builder.ToImmutable(),
                     longestPluralFormStringLength,
                     doPluralFormsUseFormatArgs
                 ),
-                modifierPattern,
-                argsString.Skip(argsString.Length)
+                cursor,
+                argsResult.Remainder
             );
         }
 
-        var errorMessage =
-            $"Invalid number of arguments in plural format modifier. Expected {args.Count}, got {builder.Count}.";
-        return Result.Empty<ITextFormatArgumentModifier>(modifierPattern, errorMessage);
+        return TokenResult.Empty<ITextFormatArgumentModifier>(cursor);
     }
 
     private PluralFormatArgumentModifier(
-        string modifierPattern,
         TextPluralType pluralType,
         IReadOnlyDictionary<string, TextFormat> pluralForms,
         int longestPluralFormStringLength,
@@ -107,7 +101,6 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
         const string manyString = "many";
         const string otherString = "other";
 
-        ModifierPattern = modifierPattern;
         _pluralType = pluralType;
         _longestPluralFormStringLength = longestPluralFormStringLength;
         _doPluralFormsUseFormatArgs = doPluralFormsUseFormatArgs;

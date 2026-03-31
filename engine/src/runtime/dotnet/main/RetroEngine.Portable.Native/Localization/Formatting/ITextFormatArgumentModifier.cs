@@ -7,14 +7,13 @@ using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using Superpower;
-using Superpower.Model;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
 public interface ITextFormatArgumentModifier
 {
-    string ModifierPattern { get; }
-
     (bool UsesFormatArgs, int Length) EstimateLength();
 
     IEnumerable<string> FormatArgumentNames { get; }
@@ -22,9 +21,51 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
-    protected static Result<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TextSpan argsString)
+    protected static TokenResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TokenCursor cursor)
     {
-        return KeyValueArgsParser(argsString);
+        var builder = ImmutableOrderedDictionary.CreateBuilder<string, string>();
+        var remainder = cursor.ParseOptionalWhitespace().Remainder;
+        while (!remainder.IsAtEnd)
+        {
+            var key = remainder.ParseIdentifier();
+            if (!key.HasValue)
+                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
+
+            remainder = key.Remainder.ParseOptionalWhitespace().Remainder;
+
+            var equals = remainder.ParseChar('=');
+            if (!equals.HasValue)
+                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
+
+            remainder = equals.Remainder.ParseOptionalWhitespace().Remainder;
+
+            var quotedString = remainder.ParseQuotedString();
+            if (quotedString.HasValue)
+            {
+                remainder = quotedString.Remainder.ParseOptionalWhitespace().Remainder;
+                builder.Add(key.TokenText.ToString(), quotedString.Value);
+            }
+            else
+            {
+                var arg = remainder.ParseUntilChar(',');
+                if (arg.TokenText.Length == 0)
+                    return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
+
+                remainder = arg.Remainder.ParseOptionalWhitespace().Remainder;
+                builder.Add(key.TokenText.ToString(), arg.TokenText.ToString());
+            }
+
+            if (remainder.IsAtEnd)
+                break;
+
+            var comma = remainder.ParseChar(',');
+            if (!comma.HasValue)
+                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
+
+            remainder = comma.Remainder;
+        }
+
+        return TokenResult.Success(builder.ToImmutable(), cursor, remainder);
     }
 
     protected static ImmutableArray<string>? ParseStringArray(string argsString)
