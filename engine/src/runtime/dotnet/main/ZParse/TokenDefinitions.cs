@@ -9,7 +9,7 @@ using ZParse.Enumeration;
 namespace ZParse;
 
 public readonly record struct TokenDefinitions<T>(
-    ImmutableArray<Func<TokenCursor, TokenResult<T>>> Definitions,
+    ImmutableArray<Func<ParseCursor, ParseResult<T>>> Definitions,
     bool IgnoreWhitespace = false
 )
     where T : allows ref struct

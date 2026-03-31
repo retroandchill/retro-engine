@@ -4,13 +4,14 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections;
+using ZParse.Parsers;
 
 namespace ZParse.Enumeration;
 
 public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<T> definitions) : IEnumerator<Token<T>>
     where T : allows ref struct
 {
-    private TokenCursor _cursor = new(input);
+    private ParseCursor _cursor = new(input);
 
     object IEnumerator.Current => throw new NotSupportedException("Token's cannot be cast to object.");
     public Token<T> Current { get; private set; }
@@ -29,7 +30,7 @@ public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<
 
         foreach (var parser in definitions.Definitions)
         {
-            TokenResult<T> result;
+            ParseResult<T> result;
             try
             {
                 result = parser(_cursor);
@@ -43,7 +44,12 @@ public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<
                 continue;
 
             _cursor = result.Remainder;
-            Current = new Token<T>(result.TokenText, result.Value, result.Before.Line, result.Before.Column);
+            Current = new Token<T>(
+                ParseCursor.Between(result.Cursor, result.Remainder),
+                result.Value,
+                result.Before.Line,
+                result.Before.Column
+            );
             return true;
         }
 

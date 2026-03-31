@@ -12,7 +12,6 @@
     <ItemGroup>
       <PackageReference Include="LinkDotNet.StringBuilder" />
       <PackageReference Include="Serilog" />
-      <PackageReference Include="Superpower" />
     </ItemGroup>
 
     <ItemGroup>

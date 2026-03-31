@@ -6,7 +6,6 @@
 using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
-using Superpower;
 using ZParse;
 using ZParse.Parsers;
 
@@ -21,7 +20,7 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
-    protected static TokenResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TokenCursor cursor)
+    protected static ParseResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(ParseCursor cursor)
     {
         var builder = ImmutableOrderedDictionary.CreateBuilder<string, string>();
         var remainder = cursor.ParseOptionalWhitespace().Remainder;
@@ -29,13 +28,13 @@ public interface ITextFormatArgumentModifier
         {
             var key = remainder.ParseIdentifier();
             if (!key.HasValue)
-                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
+                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
 
             remainder = key.Remainder.ParseOptionalWhitespace().Remainder;
 
             var equals = remainder.ParseChar('=');
             if (!equals.HasValue)
-                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
+                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
 
             remainder = equals.Remainder.ParseOptionalWhitespace().Remainder;
 
@@ -43,16 +42,16 @@ public interface ITextFormatArgumentModifier
             if (quotedString.HasValue)
             {
                 remainder = quotedString.Remainder.ParseOptionalWhitespace().Remainder;
-                builder.Add(key.TokenText.ToString(), quotedString.Value);
+                builder.Add(key.Value.ToString(), quotedString.Value);
             }
             else
             {
                 var arg = remainder.ParseUntilChar(',');
-                if (arg.TokenText.Length == 0)
-                    return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
+                if (arg.Value.Length == 0)
+                    return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
 
                 remainder = arg.Remainder.ParseOptionalWhitespace().Remainder;
-                builder.Add(key.TokenText.ToString(), arg.TokenText.ToString());
+                builder.Add(key.Value.ToString(), arg.Value.ToString());
             }
 
             if (remainder.IsAtEnd)
@@ -60,27 +59,16 @@ public interface ITextFormatArgumentModifier
 
             var comma = remainder.ParseChar(',');
             if (!comma.HasValue)
-                return TokenResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
+                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
 
             remainder = comma.Remainder;
         }
 
-        return TokenResult.Success(builder.ToImmutable(), cursor, remainder);
+        return ParseResult.Success(builder.ToImmutable(), cursor, remainder);
     }
 
-    protected static ImmutableArray<string>? ParseStringArray(string argsString)
+    protected static ParseResult<ImmutableArray<string>> ParseStringArray(string argsString)
     {
-        var result = StringArrayParser.TryParse(argsString);
-        return result.HasValue ? result.Value : null;
+        throw new NotImplementedException();
     }
-
-    private static readonly TextParser<ImmutableOrderedDictionary<string, string>> KeyValueArgsParser =
-        TextFormatParsingUtils
-            .KeyValueArg.Between(TextFormatParsingUtils.Whitespace, TextFormatParsingUtils.Whitespace)
-            .ManyDelimitedBy(TextFormatParsingUtils.Comma)
-            .Select(kv => kv.ToImmutableOrderedDictionary());
-
-    private static readonly TextParser<ImmutableArray<string>> StringArrayParser = TextFormatParsingUtils
-        .ArgValue.ManyDelimitedBy(TextFormatParsingUtils.Comma)
-        .Select(x => x.ToImmutableArray());
 }

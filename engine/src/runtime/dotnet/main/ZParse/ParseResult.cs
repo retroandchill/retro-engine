@@ -1,4 +1,4 @@
-// // @file TokenResult.cs
+// // @file ParseResult.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -10,7 +10,7 @@ public readonly struct Unit
     public static Unit Value { get; } = new();
 }
 
-public readonly ref struct TokenResult<T>
+public readonly ref struct ParseResult<T>
     where T : allows ref struct
 {
     public bool HasValue { get; }
@@ -23,13 +23,11 @@ public readonly ref struct TokenResult<T>
 
     public TextPosition After { get; }
 
-    public ReadOnlySpan<char> TokenText => Input.Slice(Before.Index, After.Index - Before.Index);
+    public ParseCursor Cursor => new(Input, Before);
 
-    public TokenCursor Cursor => new(Input, Before);
+    public ParseCursor Remainder => new(Input, After);
 
-    public TokenCursor Remainder => new(Input, After);
-
-    internal TokenResult(T value, ReadOnlySpan<char> input, TextPosition before, TextPosition after)
+    internal ParseResult(T value, ReadOnlySpan<char> input, TextPosition before, TextPosition after)
     {
         HasValue = true;
         Value = value;
@@ -38,7 +36,7 @@ public readonly ref struct TokenResult<T>
         After = after;
     }
 
-    internal TokenResult(ReadOnlySpan<char> input, TextPosition before, TextPosition after)
+    internal ParseResult(ReadOnlySpan<char> input, TextPosition before, TextPosition after)
     {
         HasValue = false;
         Value = default!;
@@ -48,34 +46,34 @@ public readonly ref struct TokenResult<T>
     }
 }
 
-public static class TokenResult
+public static class ParseResult
 {
-    public static TokenResult<T> Success<T>(T value, TokenCursor input, TokenCursor remainder)
+    public static ParseResult<T> Success<T>(T value, ParseCursor input, ParseCursor remainder)
         where T : allows ref struct
     {
         return input.Input == remainder.Input
-            ? new TokenResult<T>(value, input.Input, input.Position, remainder.Position)
+            ? new ParseResult<T>(value, input.Input, input.Position, remainder.Position)
             : throw new InvalidOperationException("Input and remainder must be from the same input.");
     }
 
-    public static TokenResult<T> Empty<T>(TokenCursor token)
+    public static ParseResult<T> Empty<T>(ParseCursor parse)
         where T : allows ref struct
     {
-        return new TokenResult<T>(token.Input, token.Position, token.Position);
+        return new ParseResult<T>(parse.Input, parse.Position, parse.Position);
     }
 
-    public static TokenResult<T> Empty<T>(TokenCursor input, TokenCursor remainder)
+    public static ParseResult<T> Empty<T>(ParseCursor input, ParseCursor remainder)
         where T : allows ref struct
     {
         return input.Input == remainder.Input
-            ? new TokenResult<T>(input.Input, input.Position, remainder.Position)
+            ? new ParseResult<T>(input.Input, input.Position, remainder.Position)
             : throw new InvalidOperationException("Input and remainder must be from the same input.");
     }
 
-    public static TokenResult<TOther> CastEmpty<T, TOther>(TokenResult<T> result)
+    public static ParseResult<TOther> CastEmpty<T, TOther>(ParseResult<T> result)
         where T : allows ref struct
         where TOther : allows ref struct
     {
-        return new TokenResult<TOther>(result.Input, result.Before, result.After);
+        return new ParseResult<TOther>(result.Input, result.Before, result.After);
     }
 }

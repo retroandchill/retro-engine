@@ -20,7 +20,6 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" />
         <PackageReference Include="MessagePack" />
-        <PackageReference Include="Superpower" />
         <PackageReference Include="System.IO.Hashing" />
         <PackageReference Include="TimeZoneNames" />
         <PackageReference Include="ZLinq" />

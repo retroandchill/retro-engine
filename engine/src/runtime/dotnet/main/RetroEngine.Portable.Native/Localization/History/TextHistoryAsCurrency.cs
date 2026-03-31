@@ -8,9 +8,8 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
-using Superpower;
-using Superpower.Model;
-using Superpower.Parsers;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -37,37 +36,48 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
         return BuildNumericDisplayString(formattingRules);
     }
 
-    private static readonly TextParser<(FormatNumericArg, string, Culture?)> Parser = Parse.Sequence(
-        Span.EqualTo(Markers.LocGenCurrency)
-            .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
-            .IgnoreThen(TextParsers.Whitespace)
-            .IgnoreThen(TextParsers.Number),
-        TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString),
-        TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.CultureFromName)
-    );
-
-    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
     {
         var culture = CultureManager.Instance.CurrentLocale;
+        var number = input.ParseSequence(
+            i => i.ParseSymbol(Markers.LocGenCurrency),
+            i => i.ParseWhitespaceAndChar('('),
+            i => i.ParseOptionalWhitespace(),
+            i => i.ParseNumber(),
+            (_, _, _, i) => i
+        );
+        if (!number.HasValue)
+            return ParseResult.CastEmpty<FormatNumericArg, ITextData>(number);
 
-        var result = Parser(input);
-        if (!result.HasValue)
-        {
-            return Result.CastEmpty<(FormatNumericArg, string, Culture?), ITextData>(result);
-        }
+        var currencyCode = number.Remainder.ParseSequence(
+            i => i.ParseWhitespaceAndChar(','),
+            i => i.ParseOptionalWhitespace(),
+            i => i.ParseQuotedString(),
+            (_, _, i) => i
+        );
 
-        var (sourceValue, currencyCode, targetCulture) = result.Value;
+        if (!currencyCode.HasValue)
+            return ParseResult.CastEmpty<string, ITextData>(currencyCode);
 
-        var baseValue = sourceValue.Match(i => i, u => u, f => f, d => d);
+        var targetCulture = currencyCode.Remainder.ParseSequence(
+            i => i.ParseWhitespaceAndChar(','),
+            i => i.ParseOptionalWhitespace(),
+            i => i.ParseQuotedString(),
+            i => i.ParseWhitespaceAndChar(')'),
+            (_, _, i, _) => CultureManager.Instance.GetCulture(i)
+        );
+        if (!targetCulture.HasValue)
+            return ParseResult.CastEmpty<Culture?, ITextData>(targetCulture);
 
-        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var baseValue = number.Value.Match(i => i, u => u, f => f, d => d);
+        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode.Value);
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
 
-        return Result.Value<ITextData>(
-            new TextHistoryAsCurrency(dividedValue, currencyCode, formattingOptions, targetCulture),
-            result.Location,
-            result.Remainder
+        return ParseResult.Success<ITextData>(
+            new TextHistoryAsCurrency(dividedValue, currencyCode.Value, formattingOptions, targetCulture.Value),
+            input,
+            targetCulture.Remainder
         );
     }
 

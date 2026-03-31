@@ -5,15 +5,15 @@
 
 using System.Text;
 using RetroEngine.Portable.Concurrency;
-using Superpower.Model;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
 internal interface ITextHistory : ITextData
 {
-    static virtual Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
+    static virtual ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
     {
-        return Result.Empty<ITextData>(input);
+        return ParseResult.Empty<ITextData>(input);
     }
 }
 

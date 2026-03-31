@@ -5,11 +5,9 @@
 
 using System.Text;
 using RetroEngine.Portable.Localization.Stringification;
-using RetroEngine.Portable.Parsers;
 using RetroEngine.Portable.Utils;
-using Superpower;
-using Superpower.Model;
-using Superpower.Parsers;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -20,79 +18,80 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
 
-    private static readonly TextParser<(string Namespace, string Key, string Source)> NsLoctextParser = Span.EqualTo(
-            Markers.NsLocText
-        )
-        .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
-        .IgnoreThen(
-            Parse.Sequence(
-                TextParsers.Whitespace.IgnoreThen(TextParsers.QuotedString),
-                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString),
-                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString)
-            )
-        )
-        .FollowedBy(TextParsers.WhitespaceAndCloseParen)
-        .AtEnd()
-        .Select(r =>
-        {
-            var (ns, key, source) = r;
-
-            if (string.IsNullOrEmpty(key))
-            {
-                key = Guid.NewGuid().ToString();
-            }
-
-            return (ns, key, source);
-        });
-
-    private static readonly TextParser<(string Key, string Source)> LoctextParser = Span.EqualTo(Markers.LocText)
-        .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
-        .IgnoreThen(
-            Parse.Sequence(
-                TextParsers.Whitespace.IgnoreThen(TextParsers.QuotedString),
-                TextParsers.WhitespaceAndComma.IgnoreThen(TextParsers.QuotedString)
-            )
-        )
-        .FollowedBy(TextParsers.WhitespaceAndCloseParen)
-        .AtEnd()
-        .Select(r =>
-        {
-            var (key, source) = r;
-
-            if (string.IsNullOrEmpty(key))
-            {
-                key = Guid.NewGuid().ToString();
-            }
-
-            return (key, source);
-        });
-
-    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
     {
-        var nsLocTextResult = NsLoctextParser(input);
-        if (nsLocTextResult.HasValue)
+        var nsloctextResult = input.ParseSymbol(Markers.NsLocText);
+        if (nsloctextResult.HasValue)
         {
-            var (ns, key, source) = nsLocTextResult.Value;
-            return Result.Value<ITextData>(
-                new TextHistorySimple(new TextId(ns, key), source),
-                nsLocTextResult.Location,
-                nsLocTextResult.Remainder
+            var nsString = nsloctextResult.Remainder.ParseSequence(
+                i => i.ParseWhitespaceAndChar('('),
+                i => i.ParseOptionalWhitespace(),
+                i => i.ParseQuotedString(),
+                (_, _, i) => i
+            );
+            if (!nsString.HasValue)
+                return ParseResult.CastEmpty<string, ITextData>(nsString);
+
+            var keyString = nsString.Remainder.ParseSequence(
+                i => i.ParseWhitespaceAndChar(','),
+                i => i.ParseOptionalWhitespace(),
+                i => i.ParseQuotedString(),
+                (_, _, i) => i
+            );
+            if (!keyString.HasValue)
+                return ParseResult.CastEmpty<string, ITextData>(keyString);
+
+            var key = string.IsNullOrEmpty(keyString.Value) ? Guid.NewGuid().ToString() : keyString.Value;
+
+            var sourceString = keyString.Remainder.ParseSequence(
+                i => i.ParseWhitespaceAndChar(','),
+                i => i.ParseOptionalWhitespace(),
+                i => i.ParseQuotedString(),
+                i => i.ParseWhitespaceAndChar(')'),
+                (_, _, i, _) => i
+            );
+            if (!sourceString.HasValue)
+                return ParseResult.CastEmpty<string, ITextData>(sourceString);
+
+            return ParseResult.Success<ITextData>(
+                new TextHistorySimple(new TextId(nsString.Value, key), sourceString.Value),
+                input,
+                sourceString.Remainder
             );
         }
 
-        var loctextResult = LoctextParser(input);
-        // ReSharper disable once InvertIf
+        var loctextResult = input.ParseSymbol(Markers.LocText);
         if (loctextResult.HasValue)
         {
-            var (key, source) = loctextResult.Value;
-            return Result.Value<ITextData>(
-                new TextHistorySimple(new TextId(textNamespace ?? string.Empty, key), source),
-                loctextResult.Location,
-                loctextResult.Remainder
+            var keyString = loctextResult.Remainder.ParseSequence(
+                i => i.ParseWhitespaceAndChar(','),
+                i => i.ParseOptionalWhitespace(),
+                i => i.ParseQuotedString(),
+                (_, _, i) => i
+            );
+            if (!keyString.HasValue)
+                return ParseResult.CastEmpty<string, ITextData>(keyString);
+
+            var key = string.IsNullOrEmpty(keyString.Value) ? Guid.NewGuid().ToString() : keyString.Value;
+
+            var sourceString = keyString.Remainder.ParseSequence(
+                i => i.ParseWhitespaceAndChar(','),
+                i => i.ParseOptionalWhitespace(),
+                i => i.ParseQuotedString(),
+                i => i.ParseWhitespaceAndChar(')'),
+                (_, _, i, _) => i
+            );
+            if (!sourceString.HasValue)
+                return ParseResult.CastEmpty<string, ITextData>(sourceString);
+
+            return ParseResult.Success<ITextData>(
+                new TextHistorySimple(new TextId(textNamespace ?? "", key), sourceString.Value),
+                input,
+                sourceString.Remainder
             );
         }
 
-        return Result.Empty<ITextData>(input);
+        return ParseResult.Empty<ITextData>(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

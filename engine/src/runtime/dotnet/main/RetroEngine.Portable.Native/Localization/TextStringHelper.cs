@@ -7,92 +7,89 @@ using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Localization.History;
 using RetroEngine.Portable.Localization.Stringification;
-using RetroEngine.Portable.Parsers;
-using Superpower;
-using Superpower.Model;
-using Superpower.Parsers;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization;
 
 internal static class TextStringHelper
 {
-    public static Result<Text> ReadFromBuffer(string buffer, string? textNamespace = null, bool requiresQuotes = false)
-    {
-        return ReadFromBuffer(new TextSpan(buffer), textNamespace, requiresQuotes);
-    }
-
-    private static readonly TextParser<Text> QuotedTextLiteral = StringLiteral.UnrealStyle.Select(t => new Text(t));
-
-    internal static Result<Text> ReadFromBuffer(
-        TextSpan buffer,
+    public static ParseResult<Text> ReadFromBuffer(
+        ReadOnlySpan<char> buffer,
         string? textNamespace = null,
         bool requiresQuotes = false
     )
     {
-        if (buffer.IsAtEnd)
+        return ReadFromBuffer(new ParseCursor(buffer), textNamespace, requiresQuotes);
+    }
+
+    internal static ParseResult<Text> ReadFromBuffer(
+        ParseCursor input,
+        string? textNamespace = null,
+        bool requiresQuotes = false
+    )
+    {
+        if (input.IsAtEnd)
         {
-            return requiresQuotes ? Result.Empty<Text>(buffer) : Result.Value(Text.Empty, buffer, buffer);
+            return requiresQuotes ? ParseResult.Empty<Text>(input) : ParseResult.Success(Text.Empty, input, input);
         }
 
-        var complexResult = ReadFromBufferComplex(buffer, textNamespace);
+        var complexResult = ReadFromBufferComplex(input, textNamespace);
         if (complexResult.HasValue)
         {
             return complexResult;
         }
 
         if (!requiresQuotes)
-            return Result.Value(new Text(buffer.ToStringValue()), buffer, buffer.Skip(buffer.Length));
+            return input.ParseToEnd().Select(x => new Text(x.ToString()));
 
-        var literalResult = QuotedTextLiteral(buffer);
-        return literalResult.HasValue
-            ? Result.Value(new Text(literalResult.Value), literalResult.Location, literalResult.Remainder)
-            : Result.CombineEmpty(complexResult, literalResult);
+        return input.ParseQuotedString().Select(x => new Text(x.ToString()));
     }
 
-    public static readonly TextParser<Text> CultureInvariantText = Span.EqualTo(Markers.InvText)
-        .IgnoreThen(TextParsers.WhitespaceAndOpenParen)
-        .IgnoreThen(TextParsers.Whitespace)
-        .IgnoreThen(TextParsers.QuotedString)
-        .FollowedBy(TextParsers.WhitespaceAndCloseParen)
-        .Select(Text.AsCultureInvariant);
-
-    private static Result<Text> ReadFromBufferComplex(TextSpan buffer, string? textNamespace = null)
+    private static ParseResult<Text> ParseCultureInvariantText(ParseCursor buffer)
     {
-        var invariantText = CultureInvariantText(buffer);
+        return buffer.ParseSequence(
+            i => i.ParseSymbol(Markers.InvText),
+            i => i.ParseWhitespaceAndChar('('),
+            i => i.ParseOptionalWhitespace(),
+            i => i.ParseQuotedString(),
+            i => i.ParseWhitespaceAndChar(')'),
+            (_, _, _, i, _) => Text.AsCultureInvariant(i)
+        );
+    }
+
+    private static ParseResult<Text> ReadFromBufferComplex(ParseCursor buffer, string? textNamespace = null)
+    {
+        var invariantText = ParseCultureInvariantText(buffer);
         if (invariantText.HasValue)
         {
             return invariantText;
         }
 
-        var emptyResult = invariantText;
-        foreach (var result in ReadTextHistories.Select(parser => parser(buffer, textNamespace)))
+        foreach (var parser in ReadTextHistories)
         {
+            var result = parser(buffer, textNamespace);
             if (result.HasValue)
                 return result;
-
-            emptyResult = Result.CombineEmpty(emptyResult, result);
         }
 
-        return emptyResult;
+        return ParseResult.Empty<Text>(buffer);
     }
 
-    private static Result<Text> ReadText<T>(TextSpan buffer, string? textNamespace)
+    private static ParseResult<Text> ReadText<T>(ParseCursor buffer, string? textNamespace)
         where T : ITextHistory
     {
-        var result = T.ReadFromBuffer(buffer, textNamespace);
-        return result.HasValue
-            ? Result.Value(new Text(result.Value), result.Location, result.Remainder)
-            : Result.Empty<Text>(buffer);
+        return T.ReadFromBuffer(buffer, textNamespace).Select(r => new Text(r));
     }
 
-    private delegate Result<Text> TextHistoryParser(TextSpan buffer, string? textNamespace);
+    private delegate ParseResult<Text> TextHistoryParser(ParseCursor buffer, string? textNamespace);
 
     private static readonly ImmutableArray<TextHistoryParser> ReadTextHistories =
     [
         ReadText<TextHistorySimple>,
         ReadText<TextHistoryNamedFormat>,
         ReadText<TextHistoryOrderedFormat>,
-        //ReadTextData<TextHistoryArgumentDataFormat)>,
+        //ReadText<TextHistoryArgumentDataFormat>,
         ReadText<TextHistoryAsNumber>,
         ReadText<TextHistoryAsPercent>,
         ReadText<TextHistoryAsCurrency>,

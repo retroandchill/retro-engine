@@ -3,11 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using RetroEngine.Portable.Localization.Stringification;
-using RetroEngine.Portable.Parsers;
 using RetroEngine.Portable.Utils;
-using Superpower.Tokenizers;
 using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -57,54 +55,54 @@ public sealed class TextFormatDefinition
         ]);
     }
 
-    private TokenResult<TextFormatToken> ParseArgument(TokenCursor input)
+    private ParseResult<TextFormatToken> ParseArgument(ParseCursor input)
     {
         var openingChar = input.ParseChar(ArgStartChar);
         if (!openingChar.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(openingChar);
+            return ParseResult.CastEmpty<char, TextFormatToken>(openingChar);
 
         var identifier = openingChar.Remainder.ParseUntilChar(ArgEndChar);
         if (!identifier.HasValue)
-            return TokenResult.CastEmpty<Unit, TextFormatToken>(identifier);
+            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(identifier);
 
         var endChar = identifier.Remainder.ParseChar(ArgEndChar);
         if (!endChar.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(endChar);
+            return ParseResult.CastEmpty<char, TextFormatToken>(endChar);
 
-        return TokenResult.Success(TextFormatToken.Argument(identifier.TokenText.ToString()), input, endChar.Remainder);
+        return ParseResult.Success(TextFormatToken.Argument(identifier.Value.ToString()), input, endChar.Remainder);
     }
 
-    private TokenResult<TextFormatToken> ParseArgumentModifier(TokenCursor input)
+    private ParseResult<TextFormatToken> ParseArgumentModifier(ParseCursor input)
     {
         var pipeToken = input.ParseChar(ArgModChar);
         if (!pipeToken.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(pipeToken);
+            return ParseResult.CastEmpty<char, TextFormatToken>(pipeToken);
 
         var identifier = pipeToken.Remainder.ParseIdentifier();
         if (!identifier.HasValue)
-            return TokenResult.CastEmpty<Unit, TextFormatToken>(identifier);
+            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(identifier);
 
         var openParen = identifier.Remainder.ParseChar('(');
         if (!openParen.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(openParen);
+            return ParseResult.CastEmpty<char, TextFormatToken>(openParen);
 
-        var identifierName = identifier.TokenText.ToString();
+        var identifierName = identifier.Value.ToString();
         var compileTextArgumentModifier = TextFormatter.Instance.FindArgumentModifier(identifierName);
         if (compileTextArgumentModifier == null)
-            return TokenResult.CastEmpty<char, TextFormatToken>(openParen);
+            return ParseResult.CastEmpty<char, TextFormatToken>(openParen);
 
         var parameters = ProcessArgumentModifierParameters(openParen.Remainder);
 
         if (!parameters.HasValue)
-            return TokenResult.CastEmpty<Unit, TextFormatToken>(parameters);
+            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(parameters);
 
         var closeParen = parameters.Remainder.ParseChar(')');
         if (!closeParen.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(closeParen);
+            return ParseResult.CastEmpty<char, TextFormatToken>(closeParen);
 
-        var createdItem = compileTextArgumentModifier(parameters.TokenText);
+        var createdItem = compileTextArgumentModifier(parameters.Value);
         if (createdItem.HasValue)
-            return TokenResult.Success(
+            return ParseResult.Success(
                 TextFormatToken.ArgumentModifier(createdItem.Value),
                 input,
                 closeParen.Remainder
@@ -112,15 +110,15 @@ public sealed class TextFormatDefinition
 
         var innerPosition = createdItem.Remainder.Position;
         var compositePosition = parameters.Cursor.Position + innerPosition;
-        var newRemainder = new TokenCursor(parameters.Cursor.Input, compositePosition);
-        return TokenResult.Empty<TextFormatToken>(input, newRemainder);
+        var newRemainder = new ParseCursor(parameters.Cursor.Input, compositePosition);
+        return ParseResult.Empty<TextFormatToken>(input, newRemainder);
     }
 
-    private static TokenResult<Unit> ProcessArgumentModifierParameters(TokenCursor input)
+    private static ParseResult<ReadOnlySpan<char>> ProcessArgumentModifierParameters(ParseCursor input)
     {
         var next = input.Advance();
         if (!next.HasValue)
-            return TokenResult.CastEmpty<char, Unit>(next);
+            return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
 
         var remainder = input;
         var quoteChar = '\0';
@@ -162,36 +160,36 @@ public sealed class TextFormatDefinition
             next = remainder.Advance();
         } while (next.HasValue);
 
-        return TokenResult.Success(Unit.Value, input, remainder);
+        return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
     }
 
-    private TokenResult<TextFormatToken> ParseEscapeCharacter(TokenCursor input)
+    private ParseResult<TextFormatToken> ParseEscapeCharacter(ParseCursor input)
     {
         var next = input.ParseChar(EscapeChar);
         if (!next.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(next);
+            return ParseResult.CastEmpty<char, TextFormatToken>(next);
 
         var remainder = next.Remainder;
         next = remainder.ParseCharIn(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar);
         return next.HasValue
-            ? TokenResult.Success(TextFormatToken.EscapeCharacter(next.Value), input, next.Remainder)
-            : TokenResult.CastEmpty<char, TextFormatToken>(next);
+            ? ParseResult.Success(TextFormatToken.EscapeCharacter(next.Value), input, next.Remainder)
+            : ParseResult.CastEmpty<char, TextFormatToken>(next);
     }
 
-    private TokenResult<TextFormatToken> ParseStringLiteral(TokenCursor input)
+    private ParseResult<TextFormatToken> ParseStringLiteral(ParseCursor input)
     {
         var next = input.Advance();
         if (!next.HasValue)
-            return TokenResult.CastEmpty<char, TextFormatToken>(next);
+            return ParseResult.CastEmpty<char, TextFormatToken>(next);
 
-        TokenCursor remainder;
+        ParseCursor remainder;
         do
         {
             remainder = next.Remainder;
             next = remainder.Advance();
         } while (next.HasValue && !IsLiteralBreakCharacter(next.Value));
 
-        return TokenResult.Success(TextFormatToken.StringLiteral(), input, remainder);
+        return ParseResult.Success(TextFormatToken.StringLiteral(), input, remainder);
     }
 
     private bool IsLiteralBreakCharacter(char c) => c == EscapeChar || c == ArgStartChar;

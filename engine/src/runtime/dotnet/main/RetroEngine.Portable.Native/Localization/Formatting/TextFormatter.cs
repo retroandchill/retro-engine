@@ -7,7 +7,6 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using RetroEngine.Portable.Localization.History;
-using Superpower.Model;
 using ZLinq;
 using ZParse;
 
@@ -56,7 +55,7 @@ internal readonly ref struct TextFormatContext<T>(
     public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
-public delegate TokenResult<ITextFormatArgumentModifier> GetTextArgumentModifier(ReadOnlySpan<char> paramArgs);
+public delegate ParseResult<ITextFormatArgumentModifier> GetTextArgumentModifier(ReadOnlySpan<char> paramArgs);
 
 public sealed class TextFormatter
 {

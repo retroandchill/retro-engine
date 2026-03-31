@@ -8,8 +8,8 @@ using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
-using Superpower;
-using Superpower.Model;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
@@ -110,15 +110,18 @@ public readonly partial struct FormatArg
         );
     }
 
-    private static readonly TextParser<FormatArg> Parser = TextParsers
-        .ScopedEnum<TextGender>("ETextGender::")
-        .Select(Gender)
-        .Try()
-        .Or(TextParsers.Number.Select(a => (FormatArg)a).Try().Or(TextParsers.QuotedText.Select(Text)));
-
-    public static Result<FormatArg> FromExportedString(string str)
+    public static ParseResult<FormatArg> FromExportedString(ReadOnlySpan<char> str)
     {
-        return Parser.TryParse(str);
+        return FromExportedString(new ParseCursor(str));
+    }
+
+    internal static ParseResult<FormatArg> FromExportedString(ParseCursor input)
+    {
+        return input
+            .ParseEnum<TextGender>("ETextGender::")
+            .Select(Gender)
+            .OrElse(i => i.ParseNumber().Select(a => (FormatArg)a))
+            .OrElse(i => TextStringHelper.ReadFromBuffer(i, requiresQuotes: true).Select(Text));
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);

@@ -8,8 +8,7 @@ using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
-using Superpower;
-using Superpower.Model;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -39,13 +38,11 @@ internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistor
         return BuildNumericDisplayString(formattingRules);
     }
 
-    private static readonly TextParser<ITextData> Parser = TextParsers
-        .NumberOrPercent(Markers.LocGenNumber)
-        .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
-
-    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
     {
-        return Parser(input);
+        return input
+            .ParseNumberOrPercent(Markers.LocGenNumber)
+            .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

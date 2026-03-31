@@ -42,15 +42,15 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     private readonly bool _doPluralFormsUseFormatArgs;
     private readonly PluralFormsArray _pluralForms;
 
-    public static TokenResult<ITextFormatArgumentModifier> Create(
+    public static ParseResult<ITextFormatArgumentModifier> Create(
         ReadOnlySpan<char> parametersPattern,
         TextPluralType pluralType
     )
     {
-        var cursor = new TokenCursor(parametersPattern);
+        var cursor = new ParseCursor(parametersPattern);
         var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
         if (!argsResult.HasValue)
-            return TokenResult.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
+            return ParseResult.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(
                 argsResult
             );
         var args = argsResult.Value;
@@ -72,7 +72,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
 
         if (builder.Count == args.Count)
         {
-            return TokenResult.Success<ITextFormatArgumentModifier>(
+            return ParseResult.Success<ITextFormatArgumentModifier>(
                 new PluralFormatArgumentModifier(
                     pluralType,
                     builder.ToImmutable(),
@@ -84,7 +84,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
             );
         }
 
-        return TokenResult.Empty<ITextFormatArgumentModifier>(cursor);
+        return ParseResult.Empty<ITextFormatArgumentModifier>(cursor);
     }
 
     private PluralFormatArgumentModifier(

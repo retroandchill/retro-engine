@@ -7,8 +7,7 @@ using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
-using Superpower;
-using Superpower.Model;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -38,13 +37,11 @@ internal sealed class TextHistoryAsDate : TextHistoryGenerated, ITextHistory
         return BuildDateTimeDisplayString(CultureManager.Instance.InvariantCulture);
     }
 
-    private static readonly TextParser<ITextData> Parser = TextParsers
-        .DateTime(Markers.LocGenDate, true, false)
-        .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
-
-    public static Result<ITextData> ReadFromBuffer(TextSpan input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
     {
-        return Parser(input);
+        return input
+            .ParseDateTime(Markers.LocGenTime, true, false)
+            .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)
