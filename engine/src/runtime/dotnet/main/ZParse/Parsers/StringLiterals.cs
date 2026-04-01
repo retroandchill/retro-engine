@@ -28,7 +28,7 @@ public static class StringLiterals
             }
         }
 
-        public ParseResult<Unit> ParseQuotedString(scoped ref ValueStringBuilder builder)
+        private ParseResult<Unit> ParseQuotedString(scoped ref ValueStringBuilder builder)
         {
             var openQuote = input.ParseChar('"');
             if (!openQuote.HasValue)
@@ -190,4 +190,6 @@ public static class StringLiterals
                 : ParseResult.CastEmpty<char, Unit>(closeQuote);
         }
     }
+
+    public static TextParser<string> QuotedString { get; } = input => input.ParseQuotedString();
 }
