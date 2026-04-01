@@ -146,7 +146,7 @@ public static class Characters
     /// <summary>
     /// Parse any character.
     /// </summary>
-    public static TextParser<char> AnyChar { get; } = Matching(c => true, "any character");
+    public static TextParser<char> AnyChar { get; } = Matching(_ => true, "any character");
 
     /// <summary>
     /// Parse a whitespace character.

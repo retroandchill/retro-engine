@@ -634,9 +634,443 @@ public static class Combinators
             return parser.Many(() => identity, accumulator);
         }
 
+        public TextParser<TIdentity> ManyDelimitedBy<TIdentity, TDelimiter>(
+            TextParser<TDelimiter> delimiter,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+            where TIdentity : allows ref struct
+        {
+            return input =>
+            {
+                var result = identity();
+                var next = parser(input);
+                while (next.HasValue)
+                {
+                    result = accumulator(result, next.Value);
+
+                    var delimiterResult = delimiter(next.Remainder);
+                    if (!delimiterResult.HasValue)
+                        break;
+
+                    next = parser(delimiterResult.Remainder);
+                }
+
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> ManyDelimitedBy<TIdentity, TDelimiter>(
+            TextParser<TDelimiter> delimiter,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            return parser.ManyDelimitedBy(delimiter, () => identity, accumulator);
+        }
+
         public TextParser<Unit> IgnoreMany()
         {
             return parser.Many(Unit.Value, (_, _) => Unit.Value);
+        }
+
+        public TextParser<TIdentity> AtLeast<TIdentity>(
+            int count,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(TIdentity)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = accumulator(elementFound ? result : identity(), next.Value);
+
+                    elementFound = true;
+                    next = parser(next.Remainder);
+                    encountered++;
+                }
+
+                return encountered >= count
+                    ? ParseResult.Success(result, input, next.Remainder)
+                    : ParseResult.CastEmpty<T, TIdentity>(next);
+            };
+        }
+
+        public TextParser<TIdentity> AtLeast<TIdentity>(
+            int count,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.AtLeast(count, () => identity, accumulator);
+        }
+
+        public TextParser<T> AtLeast(int count, Func<T, T, T> accumulator)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(T)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = elementFound ? accumulator(result, next.Value) : next.Value;
+
+                    elementFound = true;
+                    next = parser(next.Remainder);
+                    encountered++;
+                }
+
+                return encountered >= count ? ParseResult.Success(result, input, next.Remainder) : next;
+            };
+        }
+
+        public TextParser<TIdentity> AtLeastDelimitedBy<TDelimiter, TIdentity>(
+            int count,
+            TextParser<TDelimiter> delimiter,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+            where TDelimiter : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(TIdentity)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = accumulator(elementFound ? result : identity(), next.Value);
+
+                    elementFound = true;
+                    encountered++;
+
+                    var delimiterResult = delimiter(next.Remainder);
+                    if (!delimiterResult.HasValue)
+                        break;
+
+                    next = parser(delimiterResult.Remainder);
+                }
+
+                return encountered >= count
+                    ? ParseResult.Success(result, input, next.Remainder)
+                    : ParseResult.CastEmpty<T, TIdentity>(next);
+            };
+        }
+
+        public TextParser<TIdentity> AtLeastDelimitedBy<TDelimiter, TIdentity>(
+            int count,
+            TextParser<TDelimiter> delimiter,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            return parser.AtLeastDelimitedBy(count, delimiter, () => identity, accumulator);
+        }
+
+        public TextParser<T> AtLeastDelimitedBy<TDelimiter>(
+            int count,
+            TextParser<TDelimiter> delimiter,
+            Func<T, T, T> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(T)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = elementFound ? accumulator(result, next.Value) : next.Value;
+
+                    elementFound = true;
+                    encountered++;
+
+                    var delimiterResult = delimiter(next.Remainder);
+                    if (!delimiterResult.HasValue)
+                        break;
+
+                    next = parser(delimiterResult.Remainder);
+                }
+
+                return encountered >= count ? ParseResult.Success(result, input, next.Remainder) : next;
+            };
+        }
+
+        public TextParser<TIdentity> AtLeastOnce<TIdentity>(
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.AtLeast(1, identity, accumulator);
+        }
+
+        public TextParser<TIdentity> AtLeastOnce<TIdentity>(
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.AtLeastOnce(() => identity, accumulator);
+        }
+
+        public TextParser<T> AtLeastOnce(Func<T, T, T> accumulator)
+        {
+            return parser.AtLeast(1, accumulator);
+        }
+
+        public TextParser<TIdentity> AtLeastOnceDelimitedBy<TDelimiter, TIdentity>(
+            TextParser<TDelimiter> delimiter,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+            where TIdentity : allows ref struct
+        {
+            return parser.AtLeastDelimitedBy(1, delimiter, identity, accumulator);
+        }
+
+        public TextParser<TIdentity> AtLeastOnceDelimitedBy<TDelimiter, TIdentity>(
+            TextParser<TDelimiter> delimiter,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            return parser.AtLeastDelimitedBy(1, delimiter, identity, accumulator);
+        }
+
+        public TextParser<T> AtLeastOnceDelimitedBy<TDelimiter>(
+            TextParser<TDelimiter> delimiter,
+            Func<T, T, T> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            return parser.AtLeastDelimitedBy(1, delimiter, accumulator);
+        }
+
+        public TextParser<TIdentity> AtMost<TIdentity>(
+            int count,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var result = identity();
+                ParseResult<T> next;
+                var encountered = 0;
+                for (next = parser(input); next.HasValue; next = parser(next.Remainder))
+                {
+                    result = accumulator(result, next.Value);
+                    encountered++;
+                    if (encountered >= count)
+                        break;
+                }
+
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> AtMost<TIdentity>(
+            int count,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.AtMost(count, () => identity, accumulator);
+        }
+
+        public TextParser<TIdentity> AtMostDelimitedBy<TDelimiter, TIdentity>(
+            int count,
+            TextParser<TDelimiter> delimiter,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+            where TDelimiter : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var result = identity();
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = accumulator(result, next.Value);
+                    encountered++;
+                    if (encountered >= count)
+                        break;
+
+                    var delimiterResult = delimiter(next.Remainder);
+                    if (!delimiterResult.HasValue)
+                        break;
+
+                    next = parser(delimiterResult.Remainder);
+                }
+
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> AtMostDelimitedBy<TDelimiter, TIdentity>(
+            int count,
+            TextParser<TDelimiter> delimiter,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TDelimiter : allows ref struct
+        {
+            return parser.AtMostDelimitedBy(count, delimiter, () => identity, accumulator);
+        }
+
+        public TextParser<TIdentity> Repeat<TIdentity>(
+            int count,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var next = parser(input);
+                if (!next.HasValue)
+                    return ParseResult.CastEmpty<T, TIdentity>(next);
+
+                var result = accumulator(identity(), next.Value);
+                for (var i = 1; i < count; i++)
+                {
+                    if (!next.HasValue)
+                        return ParseResult.CastEmpty<T, TIdentity>(next);
+
+                    result = accumulator(result, next.Value);
+                    next = parser(next.Remainder);
+                }
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> Repeat<TIdentity>(
+            int count,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.Repeat(count, () => identity, accumulator);
+        }
+
+        public TextParser<T> Repeat(int count, Func<T, T, T> accumulator)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+            return input =>
+            {
+                var next = parser(input);
+                if (!next.HasValue)
+                    return next;
+
+                var result = next.Value;
+                for (var i = 1; i < count; i++)
+                {
+                    if (!next.HasValue)
+                        return next;
+
+                    result = accumulator(result, next.Value);
+                    next = parser(next.Remainder);
+                }
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> RepeatedRange<TIdentity>(
+            int minimum,
+            int maximum,
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(minimum);
+            if (maximum < minimum)
+                throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum value must be less than the minimum");
+
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(TIdentity)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = accumulator(elementFound ? result : identity(), next.Value);
+
+                    elementFound = true;
+                    next = parser(next.Remainder);
+                    encountered++;
+                    if (encountered >= maximum)
+                        break;
+                }
+
+                return encountered >= minimum
+                    ? ParseResult.Success(result, input, next.Remainder)
+                    : ParseResult.CastEmpty<T, TIdentity>(next);
+            };
+        }
+
+        public TextParser<TIdentity> RepeatedRange<TIdentity>(
+            int minimum,
+            int maximum,
+            TIdentity identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+        {
+            return parser.RepeatedRange(minimum, maximum, () => identity, accumulator);
+        }
+
+        public TextParser<T> RepeatedRange(int minimum, int maximum, Func<T, T, T> accumulator)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(minimum);
+            if (maximum < minimum)
+                throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum value must be less than the minimum");
+
+            return input =>
+            {
+                var elementFound = false;
+                var result = default(T)!;
+                var next = parser(input);
+                var encountered = 0;
+                while (next.HasValue)
+                {
+                    result = elementFound ? accumulator(result, next.Value) : next.Value;
+
+                    elementFound = true;
+                    next = parser(next.Remainder);
+                    encountered++;
+                    if (encountered >= maximum)
+                        break;
+                }
+
+                return encountered >= minimum ? ParseResult.Success(result, input, next.Remainder) : next;
+            };
         }
     }
 }
