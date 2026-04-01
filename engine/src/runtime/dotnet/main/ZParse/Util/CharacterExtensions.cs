@@ -24,6 +24,16 @@ public static class CharacterExtensions
             return c - '0';
         }
 
+        public static bool IsLatinDigit(char ch)
+        {
+            return ch is >= '0' and <= '9';
+        }
+
+        public static bool IsHexDigit(char ch)
+        {
+            return char.IsLatinDigit(ch) || ch is >= 'a' and <= 'f' || ch is >= 'A' and <= 'F';
+        }
+
         public static int ToHexValue(char c)
         {
             return c switch

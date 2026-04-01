@@ -47,7 +47,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
         TextPluralType pluralType
     )
     {
-        var cursor = new ParseCursor(parametersPattern);
+        var cursor = new TextSegment(parametersPattern);
         var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
         if (!argsResult.HasValue)
             return ParseResult.CastEmpty<ImmutableOrderedDictionary<string, string>, ITextFormatArgumentModifier>(

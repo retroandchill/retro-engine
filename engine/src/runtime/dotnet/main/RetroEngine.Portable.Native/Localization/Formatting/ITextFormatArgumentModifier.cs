@@ -20,7 +20,7 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
-    protected static ParseResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(ParseCursor cursor)
+    protected static ParseResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TextSegment cursor)
     {
         var builder = ImmutableOrderedDictionary.CreateBuilder<string, string>();
         var remainder = cursor.ParseOptionalWhitespace().Remainder;

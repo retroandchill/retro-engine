@@ -37,7 +37,7 @@ internal sealed class TextHistoryAsTime : TextHistoryGenerated, ITextHistory
         return BuildDateTimeDisplayString(CultureManager.Instance.InvariantCulture);
     }
 
-    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         return input
             .ParseDateTime(Markers.LocGenTime, false, true)

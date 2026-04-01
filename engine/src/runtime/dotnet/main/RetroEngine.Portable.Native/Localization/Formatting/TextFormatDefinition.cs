@@ -55,7 +55,7 @@ public sealed class TextFormatDefinition
         ]);
     }
 
-    private ParseResult<TextFormatToken> ParseArgument(ParseCursor input)
+    private ParseResult<TextFormatToken> ParseArgument(TextSegment input)
     {
         var openingChar = input.ParseChar(ArgStartChar);
         if (!openingChar.HasValue)
@@ -63,7 +63,7 @@ public sealed class TextFormatDefinition
 
         var identifier = openingChar.Remainder.ParseUntilChar(ArgEndChar);
         if (!identifier.HasValue)
-            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(identifier);
+            return ParseResult.CastEmpty<TextSegment, TextFormatToken>(identifier);
 
         var endChar = identifier.Remainder.ParseChar(ArgEndChar);
         if (!endChar.HasValue)
@@ -72,7 +72,7 @@ public sealed class TextFormatDefinition
         return ParseResult.Success(TextFormatToken.Argument(identifier.Value.ToString()), input, endChar.Remainder);
     }
 
-    private ParseResult<TextFormatToken> ParseArgumentModifier(ParseCursor input)
+    private ParseResult<TextFormatToken> ParseArgumentModifier(TextSegment input)
     {
         var pipeToken = input.ParseChar(ArgModChar);
         if (!pipeToken.HasValue)
@@ -80,7 +80,7 @@ public sealed class TextFormatDefinition
 
         var identifier = pipeToken.Remainder.ParseIdentifier();
         if (!identifier.HasValue)
-            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(identifier);
+            return ParseResult.CastEmpty<TextSegment, TextFormatToken>(identifier);
 
         var openParen = identifier.Remainder.ParseChar('(');
         if (!openParen.HasValue)
@@ -94,7 +94,7 @@ public sealed class TextFormatDefinition
         var parameters = ProcessArgumentModifierParameters(openParen.Remainder);
 
         if (!parameters.HasValue)
-            return ParseResult.CastEmpty<ReadOnlySpan<char>, TextFormatToken>(parameters);
+            return ParseResult.CastEmpty<TextSegment, TextFormatToken>(parameters);
 
         var closeParen = parameters.Remainder.ParseChar(')');
         if (!closeParen.HasValue)
@@ -109,16 +109,15 @@ public sealed class TextFormatDefinition
             );
 
         var innerPosition = createdItem.Remainder.Position;
-        var compositePosition = parameters.Cursor.Position + innerPosition;
-        var newRemainder = new ParseCursor(parameters.Cursor.Input, compositePosition);
+        var newRemainder = parameters.Input + innerPosition;
         return ParseResult.Empty<TextFormatToken>(input, newRemainder);
     }
 
-    private static ParseResult<ReadOnlySpan<char>> ProcessArgumentModifierParameters(ParseCursor input)
+    private static ParseResult<TextSegment> ProcessArgumentModifierParameters(TextSegment input)
     {
-        var next = input.Advance();
+        var next = input.ConsumeChar();
         if (!next.HasValue)
-            return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+            return ParseResult.CastEmpty<char, TextSegment>(next);
 
         var remainder = input;
         var quoteChar = '\0';
@@ -157,13 +156,13 @@ public sealed class TextFormatDefinition
                 numConsecutiveSlashes = 0;
             }
 
-            next = remainder.Advance();
+            next = remainder.ConsumeChar();
         } while (next.HasValue);
 
-        return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+        return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
     }
 
-    private ParseResult<TextFormatToken> ParseEscapeCharacter(ParseCursor input)
+    private ParseResult<TextFormatToken> ParseEscapeCharacter(TextSegment input)
     {
         var next = input.ParseChar(EscapeChar);
         if (!next.HasValue)
@@ -176,17 +175,17 @@ public sealed class TextFormatDefinition
             : ParseResult.CastEmpty<char, TextFormatToken>(next);
     }
 
-    private ParseResult<TextFormatToken> ParseStringLiteral(ParseCursor input)
+    private ParseResult<TextFormatToken> ParseStringLiteral(TextSegment input)
     {
-        var next = input.Advance();
+        var next = input.ConsumeChar();
         if (!next.HasValue)
             return ParseResult.CastEmpty<char, TextFormatToken>(next);
 
-        ParseCursor remainder;
+        TextSegment remainder;
         do
         {
             remainder = next.Remainder;
-            next = remainder.Advance();
+            next = remainder.ConsumeChar();
         } while (next.HasValue && !IsLiteralBreakCharacter(next.Value));
 
         return ParseResult.Success(TextFormatToken.StringLiteral(), input, remainder);

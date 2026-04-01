@@ -8,10 +8,11 @@ using ZParse.Parsers;
 
 namespace ZParse.Enumeration;
 
-public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<T> definitions) : IEnumerator<Token<T>>
+public ref struct TokenEnumerator<T>(TextSegment input, TokenDefinitions<T> definitions) : IEnumerator<Token<T>>
     where T : allows ref struct
 {
-    private ParseCursor _cursor = new(input);
+    private readonly TextSegment _input = input;
+    private TextSegment _cursor = input;
 
     object IEnumerator.Current => throw new NotSupportedException("Token's cannot be cast to object.");
     public Token<T> Current { get; private set; }
@@ -44,12 +45,7 @@ public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<
                 continue;
 
             _cursor = result.Remainder;
-            Current = new Token<T>(
-                ParseCursor.Between(result.Cursor, result.Remainder),
-                result.Value,
-                result.Before.Line,
-                result.Before.Column
-            );
+            Current = new Token<T>(TextSegment.Between(result.Input, result.Remainder), result.Value);
             return true;
         }
 
@@ -58,7 +54,7 @@ public ref struct TokenEnumerator<T>(ReadOnlySpan<char> input, TokenDefinitions<
 
     public void Reset()
     {
-        _cursor = _cursor.Reset();
+        _cursor = _input;
     }
 
     public void Dispose()

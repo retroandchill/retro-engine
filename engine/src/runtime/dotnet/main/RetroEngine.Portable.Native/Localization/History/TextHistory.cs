@@ -11,7 +11,7 @@ namespace RetroEngine.Portable.Localization.History;
 
 internal interface ITextHistory : ITextData
 {
-    static virtual ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    static virtual ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         return ParseResult.Empty<ITextData>(input);
     }

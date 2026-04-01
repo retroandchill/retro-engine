@@ -9,9 +9,9 @@ namespace ZParse.Parsers;
 
 public static class Symbols
 {
-    extension(ParseCursor input)
+    extension(TextSegment input)
     {
-        public ParseResult<ReadOnlySpan<char>> ParseSymbol(ReadOnlySpan<char> symbol)
+        public ParseResult<TextSegment> ParseSymbol(ReadOnlySpan<char> symbol)
         {
             if (symbol.IsEmpty)
                 throw new ArgumentException("Symbol cannot be empty.", nameof(symbol));
@@ -19,17 +19,17 @@ public static class Symbols
             var remainder = input;
             foreach (var c in symbol)
             {
-                var next = remainder.Advance();
+                var next = remainder.ConsumeChar();
                 if (!next.HasValue || next.Value != c)
-                    return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                    return ParseResult.CastEmpty<char, TextSegment>(next);
 
                 remainder = next.Remainder;
             }
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<ReadOnlySpan<char>> ParseSymbolIgnoreCase(ReadOnlySpan<char> symbol)
+        public ParseResult<TextSegment> ParseSymbolIgnoreCase(ReadOnlySpan<char> symbol)
         {
             if (symbol.IsEmpty)
                 throw new ArgumentException("Symbol cannot be empty.", nameof(symbol));
@@ -37,77 +37,77 @@ public static class Symbols
             var remainder = input;
             foreach (var c in symbol)
             {
-                var next = remainder.Advance();
+                var next = remainder.ConsumeChar();
                 if (!next.HasValue || char.ToUpper(next.Value) != char.ToUpper(c))
-                    return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                    return ParseResult.CastEmpty<char, TextSegment>(next);
 
                 remainder = next.Remainder;
             }
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<ReadOnlySpan<char>> ParseNChars(int characterCount)
+        public ParseResult<TextSegment> ParseNChars(int characterCount)
         {
             var remainder = input;
             for (var i = 0; i < characterCount; i++)
             {
-                var next = remainder.Advance();
+                var next = remainder.ConsumeChar();
                 if (!next.HasValue)
-                    return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                    return ParseResult.CastEmpty<char, TextSegment>(next);
 
                 remainder = next.Remainder;
             }
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<ReadOnlySpan<char>> ParseUntilChar(char c)
+        public ParseResult<TextSegment> ParseUntilChar(char c)
         {
-            var next = input.Advance();
+            var next = input.ConsumeChar();
             if (!next.HasValue || next.Value == c)
-                return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                return ParseResult.CastEmpty<char, TextSegment>(next);
 
-            ParseCursor remainder;
+            TextSegment remainder;
             do
             {
                 remainder = next.Remainder;
-                next = remainder.Advance();
+                next = remainder.ConsumeChar();
             } while (next.HasValue && next.Value != c);
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<ReadOnlySpan<char>> ParseUntilCharIn(params ReadOnlySpan<char> chars)
+        public ParseResult<TextSegment> ParseUntilCharIn(params ReadOnlySpan<char> chars)
         {
-            var next = input.Advance();
+            var next = input.ConsumeChar();
             if (!next.HasValue || chars.Contains(next.Value))
-                return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                return ParseResult.CastEmpty<char, TextSegment>(next);
 
-            ParseCursor remainder;
+            TextSegment remainder;
             do
             {
                 remainder = next.Remainder;
-                next = remainder.Advance();
+                next = remainder.ConsumeChar();
             } while (next.HasValue && !chars.Contains(next.Value));
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<ReadOnlySpan<char>> ParseIdentifier()
+        public ParseResult<TextSegment> ParseIdentifier()
         {
-            var next = input.Advance();
+            var next = input.ConsumeChar();
             if (!next.HasValue || !char.IsIdentifier(next.Value))
-                return ParseResult.CastEmpty<char, ReadOnlySpan<char>>(next);
+                return ParseResult.CastEmpty<char, TextSegment>(next);
 
-            ParseCursor remainder;
+            TextSegment remainder;
             do
             {
                 remainder = next.Remainder;
-                next = remainder.Advance();
+                next = remainder.ConsumeChar();
             } while (next.HasValue && char.IsIdentifier(next.Value));
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
         public ParseResult<bool> ParseBool()
@@ -118,12 +118,12 @@ public static class Symbols
         public ParseResult<T> ParseEnum<T>(string? scope = null)
             where T : unmanaged, Enum
         {
-            ParseCursor remainder;
+            TextSegment remainder;
             if (!string.IsNullOrEmpty(scope))
             {
                 var scopeIdentifier = input.ParseSymbol(scope);
                 if (!scopeIdentifier.HasValue)
-                    return ParseResult.CastEmpty<ReadOnlySpan<char>, T>(scopeIdentifier);
+                    return ParseResult.CastEmpty<TextSegment, T>(scopeIdentifier);
 
                 remainder = scopeIdentifier.Remainder;
             }
@@ -134,11 +134,11 @@ public static class Symbols
 
             var identifier = remainder.ParseIdentifier();
             if (!identifier.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, T>(identifier);
+                return ParseResult.CastEmpty<TextSegment, T>(identifier);
 
             return Enum.TryParse(identifier.Value, out T result)
                 ? ParseResult.Success(result, input, identifier.Remainder)
-                : ParseResult.CastEmpty<ReadOnlySpan<char>, T>(identifier);
+                : ParseResult.CastEmpty<TextSegment, T>(identifier);
         }
     }
 }

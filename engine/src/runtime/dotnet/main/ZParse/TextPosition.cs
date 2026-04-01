@@ -12,6 +12,8 @@ public readonly record struct TextPosition(int Index, int Line, int Column)
 {
     public static TextPosition Start => new(0, 1, 1);
 
+    public static TextPosition Empty => default;
+
     public TextPosition Advance(char character)
     {
         return character == '\n'

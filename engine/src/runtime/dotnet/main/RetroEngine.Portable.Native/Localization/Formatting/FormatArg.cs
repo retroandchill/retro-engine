@@ -112,10 +112,10 @@ public readonly partial struct FormatArg
 
     public static ParseResult<FormatArg> FromExportedString(ReadOnlySpan<char> str)
     {
-        return FromExportedString(new ParseCursor(str));
+        return FromExportedString(new TextSegment(str));
     }
 
-    internal static ParseResult<FormatArg> FromExportedString(ParseCursor input)
+    internal static ParseResult<FormatArg> FromExportedString(TextSegment input)
     {
         return input
             .ParseEnum<TextGender>("ETextGender::")

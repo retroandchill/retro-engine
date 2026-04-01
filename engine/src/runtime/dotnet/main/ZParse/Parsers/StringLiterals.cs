@@ -10,7 +10,7 @@ namespace ZParse.Parsers;
 
 public static class StringLiterals
 {
-    extension(ParseCursor input)
+    extension(TextSegment input)
     {
         public ParseResult<string> ParseQuotedString()
         {
@@ -41,10 +41,10 @@ public static class StringLiterals
             while (true)
             {
                 var unescaped = remainder.ParseUntilCharIn(stopAndEscapeCharacters);
-                builder.Append(ParseCursor.Between(unescaped.Cursor, unescaped.Remainder));
+                builder.Append(TextSegment.Between(unescaped.Input, unescaped.Remainder));
                 remainder = unescaped.Remainder;
 
-                var next = remainder.Advance();
+                var next = remainder.ConsumeChar();
                 if (!next.HasValue)
                 {
                     remainder = next.Remainder;
@@ -55,7 +55,7 @@ public static class StringLiterals
                     break;
 
                 remainder = next.Remainder;
-                next = remainder.Advance();
+                next = remainder.ConsumeChar();
                 if (!next.HasValue)
                     return ParseResult.CastEmpty<char, Unit>(next);
 
@@ -96,30 +96,38 @@ public static class StringLiterals
                                 result = result * 8 + char.ToOctalValue(next.Value);
                                 octalDigits++;
                                 remainder = next.Remainder;
-                                next = remainder.Advance();
+                                next = remainder.ConsumeChar();
                             }
 
                             builder.Append((char)result);
                         }
-                        else if (ch == 'x' && next.Remainder.Peek() is { } nextChar && char.IsAsciiHexDigit(nextChar))
+                        else if (
+                            ch == 'x'
+                            && next.Remainder.PeekChar() is { } nextChar
+                            && char.IsAsciiHexDigit(nextChar)
+                        )
                         {
                             remainder = next.Remainder;
-                            next = remainder.Advance();
+                            next = remainder.ConsumeChar();
 
                             var result = 0;
                             while (next.HasValue && char.IsAsciiHexDigit(next.Value))
                             {
                                 result = result * 16 + char.ToHexValue(next.Value);
                                 remainder = next.Remainder;
-                                next = remainder.Advance();
+                                next = remainder.ConsumeChar();
                             }
 
                             builder.Append((char)result);
                         }
-                        else if (ch == 'u' && next.Remainder.Peek() is { } nextChar2 && char.IsAsciiHexDigit(nextChar2))
+                        else if (
+                            ch == 'u'
+                            && next.Remainder.PeekChar() is { } nextChar2
+                            && char.IsAsciiHexDigit(nextChar2)
+                        )
                         {
                             remainder = next.Remainder;
-                            next = remainder.Advance();
+                            next = remainder.ConsumeChar();
 
                             var digits = 0;
                             var result = 0;
@@ -128,15 +136,19 @@ public static class StringLiterals
                                 result = result * 16 + char.ToHexValue(next.Value);
                                 digits++;
                                 remainder = next.Remainder;
-                                next = remainder.Advance();
+                                next = remainder.ConsumeChar();
                             }
 
                             builder.Append((char)result);
                         }
-                        else if (ch == 'U' && next.Remainder.Peek() is { } nextChar3 && char.IsAsciiHexDigit(nextChar3))
+                        else if (
+                            ch == 'U'
+                            && next.Remainder.PeekChar() is { } nextChar3
+                            && char.IsAsciiHexDigit(nextChar3)
+                        )
                         {
                             remainder = next.Remainder;
-                            next = remainder.Advance();
+                            next = remainder.ConsumeChar();
 
                             var digits = 0;
                             var result = 0;
@@ -145,7 +157,7 @@ public static class StringLiterals
                                 result = result * 16 + char.ToHexValue(next.Value);
                                 digits++;
                                 remainder = next.Remainder;
-                                next = remainder.Advance();
+                                next = remainder.ConsumeChar();
                             }
 
                             if (result <= 0xFFFF)
@@ -172,7 +184,7 @@ public static class StringLiterals
                 }
             }
 
-            var closeQuote = remainder.Advance();
+            var closeQuote = remainder.ConsumeChar();
             return closeQuote.HasValue
                 ? ParseResult.Success(Unit.Value, input, remainder)
                 : ParseResult.CastEmpty<char, Unit>(closeQuote);

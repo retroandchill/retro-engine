@@ -36,7 +36,7 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
         return BuildNumericDisplayString(formattingRules);
     }
 
-    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         var culture = CultureManager.Instance.CurrentLocale;
         var number = input.ParseSequence(

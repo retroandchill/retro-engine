@@ -9,10 +9,12 @@ using ZParse.Enumeration;
 namespace ZParse;
 
 public readonly record struct TokenDefinitions<T>(
-    ImmutableArray<Func<ParseCursor, ParseResult<T>>> Definitions,
+    ImmutableArray<Func<TextSegment, ParseResult<T>>> Definitions,
     bool IgnoreWhitespace = false
 )
     where T : allows ref struct
 {
-    public TokenEnumerator<T> GetTokens(ReadOnlySpan<char> input) => new(input, this);
+    public TokenEnumerator<T> GetTokens(ReadOnlySpan<char> input) => GetTokens(new TextSegment(input));
+
+    public TokenEnumerator<T> GetTokens(TextSegment input) => new(input, this);
 }

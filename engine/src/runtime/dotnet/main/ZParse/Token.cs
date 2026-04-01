@@ -5,14 +5,10 @@
 
 namespace ZParse;
 
-public readonly ref struct Token<T>(ReadOnlySpan<char> text, T value, int line, int column)
+public readonly ref struct Token<T>(TextSegment text, T value)
     where T : allows ref struct
 {
-    public ReadOnlySpan<char> Text { get; } = text;
+    public TextSegment Text { get; } = text;
 
     public T Value { get; } = value;
-
-    public int Line { get; } = line;
-
-    public int Column { get; } = column;
 }

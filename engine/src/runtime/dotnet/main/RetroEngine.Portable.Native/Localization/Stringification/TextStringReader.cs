@@ -29,9 +29,9 @@ internal static class TextStringReader
 {
     private delegate void CustomOptionParser<in T>(scoped ref NumberFormattingOptionsBuilder builder, T value);
 
-    private delegate ParseResult<bool> StatefulParser<TState>(scoped ref TState state, ParseCursor input);
+    private delegate ParseResult<bool> StatefulParser<TState>(scoped ref TState state, TextSegment input);
 
-    extension(ParseCursor input)
+    extension(TextSegment input)
     {
         public ParseResult<FormatNumericArg> ParseNumber()
         {
@@ -63,7 +63,7 @@ internal static class TextStringReader
         public ParseResult<string> ParseTextLiteral()
         {
             var macro = input.ParseSymbol(Markers.Text);
-            ParseCursor remainder;
+            TextSegment remainder;
             if (macro.HasValue)
             {
                 var openParen = macro.Remainder.ParseChar('(');
@@ -94,7 +94,7 @@ internal static class TextStringReader
 
         private ParseResult<bool> ParseNumberFormattingOption<T>(
             string marker,
-            Func<ParseCursor, ParseResult<T>> readOption,
+            Func<TextSegment, ParseResult<T>> readOption,
             scoped ref NumberFormattingOptionsBuilder builder,
             CustomOptionParser<T> applyValue
         )
@@ -105,7 +105,7 @@ internal static class TextStringReader
 
             var openParen = identifier.Remainder.ParseWhitespaceAndChar('(');
             if (!openParen.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, bool>(openParen);
+                return ParseResult.CastEmpty<TextSegment, bool>(openParen);
 
             var value = readOption(openParen.Remainder.ParseOptionalWhitespace().Remainder);
             if (!value.HasValue)
@@ -115,7 +115,7 @@ internal static class TextStringReader
 
             var closeParent = value.Remainder.ParseWhitespaceAndChar(')');
             if (!closeParent.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, bool>(closeParent);
+                return ParseResult.CastEmpty<TextSegment, bool>(closeParent);
 
             var remainder = closeParent.Remainder.ParseOptionalWhitespace().Remainder;
             return ParseResult.Success(true, input, remainder);
@@ -227,9 +227,9 @@ internal static class TextStringReader
         {
             var identifier = input.ParseSymbol(marker);
             if (!identifier.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, NumberParseResult>(identifier);
+                return ParseResult.CastEmpty<TextSegment, NumberParseResult>(identifier);
 
-            ParseCursor remainder;
+            TextSegment remainder;
             NumberFormattingOptions? options = null;
             var customSuffix = identifier.Remainder.ParseSymbol(Markers.CustomSuffix);
             if (customSuffix.HasValue)
@@ -288,7 +288,7 @@ internal static class TextStringReader
 
             var closeParen = targetCulture.Remainder.ParseWhitespaceAndChar(')');
             if (!closeParen.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, NumberParseResult>(closeParen);
+                return ParseResult.CastEmpty<TextSegment, NumberParseResult>(closeParen);
 
             return ParseResult.Success(
                 new NumberParseResult(number.Value, options, targetCulture.Value),
@@ -301,7 +301,7 @@ internal static class TextStringReader
         {
             var identifier = input.ParseSymbol(marker);
             if (!identifier.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, DateTimeParseResult>(identifier);
+                return ParseResult.CastEmpty<TextSegment, DateTimeParseResult>(identifier);
 
             var custom = identifier.Remainder.ParseSymbol(Markers.CustomSuffix);
             var remainder = custom.HasValue ? custom.Remainder : identifier.Remainder;
@@ -420,7 +420,7 @@ internal static class TextStringReader
 
             var closeParen = targetCulture.Remainder.ParseWhitespaceAndChar(')');
             if (!closeParen.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, DateTimeParseResult>(closeParen);
+                return ParseResult.CastEmpty<TextSegment, DateTimeParseResult>(closeParen);
 
             return ParseResult.Success(
                 new DateTimeParseResult(dateTime.Value, dateStyle, timeStyle, format, timeZone, targetCulture.Value),

@@ -38,7 +38,7 @@ internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistor
         return BuildNumericDisplayString(formattingRules);
     }
 
-    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         return input
             .ParseNumberOrPercent(Markers.LocGenNumber)

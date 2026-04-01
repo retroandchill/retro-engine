@@ -18,7 +18,7 @@ public static class Combinators
             where TResult : allows ref struct
         {
             return result.HasValue
-                ? ParseResult.Success(selector(result.Value), result.Cursor, result.Remainder)
+                ? ParseResult.Success(selector(result.Value), result.Input, result.Remainder)
                 : ParseResult.CastEmpty<T, TResult>(result);
         }
 
@@ -27,7 +27,7 @@ public static class Combinators
             where TResult : allows ref struct
         {
             return result.HasValue
-                ? ParseResult.Success(selector(context, result.Value), result.Cursor, result.Remainder)
+                ? ParseResult.Success(selector(context, result.Value), result.Input, result.Remainder)
                 : ParseResult.CastEmpty<T, TResult>(result);
         }
 
@@ -36,7 +36,7 @@ public static class Combinators
             if (!result.HasValue || predicate(result.Value))
                 return result;
 
-            return ParseResult.Empty<T>(result.Cursor, result.Remainder);
+            return ParseResult.Empty<T>(result.Input, result.Remainder);
         }
 
         public ParseResult<T> Where<TContext>(TContext context, Func<TContext, T, bool> predicate)
@@ -44,18 +44,18 @@ public static class Combinators
             if (!result.HasValue || predicate(context, result.Value))
                 return result;
 
-            return ParseResult.Empty<T>(result.Cursor, result.Remainder);
+            return ParseResult.Empty<T>(result.Input, result.Remainder);
         }
 
-        public ParseResult<T> OrElse(Func<ParseCursor, ParseResult<T>> fallback)
+        public ParseResult<T> OrElse(Func<TextSegment, ParseResult<T>> fallback)
         {
-            return result.HasValue ? result : fallback(result.Cursor);
+            return result.HasValue ? result : fallback(result.Input);
         }
 
-        public ParseResult<T> OrElse<TContext>(TContext context, Func<TContext, ParseCursor, ParseResult<T>> fallback)
+        public ParseResult<T> OrElse<TContext>(TContext context, Func<TContext, TextSegment, ParseResult<T>> fallback)
             where TContext : allows ref struct
         {
-            return result.HasValue ? result : fallback(context, result.Cursor);
+            return result.HasValue ? result : fallback(context, result.Input);
         }
 
         public ParseResult<T> AndThen(Action<T> next)
@@ -91,11 +91,11 @@ public static class Combinators
         }
     }
 
-    extension(ParseCursor input)
+    extension(TextSegment input)
     {
         public ParseResult<TResult> ParseSequence<T1, T2, TResult>(
-            Func<ParseCursor, ParseResult<T1>> first,
-            Func<ParseCursor, ParseResult<T2>> second,
+            Func<TextSegment, ParseResult<T1>> first,
+            Func<TextSegment, ParseResult<T2>> second,
             Func<T1, T2, TResult> selector
         )
             where T1 : allows ref struct
@@ -112,15 +112,15 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(firstResult.Value, secondResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<T1, T2, T3, TResult>(
-            Func<ParseCursor, ParseResult<T1>> first,
-            Func<ParseCursor, ParseResult<T2>> second,
-            Func<ParseCursor, ParseResult<T3>> third,
+            Func<TextSegment, ParseResult<T1>> first,
+            Func<TextSegment, ParseResult<T2>> second,
+            Func<TextSegment, ParseResult<T3>> third,
             Func<T1, T2, T3, TResult> selector
         )
             where T1 : allows ref struct
@@ -142,16 +142,16 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(firstResult.Value, secondResult.Value, thirdResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<T1, T2, T3, T4, TResult>(
-            Func<ParseCursor, ParseResult<T1>> first,
-            Func<ParseCursor, ParseResult<T2>> second,
-            Func<ParseCursor, ParseResult<T3>> third,
-            Func<ParseCursor, ParseResult<T4>> fourth,
+            Func<TextSegment, ParseResult<T1>> first,
+            Func<TextSegment, ParseResult<T2>> second,
+            Func<TextSegment, ParseResult<T3>> third,
+            Func<TextSegment, ParseResult<T4>> fourth,
             Func<T1, T2, T3, T4, TResult> selector
         )
             where T1 : allows ref struct
@@ -178,17 +178,17 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(firstResult.Value, secondResult.Value, thirdResult.Value, fourthResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<T1, T2, T3, T4, T5, TResult>(
-            Func<ParseCursor, ParseResult<T1>> first,
-            Func<ParseCursor, ParseResult<T2>> second,
-            Func<ParseCursor, ParseResult<T3>> third,
-            Func<ParseCursor, ParseResult<T4>> fourth,
-            Func<ParseCursor, ParseResult<T5>> fifth,
+            Func<TextSegment, ParseResult<T1>> first,
+            Func<TextSegment, ParseResult<T2>> second,
+            Func<TextSegment, ParseResult<T3>> third,
+            Func<TextSegment, ParseResult<T4>> fourth,
+            Func<TextSegment, ParseResult<T5>> fifth,
             Func<T1, T2, T3, T4, T5, TResult> selector
         )
             where T1 : allows ref struct
@@ -226,18 +226,18 @@ public static class Combinators
                     fourthResult.Value,
                     fifthResult.Value
                 ),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<T1, T2, T3, T4, T5, T6, TResult>(
-            Func<ParseCursor, ParseResult<T1>> first,
-            Func<ParseCursor, ParseResult<T2>> second,
-            Func<ParseCursor, ParseResult<T3>> third,
-            Func<ParseCursor, ParseResult<T4>> fourth,
-            Func<ParseCursor, ParseResult<T5>> fifth,
-            Func<ParseCursor, ParseResult<T6>> sixth,
+            Func<TextSegment, ParseResult<T1>> first,
+            Func<TextSegment, ParseResult<T2>> second,
+            Func<TextSegment, ParseResult<T3>> third,
+            Func<TextSegment, ParseResult<T4>> fourth,
+            Func<TextSegment, ParseResult<T5>> fifth,
+            Func<TextSegment, ParseResult<T6>> sixth,
             Func<T1, T2, T3, T4, T5, T6, TResult> selector
         )
             where T1 : allows ref struct
@@ -281,15 +281,15 @@ public static class Combinators
                     fifthResult.Value,
                     sixthResult.Value
                 ),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<TContext, T1, T2, TResult>(
             TContext context,
-            Func<TContext, ParseCursor, ParseResult<T1>> first,
-            Func<TContext, ParseCursor, ParseResult<T2>> second,
+            Func<TContext, TextSegment, ParseResult<T1>> first,
+            Func<TContext, TextSegment, ParseResult<T2>> second,
             Func<TContext, T1, T2, TResult> selector
         )
             where TContext : allows ref struct
@@ -307,16 +307,16 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(context, firstResult.Value, secondResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<TContext, T1, T2, T3, TResult>(
             TContext context,
-            Func<TContext, ParseCursor, ParseResult<T1>> first,
-            Func<TContext, ParseCursor, ParseResult<T2>> second,
-            Func<TContext, ParseCursor, ParseResult<T3>> third,
+            Func<TContext, TextSegment, ParseResult<T1>> first,
+            Func<TContext, TextSegment, ParseResult<T2>> second,
+            Func<TContext, TextSegment, ParseResult<T3>> third,
             Func<TContext, T1, T2, T3, TResult> selector
         )
             where TContext : allows ref struct
@@ -339,17 +339,17 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(context, firstResult.Value, secondResult.Value, thirdResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<TContext, T1, T2, T3, T4, TResult>(
             TContext context,
-            Func<TContext, ParseCursor, ParseResult<T1>> first,
-            Func<TContext, ParseCursor, ParseResult<T2>> second,
-            Func<TContext, ParseCursor, ParseResult<T3>> third,
-            Func<TContext, ParseCursor, ParseResult<T4>> fourth,
+            Func<TContext, TextSegment, ParseResult<T1>> first,
+            Func<TContext, TextSegment, ParseResult<T2>> second,
+            Func<TContext, TextSegment, ParseResult<T3>> third,
+            Func<TContext, TextSegment, ParseResult<T4>> fourth,
             Func<TContext, T1, T2, T3, T4, TResult> selector
         )
             where TContext : allows ref struct
@@ -377,18 +377,18 @@ public static class Combinators
 
             return ParseResult.Success(
                 selector(context, firstResult.Value, secondResult.Value, thirdResult.Value, fourthResult.Value),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<TContext, T1, T2, T3, T4, T5, TResult>(
             TContext context,
-            Func<TContext, ParseCursor, ParseResult<T1>> first,
-            Func<TContext, ParseCursor, ParseResult<T2>> second,
-            Func<TContext, ParseCursor, ParseResult<T3>> third,
-            Func<TContext, ParseCursor, ParseResult<T4>> fourth,
-            Func<TContext, ParseCursor, ParseResult<T5>> fifth,
+            Func<TContext, TextSegment, ParseResult<T1>> first,
+            Func<TContext, TextSegment, ParseResult<T2>> second,
+            Func<TContext, TextSegment, ParseResult<T3>> third,
+            Func<TContext, TextSegment, ParseResult<T4>> fourth,
+            Func<TContext, TextSegment, ParseResult<T5>> fifth,
             Func<TContext, T1, T2, T3, T4, T5, TResult> selector
         )
             where TContext : allows ref struct
@@ -428,19 +428,19 @@ public static class Combinators
                     fourthResult.Value,
                     fifthResult.Value
                 ),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
         }
 
         public ParseResult<TResult> ParseSequence<TContext, T1, T2, T3, T4, T5, T6, TResult>(
             TContext context,
-            Func<TContext, ParseCursor, ParseResult<T1>> first,
-            Func<TContext, ParseCursor, ParseResult<T2>> second,
-            Func<TContext, ParseCursor, ParseResult<T3>> third,
-            Func<TContext, ParseCursor, ParseResult<T4>> fourth,
-            Func<TContext, ParseCursor, ParseResult<T5>> fifth,
-            Func<TContext, ParseCursor, ParseResult<T6>> sixth,
+            Func<TContext, TextSegment, ParseResult<T1>> first,
+            Func<TContext, TextSegment, ParseResult<T2>> second,
+            Func<TContext, TextSegment, ParseResult<T3>> third,
+            Func<TContext, TextSegment, ParseResult<T4>> fourth,
+            Func<TContext, TextSegment, ParseResult<T5>> fifth,
+            Func<TContext, TextSegment, ParseResult<T6>> sixth,
             Func<TContext, T1, T2, T3, T4, T5, T6, TResult> selector
         )
             where TContext : allows ref struct
@@ -486,9 +486,157 @@ public static class Combinators
                     fifthResult.Value,
                     sixthResult.Value
                 ),
-                firstResult.Cursor,
+                firstResult.Input,
                 secondResult.Remainder
             );
+        }
+    }
+
+    extension<T>(TextParser<T> parser)
+        where T : allows ref struct
+    {
+        public TextParser<TOther> Select<TOther>(Func<T, TOther> selector)
+            where TOther : allows ref struct
+        {
+            return input =>
+            {
+                var result = parser(input);
+                return result.HasValue
+                    ? ParseResult.Success(selector(result.Value), result.Input, result.Remainder)
+                    : ParseResult.CastEmpty<T, TOther>(result);
+            };
+        }
+
+        public TextParser<TOther> SelectMany<TOther>(Func<T, TextParser<TOther>> selector)
+            where TOther : allows ref struct
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T, TOther>(result);
+
+                var nextResult = selector(result.Value)(result.Remainder);
+                return nextResult.HasValue
+                    ? ParseResult.Success(nextResult.Value, result.Input, nextResult.Remainder)
+                    : nextResult;
+            };
+        }
+
+        public TextParser<TProjection> SelectMany<TOther, TProjection>(
+            Func<T, TextParser<TOther>> selector,
+            Func<T, TOther, TProjection> projection
+        )
+            where TOther : allows ref struct
+            where TProjection : allows ref struct
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T, TProjection>(result);
+
+                var nextResult = selector(result.Value)(result.Remainder);
+                return nextResult.HasValue
+                    ? ParseResult.Success(
+                        projection(result.Value, nextResult.Value),
+                        result.Input,
+                        nextResult.Remainder
+                    )
+                    : ParseResult.CastEmpty<TOther, TProjection>(nextResult);
+            };
+        }
+
+        public TextParser<T> Where(Func<T, bool> predicate, string message = "unsatisfied condition")
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return result;
+
+                return predicate(result.Value) ? result : ParseResult.Empty<T>(result.Input, result.Remainder, message);
+            };
+        }
+
+        public TextParser<TValue> Value<TValue>(TValue value)
+        {
+            return input => ParseResult.Success(value, input, input);
+        }
+
+        public TextParser<TProjection> Then<TSecond, TProjection>(
+            TextParser<TSecond> next,
+            Func<T, TSecond, TProjection> projection
+        )
+            where TSecond : allows ref struct
+            where TProjection : allows ref struct
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T, TProjection>(result);
+
+                var nextResult = next(result.Remainder);
+                return nextResult.HasValue
+                    ? ParseResult.Success(
+                        projection(result.Value, nextResult.Value),
+                        result.Input,
+                        nextResult.Remainder
+                    )
+                    : ParseResult.CastEmpty<TSecond, TProjection>(nextResult);
+            };
+        }
+
+        public TextParser<TOther> IgnoreThen<TOther>(TextParser<TOther> next)
+            where TOther : allows ref struct
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T, TOther>(result);
+
+                var nextResult = next(result.Remainder);
+                return nextResult.HasValue
+                    ? ParseResult.Success(nextResult.Value, result.Input, nextResult.Remainder)
+                    : ParseResult.Empty<TOther>(nextResult.Remainder);
+            };
+        }
+
+        public TextParser<T> FollowedBy<TIgnored>(TextParser<TIgnored> ignored)
+            where TIgnored : allows ref struct
+        {
+            return parser.Then(ignored, (t, _) => t);
+        }
+
+        public TextParser<TIdentity> Many<TIdentity>(
+            Func<TIdentity> identity,
+            Func<TIdentity, T, TIdentity> accumulator
+        )
+            where TIdentity : allows ref struct
+        {
+            return input =>
+            {
+                var result = identity();
+                ParseResult<T> next;
+                for (next = parser(input); next.HasValue; next = parser(next.Remainder))
+                {
+                    result = accumulator(result, next.Value);
+                }
+
+                return ParseResult.Success(result, input, next.Remainder);
+            };
+        }
+
+        public TextParser<TIdentity> Many<TIdentity>(TIdentity identity, Func<TIdentity, T, TIdentity> accumulator)
+        {
+            return parser.Many(() => identity, accumulator);
+        }
+
+        public TextParser<Unit> IgnoreMany()
+        {
+            return parser.Many(Unit.Value, (_, _) => Unit.Value);
         }
     }
 }

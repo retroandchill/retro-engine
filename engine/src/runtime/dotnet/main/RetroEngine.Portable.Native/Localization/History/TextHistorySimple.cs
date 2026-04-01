@@ -18,7 +18,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
 
-    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         var nsloctextResult = input.ParseSymbol(Markers.NsLocText);
         if (nsloctextResult.HasValue)

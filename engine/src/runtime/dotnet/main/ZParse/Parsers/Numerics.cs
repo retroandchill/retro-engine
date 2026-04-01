@@ -27,29 +27,29 @@ public readonly ref struct NumericLiteral(ReadOnlySpan<char> span, NumberSign si
 
 public static class Numerics
 {
-    extension(ParseCursor input)
+    extension(TextSegment input)
     {
-        public ParseResult<ReadOnlySpan<char>> ParseDigitSequence()
+        public ParseResult<TextSegment> ParseDigitSequence()
         {
-            var next = input.Advance();
+            var next = input.ConsumeChar();
             if (!next.HasValue || char.IsDigit(next.Value))
-                return ParseResult.Empty<ReadOnlySpan<char>>(input);
+                return ParseResult.Empty<TextSegment>(input);
 
-            ParseCursor remainder;
+            TextSegment remainder;
             do
             {
                 remainder = next.Remainder;
-                next = remainder.Advance();
+                next = remainder.ConsumeChar();
             } while (next.HasValue && char.IsDigit(next.Value));
 
-            return ParseResult.Success(ParseCursor.Between(input, remainder), input, remainder);
+            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
         public ParseResult<NumericLiteral> ParseIntegerLiteral()
         {
             var sign = input.ParseCharIn('+', '-');
             NumberSign parsedSign;
-            ParseCursor remainder;
+            TextSegment remainder;
             switch (sign)
             {
                 case { HasValue: true, Value: '+' }:
@@ -69,11 +69,11 @@ public static class Numerics
             var integer = input.ParseDigitSequence();
             return integer.HasValue
                 ? ParseResult.Success(
-                    new NumericLiteral(ParseCursor.Between(input, integer.Remainder), parsedSign, false),
+                    new NumericLiteral(TextSegment.Between(input, integer.Remainder), parsedSign, false),
                     input,
                     remainder
                 )
-                : ParseResult.CastEmpty<ReadOnlySpan<char>, NumericLiteral>(integer);
+                : ParseResult.CastEmpty<TextSegment, NumericLiteral>(integer);
         }
 
         public ParseResult<T> ParseSignedInteger<T>(IFormatProvider? provider = null)
@@ -93,11 +93,11 @@ public static class Numerics
         {
             var literal = input.ParseDigitSequence();
             if (!literal.HasValue)
-                return ParseResult.CastEmpty<ReadOnlySpan<char>, T>(literal);
+                return ParseResult.CastEmpty<TextSegment, T>(literal);
 
             return T.TryParse(literal.Value, provider, out var result)
                 ? ParseResult.Success(result, input, literal.Remainder)
-                : ParseResult.CastEmpty<ReadOnlySpan<char>, T>(literal);
+                : ParseResult.CastEmpty<TextSegment, T>(literal);
         }
 
         public ParseResult<NumericLiteral> ParseDecimalLiteral()
@@ -113,11 +113,11 @@ public static class Numerics
             var fraction = decimalPoint.Remainder.ParseDigitSequence();
             return fraction.HasValue
                 ? ParseResult.Success(
-                    new NumericLiteral(ParseCursor.Between(input, fraction.Remainder), integer.Value.Sign, true),
+                    new NumericLiteral(TextSegment.Between(input, fraction.Remainder), integer.Value.Sign, true),
                     input,
                     fraction.Remainder
                 )
-                : ParseResult.CastEmpty<ReadOnlySpan<char>, NumericLiteral>(fraction);
+                : ParseResult.CastEmpty<TextSegment, NumericLiteral>(fraction);
         }
 
         public ParseResult<T> ParseDecimal<T>(IFormatProvider? provider = null)

@@ -20,11 +20,11 @@ internal static class TextStringHelper
         bool requiresQuotes = false
     )
     {
-        return ReadFromBuffer(new ParseCursor(buffer), textNamespace, requiresQuotes);
+        return ReadFromBuffer(new TextSegment(buffer), textNamespace, requiresQuotes);
     }
 
     internal static ParseResult<Text> ReadFromBuffer(
-        ParseCursor input,
+        TextSegment input,
         string? textNamespace = null,
         bool requiresQuotes = false
     )
@@ -46,7 +46,7 @@ internal static class TextStringHelper
         return input.ParseQuotedString().Select(x => new Text(x.ToString()));
     }
 
-    private static ParseResult<Text> ParseCultureInvariantText(ParseCursor buffer)
+    private static ParseResult<Text> ParseCultureInvariantText(TextSegment buffer)
     {
         return buffer.ParseSequence(
             i => i.ParseSymbol(Markers.InvText),
@@ -58,7 +58,7 @@ internal static class TextStringHelper
         );
     }
 
-    private static ParseResult<Text> ReadFromBufferComplex(ParseCursor buffer, string? textNamespace = null)
+    private static ParseResult<Text> ReadFromBufferComplex(TextSegment buffer, string? textNamespace = null)
     {
         var invariantText = ParseCultureInvariantText(buffer);
         if (invariantText.HasValue)
@@ -76,13 +76,13 @@ internal static class TextStringHelper
         return ParseResult.Empty<Text>(buffer);
     }
 
-    private static ParseResult<Text> ReadText<T>(ParseCursor buffer, string? textNamespace)
+    private static ParseResult<Text> ReadText<T>(TextSegment buffer, string? textNamespace)
         where T : ITextHistory
     {
         return T.ReadFromBuffer(buffer, textNamespace).Select(r => new Text(r));
     }
 
-    private delegate ParseResult<Text> TextHistoryParser(ParseCursor buffer, string? textNamespace);
+    private delegate ParseResult<Text> TextHistoryParser(TextSegment buffer, string? textNamespace);
 
     private static readonly ImmutableArray<TextHistoryParser> ReadTextHistories =
     [

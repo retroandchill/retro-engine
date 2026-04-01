@@ -37,7 +37,7 @@ internal sealed class TextHistoryAsPercent : TextHistoryFormatNumber, ITextHisto
         return BuildNumericDisplayString(formattingRules, 100);
     }
 
-    public static ParseResult<ITextData> ReadFromBuffer(ParseCursor input, string? textNamespace)
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
         return input
             .ParseNumberOrPercent(Markers.LocGenPercent)
