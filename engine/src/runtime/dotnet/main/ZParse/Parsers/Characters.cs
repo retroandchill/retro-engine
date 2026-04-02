@@ -168,6 +168,9 @@ public static class Characters
     /// </summary>
     public static TextParser<char> LetterOrDigit { get; } = Matching(char.IsLetterOrDigit, ["letter", "digit"]);
 
+    public static TextParser<char> LetterOrDigitOrUnderscore { get; } =
+        Matching(c => char.IsLetterOrDigit(c) || c == '_', ["letter", "digit", "underscore"]);
+
     /// <summary>
     /// Parse a lowercase letter.
     /// </summary>

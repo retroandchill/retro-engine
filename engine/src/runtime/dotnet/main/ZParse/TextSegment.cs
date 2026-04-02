@@ -17,7 +17,7 @@ public readonly ref struct TextSegment : IEquatable<TextSegment>
 
     public int Length { get; }
 
-    public bool IsAtEnd => Position.Index >= Length;
+    public bool IsAtEnd => Length == 0;
 
     public TextSegment(ReadOnlySpan<char> input)
         : this(input, TextPosition.Start) { }

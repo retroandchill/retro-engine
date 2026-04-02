@@ -547,6 +547,31 @@ public static class Combinators
             };
         }
 
+        public TextParser<TOther> SelectMany<TOther>(Func<T, ParseResult<TOther>> selector)
+        {
+            return input =>
+            {
+                var result = parser(input);
+                return result.HasValue ? selector(result.Value) : ParseResult.CastEmpty<T, TOther>(result);
+            };
+        }
+
+        public TextParser<TProjection> SelectMany<TOther, TProjection>(
+            Func<T, ParseResult<TOther>> selector,
+            Func<ParseResult<T>, ParseResult<TOther>, ParseResult<TProjection>> projection
+        )
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T, TProjection>(result);
+
+                var subResult = selector(result.Value);
+                return projection(result, subResult);
+            };
+        }
+
         public TextParser<T> Where(Func<T, bool> predicate, string message = "unsatisfied condition")
         {
             return input =>
@@ -561,7 +586,199 @@ public static class Combinators
 
         public TextParser<TValue> Value<TValue>(TValue value)
         {
-            return input => ParseResult.Success(value, input, input);
+            return parser.Select(_ => value);
+        }
+
+        public TextParser<T?> OrElseDefault()
+        {
+            return input =>
+            {
+                var result = parser(input);
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+                return result.HasValue ? result : ParseResult.Success(default(T), input, input);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            };
+        }
+
+        public TextParser<T> OrElse(Func<T> alternative)
+        {
+            return input =>
+            {
+                var result = parser(input);
+                return result.HasValue ? result : ParseResult.Success(alternative(), input, input);
+            };
+        }
+    }
+
+    extension<T>(TextParser<T> parser)
+    {
+        public TextParser<T> OrElse(T alternative)
+        {
+            return input =>
+            {
+                var result = parser(input);
+                return result.HasValue ? result : ParseResult.Success(alternative, input, input);
+            };
+        }
+    }
+
+    extension<T>(TextParser<T?> parser)
+        where T : class
+    {
+        public TextParser<T> NotNull()
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return result!;
+
+                return result.Value is not null
+                    ? result!
+                    : ParseResult.Empty<T>(result.Input, result.Remainder, "null value");
+            };
+        }
+    }
+
+    extension<T>(TextParser<T?> parser)
+        where T : struct
+    {
+        public TextParser<T> NotNull()
+        {
+            return input =>
+            {
+                var result = parser(input);
+                if (!result.HasValue)
+                    return ParseResult.CastEmpty<T?, T>(result);
+
+                return result.Value is not null
+                    ? ParseResult.Success(result.Value.Value, input, input)
+                    : ParseResult.Empty<T>(result.Input, result.Remainder, "null value");
+            };
+        }
+    }
+
+    extension<T>(TextParser<T> parser)
+        where T : allows ref struct
+    {
+        public TextParser<T> Or(TextParser<T> alternative)
+        {
+            return input =>
+            {
+                var result1 = parser(input);
+                if (result1.HasValue)
+                    return result1;
+
+                var result2 = alternative(input);
+                return result2.HasValue ? result2 : ParseResult.CombineEmpty(result1, result2);
+            };
+        }
+
+        public TextParser<T> Or(TextParser<T> alternative1, TextParser<T> alternative2)
+        {
+            return input =>
+            {
+                var result1 = parser(input);
+                if (result1.HasValue)
+                    return result1;
+
+                var result2 = alternative1(input);
+                if (result2.HasValue)
+                    return result2;
+
+                var result3 = alternative2(input);
+                return result3.HasValue ? result3 : ParseResult.CombineEmpty(result1, result2, result3);
+            };
+        }
+
+        public TextParser<T> Or(TextParser<T> alternative1, TextParser<T> alternative2, TextParser<T> alternative3)
+        {
+            return input =>
+            {
+                var result1 = parser(input);
+                if (result1.HasValue)
+                    return result1;
+
+                var result2 = alternative1(input);
+                if (result2.HasValue)
+                    return result2;
+
+                var result3 = alternative2(input);
+                if (result3.HasValue)
+                    return result3;
+
+                var result4 = alternative3(input);
+                return result4.HasValue ? result4 : ParseResult.CombineEmpty(result1, result2, result3, result4);
+            };
+        }
+
+        public TextParser<T> Or(
+            TextParser<T> alternative1,
+            TextParser<T> alternative2,
+            TextParser<T> alternative3,
+            TextParser<T> alternative4
+        )
+        {
+            return input =>
+            {
+                var result1 = parser(input);
+                if (result1.HasValue)
+                    return result1;
+
+                var result2 = alternative1(input);
+                if (result2.HasValue)
+                    return result2;
+
+                var result3 = alternative2(input);
+                if (result3.HasValue)
+                    return result3;
+
+                var result4 = alternative3(input);
+                if (result4.HasValue)
+                    return result4;
+
+                var result5 = alternative4(input);
+                return result5.HasValue
+                    ? result5
+                    : ParseResult.CombineEmpty(result1, result2, result3, result4, result5);
+            };
+        }
+
+        public TextParser<T> Or(
+            TextParser<T> alternative1,
+            TextParser<T> alternative2,
+            TextParser<T> alternative3,
+            TextParser<T> alternative4,
+            TextParser<T> alternative5
+        )
+        {
+            return input =>
+            {
+                var result1 = parser(input);
+                if (result1.HasValue)
+                    return result1;
+
+                var result2 = alternative1(input);
+                if (result2.HasValue)
+                    return result2;
+
+                var result3 = alternative2(input);
+                if (result3.HasValue)
+                    return result3;
+
+                var result4 = alternative3(input);
+                if (result4.HasValue)
+                    return result4;
+
+                var result5 = alternative4(input);
+                if (result5.HasValue)
+                    return result5;
+
+                var result6 = alternative5(input);
+                return result6.HasValue
+                    ? result6
+                    : ParseResult.CombineEmpty(result1, result2, result3, result4, result5, result6);
+            };
         }
 
         public TextParser<TProjection> Then<TSecond, TProjection>(
@@ -834,6 +1051,11 @@ public static class Combinators
         public TextParser<T> AtLeastOnce(Func<T, T, T> accumulator)
         {
             return parser.AtLeast(1, accumulator);
+        }
+
+        public TextParser<Unit> IgnoreAtLeastOnce()
+        {
+            return parser.AtLeastOnce(() => Unit.Value, (_, _) => Unit.Value);
         }
 
         public TextParser<TIdentity> AtLeastOnceDelimitedBy<TDelimiter, TIdentity>(

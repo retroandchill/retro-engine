@@ -141,4 +141,7 @@ public static class Symbols
                 : ParseResult.CastEmpty<TextSegment, T>(identifier);
         }
     }
+
+    public static TextParser<TextSegment> Identifier { get; } =
+        Sequences.MatchedBy(Characters.LetterOrDigitOrUnderscore.IgnoreAtLeastOnce());
 }

@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using LinkDotNet.StringBuilder;
 using ZParse.Display;
+using ZParse.Util;
 
 namespace ZParse;
 
@@ -135,6 +136,9 @@ public readonly ref struct ParseResult<T>
 
     public string FormatErrorMessageFragment()
     {
+        if (ErrorMessage is not null)
+            return ErrorMessage;
+
         var builder = new ValueStringBuilder();
         try
         {
@@ -149,6 +153,12 @@ public readonly ref struct ParseResult<T>
 
     private void FormatErrorMessageFragment(ref ValueStringBuilder builder)
     {
+        if (ErrorMessage is not null)
+        {
+            builder.Append(ErrorMessage);
+            return;
+        }
+
         if (Input.IsAtEnd)
         {
             builder.Append("unexpected end of input");
@@ -234,5 +244,76 @@ public static class ParseResult
         where TOther : allows ref struct
     {
         return new ParseResult<TOther>(result.Input, result.Remainder, result.Expectations, result.Backtrack);
+    }
+
+    public static ParseResult<T> CombineEmpty<T>(ParseResult<T> result1, ParseResult<T> result2)
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(result1.Expectations, result2.Expectations);
+        return new ParseResult<T>(result2.Input, result2.Remainder, expectations, result2.Backtrack);
+    }
+
+    public static ParseResult<T> CombineEmpty<T>(ParseResult<T> result1, ParseResult<T> result2, ParseResult<T> result3)
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(result1.Expectations, result2.Expectations, result3.Expectations);
+        return new ParseResult<T>(result3.Input, result3.Remainder, expectations, result3.Backtrack);
+    }
+
+    public static ParseResult<T> CombineEmpty<T>(
+        ParseResult<T> result1,
+        ParseResult<T> result2,
+        ParseResult<T> result3,
+        ParseResult<T> result4
+    )
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(
+            result1.Expectations,
+            result2.Expectations,
+            result3.Expectations,
+            result4.Expectations
+        );
+        return new ParseResult<T>(result4.Input, result4.Remainder, expectations, result4.Backtrack);
+    }
+
+    public static ParseResult<T> CombineEmpty<T>(
+        ParseResult<T> result1,
+        ParseResult<T> result2,
+        ParseResult<T> result3,
+        ParseResult<T> result4,
+        ParseResult<T> result5
+    )
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(
+            result1.Expectations,
+            result2.Expectations,
+            result3.Expectations,
+            result4.Expectations,
+            result5.Expectations
+        );
+        return new ParseResult<T>(result5.Input, result5.Remainder, expectations, result5.Backtrack);
+    }
+
+    public static ParseResult<T> CombineEmpty<T>(
+        ParseResult<T> result1,
+        ParseResult<T> result2,
+        ParseResult<T> result3,
+        ParseResult<T> result4,
+        ParseResult<T> result5,
+        ParseResult<T> result6
+    )
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(
+            result1.Expectations,
+            result2.Expectations,
+            result3.Expectations,
+            result4.Expectations,
+            result5.Expectations,
+            result6.Expectations
+        );
+        return new ParseResult<T>(result6.Input, result6.Remainder, expectations, result6.Backtrack);
     }
 }

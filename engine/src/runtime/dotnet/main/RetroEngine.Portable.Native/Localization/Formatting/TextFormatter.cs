@@ -55,7 +55,7 @@ internal readonly ref struct TextFormatContext<T>(
     public FormatArg? ResolveArg(PlaceholderKey key, int argNumber) => argResolver(_context, key, argNumber);
 }
 
-public delegate ParseResult<ITextFormatArgumentModifier> GetTextArgumentModifier(ReadOnlySpan<char> paramArgs);
+public delegate ITextFormatArgumentModifier? GetTextArgumentModifier(ReadOnlySpan<char> paramArgs);
 
 public sealed class TextFormatter
 {

@@ -127,13 +127,17 @@ public static class Sequences
         return input =>
         {
             var next = input.ConsumeChar();
+            var consumed = false;
+            var remainder = input;
             while (next.HasValue && predicate(next.Value))
             {
-                next = input.ConsumeChar();
+                consumed = true;
+                remainder = next.Remainder;
+                next = remainder.ConsumeChar();
             }
 
-            return next.HasValue
-                ? ParseResult.Success(input.Until(next.Remainder), input, next.Remainder)
+            return consumed
+                ? ParseResult.Success(input.Until(remainder), input, remainder)
                 : ParseResult.Empty<TextSegment>(input, expectations);
         };
     }
@@ -144,6 +148,11 @@ public static class Sequences
     )
     {
         return While(i => !predicate(i), name);
+    }
+
+    public static TextParser<TextSegment> UntilChar(char ch)
+    {
+        return Until(c => c == ch, $"at least one character until {Presentation.FormatLiteral(ch)}");
     }
 
     public static TextParser<TextSegment> Whitespace { get; } = While(char.IsWhiteSpace, "whitespace");
