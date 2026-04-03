@@ -38,11 +38,13 @@ internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistor
         return BuildNumericDisplayString(formattingRules);
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader
+        .NumberOrPercent(Markers.LocGenNumber)
+        .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        return input
-            .ParseNumberOrPercent(Markers.LocGenNumber)
-            .Select(ITextData (r) => new TextHistoryAsNumber(r.Value, r.Options, r.TargetCulture));
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

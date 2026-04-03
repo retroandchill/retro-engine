@@ -26,7 +26,14 @@ public ref struct TokenEnumerator<T>(TextSegment input, TokenDefinitions<T> defi
 
         if (definitions.IgnoreWhitespace)
         {
-            _cursor = _cursor.ParseOptionalWhitespace().Remainder;
+            var next = _cursor.ConsumeChar();
+            while (next.HasValue && char.IsWhiteSpace(next.Value))
+            {
+                next = next.Remainder.ConsumeChar();
+            }
+
+            if (!next.HasValue)
+                return false;
         }
 
         foreach (var parser in definitions.Definitions)

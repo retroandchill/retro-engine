@@ -443,7 +443,7 @@ public static class FastDecimalFormat
             );
             if (leadingZerosToAdd > 0)
             {
-                for (var i = 0; i < fractionalPartLength; ++i)
+                for (var i = fractionalPartLength - 1; i >= 0; --i)
                 {
                     fractionalPartBuffer[i + leadingZerosToAdd] = fractionalPartBuffer[i];
                 }

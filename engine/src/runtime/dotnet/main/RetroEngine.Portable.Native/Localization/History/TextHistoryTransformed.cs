@@ -3,7 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using RetroEngine.Portable.Localization.Cultures;
+using RetroEngine.Portable.Localization.Stringification;
+using ZParse;
+using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -42,6 +46,40 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistor
         return other is TextHistoryTransformed otherTransformed
             && _sourceText.IdenticalTo(otherTransformed._sourceText, flags)
             && _transformType == otherTransformed._transformType;
+    }
+
+    private static readonly TextParser<ITextData> Parser = Sequences
+        .EqualTo(Markers.LocGenToLower)
+        .Value(TransformType.ToLower)
+        .Or(Sequences.EqualTo(Markers.LocGenToUpper).Value(TransformType.ToUpper))
+        .Then(
+            TextStringReader
+                .WhitespaceAndOpeningParen.IgnoreThen(TextStringReader.QuotedText)
+                .FollowedBy(TextStringReader.WhitespaceAndClosingParen),
+            ITextData (type, text) => new TextHistoryTransformed(text, type)
+        );
+
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    {
+        return Parser(input);
+    }
+
+    public override bool WriteToBuffer(StringBuilder buffer)
+    {
+        switch (_transformType)
+        {
+            case TransformType.ToUpper:
+                buffer.Append($"{Markers.LocGenToUpper}(");
+                break;
+            case TransformType.ToLower:
+                buffer.Append($"{Markers.LocGenToLower}(");
+                break;
+            default:
+                throw new InvalidOperationException("Invalid transform type.");
+        }
+        TextStringHelper.WriteToBuffer(buffer, _sourceText, true);
+        buffer.Append(')');
+        return true;
     }
 
     public override IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text)

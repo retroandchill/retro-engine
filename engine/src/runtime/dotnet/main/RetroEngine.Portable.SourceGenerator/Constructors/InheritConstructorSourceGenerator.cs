@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Reflection.Metadata;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
@@ -79,7 +78,7 @@ public class InheritConstructorSourceGenerator : IIncrementalGenerator
         ];
     }
 
-    private bool IsAccessibleByDerivedType(IMethodSymbol methodSymbol, INamedTypeSymbol derivedType)
+    private static bool IsAccessibleByDerivedType(IMethodSymbol methodSymbol, INamedTypeSymbol derivedType)
     {
         var owningType = methodSymbol.ContainingType;
         return methodSymbol.DeclaredAccessibility switch

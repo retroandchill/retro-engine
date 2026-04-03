@@ -37,11 +37,13 @@ internal sealed class TextHistoryAsDate : TextHistoryGenerated, ITextHistory
         return BuildDateTimeDisplayString(CultureManager.Instance.InvariantCulture);
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader
+        .DateTime(Markers.LocGenDate, true, false)
+        .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        return input
-            .ParseDateTime(Markers.LocGenTime, true, false)
-            .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

@@ -157,5 +157,7 @@ public static class Sequences
 
     public static TextParser<TextSegment> Whitespace { get; } = While(char.IsWhiteSpace, "whitespace");
 
+    public static TextParser<TextSegment> OptionalWhitespace { get; } = Whitespace.OrElseDefault();
+
     public static TextParser<TextSegment> NonWhitespace { get; } = Until(char.IsWhiteSpace, "non-whitespace");
 }

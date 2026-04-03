@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Localization.History;
 using RetroEngine.Portable.Localization.Stringification;
+using RetroEngine.Portable.Utils;
 using ZParse;
 using ZParse.Parsers;
 
@@ -14,13 +15,16 @@ namespace RetroEngine.Portable.Localization;
 
 internal static class TextStringHelper
 {
-    public static ParseResult<Text> ReadFromBuffer(
+    public static Text ReadFromBuffer(
         ReadOnlySpan<char> buffer,
         string? textNamespace = null,
         bool requiresQuotes = false
     )
     {
-        return ReadFromBuffer(new TextSegment(buffer), textNamespace, requiresQuotes);
+        var result = ReadFromBuffer(new TextSegment(buffer), textNamespace, requiresQuotes);
+        return result.HasValue
+            ? result.Value
+            : throw new ParseException(result.ErrorPosition, result.FormatErrorMessageFragment());
     }
 
     internal static ParseResult<Text> ReadFromBuffer(
@@ -40,27 +44,22 @@ internal static class TextStringHelper
             return complexResult;
         }
 
-        if (!requiresQuotes)
-            return input.ParseToEnd().Select(x => new Text(x.ToString()));
-
-        return input.ParseQuotedString().Select(x => new Text(x.ToString()));
+        return requiresQuotes ? QuotedTextString(input) : RegularTextString(input);
     }
 
-    private static ParseResult<Text> ParseCultureInvariantText(TextSegment buffer)
-    {
-        return buffer.ParseSequence(
-            i => i.ParseSymbol(Markers.InvText),
-            i => i.ParseWhitespaceAndChar('('),
-            i => i.ParseOptionalWhitespace(),
-            i => i.ParseQuotedString(),
-            i => i.ParseWhitespaceAndChar(')'),
-            (_, _, _, i, _) => Text.AsCultureInvariant(i)
-        );
-    }
+    private static readonly TextParser<Text> CultureInvariantText = TextStringReader
+        .Marked(Markers.InvText, TextStringReader.TextLiteral)
+        .Select(r => new Text(r));
+
+    private static readonly TextParser<Text> QuotedTextString = TextStringReader.TextLiteral.Select(r => new Text(r));
+
+    private static readonly TextParser<Text> RegularTextString = Sequences
+        .MatchedBy(Characters.AnyChar.IgnoreAtLeastOnce())
+        .Select(r => new Text(r.ToString()));
 
     private static ParseResult<Text> ReadFromBufferComplex(TextSegment buffer, string? textNamespace = null)
     {
-        var invariantText = ParseCultureInvariantText(buffer);
+        var invariantText = CultureInvariantText(buffer);
         if (invariantText.HasValue)
         {
             return invariantText;
@@ -70,26 +69,25 @@ internal static class TextStringHelper
         {
             var result = parser(buffer, textNamespace);
             if (result.HasValue)
-                return result;
+                return ParseResult.Success(new Text(result.Value), result.Input, result.Remainder);
         }
 
         return ParseResult.Empty<Text>(buffer);
     }
 
-    private static ParseResult<Text> ReadText<T>(TextSegment buffer, string? textNamespace)
+    private static ParseResult<ITextData> ReadText<T>(TextSegment buffer, string? textNamespace)
         where T : ITextHistory
     {
-        return T.ReadFromBuffer(buffer, textNamespace).Select(r => new Text(r));
+        return T.ReadFromBuffer(buffer, textNamespace);
     }
 
-    private delegate ParseResult<Text> TextHistoryParser(TextSegment buffer, string? textNamespace);
+    private delegate ParseResult<ITextData> TextHistoryParser(TextSegment buffer, string? textNamespace);
 
     private static readonly ImmutableArray<TextHistoryParser> ReadTextHistories =
     [
         ReadText<TextHistorySimple>,
         ReadText<TextHistoryNamedFormat>,
         ReadText<TextHistoryOrderedFormat>,
-        //ReadText<TextHistoryArgumentDataFormat>,
         ReadText<TextHistoryAsNumber>,
         ReadText<TextHistoryAsPercent>,
         ReadText<TextHistoryAsCurrency>,
@@ -102,6 +100,25 @@ internal static class TextStringHelper
 
     public static void WriteToBuffer(StringBuilder buffer, Text value, bool requiresQuotes = false)
     {
-        throw new NotImplementedException();
+        if (value.IsCultureInvariant)
+        {
+            buffer.Append($"{Markers.InvText}(\"");
+            buffer.Append(value.ToString().ReplaceCharWithEscapedChar());
+            buffer.Append("\")");
+        }
+        else if (value.TextData.History.WriteToBuffer(buffer))
+        {
+            // Nothing to do here
+        }
+        else if (requiresQuotes)
+        {
+            buffer.Append('"');
+            buffer.Append(value.ToString().ReplaceCharWithEscapedChar());
+            buffer.Append('"');
+        }
+        else
+        {
+            buffer.Append(value.ToString());
+        }
     }
 }

@@ -31,7 +31,7 @@ internal abstract class TextHistory : ITextData
         get
         {
             using var scope = _lock.EnterReadScope();
-            return field;
+            return _revisions;
         }
     }
 

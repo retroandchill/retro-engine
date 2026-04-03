@@ -4,7 +4,10 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Text;
 using RetroEngine.Portable.Localization.Formatting;
+using RetroEngine.Portable.Localization.Stringification;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
@@ -35,6 +38,39 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
             && _args.SequenceEqual(otherOrderedFormat._args, (a, b) => a.IdenticalTo(b, flags));
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader.Marked(
+        Markers.LocGenFormatOrdered,
+        TextStringReader.QuotedText.Then(
+            TextStringReader
+                .CommaSeparator.IgnoreThen(FormatArg.Parser)
+                .Many(
+                    ImmutableArray.CreateBuilder<FormatArg>,
+                    (b, a) =>
+                    {
+                        b.Add(a);
+                        return b;
+                    },
+                    b => b.ToImmutableArray()
+                ),
+            ITextData (t, a) => new TextHistoryOrderedFormat(t, a)
+        )
+    );
+
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    {
+        return Parser(input);
+    }
+
+    public override bool WriteToBuffer(StringBuilder buffer)
+    {
+        buffer.WriteTextFormat(
+            Markers.LocGenFormatOrdered,
+            _sourceFormat,
+            _args.Select(a => new KeyValuePair<string?, FormatArg>(null, a))
+        );
+        return true;
+    }
+
     public override IEnumerable<HistoricTextFormatData> GetHistoricFormatData(Text text)
     {
         foreach (var sourceHistoric in _sourceFormat.SourceText.HistoricFormatData)
@@ -54,7 +90,7 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
 
         var namedArgs = _args
             .Select((arg, i) => (Arg: arg, Index: i))
-            .ToImmutableDictionary(x => x.Index.ToString(), x => x.Arg);
+            .ToImmutableSortedDictionary(x => x.Index.ToString(), x => x.Arg);
         yield return new HistoricTextFormatData(text, _sourceFormat, namedArgs);
     }
 

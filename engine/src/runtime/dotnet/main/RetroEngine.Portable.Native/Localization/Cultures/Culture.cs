@@ -44,7 +44,7 @@ public sealed class Culture : IDisposable
     {
         _locale = locale;
         CultureInfo = CultureInfo.GetCultureInfo(locale.Name.Replace('_', '-'));
-        Name = _locale.Name;
+        Name = _locale.Name.Replace('_', '-');
         ThreeLetterISOLanguageName = _locale.ThreeLetterISOLanguageName;
         TwoLetterISOLanguageName = _locale.TwoLetterISOLanguageName;
         Region = _locale.Region;

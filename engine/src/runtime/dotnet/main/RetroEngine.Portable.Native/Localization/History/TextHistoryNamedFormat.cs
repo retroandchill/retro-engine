@@ -4,17 +4,20 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using RetroEngine.Portable.Localization.Formatting;
+using RetroEngine.Portable.Localization.Stringification;
+using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
 internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistory
 {
     private readonly TextFormat _sourceFormat;
-    private readonly ImmutableDictionary<string, FormatArg> _args;
+    private readonly ImmutableSortedDictionary<string, FormatArg> _args;
 
-    public TextHistoryNamedFormat(TextFormat sourceFormat, ImmutableDictionary<string, FormatArg> args)
+    public TextHistoryNamedFormat(TextFormat sourceFormat, ImmutableSortedDictionary<string, FormatArg> args)
     {
         _sourceFormat = sourceFormat;
         _args = args;
@@ -22,7 +25,7 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
     }
 
     public TextHistoryNamedFormat(TextFormat sourceFormat, IReadOnlyDictionary<string, FormatArg> args)
-        : this(sourceFormat, args.ToImmutableDictionary()) { }
+        : this(sourceFormat, args.ToImmutableSortedDictionary()) { }
 
     public override string BuildInvariantDisplayString()
     {
@@ -50,6 +53,36 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
             return false;
         }
 
+        return true;
+    }
+
+    private static readonly TextParser<ITextData> Parser = TextStringReader.Marked(
+        Markers.LocGenFormatNamed,
+        TextStringReader.QuotedText.Then(
+            TextStringReader
+                .CommaSeparator.IgnoreThen(TextStringReader.TextLiteral)
+                .Then(TextStringReader.CommaSeparator.IgnoreThen(FormatArg.Parser), (t, a) => (Key: t, Value: a))
+                .Many(
+                    ImmutableSortedDictionary.CreateBuilder<string, FormatArg>,
+                    (b, a) =>
+                    {
+                        b.Add(a.Key, a.Value);
+                        return b;
+                    },
+                    b => b.ToImmutable()
+                ),
+            ITextData (t, a) => new TextHistoryNamedFormat(t, a)
+        )
+    );
+
+    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    {
+        return Parser(input);
+    }
+
+    public override bool WriteToBuffer(StringBuilder buffer)
+    {
+        buffer.WriteTextFormat(Markers.LocGenFormatNamed, _sourceFormat, _args!);
         return true;
     }
 

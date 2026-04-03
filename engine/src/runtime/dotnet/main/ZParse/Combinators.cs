@@ -11,147 +11,6 @@ public delegate bool TrySelection<in T, TResult>(T value, out TResult result)
 
 public static class Combinators
 {
-    private const string UseDeclarativeCombinators = "Use declarative combinators instead of this syntax";
-
-    extension<T>(ParseResult<T> result)
-        where T : allows ref struct
-    {
-        [Obsolete(UseDeclarativeCombinators)]
-        public ParseResult<TResult> Select<TResult>(Func<T, TResult> selector)
-            where TResult : allows ref struct
-        {
-            return result.HasValue
-                ? ParseResult.Success(selector(result.Value), result.Input, result.Remainder)
-                : ParseResult.CastEmpty<T, TResult>(result);
-        }
-
-        [Obsolete(UseDeclarativeCombinators)]
-        public ParseResult<T> OrElse(Func<TextSegment, ParseResult<T>> fallback)
-        {
-            return result.HasValue ? result : fallback(result.Input);
-        }
-    }
-
-    extension(TextSegment input)
-    {
-        [Obsolete(UseDeclarativeCombinators)]
-        public ParseResult<TResult> ParseSequence<T1, T2, T3, TResult>(
-            Func<TextSegment, ParseResult<T1>> first,
-            Func<TextSegment, ParseResult<T2>> second,
-            Func<TextSegment, ParseResult<T3>> third,
-            Func<T1, T2, T3, TResult> selector
-        )
-            where T1 : allows ref struct
-            where T2 : allows ref struct
-            where T3 : allows ref struct
-            where TResult : allows ref struct
-        {
-            var firstResult = first(input);
-            if (!firstResult.HasValue)
-                return ParseResult.CastEmpty<T1, TResult>(firstResult);
-
-            var secondResult = second(firstResult.Remainder);
-            if (!secondResult.HasValue)
-                return ParseResult.CastEmpty<T2, TResult>(secondResult);
-
-            var thirdResult = third(secondResult.Remainder);
-            if (!thirdResult.HasValue)
-                return ParseResult.CastEmpty<T3, TResult>(thirdResult);
-
-            return ParseResult.Success(
-                selector(firstResult.Value, secondResult.Value, thirdResult.Value),
-                firstResult.Input,
-                secondResult.Remainder
-            );
-        }
-
-        [Obsolete(UseDeclarativeCombinators)]
-        public ParseResult<TResult> ParseSequence<T1, T2, T3, T4, TResult>(
-            Func<TextSegment, ParseResult<T1>> first,
-            Func<TextSegment, ParseResult<T2>> second,
-            Func<TextSegment, ParseResult<T3>> third,
-            Func<TextSegment, ParseResult<T4>> fourth,
-            Func<T1, T2, T3, T4, TResult> selector
-        )
-            where T1 : allows ref struct
-            where T2 : allows ref struct
-            where T3 : allows ref struct
-            where T4 : allows ref struct
-            where TResult : allows ref struct
-        {
-            var firstResult = first(input);
-            if (!firstResult.HasValue)
-                return ParseResult.CastEmpty<T1, TResult>(firstResult);
-
-            var secondResult = second(firstResult.Remainder);
-            if (!secondResult.HasValue)
-                return ParseResult.CastEmpty<T2, TResult>(secondResult);
-
-            var thirdResult = third(secondResult.Remainder);
-            if (!thirdResult.HasValue)
-                return ParseResult.CastEmpty<T3, TResult>(thirdResult);
-
-            var fourthResult = fourth(thirdResult.Remainder);
-            if (!fourthResult.HasValue)
-                return ParseResult.CastEmpty<T4, TResult>(fourthResult);
-
-            return ParseResult.Success(
-                selector(firstResult.Value, secondResult.Value, thirdResult.Value, fourthResult.Value),
-                firstResult.Input,
-                secondResult.Remainder
-            );
-        }
-
-        [Obsolete(UseDeclarativeCombinators)]
-        public ParseResult<TResult> ParseSequence<T1, T2, T3, T4, T5, TResult>(
-            Func<TextSegment, ParseResult<T1>> first,
-            Func<TextSegment, ParseResult<T2>> second,
-            Func<TextSegment, ParseResult<T3>> third,
-            Func<TextSegment, ParseResult<T4>> fourth,
-            Func<TextSegment, ParseResult<T5>> fifth,
-            Func<T1, T2, T3, T4, T5, TResult> selector
-        )
-            where T1 : allows ref struct
-            where T2 : allows ref struct
-            where T3 : allows ref struct
-            where T4 : allows ref struct
-            where T5 : allows ref struct
-            where TResult : allows ref struct
-        {
-            var firstResult = first(input);
-            if (!firstResult.HasValue)
-                return ParseResult.CastEmpty<T1, TResult>(firstResult);
-
-            var secondResult = second(firstResult.Remainder);
-            if (!secondResult.HasValue)
-                return ParseResult.CastEmpty<T2, TResult>(secondResult);
-
-            var thirdResult = third(secondResult.Remainder);
-            if (!thirdResult.HasValue)
-                return ParseResult.CastEmpty<T3, TResult>(thirdResult);
-
-            var fourthResult = fourth(thirdResult.Remainder);
-            if (!fourthResult.HasValue)
-                return ParseResult.CastEmpty<T4, TResult>(fourthResult);
-
-            var fifthResult = fifth(fourthResult.Remainder);
-            if (!fifthResult.HasValue)
-                return ParseResult.CastEmpty<T5, TResult>(fifthResult);
-
-            return ParseResult.Success(
-                selector(
-                    firstResult.Value,
-                    secondResult.Value,
-                    thirdResult.Value,
-                    fourthResult.Value,
-                    fifthResult.Value
-                ),
-                firstResult.Input,
-                secondResult.Remainder
-            );
-        }
-    }
-
     extension<T>(TextParser<T> parser)
         where T : allows ref struct
     {
@@ -490,7 +349,7 @@ public static class Combinators
                 if (result5.HasValue)
                     return result5;
 
-                var result6 = alternative6(input);
+                var result6 = alternative5(input);
                 if (result6.HasValue)
                     return result6;
 
@@ -603,11 +462,10 @@ public static class Combinators
 
                         nextResult = parser(remaining);
 
-                        if (delimiter is null || nextResult.HasValue)
-                            continue;
+                        if (delimiter is not null && !nextResult.HasValue)
+                            break;
 
                         remaining = nextResult.Remainder;
-                        break;
                     } while (nextResult.HasValue);
 
                     return encountered >= minimum

@@ -115,13 +115,15 @@ public readonly partial struct FormatArg
         return FromExportedString(new TextSegment(str));
     }
 
+    internal static TextParser<FormatArg> Parser { get; } =
+        Symbols
+            .EnumLiteral<TextGender>("ETextGender::")
+            .Select(Gender)
+            .Or(TextStringReader.Number.Select(a => (FormatArg)a), TextStringReader.QuotedText.Select(Text));
+
     internal static ParseResult<FormatArg> FromExportedString(TextSegment input)
     {
-        return input
-            .ParseEnum<TextGender>("ETextGender::")
-            .Select(Gender)
-            .OrElse(i => i.ParseNumber().Select(a => (FormatArg)a))
-            .OrElse(i => TextStringHelper.ReadFromBuffer(i, requiresQuotes: true).Select(Text));
+        return Parser(input);
     }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);

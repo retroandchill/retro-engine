@@ -7,9 +7,13 @@ using System.Collections.Immutable;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json.Serialization;
+using MessagePack;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.History;
+using RetroEngine.Portable.Serialization.Json;
+using RetroEngine.Portable.Serialization.MessagePack;
 using RetroEngine.Portable.Strings;
 using ZLinq;
 
@@ -69,6 +73,8 @@ public enum TextComparisonLevel
     Ordinal,
 }
 
+[JsonConverter(typeof(TextJsonConverter))]
+[MessagePackFormatter(typeof(TextMessagePackFormatter))]
 public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {
     internal ITextData TextData => field ?? EmptyTextData;
@@ -133,7 +139,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        return new Text(new TextHistoryAsCurrency(value, currencyCode, options, targetCulture), TextFlag.Transient);
+        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
+        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+        var formattingOptions = formattingRules.DefaultFormattingOptions;
+        var decimalPlaces = formattingOptions.MaximumFractionalDigits;
+        var val = value.Match(s => s, u => u, f => f, d => d) / FastDecimalFormat.Pow10(decimalPlaces);
+        return new Text(new TextHistoryAsCurrency(val, currencyCode, options, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsDate(
@@ -164,10 +175,8 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var nativeString = TextChronoFormatter.AsDateTime(dateTime, dateFormat, timeFormat, timeZoneId, culture);
         return new Text(
-            new TextHistoryAsDateTime(nativeString, dateTime, dateFormat, timeFormat, timeZoneId, targetCulture),
+            new TextHistoryAsDateTime(dateTime, dateFormat, timeFormat, timeZoneId, targetCulture),
             TextFlag.Transient
         );
     }
@@ -179,12 +188,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         Culture? targetCulture = null
     )
     {
-        var culture = targetCulture ?? CultureManager.Instance.CurrentLocale;
-        var nativeString = TextChronoFormatter.AsDateTime(dateTime, pattern, timeZoneId, culture);
-        return new Text(
-            new TextHistoryAsDateTime(nativeString, dateTime, pattern, timeZoneId, targetCulture),
-            TextFlag.Transient
-        );
+        return new Text(new TextHistoryAsDateTime(dateTime, pattern, timeZoneId, targetCulture), TextFlag.Transient);
     }
 
     public static Text AsTimespan(TimeSpan timeSpan, Culture? targetCulture = null)

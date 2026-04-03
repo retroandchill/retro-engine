@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using System.Text;
 using LinkDotNet.StringBuilder;
 using ZParse.Util;
 
@@ -10,190 +12,91 @@ namespace ZParse.Parsers;
 
 public static class StringLiterals
 {
-    private const string UseDeclarativeParsers = "Use declarative parsers instead of this syntax";
+    private static readonly ImmutableArray<char> StopCharacters = ['"', '\n', '\r', '\0'];
+    private static readonly ImmutableArray<char> StopAndEscapeCharacters = StopCharacters.Add('\\');
 
-    extension(TextSegment input)
-    {
-        [Obsolete(UseDeclarativeParsers)]
-        public ParseResult<string> ParseQuotedString()
+    private static readonly TextParser<TextSegment> UnescapedSequence = Sequences.MatchedBy(
+        Characters.ExceptIn(StopAndEscapeCharacters).IgnoreAtLeastOnce()
+    );
+
+    private static readonly TextParser<Rune> SimpleEscapeCharacter = Characters
+        .In('\\', '"', 'n', 'r', 't')
+        .Select(c => new Rune(c));
+
+    private static readonly TextParser<Rune> OctalEscape = Characters.OctalDigit.RepeatedRange(
+        1,
+        3,
+        () => 0,
+        (i, c) => i + char.ToOctalValue(c),
+        i => new Rune((char)i)
+    );
+
+    private static readonly TextParser<Rune> HexEscape = Characters
+        .EqualTo('x')
+        .IgnoreThen(Characters.HexDigit.AtLeastOnce(() => 0, (i, c) => i + char.ToHexValue(c), i => new Rune((char)i)));
+
+    private static readonly TextParser<Rune> Utf16Escape = Characters
+        .EqualTo('u')
+        .IgnoreThen(
+            Characters.HexDigit.RepeatedRange(1, 4, () => 0, (i, c) => i + char.ToHexValue(c), i => new Rune((char)i))
+        );
+
+    private static readonly TextParser<Rune> Utf32Escape = Characters
+        .EqualTo('U')
+        .IgnoreThen(
+            Characters.HexDigit.RepeatedRange(1, 8, () => 0, (i, c) => i + char.ToHexValue(c), i => new Rune(i))
+        );
+
+    private static readonly TextParser<Rune> ValidEscapedSequence = SimpleEscapeCharacter.Or(
+        OctalEscape,
+        HexEscape,
+        Utf16Escape,
+        Utf32Escape
+    );
+
+    private static readonly TextParser<char> QuoteMark = Characters.EqualTo('"');
+
+    public static TextParser<string> QuotedString { get; } =
+        input =>
         {
-            var builder = new ValueStringBuilder();
-            try
-            {
-                var result = input.ParseQuotedString(ref builder);
-                return result.HasValue
-                    ? ParseResult.Success(builder.ToString(), input, result.Remainder)
-                    : ParseResult.CastEmpty<Unit, string>(result);
-            }
-            finally
-            {
-                builder.Dispose();
-            }
-        }
+            var openingQuote = QuoteMark(input);
+            if (!openingQuote.HasValue)
+                return ParseResult.CastEmpty<char, string>(openingQuote);
 
-        [Obsolete(UseDeclarativeParsers)]
-        private ParseResult<Unit> ParseQuotedString(scoped ref ValueStringBuilder builder)
-        {
-            var openQuote = input.ParseChar('"');
-            if (!openQuote.HasValue)
-                return ParseResult.CastEmpty<char, Unit>(openQuote);
+            using var builder = new ValueStringBuilder();
 
-            const string stopCharacters = "\"\n\r";
-            const string stopAndEscapeCharacters = $"{stopCharacters}\\";
-
-            var remainder = input;
+            var remainder = openingQuote.Remainder;
             while (true)
             {
-                var unescaped = remainder.ParseUntilCharIn(stopAndEscapeCharacters);
-                builder.Append(TextSegment.Between(unescaped.Input, unescaped.Remainder));
-                remainder = unescaped.Remainder;
-
-                var next = remainder.ConsumeChar();
-                if (!next.HasValue)
+                var unescaped = UnescapedSequence(remainder);
+                if (unescaped.HasValue)
                 {
-                    remainder = next.Remainder;
-                    break;
+                    remainder = unescaped.Remainder;
+                    builder.Append(unescaped.Value);
                 }
 
-                if (next.Value != '\\')
+                var next = remainder.ConsumeChar();
+                if (!next.HasValue || next.Value != '\\')
                     break;
 
                 remainder = next.Remainder;
-                next = remainder.ConsumeChar();
-                if (!next.HasValue)
-                    return ParseResult.CastEmpty<char, Unit>(next);
-
-                var ch = next.Value;
-                switch (ch)
+                var validEscape = ValidEscapedSequence(next.Remainder);
+                if (validEscape.HasValue)
                 {
-                    case '\\':
-                        builder.Append('\\');
-                        remainder = next.Remainder;
-                        break;
-                    case '"':
-                        builder.Append('"');
-                        remainder = next.Remainder;
-                        break;
-                    case '\'':
-                        builder.Append('\'');
-                        remainder = next.Remainder;
-                        break;
-                    case 'n':
-                        builder.Append('\n');
-                        remainder = next.Remainder;
-                        break;
-                    case 'r':
-                        builder.Append('\r');
-                        remainder = next.Remainder;
-                        break;
-                    case 't':
-                        builder.Append('\t');
-                        remainder = next.Remainder;
-                        break;
-                    default:
-                        if (char.IsOctalDigit(ch))
-                        {
-                            var octalDigits = 0;
-                            var result = 0;
-                            while (next.HasValue && char.IsOctalDigit(next.Value) && octalDigits < 3)
-                            {
-                                result = result * 8 + char.ToOctalValue(next.Value);
-                                octalDigits++;
-                                remainder = next.Remainder;
-                                next = remainder.ConsumeChar();
-                            }
-
-                            builder.Append((char)result);
-                        }
-                        else if (
-                            ch == 'x'
-                            && next.Remainder.PeekChar() is { } nextChar
-                            && char.IsAsciiHexDigit(nextChar)
-                        )
-                        {
-                            remainder = next.Remainder;
-                            next = remainder.ConsumeChar();
-
-                            var result = 0;
-                            while (next.HasValue && char.IsAsciiHexDigit(next.Value))
-                            {
-                                result = result * 16 + char.ToHexValue(next.Value);
-                                remainder = next.Remainder;
-                                next = remainder.ConsumeChar();
-                            }
-
-                            builder.Append((char)result);
-                        }
-                        else if (
-                            ch == 'u'
-                            && next.Remainder.PeekChar() is { } nextChar2
-                            && char.IsAsciiHexDigit(nextChar2)
-                        )
-                        {
-                            remainder = next.Remainder;
-                            next = remainder.ConsumeChar();
-
-                            var digits = 0;
-                            var result = 0;
-                            while (next.HasValue && char.IsAsciiHexDigit(next.Value) && digits < 4)
-                            {
-                                result = result * 16 + char.ToHexValue(next.Value);
-                                digits++;
-                                remainder = next.Remainder;
-                                next = remainder.ConsumeChar();
-                            }
-
-                            builder.Append((char)result);
-                        }
-                        else if (
-                            ch == 'U'
-                            && next.Remainder.PeekChar() is { } nextChar3
-                            && char.IsAsciiHexDigit(nextChar3)
-                        )
-                        {
-                            remainder = next.Remainder;
-                            next = remainder.ConsumeChar();
-
-                            var digits = 0;
-                            var result = 0;
-                            while (next.HasValue && char.IsAsciiHexDigit(next.Value) && digits < 8)
-                            {
-                                result = result * 16 + char.ToHexValue(next.Value);
-                                digits++;
-                                remainder = next.Remainder;
-                                next = remainder.ConsumeChar();
-                            }
-
-                            if (result <= 0xFFFF)
-                            {
-                                builder.Append((char)result);
-                            }
-                            else
-                            {
-                                var adjusted = result - 0x10000;
-                                var high = (char)((adjusted >> 10) + 0xD800);
-                                var low = (char)((adjusted & 0x3FF) + 0xDC00);
-                                builder.Append(high);
-                                builder.Append(low);
-                            }
-                        }
-                        else
-                        {
-                            builder.Append('\\');
-                            builder.Append(ch);
-                            remainder = next.Remainder;
-                        }
-
-                        break;
+                    builder.Append(validEscape.Value);
+                    remainder = validEscape.Remainder;
+                }
+                else if (remainder.ConsumeChar() is { HasValue: true } nextChar)
+                {
+                    builder.Append('\\');
+                    builder.Append(nextChar.Value);
+                    remainder = nextChar.Remainder;
                 }
             }
 
-            var closeQuote = remainder.ConsumeChar();
-            return closeQuote.HasValue
-                ? ParseResult.Success(Unit.Value, input, remainder)
-                : ParseResult.CastEmpty<char, Unit>(closeQuote);
-        }
-    }
-
-    public static TextParser<string> QuotedString { get; } = input => input.ParseQuotedString();
+            var closingQuote = QuoteMark(remainder);
+            return closingQuote.HasValue
+                ? ParseResult.Success(builder.ToString(), input, closingQuote.Remainder)
+                : ParseResult.CastEmpty<char, string>(closingQuote);
+        };
 }

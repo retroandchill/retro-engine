@@ -12,7 +12,7 @@ namespace RetroEngine.Portable.Localization;
 internal sealed record HistoricTextFormatData(
     Text FormattedText,
     TextFormat SourceFormat,
-    ImmutableDictionary<string, FormatArg> Args
+    ImmutableSortedDictionary<string, FormatArg> Args
 );
 
 internal readonly record struct HistoricTextNumericData(NumberFormatType FormatType, FormatNumericArg SourceValue)

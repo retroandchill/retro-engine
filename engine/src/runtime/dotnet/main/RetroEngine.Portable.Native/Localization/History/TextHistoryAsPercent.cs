@@ -37,11 +37,13 @@ internal sealed class TextHistoryAsPercent : TextHistoryFormatNumber, ITextHisto
         return BuildNumericDisplayString(formattingRules, 100);
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader
+        .NumberOrPercent(Markers.LocGenPercent)
+        .Select(ITextData (r) => new TextHistoryAsPercent(r.Value, r.Options, r.TargetCulture));
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        return input
-            .ParseNumberOrPercent(Markers.LocGenPercent)
-            .Select(ITextData (r) => new TextHistoryAsPercent(r.Value, r.Options, r.TargetCulture));
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

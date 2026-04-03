@@ -20,28 +20,22 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
 
     private static readonly TextParser<ITextData> NsLocTextParser = TextStringReader.Marked(
         Markers.NsLocText,
-        TextStringReader.TextLiteral.CommaSeparatedList(
-            3,
-            ITextData (s) =>
-            {
-                var ns = s[0];
-                var key = !string.IsNullOrEmpty(s[1]) ? s[1] : Guid.NewGuid().ToString();
-                var source = s[3];
-                return new TextHistorySimple(new TextId(ns, key), source);
-            }
-        )
+        TextStringReader
+            .TextLiteral.Then(
+                TextStringReader.CommaSeparator.IgnoreThen(TextStringReader.TextLiteral),
+                (n, k) => (Namespace: n, Key: !string.IsNullOrEmpty(k) ? k : Guid.NewGuid().ToString())
+            )
+            .Then(
+                TextStringReader.CommaSeparator.IgnoreThen(TextStringReader.TextLiteral),
+                ITextData (p, s) => new TextHistorySimple(new TextId(p.Namespace, p.Key), s)
+            )
     );
 
     private static readonly TextParser<(string Key, string Source)> LocTextParser = TextStringReader.Marked(
         Markers.LocText,
-        TextStringReader.TextLiteral.CommaSeparatedList(
-            2,
-            s =>
-            {
-                var key = !string.IsNullOrEmpty(s[0]) ? s[0] : Guid.NewGuid().ToString();
-                var source = s[2];
-                return (key, source);
-            }
+        TextStringReader.TextLiteral.Then(
+            TextStringReader.CommaSeparator.IgnoreThen(TextStringReader.TextLiteral),
+            (k, s) => (!string.IsNullOrEmpty(k) ? k : Guid.NewGuid().ToString(), s)
         )
     );
 
@@ -75,10 +69,11 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
         var key = TextId.Key.ToString();
 
         buffer.Append("NSLOCTEXT(\"");
-        buffer.Append(ns.ReplaceQuotesWithEscapedQuotes());
+        buffer.Append(ns.ReplaceCharWithEscapedChar());
         buffer.Append("\", \"");
-        buffer.Append(key.ReplaceQuotesWithEscapedQuotes());
-        buffer.Append(Source.ReplaceQuotesWithEscapedQuotes());
+        buffer.Append(key.ReplaceCharWithEscapedChar());
+        buffer.Append("\", \"");
+        buffer.Append(Source.ReplaceCharWithEscapedChar());
         buffer.Append("\")");
 
         return true;

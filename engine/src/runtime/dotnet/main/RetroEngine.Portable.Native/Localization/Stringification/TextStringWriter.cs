@@ -86,7 +86,7 @@ internal static class TextStringWriter
 
             void WriteBoolOption(StringBuilder builder, bool value)
             {
-                builder.Append(value);
+                builder.Append(value ? "true" : "false");
             }
 
             void WriteIntOption(StringBuilder builder, int value)
@@ -139,6 +139,18 @@ internal static class TextStringWriter
 
             buffer.Append(tokenMarker).Append(suffix).Append('(');
             sourceValue.ToExportedString(buffer);
+            if (suffix.Equals(Markers.CustomSuffix))
+            {
+                buffer.Append(", ");
+                buffer.Append(customOptions);
+            }
+
+            buffer.Append(", \"");
+            if (targetCulture is not null)
+            {
+                buffer.Append(targetCulture.Name.ReplaceCharWithEscapedChar());
+            }
+            buffer.Append("\")");
         }
 
         public void WriteDateTime(
@@ -165,7 +177,7 @@ internal static class TextStringWriter
             if (isCustom)
             {
                 buffer.Append(", \"");
-                buffer.Append(customPattern?.ReplaceQuotesWithEscapedQuotes());
+                buffer.Append(customPattern?.ReplaceCharWithEscapedChar());
                 buffer.Append('"');
             }
             else
@@ -176,24 +188,24 @@ internal static class TextStringWriter
                     WriteDateTimeStyle(buffer, dateStyle.Value);
                 }
 
-                if (timeStyle is null)
-                    return;
-
-                buffer.Append(", ");
-                WriteDateTimeStyle(buffer, timeStyle.Value);
+                if (timeStyle is not null)
+                {
+                    buffer.Append(", ");
+                    WriteDateTimeStyle(buffer, timeStyle.Value);
+                }
             }
 
             if (!isInvariant)
             {
                 buffer.Append(", \"");
-                buffer.Append(timeZoneId?.ReplaceQuotesWithEscapedQuotes());
+                buffer.Append(timeZoneId?.ReplaceCharWithEscapedChar());
                 buffer.Append('"');
             }
 
             buffer.Append(", \"");
             if (targetCulture is not null)
             {
-                buffer.Append(targetCulture.Name.ReplaceQuotesWithEscapedQuotes());
+                buffer.Append(targetCulture.Name.ReplaceCharWithEscapedChar());
             }
             buffer.Append("\")");
             return;
@@ -202,6 +214,30 @@ internal static class TextStringWriter
             {
                 builder.WriteScopedEnum("EDateTimeStyle::", style);
             }
+        }
+
+        public void WriteTextFormat(
+            string marker,
+            TextFormat sourceFormat,
+            IEnumerable<KeyValuePair<string?, FormatArg>> arguments
+        )
+        {
+            buffer.Append(marker);
+            buffer.Append('(');
+            TextStringHelper.WriteToBuffer(buffer, sourceFormat.SourceText, true);
+            foreach (var (key, value) in arguments)
+            {
+                if (key is not null)
+                {
+                    buffer.Append(", \"");
+                    buffer.Append(key);
+                    buffer.Append('"');
+                }
+
+                buffer.Append(", ");
+                value.ToExportedString(buffer);
+            }
+            buffer.Append(')');
         }
     }
 }

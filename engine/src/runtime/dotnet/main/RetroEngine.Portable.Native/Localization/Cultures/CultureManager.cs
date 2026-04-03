@@ -220,7 +220,7 @@ public sealed class CultureManager : IDisposable
 
     public Culture? GetCulture(string cultureName)
     {
-        return FindCulture(cultureName);
+        return !string.IsNullOrEmpty(cultureName) ? FindCulture(cultureName) : null;
     }
 
     public IEnumerable<Culture> GetCurrentCultures(bool includeLanguage, bool includeLocale, bool includeAssetGroups)

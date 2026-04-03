@@ -20,55 +20,51 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
+    private static readonly TextParser<string> ArgumentValue = StringLiterals.QuotedString.Or(
+        Characters.Except(',').AtLeastOnce(() => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString())
+    );
+
+    private static readonly TextParser<KeyValuePair<string, string>> KeyValueArg = Sequences
+        .OptionalWhitespace.IgnoreThen(Symbols.Identifier)
+        .Then(
+            Sequences
+                .OptionalWhitespace.IgnoreThen(Characters.EqualTo('='))
+                .IgnoreThen(Sequences.OptionalWhitespace)
+                .IgnoreThen(ArgumentValue)
+                .FollowedBy(Sequences.OptionalWhitespace),
+            (k, v) => new KeyValuePair<string, string>(k.ToString(), v)
+        );
+
+    private static readonly TextParser<ImmutableOrderedDictionary<string, string>> KeyValueArgs =
+        KeyValueArg.ManyDelimitedBy(
+            Characters.EqualTo(','),
+            () => ImmutableOrderedDictionary.CreateBuilder<string, string>(),
+            (builder, arg) =>
+            {
+                builder.Add(arg.Key, arg.Value);
+                return builder;
+            },
+            builder => builder.ToImmutable()
+        );
+
+    private static readonly TextParser<ImmutableArray<string>> StringArray = ArgumentValue.ManyDelimitedBy(
+        Characters.EqualTo(','),
+        ImmutableArray.CreateBuilder<string>,
+        (builder, arg) =>
+        {
+            builder.Add(arg);
+            return builder;
+        },
+        builder => builder.ToImmutable()
+    );
+
     protected static ParseResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TextSegment cursor)
     {
-        var builder = ImmutableOrderedDictionary.CreateBuilder<string, string>();
-        var remainder = cursor.ParseOptionalWhitespace().Remainder;
-        while (!remainder.IsAtEnd)
-        {
-            var key = remainder.ParseIdentifier();
-            if (!key.HasValue)
-                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
-
-            remainder = key.Remainder.ParseOptionalWhitespace().Remainder;
-
-            var equals = remainder.ParseChar('=');
-            if (!equals.HasValue)
-                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor);
-
-            remainder = equals.Remainder.ParseOptionalWhitespace().Remainder;
-
-            var quotedString = remainder.ParseQuotedString();
-            if (quotedString.HasValue)
-            {
-                remainder = quotedString.Remainder.ParseOptionalWhitespace().Remainder;
-                builder.Add(key.Value.ToString(), quotedString.Value);
-            }
-            else
-            {
-                var arg = remainder.ParseUntilChar(',');
-                if (arg.Value.Length == 0)
-                    return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
-
-                remainder = arg.Remainder.ParseOptionalWhitespace().Remainder;
-                builder.Add(key.Value.ToString(), arg.Value.ToString());
-            }
-
-            if (remainder.IsAtEnd)
-                break;
-
-            var comma = remainder.ParseChar(',');
-            if (!comma.HasValue)
-                return ParseResult.Empty<ImmutableOrderedDictionary<string, string>>(cursor, remainder);
-
-            remainder = comma.Remainder;
-        }
-
-        return ParseResult.Success(builder.ToImmutable(), cursor, remainder);
+        return KeyValueArgs(cursor);
     }
 
-    protected static ParseResult<ImmutableArray<string>> ParseStringArray(string argsString)
+    protected static ParseResult<ImmutableArray<string>> ParseStringArray(TextSegment argsString)
     {
-        throw new NotImplementedException();
+        return StringArray(argsString);
     }
 }

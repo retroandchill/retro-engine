@@ -21,7 +21,6 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
     private readonly Culture? _targetCulture;
 
     public TextHistoryAsDateTime(
-        string displayString,
         DateTimeOffset dateTime,
         DateTimeFormatStyle dateFormatStyle,
         DateTimeFormatStyle timeFormatStyle,
@@ -37,15 +36,11 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         UpdateDisplayString();
     }
 
-    public TextHistoryAsDateTime(
-        string displayString,
-        DateTimeOffset dateTime,
-        string pattern,
-        string? timeZoneId,
-        Culture? targetCulture
-    )
+    public TextHistoryAsDateTime(DateTimeOffset dateTime, string pattern, string? timeZoneId, Culture? targetCulture)
     {
         _sourceDateTime = dateTime;
+        _dateFormatStyle = DateTimeFormatStyle.Custom;
+        _timeFormatStyle = DateTimeFormatStyle.Custom;
         _customPattern = pattern;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;
@@ -53,7 +48,6 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
     }
 
     private TextHistoryAsDateTime(
-        string displayString,
         DateTimeOffset dateTime,
         DateTimeFormatStyle dateFormatStyle,
         DateTimeFormatStyle timeFormatStyle,
@@ -76,28 +70,29 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         return BuildDateTimeDisplayString(CultureManager.Instance.InvariantCulture);
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader
+        .DateTime(Markers.LocGenDateTime, true, true)
+        .Select(
+            ITextData (r) =>
+                new TextHistoryAsDateTime(
+                    r.Value,
+                    r.DateStyle,
+                    r.TimeStyle,
+                    r.CustomPattern,
+                    r.TimeZone,
+                    r.TargetCulture
+                )
+        );
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        return input
-            .ParseDateTime(Markers.LocGenTime, true, true)
-            .Select(
-                ITextData (r) =>
-                    new TextHistoryAsDateTime(
-                        "",
-                        r.Value,
-                        r.DateStyle,
-                        r.TimeStyle,
-                        r.CustomPattern,
-                        r.TimeZone,
-                        r.TargetCulture
-                    )
-            );
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)
     {
         buffer.WriteDateTime(
-            Markers.LocGenDate,
+            Markers.LocGenDateTime,
             _sourceDateTime,
             _dateFormatStyle,
             _timeFormatStyle,

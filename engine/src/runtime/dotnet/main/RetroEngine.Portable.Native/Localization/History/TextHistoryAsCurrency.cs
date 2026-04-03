@@ -36,49 +36,33 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
         return BuildNumericDisplayString(formattingRules);
     }
 
+    private static readonly TextParser<ITextData> Parser = TextStringReader.Marked(
+        Markers.LocGenCurrency,
+        TextStringReader
+            .Number.Then(
+                TextStringReader.CommaSeparator.IgnoreThen(TextStringReader.TextLiteral),
+                (n, c) => (Number: n, CurrencyCode: c)
+            )
+            .Then(
+                TextStringReader.CommaSeparator.IgnoreThen(TextStringReader.CultureByName),
+                ITextData (t, targetCulture) =>
+                {
+                    var culture = CultureManager.Instance.CurrentLocale;
+
+                    var (number, currencyCode) = t;
+                    var baseValue = number.Match(i => i, u => u, f => f, d => d);
+                    var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
+                    var formattingOptions = formattingRules.DefaultFormattingOptions;
+                    var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
+
+                    return new TextHistoryAsCurrency(dividedValue, currencyCode, formattingOptions, targetCulture);
+                }
+            )
+    );
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        var culture = CultureManager.Instance.CurrentLocale;
-        var number = input.ParseSequence(
-            i => i.ParseSymbol(Markers.LocGenCurrency),
-            i => i.ParseWhitespaceAndChar('('),
-            i => i.ParseOptionalWhitespace(),
-            i => i.ParseNumber(),
-            (_, _, _, i) => i
-        );
-        if (!number.HasValue)
-            return ParseResult.CastEmpty<FormatNumericArg, ITextData>(number);
-
-        var currencyCode = number.Remainder.ParseSequence(
-            i => i.ParseWhitespaceAndChar(','),
-            i => i.ParseOptionalWhitespace(),
-            i => i.ParseQuotedString(),
-            (_, _, i) => i
-        );
-
-        if (!currencyCode.HasValue)
-            return ParseResult.CastEmpty<string, ITextData>(currencyCode);
-
-        var targetCulture = currencyCode.Remainder.ParseSequence(
-            i => i.ParseWhitespaceAndChar(','),
-            i => i.ParseOptionalWhitespace(),
-            i => i.ParseQuotedString(),
-            i => i.ParseWhitespaceAndChar(')'),
-            (_, _, i, _) => CultureManager.Instance.GetCulture(i)
-        );
-        if (!targetCulture.HasValue)
-            return ParseResult.CastEmpty<Culture?, ITextData>(targetCulture);
-
-        var baseValue = number.Value.Match(i => i, u => u, f => f, d => d);
-        var formattingRules = culture.GetCurrencyFormattingRules(currencyCode.Value);
-        var formattingOptions = formattingRules.DefaultFormattingOptions;
-        var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
-
-        return ParseResult.Success<ITextData>(
-            new TextHistoryAsCurrency(dividedValue, currencyCode.Value, formattingOptions, targetCulture.Value),
-            input,
-            targetCulture.Remainder
-        );
+        return Parser(input);
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)
@@ -94,11 +78,11 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
         buffer.Append("LOCGEN_CURRENCY(");
         FormatArg.Signed(baseValue).ToExportedString(buffer);
         buffer.Append(", \"");
-        buffer.Append(_currencyCode?.ReplaceQuotesWithEscapedQuotes());
+        buffer.Append(_currencyCode?.ReplaceCharWithEscapedChar());
         buffer.Append("\", \"");
         if (TargetCulture is not null)
         {
-            buffer.Append(TargetCulture.Name.ReplaceQuotesWithEscapedQuotes());
+            buffer.Append(TargetCulture.Name.ReplaceCharWithEscapedChar());
         }
         buffer.Append("\")");
 
