@@ -3,6 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
+using System.Collections.Immutable;
+using System.Linq.Expressions;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using ZParse;
@@ -42,54 +45,22 @@ internal static class TextStringReader
             var suffix = literal.Remainder.ParseCharIn('f', 'u');
             return suffix switch
             {
-                { HasValue: true, Value: 'f' } => float.TryParse(literal.Value.Span, out var f)
+                { HasValue: true, Value: 'f' } => float.TryParse(literal.Value.Segment, out var f)
                     ? ParseResult.Success(FormatNumericArg.Float(f), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
                 { HasValue: true, Value: 'u' } when literal.Value.IsUnsigned => ulong.TryParse(
-                    literal.Value.Span,
+                    literal.Value.Segment,
                     out var u
                 )
                     ? ParseResult.Success(FormatNumericArg.Unsigned(u), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
-                { HasValue: false } when literal.Value.IsInteger => long.TryParse(literal.Value.Span, out var i)
+                { HasValue: false } when literal.Value.IsInteger => long.TryParse(literal.Value.Segment, out var i)
                     ? ParseResult.Success(FormatNumericArg.Signed(i), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
-                _ => double.TryParse(literal.Value.Span, out var d)
+                _ => double.TryParse(literal.Value.Segment, out var d)
                     ? ParseResult.Success(FormatNumericArg.Double(d), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
             };
-        }
-
-        public ParseResult<string> ParseTextLiteral()
-        {
-            var macro = input.ParseSymbol(Markers.Text);
-            TextSegment remainder;
-            if (macro.HasValue)
-            {
-                var openParen = macro.Remainder.ParseChar('(');
-                if (!openParen.HasValue)
-                    return ParseResult.CastEmpty<char, string>(openParen);
-
-                remainder = openParen.Remainder;
-            }
-            else
-            {
-                remainder = input;
-            }
-
-            var stringValue = remainder.ParseQuotedString();
-            remainder = stringValue.Remainder;
-
-            if (!macro.HasValue)
-                return ParseResult.Success(stringValue.Value, input, remainder);
-
-            var closeParen = remainder.ParseChar(')');
-            if (!closeParen.HasValue)
-                return ParseResult.CastEmpty<char, string>(closeParen);
-
-            remainder = closeParen.Remainder;
-
-            return ParseResult.Success(stringValue.Value, input, remainder);
         }
 
         private ParseResult<bool> ParseNumberFormattingOption<T>(
@@ -429,4 +400,273 @@ internal static class TextStringReader
             );
         }
     }
+
+    private static readonly TextParser<char> WhitespaceAndOpeningParen = Sequences
+        .Whitespace.OrElseDefault()
+        .IgnoreThen(Characters.EqualTo(')'));
+
+    private static readonly TextParser<char> WhitespaceAndClosingParen = Sequences
+        .Whitespace.OrElseDefault()
+        .IgnoreThen(Characters.EqualTo(')'));
+
+    private static readonly TextParser<char> WhitespaceThenComma = Sequences.Whitespace.IgnoreThen(
+        Characters.EqualTo(',')
+    );
+
+    public static TextParser<T> Marked<T>(string marker, TextParser<T> parser)
+        where T : allows ref struct
+    {
+        return Sequences
+            .EqualTo(marker)
+            .IgnoreThen(WhitespaceAndOpeningParen)
+            .Then(Sequences.Whitespace.OrElseDefault().IgnoreThen(parser), (_, r) => r)
+            .FollowedBy(WhitespaceAndClosingParen);
+    }
+
+    public static TextParser<TResult> CommaSeparatedList<T, TResult>(
+        this TextParser<T> parser,
+        int elements,
+        Func<ReadOnlySpan<T>, TResult> create
+    )
+        where TResult : allows ref struct
+    {
+        return WhitespaceThenComma.IgnoreThen(
+            parser.RepeatDelimitedBy(
+                elements,
+                WhitespaceThenComma,
+                () => (Array: ArrayPool<T>.Shared.Rent(elements), Count: 0),
+                (l, x) =>
+                {
+                    l.Array[l.Count++] = x;
+                    return l;
+                },
+                l => create(l.Array.AsSpan(0, l.Count)),
+                l => ArrayPool<T>.Shared.Return(l.Array, true)
+            )
+        );
+    }
+
+    private static readonly TextParser<char> NumberSuffix = Characters.In('f', 'u');
+
+    public static TextParser<FormatNumericArg> Number { get; } =
+        input =>
+        {
+            var literal = Numerics.DecimalLiteral(input);
+            if (!literal.HasValue)
+                return ParseResult.CastEmpty<NumericLiteral, FormatNumericArg>(literal);
+
+            var suffix = NumberSuffix(literal.Remainder);
+            return suffix switch
+            {
+                { HasValue: true, Value: 'f' } => float.TryParse(literal.Value.Segment, out var f)
+                    ? ParseResult.Success(FormatNumericArg.Float(f), input, suffix.Remainder)
+                    : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
+                { HasValue: true, Value: 'u' } when literal.Value.IsUnsigned => ulong.TryParse(
+                    literal.Value.Segment,
+                    out var u
+                )
+                    ? ParseResult.Success(FormatNumericArg.Unsigned(u), input, suffix.Remainder)
+                    : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
+                { HasValue: false } when literal.Value.IsInteger => long.TryParse(literal.Value.Segment, out var i)
+                    ? ParseResult.Success(FormatNumericArg.Signed(i), input, suffix.Remainder)
+                    : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
+                _ => double.TryParse(literal.Value.Segment, out var d)
+                    ? ParseResult.Success(FormatNumericArg.Double(d), input, suffix.Remainder)
+                    : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
+            };
+        };
+
+    public static TextParser<string> TextLiteral { get; } =
+        Marked(Markers.Text, StringLiterals.QuotedString).Or(StringLiterals.QuotedString);
+
+    private static readonly TextParser<TextSegment> SetPrefix = Sequences.EqualTo("Set");
+
+    private enum NumberFormattingOptionType : byte
+    {
+        Boolean,
+        Integer,
+        RoundingOption,
+    }
+
+    private readonly struct NumberFormattingOptionValue
+    {
+        private readonly NumberFormattingOptionType _type;
+        private readonly int _value;
+
+        public NumberFormattingOptionValue(bool value)
+        {
+            _type = NumberFormattingOptionType.Boolean;
+            _value = value ? 1 : 0;
+        }
+
+        public NumberFormattingOptionValue(int value)
+        {
+            _type = NumberFormattingOptionType.Integer;
+            _value = value;
+        }
+
+        public NumberFormattingOptionValue(RoundingMode value)
+        {
+            _type = NumberFormattingOptionType.RoundingOption;
+            _value = (int)value;
+        }
+
+        public bool TryGetValue(out bool value)
+        {
+            if (_type != NumberFormattingOptionType.Boolean)
+            {
+                value = false;
+                return false;
+            }
+
+            value = _value != 0;
+            return true;
+        }
+
+        public bool TryGetValue(out int value)
+        {
+            if (_type != NumberFormattingOptionType.Integer)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = _value;
+            return true;
+        }
+
+        public bool TryGetValue(out RoundingMode value)
+        {
+            if (_type != NumberFormattingOptionType.Integer)
+            {
+                value = default;
+                return false;
+            }
+
+            value = (RoundingMode)_value;
+            return true;
+        }
+
+        public static implicit operator NumberFormattingOptionValue(bool value) => new(value);
+
+        public static implicit operator NumberFormattingOptionValue(int value) => new(value);
+
+        public static implicit operator NumberFormattingOptionValue(RoundingMode value) => new(value);
+    }
+
+    private static TextParser<(string Name, NumberFormattingOptionValue Value)> NumberFormattingOption(
+        Expression<Func<NumberFormattingOptions, bool>> property,
+        TextParser<bool> parser
+    )
+    {
+        var propertyName = property.Body switch
+        {
+            MemberExpression memberExpression => memberExpression.Member.Name,
+            _ => throw new ArgumentException("Property must be a member expression", nameof(property)),
+        };
+
+        return Marked($"Set{propertyName}", parser).Select(x => (propertyName, new NumberFormattingOptionValue(x)));
+    }
+
+    private static TextParser<(string Name, NumberFormattingOptionValue Value)> NumberFormattingOption(
+        Expression<Func<NumberFormattingOptions, int>> property,
+        TextParser<int> parser
+    )
+    {
+        var propertyName = property.Body switch
+        {
+            MemberExpression memberExpression => memberExpression.Member.Name,
+            _ => throw new ArgumentException("Property must be a member expression", nameof(property)),
+        };
+
+        return Marked($"Set{propertyName}", parser).Select(x => (propertyName, new NumberFormattingOptionValue(x)));
+    }
+
+    private static TextParser<(string Name, NumberFormattingOptionValue Value)> NumberFormattingOption(
+        Expression<Func<NumberFormattingOptions, RoundingMode>> property,
+        TextParser<RoundingMode> parser
+    )
+    {
+        var propertyName = property.Body switch
+        {
+            MemberExpression memberExpression => memberExpression.Member.Name,
+            _ => throw new ArgumentException("Property must be a member expression", nameof(property)),
+        };
+
+        return Marked($"Set{propertyName}", parser).Select(x => (propertyName, new NumberFormattingOptionValue(x)));
+    }
+
+    private static TextParser<(string Name, NumberFormattingOptionValue Value)> OptionsParsers { get; } =
+        NumberFormattingOption(x => x.AlwaysSign, Symbols.Boolean)
+            .Or(
+                NumberFormattingOption(x => x.UseGrouping, Symbols.Boolean),
+                NumberFormattingOption(x => x.RoundingMode, Symbols.EnumLiteral<RoundingMode>("ERoundingMode::")),
+                NumberFormattingOption(x => x.MinimumIntegralDigits, Numerics.Int),
+                NumberFormattingOption(x => x.MaximumIntegralDigits, Numerics.Int),
+                NumberFormattingOption(x => x.MinimumFractionalDigits, Numerics.Int),
+                NumberFormattingOption(x => x.MaximumFractionalDigits, Numerics.Int)
+            );
+
+    public static TextParser<NumberFormattingOptions> NumberFormatting { get; } =
+        OptionsParsers.Many(
+            () => new NumberFormattingOptionsBuilder(),
+            (builder, option) =>
+            {
+                switch (option.Name)
+                {
+                    case nameof(NumberFormattingOptions.AlwaysSign):
+                    {
+                        builder.AlwaysSign = option.Value.TryGetValue(out bool v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.UseGrouping):
+                    {
+                        builder.UseGrouping = option.Value.TryGetValue(out bool v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.RoundingMode):
+                    {
+                        builder.RoundingMode = option.Value.TryGetValue(out RoundingMode v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.MinimumIntegralDigits):
+                    {
+                        builder.MinimumIntegralDigits = option.Value.TryGetValue(out int v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.MaximumIntegralDigits):
+                    {
+                        builder.MaximumIntegralDigits = option.Value.TryGetValue(out int v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.MinimumFractionalDigits):
+                    {
+                        builder.MinimumFractionalDigits = option.Value.TryGetValue(out int v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                    case nameof(NumberFormattingOptions.MaximumFractionalDigits):
+                    {
+                        builder.MaximumFractionalDigits = option.Value.TryGetValue(out int v)
+                            ? v
+                            : throw new InvalidOperationException();
+                        break;
+                    }
+                }
+
+                return builder;
+            },
+            b => b.Build()
+        );
 }

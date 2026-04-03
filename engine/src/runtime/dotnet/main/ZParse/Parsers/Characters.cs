@@ -12,48 +12,25 @@ namespace ZParse.Parsers;
 
 public static class Characters
 {
+    private const string UseDeclarativeParsers = "Use declarative parsers instead of this syntax";
+
     extension(TextSegment input)
     {
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<char> ParseChar(char c)
         {
             var next = input.ConsumeChar();
             return next.HasValue && next.Value == c ? next : ParseResult.Empty<char>(input);
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<char> ParseCharIn(params ReadOnlySpan<char> chars)
         {
             var next = input.ConsumeChar();
             return next.HasValue && chars.Contains(next.Value) ? next : ParseResult.Empty<char>(input);
         }
 
-        public ParseResult<char> ParseAnyCharExcept(char c)
-        {
-            var next = input.ConsumeChar();
-            return next.HasValue && next.Value != c ? next : ParseResult.Empty<char>(input);
-        }
-
-        public ParseResult<char> ParseAnyCharExceptIn(params ReadOnlySpan<char> chars)
-        {
-            var next = input.ConsumeChar();
-            return next.HasValue && !chars.Contains(next.Value) ? next : ParseResult.Empty<char>(input);
-        }
-
-        public ParseResult<TextSegment> ParseWhitespace()
-        {
-            var next = input.ConsumeChar();
-            if (!next.HasValue || !char.IsWhiteSpace(next.Value))
-                return ParseResult.Empty<TextSegment>(input);
-
-            TextSegment remainder;
-            do
-            {
-                remainder = next.Remainder;
-                next = remainder.ConsumeChar();
-            } while (next.HasValue && char.IsWhiteSpace(next.Value));
-
-            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
-        }
-
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseOptionalWhitespace()
         {
             var next = input.ConsumeChar();
@@ -70,6 +47,7 @@ public static class Characters
             return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseWhitespaceAndChar(char c)
         {
             var whitespace = input.ParseOptionalWhitespace().Remainder;

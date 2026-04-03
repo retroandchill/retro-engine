@@ -18,80 +18,52 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
 
+    private static readonly TextParser<ITextData> NsLocTextParser = TextStringReader.Marked(
+        Markers.NsLocText,
+        TextStringReader.TextLiteral.CommaSeparatedList(
+            3,
+            ITextData (s) =>
+            {
+                var ns = s[0];
+                var key = !string.IsNullOrEmpty(s[1]) ? s[1] : Guid.NewGuid().ToString();
+                var source = s[3];
+                return new TextHistorySimple(new TextId(ns, key), source);
+            }
+        )
+    );
+
+    private static readonly TextParser<(string Key, string Source)> LocTextParser = TextStringReader.Marked(
+        Markers.LocText,
+        TextStringReader.TextLiteral.CommaSeparatedList(
+            2,
+            s =>
+            {
+                var key = !string.IsNullOrEmpty(s[0]) ? s[0] : Guid.NewGuid().ToString();
+                var source = s[2];
+                return (key, source);
+            }
+        )
+    );
+
     public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
     {
-        var nsloctextResult = input.ParseSymbol(Markers.NsLocText);
+        var nsloctextResult = NsLocTextParser(input);
         if (nsloctextResult.HasValue)
-        {
-            var nsString = nsloctextResult.Remainder.ParseSequence(
-                i => i.ParseWhitespaceAndChar('('),
-                i => i.ParseOptionalWhitespace(),
-                i => i.ParseQuotedString(),
-                (_, _, i) => i
+            return nsloctextResult;
+
+        var loctextResult = LocTextParser(input);
+        if (!loctextResult.HasValue)
+            return ParseResult.CombineEmpty(
+                nsloctextResult,
+                ParseResult.CastEmpty<(string Key, string Source), ITextData>(loctextResult)
             );
-            if (!nsString.HasValue)
-                return ParseResult.CastEmpty<string, ITextData>(nsString);
 
-            var keyString = nsString.Remainder.ParseSequence(
-                i => i.ParseWhitespaceAndChar(','),
-                i => i.ParseOptionalWhitespace(),
-                i => i.ParseQuotedString(),
-                (_, _, i) => i
-            );
-            if (!keyString.HasValue)
-                return ParseResult.CastEmpty<string, ITextData>(keyString);
-
-            var key = string.IsNullOrEmpty(keyString.Value) ? Guid.NewGuid().ToString() : keyString.Value;
-
-            var sourceString = keyString.Remainder.ParseSequence(
-                i => i.ParseWhitespaceAndChar(','),
-                i => i.ParseOptionalWhitespace(),
-                i => i.ParseQuotedString(),
-                i => i.ParseWhitespaceAndChar(')'),
-                (_, _, i, _) => i
-            );
-            if (!sourceString.HasValue)
-                return ParseResult.CastEmpty<string, ITextData>(sourceString);
-
-            return ParseResult.Success<ITextData>(
-                new TextHistorySimple(new TextId(nsString.Value, key), sourceString.Value),
-                input,
-                sourceString.Remainder
-            );
-        }
-
-        var loctextResult = input.ParseSymbol(Markers.LocText);
-        if (loctextResult.HasValue)
-        {
-            var keyString = loctextResult.Remainder.ParseSequence(
-                i => i.ParseWhitespaceAndChar(','),
-                i => i.ParseOptionalWhitespace(),
-                i => i.ParseQuotedString(),
-                (_, _, i) => i
-            );
-            if (!keyString.HasValue)
-                return ParseResult.CastEmpty<string, ITextData>(keyString);
-
-            var key = string.IsNullOrEmpty(keyString.Value) ? Guid.NewGuid().ToString() : keyString.Value;
-
-            var sourceString = keyString.Remainder.ParseSequence(
-                i => i.ParseWhitespaceAndChar(','),
-                i => i.ParseOptionalWhitespace(),
-                i => i.ParseQuotedString(),
-                i => i.ParseWhitespaceAndChar(')'),
-                (_, _, i, _) => i
-            );
-            if (!sourceString.HasValue)
-                return ParseResult.CastEmpty<string, ITextData>(sourceString);
-
-            return ParseResult.Success<ITextData>(
-                new TextHistorySimple(new TextId(textNamespace ?? "", key), sourceString.Value),
-                input,
-                sourceString.Remainder
-            );
-        }
-
-        return ParseResult.Empty<ITextData>(input);
+        var (key, sourceString) = loctextResult.Value;
+        return ParseResult.Success<ITextData>(
+            new TextHistorySimple(new TextId(textNamespace ?? "", key), sourceString),
+            input,
+            loctextResult.Remainder
+        );
     }
 
     public override bool WriteToBuffer(StringBuilder buffer)

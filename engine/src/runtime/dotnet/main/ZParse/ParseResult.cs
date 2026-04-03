@@ -316,4 +316,27 @@ public static class ParseResult
         );
         return new ParseResult<T>(result6.Input, result6.Remainder, expectations, result6.Backtrack);
     }
+
+    public static ParseResult<T> CombineEmpty<T>(
+        ParseResult<T> result1,
+        ParseResult<T> result2,
+        ParseResult<T> result3,
+        ParseResult<T> result4,
+        ParseResult<T> result5,
+        ParseResult<T> result6,
+        ParseResult<T> result7
+    )
+        where T : allows ref struct
+    {
+        var expectations = ImmutableArray.Join(
+            result1.Expectations,
+            result2.Expectations,
+            result3.Expectations,
+            result4.Expectations,
+            result5.Expectations,
+            result6.Expectations,
+            result7.Expectations
+        );
+        return new ParseResult<T>(result7.Input, result7.Remainder, expectations, result7.Backtrack);
+    }
 }

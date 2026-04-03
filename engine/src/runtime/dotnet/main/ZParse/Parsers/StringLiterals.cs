@@ -10,8 +10,11 @@ namespace ZParse.Parsers;
 
 public static class StringLiterals
 {
+    private const string UseDeclarativeParsers = "Use declarative parsers instead of this syntax";
+
     extension(TextSegment input)
     {
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<string> ParseQuotedString()
         {
             var builder = new ValueStringBuilder();
@@ -28,6 +31,7 @@ public static class StringLiterals
             }
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         private ParseResult<Unit> ParseQuotedString(scoped ref ValueStringBuilder builder)
         {
             var openQuote = input.ParseChar('"');

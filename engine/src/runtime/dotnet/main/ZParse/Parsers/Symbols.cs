@@ -9,8 +9,11 @@ namespace ZParse.Parsers;
 
 public static class Symbols
 {
+    private const string UseDeclarativeParsers = "Use declarative parsers instead of this syntax";
+
     extension(TextSegment input)
     {
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseSymbol(ReadOnlySpan<char> symbol)
         {
             if (symbol.IsEmpty)
@@ -29,39 +32,7 @@ public static class Symbols
             return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
-        public ParseResult<TextSegment> ParseSymbolIgnoreCase(ReadOnlySpan<char> symbol)
-        {
-            if (symbol.IsEmpty)
-                throw new ArgumentException("Symbol cannot be empty.", nameof(symbol));
-
-            var remainder = input;
-            foreach (var c in symbol)
-            {
-                var next = remainder.ConsumeChar();
-                if (!next.HasValue || char.ToUpper(next.Value) != char.ToUpper(c))
-                    return ParseResult.CastEmpty<char, TextSegment>(next);
-
-                remainder = next.Remainder;
-            }
-
-            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
-        }
-
-        public ParseResult<TextSegment> ParseNChars(int characterCount)
-        {
-            var remainder = input;
-            for (var i = 0; i < characterCount; i++)
-            {
-                var next = remainder.ConsumeChar();
-                if (!next.HasValue)
-                    return ParseResult.CastEmpty<char, TextSegment>(next);
-
-                remainder = next.Remainder;
-            }
-
-            return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
-        }
-
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseUntilChar(char c)
         {
             var next = input.ConsumeChar();
@@ -78,6 +49,7 @@ public static class Symbols
             return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseUntilCharIn(params ReadOnlySpan<char> chars)
         {
             var next = input.ConsumeChar();
@@ -94,6 +66,7 @@ public static class Symbols
             return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<TextSegment> ParseIdentifier()
         {
             var next = input.ConsumeChar();
@@ -110,11 +83,13 @@ public static class Symbols
             return ParseResult.Success(TextSegment.Between(input, remainder), input, remainder);
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<bool> ParseBool()
         {
             return input.ParseSymbol("true").Select(_ => true).OrElse(i => i.ParseSymbol("false").Select(_ => false));
         }
 
+        [Obsolete(UseDeclarativeParsers)]
         public ParseResult<T> ParseEnum<T>(string? scope = null)
             where T : unmanaged, Enum
         {
@@ -144,4 +119,14 @@ public static class Symbols
 
     public static TextParser<TextSegment> Identifier { get; } =
         Sequences.MatchedBy(Characters.LetterOrDigitOrUnderscore.IgnoreAtLeastOnce());
+
+    public static TextParser<bool> Boolean { get; } =
+        Sequences.EqualTo("true").Value(true).Or(Sequences.EqualTo("false").Value(false));
+
+    public static TextParser<T> EnumLiteral<T>(string? prefix = null)
+        where T : unmanaged, Enum
+    {
+        var parseEnumValue = Identifier.TrySelect((TextSegment s, out T r) => Enum.TryParse(s, out r));
+        return prefix is null ? parseEnumValue : Sequences.EqualTo(prefix).IgnoreThen(parseEnumValue);
+    }
 }
