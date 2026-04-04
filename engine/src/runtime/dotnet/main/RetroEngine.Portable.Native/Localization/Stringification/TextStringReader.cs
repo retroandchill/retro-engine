@@ -81,7 +81,7 @@ internal static class TextStringReader
         };
 
     public static TextParser<string> TextLiteral { get; } =
-        Marked(Markers.Text, StringLiterals.QuotedString).Or(StringLiterals.QuotedString);
+        Marked(Markers.Text, QuotedString.CStyle).Or(QuotedString.CStyle);
 
     private enum NumberFormattingOptionType : byte
     {

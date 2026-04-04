@@ -1,4 +1,4 @@
-﻿// // @file Strings.cs
+﻿// // @file QuotedString.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -10,7 +10,7 @@ using ZParse.Util;
 
 namespace ZParse.Parsers;
 
-public static class StringLiterals
+public static class QuotedString
 {
     private static readonly ImmutableArray<char> StopCharacters = ['"', '\n', '\r', '\0'];
     private static readonly ImmutableArray<char> StopAndEscapeCharacters = StopCharacters.Add('\\');
@@ -56,7 +56,7 @@ public static class StringLiterals
 
     private static readonly TextParser<char> QuoteMark = Characters.EqualTo('"');
 
-    public static TextParser<string> QuotedString { get; } =
+    public static TextParser<string> CStyle { get; } =
         input =>
         {
             var openingQuote = QuoteMark(input);

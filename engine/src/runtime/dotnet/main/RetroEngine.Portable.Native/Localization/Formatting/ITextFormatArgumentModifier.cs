@@ -20,7 +20,7 @@ public interface ITextFormatArgumentModifier
     void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct;
 
-    private static readonly TextParser<string> ArgumentValue = StringLiterals.QuotedString.Or(
+    private static readonly TextParser<string> ArgumentValue = QuotedString.CStyle.Or(
         Characters.Except(',').AtLeastOnce(() => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString())
     );
 
