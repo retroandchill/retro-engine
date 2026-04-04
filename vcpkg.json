@@ -21,7 +21,7 @@
     },
     {
       "name": "vulkan-sdk-components",
-      "version>=": "1.4.335.0"
+      "version>=": "1.4.341.0"
     },
     {
       "name": "boost-dll",
