@@ -11,6 +11,7 @@ using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
+using RetroEngine.Portable.Localization.StringTables;
 
 namespace RetroEngine.Portable.Test.Localization;
 
@@ -804,14 +805,13 @@ public class TextTest
         {
             TestName = "Stringification of a LocText object",
         };
-        /*
         yield return new TestCaseData<Text, string>(
-            LocTable("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem"),
-            "LOCTABLE(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\")")
+            StringTable.From("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem"),
+            "LOCTABLE(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\")"
+        )
         {
             TestName = "Stringification of a LocTable object",
         };
-        */
         yield return new TestCaseData<Text, string>(Text.AsCultureInvariant("DummyText"), "INVTEXT(\"DummyText\")")
         {
             TestName = "Stringification of an InvText object",
@@ -819,21 +819,21 @@ public class TextTest
 
         yield return new TestCaseData<Text, string>(LocGen.Number(10, ""), "LOCGEN_NUMBER(10, \"\")")
         {
-            TestName = "Stringification of aLocGen.Number object",
+            TestName = "Stringification of a LocGen.Number object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.NumberGrouped(12.5f, ""),
             "LOCGEN_NUMBER_GROUPED(12.5f, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.NumberGrouped object",
+            TestName = "Stringification of a LocGen.NumberGrouped object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.NumberUngrouped(12.5f, ""),
             "LOCGEN_NUMBER_UNGROUPED(12.5f, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.NumberUngrouped object",
+            TestName = "Stringification of a LocGen.NumberUngrouped object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.NumberCustom(
@@ -849,30 +849,30 @@ public class TextTest
             "LOCGEN_NUMBER_CUSTOM(10, SetAlwaysSign(true).SetRoundingMode(ERoundingMode::ToZero).SetMinimumFractionalDigits(2), \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.NumberCustom object",
+            TestName = "Stringification of a LocGen.NumberCustom object",
         };
         yield return new TestCaseData<Text, string>(LocGen.Number(-10, "en"), "LOCGEN_NUMBER(-10, \"en\")")
         {
-            TestName = "Stringification of aLocGen.Number object with a culture",
+            TestName = "Stringification of a LocGen.Number object with a culture",
         };
 
         yield return new TestCaseData<Text, string>(LocGen.Percent(0.1f, ""), "LOCGEN_PERCENT(0.1f, \"\")")
         {
-            TestName = "Stringification of aLocGen.Percent object",
+            TestName = "Stringification of a LocGen.Percent object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.PercentGrouped(0.1f, ""),
             "LOCGEN_PERCENT_GROUPED(0.1f, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.PercentGrouped object",
+            TestName = "Stringification of a LocGen.PercentGrouped object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.PercentUngrouped(0.1f, ""),
             "LOCGEN_PERCENT_UNGROUPED(0.1f, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.PercentUngrouped object",
+            TestName = "Stringification of a LocGen.PercentUngrouped object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.PercentCustom(
@@ -888,11 +888,11 @@ public class TextTest
             "LOCGEN_PERCENT_CUSTOM(0.1f, SetAlwaysSign(true).SetRoundingMode(ERoundingMode::ToZero).SetMinimumFractionalDigits(2), \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.PercentCustom object",
+            TestName = "Stringification of a LocGen.PercentCustom object",
         };
         yield return new TestCaseData<Text, string>(LocGen.Percent(0.1, "en"), "LOCGEN_PERCENT(0.1, \"en\")")
         {
-            TestName = "Stringification of aLocGen.Percent object with a culture",
+            TestName = "Stringification of a LocGen.Percent object with a culture",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -900,14 +900,14 @@ public class TextTest
             "LOCGEN_CURRENCY(125, \"USD\", \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.Currency object",
+            TestName = "Stringification of a LocGen.Currency object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.Currency(125, "USD", "en"),
             "LOCGEN_CURRENCY(125, \"USD\", \"en\")"
         )
         {
-            TestName = "Stringification of aLocGen.Currency object with a culture",
+            TestName = "Stringification of a LocGen.Currency object with a culture",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -915,14 +915,14 @@ public class TextTest
             "LOCGEN_DATE_UTC(1526342400, EDateTimeStyle::Short, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateUtc object",
+            TestName = "Stringification of a LocGen.DateUtc object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.DateLocal(1526342400, DateTimeFormatStyle.Medium, ""),
             "LOCGEN_DATE_LOCAL(1526342400, EDateTimeStyle::Medium, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateLocal object",
+            TestName = "Stringification of a LocGen.DateLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -930,14 +930,14 @@ public class TextTest
             "LOCGEN_TIME_UTC(1526342400, EDateTimeStyle::Long, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of aLocGen.TimeUtc object",
+            TestName = "Stringification of a LocGen.TimeUtc object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.TimeLocal(1526342400, DateTimeFormatStyle.Full, ""),
             "LOCGEN_TIME_LOCAL(1526342400, EDateTimeStyle::Full, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.TimeLocal object",
+            TestName = "Stringification of a LocGen.TimeLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -945,14 +945,14 @@ public class TextTest
             "LOCGEN_DATETIME_UTC(1526342400, EDateTimeStyle::Short, EDateTimeStyle::Medium, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateTimeUtc object",
+            TestName = "Stringification of a LocGen.DateTimeUtc object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.DateTimeLocal(1526342400, DateTimeFormatStyle.Long, DateTimeFormatStyle.Full, ""),
             "LOCGEN_DATETIME_LOCAL(1526342400, EDateTimeStyle::Long, EDateTimeStyle::Full, \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateTimeLocal object",
+            TestName = "Stringification of a LocGen.DateTimeLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -960,14 +960,14 @@ public class TextTest
             "LOCGEN_DATETIME_CUSTOM_UTC(1526342400, \"%A, %B %e, %Y\", \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateTimeCustomUtc object",
+            TestName = "Stringification of a LocGen.DateTimeCustomUtc object",
         };
         yield return new TestCaseData<Text, string>(
             LocGen.DateTimeCustomLocal(1526342400, "%A, %B %e, %Y", ""),
             "LOCGEN_DATETIME_CUSTOM_LOCAL(1526342400, \"%A, %B %e, %Y\", \"\")"
         )
         {
-            TestName = "Stringification of aLocGen.DateTimeCustomLocal object",
+            TestName = "Stringification of a LocGen.DateTimeCustomLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -975,14 +975,14 @@ public class TextTest
             "LOCGEN_TOUPPER(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\"))"
         )
         {
-            TestName = "Stringification of aLocGen.ToUpper object",
+            TestName = "Stringification of a LocGen.ToUpper object",
         };
         yield return new TestCaseData<Text, string>(
             Localized("TextStringificationTest_Lorem", "Lorem").ToLower(),
             "LOCGEN_TOLOWER(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\"))"
         )
         {
-            TestName = "Stringification of aLocGen.ToLower object",
+            TestName = "Stringification of a LocGen.ToLower object",
         };
 
         yield return new TestCaseData<Text, string>(
@@ -995,7 +995,7 @@ public class TextTest
                 + "\"{0} weighs {1}kg\"), NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Bear\", \"Bear\"), 227)"
         )
         {
-            TestName = "Stringification of aLocGen.FormatOrdered object",
+            TestName = "Stringification of a LocGen.FormatOrdered object",
         };
         yield return new TestCaseData<Text, string>(
             Text.Format(
@@ -1006,7 +1006,7 @@ public class TextTest
             "LOCGEN_FORMAT_NAMED(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_FmtN\", \"{Animal} weighs {Weight}kg\"), \"Animal\", NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Bear\", \"Bear\"), \"Weight\", 227)"
         )
         {
-            TestName = "Stringification of aLocGen.FormatNamed object",
+            TestName = "Stringification of a LocGen.FormatNamed object",
         };
     }
 

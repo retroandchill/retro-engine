@@ -12,6 +12,7 @@ using MessagePack;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.History;
+using RetroEngine.Portable.Localization.StringTables;
 using RetroEngine.Portable.Serialization.Json;
 using RetroEngine.Portable.Serialization.MessagePack;
 using RetroEngine.Portable.Strings;
@@ -105,6 +106,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     {
         TextData = new TextHistorySimple(new TextId(@namespace, key), sourceString);
         Flags = flags;
+    }
+
+    internal Text(Name tableId, TextKey key, StringTableLoadingPolicy loadingPolicy)
+    {
+        TextData = new TextHistoryStringTableEntry(tableId, key, loadingPolicy);
+        Flags = TextFlag.None;
     }
 
     public Text(string sourceString)

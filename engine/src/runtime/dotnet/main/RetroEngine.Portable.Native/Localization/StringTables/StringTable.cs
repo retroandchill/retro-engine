@@ -8,6 +8,7 @@ using System.Data;
 using System.Globalization;
 using CsvHelper;
 using LinkDotNet.StringBuilder;
+using RetroEngine.Portable.Collections;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Portable.Utils;
 using ZLinq;
@@ -78,13 +79,9 @@ public sealed partial class StringTable
         ClearMetadata(key);
     }
 
-    public void EnumerateSourceStrings(Action<TextKey, string> action)
+    public IEnumerable<(TextKey Key, string SourceString)> EnumerateSourceStrings(Action<TextKey, string> action)
     {
-        using var scope = _entriesLock.EnterScope();
-        foreach (var (key, entry) in _entries)
-        {
-            action(key, entry.SourceString);
-        }
+        return _entries.Lock(_entriesLock).Select(x => (x.Key, x.Value.SourceString));
     }
 
     public void ClearSourceStrings()
@@ -151,16 +148,9 @@ public sealed partial class StringTable
             _metadata.Remove(key);
     }
 
-    public void EnumerateMetadata(TextKey key, Action<Name, string> action)
+    public IEnumerable<KeyValuePair<Name, string>> EnumerateMetadata(TextKey key)
     {
-        using var scope = _metadataLock.EnterScope();
-        if (!_metadata.TryGetValue(key, out var metadata))
-            return;
-
-        foreach (var (name, value) in metadata)
-        {
-            action(name, value);
-        }
+        return _metadata.TryGetValue(key, out var metadata) ? metadata.Lock(_metadataLock) : [];
     }
 
     public void ClearMetadata(TextKey key)
@@ -176,43 +166,10 @@ public sealed partial class StringTable
     }
 
     [CreateSyncVersion]
-    public async ValueTask ExportStringsAsync(TextWriter writer, CancellationToken cancellationToken = default)
+    public async ValueTask ExportStringsAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        var dataTable = new DataTable();
-        using (_entriesLock.EnterScope())
-        {
-            using var metadataLock = _metadataLock.EnterScope();
-
-            var metadataColumnNames = _metadata.Values.SelectMany(x => x.Keys).Distinct().ToImmutableArray();
-
-            dataTable.Columns.Add("Key", typeof(string));
-            dataTable.Columns.Add("SourceString", typeof(string));
-            foreach (var name in metadataColumnNames)
-            {
-                dataTable.Columns.Add(name.ToString(), typeof(string));
-            }
-
-            foreach (var (key, sourceString) in _entries)
-            {
-                var row = dataTable.NewRow();
-
-                var exportedKey = key.ToString().ReplaceCharWithEscapedChar();
-                var exportedSourceString = sourceString.SourceString.ReplaceCharWithEscapedChar();
-                row[0] = exportedKey;
-                row[1] = exportedSourceString;
-
-                foreach (
-                    var (i, metadata) in metadataColumnNames
-                        .AsValueEnumerable()
-                        .Select(columnName => _metadata.GetValueOrDefault(key)?.GetValueOrDefault(columnName, "") ?? "")
-                        .Index()
-                )
-                {
-                    row[i + 2] = metadata.ReplaceCharWithEscapedChar();
-                }
-            }
-        }
-
+        var dataTable = ToDataTable();
+        await using var writer = new StreamWriter(stream, leaveOpen: true);
         await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
         foreach (DataColumn dc in dataTable.Columns)
         {
@@ -230,12 +187,51 @@ public sealed partial class StringTable
         }
     }
 
-    [CreateSyncVersion]
-    public async ValueTask ImportStringsAsync(TextReader reader, CancellationToken cancellationToken = default)
+    private DataTable ToDataTable()
     {
         var dataTable = new DataTable();
-        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        using var scope = _entriesLock.EnterScope();
+        using var metadataLock = _metadataLock.EnterScope();
+
+        var metadataColumnNames = _metadata.Values.SelectMany(x => x.Keys).Distinct().ToImmutableArray();
+
+        dataTable.Columns.Add("Key", typeof(string));
+        dataTable.Columns.Add("SourceString", typeof(string));
+        foreach (var name in metadataColumnNames)
         {
+            dataTable.Columns.Add(name.ToString(), typeof(string));
+        }
+
+        foreach (var (key, sourceString) in _entries)
+        {
+            var row = dataTable.NewRow();
+
+            var exportedKey = key.ToString().ReplaceCharWithEscapedChar();
+            var exportedSourceString = sourceString.SourceString.ReplaceCharWithEscapedChar();
+            row[0] = exportedKey;
+            row[1] = exportedSourceString;
+
+            foreach (
+                var (i, metadata) in metadataColumnNames
+                    .AsValueEnumerable()
+                    .Select(columnName => _metadata.GetValueOrDefault(key)?.GetValueOrDefault(columnName, "") ?? "")
+                    .Index()
+            )
+            {
+                row[i + 2] = metadata.ReplaceCharWithEscapedChar();
+            }
+        }
+
+        return dataTable;
+    }
+
+    [CreateSyncVersion]
+    public async ValueTask ImportStringsAsync(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var dataTable = new DataTable();
+        using (var reader = new StreamReader(stream, leaveOpen: true))
+        {
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             await csv.ReadAsync();
             cancellationToken.ThrowIfCancellationRequested();
             csv.ReadHeader();
@@ -258,6 +254,11 @@ public sealed partial class StringTable
             }
         }
 
+        FromDataTable(dataTable);
+    }
+
+    private void FromDataTable(DataTable dataTable)
+    {
         if (dataTable.Columns.Count < 2)
             throw new InvalidOperationException("Table must have at least 2 columns.");
 
@@ -337,5 +338,47 @@ public sealed partial class StringTable
                 metadata[column] = value;
             }
         }
+    }
+
+    public static void CreateNew(Name tableId, TextKey ns)
+    {
+        var stringTable = new StringTable { Namespace = ns };
+        StringTableRegistry.Instance.RegisterStringTable(tableId, stringTable);
+    }
+
+    [CreateSyncVersion]
+    public static async ValueTask LoadAsync(
+        Stream stream,
+        Name tableId,
+        TextKey ns,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var stringTable = new StringTable { Namespace = ns };
+        await stringTable.ImportStringsAsync(stream, cancellationToken);
+        StringTableRegistry.Instance.RegisterStringTable(tableId, stringTable);
+    }
+
+    public static void SetEntry(Name tableId, TextKey key, string value)
+    {
+        var stringTable = StringTableRegistry.Instance.FindStringTable(tableId);
+        if (stringTable is null)
+            throw new InvalidOperationException($"String table with ID {tableId} does not exist.");
+
+        stringTable.SetSourceString(key, value);
+    }
+
+    public static void SetMetadata(Name tableId, TextKey key, Name metaDataId, string value)
+    {
+        var stringTable = StringTableRegistry.Instance.FindStringTable(tableId);
+        if (stringTable is null)
+            throw new InvalidOperationException($"String table with ID {tableId} does not exist.");
+
+        stringTable.SetMetadata(key, metaDataId, value);
+    }
+
+    public static Text From(Name tableId, TextKey key)
+    {
+        return new Text(tableId, key, StringTableLoadingPolicy.FindOrLoad);
     }
 }

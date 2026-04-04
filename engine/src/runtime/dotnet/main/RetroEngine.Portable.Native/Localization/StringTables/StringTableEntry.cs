@@ -18,7 +18,7 @@ public sealed class StringTableEntry
 
     public TextId DisplayStringId { get; }
 
-    public static string PlaceholderSourceString => "<MISSING STRING TABLE ENTRY>";
+    public const string PlaceholderSourceString = "<MISSING STRING TABLE ENTRY>";
 
     public StringTableEntry()
     {

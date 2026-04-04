@@ -94,7 +94,7 @@ public static class TextStringifier
         ImportText<TextHistoryAsDate>,
         ImportText<TextHistoryAsTime>,
         ImportText<TextHistoryTransformed>,
-        //ReadTextData<TextHistoryStringTableEntry>
+        ImportText<TextHistoryStringTableEntry>,
     ];
 
     public static string ExportToString(Text value, bool requiresQuotes = false)
