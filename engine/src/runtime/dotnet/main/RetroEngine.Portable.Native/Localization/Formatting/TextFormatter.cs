@@ -6,6 +6,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
+using System.Text;
 using RetroEngine.Portable.Localization.History;
 using ZLinq;
 using ZParse;
@@ -65,6 +66,8 @@ public sealed class TextFormatter
     {
         _argumentModifiers.TryAdd("plural", a => PluralFormatArgumentModifier.Create(a, TextPluralType.Cardinal));
         _argumentModifiers.TryAdd("ordinal", a => PluralFormatArgumentModifier.Create(a, TextPluralType.Ordinal));
+        _argumentModifiers.TryAdd("gender", GenderFormatArgumentModifier.Create);
+        _argumentModifiers.TryAdd("hpp", HangulPostPositionsFormatArgumentModifier.Create);
     }
 
     public static TextFormatter Instance { get; } = new();
@@ -209,6 +212,16 @@ public sealed class TextFormatter
         fmtPattern = new TextFormat(formatText, fmtPattern.PatternDefinition);
 
         return fmtPattern.Format(context);
+    }
+
+    public static void ArgumentValueToFormattedString<TContext>(
+        in FormatArg arg,
+        in TContext context,
+        StringBuilder builder
+    )
+        where TContext : ITextFormatContext, allows ref struct
+    {
+        arg.ToFormattedString(context.RebuildText, context.RebuildAsSource, builder);
     }
 
     private static int EstimateArgumentValueLength(FormatArg arg)

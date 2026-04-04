@@ -58,13 +58,15 @@ public interface ITextFormatArgumentModifier
         builder => builder.ToImmutable()
     );
 
-    protected static ParseResult<ImmutableOrderedDictionary<string, string>> ParseKeyValueArgs(TextSegment cursor)
+    protected static ImmutableOrderedDictionary<string, string>? ParseKeyValueArgs(ReadOnlySpan<char> cursor)
     {
-        return KeyValueArgs(cursor);
+        var result = KeyValueArgs.TryParse(cursor);
+        return result.HasValue ? result.Value : null;
     }
 
-    protected static ParseResult<ImmutableArray<string>> ParseStringArray(TextSegment argsString)
+    protected static ImmutableArray<string>? ParseStringArray(ReadOnlySpan<char> argsString)
     {
-        return StringArray(argsString);
+        var result = StringArray.TryParse(argsString);
+        return result.HasValue ? result.Value : null;
     }
 }

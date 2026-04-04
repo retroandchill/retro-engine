@@ -267,6 +267,11 @@ public sealed class TextFormat
                         builder.Clear();
                     }
 
+                    if (currentArgument is not null)
+                    {
+                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                    }
+
                     _expressionType = CompiledExpressionType.Complex;
 
                     currentArgument = new PlaceholderKey(arg);

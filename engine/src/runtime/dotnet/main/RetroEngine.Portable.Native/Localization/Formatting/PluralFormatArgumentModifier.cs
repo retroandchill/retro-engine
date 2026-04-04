@@ -45,10 +45,9 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     public static ITextFormatArgumentModifier? Create(ReadOnlySpan<char> parametersPattern, TextPluralType pluralType)
     {
         var cursor = new TextSegment(parametersPattern);
-        var argsResult = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
-        if (!argsResult.HasValue)
+        var args = ITextFormatArgumentModifier.ParseKeyValueArgs(cursor);
+        if (args is null)
             return null;
-        var args = argsResult.Value;
 
         var doPluralFormsUseFormatArgs = false;
         var longestPluralFormStringLength = 0;

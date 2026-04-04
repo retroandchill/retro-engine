@@ -877,7 +877,7 @@ public class TextTest
         yield return new TestCaseData<Text, string>(
             LocGen.PercentCustom(
                 0.1f,
-                new NumberFormattingOptions()
+                new NumberFormattingOptions
                 {
                     AlwaysSign = true,
                     RoundingMode = RoundingMode.ToZero,
@@ -1021,5 +1021,300 @@ public class TextTest
 
         var actualText = TextStringifier.ImportFromString(expectedString);
         Assert.That(actualText, Is.EqualTo(expectedText));
+    }
+
+    private static IEnumerable<TestCaseData<string, (string, FormatArg)[], string>> FormatTestData()
+    {
+        const string cardinal =
+            "There {NumCats}|plural(one=is,other=are) {NumCats} {NumCats}|plural(one=cat,other=cats)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            cardinal,
+            [("NumCats", 0)],
+            "There are 0 cats"
+        )
+        {
+            TestName = "CardinalResult0",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            cardinal,
+            [("NumCats", 1)],
+            "There is 1 cat"
+        )
+        {
+            TestName = "CardinalResult1",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            cardinal,
+            [("NumCats", 2)],
+            "There are 2 cats"
+        )
+        {
+            TestName = "CardinalResult2",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            cardinal,
+            [("NumCats", 3)],
+            "There are 3 cats"
+        )
+        {
+            TestName = "CardinalResult3",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            cardinal,
+            [("NumCats", 4)],
+            "There are 4 cats"
+        )
+        {
+            TestName = "CardinalResult4",
+        };
+
+        const string ordinal = "You came {Place}{Place}|ordinal(one=st,two=nd,few=rd,other=th)!";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(ordinal, [("Place", 0)], "You came 0th!")
+        {
+            TestName = "OrdinalResult0",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(ordinal, [("Place", 1)], "You came 1st!")
+        {
+            TestName = "OrdinalResult1",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(ordinal, [("Place", 2)], "You came 2nd!")
+        {
+            TestName = "OrdinalResult2",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(ordinal, [("Place", 3)], "You came 3rd!")
+        {
+            TestName = "OrdinalResult3",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(ordinal, [("Place", 4)], "You came 4th!")
+        {
+            TestName = "OrdinalResult4",
+        };
+
+        const string genderFragments =
+            "{Gender}|gender(Le,La) {Gender}|gender(guerrier,guerrière) est {Gender}|gender(fort,forte)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            genderFragments,
+            [("Gender", TextGender.Masculine)],
+            "Le guerrier est fort"
+        )
+        {
+            TestName = "GenderFragmentsResultM",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            genderFragments,
+            [("Gender", TextGender.Feminine)],
+            "La guerrière est forte"
+        )
+        {
+            TestName = "GenderFragmentsResultF",
+        };
+
+        const string genderFull = "{Gender}|gender(Le guerrier est fort,La guerrière est forte)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            genderFull,
+            [("Gender", TextGender.Masculine)],
+            "Le guerrier est fort"
+        )
+        {
+            TestName = "GenderFullResultM",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            genderFull,
+            [("Gender", TextGender.Feminine)],
+            "La guerrière est forte"
+        )
+        {
+            TestName = "GenderFullResultF",
+        };
+
+        var consonant = Text.AsCultureInvariant("사람");
+        var consonantRieul = Text.AsCultureInvariant("서울");
+        var vowel = Text.AsCultureInvariant("사자");
+
+        const string hppFormat1 = "{Arg}|hpp(은,는)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat1, [("Arg", consonant)], "사람은")
+        {
+            TestName = "HppResultConsonant1",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat1,
+            [("Arg", consonantRieul)],
+            "서울은"
+        )
+        {
+            TestName = "HppResultConsonantRieul1",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat1, [("Arg", vowel)], "사자는")
+        {
+            TestName = "HppResultVowel1",
+        };
+
+        const string hppFormat2 = "{Arg}|hpp(이,가)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat2, [("Arg", consonant)], "사람이")
+        {
+            TestName = "HppResultConsonant2",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat2,
+            [("Arg", consonantRieul)],
+            "서울이"
+        )
+        {
+            TestName = "HppResultConsonantRieul2",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat2, [("Arg", vowel)], "사자가")
+        {
+            TestName = "HppResultVowel2",
+        };
+
+        const string hppFormat3 = "{Arg}|hpp(을,를)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat3, [("Arg", consonant)], "사람을")
+        {
+            TestName = "HppResultConsonant3",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat3,
+            [("Arg", consonantRieul)],
+            "서울을"
+        )
+        {
+            TestName = "HppResultConsonantRieul3",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat3, [("Arg", vowel)], "사자를")
+        {
+            TestName = "HppResultVowel3",
+        };
+
+        const string hppFormat4 = "{Arg}|hpp(과,와)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat4, [("Arg", consonant)], "사람과")
+        {
+            TestName = "HppResultConsonant4",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat4,
+            [("Arg", consonantRieul)],
+            "서울과"
+        )
+        {
+            TestName = "HppResultConsonantRieul4",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat4, [("Arg", vowel)], "사자와")
+        {
+            TestName = "HppResultVowel4",
+        };
+
+        const string hppFormat5 = "{Arg}|hpp(\uC544,\uC57C)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat5, [("Arg", consonant)], "사람아")
+        {
+            TestName = "HppResultConsonant5",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat5,
+            [("Arg", consonantRieul)],
+            "서울아"
+        )
+        {
+            TestName = "HppResultConsonantRieul5",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat5, [("Arg", vowel)], "사자야")
+        {
+            TestName = "HppResultVowel5",
+        };
+
+        var hppFormat6 = "{Arg}|hpp(이어,여)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat6,
+            [("Arg", consonant)],
+            "사람이어"
+        )
+        {
+            TestName = "HppResultConsonant6",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat6,
+            [("Arg", consonantRieul)],
+            "서울이어"
+        )
+        {
+            TestName = "HppResultConsonantRieul6",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat6, [("Arg", vowel)], "사자여")
+        {
+            TestName = "HppResultVowel6",
+        };
+
+        const string hppFormat7 = "{Arg}|hpp(이에,예)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat7,
+            [("Arg", consonant)],
+            "사람이에"
+        )
+        {
+            TestName = "HppResultConsonant7",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat7,
+            [("Arg", consonantRieul)],
+            "서울이에"
+        )
+        {
+            TestName = "HppResultConsonantRieul7",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat7, [("Arg", vowel)], "사자예")
+        {
+            TestName = "HppResultVowel7",
+        };
+
+        const string hppFormat8 = "{Arg}|hpp(\uC774\uC5C8,\uC601)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat8,
+            [("Arg", consonant)],
+            "사람이었"
+        )
+        {
+            TestName = "HppResultConsonant8",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat8,
+            [("Arg", consonantRieul)],
+            "서울이었"
+        )
+        {
+            TestName = "HppResultConsonantRieul8",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat8, [("Arg", vowel)], "사자영")
+        {
+            TestName = "HppResultVowel8",
+        };
+
+        const string hppFormat9 = "{Arg}|hpp(으로,로)";
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat9,
+            [("Arg", consonant)],
+            "사람으로"
+        )
+        {
+            TestName = "HppResultConsonant9",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(
+            hppFormat9,
+            [("Arg", consonantRieul)],
+            "서울로"
+        )
+        {
+            TestName = "HppResultConsonantRieul9",
+        };
+        yield return new TestCaseData<string, (string, FormatArg)[], string>(hppFormat9, [("Arg", vowel)], "사자로")
+        {
+            TestName = "HppResultVowel9",
+        };
+    }
+
+    [Test]
+    [TestCaseSource(nameof(FormatTestData))]
+    public void TextFormattingWithArgumentsWorks(string format, (string, FormatArg)[] args, string expectedOutput)
+    {
+        CultureManager.Instance.SetCurrentCulture("en");
+        Assert.That(Text.Format(Text.AsCultureInvariant(format), args).ToString(), Is.EqualTo(expectedOutput));
     }
 }
