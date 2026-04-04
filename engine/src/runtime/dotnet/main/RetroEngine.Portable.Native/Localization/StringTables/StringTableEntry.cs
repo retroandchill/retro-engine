@@ -5,34 +5,20 @@
 
 namespace RetroEngine.Portable.Localization.StringTables;
 
-public sealed class StringTableEntry
+public sealed class StringTableEntry(StringTable ownerTable, string sourceString, TextId displayStringId)
 {
-    private StringTable? _ownerTable;
+    private StringTable? _ownerTable = ownerTable;
 
     public bool IsOwned => _ownerTable is not null;
 
-    public string SourceString { get; }
+    public string SourceString { get; } = sourceString;
 
     public string? DisplayString =>
         LocalizationManager.Instance.GetDisplayString(DisplayStringId.Namespace, DisplayStringId.Key, SourceString);
 
-    public TextId DisplayStringId { get; }
+    public TextId DisplayStringId { get; } = displayStringId;
 
     public const string PlaceholderSourceString = "<MISSING STRING TABLE ENTRY>";
-
-    public StringTableEntry()
-    {
-        _ownerTable = null;
-        SourceString = "";
-        DisplayStringId = TextId.Empty;
-    }
-
-    public StringTableEntry(StringTable ownerTable, string sourceString, TextId displayStringId)
-    {
-        _ownerTable = ownerTable;
-        SourceString = sourceString;
-        DisplayStringId = displayStringId;
-    }
 
     public void Disown()
     {

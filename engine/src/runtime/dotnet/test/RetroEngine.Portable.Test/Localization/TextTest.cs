@@ -805,6 +805,13 @@ public class TextTest
         {
             TestName = "Stringification of a LocText object",
         };
+
+        if (StringTableRegistry.Instance.FindStringTable("Core.Tests.TextFormatTest") is null)
+        {
+            StringTable.CreateNew("Core.Tests.TextFormatTest", "Core.Tests.TextFormatTest");
+            StringTable.SetEntry("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem", "Lorem");
+        }
+
         yield return new TestCaseData<Text, string>(
             StringTable.From("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem"),
             "LOCTABLE(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\")"

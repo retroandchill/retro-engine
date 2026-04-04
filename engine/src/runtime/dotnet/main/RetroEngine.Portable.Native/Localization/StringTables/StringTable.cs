@@ -18,7 +18,7 @@ namespace RetroEngine.Portable.Localization.StringTables;
 
 public sealed partial class StringTable
 {
-    public bool IsLoaded { get; set; }
+    public bool IsLoaded { get; set; } = true;
 
     public bool IsInternal { get; set; }
 
