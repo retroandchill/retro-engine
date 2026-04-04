@@ -81,7 +81,7 @@ public sealed class CultureManager : IDisposable
         _cultureMappingsInitialized = false;
         ConditionalInitializeCultureMappings();
 
-        ConditionalIntializeAllowedCultures();
+        ConditionalInitializeAllowedCultures();
 
         InvariantCulture = FindCanonizedCulture("en-US-POSIX") ?? FindOrMakeCanonizedCulture("");
 
@@ -220,7 +220,7 @@ public sealed class CultureManager : IDisposable
 
     public Culture? GetCulture(string cultureName)
     {
-        return !string.IsNullOrEmpty(cultureName) ? FindCulture(cultureName) : null;
+        return FindCulture(cultureName);
     }
 
     public IEnumerable<Culture> GetCurrentCultures(bool includeLanguage, bool includeLocale, bool includeAssetGroups)
@@ -320,7 +320,7 @@ public sealed class CultureManager : IDisposable
 
     public bool IsCultureAllowed(string name)
     {
-        ConditionalIntializeAllowedCultures();
+        ConditionalInitializeAllowedCultures();
         return _allowedCulturesFilter.IsCultureAllowed(name);
     }
 
@@ -340,7 +340,7 @@ public sealed class CultureManager : IDisposable
         ConditionalInitializeCultureMappings();
 
         _allowedCulturesFilter = null;
-        ConditionalIntializeAllowedCultures();
+        ConditionalInitializeAllowedCultures();
     }
 
     public IEnumerable<string> CultureNames
@@ -584,7 +584,7 @@ public sealed class CultureManager : IDisposable
     }
 
     [MemberNotNull(nameof(_allowedCulturesFilter))]
-    private void ConditionalIntializeAllowedCultures()
+    private void ConditionalInitializeAllowedCultures()
     {
         if (AllowedCulturesInitialized)
         {
@@ -594,12 +594,12 @@ public sealed class CultureManager : IDisposable
         _allowedCulturesFilter = new CultureFilter(_availableCulturesMap.Keys.ToHashSet());
     }
 
-    private Culture? FindCulture(string name)
+    public Culture? FindCulture(string name)
     {
         return FindCanonizedCulture(Culture.GetCanonicalName(name, this));
     }
 
-    private Culture FindOrMakeCulture(string name)
+    public Culture FindOrMakeCulture(string name)
     {
         return FindOrMakeCanonizedCulture(Culture.GetCanonicalName(name, this));
     }

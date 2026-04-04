@@ -669,7 +669,7 @@ public class TextTest
         formattedTestLayer2.BuildSourceString();
 
         var task = new TaskCompletionSource();
-        var completeTask = () => task.SetResult();
+        var completeTask = task.SetResult;
         LocalizationManager.Instance.OnTextRevisionChanged += completeTask;
         try
         {

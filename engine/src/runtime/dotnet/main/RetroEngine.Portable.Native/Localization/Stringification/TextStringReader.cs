@@ -274,7 +274,7 @@ internal static class TextStringReader
         );
 
     public static TextParser<Culture?> CultureByName { get; } =
-        TextLiteral.Select(x => CultureManager.Instance.GetCulture(x));
+        TextLiteral.Select(x => !string.IsNullOrEmpty(x) ? CultureManager.Instance.GetCulture(x) : null);
 
     private static readonly TextParser<NumberParseResult> NumberOrPercentCustom = Marked(
         Markers.CustomSuffix,

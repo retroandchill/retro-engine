@@ -3,7 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Text;
+using RetroEngine.Portable.Collections;
+using ZLinq;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
@@ -25,7 +26,7 @@ public static class CultureUtilities
         string? KeywordArgValue
     );
 
-    private static readonly OrderedDictionary<string, CanonizedTagData> CanonizedTagMap = new()
+    private static readonly Dictionary<string, CanonizedTagData> CanonizedTagMap = new()
     {
         [""] = new CanonizedTagData("en-US-POSIX", null, null),
         ["c"] = new CanonizedTagData("en-US-POSIX", null, null),
@@ -51,7 +52,7 @@ public static class CultureUtilities
         ["pt-PT-PREEURO"] = new CanonizedTagData("pt-PT", "currency", "PTE"),
     };
 
-    private static readonly OrderedDictionary<string, CanonizedTagData> VariantMap = new()
+    private static readonly Dictionary<string, CanonizedTagData> VariantMap = new()
     {
         ["EURO"] = new CanonizedTagData(null, "currency", "EUR"),
     };
@@ -65,7 +66,7 @@ public static class CultureUtilities
             return sanitizedName;
         }
 
-        var parsedNameTags = new List<NameTag>(4);
+        using var parsedNameTags = new FixedList<NameTag>(4);
         var parsedKeywords = new OrderedDictionary<string, string>(4);
 
         var nameKeywords = "";
@@ -111,7 +112,7 @@ public static class CultureUtilities
                     nameTagType = NameTagType.Language;
                     nameTagStr = ConditionLanguageCode(nameTagStr);
                     break;
-                case 1 when parsedNameTags[^1].Type == NameTagType.Language && IsScipeCode(nameTagStr):
+                case 1 when parsedNameTags[^1].Type == NameTagType.Language && IsScriptCode(nameTagStr):
                     nameTagType = NameTagType.Script;
                     nameTagStr = ConditionScriptCode(nameTagStr);
                     break;
@@ -171,7 +172,7 @@ public static class CultureUtilities
 
         if (parsedNameTags.Count > 0 && parsedNameTags[0].Type == NameTagType.Language)
         {
-            foreach (var (i, tag) in parsedNameTags.Index())
+            foreach (var (i, tag) in parsedNameTags.AsValueEnumerable().Index())
             {
                 switch (tag.Type)
                 {
@@ -217,11 +218,11 @@ public static class CultureUtilities
 
         return string.IsNullOrEmpty(canonicalName) ? fallbackCulture : canonicalName;
 
-        bool IsLanguageCode(string code) => code.Length is 2 or 3;
+        bool IsLanguageCode(ReadOnlySpan<char> code) => code.Length is 2 or 3;
 
-        bool IsScipeCode(string code) => code.Length is 4;
+        bool IsScriptCode(ReadOnlySpan<char> code) => code.Length is 4;
 
-        bool IsRegionCode(string code) => code.Length is 2 or 3;
+        bool IsRegionCode(ReadOnlySpan<char> code) => code.Length is 2 or 3;
 
         string ConditionLanguageCode(string code) => code.ToLowerInvariant();
 

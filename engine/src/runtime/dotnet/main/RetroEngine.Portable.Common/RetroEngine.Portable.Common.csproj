@@ -12,6 +12,7 @@
     <ItemGroup>
       <PackageReference Include="LinkDotNet.StringBuilder" />
       <PackageReference Include="Serilog" />
+      <PackageReference Include="ZLinq" />
     </ItemGroup>
 
     <ItemGroup>
