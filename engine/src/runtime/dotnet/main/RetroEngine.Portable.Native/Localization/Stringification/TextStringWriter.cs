@@ -224,7 +224,7 @@ internal static class TextStringWriter
         {
             buffer.Append(marker);
             buffer.Append('(');
-            TextStringHelper.WriteToBuffer(buffer, sourceFormat.SourceText, true);
+            TextStringifier.ExportToString(buffer, sourceFormat.SourceText, true);
             foreach (var (key, value) in arguments)
             {
                 if (key is not null)

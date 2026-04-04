@@ -11,7 +11,7 @@ namespace RetroEngine.Portable.Localization.History;
 
 internal interface ITextHistory : ITextData
 {
-    static virtual ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    static virtual ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return ParseResult.Empty<ITextData>(input);
     }
@@ -47,7 +47,7 @@ internal abstract class TextHistory : ITextData
 
     public virtual HistoricTextNumericData? GetHistoricNumericData(Text text) => null;
 
-    public virtual bool WriteToBuffer(StringBuilder buffer) => false;
+    public virtual bool ExportToString(StringBuilder buffer) => false;
 
     public void UpdateDisplayStringIfOutOfDate()
     {

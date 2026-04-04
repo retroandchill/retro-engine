@@ -274,7 +274,12 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         return TextFormatter.Format(format, arguments);
     }
 
-    public static Text Format(TextFormat format, ImmutableDictionary<string, FormatArg> arguments)
+    public static Text Format(TextFormat format, ImmutableSortedDictionary<string, FormatArg> arguments)
+    {
+        return TextFormatter.Format(format, arguments);
+    }
+
+    public static Text Format(TextFormat format, params ReadOnlySpan<(string, FormatArg)> arguments)
     {
         return TextFormatter.Format(format, arguments);
     }

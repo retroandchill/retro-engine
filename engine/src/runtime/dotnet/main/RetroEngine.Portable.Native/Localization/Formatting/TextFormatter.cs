@@ -84,7 +84,12 @@ public sealed class TextFormatter
         return _argumentModifiers.GetValueOrDefault(keyword);
     }
 
-    public static Text Format(TextFormat format, ImmutableDictionary<string, FormatArg> arguments)
+    public static Text Format(TextFormat format, ImmutableSortedDictionary<string, FormatArg> arguments)
+    {
+        return new Text(new TextHistoryNamedFormat(format, arguments), TextFlag.Transient);
+    }
+
+    public static Text Format(TextFormat format, ReadOnlySpan<(string Name, FormatArg Value)> arguments)
     {
         return new Text(new TextHistoryNamedFormat(format, arguments), TextFlag.Transient);
     }
@@ -106,7 +111,7 @@ public sealed class TextFormatter
 
     public static Text Format(TextFormat format, ReadOnlySpan<FormatArg> arguments)
     {
-        return new Text(new TextHistoryOrderedFormat(format, [.. arguments]), TextFlag.Transient);
+        return new Text(new TextHistoryOrderedFormat(format, arguments), TextFlag.Transient);
     }
 
     public static string FormatStr(
@@ -192,17 +197,16 @@ public sealed class TextFormatter
         where TContext : ITextFormatContext, allows ref struct
     {
         var fmtPattern = format;
-        if (context.RebuildAsSource)
+        if (!context.RebuildAsSource)
+            return fmtPattern.Format(context);
+        var formatText = format.SourceText;
+
+        if (context.RebuildText)
         {
-            var formatText = format.SourceText;
-
-            if (context.RebuildText)
-            {
-                formatText.Rebuild();
-            }
-
-            fmtPattern = new TextFormat(formatText, fmtPattern.PatternDefinition);
+            formatText.Rebuild();
         }
+
+        fmtPattern = new TextFormat(formatText, fmtPattern.PatternDefinition);
 
         return fmtPattern.Format(context);
     }

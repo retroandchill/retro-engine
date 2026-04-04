@@ -6,28 +6,27 @@
 using System.Collections.Immutable;
 using System.Text;
 using RetroEngine.Portable.Localization.History;
-using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Utils;
 using ZParse;
 using ZParse.Parsers;
 
-namespace RetroEngine.Portable.Localization;
+namespace RetroEngine.Portable.Localization.Stringification;
 
-internal static class TextStringHelper
+public static class TextStringifier
 {
-    public static Text ReadFromBuffer(
+    public static Text ImportFromString(
         ReadOnlySpan<char> buffer,
         string? textNamespace = null,
         bool requiresQuotes = false
     )
     {
-        var result = ReadFromBuffer(new TextSegment(buffer), textNamespace, requiresQuotes);
+        var result = ImportFromString(new TextSegment(buffer), textNamespace, requiresQuotes);
         return result.HasValue
             ? result.Value
             : throw new ParseException(result.ErrorPosition, result.FormatErrorMessageFragment());
     }
 
-    internal static ParseResult<Text> ReadFromBuffer(
+    internal static ParseResult<Text> ImportFromString(
         TextSegment input,
         string? textNamespace = null,
         bool requiresQuotes = false
@@ -38,7 +37,7 @@ internal static class TextStringHelper
             return requiresQuotes ? ParseResult.Empty<Text>(input) : ParseResult.Success(Text.Empty, input, input);
         }
 
-        var complexResult = ReadFromBufferComplex(input, textNamespace);
+        var complexResult = ImportFromStringInternal(input, textNamespace);
         if (complexResult.HasValue)
         {
             return complexResult;
@@ -57,7 +56,7 @@ internal static class TextStringHelper
         .MatchedBy(Characters.AnyChar.IgnoreAtLeastOnce())
         .Select(r => new Text(r.ToString()));
 
-    private static ParseResult<Text> ReadFromBufferComplex(TextSegment buffer, string? textNamespace = null)
+    private static ParseResult<Text> ImportFromStringInternal(TextSegment buffer, string? textNamespace = null)
     {
         var invariantText = CultureInvariantText(buffer);
         if (invariantText.HasValue)
@@ -75,30 +74,37 @@ internal static class TextStringHelper
         return ParseResult.Empty<Text>(buffer);
     }
 
-    private static ParseResult<ITextData> ReadText<T>(TextSegment buffer, string? textNamespace)
+    private static ParseResult<ITextData> ImportText<T>(TextSegment buffer, string? textNamespace)
         where T : ITextHistory
     {
-        return T.ReadFromBuffer(buffer, textNamespace);
+        return T.ImportFromString(buffer, textNamespace);
     }
 
     private delegate ParseResult<ITextData> TextHistoryParser(TextSegment buffer, string? textNamespace);
 
     private static readonly ImmutableArray<TextHistoryParser> ReadTextHistories =
     [
-        ReadText<TextHistorySimple>,
-        ReadText<TextHistoryNamedFormat>,
-        ReadText<TextHistoryOrderedFormat>,
-        ReadText<TextHistoryAsNumber>,
-        ReadText<TextHistoryAsPercent>,
-        ReadText<TextHistoryAsCurrency>,
-        ReadText<TextHistoryAsDateTime>,
-        ReadText<TextHistoryAsDate>,
-        ReadText<TextHistoryAsTime>,
-        ReadText<TextHistoryTransformed>,
+        ImportText<TextHistorySimple>,
+        ImportText<TextHistoryNamedFormat>,
+        ImportText<TextHistoryOrderedFormat>,
+        ImportText<TextHistoryAsNumber>,
+        ImportText<TextHistoryAsPercent>,
+        ImportText<TextHistoryAsCurrency>,
+        ImportText<TextHistoryAsDateTime>,
+        ImportText<TextHistoryAsDate>,
+        ImportText<TextHistoryAsTime>,
+        ImportText<TextHistoryTransformed>,
         //ReadTextData<TextHistoryStringTableEntry>
     ];
 
-    public static void WriteToBuffer(StringBuilder buffer, Text value, bool requiresQuotes = false)
+    public static string ExportToString(Text value, bool requiresQuotes = false)
+    {
+        var builder = new StringBuilder();
+        ExportToString(builder, value, requiresQuotes);
+        return builder.ToString();
+    }
+
+    public static void ExportToString(StringBuilder buffer, Text value, bool requiresQuotes = false)
     {
         if (value.IsCultureInvariant)
         {
@@ -106,7 +112,7 @@ internal static class TextStringHelper
             buffer.Append(value.ToString().ReplaceCharWithEscapedChar());
             buffer.Append("\")");
         }
-        else if (value.TextData.History.WriteToBuffer(buffer))
+        else if (value.TextData.History.ExportToString(buffer))
         {
             // Nothing to do here
         }

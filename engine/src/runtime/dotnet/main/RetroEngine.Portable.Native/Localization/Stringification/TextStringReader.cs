@@ -370,5 +370,5 @@ internal static class TextStringReader
     }
 
     public static TextParser<Text> QuotedText { get; } =
-        input => TextStringHelper.ReadFromBuffer(input, requiresQuotes: true);
+        input => TextStringifier.ImportFromString(input, requiresQuotes: true);
 }

@@ -41,12 +41,12 @@ internal sealed class TextHistoryAsDate : TextHistoryGenerated, ITextHistory
         .DateTime(Markers.LocGenDate, true, false)
         .Select(ITextData (r) => new TextHistoryAsDate(r.Value, r.DateStyle, r.TimeZone, r.TargetCulture));
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return Parser(input);
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         buffer.WriteDateTime(
             Markers.LocGenDate,

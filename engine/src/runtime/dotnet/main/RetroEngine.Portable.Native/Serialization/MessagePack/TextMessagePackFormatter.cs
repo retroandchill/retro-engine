@@ -7,6 +7,7 @@ using System.Text;
 using MessagePack;
 using MessagePack.Formatters;
 using RetroEngine.Portable.Localization;
+using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Portable.Serialization.MessagePack;
@@ -16,13 +17,13 @@ public class TextMessagePackFormatter : IMessagePackFormatter<Text>
     public void Serialize(ref MessagePackWriter writer, Text value, MessagePackSerializerOptions options)
     {
         var builder = new StringBuilder();
-        TextStringHelper.WriteToBuffer(builder, value);
+        TextStringifier.ExportToString(builder, value);
         writer.Write(builder.ToString());
     }
 
     public Text Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
     {
         var readString = reader.ReadString();
-        return TextStringHelper.ReadFromBuffer(readString);
+        return TextStringifier.ImportFromString(readString);
     }
 }

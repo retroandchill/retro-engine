@@ -59,12 +59,12 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistor
             ITextData (type, text) => new TextHistoryTransformed(text, type)
         );
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return Parser(input);
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         switch (_transformType)
         {
@@ -77,7 +77,7 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistor
             default:
                 throw new InvalidOperationException("Invalid transform type.");
         }
-        TextStringHelper.WriteToBuffer(buffer, _sourceText, true);
+        TextStringifier.ExportToString(buffer, _sourceText, true);
         buffer.Append(')');
         return true;
     }

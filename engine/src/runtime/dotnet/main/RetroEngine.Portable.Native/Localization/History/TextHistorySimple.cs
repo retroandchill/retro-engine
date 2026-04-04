@@ -39,7 +39,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
         )
     );
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         var nsloctextResult = NsLocTextParser(input);
         if (nsloctextResult.HasValue)
@@ -60,7 +60,7 @@ internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
         );
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         if (TextId.IsEmpty)
             return false;

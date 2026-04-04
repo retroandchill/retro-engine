@@ -105,14 +105,14 @@ public readonly partial struct FormatArg
             (b, x) => b.Append(x).Append('u'),
             (b, x) => b.Append(x).Append('f'),
             (b, x) => b.Append(x),
-            (b, x) => TextStringHelper.WriteToBuffer(b, x, true),
+            (b, x) => TextStringifier.ExportToString(b, x, true),
             (b, x) => b.WriteScopedEnum("ETextGender::", x)
         );
     }
 
-    public static ParseResult<FormatArg> FromExportedString(ReadOnlySpan<char> str)
+    public static FormatArg FromExportedString(ReadOnlySpan<char> str)
     {
-        return FromExportedString(new TextSegment(str));
+        return Parser.Parse(str);
     }
 
     internal static TextParser<FormatArg> Parser { get; } =
@@ -120,11 +120,6 @@ public readonly partial struct FormatArg
             .EnumLiteral<TextGender>("ETextGender::")
             .Select(Gender)
             .Or(TextStringReader.Number.Select(a => (FormatArg)a), TextStringReader.QuotedText.Select(Text));
-
-    internal static ParseResult<FormatArg> FromExportedString(TextSegment input)
-    {
-        return Parser(input);
-    }
 
     public static implicit operator FormatArg(sbyte value) => Signed(value);
 

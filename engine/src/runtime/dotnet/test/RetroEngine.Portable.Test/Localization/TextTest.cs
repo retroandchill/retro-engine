@@ -7,11 +7,10 @@ using System.Collections;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
-using ZLinq;
+using RetroEngine.Portable.Localization.Stringification;
 
 namespace RetroEngine.Portable.Test.Localization;
 
@@ -31,117 +30,7 @@ public class TextTest
 
     private CultureManager.CultureStateSnapshot _cultureState;
 
-    private static Culture? GetCulture(string culture)
-    {
-        return string.IsNullOrEmpty(culture) ? null : CultureManager.Instance.GetCulture(culture);
-    }
-
-    private static Text NsLocText(string ns, string key, string source) => Text.AsLocalizable(ns, key, source);
-
-    private static Text LocText(string key, string source) => Text.AsLocalizable(TextNamespace, key, source);
-
-    private static Text LocTable(string key, string source) => Text.AsLocalizable(TextNamespace, key, source);
-
-    private static Text InvText(string str) => Text.AsCultureInvariant(str);
-
-    private static Text LocGenNumber(FormatNumericArg arg, string culture) =>
-        Text.AsNumber(arg, null, GetCulture(culture));
-
-    private static Text LocGenNumberGrouped(FormatNumericArg arg, string culture) =>
-        Text.AsNumber(arg, NumberFormattingOptions.DefaultWithGrouping, GetCulture(culture));
-
-    private static Text LocGenNumberUngrouped(FormatNumericArg arg, string culture) =>
-        Text.AsNumber(arg, NumberFormattingOptions.DefaultWithoutGrouping, GetCulture(culture));
-
-    private static Text LocGenNumberCustom(FormatNumericArg arg, NumberFormattingOptions options, string culture) =>
-        Text.AsNumber(arg, options, GetCulture(culture));
-
-    private static Text LocGenPercent(FormatNumericArg arg, string culture) =>
-        Text.AsPercent(arg, null, GetCulture(culture));
-
-    private static Text LocGenPercentGrouped(FormatNumericArg arg, string culture) =>
-        Text.AsPercent(arg, NumberFormattingOptions.DefaultWithGrouping, GetCulture(culture));
-
-    private static Text LocGenPercentUngrouped(FormatNumericArg arg, string culture) =>
-        Text.AsPercent(arg, NumberFormattingOptions.DefaultWithoutGrouping, GetCulture(culture));
-
-    private static Text LocGenPercentCustom(FormatNumericArg arg, NumberFormattingOptions options, string culture) =>
-        Text.AsPercent(arg, options, GetCulture(culture));
-
-    private static Text LocGenCurrency(FormatNumericArg num, string currency, string culture) =>
-        Text.AsCurrency(num, currency, null, GetCulture(culture));
-
-    private static Text LocGenDateUtc(long unixTime, DateTimeFormatStyle dateStyle, string timeZone, string culture) =>
-        Text.AsDate(DateTimeOffset.FromUnixTimeMilliseconds(unixTime), dateStyle, timeZone, GetCulture(culture));
-
-    private static Text LocGenDateLocal(long unixTime, DateTimeFormatStyle dateStyle, string culture) =>
-        Text.AsDate(
-            DateTimeOffset.FromUnixTimeMilliseconds(unixTime),
-            dateStyle,
-            Text.InvariantTimeZone,
-            GetCulture(culture)
-        );
-
-    private static Text LocGenTimeUtc(long unixTime, DateTimeFormatStyle timeStyle, string timeZone, string culture) =>
-        Text.AsTime(DateTimeOffset.FromUnixTimeMilliseconds(unixTime), timeStyle, timeZone, GetCulture(culture));
-
-    private static Text LocGenTimeLocal(long unixTime, DateTimeFormatStyle timeStyle, string culture) =>
-        Text.AsTime(
-            DateTimeOffset.FromUnixTimeMilliseconds(unixTime),
-            timeStyle,
-            Text.InvariantTimeZone,
-            GetCulture(culture)
-        );
-
-    private static Text LocGenDateTimeUtc(
-        long unixTime,
-        DateTimeFormatStyle dateStyle,
-        DateTimeFormatStyle timeStyle,
-        string timeZone,
-        string culture
-    ) =>
-        Text.AsDateTime(
-            DateTimeOffset.FromUnixTimeMilliseconds(unixTime),
-            dateStyle,
-            timeStyle,
-            timeZone,
-            GetCulture(culture)
-        );
-
-    private static Text LocGenDateTimeLocal(
-        long unixTime,
-        DateTimeFormatStyle dateStyle,
-        DateTimeFormatStyle timeStyle,
-        string culture
-    ) =>
-        Text.AsDateTime(
-            DateTimeOffset.FromUnixTimeMilliseconds(unixTime),
-            dateStyle,
-            timeStyle,
-            Text.InvariantTimeZone,
-            GetCulture(culture)
-        );
-
-    private static Text LocGenDateTimeCustomUtc(long unixTime, string pattern, string timeZone, string culture) =>
-        Text.AsDateTime(DateTimeOffset.FromUnixTimeMilliseconds(unixTime), pattern, timeZone, GetCulture(culture));
-
-    private static Text LocGenDateTimeCustomLocal(long unixTime, string pattern, string culture) =>
-        Text.AsDateTime(
-            DateTimeOffset.FromUnixTimeMilliseconds(unixTime),
-            pattern,
-            Text.InvariantTimeZone,
-            GetCulture(culture)
-        );
-
-    private static Text LocGenToUpper(Text text) => text.ToUpper();
-
-    private static Text LocGenToLower(Text text) => text.ToLower();
-
-    private static Text LocGenFormatOrdered(Text pattern, params ReadOnlySpan<FormatArg> args) =>
-        Text.Format(pattern, args);
-
-    private static Text LocGenFormatNamed(Text pattern, params ReadOnlySpan<(string Key, FormatArg Arg)> args) =>
-        Text.Format(pattern, args.AsValueEnumerable().ToDictionary(x => x.Key, x => x.Arg));
+    private static Text Localized(string key, string source) => Text.AsLocalizable(TextNamespace, key, source);
 
     [SetUp]
     public void Setup()
@@ -166,8 +55,8 @@ public class TextTest
         const int testNumber1 = 10;
         const int testNumber2 = 20;
         DateTimeOffset testDate = new DateTime(1991, 6, 21, 9, 30, 0, DateTimeKind.Utc);
-        var testIdenticalStr1 = LocText("TestIdenticalStr1", "Str1");
-        var testIdenticalStr2 = LocText("TestIdenticalStr2", "Str2");
+        var testIdenticalStr1 = Localized("TestIdenticalStr1", "Str1");
+        var testIdenticalStr2 = Localized("TestIdenticalStr2", "Str2");
 
         using var scope = Assert.EnterMultipleScope();
         TestIdentical(testIdenticalStr1, testIdenticalStr1, TextIdenticalModeFlags.None, true);
@@ -208,26 +97,26 @@ public class TextTest
         TestIdentical(new Text("Wooble"), new Text("Wooble2"), TextIdenticalModeFlags.LexicalCompareInvariants, false);
 
         TestIdentical(
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             TextIdenticalModeFlags.None,
             false
         );
         TestIdentical(
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             true
         );
         TestIdentical(
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText1),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText1),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
         TestIdentical(
-            Text.Format(LocText("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
-            Text.Format(LocText("TestIdenticalPattern2", "This takes an arg {0}!"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern", "This takes an arg {0}"), ArgText0),
+            Text.Format(Localized("TestIdenticalPattern2", "This takes an arg {0}!"), ArgText0),
             TextIdenticalModeFlags.DeepCompare | TextIdenticalModeFlags.LexicalCompareInvariants,
             false
         );
@@ -629,16 +518,19 @@ public class TextTest
     {
         var args = new OrderedDictionary<string, FormatArg>
         {
-            ["String1"] = LocText("RebuildFTextTest1_Lorem", "Lorem"),
-            ["String2"] = LocText("RebuildFTextTest1_Ipsum", "Ipsum"),
+            ["String1"] = Localized("RebuildFTextTest1_Lorem", "Lorem"),
+            ["String2"] = Localized("RebuildFTextTest1_Ipsum", "Ipsum"),
         };
-        var formattedTest1 = Text.Format(LocText("RebuildNamedText1", "{String1} \"Lorem Ipsum\" {String2}"), args);
+        var formattedTest1 = Text.Format(Localized("RebuildNamedText1", "{String1} \"Lorem Ipsum\" {String2}"), args);
 
         var argsOrdered = ImmutableArray.Create<FormatArg>(
-            LocText("RebuildFTextTest1_Lorem", "Lorem"),
-            LocText("RebuildFTextTest1_Ipsum", "Ipsum")
+            Localized("RebuildFTextTest1_Lorem", "Lorem"),
+            Localized("RebuildFTextTest1_Ipsum", "Ipsum")
         );
-        var formattedTestOrdered1 = Text.Format(LocText("RebuildOrderedText1", "{0} \"Lorem Ipsum\" {1}"), argsOrdered);
+        var formattedTestOrdered1 = Text.Format(
+            Localized("RebuildOrderedText1", "{0} \"Lorem Ipsum\" {1}"),
+            argsOrdered
+        );
 
         var asNumberTest1 = Text.AsNumber(5.5421);
 
@@ -659,7 +551,7 @@ public class TextTest
             ["Currency"] = asCurrencyTest1,
         };
         var formattedTestLayer2 = Text.Format(
-            LocText(
+            Localized(
                 "RebuildTextLayer2",
                 "{NamedLayer1} | {OrderedLayer1} | {FTextNumber} | {Number} | {DateTime} | {Percent} | {Currency}"
             ),
@@ -899,14 +791,14 @@ public class TextTest
     private static IEnumerable<TestCaseData<Text, string>> StringificationTextData()
     {
         yield return new TestCaseData<Text, string>(
-            NsLocText("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem", "Lorem"),
+            Text.AsLocalizable("Core.Tests.TextFormatTest", "TextStringificationTest_Lorem", "Lorem"),
             "NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\")"
         )
         {
             TestName = "Stringification of a Text object",
         };
         yield return new TestCaseData<Text, string>(
-            LocText("TextStringificationTest_Lorem", "Lorem"),
+            Localized("TextStringificationTest_Lorem", "Lorem"),
             "NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\")"
         )
         {
@@ -920,31 +812,31 @@ public class TextTest
             TestName = "Stringification of a LocTable object",
         };
         */
-        yield return new TestCaseData<Text, string>(InvText("DummyText"), "INVTEXT(\"DummyText\")")
+        yield return new TestCaseData<Text, string>(Text.AsCultureInvariant("DummyText"), "INVTEXT(\"DummyText\")")
         {
             TestName = "Stringification of an InvText object",
         };
 
-        yield return new TestCaseData<Text, string>(LocGenNumber(10, ""), "LOCGEN_NUMBER(10, \"\")")
+        yield return new TestCaseData<Text, string>(LocGen.Number(10, ""), "LOCGEN_NUMBER(10, \"\")")
         {
-            TestName = "Stringification of a LocGenNumber object",
+            TestName = "Stringification of aLocGen.Number object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenNumberGrouped(12.5f, ""),
+            LocGen.NumberGrouped(12.5f, ""),
             "LOCGEN_NUMBER_GROUPED(12.5f, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenNumberGrouped object",
+            TestName = "Stringification of aLocGen.NumberGrouped object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenNumberUngrouped(12.5f, ""),
+            LocGen.NumberUngrouped(12.5f, ""),
             "LOCGEN_NUMBER_UNGROUPED(12.5f, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenNumberUngrouped object",
+            TestName = "Stringification of aLocGen.NumberUngrouped object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenNumberCustom(
+            LocGen.NumberCustom(
                 +10,
                 new NumberFormattingOptions()
                 {
@@ -957,33 +849,33 @@ public class TextTest
             "LOCGEN_NUMBER_CUSTOM(10, SetAlwaysSign(true).SetRoundingMode(ERoundingMode::ToZero).SetMinimumFractionalDigits(2), \"\")"
         )
         {
-            TestName = "Stringification of a LocGenNumberCustom object",
+            TestName = "Stringification of aLocGen.NumberCustom object",
         };
-        yield return new TestCaseData<Text, string>(LocGenNumber(-10, "en"), "LOCGEN_NUMBER(-10, \"en\")")
+        yield return new TestCaseData<Text, string>(LocGen.Number(-10, "en"), "LOCGEN_NUMBER(-10, \"en\")")
         {
-            TestName = "Stringification of a LocGenNumber object with a culture",
+            TestName = "Stringification of aLocGen.Number object with a culture",
         };
 
-        yield return new TestCaseData<Text, string>(LocGenPercent(0.1f, ""), "LOCGEN_PERCENT(0.1f, \"\")")
+        yield return new TestCaseData<Text, string>(LocGen.Percent(0.1f, ""), "LOCGEN_PERCENT(0.1f, \"\")")
         {
-            TestName = "Stringification of a LocGenPercent object",
+            TestName = "Stringification of aLocGen.Percent object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenPercentGrouped(0.1f, ""),
+            LocGen.PercentGrouped(0.1f, ""),
             "LOCGEN_PERCENT_GROUPED(0.1f, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenPercentGrouped object",
+            TestName = "Stringification of aLocGen.PercentGrouped object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenPercentUngrouped(0.1f, ""),
+            LocGen.PercentUngrouped(0.1f, ""),
             "LOCGEN_PERCENT_UNGROUPED(0.1f, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenPercentUngrouped object",
+            TestName = "Stringification of aLocGen.PercentUngrouped object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenPercentCustom(
+            LocGen.PercentCustom(
                 0.1f,
                 new NumberFormattingOptions()
                 {
@@ -996,125 +888,125 @@ public class TextTest
             "LOCGEN_PERCENT_CUSTOM(0.1f, SetAlwaysSign(true).SetRoundingMode(ERoundingMode::ToZero).SetMinimumFractionalDigits(2), \"\")"
         )
         {
-            TestName = "Stringification of a LocGenPercentCustom object",
+            TestName = "Stringification of aLocGen.PercentCustom object",
         };
-        yield return new TestCaseData<Text, string>(LocGenPercent(0.1, "en"), "LOCGEN_PERCENT(0.1, \"en\")")
+        yield return new TestCaseData<Text, string>(LocGen.Percent(0.1, "en"), "LOCGEN_PERCENT(0.1, \"en\")")
         {
-            TestName = "Stringification of a LocGenPercent object with a culture",
+            TestName = "Stringification of aLocGen.Percent object with a culture",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenCurrency(125, "USD", ""),
+            LocGen.Currency(125, "USD", ""),
             "LOCGEN_CURRENCY(125, \"USD\", \"\")"
         )
         {
-            TestName = "Stringification of a LocGenCurrency object",
+            TestName = "Stringification of aLocGen.Currency object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenCurrency(125, "USD", "en"),
+            LocGen.Currency(125, "USD", "en"),
             "LOCGEN_CURRENCY(125, \"USD\", \"en\")"
         )
         {
-            TestName = "Stringification of a LocGenCurrency object with a culture",
+            TestName = "Stringification of aLocGen.Currency object with a culture",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenDateUtc(1526342400, DateTimeFormatStyle.Short, "", "en-GB"),
+            LocGen.DateUtc(1526342400, DateTimeFormatStyle.Short, "", "en-GB"),
             "LOCGEN_DATE_UTC(1526342400, EDateTimeStyle::Short, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of a LocGenDateUtc object",
+            TestName = "Stringification of aLocGen.DateUtc object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenDateLocal(1526342400, DateTimeFormatStyle.Medium, ""),
+            LocGen.DateLocal(1526342400, DateTimeFormatStyle.Medium, ""),
             "LOCGEN_DATE_LOCAL(1526342400, EDateTimeStyle::Medium, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenDateLocal object",
+            TestName = "Stringification of aLocGen.DateLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenTimeUtc(1526342400, DateTimeFormatStyle.Long, "", "en-GB"),
+            LocGen.TimeUtc(1526342400, DateTimeFormatStyle.Long, "", "en-GB"),
             "LOCGEN_TIME_UTC(1526342400, EDateTimeStyle::Long, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of a LocGenTimeUtc object",
+            TestName = "Stringification of aLocGen.TimeUtc object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenTimeLocal(1526342400, DateTimeFormatStyle.Full, ""),
+            LocGen.TimeLocal(1526342400, DateTimeFormatStyle.Full, ""),
             "LOCGEN_TIME_LOCAL(1526342400, EDateTimeStyle::Full, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenTimeLocal object",
+            TestName = "Stringification of aLocGen.TimeLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenDateTimeUtc(1526342400, DateTimeFormatStyle.Short, DateTimeFormatStyle.Medium, "", "en-GB"),
+            LocGen.DateTimeUtc(1526342400, DateTimeFormatStyle.Short, DateTimeFormatStyle.Medium, "", "en-GB"),
             "LOCGEN_DATETIME_UTC(1526342400, EDateTimeStyle::Short, EDateTimeStyle::Medium, \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of a LocGenDateTimeUtc object",
+            TestName = "Stringification of aLocGen.DateTimeUtc object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenDateTimeLocal(1526342400, DateTimeFormatStyle.Long, DateTimeFormatStyle.Full, ""),
+            LocGen.DateTimeLocal(1526342400, DateTimeFormatStyle.Long, DateTimeFormatStyle.Full, ""),
             "LOCGEN_DATETIME_LOCAL(1526342400, EDateTimeStyle::Long, EDateTimeStyle::Full, \"\")"
         )
         {
-            TestName = "Stringification of a LocGenDateTimeLocal object",
+            TestName = "Stringification of aLocGen.DateTimeLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenDateTimeCustomUtc(1526342400, "%A, %B %e, %Y", "", "en-GB"),
+            LocGen.DateTimeCustomUtc(1526342400, "%A, %B %e, %Y", "", "en-GB"),
             "LOCGEN_DATETIME_CUSTOM_UTC(1526342400, \"%A, %B %e, %Y\", \"\", \"en-GB\")"
         )
         {
-            TestName = "Stringification of a LocGenDateTimeCustomUtc object",
+            TestName = "Stringification of aLocGen.DateTimeCustomUtc object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenDateTimeCustomLocal(1526342400, "%A, %B %e, %Y", ""),
+            LocGen.DateTimeCustomLocal(1526342400, "%A, %B %e, %Y", ""),
             "LOCGEN_DATETIME_CUSTOM_LOCAL(1526342400, \"%A, %B %e, %Y\", \"\")"
         )
         {
-            TestName = "Stringification of a LocGenDateTimeCustomLocal object",
+            TestName = "Stringification of aLocGen.DateTimeCustomLocal object",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenToUpper(LocText("TextStringificationTest_Lorem", "Lorem")),
+            Localized("TextStringificationTest_Lorem", "Lorem").ToUpper(),
             "LOCGEN_TOUPPER(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\"))"
         )
         {
-            TestName = "Stringification of a LocGenToUpper object",
+            TestName = "Stringification of aLocGen.ToUpper object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenToLower(LocText("TextStringificationTest_Lorem", "Lorem")),
+            Localized("TextStringificationTest_Lorem", "Lorem").ToLower(),
             "LOCGEN_TOLOWER(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Lorem\", \"Lorem\"))"
         )
         {
-            TestName = "Stringification of a LocGenToLower object",
+            TestName = "Stringification of aLocGen.ToLower object",
         };
 
         yield return new TestCaseData<Text, string>(
-            LocGenFormatOrdered(
-                LocText("TextStringificationTest_FmtO", "{0} weighs {1}kg"),
-                LocText("TextStringificationTest_Bear", "Bear"),
+            Text.Format(
+                Localized("TextStringificationTest_FmtO", "{0} weighs {1}kg"),
+                Localized("TextStringificationTest_Bear", "Bear"),
                 227
             ),
             "LOCGEN_FORMAT_ORDERED(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_FmtO\", "
                 + "\"{0} weighs {1}kg\"), NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Bear\", \"Bear\"), 227)"
         )
         {
-            TestName = "Stringification of a LocGenFormatOrdered object",
+            TestName = "Stringification of aLocGen.FormatOrdered object",
         };
         yield return new TestCaseData<Text, string>(
-            LocGenFormatNamed(
-                LocText("TextStringificationTest_FmtN", "{Animal} weighs {Weight}kg"),
-                ("Animal", LocText("TextStringificationTest_Bear", "Bear")),
+            Text.Format(
+                Localized("TextStringificationTest_FmtN", "{Animal} weighs {Weight}kg"),
+                ("Animal", Localized("TextStringificationTest_Bear", "Bear")),
                 ("Weight", 227)
             ),
             "LOCGEN_FORMAT_NAMED(NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_FmtN\", \"{Animal} weighs {Weight}kg\"), \"Animal\", NSLOCTEXT(\"Core.Tests.TextFormatTest\", \"TextStringificationTest_Bear\", \"Bear\"), \"Weight\", 227)"
         )
         {
-            TestName = "Stringification of a LocGenFormatNamed object",
+            TestName = "Stringification of aLocGen.FormatNamed object",
         };
     }
 
@@ -1124,11 +1016,10 @@ public class TextTest
     {
         CultureManager.Instance.SetCurrentCulture("en-US");
 
-        var builder = new StringBuilder();
-        TextStringHelper.WriteToBuffer(builder, expectedText);
-        Assert.That(builder.ToString(), Is.EqualTo(expectedString));
+        var exportedString = TextStringifier.ExportToString(expectedText);
+        Assert.That(exportedString, Is.EqualTo(expectedString));
 
-        var actualText = TextStringHelper.ReadFromBuffer(expectedString);
+        var actualText = TextStringifier.ImportFromString(expectedString);
         Assert.That(actualText, Is.EqualTo(expectedText));
     }
 }

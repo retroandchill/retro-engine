@@ -8,6 +8,7 @@ using System.Text;
 using RetroEngine.Portable.Collections.Immutable;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
+using ZLinq;
 using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
@@ -26,6 +27,9 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
 
     public TextHistoryNamedFormat(TextFormat sourceFormat, IReadOnlyDictionary<string, FormatArg> args)
         : this(sourceFormat, args.ToImmutableSortedDictionary()) { }
+
+    public TextHistoryNamedFormat(TextFormat sourceFormat, ReadOnlySpan<(string Name, FormatArg Value)> args)
+        : this(sourceFormat, args.AsValueEnumerable().ToImmutableSortedDictionary(x => x.Name, x => x.Value)) { }
 
     public override string BuildInvariantDisplayString()
     {
@@ -75,12 +79,12 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
         )
     );
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return Parser(input);
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         buffer.WriteTextFormat(Markers.LocGenFormatNamed, _sourceFormat, _args!);
         return true;

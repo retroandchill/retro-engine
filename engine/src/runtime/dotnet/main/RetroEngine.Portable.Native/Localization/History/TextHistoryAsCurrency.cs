@@ -60,12 +60,12 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
             )
     );
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return Parser(input);
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
 

@@ -17,7 +17,7 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
     private readonly ImmutableArray<FormatArg> _args;
 
     public TextHistoryOrderedFormat(TextFormat sourceFormat, IReadOnlyList<FormatArg> args)
-        : this(sourceFormat, [.. args]) { }
+        : this(sourceFormat, args.ToImmutableArray()) { }
 
     public TextHistoryOrderedFormat(TextFormat sourceFormat, ImmutableArray<FormatArg> args)
     {
@@ -25,6 +25,9 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
         _args = args;
         UpdateDisplayString();
     }
+
+    public TextHistoryOrderedFormat(TextFormat sourceFormat, ReadOnlySpan<FormatArg> args)
+        : this(sourceFormat, args.ToImmutableArray()) { }
 
     public override string BuildInvariantDisplayString()
     {
@@ -56,12 +59,12 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
         )
     );
 
-    public static ParseResult<ITextData> ReadFromBuffer(TextSegment input, string? textNamespace)
+    public static ParseResult<ITextData> ImportFromString(TextSegment input, string? textNamespace)
     {
         return Parser(input);
     }
 
-    public override bool WriteToBuffer(StringBuilder buffer)
+    public override bool ExportToString(StringBuilder buffer)
     {
         buffer.WriteTextFormat(
             Markers.LocGenFormatOrdered,
