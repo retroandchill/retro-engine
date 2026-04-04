@@ -26,6 +26,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Serilog.Extensions.Logging" />
       <PackageReference Include="System.IO.Abstractions" />
+    <PackageReference Include="Testably.Abstractions.FileSystem.Interface" VersionOverride="10.2.0" />
       <PackageReference Include="ZLinq" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
         <PrivateAssets>all</PrivateAssets>
