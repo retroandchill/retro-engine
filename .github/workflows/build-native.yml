@@ -44,4 +44,3 @@ jobs:
         with:
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           configurePreset: release
-          buildPreset: release
