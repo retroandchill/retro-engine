@@ -7,7 +7,7 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-      <ProjectReference Include="$(RetroEnginePortableCommonProj)" />
+      <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />

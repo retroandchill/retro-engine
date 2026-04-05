@@ -1,33 +1,7 @@
 ﻿<Project>
-    <PropertyGroup>
-        <RootSlnDir>$(MSBuildThisFileDirectory)</RootSlnDir>
-        <EngineProjectsDir>$(RootSlnDir)/engine/src/runtime/dotnet/main</EngineProjectsDir>
-        <RetroEngineProj>$(EngineProjectsDir)/RetroEngine/RetroEngine.csproj</RetroEngineProj>
-        <RetroEngineCoreProj>$(EngineProjectsDir)/RetroEngine.Core/RetroEngine.Core.csproj</RetroEngineCoreProj>
-        <RetroEngineHostProj>$(EngineProjectsDir)/RetroEngine.Host/RetroEngine.Host.csproj</RetroEngineHostProj>
-        <RetroEngineInteropProj>$(EngineProjectsDir)/RetroEngine.Interop/RetroEngine.Interop.csproj</RetroEngineInteropProj>
-        <RetroEngineLoggingProj>$(EngineProjectsDir)/RetroEngine.Logging/RetroEngine.Logging.csproj</RetroEngineLoggingProj>
-        <RetroEnginePlatformProj>$(EngineProjectsDir)/RetroEngine.Platform/RetroEngine.Platform.csproj</RetroEnginePlatformProj>
-        <RetroEnginePortableProj>$(EngineProjectsDir)/RetroEngine.Portable/RetroEngine.Portable.csproj</RetroEnginePortableProj>
-        <RetroEnginePortableNativeProj>$(EngineProjectsDir)/RetroEngine.Portable.Native/RetroEngine.Portable.Native.csproj</RetroEnginePortableNativeProj>
-        <RetroEnginePortableCommonProj>$(EngineProjectsDir)/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj</RetroEnginePortableCommonProj>
-        <RetroEnginePortableExtensionsProj>$(EngineProjectsDir)/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj</RetroEnginePortableExtensionsProj>
-        <RetroEnginePortableSourceGeneratorProj>$(EngineProjectsDir)/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj</RetroEnginePortableSourceGeneratorProj>
-
-        <EditorProjectsDir>$(RootSlnDir)/engine/src/editor/dotnet/main</EditorProjectsDir>
-        <RetroEngineEditorProj>$(EditorProjectsDir)/RetroEngine.Editor/RetroEngine.Editor.csproj</RetroEngineEditorProj>
-        <RetroEngineEditorCoreProj>$(EditorProjectsDir)/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj</RetroEngineEditorCoreProj>
-        <RetroEngineEditorSourceGeneratorProj>$(EditorProjectsDir)/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj</RetroEngineEditorSourceGeneratorProj>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <RetroEngineBackend>Native</RetroEngineBackend>
-    </PropertyGroup>
-
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">
         <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshalling"/>
     </ItemGroup>
-
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <DefineConstants>$(DefineConstants);CHECKED</DefineConstants>

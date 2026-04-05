@@ -8,16 +8,6 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="$(RetroEngineCoreProj)" />
-        <ProjectReference Include="$(RetroEngineLoggingProj)" />
-        <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
-                          OutputItemType="Analyzer"
-                          ReferenceOutputAssembly="false"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
-    </ItemGroup>
-    <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="Injectio" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />
@@ -31,5 +21,11 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
+      <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.csproj" />
+      <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+      <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
     </ItemGroup>
 </Project>

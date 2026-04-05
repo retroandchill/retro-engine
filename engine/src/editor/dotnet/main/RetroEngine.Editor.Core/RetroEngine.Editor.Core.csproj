@@ -32,6 +32,9 @@
                           ReferenceOutputAssembly="false"/>
         <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
         <ProjectReference Include="..\Dock.Model.RetroEngine\Dock.Model.RetroEngine.csproj" />
+        <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">

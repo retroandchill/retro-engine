@@ -23,7 +23,7 @@
     <ItemGroup>
         <Using Include="NUnit.Framework" />
     </ItemGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
+    <ItemGroup>
+      <ProjectReference Include="..\..\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
     </ItemGroup>
 </Project>

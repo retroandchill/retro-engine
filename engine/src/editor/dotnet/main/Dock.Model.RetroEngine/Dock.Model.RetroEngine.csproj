@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable.Native\RetroEngine.Portable.Native.csproj" />
+      <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
     </ItemGroup>
 
     <ItemGroup>

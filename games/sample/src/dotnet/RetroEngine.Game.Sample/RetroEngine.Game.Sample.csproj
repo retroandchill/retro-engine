@@ -10,12 +10,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="$(RetroEngineLoggingProj)" />
-      <ProjectReference Include="$(RetroEngineProj)" />
+        <ContentFiles Include="../../../content/**/*" />
     </ItemGroup>
 
     <ItemGroup>
-        <ContentFiles Include="../../../content/**/*" />
+      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj" />
+      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
     </ItemGroup>
 
     <Target Name="CopyContentFiles" AfterTargets="Build">

@@ -16,11 +16,9 @@
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Core/RetroEngine.Core.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Interop/RetroEngine.Interop.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Logging/RetroEngine.Logging.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Common/RetroEngine.Portable.Common.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Extensions/RetroEngine.Portable.Extensions.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.SourceGenerator/RetroEngine.Portable.SourceGenerator.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
-    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable.Native/RetroEngine.Portable.Native.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Utilities.SourceGenerator/RetroEngine.Utilities.SourceGenerator.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Utilities/RetroEngine.Utilities.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine/RetroEngine.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/ZParse/ZParse.csproj" />
   </Folder>

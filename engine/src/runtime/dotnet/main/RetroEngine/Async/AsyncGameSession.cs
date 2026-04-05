@@ -1,5 +1,4 @@
-﻿using RetroEngine.Logging;
-using Serilog;
+﻿using Serilog;
 
 namespace RetroEngine.Async;
 
@@ -21,7 +20,7 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
     {
         try
         {
-            var exitCode = await RunAsync(cancellationToken);
+            await RunAsync(cancellationToken);
             Engine.Instance.RequestShutdown();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

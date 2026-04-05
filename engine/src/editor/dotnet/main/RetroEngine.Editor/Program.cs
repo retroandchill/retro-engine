@@ -1,8 +1,5 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Logging;
 using Serilog;

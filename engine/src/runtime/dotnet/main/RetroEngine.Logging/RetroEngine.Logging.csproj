@@ -9,12 +9,9 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="$(RetroEngineCoreProj)" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
-        <ProjectReference Include="$(RetroEnginePortableNativeProj)" />
+      <PackageReference Include="Serilog.Enrichers.CallerInfo" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Serilog.Enrichers.CallerInfo" />
+      <ProjectReference Include="..\RetroEngine.Interop\RetroEngine.Interop.csproj" />
     </ItemGroup>
 </Project>

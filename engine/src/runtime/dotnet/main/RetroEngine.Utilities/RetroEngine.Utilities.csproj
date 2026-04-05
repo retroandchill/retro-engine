@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>1.0.0-dev.4</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="LinkDotNet.StringBuilder" />
+      <PackageReference Include="Serilog" />
+      <PackageReference Include="ZLinq" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+</Project>

@@ -5,7 +5,7 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
-using RetroEngine.Portable.Utils;
+using RetroEngine.Utilities;
 using RetroEngine.Utils;
 
 namespace RetroEngine.Interop;
