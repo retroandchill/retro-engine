@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using RetroEngine.Portable.Localization;
@@ -73,9 +74,19 @@ public readonly struct StructuredJsonWriter(Utf8JsonWriter writer) : IStructured
         // No-op
     }
 
+    public void WriteNull()
+    {
+        writer.WriteNullValue();
+    }
+
     public void Write(bool value)
     {
         writer.WriteBooleanValue(value);
+    }
+
+    public void Write(char value)
+    {
+        writer.WriteStringValue(new ReadOnlySpan<char>(ref value));
     }
 
     public void Write(byte value)
@@ -126,6 +137,21 @@ public readonly struct StructuredJsonWriter(Utf8JsonWriter writer) : IStructured
     public void Write(double value)
     {
         writer.WriteNumberValue(value);
+    }
+
+    public void Write(Guid value)
+    {
+        writer.WriteStringValue(value);
+    }
+
+    public void Write(DateTime value)
+    {
+        writer.WriteStringValue(value);
+    }
+
+    public void Write(DateTimeOffset value)
+    {
+        writer.WriteStringValue(value);
     }
 
     public void Write(Name value)

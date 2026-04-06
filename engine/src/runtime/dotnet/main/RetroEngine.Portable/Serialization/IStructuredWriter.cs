@@ -25,7 +25,9 @@ public interface IStructuredWriter
     void BeginDictionaryItem(ReadOnlySpan<char> key);
     void EndDictionaryItem();
 
+    void WriteNull();
     void Write(bool value);
+    void Write(char value);
     void Write(byte value);
     void Write(sbyte value);
     void Write(short value);
@@ -36,6 +38,9 @@ public interface IStructuredWriter
     void Write(ulong value);
     void Write(float value);
     void Write(double value);
+    void Write(Guid value);
+    void Write(DateTime value);
+    void Write(DateTimeOffset value);
     void Write(Name value);
     void Write(ReadOnlySpan<char> value);
     void Write(Text value);

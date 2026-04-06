@@ -26,7 +26,9 @@ public interface IStructuredReader
     string BeginDictionaryItem();
     void EndDictionaryItem();
 
+    void ReadNull();
     bool ReadBoolean();
+    char ReadChar();
     byte ReadByte();
     sbyte ReadSByte();
     short ReadInt16();
@@ -37,6 +39,9 @@ public interface IStructuredReader
     ulong ReadUInt64();
     float ReadSingle();
     double ReadDouble();
+    Guid ReadGuid();
+    DateTime ReadDateTime();
+    DateTimeOffset ReadDateTimeOffset();
     Name ReadName();
     string ReadString();
     Text ReadText();

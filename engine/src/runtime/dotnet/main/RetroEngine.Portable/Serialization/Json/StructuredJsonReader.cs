@@ -183,6 +183,30 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
         // No-op
     }
 
+    private Utf8JsonReader CreateTemporaryReader(SavedJsonReaderState state)
+    {
+        return new Utf8JsonReader(_bytes[state.Position..], true, state.State);
+    }
+
+    public void ReadNull()
+    {
+        if (_currentProperty is null)
+        {
+            ReadNull(ref _reader);
+            return;
+        }
+
+        var reader = CreateTemporaryReader(_currentProperty.Value);
+        ReadNull(ref reader);
+    }
+
+    private static void ReadNull(ref Utf8JsonReader reader)
+    {
+        reader.Read();
+        if (reader.TokenType != JsonTokenType.Null)
+            throw new JsonException("Expected null");
+    }
+
     public bool ReadBoolean()
     {
         if (_currentProperty is null)
@@ -190,7 +214,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadBoolean(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadBoolean(ref reader);
     }
 
@@ -200,6 +224,11 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
         return reader.GetBoolean();
     }
 
+    public char ReadChar()
+    {
+        return ReadString()[0];
+    }
+
     public byte ReadByte()
     {
         if (_currentProperty is null)
@@ -207,7 +236,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadByte(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadByte(ref reader);
     }
 
@@ -224,7 +253,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadSByte(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadSByte(ref reader);
     }
 
@@ -241,7 +270,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadInt16(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadInt16(ref reader);
     }
 
@@ -258,7 +287,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadUInt16(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadUInt16(ref reader);
     }
 
@@ -275,7 +304,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadInt32(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadInt32(ref reader);
     }
 
@@ -292,7 +321,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadUInt32(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadUInt32(ref reader);
     }
 
@@ -309,7 +338,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadInt64(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadInt64(ref reader);
     }
 
@@ -326,7 +355,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadUInt64(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadUInt64(ref reader);
     }
 
@@ -343,7 +372,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadSingle(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadSingle(ref reader);
     }
 
@@ -360,7 +389,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadDouble(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadDouble(ref reader);
     }
 
@@ -370,21 +399,60 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
         return reader.GetDouble();
     }
 
-    public Name ReadName()
+    public Guid ReadGuid()
     {
         if (_currentProperty is null)
         {
-            return ReadName(ref _reader);
+            return ReadGuid(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
-        return ReadName(ref reader);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
+        return ReadGuid(ref reader);
     }
 
-    private static Name ReadName(ref Utf8JsonReader reader)
+    private static Guid ReadGuid(ref Utf8JsonReader reader)
     {
         reader.Read();
-        return reader.GetString() ?? throw new JsonException("Expected name");
+        return reader.GetGuid();
+    }
+
+    public DateTime ReadDateTime()
+    {
+        if (_currentProperty is null)
+        {
+            return ReadDateTime(ref _reader);
+        }
+
+        var reader = CreateTemporaryReader(_currentProperty.Value);
+        return ReadDateTime(ref reader);
+    }
+
+    private static DateTime ReadDateTime(ref Utf8JsonReader reader)
+    {
+        reader.Read();
+        return reader.GetDateTime();
+    }
+
+    public DateTimeOffset ReadDateTimeOffset()
+    {
+        if (_currentProperty is null)
+        {
+            return ReadDateTimeOffset(ref _reader);
+        }
+
+        var reader = CreateTemporaryReader(_currentProperty.Value);
+        return ReadDateTimeOffset(ref reader);
+    }
+
+    private static DateTimeOffset ReadDateTimeOffset(ref Utf8JsonReader reader)
+    {
+        reader.Read();
+        return reader.GetDateTimeOffset();
+    }
+
+    public Name ReadName()
+    {
+        return ReadString();
     }
 
     public string ReadString()
@@ -394,7 +462,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadString(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadString(ref reader);
     }
 
@@ -406,20 +474,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
 
     public Text ReadText()
     {
-        if (_currentProperty is null)
-        {
-            return ReadText(ref _reader);
-        }
-
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
-        return ReadText(ref reader);
-    }
-
-    private static Text ReadText(ref Utf8JsonReader reader)
-    {
-        reader.Read();
-        var stringValue = reader.GetString() ?? throw new JsonException("Expected string");
-        return TextStringifier.ImportFromString(stringValue);
+        return TextStringifier.ImportFromString(ReadString());
     }
 
     public byte[] ReadBytes()
@@ -429,7 +484,7 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
             return ReadBytes(ref _reader);
         }
 
-        var reader = new Utf8JsonReader(_bytes[_currentProperty.Value.Position..], true, _currentProperty.Value.State);
+        var reader = CreateTemporaryReader(_currentProperty.Value);
         return ReadBytes(ref reader);
     }
 
