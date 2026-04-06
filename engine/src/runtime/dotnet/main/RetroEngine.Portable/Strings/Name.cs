@@ -392,6 +392,18 @@ public readonly partial struct Name
         return buffer[..newLength].ToString();
     }
 
+    public int ToString(Span<char> buffer)
+    {
+        int newLength;
+        unsafe
+        {
+            fixed (char* ch = buffer)
+            {
+                return NativeToString(this, ch, buffer.Length);
+            }
+        }
+    }
+
     /// <inheritdoc />
     public override int GetHashCode()
     {

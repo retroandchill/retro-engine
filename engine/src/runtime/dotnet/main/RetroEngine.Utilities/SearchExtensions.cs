@@ -7,24 +7,26 @@ namespace RetroEngine.Utilities;
 
 public static class SearchExtensions
 {
-    public static TValue? FirstOrNull<TValue>(this IEnumerable<TValue> source)
+    extension<TValue>(IEnumerable<TValue> source)
         where TValue : struct
     {
-        using var enumerator = source.GetEnumerator();
-        return enumerator.MoveNext() ? enumerator.Current : null;
-    }
-
-    public static TValue? FirstOrNull<TValue>(this IEnumerable<TValue> source, Func<TValue, bool> predicate)
-        where TValue : struct
-    {
-        foreach (var value in source)
+        public TValue? FirstOrNull()
         {
-            if (predicate(value))
-            {
-                return value;
-            }
+            using var enumerator = source.GetEnumerator();
+            return enumerator.MoveNext() ? enumerator.Current : null;
         }
 
-        return null;
+        public TValue? FirstOrNull(Func<TValue, bool> predicate)
+        {
+            foreach (var value in source)
+            {
+                if (predicate(value))
+                {
+                    return value;
+                }
+            }
+
+            return null;
+        }
     }
 }

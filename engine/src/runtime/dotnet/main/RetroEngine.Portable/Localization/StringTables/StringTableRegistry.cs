@@ -16,7 +16,7 @@ public enum StringTableLoadingPolicy : byte
     FindOrFullyLoad,
 }
 
-public sealed partial class StringTableRegistry
+public sealed class StringTableRegistry
 {
     private readonly Dictionary<Name, StringTable> _registeredStringTables = new();
     private readonly Lock _registeredStringTablesLock = new();
