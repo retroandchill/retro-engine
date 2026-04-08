@@ -3,26 +3,122 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using RetroEngine.Utilities;
 using ZParse;
 using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.Formatting;
 
-[Union]
-internal readonly partial struct TextFormatToken
+internal readonly record struct StringLiteralToken;
+
+internal readonly record struct ArgumentToken(string Name);
+
+internal readonly record struct ArgumentModifierToken(ITextFormatArgumentModifier Modifier);
+
+internal readonly record struct EscapeCharacterToken(char Character);
+
+internal enum TextFormatTokenKind
 {
-    [UnionCase]
-    public static partial TextFormatToken StringLiteral();
+    StringLiteral,
+    Argument,
+    ArgumentModifier,
+    EscapeCharacter,
+}
 
-    [UnionCase]
-    public static partial TextFormatToken Argument(string name);
+internal readonly struct TextFormatToken
+{
+    public TextFormatTokenKind Kind { get; }
 
-    [UnionCase]
-    public static partial TextFormatToken ArgumentModifier(ITextFormatArgumentModifier? modifier);
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private readonly object? _objectValue;
 
-    [UnionCase]
-    public static partial TextFormatToken EscapeCharacter(char character);
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private readonly char _escapeChar;
+
+    public TextFormatToken(StringLiteralToken token)
+    {
+        Kind = TextFormatTokenKind.StringLiteral;
+        _objectValue = null;
+        _escapeChar = '\0';
+    }
+
+    public TextFormatToken(ArgumentToken token)
+    {
+        Kind = TextFormatTokenKind.Argument;
+        _objectValue = token.Name;
+        _escapeChar = '\0';
+    }
+
+    public TextFormatToken(ArgumentModifierToken token)
+    {
+        Kind = TextFormatTokenKind.ArgumentModifier;
+        _objectValue = token.Modifier;
+        _escapeChar = '\0';
+    }
+
+    public TextFormatToken(EscapeCharacterToken token)
+    {
+        Kind = TextFormatTokenKind.EscapeCharacter;
+        _objectValue = null;
+        _escapeChar = token.Character;
+    }
+
+    public bool TryGetValue(out StringLiteralToken value)
+    {
+        if (Kind == TextFormatTokenKind.StringLiteral)
+        {
+            value = default;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public bool TryGetValue(out ArgumentToken value)
+    {
+        if (Kind == TextFormatTokenKind.Argument)
+        {
+            value = new ArgumentToken((string)_objectValue!);
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public bool TryGetValue(out ArgumentModifierToken value)
+    {
+        if (Kind == TextFormatTokenKind.ArgumentModifier)
+        {
+            value = new ArgumentModifierToken((ITextFormatArgumentModifier)_objectValue!);
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public bool TryGetValue(out EscapeCharacterToken value)
+    {
+        if (Kind == TextFormatTokenKind.EscapeCharacter)
+        {
+            value = new EscapeCharacterToken(_escapeChar);
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public static implicit operator TextFormatToken(StringLiteralToken token) => new(token);
+
+    public static implicit operator TextFormatToken(ArgumentToken token) => new(token);
+
+    public static implicit operator TextFormatToken(ArgumentModifierToken token) => new(token);
+
+    public static implicit operator TextFormatToken(EscapeCharacterToken token) => new(token);
 }
 
 public sealed class TextFormatDefinition
@@ -52,7 +148,7 @@ public sealed class TextFormatDefinition
             .EqualTo(ArgStartChar)
             .IgnoreThen(Sequences.UntilChar(ArgEndChar))
             .FollowedBy(Characters.EqualTo(ArgEndChar))
-            .Select(x => TextFormatToken.Argument(x.ToString()));
+            .Select(x => new TextFormatToken(new ArgumentToken(x.ToString())));
 
         var argumentModifier = Characters
             .EqualTo(ArgModChar)
@@ -64,16 +160,16 @@ public sealed class TextFormatDefinition
                 (getModifier, segment) => getModifier(segment)
             )
             .NotNull()
-            .Select(TextFormatToken.ArgumentModifier);
+            .Select(m => new TextFormatToken(new ArgumentModifierToken(m)));
 
         var parseEscapeCharacter = Characters
             .EqualTo(EscapeChar)
             .IgnoreThen(Characters.In(EscapeChar, ArgStartChar, ArgEndChar, ArgModChar))
-            .Select(TextFormatToken.EscapeCharacter);
+            .Select(e => new TextFormatToken(new EscapeCharacterToken(e)));
 
         var parseStringLiteral = Characters
             .AnyChar.IgnoreThen(Characters.Matching(c => !IsLiteralBreakCharacter(c), "string literal").IgnoreMany())
-            .Value(TextFormatToken.StringLiteral());
+            .Value(new TextFormatToken(new StringLiteralToken()));
 
         Definitions = new TokenDefinitions<TextFormatToken>([
             parseArgument,

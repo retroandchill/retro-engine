@@ -26,9 +26,6 @@
       <Compile Include="..\RetroEngine.Utilities\ExceptionUtils.cs">
         <Link>Common\Extensions\ExceptionUtils.cs</Link>
       </Compile>
-      <Compile Include="..\RetroEngine.Utilities\UnionAttribute.cs">
-        <Link>Unions\Attributes\UnionAttribute.cs</Link>
-      </Compile>
     </ItemGroup>
 
 </Project>

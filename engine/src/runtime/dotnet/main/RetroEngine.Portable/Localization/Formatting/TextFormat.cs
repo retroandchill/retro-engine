@@ -84,18 +84,18 @@ public sealed class TextFormat
             var nameSeen = new HashSet<string>();
             foreach (var token in segments)
             {
-                if (!token.TryGetPlaceholderData(out var key, out _, out var modifier))
+                if (!token.TryGetValue(out FormatPlaceholder placeholder))
                     continue;
 
-                if (nameSeen.Add(key.Name))
+                if (nameSeen.Add(placeholder.Key.Name))
                 {
-                    yield return key.Name;
+                    yield return placeholder.Key.Name;
                 }
 
-                if (modifier is null)
+                if (placeholder.Modifier is null)
                     continue;
 
-                foreach (var argName in modifier.FormatArgumentNames.Where(nameSeen.Add))
+                foreach (var argName in placeholder.Modifier.FormatArgumentNames.Where(nameSeen.Add))
                 {
                     yield return argName;
                 }
@@ -178,40 +178,44 @@ public sealed class TextFormat
         var argumentIndex = 0;
         foreach (var segment in _compiledSegments)
         {
-            segment.Match(
-                context,
-                (_, str) => resultBuilder.Append(str),
-                (ctx, key, pattern, mod) =>
+            if (segment.TryGetValue(out string? str))
+            {
+                resultBuilder.Append(str);
+            }
+            else if (segment.TryGetValue(out FormatPlaceholder placeholder))
+            {
+                // ReSharper disable once AccessToModifiedClosure
+                var possibleArg = context.ResolveArg(placeholder.Key, argumentIndex);
+                if (possibleArg is not null)
                 {
-                    // ReSharper disable once AccessToModifiedClosure
-                    var possibleArg = ctx.ResolveArg(key, argumentIndex);
-                    if (possibleArg is not null)
+                    if (placeholder.Modifier is not null)
                     {
-                        if (mod is not null)
+                        if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
                         {
-                            if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
-                            {
-                                mod.Evaluate(possibleArg.Value, in ctx, resultBuilder);
-                            }
-                            else
-                            {
-                                resultBuilder.Append(PatternDefinition.ArgModChar);
-                                resultBuilder.Append(pattern);
-                            }
+                            placeholder.Modifier.Evaluate(possibleArg.Value, in context, resultBuilder);
                         }
                         else
                         {
-                            possibleArg.Value.ToFormattedString(ctx.RebuildText, ctx.RebuildAsSource, resultBuilder);
+                            resultBuilder.Append(PatternDefinition.ArgModChar);
+                            resultBuilder.Append(placeholder.ModifierPattern);
                         }
                     }
                     else
                     {
-                        resultBuilder.Append(PatternDefinition.ArgStartChar);
-                        resultBuilder.Append(key.Name);
-                        resultBuilder.Append(PatternDefinition.ArgEndChar);
+                        possibleArg.Value.ToFormattedString(
+                            context.RebuildText,
+                            context.RebuildAsSource,
+                            resultBuilder
+                        );
                     }
                 }
-            );
+                else
+                {
+                    resultBuilder.Append(PatternDefinition.ArgStartChar);
+                    resultBuilder.Append(placeholder.Key.Name);
+                    resultBuilder.Append(PatternDefinition.ArgEndChar);
+                }
+            }
             argumentIndex++;
         }
 
@@ -237,46 +241,46 @@ public sealed class TextFormat
             PlaceholderKey? currentArgument = null;
             foreach (var token in PatternDefinition.Definitions.GetTokens(_sourceExpression))
             {
-                if (token.Value.IsStringLiteral)
+                if (token.Value.TryGetValue(out StringLiteralToken _))
                 {
                     if (currentArgument is not null)
                     {
-                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                        arrayBuilder.Add(new FormatPlaceholder(currentArgument.Value));
                         currentArgument = null;
                     }
 
                     builder.Append(token.Text);
                     _baseFormatStringLength += token.Text.Length;
                 }
-                else if (token.Value.TryGetEscapeCharacterData(out var escapeChar))
+                else if (token.Value.TryGetValue(out EscapeCharacterToken escapeChar))
                 {
                     if (currentArgument is not null)
                     {
-                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                        arrayBuilder.Add(new FormatPlaceholder(currentArgument.Value));
                         currentArgument = null;
                     }
 
-                    builder.Append(escapeChar);
+                    builder.Append(escapeChar.Character);
                     _baseFormatStringLength++;
                 }
-                else if (token.Value.TryGetArgumentData(out var arg))
+                else if (token.Value.TryGetValue(out ArgumentToken arg))
                 {
                     if (builder.Length > 0)
                     {
-                        arrayBuilder.Add(FormatSegment.Literal(builder.ToString()));
+                        arrayBuilder.Add(builder.ToString());
                         builder.Clear();
                     }
 
                     if (currentArgument is not null)
                     {
-                        arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                        arrayBuilder.Add(new FormatPlaceholder(currentArgument.Value));
                     }
 
                     _expressionType = CompiledExpressionType.Complex;
 
-                    currentArgument = new PlaceholderKey(arg);
+                    currentArgument = new PlaceholderKey(arg.Name);
                 }
-                else if (token.Value.TryGetArgumentModifierData(out var argMod))
+                else if (token.Value.TryGetValue(out ArgumentModifierToken argMod))
                 {
                     if (currentArgument is null)
                     {
@@ -285,12 +289,14 @@ public sealed class TextFormat
                         break;
                     }
 
-                    arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, token.Text.ToString(), argMod));
+                    arrayBuilder.Add(
+                        new FormatPlaceholder(currentArgument.Value, token.Text.ToString(), argMod.Modifier)
+                    );
                     currentArgument = null;
 
                     if (_formatFlags.HasFlag(TextFormatFlags.EvaluateArgumentModifiers))
                     {
-                        var (argModUsesFormatArgs, argModLength) = argMod!.EstimateLength();
+                        var (argModUsesFormatArgs, argModLength) = argMod.Modifier.EstimateLength();
                         _baseFormatStringLength += argModLength;
                         _formatArgumentEstimateMultiplier += argModUsesFormatArgs ? 1 : 0;
                     }
@@ -303,12 +309,12 @@ public sealed class TextFormat
 
             if (builder.Length > 0)
             {
-                arrayBuilder.Add(FormatSegment.Literal(builder.ToString()));
+                arrayBuilder.Add(builder.ToString());
             }
 
             if (currentArgument is not null)
             {
-                arrayBuilder.Add(FormatSegment.Placeholder(currentArgument.Value, null, null));
+                arrayBuilder.Add(new FormatPlaceholder(currentArgument.Value));
             }
 
             if (_expressionType != CompiledExpressionType.Invalid)

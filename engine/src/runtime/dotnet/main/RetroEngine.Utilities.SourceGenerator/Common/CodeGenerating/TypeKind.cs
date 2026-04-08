@@ -18,13 +18,11 @@ internal readonly struct BlittableTypeKindData
     public bool IsReadOnly { get; init; }
 }
 
-[Union]
 public struct TypeKind
 {
     private byte Index { get; init; }
     private BlittableTypeKindData Data { get; init; }
 
-    [UnionCase]
     public static TypeKind Class(bool isAbstract, bool isSealed)
     {
         return new TypeKind
@@ -34,7 +32,6 @@ public struct TypeKind
         };
     }
 
-    [UnionCase]
     public static TypeKind Struct(bool isReadOnly)
     {
         return new TypeKind
