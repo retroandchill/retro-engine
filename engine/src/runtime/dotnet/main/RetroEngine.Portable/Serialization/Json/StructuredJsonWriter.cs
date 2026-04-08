@@ -156,8 +156,8 @@ public readonly struct StructuredJsonWriter(Utf8JsonWriter writer) : IStructured
 
     public void Write(Name value)
     {
-        Span<char> buffer = stackalloc char[Name.MaxLength];
-        var length = value.ToString(buffer);
+        Span<byte> buffer = stackalloc byte[Name.MaxRenderedLength];
+        var length = value.ToUtf8(buffer);
         writer.WriteStringValue(buffer[..length]);
     }
 
@@ -168,7 +168,6 @@ public readonly struct StructuredJsonWriter(Utf8JsonWriter writer) : IStructured
 
     public void Write(Text value)
     {
-        // TODO: For now we can just encode into a string format, but we can probably update it a bit more
         var builder = new StringBuilder();
         TextStringifier.ExportToString(builder, value);
         writer.WriteStringValue(builder.ToString());
