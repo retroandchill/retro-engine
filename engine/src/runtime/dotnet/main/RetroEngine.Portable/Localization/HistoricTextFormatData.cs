@@ -17,5 +17,5 @@ internal sealed record HistoricTextFormatData(
 internal readonly record struct HistoricTextNumericData(NumberFormatType FormatType, FormatNumericArg SourceValue)
 {
     public HistoricTextNumericData()
-        : this(NumberFormatType.Number, FormatNumericArg.Signed(0)) { }
+        : this(NumberFormatType.Number, new FormatNumericArg(0)) { }
 }

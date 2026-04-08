@@ -3,13 +3,19 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MessagePack;
+
 namespace RetroEngine.Portable.Localization.History;
 
 internal abstract class TextHistoryBase : TextHistory
 {
+    [Key(0)]
     public sealed override TextId TextId { get; } = TextId.Empty;
 
+    [Key(1)]
     protected string Source { get; } = "";
+
+    [IgnoreMember]
     private string? _localized;
 
     protected TextHistoryBase() { }

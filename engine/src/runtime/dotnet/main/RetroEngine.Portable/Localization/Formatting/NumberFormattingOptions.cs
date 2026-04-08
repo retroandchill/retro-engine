@@ -3,6 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MessagePack;
+using RetroEngine.Portable.Serialization.MessagePack;
+
 namespace RetroEngine.Portable.Localization.Formatting;
 
 public enum NumberFormatType : byte
@@ -28,12 +31,19 @@ public record NumberFormattingOptions
     private const int DoubleDigits10Exp = 15;
 
     public bool AlwaysSign { get; init; }
+
     public bool UseGrouping { get; init; } = true;
+
     public bool IndicateNearlyInteger { get; init; }
+
     public RoundingMode RoundingMode { get; init; } = RoundingMode.HalfToEven;
+
     public int MinimumIntegralDigits { get; init; } = 1;
+
     public int MaximumIntegralDigits { get; init; } = DoubleMax10Exp + DoubleDigits10Exp + 1;
+
     public int MinimumFractionalDigits { get; init; }
+
     public int MaximumFractionalDigits { get; init; } = 3;
 
     public static NumberFormattingOptions DefaultWithGrouping { get; } = new() { UseGrouping = true };

@@ -72,7 +72,7 @@ internal sealed class GenderFormatArgumentModifier : ITextFormatArgumentModifier
     public void Evaluate<TContext>(in FormatArg arg, in TContext context, StringBuilder builder)
         where TContext : ITextFormatContext, allows ref struct
     {
-        if (!arg.TryGetGenderData(out var gender))
+        if (!arg.TryGetValue(out TextGender gender))
             return;
 
         switch (gender)

@@ -145,6 +145,10 @@ public readonly partial struct Name
     [PublicAPI]
     public const int MaxLength = 1024;
 
+    private const int MaxDigits = 10;
+
+    internal const int MaxRenderedLength = MaxLength + MaxDigits + 1;
+
     private const int NoNumberInternal = 0;
 
     /// <summary>
@@ -181,6 +185,11 @@ public readonly partial struct Name
     [UsedImplicitly]
     public NameEntryId DisplayIndex { get; }
 
+    internal Name(ReadOnlySpan<byte> name, FindName findType = FindName.Add)
+    {
+        this = NativeLookup(name, name.Length, findType);
+    }
+
     /// <summary>
     /// Construct a new <see cref="Name"/> from a <see cref="ReadOnlySpan{char}"/>
     /// </summary>
@@ -190,13 +199,7 @@ public readonly partial struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
-        unsafe
-        {
-            fixed (char* namePtr = name)
-            {
-                this = NativeLookup(namePtr, name.Length, findType);
-            }
-        }
+        this = NativeLookup(name, name.Length, findType);
     }
 
     /// <summary>
@@ -312,13 +315,7 @@ public readonly partial struct Name
     /// </returns>
     public static bool operator ==(Name lhs, ReadOnlySpan<char> rhs)
     {
-        unsafe
-        {
-            fixed (char* rhsPtr = rhs)
-            {
-                return NativeCompare(lhs, rhsPtr, rhs.Length) == 0;
-            }
-        }
+        return NativeCompare(lhs, rhs, rhs.Length) == 0;
     }
 
     /// <summary>
@@ -380,28 +377,13 @@ public readonly partial struct Name
     public override string ToString()
     {
         Span<char> buffer = stackalloc char[MaxLength];
-        int newLength;
-        unsafe
-        {
-            fixed (char* ch = buffer)
-            {
-                newLength = NativeToString(this, ch, buffer.Length);
-            }
-        }
-
+        var newLength = NativeToString(this, buffer, buffer.Length);
         return buffer[..newLength].ToString();
     }
 
-    public int ToString(Span<char> buffer)
+    internal int ToUtf8(Span<byte> buffer)
     {
-        int newLength;
-        unsafe
-        {
-            fixed (char* ch = buffer)
-            {
-                return NativeToString(this, ch, buffer.Length);
-            }
-        }
+        return NativeToString(this, buffer, buffer.Length);
     }
 
     /// <inheritdoc />
@@ -410,16 +392,22 @@ public readonly partial struct Name
         return HashCode.Combine(ComparisonIndex, _number);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup")]
-    private static unsafe partial Name NativeLookup(char* name, int nameLength, FindName findType);
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf8")]
+    private static partial Name NativeLookup(ReadOnlySpan<byte> name, int nameLength, FindName findType);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf16")]
+    private static partial Name NativeLookup(ReadOnlySpan<char> name, int nameLength, FindName findType);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_is_valid")]
     [return: MarshalAs(UnmanagedType.U1)]
-    private static unsafe partial bool NativeIsValid(Name name);
+    private static partial bool NativeIsValid(Name name);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare")]
-    private static unsafe partial int NativeCompare(Name lhs, char* name, int nameLength);
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare_utf16")]
+    private static partial int NativeCompare(Name lhs, ReadOnlySpan<char> name, int nameLength);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string")]
-    private static unsafe partial int NativeToString(Name name, char* buffer, int bufferLength);
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf8")]
+    private static partial int NativeToString(Name name, ReadOnlySpan<byte> buffer, int bufferLength);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf16")]
+    private static partial int NativeToString(Name name, ReadOnlySpan<char> buffer, int bufferLength);
 }

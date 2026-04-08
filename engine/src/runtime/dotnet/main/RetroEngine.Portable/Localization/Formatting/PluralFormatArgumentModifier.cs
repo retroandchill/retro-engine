@@ -124,7 +124,7 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
     {
         var culture = CultureManager.Instance.CurrentLocale;
 
-        if (!TryGetPluralFormForArgument(in arg, 1, out var valuePluralForm) && arg.TryGetTextData(out var textValue))
+        if (!TryGetPluralFormForArgument(in arg, 1, out var valuePluralForm) && arg.TryGetValue(out Text textValue))
         {
             var textValueNumericData = textValue.HistoricNumericData;
             if (textValueNumericData is not null)
@@ -143,17 +143,32 @@ internal sealed class PluralFormatArgumentModifier : ITextFormatArgumentModifier
 
         bool TryGetPluralFormForArgument(in FormatArg a, int argValueMultiplier, out TextPluralForm pluralForm)
         {
-            var form = a.Match(
-                TextPluralForm? (val) => culture.GetPluralForm(val * argValueMultiplier, _pluralType),
-                val => culture.GetPluralForm(val * (uint)argValueMultiplier, _pluralType),
-                val => culture.GetPluralForm(val * argValueMultiplier, _pluralType),
-                val => culture.GetPluralForm(val * argValueMultiplier, _pluralType),
-                _ => null,
-                _ => null
-            );
+            if (a.TryGetValue(out long longValue))
+            {
+                pluralForm = culture.GetPluralForm(longValue * argValueMultiplier, _pluralType);
+                return true;
+            }
 
-            pluralForm = form ?? default;
-            return form is not null;
+            if (a.TryGetValue(out ulong ulongValue))
+            {
+                pluralForm = culture.GetPluralForm(ulongValue * (ulong)argValueMultiplier, _pluralType);
+                return true;
+            }
+
+            if (a.TryGetValue(out float floatValue))
+            {
+                pluralForm = culture.GetPluralForm(floatValue * argValueMultiplier, _pluralType);
+                return true;
+            }
+
+            if (a.TryGetValue(out double doubleValue))
+            {
+                pluralForm = culture.GetPluralForm(doubleValue * argValueMultiplier, _pluralType);
+                return true;
+            }
+
+            pluralForm = default;
+            return false;
         }
     }
 }

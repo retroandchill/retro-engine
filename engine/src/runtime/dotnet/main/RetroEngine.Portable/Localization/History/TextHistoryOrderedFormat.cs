@@ -83,7 +83,7 @@ internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHist
 
         foreach (var arg in _args)
         {
-            if (!arg.TryGetTextData(out var textData))
+            if (!arg.TryGetValue(out Text textData))
                 continue;
             foreach (var historic in textData.HistoricFormatData)
             {

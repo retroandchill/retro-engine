@@ -25,9 +25,16 @@ namespace
 
 extern "C"
 {
-    RETRO_API retro::Name retro_name_lookup(const char16_t *name,
-                                            const std::int32_t length,
-                                            const retro::FindType find_type)
+    RETRO_API retro::Name retro_name_lookup_utf8(const char *name,
+                                                 const std::int32_t length,
+                                                 const retro::FindType find_type)
+    {
+        return retro::Name{std::string_view{name, static_cast<std::size_t>(length)}, find_type};
+    }
+
+    RETRO_API retro::Name retro_name_lookup_utf16(const char16_t *name,
+                                                  const std::int32_t length,
+                                                  const retro::FindType find_type)
     {
         return retro::Name{std::u16string_view{name, static_cast<std::size_t>(length)}, find_type};
     }
@@ -37,7 +44,14 @@ extern "C"
         return name.is_valid();
     }
 
-    RETRO_API std::int32_t retro_name_compare(const retro::Name lhs, const char16_t *rhs, const std::int32_t length)
+    RETRO_API std::int32_t retro_name_compare_utf8(const retro::Name lhs, const char *rhs, const std::int32_t length)
+    {
+        return strong_ordering_to_int(lhs <=> std::string_view{rhs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API std::int32_t retro_name_compare_utf16(const retro::Name lhs,
+                                                    const char16_t *rhs,
+                                                    const std::int32_t length)
     {
         return strong_ordering_to_int(lhs <=> std::u16string_view{rhs, static_cast<std::size_t>(length)});
     }
@@ -54,7 +68,17 @@ extern "C"
         return strong_ordering_to_int(lhs_id.compare_lexical(rhs_id));
     }
 
-    RETRO_API std::int32_t retro_name_to_string(const retro::Name name, char16_t *buffer, const std::int32_t length)
+    RETRO_API std::int32_t retro_name_to_string_utf8(const retro::Name name, char *buffer, const std::int32_t length)
+    {
+        const auto utf8_string = name.to_string<char>(boost::pool_allocator<char>{});
+        const std::size_t string_length = std::min(utf8_string.size(), static_cast<std::size_t>(length));
+        std::memcpy(buffer, utf8_string.data(), string_length * sizeof(char));
+        return static_cast<std::int32_t>(string_length);
+    }
+
+    RETRO_API std::int32_t retro_name_to_string_utf16(const retro::Name name,
+                                                      char16_t *buffer,
+                                                      const std::int32_t length)
     {
         const auto utf16_string = name.to_string<char16_t>(boost::pool_allocator<char16_t>{});
         const std::size_t string_length = std::min(utf16_string.size(), static_cast<std::size_t>(length));

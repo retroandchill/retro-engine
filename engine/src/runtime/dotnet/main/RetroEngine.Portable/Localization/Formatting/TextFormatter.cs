@@ -226,6 +226,11 @@ public sealed class TextFormatter
 
     private static int EstimateArgumentValueLength(FormatArg arg)
     {
-        return arg.Match(_ => 20, _ => 20, _ => 20, _ => 20, text => text.ToString().Length, _ => 0);
+        if (arg.TryGetValue(out Text textValue))
+        {
+            return textValue.ToString().Length;
+        }
+
+        return arg.Type == FormatArgumentType.Gender ? 0 : 20;
     }
 }

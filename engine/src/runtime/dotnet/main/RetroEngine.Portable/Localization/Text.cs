@@ -150,7 +150,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
         var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         var decimalPlaces = formattingOptions.MaximumFractionalDigits;
-        var val = value.Match(s => s, u => u, f => f, d => d) / FastDecimalFormat.Pow10(decimalPlaces);
+        var val = value.ToDouble() / FastDecimalFormat.Pow10(decimalPlaces);
         return new Text(new TextHistoryAsCurrency(val, currencyCode, options, targetCulture), TextFlag.Transient);
     }
 
@@ -314,7 +314,7 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
 
     public static Text Join(Text separator, params ReadOnlySpan<FormatArg> elements)
     {
-        if (elements.Length == 1 && elements[0].TryGetTextData(out var textData))
+        if (elements.Length == 1 && elements[0].TryGetValue(out Text textData))
         {
             return textData;
         }

@@ -522,13 +522,24 @@ public static class FastDecimalFormat
         NumberFormattingOptions options
     )
     {
-        return value.Match(
-            (rules, options),
-            (t, i) => NumberToString(i, t.rules, t.options),
-            (t, i) => NumberToString(i, t.rules, t.options),
-            (t, i) => NumberToString(i, t.rules, t.options),
-            (t, i) => NumberToString(i, t.rules, t.options)
-        );
+        if (value.TryGetValue(out long longValue))
+        {
+            return NumberToString(longValue, rules, options);
+        }
+
+        if (value.TryGetValue(out ulong ulongValue))
+        {
+            return NumberToString(ulongValue, rules, options);
+        }
+
+        if (value.TryGetValue(out float floatValue))
+        {
+            return NumberToString(floatValue, rules, options);
+        }
+
+        return value.TryGetValue(out double doubleValue)
+            ? NumberToString(doubleValue, rules, options)
+            : throw new ArgumentException("Type is not supported.", nameof(value));
     }
 
     public static string NumberToString<T>(

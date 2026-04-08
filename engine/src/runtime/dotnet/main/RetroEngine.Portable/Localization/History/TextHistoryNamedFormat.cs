@@ -98,7 +98,7 @@ internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistor
 
         foreach (var (_, value) in _args)
         {
-            if (!value.TryGetTextData(out var textData))
+            if (!value.TryGetValue(out Text textData))
                 continue;
             foreach (var historic in textData.HistoricFormatData)
             {

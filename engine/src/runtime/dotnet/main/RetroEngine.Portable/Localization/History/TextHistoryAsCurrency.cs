@@ -49,7 +49,7 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
                     var culture = CultureManager.Instance.CurrentLocale;
 
                     var (number, currencyCode) = t;
-                    var baseValue = number.Match(i => i, u => u, f => f, d => d);
+                    var baseValue = number.ToDouble();
                     var formattingRules = culture.GetCurrencyFormattingRules(currencyCode);
                     var formattingOptions = formattingRules.DefaultFormattingOptions;
                     var dividedValue = baseValue / FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits);
@@ -68,14 +68,14 @@ internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHist
     {
         var culture = TargetCulture ?? CultureManager.Instance.CurrentLocale;
 
-        var dividedValue = SourceValue.Match(i => i, u => u, f => f, d => d);
+        var dividedValue = SourceValue.ToDouble();
 
         var formattingRules = culture.GetCurrencyFormattingRules(_currencyCode);
         var formattingOptions = formattingRules.DefaultFormattingOptions;
         var baseValue = (long)(dividedValue * FastDecimalFormat.Pow10(formattingOptions.MaximumFractionalDigits));
 
         buffer.Append("LOCGEN_CURRENCY(");
-        FormatArg.Signed(baseValue).ToExportedString(buffer);
+        new FormatArg(baseValue).ToExportedString(buffer);
         buffer.Append(", \"");
         buffer.Append(_currencyCode?.ReplaceCharWithEscapedChar());
         buffer.Append("\", \"");

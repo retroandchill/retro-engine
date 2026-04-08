@@ -4,10 +4,11 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MessagePack;
+using MessagePack.Formatters;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Utilities;
 using ZParse;
-using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 

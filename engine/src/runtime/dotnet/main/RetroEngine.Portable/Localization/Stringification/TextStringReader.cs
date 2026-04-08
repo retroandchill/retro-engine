@@ -63,19 +63,19 @@ internal static class TextStringReader
             return suffix switch
             {
                 { HasValue: true, Value: 'f' } => float.TryParse(literal.Value.Segment, out var f)
-                    ? ParseResult.Success(FormatNumericArg.Float(f), input, suffix.Remainder)
+                    ? ParseResult.Success(new FormatNumericArg(f), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
                 { HasValue: true, Value: 'u' } when literal.Value.IsUnsigned => ulong.TryParse(
                     literal.Value.Segment,
                     out var u
                 )
-                    ? ParseResult.Success(FormatNumericArg.Unsigned(u), input, suffix.Remainder)
+                    ? ParseResult.Success(new FormatNumericArg(u), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, suffix.Remainder),
                 { HasValue: false } when literal.Value.IsInteger => long.TryParse(literal.Value.Segment, out var i)
-                    ? ParseResult.Success(FormatNumericArg.Signed(i), input, suffix.Remainder)
+                    ? ParseResult.Success(new FormatNumericArg(i), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
                 _ => double.TryParse(literal.Value.Segment, out var d)
-                    ? ParseResult.Success(FormatNumericArg.Double(d), input, suffix.Remainder)
+                    ? ParseResult.Success(new FormatNumericArg(d), input, suffix.Remainder)
                     : ParseResult.Empty<FormatNumericArg>(input, literal.Remainder),
             };
         };

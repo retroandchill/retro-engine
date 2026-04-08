@@ -3,7 +3,6 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RetroEngine.Portable.Strings;
@@ -39,11 +38,13 @@ public sealed class NameJsonConverter : JsonConverter<Name>
     /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, Name value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString());
+        Span<byte> buffer = stackalloc byte[Name.MaxRenderedLength];
+        var writtenLength = value.ToUtf8(buffer);
+        writer.WriteStringValue(buffer[..writtenLength]);
     }
 
     public override void WriteAsPropertyName(Utf8JsonWriter writer, Name value, JsonSerializerOptions options)
     {
-        writer.WritePropertyName(value.ToString());
+        Write(writer, value, options);
     }
 }
