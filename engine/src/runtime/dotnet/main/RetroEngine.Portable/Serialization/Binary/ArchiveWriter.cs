@@ -136,15 +136,6 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteRawBytes(ReadOnlySpan<byte> buffer)
-    {
-        ref var spanRef = ref GetSpanReference(buffer.Length);
-        var span = MemoryMarshal.CreateSpan(ref spanRef, buffer.Length);
-        buffer.CopyTo(span);
-        Advance(buffer.Length);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(bool value)
     {
         Write(value ? (byte)1 : (byte)0);
