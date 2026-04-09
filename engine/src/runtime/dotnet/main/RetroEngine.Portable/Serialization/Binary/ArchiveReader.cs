@@ -190,6 +190,95 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryReadObjectHeader(out byte memberCount)
+    {
+        memberCount = GetSpanReference(1);
+        Advance(1);
+        return memberCount != ArchiveCodes.NullObject;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryReadUnionHeader(out ushort tag)
+    {
+        var firstTag = GetSpanReference(1);
+        Advance(1);
+        switch (firstTag)
+        {
+            case < ArchiveCodes.WideTag:
+                tag = firstTag;
+                return true;
+            case ArchiveCodes.WideTag:
+                tag = ReadByte();
+                return true;
+            default:
+                tag = 0;
+                return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryReadCollectionHeader(out int length)
+    {
+        length = ReadInt32();
+
+        if (RemainingBytes < length)
+        {
+            ArchiveSerializationException.ThrowInsufficientBufferUnless(length);
+        }
+
+        return length != ArchiveCodes.NullCollection;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool PeekIsNull()
+    {
+        var code = GetSpanReference(1);
+        return code == ArchiveCodes.NullObject;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryPeekObjectHeader(out byte memberCount)
+    {
+        memberCount = GetSpanReference(1);
+        return memberCount != ArchiveCodes.NullObject;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryPeekUnionHeader(out ushort tag)
+    {
+        var firstTag = GetSpanReference(1);
+        switch (firstTag)
+        {
+            case < ArchiveCodes.WideTag:
+                tag = firstTag;
+                return true;
+            case ArchiveCodes.WideTag:
+                tag = ReadByte();
+                return true;
+            default:
+                tag = 0;
+                return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryPeekCollectionHeader(out int length)
+    {
+        const int size = sizeof(int);
+        ref var spanRef = ref GetSpanReference(size);
+        length = !IsByteSwapping
+            ? Unsafe.ReadUnaligned<int>(ref spanRef)
+            : BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref spanRef));
+
+        if (RemainingBytes < length)
+        {
+            ArchiveSerializationException.ThrowInsufficientBufferUnless(length);
+        }
+
+        return length != ArchiveCodes.NullCollection;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ReadBool()
     {
         var value = ReadByte();
@@ -344,5 +433,96 @@ public ref struct ArchiveReader : IDisposable
     {
         var unixTimestamp = ReadInt64();
         return DateTimeOffset.FromUnixTimeMilliseconds(unixTimestamp);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string? ReadString()
+    {
+        if (!TryReadCollectionHeader(out var length))
+            return null;
+
+        return length switch
+        {
+            0 => "",
+            > 0 => ReadUtf16(length),
+            _ => ReadUtf8(length),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private string ReadUtf16(int length)
+    {
+        var byteCount = checked(length * 2);
+        ref var src = ref GetSpanReference(byteCount);
+
+        if (!IsByteSwapping)
+        {
+            var str = new string(MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<byte, char>(ref src), length));
+            Advance(byteCount);
+            return str;
+        }
+
+        using var builder = new ValueStringBuilder(byteCount);
+        for (var i = 0; i < length; i++)
+        {
+            builder.Append(Unsafe.ReadUnaligned<char>(ref src));
+            src = ref Unsafe.Add(ref src, 1);
+        }
+        Advance(byteCount);
+        return builder.ToString();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private string ReadUtf8(int length)
+    {
+        // (int ~utf8-byte-count, int utf16-length, utf8-bytes)
+        // already read utf8 length, but it is complement.
+        var utf8Length = ~length;
+
+        ref var spanRef = ref GetSpanReference(utf8Length + 4);
+
+        string str;
+        var utf16Length = !IsByteSwapping
+            ? Unsafe.ReadUnaligned<int>(ref spanRef)
+            : BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref spanRef));
+
+        if (utf16Length <= 0)
+        {
+            var src = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref spanRef, sizeof(int)), utf8Length);
+            str = Encoding.UTF8.GetString(src);
+        }
+        else
+        {
+            var max = unchecked((RemainingBytes + 1) * 3);
+            if (max < 0)
+                max = int.MaxValue;
+            if (max < utf16Length)
+            {
+                ArchiveSerializationException.ThrowInsufficientBufferUnless(utf8Length);
+            }
+
+            unsafe
+            {
+                fixed (byte* p = &Unsafe.Add(ref spanRef, sizeof(int)))
+                {
+                    str = string.Create(
+                        utf16Length,
+                        (Ptr: (IntPtr)p, Length: utf16Length),
+                        static (dest, state) =>
+                        {
+                            var src = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>((byte*)state.Ptr), state.Length);
+                            var status = Utf8.ToUtf16(src, dest, out _, out _, replaceInvalidSequences: false);
+                            if (status != OperationStatus.Done)
+                            {
+                                ArchiveSerializationException.ThrowFailedEncoding(status);
+                            }
+                        }
+                    );
+                }
+            }
+        }
+
+        Advance(utf8Length + 4);
+        return str;
     }
 }
