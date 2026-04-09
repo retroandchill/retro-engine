@@ -7,6 +7,9 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Unicode;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Portable.Serialization.Binary;
 
@@ -136,12 +139,62 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteRawBytes(ReadOnlySpan<byte> buffer)
+    public void WriteObjectHeader(byte memberCount)
     {
-        ref var spanRef = ref GetSpanReference(buffer.Length);
-        var span = MemoryMarshal.CreateSpan(ref spanRef, buffer.Length);
-        buffer.CopyTo(span);
-        Advance(buffer.Length);
+        if (memberCount >= ArchiveCodes.Reserved1)
+        {
+            ArchiveSerializationException.ThrowWriteInvalidMemberCount(memberCount);
+        }
+
+        Write(memberCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteNullObjectHeader()
+    {
+        Write(ArchiveCodes.NullObject);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteObjectReferenceId(uint referenceId)
+    {
+        Write(ArchiveCodes.ReferenceId);
+        Write(referenceId);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteUnionHeader(ushort tag)
+    {
+        if (tag < ArchiveCodes.WideTag)
+        {
+            Write((byte)tag);
+        }
+        else
+        {
+            const int size = sizeof(byte) + sizeof(ushort);
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, ArchiveCodes.WideTag);
+            Unsafe.WriteUnaligned(ref Unsafe.Add(ref spanRef, 1), tag);
+            Advance(size);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteNullUnionHeader()
+    {
+        WriteNullObjectHeader();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteCollectionHeader(int length)
+    {
+        Write(length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteNullCollectionHeader()
+    {
+        Write(ArchiveCodes.NullCollection);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -153,13 +206,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(char value)
     {
-        const int size = sizeof(char);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        Write((ushort)value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -173,21 +220,13 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(sbyte value)
     {
-        ref var spanRef = ref GetSpanReference(1);
-        spanRef = Unsafe.BitCast<sbyte, byte>(value);
-        Advance(1);
+        Write(Unsafe.BitCast<sbyte, byte>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(short value)
     {
-        const int size = sizeof(short);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        Write(Unsafe.BitCast<short, ushort>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,13 +244,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(int value)
     {
-        const int size = sizeof(int);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        Write(Unsafe.BitCast<int, uint>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -229,13 +262,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(long value)
     {
-        const int size = sizeof(long);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        Write(Unsafe.BitCast<long, ulong>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -253,31 +280,13 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(float value)
     {
-        const int size = sizeof(float);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(
-                ref spanRef,
-                BinaryPrimitives.ReverseEndianness(BitConverter.SingleToInt32Bits(value))
-            );
-        Advance(size);
+        Write(Unsafe.BitCast<float, uint>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(double value)
     {
-        const int size = sizeof(double);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(
-                ref spanRef,
-                BinaryPrimitives.ReverseEndianness(BitConverter.DoubleToInt64Bits(value))
-            );
-        Advance(size);
+        Write(Unsafe.BitCast<double, ulong>(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -297,5 +306,133 @@ public ref struct ArchiveWriter<TBufferWriter>
     public void Write(DateTimeOffset value)
     {
         Write(value.ToUnixTimeMilliseconds());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write(Name value)
+    {
+        Span<byte> buffer = stackalloc byte[Name.MaxRenderedLength];
+        var writtenLength = value.ToUtf8(buffer);
+        ref var dest = ref GetSpanReference(writtenLength + sizeof(int));
+        if (!IsByteSwapping)
+        {
+            Unsafe.WriteUnaligned(ref dest, writtenLength);
+        }
+        else
+        {
+            Unsafe.WriteUnaligned(ref dest, BinaryPrimitives.ReverseEndianness(writtenLength));
+        }
+
+        Unsafe.CopyBlockUnaligned(
+            ref Unsafe.Add(ref dest, sizeof(int)),
+            ref MemoryMarshal.GetReference(buffer),
+            (uint)writtenLength
+        );
+        Advance(writtenLength + sizeof(int));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write(string? value)
+    {
+        if (_serializeStringAsUtf8)
+        {
+            WriteUtf8(value);
+        }
+        else
+        {
+            WriteUtf16(value);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write(ReadOnlySpan<char> value)
+    {
+        if (_serializeStringAsUtf8)
+        {
+            WriteUtf8(value);
+        }
+        else
+        {
+            WriteUtf16(value);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteUtf16(string? value)
+    {
+        if (value is null)
+        {
+            WriteNullCollectionHeader();
+            return;
+        }
+
+        WriteUtf16(value.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteUtf16(ReadOnlySpan<char> value)
+    {
+        if (value.Length == 0)
+        {
+            WriteCollectionHeader(0);
+            return;
+        }
+
+        var copyByteCount = checked(value.Length * sizeof(char)) + 4;
+
+        ref var dest = ref GetSpanReference(copyByteCount);
+        if (!IsByteSwapping)
+        {
+            ref var src = ref Unsafe.As<char, byte>(ref Unsafe.AsRef(in value.GetPinnableReference()));
+            Unsafe.WriteUnaligned(ref dest, value.Length);
+            Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref dest, 4), ref src, (uint)copyByteCount);
+        }
+        else
+        {
+            Unsafe.WriteUnaligned(ref dest, BinaryPrimitives.ReverseEndianness(value.Length));
+            for (var i = 0; i < value.Length; i++)
+            {
+                Unsafe.WriteUnaligned(
+                    ref Unsafe.Add(ref dest, i * sizeof(char) + sizeof(int)),
+                    BinaryPrimitives.ReverseEndianness(value[i])
+                );
+            }
+        }
+
+        Advance(copyByteCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteUtf8(string? value)
+    {
+        if (value is null)
+        {
+            WriteNullCollectionHeader();
+            return;
+        }
+
+        WriteUtf8(value.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteUtf8(ReadOnlySpan<char> value)
+    {
+        if (value.Length == 0)
+        {
+            WriteCollectionHeader(0);
+            return;
+        }
+
+        var maxUtf8Size = Encoding.UTF8.GetMaxByteCount(value.Length);
+        ref var destPointer = ref GetSpanReference(maxUtf8Size + sizeof(int));
+        var dest = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref destPointer, sizeof(int)), maxUtf8Size);
+        var status = Utf8.FromUtf16(value, dest, out _, out var bytesWritten, replaceInvalidSequences: false);
+        if (status != OperationStatus.Done)
+        {
+            ArchiveSerializationException.ThrowFailedEncoding(status);
+        }
+
+        Unsafe.WriteUnaligned(ref destPointer, ~bytesWritten);
+        Advance(maxUtf8Size + sizeof(int));
     }
 }
