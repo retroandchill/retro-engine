@@ -479,50 +479,24 @@ public ref struct ArchiveReader : IDisposable
         // already read utf8 length, but it is complement.
         var utf8Length = ~length;
 
-        ref var spanRef = ref GetSpanReference(utf8Length + 4);
+        ref var spanRef = ref GetSpanReference(utf8Length);
 
-        string str;
-        var utf16Length = !IsByteSwapping
-            ? Unsafe.ReadUnaligned<int>(ref spanRef)
-            : BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref spanRef));
-
-        if (utf16Length <= 0)
+        var maxBufferSize = Encoding.UTF8.GetMaxCharCount(utf8Length);
+        var buffer = ArrayPool<char>.Shared.Rent(maxBufferSize);
+        try
         {
-            var src = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref spanRef, sizeof(int)), utf8Length);
-            str = Encoding.UTF8.GetString(src);
+            var src = MemoryMarshal.CreateReadOnlySpan(ref spanRef, utf8Length);
+            var status = Utf8.ToUtf16(src, buffer, out _, out var strLength, replaceInvalidSequences: false);
+            if (status != OperationStatus.Done)
+            {
+                ArchiveSerializationException.ThrowFailedEncoding(status);
+            }
+            Advance(utf8Length);
+            return new string(buffer.AsSpan(0, strLength));
         }
-        else
+        finally
         {
-            var max = unchecked((RemainingBytes + 1) * 3);
-            if (max < 0)
-                max = int.MaxValue;
-            if (max < utf16Length)
-            {
-                ArchiveSerializationException.ThrowInsufficientBufferUnless(utf8Length);
-            }
-
-            unsafe
-            {
-                fixed (byte* p = &Unsafe.Add(ref spanRef, sizeof(int)))
-                {
-                    str = string.Create(
-                        utf16Length,
-                        (Ptr: (IntPtr)p, Length: utf16Length),
-                        static (dest, state) =>
-                        {
-                            var src = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>((byte*)state.Ptr), state.Length);
-                            var status = Utf8.ToUtf16(src, dest, out _, out _, replaceInvalidSequences: false);
-                            if (status != OperationStatus.Done)
-                            {
-                                ArchiveSerializationException.ThrowFailedEncoding(status);
-                            }
-                        }
-                    );
-                }
-            }
+            ArrayPool<char>.Shared.Return(buffer);
         }
-
-        Advance(utf8Length + 4);
-        return str;
     }
 }
