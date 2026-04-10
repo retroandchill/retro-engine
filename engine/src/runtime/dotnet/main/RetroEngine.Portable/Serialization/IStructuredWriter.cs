@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Strings;
 
@@ -28,6 +29,7 @@ public interface IStructuredWriter
     void WriteNull();
     void Write(bool value);
     void Write(char value);
+    void Write(Rune value);
     void Write(byte value);
     void Write(sbyte value);
     void Write(short value);

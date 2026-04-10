@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
+using System.Text;
 using System.Text.Json;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Stringification;
@@ -227,6 +229,13 @@ public ref struct StructuredJsonReader(ReadOnlySpan<byte> bytes, JsonReaderOptio
     public char ReadChar()
     {
         return ReadString()[0];
+    }
+
+    public Rune ReadRune()
+    {
+        var str = ReadString();
+        var result = Rune.DecodeFromUtf16(str, out var rune, out _);
+        return result == OperationStatus.Done ? rune : throw new JsonException("Expected valid UTF-16 rune");
     }
 
     public byte ReadByte()

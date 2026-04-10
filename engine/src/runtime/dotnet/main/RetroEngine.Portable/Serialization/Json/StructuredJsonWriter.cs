@@ -89,6 +89,11 @@ public readonly struct StructuredJsonWriter(Utf8JsonWriter writer) : IStructured
         writer.WriteStringValue(new ReadOnlySpan<char>(ref value));
     }
 
+    public void Write(Rune value)
+    {
+        writer.WriteStringValue(value.ToString());
+    }
+
     public void Write(byte value)
     {
         writer.WriteNumberValue(value);

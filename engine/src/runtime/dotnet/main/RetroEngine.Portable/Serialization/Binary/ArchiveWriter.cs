@@ -9,9 +9,22 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Unicode;
+using RetroEngine.Portable.Serialization.Binary.Utilities;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Portable.Serialization.Binary;
+
+public static class ArchiveWriter
+{
+    public static ArchiveWriter<TBufferWriter> Create<TBufferWriter>(
+        ref TBufferWriter bufferWriter,
+        ArchiveSerializerState state
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        return new ArchiveWriter<TBufferWriter>(ref bufferWriter, state);
+    }
+}
 
 public ref struct ArchiveWriter<TBufferWriter>
     where TBufferWriter : IBufferWriter<byte>
@@ -112,7 +125,7 @@ public ref struct ArchiveWriter<TBufferWriter>
         if (count == 0)
             return;
 
-        var rest = _bufferStart - count;
+        var rest = BufferLength - count;
         if (rest < 0)
         {
             throw new ArchiveSerializationException(BufferLimitReached);
@@ -432,7 +445,64 @@ public ref struct ArchiveWriter<TBufferWriter>
             ArchiveSerializationException.ThrowFailedEncoding(status);
         }
 
-        Unsafe.WriteUnaligned(ref destPointer, ~bytesWritten);
-        Advance(maxUtf8Size + sizeof(int));
+        if (!IsByteSwapping)
+            Unsafe.WriteUnaligned(ref destPointer, ~bytesWritten);
+        else
+            Unsafe.WriteUnaligned(ref destPointer, BinaryPrimitives.ReverseEndianness(~bytesWritten));
+        Advance(bytesWritten + sizeof(int));
+    }
+
+    public void Write<T>(in T value)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void WriteUnmanaged<T>(in T value)
+        where T : unmanaged
+    {
+        if (BinaryHandling.IsBlittable<T>())
+        {
+            var size = Unsafe.SizeOf<T>();
+            ref var spanRef = ref GetSpanReference(size);
+            if (IsByteSwapping)
+            {
+                Unsafe.WriteUnaligned(ref spanRef, BinaryHandling.ReverseEndianness(value));
+            }
+            else
+            {
+                Unsafe.WriteUnaligned(ref spanRef, value);
+            }
+
+            Advance(size);
+            return;
+        }
+
+        if (typeof(T) == typeof(bool))
+        {
+            Write(Unsafe.BitCast<T, bool>(value));
+            return;
+        }
+
+        if (typeof(T) == typeof(Name))
+        {
+            Write(Unsafe.BitCast<T, Name>(value));
+            return;
+        }
+
+        if (typeof(T) == typeof(Guid))
+        {
+            Write(Unsafe.BitCast<T, Guid>(value));
+            return;
+        }
+
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (typeof(T) == typeof(DateTimeOffset))
+        {
+            Write(Unsafe.BitCast<T, DateTimeOffset>(value));
+            return;
+        }
+
+        // Fallback: if we don't have a known-type we'll go through the regular serialization path
+        Write(in value);
     }
 }
