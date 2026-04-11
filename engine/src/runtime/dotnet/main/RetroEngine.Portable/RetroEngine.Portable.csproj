@@ -11,11 +11,11 @@
         <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     </PropertyGroup>
     <ItemGroup>
+        <ProjectReference Include="..\MagicArchive.SourceGenerator\MagicArchive.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\MagicArchive\MagicArchive.csproj" />
         <ProjectReference Include="..\RetroEngine.Interop\RetroEngine.Interop.csproj" />
         <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
         <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        <ProjectReference Include="$(RetroEngineInteropProj)" />
         <ProjectReference Include="..\ZParse\ZParse.csproj" />
     </ItemGroup>
     <ItemGroup>

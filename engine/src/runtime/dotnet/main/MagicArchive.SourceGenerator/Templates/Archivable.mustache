@@ -1,0 +1,61 @@
+#nullable enable
+using System;
+using MagicArchive;
+using MagicArchive.Formatters;
+
+namespace {{Namespace}};
+
+partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
+{
+    static {{Name}}()
+    {
+        ArchiveFormatterRegistry.Register<{{Name}}>();
+        StaticInit();
+    }
+
+    static partial void StaticInit();
+
+    static void IArchivable.RegisterFormatters()
+    {
+        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}>())
+            ArchiveFormatterRegistry.Register<{{Name}}>();
+        {{#IsStruct}}
+        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}?>())
+            ArchiveFormatterRegistry.Register(new NullableFormatter<{{Name}}>());
+        {{/IsStruct}}
+        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}[]>())
+            ArchiveFormatterRegistry.Register(new ArrayFormatter<{{Name}}>());
+    }
+    {{^IsCustom}}
+
+    static void IArchivable<{{Name}}>.Serialize<TBufferWrite>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
+    {
+        {{^IsStruct}}
+        if (value is null)
+        {
+            writer.WriteNullObjectHeader();
+            return;
+        }
+
+        {{/IsStruct}}
+
+        throw new NotImplementedException();
+    }
+
+    static void IArchivable<{{Name}}>.Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
+    {
+        if (!reader.TryReadObjectHeader(out var count))
+        {
+            {{#IsStruct}}
+            ArchiveSerializationException.ThrowDeserializeObjectIsNull("{{Name}}");
+            {{/IsStruct}}
+            {{^IsStruct}}
+            value = null;
+            return;
+            {{/IsStruct}}
+        }
+
+        throw new NotImplementedException();
+    }
+    {{/IsCustom}}
+}

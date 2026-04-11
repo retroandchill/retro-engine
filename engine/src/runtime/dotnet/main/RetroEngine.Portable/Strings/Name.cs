@@ -3,7 +3,6 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -11,7 +10,6 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MagicArchive;
-using MagicArchive.Formatters;
 using MessagePack;
 using RetroEngine.Interop;
 using RetroEngine.Portable.Serialization.Json;
@@ -140,14 +138,14 @@ public enum FindName : byte
 [StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(NameJsonConverter))]
 [MessagePackFormatter(typeof(NameMessagePackFormatter))]
+[Archivable(GenerateType.Custom)]
 public readonly partial struct Name
     : IEquatable<Name>,
         IEquatable<string>,
         IEquatable<ReadOnlySpan<char>>,
         IComparable<Name>,
         IEqualityOperators<Name, Name, bool>,
-        IEqualityOperators<Name, string?, bool>,
-        IArchivable<Name>
+        IEqualityOperators<Name, string?, bool>
 {
     [PublicAPI]
     public const int MaxLength = 1024;
@@ -418,26 +416,10 @@ public readonly partial struct Name
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf16")]
     private static partial int NativeToString(Name name, ReadOnlySpan<char> buffer, int bufferLength);
 
-    static Name()
-    {
-        RegisterFormatters();
-        StaticInit();
-    }
-
-    static partial void StaticInit();
-
-    public static void RegisterFormatters()
-    {
-        if (!ArchiveFormatterRegistry.IsRegistered<Name>())
-            ArchiveFormatterRegistry.Register<Name>();
-        if (!ArchiveFormatterRegistry.IsRegistered<Name?>())
-            ArchiveFormatterRegistry.Register(new NullableFormatter<Name>());
-        if (!ArchiveFormatterRegistry.IsRegistered<Name[]>())
-            ArchiveFormatterRegistry.Register(new ArrayFormatter<Name>());
-    }
-
-    public static void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Name value)
-        where TBufferWriter : IBufferWriter<byte>
+    static void IArchivable<Name>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in Name value
+    )
     {
         Span<byte> buffer = stackalloc byte[MaxRenderedLength];
         var writtenLength = value.ToUtf8(buffer);
@@ -459,11 +441,11 @@ public readonly partial struct Name
         writer.Advance(writtenLength + sizeof(int));
     }
 
-    public static void Deserialize(ref ArchiveReader reader, scoped ref Name value)
+    static void IArchivable<Name>.Deserialize(ref ArchiveReader reader, scoped ref Name value)
     {
         if (!reader.TryReadCollectionHeader(out var length))
         {
-            ArchiveSerializationException.ThrowDeserializeObjectIsNull("Name");
+            ArchiveSerializationException.ThrowDeserializeObjectIsNull(nameof(Name));
         }
 
         ref var spanRef = ref reader.GetSpanReference(length);
