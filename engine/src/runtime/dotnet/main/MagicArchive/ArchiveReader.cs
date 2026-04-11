@@ -565,6 +565,22 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? ReadArchivable<T>()
+        where T : IArchivable<T>
+    {
+        T? value = default;
+        ReadArchivable(ref value);
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadArchivable<T>(ref T? value)
+        where T : IArchivable<T>
+    {
+        T.Deserialize(ref this, ref value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? Read<T>()
     {
         if (BinaryHandling.IsBlittable<T>())

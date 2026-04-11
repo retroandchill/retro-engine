@@ -1,0 +1,423 @@
+// // @file TypeMetadata.cs
+// //
+// // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+// // Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Retro.SourceGeneratorUtilities.Utilities.Attributes;
+
+namespace MagicArchive.SourceGenerator.Model;
+
+public enum ClassType
+{
+    Class,
+    Struct,
+    Record,
+    RecordStruct,
+    Interface,
+}
+
+public class TypeMetadata
+{
+    private DiagnosticDescriptor? _ctorInvalid;
+
+    public GenerateType GenerateType { get; }
+    public SerializeLayout SerializeLayout { get; }
+    public INamedTypeSymbol Symbol { get; }
+    public string Namespace { get; }
+    public ClassType ClassType { get; }
+    public string Name { get; }
+    public string NullableName { get; }
+    public ImmutableArray<MemberMetadata> Members { get; private set; }
+    public int MemberCount => Members.Length;
+    public bool IsValueType { get; }
+    public bool IsInterfaceOrAbstract { get; }
+    public bool IsUnion { get; }
+
+    public bool IsCustom => GenerateType is GenerateType.Custom;
+    public bool UsesEmptyConstructor => Constructor is null || Constructor.Parameters.IsEmpty;
+
+    public IMethodSymbol? Constructor { get; }
+
+    public TypeMetadata(INamedTypeSymbol symbol)
+    {
+        Symbol = symbol;
+
+        symbol.TryGetArchivableType(out var generateType, out var serializeLayout);
+        GenerateType = generateType;
+        SerializeLayout = serializeLayout;
+
+        Namespace = symbol.ContainingNamespace.ToDisplayString();
+        ClassType = GetClassType();
+        Name = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        NullableName = symbol.IsValueType ? Name : $"{Name}?";
+
+        Constructor = ChooseConstructor(symbol);
+
+        Members =
+        [
+            .. symbol
+                .GetAllMembers()
+                .Where(x =>
+                    x
+                        is (IFieldSymbol or IPropertySymbol)
+                            and { IsStatic: false, IsImplicitlyDeclared: false, CanBeReferencedByName: true }
+                )
+                .Reverse()
+                .DistinctBy(x => x.Name)
+                .Reverse()
+                .Where(x =>
+                {
+                    var include = x.HasAttribute<ArchiveIncludeAttribute>();
+                    var ignore = x.HasAttribute<ArchiveIgnoreAttribute>();
+                    if (ignore)
+                        return false;
+                    if (include)
+                        return true;
+                    return x.DeclaredAccessibility is Accessibility.Public;
+                })
+                .Where(x =>
+                {
+                    if (x is IPropertySymbol p)
+                    {
+                        if (p.GetMethod is null && p.SetMethod is not null)
+                            return false;
+
+                        if (p.IsIndexer)
+                            return false;
+                    }
+
+                    return true;
+                })
+                .Select((x, i) => new MemberMetadata(x, Constructor, i))
+                .OrderBy(x => x.Order),
+        ];
+
+        IsValueType = symbol.IsValueType;
+        IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
+        IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
+    }
+
+    private ClassType GetClassType()
+    {
+        if (Symbol.TypeKind == TypeKind.Interface)
+            return ClassType.Interface;
+
+        if (Symbol.IsValueType)
+        {
+            return Symbol.IsRecord ? ClassType.RecordStruct : ClassType.Struct;
+        }
+
+        return Symbol.IsRecord ? ClassType.Record : ClassType.Class;
+    }
+
+    private IMethodSymbol? ChooseConstructor(INamedTypeSymbol symbol)
+    {
+        var ctors = symbol.InstanceConstructors.Where(x => !x.IsImplicitlyDeclared).ToArray();
+
+        switch (ctors.Length)
+        {
+            case 0:
+                return null;
+            case 1:
+                return ctors[0];
+            default:
+            {
+                var ctorsWithAttribute = ctors.Where(x => x.HasAttribute<ArchivableConstructorAttribute>()).ToArray();
+
+                switch (ctorsWithAttribute.Length)
+                {
+                    case 0:
+                        _ctorInvalid = DiagnosticDescriptors.MultipleCtorWithoutAttribute;
+                        return null;
+                    case 1:
+                        return ctorsWithAttribute[0];
+                    default:
+                        _ctorInvalid = DiagnosticDescriptors.MultipleCtorAttribute;
+                        return null;
+                }
+            }
+        }
+    }
+
+    public bool Validate(TypeDeclarationSyntax syntax, SourceProductionContext context)
+    {
+        var noError = true;
+
+        switch (GenerateType)
+        {
+            case GenerateType.NoGenerate or GenerateType.Custom:
+                return true;
+            case GenerateType.Collection:
+                // TODO: We'll do collections later
+                return false;
+            case GenerateType.CircularReference when !UsesEmptyConstructor:
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.CircularReferenceOnlyAllowsParameterlessConstructor,
+                        syntax.Identifier.GetLocation(),
+                        Symbol.Name
+                    )
+                );
+                return false;
+        }
+
+        if (Symbol.IsRefLikeType)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(DiagnosticDescriptors.TypeIsRefStruct, syntax.Identifier.GetLocation(), Symbol.Name)
+            );
+            return false;
+        }
+
+        if (IsInterfaceOrAbstract && !IsUnion)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(DiagnosticDescriptors.AbstractMustUnion, syntax.Identifier.GetLocation(), Symbol.Name)
+            );
+            noError = false;
+        }
+
+        if (_ctorInvalid != null)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(_ctorInvalid, syntax.Identifier.GetLocation(), Symbol.Name));
+            noError = false;
+        }
+
+        if (Constructor is not null)
+        {
+            foreach (var parameter in Constructor.Parameters)
+            {
+                if (Members.ContainsConstructorParameter(parameter))
+                    continue;
+                var location = Constructor.Locations.FirstOrDefault() ?? syntax.Identifier.GetLocation();
+
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.ConstructorHasNoMatchedParameter,
+                        location,
+                        Symbol.Name,
+                        parameter.Name
+                    )
+                );
+                noError = false;
+            }
+        }
+
+        foreach (var item in Members)
+        {
+            if (item.IsField && ((IFieldSymbol)item.Symbol).IsReadOnly && !item.IsConstructorParameter)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.ReadOnlyFieldMustBeConstructorMember,
+                        item.GetLocation(syntax),
+                        Symbol.Name,
+                        item.Name
+                    )
+                );
+                noError = false;
+            }
+            else if (item is { SuppressDefaultInitialization: true, IsAssignable: false })
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.SuppressDefaultInitializationMustBeSettable,
+                        item.GetLocation(syntax),
+                        Symbol.Name,
+                        item.Name
+                    )
+                );
+                noError = false;
+            }
+        }
+
+        if (Symbol.BaseType != null)
+        {
+            // Member override member can't annotate[Ignore][Include]
+            foreach (var item in Symbol.GetAllMembers(withoutOverride: false))
+            {
+                if (item.IsOverride)
+                {
+                    var include = item.HasAttribute<ArchiveIncludeAttribute>();
+                    var ignore = item.HasAttribute<ArchiveIgnoreAttribute>();
+                    if (include || ignore)
+                    {
+                        var location = item.Locations.FirstOrDefault() ?? syntax.Identifier.GetLocation();
+
+                        var attr = include ? "ArchiveInclude" : "ArchiveIgnore";
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.OverrideMemberCantAddAnnotation,
+                                location,
+                                Symbol.Name,
+                                item.Name,
+                                attr
+                            )
+                        );
+                        noError = false;
+                    }
+                }
+            }
+
+            // inherit type can not serialize parent private member
+            foreach (var item in Symbol.GetParentMembers())
+            {
+                var include = item.HasAttribute<ArchiveIncludeAttribute>();
+                var ignore = item.HasAttribute<ArchiveIgnoreAttribute>();
+                if (!include || item.DeclaredAccessibility != Accessibility.Private)
+                    continue;
+                var location = item.Locations.FirstOrDefault() ?? syntax.Identifier.GetLocation();
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.InheritTypeCanNotIncludeParentPrivateMember,
+                        location,
+                        Symbol.Name,
+                        item.Name
+                    )
+                );
+                noError = false;
+            }
+        }
+
+        // ALl Members
+        if (Members.Length >= 250) // MemoryPackCode.Reserved1
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.MembersCountOver250,
+                    syntax.Identifier.GetLocation(),
+                    Symbol.Name,
+                    Members.Length
+                )
+            );
+            noError = false;
+        }
+
+        // exists can't serialize member
+        foreach (var item in Members)
+        {
+            if (item.Kind == MemberKind.NonSerializable)
+            {
+                if (
+                    item.MemberType.SpecialType
+                        is SpecialType.System_Object
+                            or SpecialType.System_Array
+                            or SpecialType.System_Delegate
+                            or SpecialType.System_MulticastDelegate
+                    || item.MemberType.TypeKind == TypeKind.Delegate
+                )
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.MemberCantSerializeType,
+                            item.GetLocation(syntax),
+                            Symbol.Name,
+                            item.Name,
+                            item.MemberType.FullyQualifiedToString()
+                        )
+                    );
+                    noError = false;
+                }
+                else
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.MemberIsNotArchivable,
+                            item.GetLocation(syntax),
+                            Symbol.Name,
+                            item.Name,
+                            item.MemberType.FullyQualifiedToString()
+                        )
+                    );
+                    noError = false;
+                }
+            }
+            else if (item.Kind == MemberKind.RefLike)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.MemberIsRefStruct,
+                        item.GetLocation(syntax),
+                        Symbol.Name,
+                        item.Name,
+                        item.MemberType.FullyQualifiedToString()
+                    )
+                );
+                noError = false;
+            }
+        }
+
+        // order
+        if (SerializeLayout == SerializeLayout.Explicit)
+        {
+            // All members must annotate MemoryPackOrder
+            foreach (var item in Members)
+            {
+                if (!item.HasExplicitOrder)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.AllMembersMustAnnotateOrder,
+                            item.GetLocation(syntax),
+                            Symbol.Name,
+                            item.Name
+                        )
+                    );
+                    noError = false;
+                }
+            }
+
+            // don't allow duplicate order
+            var orderSet = new Dictionary<int, MemberMetadata>(Members.Length);
+            foreach (var item in Members)
+            {
+                if (orderSet.TryGetValue(item.Order, out var duplicateMember))
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.DuplicateOrderDoesNotAllow,
+                            item.GetLocation(syntax),
+                            Symbol.Name,
+                            item.Name,
+                            duplicateMember.Name
+                        )
+                    );
+                    noError = false;
+                }
+                else
+                {
+                    orderSet.Add(item.Order, item);
+                }
+            }
+
+            // Annotated MemoryPackOrder must be continuous number from zero if GenerateType.Object.
+            if (noError && GenerateType == GenerateType.Object)
+            {
+                var expectedOrder = 0;
+                foreach (var item in Members)
+                {
+                    if (item.Order != expectedOrder)
+                    {
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.AllMembersMustBeContinuousNumber,
+                                item.GetLocation(syntax),
+                                Symbol.Name,
+                                item.Name
+                            )
+                        );
+                        noError = false;
+                        break;
+                    }
+
+                    expectedOrder++;
+                }
+            }
+        }
+
+        return noError;
+    }
+}

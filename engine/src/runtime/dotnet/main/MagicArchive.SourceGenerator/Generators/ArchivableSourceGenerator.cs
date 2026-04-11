@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using HandlebarsDotNet;
+using MagicArchive.SourceGenerator.Formatters;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
@@ -20,6 +21,8 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
     {
         var handlebars = Handlebars.Create();
         handlebars.Configuration.TextEncoder = null;
+        handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
+        handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
         _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
     }
 
@@ -37,30 +40,30 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
                 (ctx, _) =>
                 {
                     var type = (TypeDeclarationSyntax)ctx.TargetNode;
-                    return ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol;
+                    return (Syntax: type, Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol);
                 }
             )
-            .Where(x => x is not null);
+            .Where(x => x.Symbol is not null);
 
-        context.RegisterSourceOutput(provider, Execute!);
+        context.RegisterSourceOutput(
+            provider,
+            (ctx, t) =>
+            {
+                Execute(ctx, t.Syntax, t.Symbol!);
+            }
+        );
     }
 
-    private void Execute(SourceProductionContext context, INamedTypeSymbol typeSymbol)
+    private void Execute(SourceProductionContext context, TypeDeclarationSyntax syntax, INamedTypeSymbol typeSymbol)
     {
-        var (type, _) = typeSymbol.GetArchivableInfo();
-        if (type == GenerateType.NoGenerate)
+        var typeMetadata = new TypeMetadata(typeSymbol);
+        if (typeMetadata.GenerateType == GenerateType.NoGenerate)
             return;
 
-        var templateParams = new
-        {
-            Namespace = typeSymbol.ContainingNamespace.ToDisplayString(),
-            ClassType = GetClassType(typeSymbol),
-            typeSymbol.Name,
-            NullableName = typeSymbol.IsValueType ? typeSymbol.Name : $"{typeSymbol.Name}?",
-            IsStruct = typeSymbol.IsValueType,
-            IsCustom = type == GenerateType.Custom,
-        };
-        context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(templateParams));
+        if (!typeMetadata.Validate(syntax, context))
+            return;
+
+        context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
     }
 
     private static string GetClassType(INamedTypeSymbol symbol)

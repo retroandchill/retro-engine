@@ -444,6 +444,13 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteArchivable<T>(in T value)
+        where T : IArchivable<T>
+    {
+        T.Serialize(ref this, in value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T>(in T value)
     {
         if (BinaryHandling.IsBlittable<T>())

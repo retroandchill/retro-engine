@@ -3,6 +3,8 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MagicArchive;
+
 namespace RetroEngine.Portable.Localization.Formatting;
 
 public enum NumberFormatType : byte
@@ -22,7 +24,8 @@ public enum RoundingMode
     ToPositiveInfinity,
 }
 
-public record NumberFormattingOptions
+[Archivable]
+public partial record NumberFormattingOptions
 {
     private const int DoubleMax10Exp = 308;
     private const int DoubleDigits10Exp = 15;

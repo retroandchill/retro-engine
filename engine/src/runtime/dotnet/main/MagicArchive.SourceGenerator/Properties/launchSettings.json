@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MemoryPack.Generator": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\RetroEngine.Portable\\RetroEngine.Portable.csproj"
+    }
+  }
+}

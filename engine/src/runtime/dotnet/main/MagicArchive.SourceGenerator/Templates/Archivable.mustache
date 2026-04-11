@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using MagicArchive;
+using System.Buffers;
 using MagicArchive.Formatters;
 
 namespace {{Namespace}};
@@ -19,40 +20,43 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
     {
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}>())
             ArchiveFormatterRegistry.Register<{{Name}}>();
-        {{#IsStruct}}
+        {{#IsValueType}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}?>())
             ArchiveFormatterRegistry.Register(new NullableFormatter<{{Name}}>());
-        {{/IsStruct}}
+        {{/IsValueType}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}[]>())
             ArchiveFormatterRegistry.Register(new ArrayFormatter<{{Name}}>());
     }
     {{^IsCustom}}
 
-    static void IArchivable<{{Name}}>.Serialize<TBufferWrite>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
+    static void IArchivable<{{Name}}>.Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
     {
-        {{^IsStruct}}
+        {{^IsValueType}}
         if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
         }
 
-        {{/IsStruct}}
+        {{/IsValueType}}
 
-        throw new NotImplementedException();
+        writer.WriteObjectHeader({{MemberCount}});
+        {{#Members}}
+        {{MemberWriter}}
+        {{/Members}}
     }
 
     static void IArchivable<{{Name}}>.Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
     {
         if (!reader.TryReadObjectHeader(out var count))
         {
-            {{#IsStruct}}
+            {{#IsValueType}}
             ArchiveSerializationException.ThrowDeserializeObjectIsNull("{{Name}}");
-            {{/IsStruct}}
-            {{^IsStruct}}
+            {{/IsValueType}}
+            {{^IsValueType}}
             value = null;
             return;
-            {{/IsStruct}}
+            {{/IsValueType}}
         }
 
         throw new NotImplementedException();

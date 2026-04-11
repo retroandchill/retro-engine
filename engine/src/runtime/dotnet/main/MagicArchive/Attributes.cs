@@ -44,8 +44,30 @@ public sealed class ArchivableAttribute(GenerateType generateType, SerializeLayo
         : this(GenerateType.Object, serializeLayout) { }
 }
 
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = true, Inherited = false)]
+public sealed class ArchivableUnionAttribute(ushort tag, Type type) : Attribute
+{
+    public ushort Tag { get; } = tag;
+    public Type Type { get; } = type;
+}
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public sealed class ArchiveAllowSerializeAttribute : Attribute;
+
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public sealed class ArchiveOrderAttribute(int order) : Attribute
 {
     public int Order { get; } = order;
 }
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class ArchiveIgnoreAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class ArchiveIncludeAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Constructor)]
+public sealed class ArchivableConstructorAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public sealed class SuppressDefaultInitializationAttribute : Attribute;
