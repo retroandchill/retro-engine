@@ -39,10 +39,9 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         }
 
         {{/IsValueType}}
-
         writer.WriteObjectHeader({{MemberCount}});
         {{#Members}}
-        {{MemberWriter}}
+        {{MemberWriter "writer"}}
         {{/Members}}
     }
 
@@ -58,8 +57,32 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             return;
             {{/IsValueType}}
         }
+        {{#RequiresConstruct}}
+        {{^IsValueType}}
 
-        throw new NotImplementedException();
+        value ?? = new {{Name}}();
+        {{/IsValueType}}
+        {{/RequiresConstruct}}
+        {{^RequiresConstruct}}
+
+        {{#PreConstructMembers}}
+        var __{{Name}}__ = count > {{Order}} ? {{MemberReader "reader"}} : {{DefaultValue}};
+        {{/PreConstructMembers}}
+
+        value = new {{Name}}({{ConstructorParameters}})
+        {
+            {{#PreConstructMembers}}
+            {{^IsConstructorParameters}}
+            {{Name}} = __{{Name}}__,
+            {{/IsConstructorParameters}}
+            {{/PreConstructMembers}}
+        };
+        {{/RequiresConstruct}}
+        {{#PostConstructMembers}}
+
+        if (count <= {{Order}}) return;
+        value.{{Name}} = {{MemberReader "reader"}};
+        {{/PostConstructMembers}}
     }
     {{/IsCustom}}
 }

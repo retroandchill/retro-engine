@@ -565,6 +565,20 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T ReadEnum<T>()
+        where T : unmanaged, Enum
+    {
+        return ReadBlittable<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadEnum<T>(ref T value)
+        where T : unmanaged, Enum
+    {
+        value = ReadBlittable<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? ReadArchivable<T>()
         where T : IArchivable<T>
     {

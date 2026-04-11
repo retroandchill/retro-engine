@@ -23,6 +23,8 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         handlebars.Configuration.TextEncoder = null;
         handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
         handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
+        handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
+        handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
         _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
     }
 

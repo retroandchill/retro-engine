@@ -31,10 +31,16 @@ public class TypeMetadata
     public string Name { get; }
     public string NullableName { get; }
     public ImmutableArray<MemberMetadata> Members { get; private set; }
+    public ImmutableArray<MemberMetadata> PreConstructMembers { get; private set; }
+    public ImmutableArray<MemberMetadata> PostConstructMembers { get; private set; }
     public int MemberCount => Members.Length;
     public bool IsValueType { get; }
     public bool IsInterfaceOrAbstract { get; }
     public bool IsUnion { get; }
+    public bool IsRecord { get; }
+    public bool RequiresConstruct => PreConstructMembers.Length > 0 || Constructor is { Parameters.Length: > 0 };
+    public bool HasDefault { get; }
+    public bool HasImplicitConstructor => Constructor is null;
 
     public bool IsCustom => GenerateType is GenerateType.Custom;
     public bool UsesEmptyConstructor => Constructor is null || Constructor.Parameters.IsEmpty;
@@ -95,9 +101,23 @@ public class TypeMetadata
                 .OrderBy(x => x.Order),
         ];
 
+        var preConstructEnd = Members.Length - 1;
+        while (preConstructEnd >= 0)
+        {
+            if (!Members[preConstructEnd].IsAssignable || Members[preConstructEnd].IsConstructorParameter)
+                break;
+
+            preConstructEnd--;
+        }
+
+        PreConstructMembers = Members[..(preConstructEnd + 1)];
+        PostConstructMembers = Members[(preConstructEnd + 1)..];
+
         IsValueType = symbol.IsValueType;
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
+        IsRecord = symbol.IsRecord;
+        HasDefault = Constructor is null || Constructor.Parameters.IsEmpty;
     }
 
     private ClassType GetClassType()
@@ -419,5 +439,15 @@ public class TypeMetadata
         }
 
         return noError;
+    }
+
+    public string EmitConstructorParameters()
+    {
+        return string.Join(
+            ", ",
+            PreConstructMembers
+                .Where(x => x.IsConstructorParameter)
+                .Select(x => $"{x.ConstructorParameterName}: __{x.Name}__")
+        );
     }
 }

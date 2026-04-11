@@ -54,6 +54,8 @@ public class MemberMetadata
     public ISymbol Symbol { get; }
     public string Name { get; }
     public ITypeSymbol MemberType { get; }
+    public INamedTypeSymbol? CustomFormatter { get; }
+    public string? CustomFormatterName { get; }
     public bool IsField { get; }
     public bool IsProperty { get; }
     public bool IsSettable { get; }
@@ -61,15 +63,18 @@ public class MemberMetadata
     public bool IsConstructorParameter { get; }
     public string? ConstructorParameterName { get; }
     public int Order { get; }
+    public int OrderPlusOne => Order + 1;
     public bool HasExplicitOrder { get; }
     public MemberKind Kind { get; }
     public bool SuppressDefaultInitialization { get; }
+    public string DefaultValue { get; }
 
     private MemberMetadata(int order)
     {
         Symbol = null!;
         Name = null!;
         MemberType = null!;
+        DefaultValue = null!;
         Order = order;
         Kind = MemberKind.Blank;
     }
@@ -93,7 +98,17 @@ public class MemberMetadata
         if (constructor is not null)
         {
             IsConstructorParameter = constructor.TryGetConstructorParameter(symbol, out var parameter);
-            ConstructorParameterName = parameter?.Name;
+            if (parameter is not null)
+            {
+                ConstructorParameterName = parameter.Name;
+                var defaultValue = parameter
+                    .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
+                    .OfType<ParameterSyntax>()
+                    .FirstOrDefault(x => x.Identifier.ValueText == parameter.Name)
+                    ?.Default;
+                if (defaultValue is not null)
+                    DefaultValue = defaultValue.Value.ToString();
+            }
         }
         else
         {
@@ -108,6 +123,18 @@ public class MemberMetadata
                 IsSettable = !field.IsReadOnly;
                 IsAssignable = IsSettable && !field.IsRequired;
                 MemberType = field.Type;
+                if (DefaultValue is null)
+                {
+                    var defaultValue = field
+                        .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
+                        .OfType<FieldDeclarationSyntax>()
+                        .SelectMany(x => x.Declaration.Variables)
+                        .Where(x => x.Identifier.ValueText == field.Name && x.Initializer is not null)
+                        .Select(x => x.Initializer!.Value.ToString())
+                        .FirstOrDefault();
+                    if (defaultValue is not null)
+                        DefaultValue = defaultValue;
+                }
                 break;
             case IPropertySymbol property:
                 IsProperty = true;
@@ -115,10 +142,23 @@ public class MemberMetadata
                 IsSettable = !property.IsReadOnly;
                 IsAssignable = IsSettable && property is { IsRequired: false, SetMethod.IsInitOnly: false };
                 MemberType = property.Type;
+                if (DefaultValue is null)
+                {
+                    var defaultValue = property
+                        .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
+                        .OfType<PropertyDeclarationSyntax>()
+                        .Where(x => x.Initializer is not null)
+                        .Select(x => x.Initializer!.Value.ToString())
+                        .FirstOrDefault();
+                    if (defaultValue is not null)
+                        DefaultValue = defaultValue;
+                }
                 break;
             default:
                 throw new ArgumentException("Symbol must be a field or property", nameof(symbol));
         }
+
+        DefaultValue ??= $"default({MemberType.FullyQualifiedToString()})";
 
         // TODO: Eventually we will want to allow for custom formatters, but not right now
 
@@ -276,5 +316,89 @@ public class MemberMetadata
         }
 
         return MemberKind.NonSerializable;
+    }
+
+    public string EmitSerialize(string writer)
+    {
+        // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+        switch (Kind)
+        {
+            case MemberKind.Archivable:
+            case MemberKind.ArchivableArray:
+            case MemberKind.ArchivableList:
+                return $"{writer}.WriteArchivable(value.@{Name});";
+            case MemberKind.Enum:
+                return $"{writer}.WriteEnum(value.@{Name});";
+            case MemberKind.Blank:
+                return "";
+            case MemberKind.CustomFormatter:
+                return $"{writer}.WriteWithFormatter(__{Name}Formatter, value.@{Name});";
+            default:
+                return $"{writer}.Write(value.@{Name});";
+        }
+    }
+
+    public string EmitDeserialize(string reader)
+    {
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+        switch (Kind)
+        {
+            case MemberKind.Archivable:
+                return $"{reader}.ReadArchivable<{MemberType.FullyQualifiedToString()}>()";
+            case MemberKind.Nullable:
+            {
+                var namedNullable = (INamedTypeSymbol)MemberType;
+                return $"{reader}.ReadNullable<{namedNullable.TypeArguments[0].FullyQualifiedToString()}>()";
+            }
+            case MemberKind.Bool:
+                return $"{reader}.ReadBool()";
+            case MemberKind.Char:
+                return $"{reader}.ReadChar()";
+            case MemberKind.Rune:
+                return $"{reader}.ReadRune()";
+            case MemberKind.Byte:
+                return $"{reader}.ReadByte()";
+            case MemberKind.SByte:
+                return $"{reader}.ReadSByte()";
+            case MemberKind.Int16:
+                return $"{reader}.ReadInt16()";
+            case MemberKind.UInt16:
+                return $"{reader}.ReadUInt16()";
+            case MemberKind.Int32:
+                return $"{reader}.ReadInt32()";
+            case MemberKind.UInt32:
+                return $"{reader}.ReadUInt32()";
+            case MemberKind.Int64:
+                return $"{reader}.ReadInt64()";
+            case MemberKind.UInt64:
+                return $"{reader}.ReadUInt64()";
+            case MemberKind.Single:
+                return $"{reader}.ReadSingle()";
+            case MemberKind.Double:
+                return $"{reader}.ReadDouble()";
+            case MemberKind.Guid:
+                return $"{reader}.ReadGuid()";
+            case MemberKind.DateTimeOffset:
+                return $"{reader}.ReadDateTimeOffset()";
+            case MemberKind.String:
+                return $"{reader}.ReadString()";
+            case MemberKind.Array:
+            {
+                var arrayType = (IArrayTypeSymbol)MemberType;
+                var elemType = arrayType.ElementType;
+                return $"{reader}.ReadArray<{elemType.FullyQualifiedToString()}>()";
+            }
+            case MemberKind.Enum:
+                return $"{reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
+            case MemberKind.Blank:
+                break;
+            case MemberKind.CustomFormatter:
+            {
+                var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                return $"reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter)";
+            }
+        }
+
+        return $"{reader}.Read<{MemberType.FullyQualifiedToString()}>();";
     }
 }
