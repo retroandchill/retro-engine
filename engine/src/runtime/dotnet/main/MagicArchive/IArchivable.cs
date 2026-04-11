@@ -5,7 +5,12 @@
 
 using System.Buffers;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
+
+public interface IFixedSizeArchivable
+{
+    static abstract int Size { get; }
+}
 
 public interface IArchivable
 {

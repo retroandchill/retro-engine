@@ -32,8 +32,7 @@
     };
 
     var knownStructTypeNames = knownStructTypes
-        .Select(x => x.Name)
-        .Concat(["Name"]);
+        .Select(x => x.Name);
 
     var knownTypes = new Type[]
     {
@@ -45,7 +44,6 @@
 #>
 using RetroEngine.Portable.Serialization.Binary.Formatters;
 using RetroEngine.Portable.Serialization.Binary;
-using RetroEngine.Portable.Strings;
 using System.Collections;
 using System.Globalization;
 using System.Text;

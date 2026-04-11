@@ -7,10 +7,9 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
-using RetroEngine.Portable.Serialization.Binary;
-using RetroEngine.Portable.Serialization.Binary.Utilities;
+using MagicArchive.Utilities;
 
-namespace RetroEngine.Portable.Test.Serialization;
+namespace MagicArchive.Test;
 
 public class ArchiveWriterTest
 {

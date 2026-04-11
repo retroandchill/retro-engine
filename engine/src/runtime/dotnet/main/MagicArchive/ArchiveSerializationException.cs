@@ -6,7 +6,7 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public sealed class ArchiveSerializationException : Exception
 {

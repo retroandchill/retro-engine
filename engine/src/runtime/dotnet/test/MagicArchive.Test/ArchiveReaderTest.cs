@@ -5,9 +5,8 @@
 
 using System.Buffers;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Serialization.Binary;
 
-namespace RetroEngine.Portable.Test.Serialization;
+namespace MagicArchive.Test;
 
 public class ArchiveReaderTest
 {
@@ -19,12 +18,10 @@ public class ArchiveReaderTest
 
         Span<byte> bytes = stackalloc byte[8];
         MemoryMarshal.AsRef<ulong>(bytes) = writtenValue;
-
-        using var settings = ArchiveSerializerStatePool.Rent(
+        var readValue = ArchiveSerializer.Deserialize<ulong>(
+            bytes,
             new ArchiveSerializerOptions { ByteOrder = ByteOrder.BigEndian }
         );
-        using var reader = new ArchiveReader(bytes, settings);
-        var readValue = reader.ReadUInt64();
         Assert.That(readValue, Is.EqualTo(expectedValue));
     }
 

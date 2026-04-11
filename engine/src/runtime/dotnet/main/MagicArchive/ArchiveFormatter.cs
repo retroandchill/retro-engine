@@ -5,7 +5,7 @@
 
 using System.Buffers;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public interface IArchiveFormatter
 {

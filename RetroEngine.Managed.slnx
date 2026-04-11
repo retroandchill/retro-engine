@@ -13,6 +13,7 @@
   <Folder Name="/engine/src/runtime/" />
   <Folder Name="/engine/src/runtime/dotnet/" />
   <Folder Name="/engine/src/runtime/dotnet/main/">
+    <Project Path="engine/src/runtime/dotnet/main/MagicArchive/MagicArchive.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Core/RetroEngine.Core.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Interop/RetroEngine.Interop.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Logging/RetroEngine.Logging.csproj" />
@@ -23,6 +24,7 @@
     <Project Path="engine/src/runtime/dotnet/main/ZParse/ZParse.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/dotnet/test/">
+    <Project Path="engine/src/runtime/dotnet/test/MagicArchive.Test/MagicArchive.Test.csproj" />
     <Project Path="engine/src/runtime/dotnet/test/RetroEngine.Portable.Test/RetroEngine.Portable.Test.csproj" />
   </Folder>
   <Folder Name="/games/" />

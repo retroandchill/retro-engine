@@ -6,7 +6,7 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 
-namespace RetroEngine.Portable.Serialization.Binary.Formatters;
+namespace MagicArchive.Formatters;
 
 internal sealed class ErrorArchiveFormatter(Type type, string? message = null) : IArchiveFormatter
 {

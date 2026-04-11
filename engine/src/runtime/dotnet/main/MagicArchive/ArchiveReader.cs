@@ -10,10 +10,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Unicode;
 using LinkDotNet.StringBuilder;
-using RetroEngine.Portable.Serialization.Binary.Utilities;
-using RetroEngine.Portable.Strings;
+using MagicArchive.Utilities;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public ref struct ArchiveReader : IDisposable
 {
@@ -404,21 +403,6 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Name ReadName()
-    {
-        if (!TryReadCollectionHeader(out var length))
-        {
-            ArchiveSerializationException.ThrowDeserializeObjectIsNull("Name");
-        }
-
-        ref var spanRef = ref GetSpanReference(length);
-        var span = MemoryMarshal.CreateReadOnlySpan(ref spanRef, length);
-        var value = new Name(span);
-        Advance(length);
-        return value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string? ReadString()
     {
         if (!TryReadCollectionHeader(out var length))
@@ -592,6 +576,19 @@ public ref struct ArchiveReader : IDisposable
         var value = default(T)!;
         formatter.Deserialize(ref this, ref value);
         return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Read<T>(ref T? value)
+    {
+        if (BinaryHandling.IsBlittable<T>())
+        {
+            value = ReadBlittable<T>();
+            return;
+        }
+
+        var formatter = GetFormatter<T>();
+        formatter.Deserialize(ref this, ref value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

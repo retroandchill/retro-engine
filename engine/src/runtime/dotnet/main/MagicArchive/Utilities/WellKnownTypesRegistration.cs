@@ -1,14 +1,9 @@
-﻿using System.Collections;
-using System.Globalization;
-using System.Numerics;
-using System.Text;
-using RetroEngine.Portable.Serialization.Binary;
-using RetroEngine.Portable.Serialization.Binary.Formatters;
-using RetroEngine.Portable.Strings;
+﻿using System.Text;
+using MagicArchive.Formatters;
 
 // ReSharper disable BuiltInTypeReferenceStyle
 
-namespace RetroEngine.Portable.Serialization.Binary.Utilities;
+namespace MagicArchive.Utilities;
 
 internal static class WellKnownTypeRegistration
 {
@@ -59,9 +54,6 @@ internal static class WellKnownTypeRegistration
         ArchiveFormatterRegistry.Register(new DateTimeOffsetFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<DateTimeOffset>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<DateTimeOffset>());
-        ArchiveFormatterRegistry.Register(new NameFormatter());
-        ArchiveFormatterRegistry.Register(new ArrayFormatter<Name>());
-        ArchiveFormatterRegistry.Register(new NullableFormatter<Name>());
         ArchiveFormatterRegistry.Register(new StringFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<String>());
     }

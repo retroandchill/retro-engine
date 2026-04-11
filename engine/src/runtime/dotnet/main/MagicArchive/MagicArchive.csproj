@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Update="Utilities\MultiReadExtensions.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>MultiReadExtensions.cs</LastGenOutput>
+      </None>
+      <None Update="Utilities\MultiWriteExtensions.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>MultiWriteExtensions.cs</LastGenOutput>
+      </None>
+      <None Update="Utilities\WellKnownTypesRegistration.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>WellKnownTypesRegistration.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="LinkDotNet.StringBuilder" />
+      <PackageReference Include="ZLinq" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="MagicArchive.Test"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Utilities\WellKnownTypesRegistration.cs">
+        <DependentUpon>WellKnownTypesRegistration.tt</DependentUpon>
+      </Compile>
+    </ItemGroup>
+</Project>

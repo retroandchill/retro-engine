@@ -9,13 +9,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Unicode;
-using RetroEngine.Portable.Serialization.Binary.Utilities;
-using RetroEngine.Portable.Strings;
+using MagicArchive.Utilities;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public static class ArchiveWriter
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArchiveWriter<TBufferWriter> Create<TBufferWriter>(
         ref TBufferWriter bufferWriter,
         ArchiveSerializerState state
@@ -23,6 +23,17 @@ public static class ArchiveWriter
         where TBufferWriter : IBufferWriter<byte>
     {
         return new ArchiveWriter<TBufferWriter>(ref bufferWriter, state);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ArchiveWriter<TBufferWriter> Create<TBufferWriter>(
+        ref TBufferWriter bufferWriter,
+        byte[] firstBufferOfWriter,
+        ArchiveSerializerState state
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        return new ArchiveWriter<TBufferWriter>(ref bufferWriter, firstBufferOfWriter, state);
     }
 }
 
@@ -305,29 +316,6 @@ public ref struct ArchiveWriter<TBufferWriter>
     public void Write(DateTimeOffset value)
     {
         Write(value.ToUnixTimeMilliseconds());
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(Name value)
-    {
-        Span<byte> buffer = stackalloc byte[Name.MaxRenderedLength];
-        var writtenLength = value.ToUtf8(buffer);
-        ref var dest = ref GetSpanReference(writtenLength + sizeof(int));
-        if (!IsByteSwapping)
-        {
-            Unsafe.WriteUnaligned(ref dest, writtenLength);
-        }
-        else
-        {
-            Unsafe.WriteUnaligned(ref dest, BinaryPrimitives.ReverseEndianness(writtenLength));
-        }
-
-        Unsafe.CopyBlockUnaligned(
-            ref Unsafe.Add(ref dest, sizeof(int)),
-            ref MemoryMarshal.GetReference(buffer),
-            (uint)writtenLength
-        );
-        Advance(writtenLength + sizeof(int));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

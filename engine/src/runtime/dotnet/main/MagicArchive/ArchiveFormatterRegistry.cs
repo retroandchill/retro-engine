@@ -5,10 +5,10 @@
 
 using System.Collections.Concurrent;
 using System.Reflection;
-using RetroEngine.Portable.Serialization.Binary.Formatters;
-using RetroEngine.Portable.Serialization.Binary.Utilities;
+using MagicArchive.Formatters;
+using MagicArchive.Utilities;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public static class ArchiveFormatterRegistry
 {
@@ -17,11 +17,6 @@ public static class ArchiveFormatterRegistry
     static ArchiveFormatterRegistry()
     {
         WellKnownTypeRegistration.RegisterWellKnownTypesFormatters();
-    }
-
-    public static ArchiveFormatter<T> GetFormatter<T>()
-    {
-        return Cache<T>.Formatter;
     }
 
     public static void Register<T>()
@@ -33,6 +28,13 @@ public static class ArchiveFormatterRegistry
     public static void Register<T>(ArchiveFormatter<T> formatter)
     {
         Formatters.TryAdd(typeof(T), formatter);
+    }
+
+    public static bool IsRegistered<T>() => Check<T>.Registered;
+
+    public static ArchiveFormatter<T> GetFormatter<T>()
+    {
+        return Cache<T>.Formatter;
     }
 
     private static bool TryInvokeRegisterFormatter(Type type)
@@ -85,7 +87,7 @@ public static class ArchiveFormatterRegistry
                     return;
                 }
 
-                if (TypeHelpers.IsAnonymous(type))
+                if (type.IsAnonymous)
                 {
                     Formatter = new ErrorArchiveFormatter<T>();
                 }

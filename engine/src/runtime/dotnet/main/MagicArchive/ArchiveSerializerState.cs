@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace RetroEngine.Portable.Serialization.Binary;
+namespace MagicArchive;
 
 public static class ArchiveSerializerStatePool
 {
@@ -33,7 +33,8 @@ public static class ArchiveSerializerStatePool
 
 public sealed class ArchiveSerializerState : IDisposable
 {
-    internal static ArchiveSerializerState NullState { get; } = new(true);
+    internal static ArchiveSerializerState NullStateLittleEndian { get; } = new(ByteOrder.LittleEndian);
+    internal static ArchiveSerializerState NullStateBigEndian { get; } = new(ByteOrder.BigEndian);
 
     private uint _nextId;
     private readonly Dictionary<object, uint> _objectToRef;
@@ -47,11 +48,15 @@ public sealed class ArchiveSerializerState : IDisposable
         _nextId = 0;
     }
 
-    // ReSharper disable once UnusedParameter.Local
-    private ArchiveSerializerState(bool _)
+    private ArchiveSerializerState(ByteOrder byteOrder)
     {
         _objectToRef = null!;
-        Options = ArchiveSerializerOptions.Default;
+        Options = byteOrder switch
+        {
+            ByteOrder.LittleEndian => ArchiveSerializerOptions.LittleEndian,
+            ByteOrder.BigEndian => ArchiveSerializerOptions.BigEndian,
+            _ => throw new ArgumentOutOfRangeException(nameof(byteOrder), byteOrder, null),
+        };
         _nextId = 0;
     }
 

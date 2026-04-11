@@ -5,9 +5,9 @@
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Serialization.Binary.Utilities;
+using MagicArchive.Utilities;
 
-namespace RetroEngine.Portable.Serialization.Binary.Formatters;
+namespace MagicArchive.Formatters;
 
 public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
 {
