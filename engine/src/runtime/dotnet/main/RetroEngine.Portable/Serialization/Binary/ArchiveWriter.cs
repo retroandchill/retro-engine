@@ -152,6 +152,12 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IArchiveFormatter<T> GetFormatter<T>()
+    {
+        return ArchiveFormatterRegistry.GetFormatter<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteObjectHeader(byte memberCount)
     {
         if (memberCount >= ArchiveCodes.Reserved1)
@@ -219,87 +225,67 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(char value)
     {
-        Write((ushort)value);
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(byte value)
     {
-        ref var spanRef = ref GetSpanReference(1);
-        spanRef = value;
-        Advance(1);
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(sbyte value)
     {
-        Write(Unsafe.BitCast<sbyte, byte>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(short value)
     {
-        Write(Unsafe.BitCast<short, ushort>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(ushort value)
     {
-        const int size = sizeof(ushort);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(int value)
     {
-        Write(Unsafe.BitCast<int, uint>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(uint value)
     {
-        const int size = sizeof(uint);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(long value)
     {
-        Write(Unsafe.BitCast<long, ulong>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(ulong value)
     {
-        const int size = sizeof(ulong);
-        ref var spanRef = ref GetSpanReference(size);
-        if (!IsByteSwapping)
-            Unsafe.WriteUnaligned(ref spanRef, value);
-        else
-            Unsafe.WriteUnaligned(ref spanRef, BinaryPrimitives.ReverseEndianness(value));
-        Advance(size);
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(float value)
     {
-        Write(Unsafe.BitCast<float, uint>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(double value)
     {
-        Write(Unsafe.BitCast<double, ulong>(value));
+        WriteBlittable(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -358,7 +344,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(ReadOnlySpan<char> value)
+    public void Write(scoped ReadOnlySpan<char> value)
     {
         if (_serializeStringAsUtf8)
         {
@@ -383,7 +369,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteUtf16(ReadOnlySpan<char> value)
+    public void WriteUtf16(scoped ReadOnlySpan<char> value)
     {
         if (value.Length == 0)
         {
@@ -428,7 +414,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteUtf8(ReadOnlySpan<char> value)
+    public void WriteUtf8(scoped ReadOnlySpan<char> value)
     {
         if (value.Length == 0)
         {
@@ -452,57 +438,111 @@ public ref struct ArchiveWriter<TBufferWriter>
         Advance(bytesWritten + sizeof(int));
     }
 
-    public void Write<T>(in T value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void WriteBlittable<T>(in T value)
     {
-        throw new NotImplementedException();
+        var size = Unsafe.SizeOf<T>();
+        ref var spanRef = ref GetSpanReference(size);
+        if (IsByteSwapping)
+        {
+            Unsafe.WriteUnaligned(ref spanRef, BinaryHandling.ReverseEndianness(value));
+        }
+        else
+        {
+            Unsafe.WriteUnaligned(ref spanRef, value);
+        }
+
+        Advance(size);
     }
 
-    public void WriteUnmanaged<T>(in T value)
-        where T : unmanaged
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write<T>(in T value)
     {
         if (BinaryHandling.IsBlittable<T>())
         {
-            var size = Unsafe.SizeOf<T>();
-            ref var spanRef = ref GetSpanReference(size);
-            if (IsByteSwapping)
-            {
-                Unsafe.WriteUnaligned(ref spanRef, BinaryHandling.ReverseEndianness(value));
-            }
-            else
-            {
-                Unsafe.WriteUnaligned(ref spanRef, value);
-            }
-
-            Advance(size);
+            WriteBlittable(in value);
             return;
         }
 
-        if (typeof(T) == typeof(bool))
+        var formatter = GetFormatter<T>();
+        formatter.Serialize(ref this, in value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write<T>(in T? value)
+        where T : struct
+    {
+        if (!value.HasValue)
         {
-            Write(Unsafe.BitCast<T, bool>(value));
+            WriteNullObjectHeader();
             return;
         }
 
-        if (typeof(T) == typeof(Name))
+        WriteObjectHeader(1);
+        Write(value.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write<T>(T[]? value)
+    {
+        if (value is null)
         {
-            Write(Unsafe.BitCast<T, Name>(value));
+            WriteNullCollectionHeader();
             return;
         }
 
-        if (typeof(T) == typeof(Guid))
+        if (typeof(T) == typeof(char))
         {
-            Write(Unsafe.BitCast<T, Guid>(value));
+            var charSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<char>>(value);
+            Write(charSpan);
             return;
         }
 
-        // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (typeof(T) == typeof(DateTimeOffset))
+        WriteCollectionHeader(value.Length);
+        WriteSpan(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Write<T>(scoped ReadOnlySpan<T> value)
+    {
+        if (typeof(T) == typeof(char))
         {
-            Write(Unsafe.BitCast<T, DateTimeOffset>(value));
+            var charSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<char>>(value);
+            Write(charSpan);
             return;
         }
 
-        // Fallback: if we don't have a known-type we'll go through the regular serialization path
-        Write(in value);
+        WriteCollectionHeader(value.Length);
+        WriteSpan(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteSpan<T>(scoped ReadOnlySpan<T> value)
+    {
+        if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        {
+            WriteUnmanagedSpan(value);
+            return;
+        }
+
+        var formatter = GetFormatter<T>();
+        foreach (var t in value)
+        {
+            formatter.Serialize(ref this, in t);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteUnmanagedSpan<T>(scoped ReadOnlySpan<T> value)
+    {
+        if (value.Length == 0)
+            return;
+
+        var byteCount = value.Length * Unsafe.SizeOf<T>();
+        ref var dest = ref GetSpanReference(byteCount);
+        ref var src = ref Unsafe.As<T, byte>(ref MemoryMarshal.GetReference(value));
+
+        Unsafe.CopyBlockUnaligned(ref dest, ref src, (uint)byteCount);
+        Advance(byteCount);
     }
 }

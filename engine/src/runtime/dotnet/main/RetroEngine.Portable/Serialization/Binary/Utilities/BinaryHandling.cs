@@ -5,7 +5,6 @@
 
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RetroEngine.Portable.Serialization.Binary.Utilities;
@@ -30,16 +29,36 @@ public static class BinaryHandling
     }
 
     internal static T ReverseEndianness<T>(T value)
-        where T : unmanaged
     {
         ReverseEndianness(ref value);
         return value;
     }
 
     internal static void ReverseEndianness<T>(ref T value)
-        where T : unmanaged
     {
-        var memorySpan = MemoryMarshal.AsBytes(new Span<T>(ref value));
-        memorySpan.Reverse();
+        switch (value)
+        {
+            case byte or sbyte:
+                // Do nothing
+                break;
+            case short or ushort or char:
+            {
+                ref var castValue = ref Unsafe.As<T, ushort>(ref value);
+                castValue = BinaryPrimitives.ReverseEndianness(castValue);
+                break;
+            }
+            case int or uint or float:
+            {
+                ref var castValue = ref Unsafe.As<T, uint>(ref value);
+                castValue = BinaryPrimitives.ReverseEndianness(castValue);
+                break;
+            }
+            case long or ulong or double:
+            {
+                ref var castValue = ref Unsafe.As<T, ulong>(ref value);
+                castValue = BinaryPrimitives.ReverseEndianness(castValue);
+                break;
+            }
+        }
     }
 }

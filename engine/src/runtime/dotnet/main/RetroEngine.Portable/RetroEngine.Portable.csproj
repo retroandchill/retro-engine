@@ -33,4 +33,37 @@
     <ItemGroup>
         <InternalsVisibleTo Include="RetroEngine.Portable.Test"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Serialization\Binary\Utilities\MultiReadExtensions.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>MultiReadExtensions.cs</LastGenOutput>
+        </None>
+        <None Update="Serialization\Binary\Utilities\WellKnownTypesRegistration.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>WellKnownTypesRegistration.cs</LastGenOutput>
+        </None>
+        <None Update="Serialization\Binary\Utilities\MultiWriteExtensions.tt">
+          <Generator>TextTemplatingFileGenerator</Generator>
+          <LastGenOutput>MultiWriteExtensions.cs</LastGenOutput>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Serialization\Binary\Utilities\WellKnownTypesRegistration.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>WellKnownTypesRegistration.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Serialization\Binary\Utilities\MultiReadExtensions.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>MultiReadExtensions.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Serialization\Binary\Utilities\MultiWriteExtensions.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>MultiWriteExtensions.tt</DependentUpon>
+      </Compile>
+    </ItemGroup>
 </Project>

@@ -1,0 +1,76 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Numerics" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+    var blittableTypes = new Type[]
+    {
+        typeof(sbyte),
+        typeof(byte),
+        typeof(short),
+        typeof(ushort),
+        typeof(int),
+        typeof(uint),
+        typeof(long),
+        typeof(ulong),
+        typeof(char),
+        typeof(float),
+        typeof(double)
+    };
+    var blittableTypeNames = blittableTypes
+        .Select(x => x.Name)
+        .Concat(["Rune"]);
+
+    var knownStructTypes = new Type[]
+    {
+        typeof(bool),
+        typeof(Guid),
+        typeof(DateTimeOffset),
+    };
+
+    var knownStructTypeNames = knownStructTypes
+        .Select(x => x.Name)
+        .Concat(["Name"]);
+
+    var knownTypes = new Type[]
+    {
+        typeof(string)
+    };
+
+    var knownTypesNames = knownTypes
+        .Select(x => x.Name);
+#>
+using RetroEngine.Portable.Serialization.Binary.Formatters;
+using RetroEngine.Portable.Serialization.Binary;
+using RetroEngine.Portable.Strings;
+using System.Collections;
+using System.Globalization;
+using System.Text;
+using System.Numerics;
+// ReSharper disable BuiltInTypeReferenceStyle
+
+namespace RetroEngine.Portable.Serialization.Binary.Utilities;
+
+internal static class WellKnownTypeRegistration
+{
+    public static void RegisterWellKnownTypesFormatters()
+    {
+<# foreach(var item in blittableTypeNames) { #>
+        ArchiveFormatterRegistry.Register(new BlittableFormatter<<#= item #>>());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<<#= item #>>());
+        ArchiveFormatterRegistry.Register(new NullableFormatter<<#= item #>>());
+<# } #>
+<# foreach(var item in knownStructTypeNames) { #>
+        ArchiveFormatterRegistry.Register(new <#= item #>Formatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<<#= item #>>());
+        ArchiveFormatterRegistry.Register(new NullableFormatter<<#= item #>>());
+<# } #>
+<# foreach(var item in knownTypesNames) { #>
+        ArchiveFormatterRegistry.Register(new <#= item #>Formatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<<#= item #>>());
+<# } #>
+    }
+}

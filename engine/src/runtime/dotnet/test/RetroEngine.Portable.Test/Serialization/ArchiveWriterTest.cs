@@ -91,7 +91,7 @@ public class ArchiveWriterTest
         using var state = ArchiveSerializerStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
         var bufferWriter = new ArrayBufferWriter<byte>(Unsafe.SizeOf<T>());
         var writer = ArchiveWriter.Create(ref bufferWriter, state);
-        writer.WriteUnmanaged(in value);
+        writer.Write(in value);
         writer.Flush();
 
         var span = bufferWriter.WrittenSpan;

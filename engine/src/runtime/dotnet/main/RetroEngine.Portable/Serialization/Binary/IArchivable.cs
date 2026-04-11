@@ -7,7 +7,12 @@ using System.Buffers;
 
 namespace RetroEngine.Portable.Serialization.Binary;
 
-public interface IArchivable<T>
+public interface IArchivable
+{
+    static abstract void RegisterFormatters();
+}
+
+public interface IArchivable<T> : IArchivable
     where T : IArchivable<T>
 {
     static abstract void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T? value)
