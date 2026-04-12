@@ -124,7 +124,6 @@ internal static class MetadataExtensions
                     is {
                         MetadataName: "List`1",
                         TypeArguments.Length: 1,
-                        IsValueType: true,
                         ContainingNamespace:
                         {
                             Name: "Generic",

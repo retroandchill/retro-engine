@@ -465,6 +465,19 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteArchivable<T>(List<T?>? value)
+        where T : IArchivable<T>
+    {
+        if (value is null)
+        {
+            WriteNullCollectionHeader();
+            return;
+        }
+
+        WriteArchivable(CollectionsMarshal.AsSpan(value));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteArchivable<T>(scoped ReadOnlySpan<T?> value)
         where T : IArchivable<T>
     {

@@ -25,18 +25,21 @@ internal static class CollectionFormatters
 
 public static class ListFormatter
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteArchivable<TBufferWriter, T>(this ref ArchiveWriter<TBufferWriter> writer, List<T?>? value)
+    extension<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer)
         where TBufferWriter : IBufferWriter<byte>
-        where T : IArchivable<T>
     {
-        if (value is null)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteArchivable<T>(List<T?>? value)
+            where T : IArchivable<T>
         {
-            writer.WriteNullCollectionHeader();
-            return;
-        }
+            if (value is null)
+            {
+                writer.WriteNullCollectionHeader();
+                return;
+            }
 
-        writer.WriteArchivable(CollectionsMarshal.AsSpan(value));
+            writer.WriteArchivable(CollectionsMarshal.AsSpan(value));
+        }
     }
 
     extension(ref ArchiveReader reader)

@@ -47,7 +47,7 @@ public class TypeMetadata
 
     public IMethodSymbol? Constructor { get; }
 
-    public TypeMetadata(INamedTypeSymbol symbol)
+    public TypeMetadata(INamedTypeSymbol symbol, SemanticModel semanticModel)
     {
         Symbol = symbol;
 
@@ -97,7 +97,7 @@ public class TypeMetadata
 
                     return true;
                 })
-                .Select((x, i) => new MemberMetadata(x, Constructor, i))
+                .Select((x, i) => new MemberMetadata(x, Constructor, semanticModel, i))
                 .OrderBy(x => x.Order),
         ];
 

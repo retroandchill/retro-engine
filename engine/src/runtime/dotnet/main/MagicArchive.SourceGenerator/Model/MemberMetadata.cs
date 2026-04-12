@@ -79,7 +79,7 @@ public class MemberMetadata
         Kind = MemberKind.Blank;
     }
 
-    public MemberMetadata(ISymbol symbol, IMethodSymbol? constructor, int sequentialOrder)
+    public MemberMetadata(ISymbol symbol, IMethodSymbol? constructor, SemanticModel semanticModel, int sequentialOrder)
     {
         Symbol = symbol;
         Name = symbol.Name;
@@ -147,7 +147,7 @@ public class MemberMetadata
                     var defaultValue = property
                         .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
                         .OfType<PropertyDeclarationSyntax>()
-                        .Where(x => x.Initializer is not null)
+                        .Where(x => IsValidInitializer(x.Initializer, semanticModel))
                         .Select(x => x.Initializer!.Value.ToString())
                         .FirstOrDefault();
                     if (defaultValue is not null)
@@ -163,6 +163,21 @@ public class MemberMetadata
         // TODO: Eventually we will want to allow for custom formatters, but not right now
 
         Kind = ParseMemberKind(symbol, MemberType);
+    }
+
+    private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, SemanticModel semanticModel)
+    {
+        if (initializer is null)
+            return false;
+
+        foreach (var id in initializer.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>())
+        {
+            var symbol = semanticModel.GetSymbolInfo(id).Symbol;
+            if (symbol is IParameterSymbol param)
+                return false;
+        }
+
+        return true;
     }
 
     public static MemberMetadata CreateEmpty(int order)
@@ -387,11 +402,6 @@ public class MemberMetadata
                 var arrayType = (IArrayTypeSymbol)MemberType;
                 var elemType = arrayType.ElementType;
                 return $"{reader}.ReadArray<{elemType.FullyQualifiedToString()}>()";
-            }
-            case MemberKind.List:
-            {
-                var listType = (INamedTypeSymbol)MemberType;
-                return $"{reader}.ReadList<{listType.TypeArguments[0].FullyQualifiedToString()}>()";
             }
             case MemberKind.ArchivableList:
             {

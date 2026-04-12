@@ -26,6 +26,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\main\MagicArchive\MagicArchive.csproj" />
+        <ProjectReference Include="..\..\main\MagicArchive.SourceGenerator\MagicArchive.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

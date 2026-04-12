@@ -42,7 +42,11 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
                 (ctx, _) =>
                 {
                     var type = (TypeDeclarationSyntax)ctx.TargetNode;
-                    return (Syntax: type, Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol);
+                    return (
+                        Syntax: type,
+                        Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol,
+                        ctx.SemanticModel
+                    );
                 }
             )
             .Where(x => x.Symbol is not null);
@@ -51,14 +55,19 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
             provider,
             (ctx, t) =>
             {
-                Execute(ctx, t.Syntax, t.Symbol!);
+                Execute(ctx, t.Syntax, t.Symbol!, t.SemanticModel);
             }
         );
     }
 
-    private void Execute(SourceProductionContext context, TypeDeclarationSyntax syntax, INamedTypeSymbol typeSymbol)
+    private void Execute(
+        SourceProductionContext context,
+        TypeDeclarationSyntax syntax,
+        INamedTypeSymbol typeSymbol,
+        SemanticModel semanticModel
+    )
     {
-        var typeMetadata = new TypeMetadata(typeSymbol);
+        var typeMetadata = new TypeMetadata(typeSymbol, semanticModel);
         if (typeMetadata.GenerateType == GenerateType.NoGenerate)
             return;
 
@@ -66,17 +75,5 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
             return;
 
         context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
-    }
-
-    private static string GetClassType(INamedTypeSymbol symbol)
-    {
-        return symbol switch
-        {
-            { IsRecord: true, IsValueType: true } => "record struct ",
-            { IsRecord: true, IsValueType: false } => "record ",
-            { IsRecord: false, IsValueType: true } => "struct ",
-            { IsRecord: false, IsValueType: false } => "class ",
-            _ => throw new InvalidOperationException("Unexpected type"),
-        };
     }
 }
