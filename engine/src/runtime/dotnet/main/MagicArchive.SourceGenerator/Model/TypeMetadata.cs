@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
@@ -41,6 +42,9 @@ public class TypeMetadata
 
     [UsedImplicitly]
     public string Name { get; }
+
+    [UsedImplicitly]
+    public string SimpleName { get; }
 
     [UsedImplicitly]
     public string NullableName { get; }
@@ -95,6 +99,7 @@ public class TypeMetadata
         Namespace = symbol.ContainingNamespace.ToDisplayString();
         ClassType = GetClassType();
         Name = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        SimpleName = symbol.Name;
         NullableName = symbol.IsValueType ? Name : $"{Name}?";
 
         Constructor = ChooseConstructor(symbol);
@@ -133,10 +138,6 @@ public class TypeMetadata
                 .Select((x, i) => new MemberMetadata(x, Constructor, _reference, i))
                 .OrderBy(x => x.Order),
         ];
-        for (var i = 0; i < Members.Length; i++)
-        {
-            Members[i].Index = i;
-        }
 
         var preConstructEnd = Members.Length - 1;
         while (preConstructEnd >= 0)
@@ -157,6 +158,21 @@ public class TypeMetadata
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
         IsRecord = symbol.IsRecord;
         HasDefault = Constructor is null || Constructor.Parameters.IsEmpty;
+
+        if (GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference)
+        {
+            if (Members.Length != 0)
+            {
+                var maxOrder = Members.Max(x => x.Order);
+                var tempMembers = new MemberMetadata[maxOrder + 1];
+                for (var i = 0; i <= maxOrder; i++)
+                {
+                    tempMembers[i] = Members.FirstOrDefault(x => x.Order == i) ?? MemberMetadata.CreateEmpty(i);
+                    tempMembers[i].Index = i;
+                }
+                Members = ImmutableCollectionsMarshal.AsImmutableArray(tempMembers);
+            }
+        }
     }
 
     private ClassType GetClassType()
@@ -414,7 +430,7 @@ public class TypeMetadata
             // All members must annotate MemoryPackOrder
             foreach (var item in Members)
             {
-                if (!item.HasExplicitOrder)
+                if (!item.HasExplicitOrder && !item.IsBlank)
                 {
                     context.ReportDiagnostic(
                         Diagnostic.Create(

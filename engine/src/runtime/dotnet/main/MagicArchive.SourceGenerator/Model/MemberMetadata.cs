@@ -425,7 +425,7 @@ public class MemberMetadata
             }
         }
 
-        return $"{reader}.Read<{MemberType.FullyQualifiedToString()}>();";
+        return $"{reader}.Read<{MemberType.FullyQualifiedToString()}>()";
     }
 
     public string EmitRefDeserialize(string reader)
@@ -477,6 +477,6 @@ public class MemberMetadata
             }
         }
 
-        return $"{reader}.Read(ref __{Name}__);";
+        return $"{reader}.Read(ref __{Name}__)";
     }
 }

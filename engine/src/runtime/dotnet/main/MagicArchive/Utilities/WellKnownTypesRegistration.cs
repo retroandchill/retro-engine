@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Globalization;
+using System.Numerics;
+using System.Text;
 using MagicArchive.Formatters;
 
 // ReSharper disable BuiltInTypeReferenceStyle
@@ -54,6 +57,8 @@ internal static class WellKnownTypeRegistration
         ArchiveFormatterRegistry.Register(new DateTimeOffsetFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<DateTimeOffset>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<DateTimeOffset>());
+        ArchiveFormatterRegistry.Register(new VersionFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<Version>());
         ArchiveFormatterRegistry.Register(new StringFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<String>());
     }

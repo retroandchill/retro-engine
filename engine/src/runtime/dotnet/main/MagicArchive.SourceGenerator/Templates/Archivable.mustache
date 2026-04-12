@@ -9,7 +9,7 @@ namespace {{Namespace}};
 
 partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
 {
-    static {{Name}}()
+    static {{SimpleName}}()
     {
         ArchiveFormatterRegistry.Register<{{Name}}>();
         StaticInit();
@@ -130,8 +130,8 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         }
         {{/IsCircularReference}}
         {{#IsTolerant}}
-        Span<int> deltas = stackalloc int[{{Members.Length}}];
-        for (var i = 0; i < {{Members.Length}}; i++)
+        Span<int> deltas = stackalloc int[count];
+        for (var i = 0; i < count; i++)
         {
             deltas[i] = reader.ReadInt32();
         }
@@ -159,12 +159,12 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             {{/IsValueType}}
             {
                 {{#Members}}
-                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}__{{Name}}__ = {{MemberReader "reader"}};
-                {{#IsTolerant}}
+                {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{^IsBlank}}__{{Name}}__ = {{/IsBlank}}{{MemberReader "reader"}};
+                {{#if ../IsTolerant}}
                 {{^IsBlank}}
-                __{{Name}}__ = {{DefaultValue}};
+                else __{{Name}}__ = {{DefaultValue}};
                 {{/IsBlank}}
-                {{/IsTolerant}}
+                {{/if}}
                 {{/Members}}
 
                 goto NEW;
@@ -179,7 +179,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
                 {{/Members}}
 
                 {{#Members}}
-                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}{{MemberRefReader "reader"}};
+                {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{MemberRefReader "reader"}};
                 {{/Members}}
 
                 goto SET;
@@ -206,33 +206,34 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
                 {{/Members}}
             }
             {{^IsValueType}}
+            else
             {
                 {{#Members}}
                 {{^IsBlank}}
                 __{{Name}}__ = value.{{Name}};
                 {{/IsBlank}}
                 {{/Members}}
+            }
+            {{/IsValueType}}
 
-                if (count == 0) goto SKIP_READ;
-                {{#Members}}
+            if (count == 0) goto SKIP_READ;
+            {{#Members}}
 
-                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}{{MemberRefReader "reader"}};
-                if (count == {{IndexPlusOne}}) goto SKIP_READ;
-                {{/Members}}
+            {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{MemberRefReader "reader"}};
+            if (count == {{IndexPlusOne}}) goto SKIP_READ;
+            {{/Members}}
 
-                SKIP_READ:
-                {{^IsValueType}}
-                if (value is null)
-                {{/IsValueType}}
-                {
-                    goto NEW;
-                }
-                {{^IsValueType}}
-                else
-                {
-                    goto SET;
-                }
-                {{/IsValueType}}
+            SKIP_READ:
+            {{^IsValueType}}
+            if (value is null)
+            {{/IsValueType}}
+            {
+                goto NEW;
+            }
+            {{^IsValueType}}
+            else
+            {
+                goto SET;
             }
             {{/IsValueType}}
         }

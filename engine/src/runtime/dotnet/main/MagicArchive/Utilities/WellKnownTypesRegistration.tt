@@ -36,21 +36,21 @@
 
     var knownTypes = new Type[]
     {
+        typeof(Version),
         typeof(string)
     };
 
     var knownTypesNames = knownTypes
         .Select(x => x.Name);
 #>
-using RetroEngine.Portable.Serialization.Binary.Formatters;
-using RetroEngine.Portable.Serialization.Binary;
+using MagicArchive.Formatters;
 using System.Collections;
 using System.Globalization;
 using System.Text;
 using System.Numerics;
 // ReSharper disable BuiltInTypeReferenceStyle
 
-namespace RetroEngine.Portable.Serialization.Binary.Utilities;
+namespace MagicArchive.Utilities;
 
 internal static class WellKnownTypeRegistration
 {
