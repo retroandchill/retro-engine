@@ -46,9 +46,10 @@ public class ArchiveReaderTest
         const string testUtf16Str = "\uC11C\uC6B8\uC0AC\uB78C";
 
         var bufferWriter = new ArrayBufferWriter<byte>();
-        var settings = ArchiveSerializerStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
+        using var writerSettings = ArchiveWriterStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
+        using var readerSettings = ArchiveReaderStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
 
-        var writer = new ArchiveWriter<ArrayBufferWriter<byte>>(ref bufferWriter, settings);
+        var writer = new ArchiveWriter<ArrayBufferWriter<byte>>(ref bufferWriter, writerSettings);
         writer.Write(testValueU8);
         writer.Write(testValueS8);
         writer.Write(testValueU16);
@@ -65,7 +66,7 @@ public class ArchiveReaderTest
         writer.Write(testUtf16Str);
         writer.Flush();
 
-        var reader = new ArchiveReader(bufferWriter.WrittenSpan, settings);
+        var reader = new ArchiveReader(bufferWriter.WrittenSpan, readerSettings);
         using var scope = Assert.EnterMultipleScope();
         Assert.That(reader.ReadByte(), Is.EqualTo(testValueU8));
         Assert.That(reader.ReadSByte(), Is.EqualTo(testValueS8));

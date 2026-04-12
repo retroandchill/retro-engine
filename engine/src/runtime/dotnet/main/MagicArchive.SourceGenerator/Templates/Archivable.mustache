@@ -53,7 +53,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {{#IsTolerant}}
         {{#IsCircularReference}}
         var (existsReference, id) = writer.State.GetOrAddReference(value);
-        if (existReference)
+        if (existsReference)
         {
             writer.WriteObjectReferenceId(id);
             return;
@@ -68,7 +68,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             var tempWriter = ArchiveWriter.Create(ref tempBuffer, writer.State);
             {{#Members}}
             {{MemberWriter "tempWriter"}}
-            offset[{{Index}}] = tempWriter.WrittenBytes;
+            offsets[{{Index}}] = tempWriter.WrittenBytes;
             {{/Members}}
 
             tempWriter.Flush();
@@ -85,10 +85,10 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
                 {
                     delta = offsets[i] - offsets[i - 1];
                 }
-                writer.WriteInt32(delta);
+                writer.Write(delta);
             }
             {{#IsCircularReference}}
-            writer.WriteInt32(id);
+            writer.Write(id);
             {{/IsCircularReference}}
             tempBuffer.WriteToAndReset(ref writer);
         }
@@ -97,13 +97,13 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             ReusableLinkedArrayBufferWriterPool.Return(tempBuffer);
         }
         {{/IsTolerant}}
-        {{^IsVersionTolerant}}
+        {{^IsTolerant}}
 
         writer.WriteObjectHeader({{MemberCount}});
         {{#Members}}
         {{MemberWriter "writer"}}
         {{/Members}}
-        {{/IsVersionTolerant}}
+        {{/IsTolerant}}
     }
 
     static void IArchivable<{{Name}}>.Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
@@ -129,13 +129,13 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             return;
         }
         {{/IsCircularReference}}
-        {{#IsVersionTolerant}}
+        {{#IsTolerant}}
         Span<int> deltas = stackalloc int[{{Members.Length}}];
         for (var i = 0; i < {{Members.Length}}; i++)
         {
             deltas[i] = reader.ReadInt32();
         }
-        {{/IsVersionTolerant}}
+        {{/IsTolerant}}
         {{#IsCircularReference}}
         id = reader.ReadUInt32();
         if (value is null)
@@ -149,9 +149,9 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {{MemberType}} __{{Name}}__;
         {{/IsBlank}}
         {{/Members}}
-        {{#IsVersionTolerant}}
+        {{#IsTolerant}}
         var readCount = {{MemberCount}};
-        {{/IsVersionTolerant}}
+        {{/IsTolerant}}
         if (count == {{MemberCount}})
         {
             {{^IsValueType}}
@@ -186,13 +186,13 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             }
             {{/IsValueType}}
         }
-        {{^IsVersionTolerant}}
+        {{^IsTolerant}}
         else if (count > {{MemberCount}})
         {
             ArchiveSerializationException.ThrowInvalidPropertyCount(typeof({{Name}}), {{MemberCount}}, count);
             return;
         }
-        {{/IsVersionTolerant}}
+        {{/IsTolerant}}
         else
         {
             {{^IsValueType}}

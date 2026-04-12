@@ -9,46 +9,46 @@ using System.Runtime.InteropServices;
 
 namespace MagicArchive;
 
-public static class ArchiveSerializerStatePool
+public static class ArchiveWriterStatePool
 {
-    private static readonly ConcurrentQueue<ArchiveSerializerState> Queue = new();
+    private static readonly ConcurrentQueue<ArchiveWriterState> Queue = new();
 
-    public static ArchiveSerializerState Rent(ArchiveSerializerOptions? options)
+    public static ArchiveWriterState Rent(ArchiveSerializerOptions? options)
     {
         if (!Queue.TryDequeue(out var state))
         {
-            state = new ArchiveSerializerState();
+            state = new ArchiveWriterState();
         }
 
         state.Init(options);
         return state;
     }
 
-    internal static void Return(ArchiveSerializerState state)
+    internal static void Return(ArchiveWriterState state)
     {
         state.Reset();
         Queue.Enqueue(state);
     }
 }
 
-public sealed class ArchiveSerializerState : IDisposable
+public sealed class ArchiveWriterState : IDisposable
 {
-    internal static ArchiveSerializerState NullStateLittleEndian { get; } = new(ByteOrder.LittleEndian);
-    internal static ArchiveSerializerState NullStateBigEndian { get; } = new(ByteOrder.BigEndian);
+    internal static ArchiveWriterState NullStateLittleEndian { get; } = new(ByteOrder.LittleEndian);
+    internal static ArchiveWriterState NullStateBigEndian { get; } = new(ByteOrder.BigEndian);
 
     private uint _nextId;
     private readonly Dictionary<object, uint> _objectToRef;
 
     public ArchiveSerializerOptions Options { get; private set; }
 
-    internal ArchiveSerializerState()
+    internal ArchiveWriterState()
     {
         _objectToRef = new Dictionary<object, uint>(ReferenceEqualityComparer.Instance);
         Options = null!;
         _nextId = 0;
     }
 
-    private ArchiveSerializerState(ByteOrder byteOrder)
+    private ArchiveWriterState(ByteOrder byteOrder)
     {
         _objectToRef = null!;
         Options = byteOrder switch
@@ -86,7 +86,7 @@ public sealed class ArchiveSerializerState : IDisposable
 
     void IDisposable.Dispose()
     {
-        ArchiveSerializerStatePool.Return(this);
+        ArchiveWriterStatePool.Return(this);
     }
 
     private sealed class ReferenceEqualityComparer : IEqualityComparer<object>

@@ -19,7 +19,7 @@ public static class ArchiveWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArchiveWriter<TBufferWriter> Create<TBufferWriter>(
         ref TBufferWriter bufferWriter,
-        ArchiveSerializerState state
+        ArchiveWriterState state
     )
         where TBufferWriter : IBufferWriter<byte>
     {
@@ -30,7 +30,7 @@ public static class ArchiveWriter
     public static ArchiveWriter<TBufferWriter> Create<TBufferWriter>(
         ref TBufferWriter bufferWriter,
         byte[] firstBufferOfWriter,
-        ArchiveSerializerState state
+        ArchiveWriterState state
     )
         where TBufferWriter : IBufferWriter<byte>
     {
@@ -54,7 +54,7 @@ public ref struct ArchiveWriter<TBufferWriter>
 
     private readonly bool _serializeStringAsUtf8;
 
-    public ArchiveSerializerState State { get; }
+    public ArchiveWriterState State { get; }
     public ArchiveSerializerOptions Options => State.Options;
 
     public bool IsByteSwapping
@@ -70,7 +70,7 @@ public ref struct ArchiveWriter<TBufferWriter>
         }
     }
 
-    public ArchiveWriter(ref TBufferWriter bufferWriter, ArchiveSerializerState state)
+    public ArchiveWriter(ref TBufferWriter bufferWriter, ArchiveWriterState state)
     {
         _bufferWriter = ref bufferWriter;
         _bufferStart = ref Unsafe.NullRef<byte>();
@@ -82,7 +82,7 @@ public ref struct ArchiveWriter<TBufferWriter>
         State = state;
     }
 
-    public ArchiveWriter(ref TBufferWriter bufferWriter, byte[] firstBufferOfWriter, ArchiveSerializerState state)
+    public ArchiveWriter(ref TBufferWriter bufferWriter, byte[] firstBufferOfWriter, ArchiveWriterState state)
     {
         _bufferWriter = ref bufferWriter;
         _bufferStart = ref MemoryMarshal.GetArrayDataReference(firstBufferOfWriter);
@@ -94,7 +94,7 @@ public ref struct ArchiveWriter<TBufferWriter>
         State = state;
     }
 
-    public ArchiveWriter(ref TBufferWriter bufferWriter, Span<byte> firstBufferOfWriter, ArchiveSerializerState state)
+    public ArchiveWriter(ref TBufferWriter bufferWriter, Span<byte> firstBufferOfWriter, ArchiveWriterState state)
     {
         _bufferWriter = ref bufferWriter;
         _bufferStart = ref MemoryMarshal.GetReference(firstBufferOfWriter);

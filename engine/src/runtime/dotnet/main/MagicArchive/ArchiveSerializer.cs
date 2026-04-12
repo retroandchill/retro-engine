@@ -18,10 +18,10 @@ public static class ArchiveSerializer
     private static SerializeWriterThreadStaticState? _threadStaticState;
 
     [ThreadStatic]
-    private static ArchiveSerializerState? _threadStaticWriterState;
+    private static ArchiveWriterState? _threadStaticWriterState;
 
     [ThreadStatic]
-    private static ArchiveSerializerState? _threadStaticReaderState;
+    private static ArchiveReaderState? _threadStaticReaderState;
 
     public static byte[] Serialize<T>(in T? value, ArchiveSerializerOptions? options = null)
     {
@@ -67,8 +67,8 @@ public static class ArchiveSerializer
             var buffer = new byte[value is null ? 1 : elementSize];
             var bufferWriter = new FixedArrayBufferWriter(buffer);
             var nullState = writeLittleEndian
-                ? ArchiveSerializerState.NullStateLittleEndian
-                : ArchiveSerializerState.NullStateBigEndian;
+                ? ArchiveWriterState.NullStateLittleEndian
+                : ArchiveWriterState.NullStateBigEndian;
             var writer = ArchiveWriter.Create(ref bufferWriter, nullState);
             Serialize(ref writer, value);
             return bufferWriter.FilledBuffer;
@@ -171,7 +171,7 @@ public static class ArchiveSerializer
             SerializeBlittableArray(byteSwapping, ref head, length, srcArray, dataSize, elementSize);
         }
 
-        _threadStaticWriterState ??= new ArchiveSerializerState();
+        _threadStaticWriterState ??= new ArchiveWriterState();
         _threadStaticWriterState.Init(options);
 
         try
@@ -223,7 +223,7 @@ public static class ArchiveSerializer
     )
         where TBufferWriter : IBufferWriter<byte>
     {
-        _threadStaticWriterState ??= new ArchiveSerializerState();
+        _threadStaticWriterState ??= new ArchiveWriterState();
         _threadStaticWriterState.Init(options);
 
         try
@@ -298,7 +298,7 @@ public static class ArchiveSerializer
         ArchiveSerializerOptions? options
     )
     {
-        _threadStaticWriterState ??= new ArchiveSerializerState();
+        _threadStaticWriterState ??= new ArchiveWriterState();
         _threadStaticWriterState.Init(options);
 
         var writer = ArchiveWriter.Create(ref bufferWriter, _threadStaticWriterState);
@@ -343,7 +343,7 @@ public static class ArchiveSerializer
             return Unsafe.SizeOf<T>();
         }
 
-        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState ??= new ArchiveReaderState();
         _threadStaticReaderState.Init(options);
 
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
@@ -419,7 +419,7 @@ public static class ArchiveSerializer
             }
         }
 
-        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState ??= new ArchiveReaderState();
         _threadStaticReaderState.Init(options);
 
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
@@ -449,7 +449,7 @@ public static class ArchiveSerializer
         ArchiveSerializerOptions? options = null
     )
     {
-        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState ??= new ArchiveReaderState();
         _threadStaticReaderState.Init(options);
 
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
@@ -483,7 +483,7 @@ public static class ArchiveSerializer
         ArchiveSerializerOptions? options = null
     )
     {
-        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState ??= new ArchiveReaderState();
         _threadStaticReaderState.Init(options);
 
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
@@ -644,7 +644,7 @@ public static class ArchiveSerializer
     private sealed class SerializeWriterThreadStaticState
     {
         public ReusableLinkedArrayBufferWriter BufferWriter = new(true, true);
-        public ArchiveSerializerState State = new();
+        public ArchiveWriterState State = new();
 
         public void Init(ArchiveSerializerOptions? options)
         {

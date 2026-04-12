@@ -87,7 +87,7 @@ public class ArchiveWriterTest
     public void CanWriteUnmanagedValuesToTheArchive<T>(T value, ByteOrder byteOrder)
         where T : unmanaged
     {
-        using var state = ArchiveSerializerStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
+        using var state = ArchiveWriterStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
         var bufferWriter = new ArrayBufferWriter<byte>(Unsafe.SizeOf<T>());
         var writer = ArchiveWriter.Create(ref bufferWriter, state);
         writer.Write(in value);

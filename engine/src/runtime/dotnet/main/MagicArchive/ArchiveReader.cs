@@ -27,7 +27,7 @@ public ref struct ArchiveReader : IDisposable
     public int ConsumedBytes { get; private set; }
     public long RemainingBytes => TotalSize - ConsumedBytes;
 
-    public ArchiveSerializerState State { get; }
+    public ArchiveReaderState State { get; }
     public ArchiveSerializerOptions Options => State.Options;
 
     public bool IsByteSwapping
@@ -43,7 +43,7 @@ public ref struct ArchiveReader : IDisposable
         }
     }
 
-    public ArchiveReader(in ReadOnlySequence<byte> sequence, ArchiveSerializerState state)
+    public ArchiveReader(in ReadOnlySequence<byte> sequence, ArchiveReaderState state)
     {
         _sequence = sequence.IsSingleSegment ? ReadOnlySequence<byte>.Empty : sequence;
         var span = sequence.FirstSpan;
@@ -56,7 +56,7 @@ public ref struct ArchiveReader : IDisposable
         State = state;
     }
 
-    public ArchiveReader(ReadOnlySpan<byte> buffer, ArchiveSerializerState state)
+    public ArchiveReader(ReadOnlySpan<byte> buffer, ArchiveReaderState state)
     {
         _sequence = ReadOnlySequence<byte>.Empty;
         _bufferStart = ref MemoryMarshal.GetReference(buffer);
