@@ -56,6 +56,8 @@ public class TypeMetadata
     [UsedImplicitly]
     public string NullableName { get; }
 
+    public string? UnionTarget { get; }
+
     [UsedImplicitly]
     public ImmutableArray<AdditionalTypeRegistration> AdditionalTypeRegistrations { get; }
     public ImmutableArray<MemberMetadata> Members { get; }
@@ -224,6 +226,14 @@ public class TypeMetadata
         else
         {
             UnionTags = [];
+        }
+
+        if (symbol.TypeKind != TypeKind.Class)
+            return;
+
+        if (symbol.TryGetArchivableUnionFormatterInfo(out var info))
+        {
+            UnionTarget = ToUnionTagTypeFullyQualifiedToString((INamedTypeSymbol)info.Type);
         }
     }
 

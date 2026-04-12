@@ -1,5 +1,22 @@
 #nullable enable
+#pragma warning disable CS0108 // hides inherited member
+#pragma warning disable CS0162 // Unreachable code
+#pragma warning disable CS0164 // This label has not been referenced
+#pragma warning disable CS0219 // Variable assigned but never used
+#pragma warning disable CS0618 // Type or member is obsolete
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8602
+#pragma warning disable CS8604 // Possible null reference argument for parameter
+#pragma warning disable CS8619
+#pragma warning disable CS8620
+#pragma warning disable CS8631 // The type cannot be used as type parameter in the generic type or method
+#pragma warning disable CS8765 // Nullability of type of parameter
+#pragma warning disable CS9074 // The 'scoped' modifier of parameter doesn't match overridden or implemented member
+#pragma warning disable CA1050 // Declare types in namespaces.
+
 using System;
+using System.Runtime.CompilerServices;
 using MagicArchive;
 using System.Buffers;
 using MagicArchive.Formatters;
@@ -42,7 +59,7 @@ partial {{ClassType}} {{Name}} : IArchivable
                 return;
             }
 
-            if (_typeToTag.TryGetValue(value.GetType(), out var tag)
+            if (_typeToTag.TryGetValue(value.GetType(), out var tag))
             {
                 writer.WriteUnionHeader(tag);
 
@@ -50,7 +67,7 @@ partial {{ClassType}} {{Name}} : IArchivable
                 {
                     {{#UnionTags}}
                     case {{Tag}}:
-                        writer.{{WriteMethd}}(Unsafe.As<{{NullableName}}, {{FullyQualifiedName}}>(ref value));
+                        writer.{{WriteMethod}}(Unsafe.As<{{../NullableName}}, {{FullyQualifiedName}}>(ref Unsafe.AsRef(in value)));
                         break;
                     {{/UnionTags}}
                     default:
@@ -77,7 +94,7 @@ partial {{ClassType}} {{Name}} : IArchivable
                 case {{Tag}}:
                     if (value is {{FullyQualifiedName}})
                     {
-                        reader.{{ReadMethod}}(ref Unsafe.As<{{NullableName}}, {{FullyQualifiedName}}>(ref value));
+                        reader.{{ReadMethod}}(ref Unsafe.As<{{../NullableName}}, {{FullyQualifiedName}}>(ref value));
                     }
                     else
                     {

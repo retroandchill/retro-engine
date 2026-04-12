@@ -26,5 +26,8 @@ public readonly record struct ArchivableInfo(GenerateType GenerateType, Serializ
 [AttributeInfoType<ArchivableUnionAttribute>]
 public readonly record struct ArchivableUnionInfo(ushort Tag, ITypeSymbol Type);
 
+[AttributeInfoType<ArchivableUnionFormatterAttribute>]
+public readonly record struct ArchivableUnionFormatterInfo(ITypeSymbol Type);
+
 [AttributeInfoType<ArchiveOrderAttribute>]
 public readonly record struct ArchiveOrderInfo(int Order);

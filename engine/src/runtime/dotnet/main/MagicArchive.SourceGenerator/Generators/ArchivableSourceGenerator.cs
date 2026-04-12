@@ -9,6 +9,7 @@ using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Retro.SourceGeneratorUtilities.Utilities.Attributes;
 
 namespace MagicArchive.SourceGenerator.Generators;
 
@@ -17,6 +18,7 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
 {
     private readonly HandlebarsTemplate<object?, object?> _archivableTemplate;
     private readonly HandlebarsTemplate<object?, object?> _unionTemplate;
+    private readonly HandlebarsTemplate<object?, object?> _unionFormatterTemplate;
 
     public ArchivableSourceGenerator()
     {
@@ -29,11 +31,12 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
         _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
         _unionTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Union"));
+        _unionFormatterTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("UnionFormatter"));
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var provider = context
+        var archivableTypes = context
             .SyntaxProvider.ForAttributeWithMetadataName(
                 typeof(ArchivableAttribute).FullName!,
                 (syntaxNode, _) =>
@@ -54,8 +57,31 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
             )
             .Where(x => x.Symbol is not null);
 
+        var unionFormatters = context
+            .SyntaxProvider.ForAttributeWithMetadataName(
+                typeof(ArchivableUnionFormatterAttribute).FullName!,
+                (node, _) => node is ClassDeclarationSyntax,
+                (ctx, _) =>
+                {
+                    var type = (TypeDeclarationSyntax)ctx.TargetNode;
+                    return (
+                        Syntax: type,
+                        Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol,
+                        ctx.SemanticModel
+                    );
+                }
+            )
+            .Where(x => x.Symbol is not null);
+
         context.RegisterSourceOutput(
-            provider,
+            archivableTypes,
+            (ctx, t) =>
+            {
+                Execute(ctx, t.Syntax, t.Symbol!, t.SemanticModel);
+            }
+        );
+        context.RegisterSourceOutput(
+            unionFormatters,
             (ctx, t) =>
             {
                 Execute(ctx, t.Syntax, t.Symbol!, t.SemanticModel);
@@ -78,23 +104,30 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         if (!typeMetadata.Validate(syntax, context))
             return;
 
-        switch (typeMetadata.GenerateType)
+        if (typeSymbol.HasAttribute<ArchivableUnionFormatterAttribute>())
         {
-            case GenerateType.Object:
-            case GenerateType.VersionTolerant:
-            case GenerateType.CircularReference:
-            case GenerateType.Custom:
-                context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
-                break;
-            case GenerateType.Collection:
-                break;
-            case GenerateType.NoGenerate:
-                break;
-            case GenerateType.Union:
-                context.AddSource($"{typeSymbol.Name}.g.cs", _unionTemplate(typeMetadata));
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+            context.AddSource($"{typeSymbol.Name}.g.cs", _unionFormatterTemplate(typeMetadata));
+        }
+        else
+        {
+            switch (typeMetadata.GenerateType)
+            {
+                case GenerateType.Object:
+                case GenerateType.VersionTolerant:
+                case GenerateType.CircularReference:
+                case GenerateType.Custom:
+                    context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
+                    break;
+                case GenerateType.Collection:
+                    break;
+                case GenerateType.NoGenerate:
+                    break;
+                case GenerateType.Union:
+                    context.AddSource($"{typeSymbol.Name}.g.cs", _unionTemplate(typeMetadata));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }
