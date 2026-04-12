@@ -19,6 +19,10 @@
         <Generator>TextTemplatingFileGenerator</Generator>
         <LastGenOutput>WellKnownTypesRegistration.cs</LastGenOutput>
       </None>
+        <None Update="Formatters\TupleFormatter.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>TupleFormatter.cs</LastGenOutput>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -33,6 +37,11 @@
     <ItemGroup>
       <Compile Update="Utilities\WellKnownTypesRegistration.cs">
         <DependentUpon>WellKnownTypesRegistration.tt</DependentUpon>
+      </Compile>
+      <Compile Update="Formatters\TupleFormatter.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>TupleFormatter.tt</DependentUpon>
       </Compile>
     </ItemGroup>
 </Project>

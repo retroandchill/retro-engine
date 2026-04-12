@@ -5,6 +5,7 @@
 
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -451,6 +452,30 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteArchivable<T>(T[]? value)
+        where T : IArchivable<T>
+    {
+        if (value is null)
+        {
+            WriteNullCollectionHeader();
+            return;
+        }
+
+        WriteArchivable(value.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteArchivable<T>(scoped ReadOnlySpan<T?> value)
+        where T : IArchivable<T>
+    {
+        WriteCollectionHeader(value.Length);
+        foreach (ref readonly var t in value)
+        {
+            T.Serialize(ref this, in t);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteEnum<T>(in T value)
         where T : unmanaged, Enum
     {
@@ -493,13 +518,6 @@ public ref struct ArchiveWriter<TBufferWriter>
             return;
         }
 
-        if (typeof(T) == typeof(char))
-        {
-            var charSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<char>>(value);
-            Write(charSpan);
-            return;
-        }
-
         WriteCollectionHeader(value.Length);
         WriteSpan(value);
     }
@@ -528,7 +546,7 @@ public ref struct ArchiveWriter<TBufferWriter>
         }
 
         var formatter = GetFormatter<T>();
-        foreach (var t in value)
+        foreach (ref readonly var t in value)
         {
             formatter.Serialize(ref this, in t);
         }

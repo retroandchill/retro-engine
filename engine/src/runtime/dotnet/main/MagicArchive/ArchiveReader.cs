@@ -5,6 +5,7 @@
 
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -595,6 +596,42 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T?[]? ReadArchivableArray<T>()
+        where T : IArchivable<T>
+    {
+        T?[]? value = null;
+        ReadArchivableArray(ref value);
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadArchivableArray<T>(ref T?[]? value)
+        where T : IArchivable<T>
+    {
+        if (!TryReadCollectionHeader(out var length))
+        {
+            value = null;
+            return;
+        }
+
+        if (length == 0)
+        {
+            value = [];
+            return;
+        }
+
+        if (value is null || value.Length != length)
+        {
+            value = new T?[length];
+        }
+
+        for (var i = 0; i < length; i++)
+        {
+            value[i] = ReadArchivable<T>();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? Read<T>()
     {
         if (BinaryHandling.IsBlittable<T>())
@@ -637,9 +674,9 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T[]? ReadArray<T>()
+    public T?[]? ReadArray<T>()
     {
-        T[]? value = null;
+        T?[]? value = null;
         ReadArray(ref value);
         return value;
     }
@@ -709,19 +746,23 @@ public ref struct ArchiveReader : IDisposable
         }
 
         Advance(sizeof(int));
+        ReadInto(buffer[..length]);
+        return true;
+    }
+
+    internal void ReadInto<T>(Span<T?> buffer)
+    {
         if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
         {
-            ReadIntoUnmanaged(buffer[..length]);
-            return true;
+            ReadIntoUnmanaged(buffer);
+            return;
         }
 
         var formatter = GetFormatter<T>();
-        for (var i = 0; i < length; i++)
+        foreach (ref var value in buffer)
         {
-            formatter.Deserialize(ref this, ref buffer[i]);
+            formatter.Deserialize(ref this, ref value);
         }
-
-        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

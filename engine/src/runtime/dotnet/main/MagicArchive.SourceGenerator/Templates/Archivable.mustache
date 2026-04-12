@@ -58,12 +58,6 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             {{/IsValueType}}
         }
         {{#RequiresConstruct}}
-        {{^IsValueType}}
-
-        value ?? = new {{Name}}();
-        {{/IsValueType}}
-        {{/RequiresConstruct}}
-        {{^RequiresConstruct}}
 
         {{#PreConstructMembers}}
         var __{{Name}}__ = count > {{Order}} ? {{MemberReader "reader"}} : {{DefaultValue}};
@@ -77,6 +71,12 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             {{/IsConstructorParameters}}
             {{/PreConstructMembers}}
         };
+        {{/RequiresConstruct}}
+        {{^RequiresConstruct}}
+        {{^IsValueType}}
+
+        value ??= new {{Name}}();
+        {{/IsValueType}}
         {{/RequiresConstruct}}
         {{#PostConstructMembers}}
 

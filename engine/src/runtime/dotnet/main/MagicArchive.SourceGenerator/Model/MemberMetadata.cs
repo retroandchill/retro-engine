@@ -388,6 +388,16 @@ public class MemberMetadata
                 var elemType = arrayType.ElementType;
                 return $"{reader}.ReadArray<{elemType.FullyQualifiedToString()}>()";
             }
+            case MemberKind.List:
+            {
+                var listType = (INamedTypeSymbol)MemberType;
+                return $"{reader}.ReadList<{listType.TypeArguments[0].FullyQualifiedToString()}>()";
+            }
+            case MemberKind.ArchivableList:
+            {
+                var listType = (INamedTypeSymbol)MemberType;
+                return $"{reader}.ReadArchivableList<{listType.TypeArguments[0].FullyQualifiedToString()}>()";
+            }
             case MemberKind.Enum:
                 return $"{reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
             case MemberKind.Blank:

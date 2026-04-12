@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Reflection;
 using MagicArchive.Formatters;
 using MagicArchive.Utilities;
@@ -133,9 +134,30 @@ public static class ArchiveFormatterRegistry
         }
         else
         {
-            return null;
+            ReadOnlySpan<ImmutableDictionary<Type, Type>> possibleFormatters =
+            [
+                TupleFormatters.FormatterTypes,
+                CollectionFormatters.FormatterTypes,
+            ];
+
+            formatterType = null;
+            foreach (var formatter in possibleFormatters)
+            {
+                formatterType = TryCreateGenericFormatterType(type, formatter);
+                if (formatterType is not null)
+                    break;
+            }
         }
 
         return formatterType is not null ? Activator.CreateInstance(formatterType) : null;
+    }
+
+    private static Type? TryCreateGenericFormatterType(Type type, ImmutableDictionary<Type, Type> formatters)
+    {
+        if (!type.IsGenericType)
+            return null;
+        var genericDefinition = type.GetGenericTypeDefinition();
+
+        return formatters.GetValueOrDefault(genericDefinition)?.MakeGenericType(type.GetGenericArguments());
     }
 }
