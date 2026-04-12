@@ -4,7 +4,7 @@ public sealed class LazyFormatter<T> : ArchiveFormatter<Lazy<T?>>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Lazy<T?>? value)
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;

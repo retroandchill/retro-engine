@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
-using FluentAssertions;
 
 namespace MagicArchive.Test;
 
@@ -17,10 +16,10 @@ public class PrimitiveTest
 
         ArchiveSerializer.Serialize(buffer, 123);
 
-        buffer.WrittenCount.Should().Be(4);
+        Assert.That(buffer.WrittenCount, Is.EqualTo(4));
 
         var i = ArchiveSerializer.Deserialize<int>(buffer.WrittenSpan);
-        i.Should().Be(123);
+        Assert.That(i, Is.EqualTo(123));
     }
 
     [Test]
@@ -28,11 +27,11 @@ public class PrimitiveTest
     {
         var bin = ArchiveSerializer.Serialize(123);
         var i = ArchiveSerializer.Deserialize<int>(bin);
-        i.Should().Be(123);
+        Assert.That(i, Is.EqualTo(123));
 
 #pragma warning disable CA2263
         var j = (int)ArchiveSerializer.Deserialize(typeof(int), bin)!;
 #pragma warning restore CA2263
-        j.Should().Be(123);
+        Assert.That(j, Is.EqualTo(123));
     }
 }

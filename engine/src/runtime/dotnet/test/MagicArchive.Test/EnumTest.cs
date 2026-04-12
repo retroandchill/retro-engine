@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-
-namespace MagicArchive.Test;
+﻿namespace MagicArchive.Test;
 
 public class EnumTest
 {
@@ -12,9 +10,12 @@ public class EnumTest
     [Test]
     public void EnumsAreBlittable()
     {
-        Convert(BEnum.B).Should().Be(BEnum.B);
-        Convert(NormalEnum.A).Should().Be(NormalEnum.A);
-        Convert(NotNotEnum.C).Should().Be(NotNotEnum.C);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(Convert(BEnum.B), Is.EqualTo(BEnum.B));
+            Assert.That(Convert(NormalEnum.A), Is.EqualTo(NormalEnum.A));
+            Assert.That(Convert(NotNotEnum.C), Is.EqualTo(NotNotEnum.C));
+        }
     }
 
     private enum BEnum : byte

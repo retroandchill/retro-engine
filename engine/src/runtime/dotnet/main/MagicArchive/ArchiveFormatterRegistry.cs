@@ -15,6 +15,8 @@ public static class ArchiveFormatterRegistry
 {
     private static readonly ConcurrentDictionary<Type, IArchiveFormatter> Formatters = new();
 
+    private static readonly ConcurrentDictionary<Type, Type> GenericFormatterFactories = new();
+
     private static readonly ImmutableDictionary<Type, Type> KnownGenericTypeFormatters =
         ImmutableDictionary.CreateRange([
             new KeyValuePair<Type, Type>(typeof(KeyValuePair<,>), typeof(KeyValuePairFormatter<,>)),
@@ -26,6 +28,8 @@ public static class ArchiveFormatterRegistry
     {
         WellKnownTypeRegistration.RegisterWellKnownTypesFormatters();
     }
+
+    public static bool IsRegistered<T>() => Check<T>.Registered;
 
     public static void Register<T>()
         where T : IArchivable
@@ -40,7 +44,25 @@ public static class ArchiveFormatterRegistry
         Cache<T>.Formatter = formatter;
     }
 
-    public static bool IsRegistered<T>() => Check<T>.Registered;
+    public static void RegisterGenericType(Type genericType, Type genericFormatterType)
+    {
+        if (genericType.IsGenericType && genericFormatterType.IsGenericType)
+        {
+            GenericFormatterFactories[genericType] = genericFormatterType;
+        }
+        else
+        {
+            ArchiveSerializationException.ThrowMessage(
+                $"Registered type is not generic type. genericType:{genericType.FullName}, formatterType:{genericFormatterType.FullName}"
+            );
+        }
+    }
+
+    public static void RegisterCollection<TCollection, TElement>()
+        where TCollection : ICollection<TElement?>, new()
+    {
+        Register(new GenericCollectionFormatter<TCollection, TElement>());
+    }
 
     public static IArchiveFormatter GetFormatter(Type type)
     {
@@ -118,7 +140,7 @@ public static class ArchiveFormatterRegistry
         public static bool Registered { get; set; }
     }
 
-    public static class Cache<T>
+    private static class Cache<T>
     {
         public static ArchiveFormatter<T> Formatter { get; set; } = null!;
 
@@ -181,11 +203,16 @@ public static class ArchiveFormatterRegistry
         }
         else
         {
-            ReadOnlySpan<ImmutableDictionary<Type, Type>> possibleFormatters =
+            ReadOnlySpan<IReadOnlyDictionary<Type, Type>> possibleFormatters =
             [
                 TupleFormatters.FormatterTypes,
                 KnownGenericTypeFormatters,
+                ArrayLikeFormatters.FormatterTypes,
                 CollectionFormatters.FormatterTypes,
+                ImmutableCollectionFormatters.FormatterTypes,
+                FrozenCollectionFormatters.FormatterTypes,
+                InterfaceCollectionFormatters.FormatterTypes,
+                GenericFormatterFactories,
             ];
 
             formatterType = null;
@@ -200,7 +227,7 @@ public static class ArchiveFormatterRegistry
         return formatterType is not null ? Activator.CreateInstance(formatterType) : null;
     }
 
-    private static Type? TryCreateGenericFormatterType(Type type, ImmutableDictionary<Type, Type> formatters)
+    private static Type? TryCreateGenericFormatterType(Type type, IReadOnlyDictionary<Type, Type> formatters)
     {
         if (!type.IsGenericType)
             return null;

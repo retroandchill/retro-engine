@@ -1,7 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using FluentAssertions;
 
 // ReSharper disable AccessToModifiedClosure
 
@@ -14,7 +12,7 @@ public class CollectionFormatterTest
     {
         var bin = ArchiveSerializer.Serialize(value);
         var value2 = ArchiveSerializer.Deserialize<T>(bin);
-        value2.Should().Equal(value);
+        Assert.That(value2, Is.EqualTo(value));
     }
 
     private static void CollectionEqualReference<T>(ref T? value, Action<T?> clear)
@@ -25,8 +23,8 @@ public class CollectionFormatterTest
         clear(value);
         var expected = ArchiveSerializer.Deserialize<T>(bin);
         ArchiveSerializer.Deserialize(bin, ref value);
-        value.Should().Equal(expected);
-        value.Should().BeSameAs(original);
+        Assert.That(value, Is.EqualTo(expected));
+        Assert.That(value, Is.SameAs(original));
     }
 
     [Test]
@@ -36,17 +34,17 @@ public class CollectionFormatterTest
         var bin = ArchiveSerializer.Serialize(list);
 
         // no ref
-        ArchiveSerializer.Deserialize<List<int>>(bin).Should().Equal(list);
+        Assert.That(ArchiveSerializer.Deserialize<List<int>>(bin), Is.EqualTo(list));
 
         // ref and same length
         var list2 = new List<int>() { 10, 20, 30, 40, 50 };
         ArchiveSerializer.Deserialize(bin, ref list2);
-        list2.Should().Equal(list);
+        Assert.That(list2, Is.EqualTo(list));
 
         // ref and differenct length
         var list3 = new List<int>() { 99, 98, 97 };
         ArchiveSerializer.Deserialize(bin, ref list3);
-        list3.Should().Equal(list);
+        Assert.That(list3, Is.EqualTo(list));
     }
 
     [Test]
@@ -65,19 +63,19 @@ public class CollectionFormatterTest
         var bin = ArchiveSerializer.Serialize(stack);
 
         // no ref
-        ArchiveSerializer.Deserialize<Stack<int>>(bin).Should().Equal(stack);
+        Assert.That(ArchiveSerializer.Deserialize<Stack<int>>(bin), Is.EqualTo(stack));
 
         // ref and same length
         var stack2 = new Stack<int>();
         Push(stack2, 10, 20, 30, 40, 50);
         ArchiveSerializer.Deserialize(bin, ref stack2);
-        stack2.Should().Equal(stack);
+        Assert.That(stack2, Is.EqualTo(stack));
 
         // ref and differenct length
         var stack3 = new Stack<int>();
         Push(stack3, 99, 98, 97);
         ArchiveSerializer.Deserialize(bin, ref stack3);
-        stack3.Should().Equal(stack);
+        Assert.That(stack3, Is.EqualTo(stack));
     }
 
     [Test]
@@ -131,11 +129,11 @@ public class CollectionFormatterTest
         var v2 = ArchiveSerializer.Deserialize<PriorityQueue<int, int>>(bin);
 
         Assert.That(v2, Is.Not.Null);
-        collection.Dequeue().Should().Be(v2.Dequeue());
-        collection.Dequeue().Should().Be(v2.Dequeue());
-        collection.Dequeue().Should().Be(v2.Dequeue());
-        collection.Dequeue().Should().Be(v2.Dequeue());
-        collection.Dequeue().Should().Be(v2.Dequeue());
+        Assert.That(collection.Dequeue(), Is.EqualTo(v2.Dequeue()));
+        Assert.That(collection.Dequeue(), Is.EqualTo(v2.Dequeue()));
+        Assert.That(collection.Dequeue(), Is.EqualTo(v2.Dequeue()));
+        Assert.That(collection.Dequeue(), Is.EqualTo(v2.Dequeue()));
+        Assert.That(collection.Dequeue(), Is.EqualTo(v2.Dequeue()));
     }
 
     [Test]
@@ -176,7 +174,7 @@ public class CollectionFormatterTest
 
             var bin = ArchiveSerializer.Serialize(collection);
             // not gurantees order
-            ArchiveSerializer.Deserialize<Stack<int>>(bin).Should().BeEquivalentTo(collection);
+            Assert.That(ArchiveSerializer.Deserialize<Stack<int>>(bin), Is.EquivalentTo(collection));
         }
         {
             var collection = new ReadOnlyCollection<int>([1, 2, 3, 4, 5]);
@@ -208,7 +206,7 @@ public class CollectionFormatterTest
             };
 
             var bin = ArchiveSerializer.Serialize(dict);
-            ArchiveSerializer.Deserialize<Dictionary<int, int>>(bin).Should().BeEquivalentTo(dict);
+            Assert.That(ArchiveSerializer.Deserialize<Dictionary<int, int>>(bin), Is.EquivalentTo(dict));
         }
         {
             var dict = new SortedDictionary<int, int>()
@@ -221,7 +219,7 @@ public class CollectionFormatterTest
             };
 
             var bin = ArchiveSerializer.Serialize(dict);
-            ArchiveSerializer.Deserialize<SortedDictionary<int, int>>(bin).Should().BeEquivalentTo(dict);
+            Assert.That(ArchiveSerializer.Deserialize<SortedDictionary<int, int>>(bin), Is.EquivalentTo(dict));
         }
         {
             var dict = new SortedList<int, int>()
@@ -234,7 +232,7 @@ public class CollectionFormatterTest
             };
 
             var bin = ArchiveSerializer.Serialize(dict);
-            ArchiveSerializer.Deserialize<SortedList<int, int>>(bin).Should().BeEquivalentTo(dict);
+            Assert.That(ArchiveSerializer.Deserialize<SortedList<int, int>>(bin), Is.EquivalentTo(dict));
         }
         {
             var dict = new ConcurrentDictionary<int, int>();
@@ -244,7 +242,7 @@ public class CollectionFormatterTest
             dict.TryAdd(4, 8);
 
             var bin = ArchiveSerializer.Serialize(dict);
-            ArchiveSerializer.Deserialize<ConcurrentDictionary<int, int>>(bin).Should().BeEquivalentTo(dict);
+            Assert.That(ArchiveSerializer.Deserialize<ConcurrentDictionary<int, int>>(bin), Is.EquivalentTo(dict));
         }
     }
 }

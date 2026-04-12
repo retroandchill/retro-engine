@@ -3,7 +3,6 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using FluentAssertions;
 using MagicArchive.Test.Models;
 
 namespace MagicArchive.Test;
@@ -25,7 +24,7 @@ public class CircularReferenceTest
         var bin = ArchiveSerializer.Serialize(tyler);
         var tylerDeserialized = ArchiveSerializer.Deserialize<Employee>(bin);
 
-        tylerDeserialized?.DirectReports?[0].Manager.Should().BeSameAs(tylerDeserialized);
+        Assert.That(tylerDeserialized?.DirectReports?[0].Manager, Is.SameAs(tylerDeserialized));
     }
 
     [Test]
@@ -45,7 +44,7 @@ public class CircularReferenceTest
 
         foreach (var item in value2!.Children!)
         {
-            item.Parent.Should().BeSameAs(value2);
+            Assert.That(item.Parent, Is.SameAs(value2));
         }
     }
 
@@ -58,8 +57,11 @@ public class CircularReferenceTest
         var value2 = ArchiveSerializer.Deserialize<PureNode>(bin);
 
         Assert.That(value2, Is.Not.Null);
-        value2.Id.Should().Be(10);
-        value2.Id2.Should().Be(1000);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(value2.Id, Is.EqualTo(10));
+            Assert.That(value2.Id2, Is.EqualTo(1000));
+        }
     }
 
     [Test]
@@ -102,18 +104,29 @@ public class CircularReferenceTest
             var a2 = parent.Children[1];
             _ = parent.Children[2];
 
-            parent.Should().NotBeSameAs(parent2);
-            parent2.Children![0].Should().BeSameAs(parent);
-            parent2.Children[1].Should().BeSameAs(a2);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(parent, Is.Not.SameAs(parent2));
+                Assert.That(parent2.Children, Is.Not.Null);
+            }
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(parent2.Children[0], Is.SameAs(parent));
+                Assert.That(parent2.Children[1], Is.SameAs(a2));
+            }
         }
         {
             var pure1 = value2.ListPure![0];
             var pure2 = value2.ListPure[2];
 
-            pure1.Should().NotBeSameAs(pure2);
-            pure1.Should().BeSameAs(value2.ListPure[1]);
-            pure1.Should().BeSameAs(value2.ListPure[4]);
-            pure2.Should().BeSameAs(value2.ListPure[3]);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(pure1, Is.Not.SameAs(pure2));
+                Assert.That(pure1, Is.SameAs(value2.ListPure[1]));
+                Assert.That(pure1, Is.SameAs(value2.ListPure[4]));
+                Assert.That(pure2, Is.SameAs(value2.ListPure[3]));
+            }
         }
     }
 
@@ -130,6 +143,6 @@ public class CircularReferenceTest
         var bin = ArchiveSerializer.Serialize(tyler);
         var tylerDeserialized = ArchiveSerializer.Deserialize<SequentialCircularReference>(bin);
 
-        tylerDeserialized?.DirectReports?[0].Manager.Should().BeSameAs(tylerDeserialized);
+        Assert.That(tylerDeserialized?.DirectReports?[0].Manager, Is.SameAs(tylerDeserialized));
     }
 }

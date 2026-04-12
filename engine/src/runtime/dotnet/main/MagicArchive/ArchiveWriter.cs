@@ -537,7 +537,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteSpan<T>(scoped ReadOnlySpan<T> value)
+    internal void WriteSpan<T>(scoped ReadOnlySpan<T> value)
     {
         if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
         {
