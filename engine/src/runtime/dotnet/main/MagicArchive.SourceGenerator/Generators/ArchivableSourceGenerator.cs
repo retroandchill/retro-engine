@@ -16,6 +16,7 @@ namespace MagicArchive.SourceGenerator.Generators;
 public class ArchivableSourceGenerator : IIncrementalGenerator
 {
     private readonly HandlebarsTemplate<object?, object?> _archivableTemplate;
+    private readonly HandlebarsTemplate<object?, object?> _unionTemplate;
 
     public ArchivableSourceGenerator()
     {
@@ -27,6 +28,7 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);
         handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
         _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
+        _unionTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Union"));
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -76,6 +78,23 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         if (!typeMetadata.Validate(syntax, context))
             return;
 
-        context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
+        switch (typeMetadata.GenerateType)
+        {
+            case GenerateType.Object:
+            case GenerateType.VersionTolerant:
+            case GenerateType.CircularReference:
+            case GenerateType.Custom:
+                context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
+                break;
+            case GenerateType.Collection:
+                break;
+            case GenerateType.NoGenerate:
+                break;
+            case GenerateType.Union:
+                context.AddSource($"{typeSymbol.Name}.g.cs", _unionTemplate(typeMetadata));
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 }

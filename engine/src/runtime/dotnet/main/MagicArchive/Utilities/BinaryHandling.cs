@@ -26,7 +26,8 @@ public static class BinaryHandling
             || typeof(T) == typeof(float)
             || typeof(T) == typeof(double)
             || typeof(T) == typeof(char)
-            || typeof(T) == typeof(Rune);
+            || typeof(T) == typeof(Rune)
+            || typeof(T) == typeof(DateTime);
     }
 
     internal static T ReverseEndianness<T>(T value)

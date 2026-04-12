@@ -18,7 +18,8 @@
         typeof(ulong),
         typeof(char),
         typeof(float),
-        typeof(double)
+        typeof(double),
+        typeof(DateTime),
     };
     var blittableTypeNames = blittableTypes
         .Select(x => x.Name)
@@ -27,6 +28,7 @@
     var knownStructTypes = new Type[]
     {
         typeof(bool),
+        typeof(decimal),
         typeof(Guid),
         typeof(DateTimeOffset),
     };

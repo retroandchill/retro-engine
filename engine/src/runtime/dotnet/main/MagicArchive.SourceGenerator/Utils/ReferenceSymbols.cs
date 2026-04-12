@@ -59,6 +59,7 @@ public sealed class ReferenceSymbols
         public INamedTypeSymbol IDictionary { get; }
         public INamedTypeSymbol List { get; }
 
+        public INamedTypeSymbol Decimal { get; }
         public INamedTypeSymbol Guid { get; }
         public INamedTypeSymbol Rune { get; }
         public INamedTypeSymbol Version { get; }
@@ -281,6 +282,7 @@ public sealed class ReferenceSymbols
             ISet = GetType(typeof(ISet<>)).ConstructUnboundGenericType();
             IDictionary = GetType(typeof(IDictionary<,>)).ConstructUnboundGenericType();
             List = GetType(typeof(List<>)).ConstructUnboundGenericType();
+            Decimal = GetType<decimal>();
             Guid = GetType<Guid>();
             Rune = GetTypeByMetadataName("System.Text.Rune");
             Version = GetType<Version>();
@@ -316,7 +318,10 @@ public sealed class ReferenceSymbols
                     Lazy,
                     KeyValuePair,
                     Nullable,
+                    Decimal,
                     Guid,
+                    DateTime,
+                    DateTimeOffset,
                 ],
                 SymbolEqualityComparer.Default
             );

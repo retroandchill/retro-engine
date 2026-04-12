@@ -25,6 +25,13 @@ public enum ClassType
 [UsedImplicitly]
 public readonly record struct AdditionalTypeRegistration(string TypeName, string FormatterName);
 
+public record UnionTag(ushort Tag, INamedTypeSymbol Type)
+{
+    public required string FullyQualifiedName { get; init; }
+    public required string WriteMethod { get; init; }
+    public required string ReadMethod { get; init; }
+}
+
 public class TypeMetadata
 {
     private DiagnosticDescriptor? _ctorInvalid;
@@ -67,6 +74,8 @@ public class TypeMetadata
     public bool IsInterfaceOrAbstract { get; }
     public bool IsUnion { get; }
     public bool IsRecord { get; }
+
+    public ImmutableArray<UnionTag> UnionTags { get; }
 
     [UsedImplicitly]
     public bool IsTolerant => GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference;
@@ -170,8 +179,51 @@ public class TypeMetadata
                     tempMembers[i] = Members.FirstOrDefault(x => x.Order == i) ?? MemberMetadata.CreateEmpty(i);
                     tempMembers[i].Index = i;
                 }
+
                 Members = ImmutableCollectionsMarshal.AsImmutableArray(tempMembers);
             }
+        }
+
+        if (IsUnion)
+        {
+            UnionTags =
+            [
+                .. symbol
+                    .GetArchivableUnionInfos()
+                    .Select(x =>
+                    {
+                        var namedSymbol = (INamedTypeSymbol)x.Type;
+                        var displayName = ToUnionTagTypeFullyQualifiedToString(namedSymbol);
+                        string writeMethodName;
+                        string readMethodName;
+                        if (
+                            x.Type.TryGetArchivableType(out var genType, out _)
+                            && genType
+                                is GenerateType.Object
+                                    or GenerateType.VersionTolerant
+                                    or GenerateType.CircularReference
+                        )
+                        {
+                            writeMethodName = "WriteArchivable";
+                            readMethodName = "ReadArchivable";
+                        }
+                        else
+                        {
+                            writeMethodName = "Write";
+                            readMethodName = "Read";
+                        }
+                        return new UnionTag(x.Tag, namedSymbol)
+                        {
+                            FullyQualifiedName = displayName,
+                            WriteMethod = writeMethodName,
+                            ReadMethod = readMethodName,
+                        };
+                    }),
+            ];
+        }
+        else
+        {
+            UnionTags = [];
         }
     }
 
@@ -214,6 +266,20 @@ public class TypeMetadata
                         return null;
                 }
             }
+        }
+    }
+
+    private string ToUnionTagTypeFullyQualifiedToString(INamedTypeSymbol type)
+    {
+        if (type.IsGenericType && Symbol.IsGenericType)
+        {
+            // when generic type, it is unconstructed.( typeof(T<>) ) so construct symbol's T
+            var typeName = string.Join(", ", this.Symbol.TypeArguments.Select(x => x.FullyQualifiedToString()));
+            return type.FullyQualifiedToString().Replace("<>", "<" + typeName + ">");
+        }
+        else
+        {
+            return type.FullyQualifiedToString();
         }
     }
 

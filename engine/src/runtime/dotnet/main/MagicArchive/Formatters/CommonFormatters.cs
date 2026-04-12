@@ -3,7 +3,9 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using MagicArchive.Utilities;
 
 namespace MagicArchive.Formatters;
 
@@ -44,6 +46,23 @@ public sealed class GuidFormatter : ArchiveFormatter<Guid>
     }
 }
 
+public sealed class DecimalFormatter : ArchiveFormatter<decimal>
+{
+    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in decimal value)
+    {
+        Span<int> bits = stackalloc int[4];
+        decimal.GetBits(value, bits);
+        writer.Write(bits[0], bits[1], bits[2], bits[3]);
+    }
+
+    public override void Deserialize(ref ArchiveReader reader, scoped ref decimal value)
+    {
+        Span<int> bits = stackalloc int[4];
+        reader.Read(out bits[0], out bits[1], out bits[2], out bits[3]);
+        value = new decimal(bits);
+    }
+}
+
 public sealed class DateTimeOffsetFormatter : ArchiveFormatter<DateTimeOffset>
 {
     public override void Serialize<TBufferWriter>(
@@ -51,13 +70,13 @@ public sealed class DateTimeOffsetFormatter : ArchiveFormatter<DateTimeOffset>
         scoped in DateTimeOffset value
     )
     {
-        writer.Write(value.ToUnixTimeMilliseconds());
+        writer.Write(value.UtcTicks, value.TotalOffsetMinutes);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref DateTimeOffset value)
     {
-        var unixTimestamp = reader.ReadInt64();
-        value = DateTimeOffset.FromUnixTimeMilliseconds(unixTimestamp);
+        reader.Read(out long utcTicks, out int offsetMinutes);
+        value = new DateTimeOffset(utcTicks, TimeSpan.FromMinutes(offsetMinutes));
     }
 }
 

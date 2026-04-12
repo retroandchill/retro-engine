@@ -16,13 +16,19 @@ internal static class MetadataExtensions
     {
         if (symbol is not INamedTypeSymbol namedTypeSymbol || !namedTypeSymbol.TryGetArchivableInfo(out var info))
         {
-            type = GenerateType.NoGenerate;
+            type = symbol.HasAttribute<ArchivableUnionAttribute>() ? GenerateType.Union : GenerateType.NoGenerate;
             layout = SerializeLayout.Sequential;
             return false;
         }
 
         type = info.GenerateType;
         layout = info.SerializeLayout;
+
+        if (type != GenerateType.Object || symbol is { IsStatic: false, IsAbstract: false })
+            return true;
+        type = GenerateType.Union;
+        layout = SerializeLayout.Sequential;
+
         return true;
     }
 

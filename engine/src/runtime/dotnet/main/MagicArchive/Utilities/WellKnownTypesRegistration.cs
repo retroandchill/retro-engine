@@ -45,12 +45,18 @@ internal static class WellKnownTypeRegistration
         ArchiveFormatterRegistry.Register(new BlittableFormatter<Double>());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<Double>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<Double>());
+        ArchiveFormatterRegistry.Register(new BlittableFormatter<DateTime>());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<DateTime>());
+        ArchiveFormatterRegistry.Register(new NullableFormatter<DateTime>());
         ArchiveFormatterRegistry.Register(new BlittableFormatter<Rune>());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<Rune>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<Rune>());
         ArchiveFormatterRegistry.Register(new BooleanFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<Boolean>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<Boolean>());
+        ArchiveFormatterRegistry.Register(new DecimalFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<Decimal>());
+        ArchiveFormatterRegistry.Register(new NullableFormatter<Decimal>());
         ArchiveFormatterRegistry.Register(new GuidFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<Guid>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<Guid>());

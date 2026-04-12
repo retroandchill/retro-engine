@@ -1,0 +1,94 @@
+#nullable enable
+using System;
+using MagicArchive;
+using System.Buffers;
+using MagicArchive.Formatters;
+using MagicArchive.Utilities;
+
+namespace {{Namespace}};
+
+partial {{ClassType}} {{Name}} : IArchivable
+{
+    static {{SimpleName}}()
+    {
+        ArchiveFormatterRegistry.Register<{{Name}}>();
+        StaticInit();
+    }
+
+    static partial void StaticInit();
+
+    static void IArchivable.RegisterFormatters()
+    {
+        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}>())
+            ArchiveFormatterRegistry.Register(new {{SimpleName}}Formatter());
+        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}[]>())
+            ArchiveFormatterRegistry.Register(new ArrayFormatter<{{Name}}>());
+    }
+
+    private sealed class {{SimpleName}}Formatter : ArchiveFormatter<{{Name}}>
+    {
+        private static readonly Dictionary<Type, ushort> _typeToTag = new({{UnionTags.Length}})
+        {
+            {{#UnionTags}}
+            { typeof({{FullyQualifiedName}}), {{Tag}} },
+            {{/UnionTags}}
+        };
+
+        public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
+        {
+            if (value is null)
+            {
+                writer.WriteNullObjectHeader();
+                return;
+            }
+
+            if (_typeToTag.TryGetValue(value.GetType(), out var tag)
+            {
+                writer.WriteUnionHeader(tag);
+
+                switch (tag)
+                {
+                    {{#UnionTags}}
+                    case {{Tag}}:
+                        writer.{{WriteMethd}}(Unsafe.As<{{NullableName}}, {{FullyQualifiedName}}>(ref value));
+                        break;
+                    {{/UnionTags}}
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                ArchiveSerializationException.ThrowNotFoundInUnionType(value.GetType(), typeof({{Name}}));
+            }
+        }
+
+        public override void Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
+        {
+            if (!reader.TryReadUnionHeader(out var tag))
+            {
+                value = null;
+                return;
+            }
+
+            switch (tag)
+            {
+                {{#UnionTags}}
+                case {{Tag}}:
+                    if (value is {{FullyQualifiedName}})
+                    {
+                        reader.{{ReadMethod}}(ref Unsafe.As<{{NullableName}}, {{FullyQualifiedName}}>(ref value));
+                    }
+                    else
+                    {
+                        value = reader.{{ReadMethod}}<{{FullyQualifiedName}}>();
+                    }
+                    break;
+                {{/UnionTags}}
+                default:
+                    ArchiveSerializationException.ThrowInvalidTag(tag, typeof({{Name}}));
+                    break;
+            }
+        }
+    }
+}

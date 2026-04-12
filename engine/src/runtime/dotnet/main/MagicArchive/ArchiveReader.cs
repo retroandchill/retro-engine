@@ -614,6 +614,18 @@ public ref struct ArchiveReader : IDisposable
         }
     }
 
+    public object? Read(Type type)
+    {
+        object? value = default;
+        GetFormatter(type).Deserialize(ref this, ref value);
+        return value;
+    }
+
+    public void Read(Type type, ref object? value)
+    {
+        GetFormatter(type).Deserialize(ref this, ref value);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? Read<T>()
     {

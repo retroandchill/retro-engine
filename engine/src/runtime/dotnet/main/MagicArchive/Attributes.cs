@@ -53,6 +53,12 @@ public sealed class ArchivableUnionAttribute(ushort tag, Type type) : Attribute
     public Type Type { get; } = type;
 }
 
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class ArchivableUnionFormatterAttribute(Type type) : Attribute
+{
+    public Type Type { get; } = type;
+}
+
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public sealed class ArchiveAllowSerializeAttribute : Attribute;
 
