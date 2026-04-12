@@ -9,11 +9,11 @@ using MagicArchive.Utilities;
 
 namespace MagicArchive.Formatters;
 
-public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
+public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,]?>
 {
     private const int HeaderValue = 3;
 
-    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T[,]? value)
+    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T?[,]? value)
     {
         if (value is null)
         {
@@ -37,7 +37,6 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
         }
         else
         {
-            writer.WriteCollectionHeader(value.Length);
             var formatter = writer.GetFormatter<T>();
             foreach (var item in value)
             {
@@ -46,7 +45,7 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
         }
     }
 
-    public override void Deserialize(ref ArchiveReader reader, scoped ref T[,]? value)
+    public override void Deserialize(ref ArchiveReader reader, scoped ref T?[,]? value)
     {
         if (!reader.TryReadObjectHeader(out var propertyCount))
         {
@@ -63,7 +62,7 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
 
         if (value is null || value.GetLength(0) != iLength || value.GetLength(1) != jLength)
         {
-            value = new T[iLength, jLength];
+            value = new T?[iLength, jLength];
         }
 
         if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
@@ -99,11 +98,11 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T[,]?>
     }
 }
 
-public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
+public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,]?>
 {
     private const int HeaderValue = 4;
 
-    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T[,,]? value)
+    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T?[,,]? value)
     {
         if (value is null)
         {
@@ -128,7 +127,6 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
         }
         else
         {
-            writer.WriteCollectionHeader(value.Length);
             var formatter = writer.GetFormatter<T>();
             foreach (var item in value)
             {
@@ -137,7 +135,7 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
         }
     }
 
-    public override void Deserialize(ref ArchiveReader reader, scoped ref T[,,]? value)
+    public override void Deserialize(ref ArchiveReader reader, scoped ref T?[,,]? value)
     {
         if (!reader.TryReadObjectHeader(out var propertyCount))
         {
@@ -159,7 +157,7 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
             || value.GetLength(2) != kLength
         )
         {
-            value = new T[iLength, jLength, kLength];
+            value = new T?[iLength, jLength, kLength];
         }
 
         if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
@@ -173,9 +171,9 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
         else
         {
             var formatter = reader.GetFormatter<T>();
-            var length = iLength * jLength;
+            var length = iLength * jLength * kLength;
             var i = 0;
-            var j = -1;
+            var j = 0;
             var k = -1;
             var count = 0;
             while (count++ < length)
@@ -202,11 +200,11 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,]?>
     }
 }
 
-public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,,]?>
+public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,,]?>
 {
     private const int HeaderValue = 5;
 
-    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T[,,,]? value)
+    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T?[,,,]? value)
     {
         if (value is null)
         {
@@ -232,7 +230,6 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,,]?>
         }
         else
         {
-            writer.WriteCollectionHeader(value.Length);
             var formatter = writer.GetFormatter<T>();
             foreach (var item in value)
             {
@@ -241,7 +238,7 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,,]?>
         }
     }
 
-    public override void Deserialize(ref ArchiveReader reader, scoped ref T[,,,]? value)
+    public override void Deserialize(ref ArchiveReader reader, scoped ref T?[,,,]? value)
     {
         if (!reader.TryReadObjectHeader(out var propertyCount))
         {
@@ -264,7 +261,7 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,,]?>
             || value.GetLength(3) != lLength
         )
         {
-            value = new T[iLength, jLength, kLength, lLength];
+            value = new T?[iLength, jLength, kLength, lLength];
         }
 
         if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
@@ -278,10 +275,10 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T[,,,]?>
         else
         {
             var formatter = reader.GetFormatter<T>();
-            var length = iLength * jLength;
+            var length = iLength * jLength * kLength * lLength;
             var i = 0;
-            var j = -1;
-            var k = -1;
+            var j = 0;
+            var k = 0;
             var l = -1;
             var count = 0;
             while (count++ < length)
