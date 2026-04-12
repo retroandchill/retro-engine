@@ -164,6 +164,12 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IArchiveFormatter GetFormatter(Type type)
+    {
+        return ArchiveFormatterRegistry.GetFormatter(type);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IArchiveFormatter<T> GetFormatter<T>()
     {
         return ArchiveFormatterRegistry.GetFormatter<T>();

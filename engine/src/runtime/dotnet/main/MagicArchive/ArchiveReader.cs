@@ -192,7 +192,7 @@ public ref struct ArchiveReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IArchiveFormatter GetFormatter(Type type)
     {
-        throw new NotImplementedException();
+        return ArchiveFormatterRegistry.GetFormatter(type);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

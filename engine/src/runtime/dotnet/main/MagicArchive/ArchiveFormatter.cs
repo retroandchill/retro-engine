@@ -40,5 +40,6 @@ public abstract class ArchiveFormatter<T> : IArchiveFormatter<T>
     {
         var v = value is not null ? (T)value : default;
         Deserialize(ref reader, ref v);
+        value = v;
     }
 }

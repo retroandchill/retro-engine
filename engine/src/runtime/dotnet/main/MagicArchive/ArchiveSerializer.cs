@@ -193,6 +193,64 @@ public static class ArchiveSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte[] Serialize(Type type, object? value, ArchiveSerializerOptions? options = null)
+    {
+        _threadStaticState ??= new SerializeWriterThreadStaticState();
+        _threadStaticState.Init(options);
+
+        try
+        {
+            var writer = ArchiveWriter.Create(
+                ref _threadStaticState.BufferWriter,
+                _threadStaticState.BufferWriter.FirstBuffer,
+                _threadStaticState.State
+            );
+            Serialize(type, ref writer, value);
+            return _threadStaticState.BufferWriter.ToArrayAndReset();
+        }
+        finally
+        {
+            _threadStaticState.Reset();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Serialize<TBufferWriter>(
+        Type type,
+        in TBufferWriter bufferWriter,
+        object? value,
+        ArchiveSerializerOptions? options = null
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        _threadStaticWriterState ??= new ArchiveSerializerState();
+        _threadStaticWriterState.Init(options);
+
+        try
+        {
+            var writer = ArchiveWriter.Create(ref Unsafe.AsRef(in bufferWriter), _threadStaticWriterState);
+            Serialize(type, ref writer, value);
+        }
+        finally
+        {
+            _threadStaticWriterState.Reset();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Serialize<TBufferWriter>(
+        Type type,
+        ref ArchiveWriter<TBufferWriter> writer,
+        object? value,
+        ArchiveSerializerOptions? options = null
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        writer.GetFormatter(type).Serialize(ref writer, in value);
+        writer.Flush();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static async ValueTask SerializeAsync<T>(
         Stream stream,
         T? value,
@@ -210,6 +268,47 @@ public static class ArchiveSerializer
         finally
         {
             ReusableLinkedArrayBufferWriterPool.Return(tempWriter);
+        }
+    }
+
+    public static async ValueTask SerializeAsync(
+        Type type,
+        Stream stream,
+        object? value,
+        ArchiveSerializerOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var tempWriter = ReusableLinkedArrayBufferWriterPool.Rent();
+        try
+        {
+            SerializeToTempWriter(tempWriter, type, value, options);
+            await tempWriter.WriteToAndResetAsync(stream, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            ReusableLinkedArrayBufferWriterPool.Return(tempWriter);
+        }
+    }
+
+    private static void SerializeToTempWriter(
+        ReusableLinkedArrayBufferWriter bufferWriter,
+        Type type,
+        object? value,
+        ArchiveSerializerOptions? options
+    )
+    {
+        _threadStaticWriterState ??= new ArchiveSerializerState();
+        _threadStaticWriterState.Init(options);
+
+        var writer = ArchiveWriter.Create(ref bufferWriter, _threadStaticWriterState);
+        try
+        {
+            Serialize(type, ref writer, value);
+        }
+        finally
+        {
+            _threadStaticWriterState.Reset();
         }
     }
 
@@ -237,6 +336,7 @@ public static class ArchiveSerializer
             {
                 ArchiveSerializationException.ThrowInvalidRange(Unsafe.SizeOf<T>(), buffer.Length);
             }
+
             value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(buffer));
             if (byteSwapping)
                 BinaryHandling.ReverseEndianness(ref value);
@@ -284,6 +384,7 @@ public static class ArchiveSerializer
             {
                 ArchiveSerializationException.ThrowInvalidRange(sizeOfT, (int)buffer.Length);
             }
+
             var slice = buffer.Slice(0, sizeOfT);
 
             if (slice.IsSingleSegment)
@@ -325,6 +426,70 @@ public static class ArchiveSerializer
         try
         {
             reader.Read(ref value);
+            return reader.ConsumedBytes;
+        }
+        finally
+        {
+            reader.Dispose();
+            _threadStaticReaderState.Reset();
+        }
+    }
+
+    public static object? Deserialize(Type type, ReadOnlySpan<byte> buffer, ArchiveSerializerOptions? options = null)
+    {
+        object? value = null;
+        Deserialize(type, buffer, ref value, options);
+        return value;
+    }
+
+    public static int Deserialize(
+        Type type,
+        ReadOnlySpan<byte> buffer,
+        ref object? value,
+        ArchiveSerializerOptions? options = null
+    )
+    {
+        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState.Init(options);
+
+        var reader = new ArchiveReader(buffer, _threadStaticReaderState);
+        try
+        {
+            reader.GetFormatter(type).Deserialize(ref reader, ref value);
+            return reader.ConsumedBytes;
+        }
+        finally
+        {
+            reader.Dispose();
+            _threadStaticReaderState.Reset();
+        }
+    }
+
+    public static object? Deserialize(
+        Type type,
+        in ReadOnlySequence<byte> buffer,
+        ArchiveSerializerOptions? options = null
+    )
+    {
+        object? value = null;
+        Deserialize(type, buffer, ref value, options);
+        return value;
+    }
+
+    public static int Deserialize(
+        Type type,
+        in ReadOnlySequence<byte> buffer,
+        ref object? value,
+        ArchiveSerializerOptions? options = null
+    )
+    {
+        _threadStaticReaderState ??= new ArchiveSerializerState();
+        _threadStaticReaderState.Init(options);
+
+        var reader = new ArchiveReader(buffer, _threadStaticReaderState);
+        try
+        {
+            reader.GetFormatter(type).Deserialize(ref reader, ref value);
             return reader.ConsumedBytes;
         }
         finally
@@ -393,6 +558,81 @@ public static class ArchiveSerializer
                 var seq = builder.Build();
                 var result = Deserialize<T>(seq, options);
                 return result;
+            }
+        }
+        finally
+        {
+            builder.Reset();
+        }
+    }
+
+    public static async ValueTask<object?> DeserializeAsync(
+        Type type,
+        Stream stream,
+        ArchiveSerializerOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (stream is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var streamBuffer))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            object? value = null;
+            var bytesRead = Deserialize(
+                type,
+                streamBuffer.AsSpan(checked((int)memoryStream.Position)),
+                ref value,
+                options
+            );
+
+            // Emulate that we had actually "read" from the stream.
+            memoryStream.Seek(bytesRead, SeekOrigin.Current);
+
+            return value;
+        }
+
+        var builder = ReusableReadOnlySequenceBuilderPool.Rent();
+        try
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(65536);
+            var offset = 0;
+            do
+            {
+                if (offset == buffer.Length)
+                {
+                    builder.Add(buffer, returnToPool: true);
+                    buffer = ArrayPool<byte>.Shared.Rent(MathEx.NewArrayCapacity(buffer.Length));
+                    offset = 0;
+                }
+
+                int read;
+                try
+                {
+                    read = await stream
+                        .ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    throw;
+                }
+
+                offset += read;
+
+                if (read != 0)
+                    continue;
+                builder.Add(buffer.AsMemory(0, offset), returnToPool: true);
+                break;
+            } while (true);
+
+            if (builder.TryGetSingleMemory(out var memory))
+            {
+                return Deserialize(type, memory.Span, options);
+            }
+            else
+            {
+                var seq = builder.Build();
+                return Deserialize(type, seq, options);
             }
         }
         finally

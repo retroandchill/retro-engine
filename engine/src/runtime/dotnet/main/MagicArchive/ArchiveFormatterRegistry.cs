@@ -35,6 +35,44 @@ public static class ArchiveFormatterRegistry
 
     public static bool IsRegistered<T>() => Check<T>.Registered;
 
+    public static IArchiveFormatter GetFormatter(Type type)
+    {
+        if (Formatters.TryGetValue(type, out var formatter))
+        {
+            return formatter;
+        }
+
+        if (TryInvokeRegisterFormatter(type))
+        {
+            if (Formatters.TryGetValue(type, out formatter))
+            {
+                return formatter;
+            }
+        }
+
+        if (type.IsAnonymous)
+        {
+            formatter = new ErrorArchiveFormatter(
+                type,
+                "Serialize anonymous type is not supported, use record or tuple instead."
+            );
+        }
+        else
+        {
+            if (CreateGenericFormatter(type) is IArchiveFormatter candidate)
+            {
+                formatter = candidate;
+            }
+            else
+            {
+                formatter = new ErrorArchiveFormatter(type);
+            }
+        }
+
+        Formatters[type] = formatter;
+        return formatter;
+    }
+
     public static ArchiveFormatter<T> GetFormatter<T>()
     {
         return Cache<T>.Formatter;
