@@ -29,7 +29,7 @@ public sealed class TupleFormatter<T1> : ArchiveFormatter<Tuple<T1?>>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Tuple<T1?>? value)
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -61,7 +61,7 @@ public sealed class TupleFormatter<T1, T2> : ArchiveFormatter<Tuple<T1?, T2?>>
         scoped in Tuple<T1?, T2?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -94,7 +94,7 @@ public sealed class TupleFormatter<T1, T2, T3> : ArchiveFormatter<Tuple<T1?, T2?
         scoped in Tuple<T1?, T2?, T3?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -128,7 +128,7 @@ public sealed class TupleFormatter<T1, T2, T3, T4> : ArchiveFormatter<Tuple<T1?,
         scoped in Tuple<T1?, T2?, T3?, T4?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -168,7 +168,7 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5> : ArchiveFormatter<Tuple<
         scoped in Tuple<T1?, T2?, T3?, T4?, T5?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -210,7 +210,7 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : ArchiveFormatter<Tu
         scoped in Tuple<T1?, T2?, T3?, T4?, T5?, T6?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -255,7 +255,7 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7>
         scoped in Tuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;
@@ -306,7 +306,7 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest>
         scoped in Tuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;

@@ -36,7 +36,7 @@ public sealed class TupleFormatter<<#= CreateT(i) #>> : ArchiveFormatter<Tuple<<
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Tuple<<#= CreateTNull(i) #>>? value)
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullObjectHeader();
             return;

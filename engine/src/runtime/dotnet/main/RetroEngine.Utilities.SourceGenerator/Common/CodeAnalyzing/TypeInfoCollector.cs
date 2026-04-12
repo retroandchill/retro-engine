@@ -14,7 +14,7 @@ public static class TypeInfoCollector
             typeSymbol.ContainingNamespace is { IsGlobalNamespace: false }
                 ? typeSymbol.ContainingNamespace.ToDisplayString()
                 : null,
-            typeSymbol.ContainingType != null ? CreateTypeInfo(typeSymbol.ContainingType) : null,
+            typeSymbol.ContainingType is not null ? CreateTypeInfo(typeSymbol.ContainingType) : null,
             typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
             typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             typeSymbol switch

@@ -52,7 +52,7 @@ internal static class TypeHelpers
         {
             [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
             get =>
-                type.Namespace == null
+                type.Namespace is null
                 && type.IsSealed
                 && (
                     type.Name.StartsWith("<>f__AnonymousType", StringComparison.Ordinal)

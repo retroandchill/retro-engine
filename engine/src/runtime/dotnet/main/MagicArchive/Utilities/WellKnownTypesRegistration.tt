@@ -36,12 +36,21 @@
 
     var knownTypes = new Type[]
     {
+        typeof(string),
         typeof(Version),
-        typeof(string)
+        typeof(Uri),
     };
 
     var knownTypesNames = knownTypes
-        .Select(x => x.Name);
+        .Select(x => x.Name)
+        .Concat([
+            "TimeZoneInfo",
+            "BigInteger",
+            "BitArray",
+            "StringBuilder",
+            "Type",
+            "CultureInfo"
+        ]);
 #>
 using MagicArchive.Formatters;
 using System.Collections;

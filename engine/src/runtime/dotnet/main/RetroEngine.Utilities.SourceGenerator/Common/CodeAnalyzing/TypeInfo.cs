@@ -53,8 +53,9 @@ public sealed class TypeInfo(
     public static TypeInfo SpecificType(string? @namespace, TypeInfo? containingType, string name, TypeKind kind)
     {
         var namespacePart = !string.IsNullOrEmpty(@namespace) ? $"{@namespace}." : string.Empty;
-        var containingTypesPart =
-            containingType != null ? $"{string.Join(".", FlattenNesting(containingType))}." : string.Empty;
+        var containingTypesPart = containingType is not null
+            ? $"{string.Join(".", FlattenNesting(containingType))}."
+            : string.Empty;
         return new TypeInfo(
             @namespace,
             containingType,

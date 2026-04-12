@@ -54,7 +54,7 @@ public static class TypeCodeWriter
     private static void WriteTypeDeclaration(TypeDefinition typeDefinition, CodeWriter codeWriter)
     {
         var declarationBuilder = new DeclarationBuilder().AddIf(
-            typeDefinition.Accessibility != null,
+            typeDefinition.Accessibility is not null,
             () => typeDefinition.Accessibility!.Value.ToCodeString()
         );
 
@@ -91,12 +91,12 @@ public static class TypeCodeWriter
         }
 
         var declarationBuilder = new DeclarationBuilder()
-            .AddIf(fieldDefinition.Accessibility != null, () => fieldDefinition.Accessibility!.Value.ToCodeString())
+            .AddIf(fieldDefinition.Accessibility is not null, () => fieldDefinition.Accessibility!.Value.ToCodeString())
             .AddIf(fieldDefinition.IsStatic, () => "static")
             .AddIf(fieldDefinition.IsReadOnly, () => "readonly")
             .Add(fieldDefinition.TypeName.FullyQualifiedName)
             .Add(fieldDefinition.Name)
-            .AddIf(fieldDefinition.Initializer != null, () => "=", () => fieldDefinition.Initializer!);
+            .AddIf(fieldDefinition.Initializer is not null, () => "=", () => fieldDefinition.Initializer!);
         typeBodyBlock.AppendLine($"{declarationBuilder};");
     }
 
@@ -109,7 +109,7 @@ public static class TypeCodeWriter
 
         var declarationBuilder = new DeclarationBuilder()
             .AddIf(
-                propertyDefinition.Accessibility != null,
+                propertyDefinition.Accessibility is not null,
                 () => propertyDefinition.Accessibility!.Value.ToCodeString()
             )
             .AddIf(propertyDefinition.IsStatic, () => "static")
@@ -118,12 +118,12 @@ public static class TypeCodeWriter
         typeBodyBlock.AppendLine(declarationBuilder.ToString());
         using (var propertyBodyBlock = typeBodyBlock.NewBlock())
         {
-            if (propertyDefinition.Getter != null)
+            if (propertyDefinition.Getter is not null)
             {
                 WritePropertyAccessor(propertyDefinition.Getter.Value, "get", propertyBodyBlock, propertyDefinition);
             }
 
-            if (propertyDefinition.Setter != null)
+            if (propertyDefinition.Setter is not null)
             {
                 WritePropertyAccessor(
                     propertyDefinition.Setter.Value,
@@ -134,7 +134,7 @@ public static class TypeCodeWriter
             }
         }
 
-        if (propertyDefinition.Initializer != null)
+        if (propertyDefinition.Initializer is not null)
         {
             typeBodyBlock.AppendLine($" = {propertyDefinition.Initializer};");
         }
@@ -148,7 +148,7 @@ public static class TypeCodeWriter
             PropertyDefinition propertyDefinition
         )
         {
-            if (propertyAccessor.Accessibility != null)
+            if (propertyAccessor.Accessibility is not null)
             {
                 propertyBodyBlock.Append($"{propertyAccessor.Accessibility.Value.ToCodeString()} ");
             }
@@ -185,7 +185,7 @@ public static class TypeCodeWriter
     {
         var declarationStr = new DeclarationBuilder()
             .AddIf(
-                constructorDefinition.Accessibility != null,
+                constructorDefinition.Accessibility is not null,
                 () => constructorDefinition.Accessibility!.Value.ToCodeString()
             )
             .AddIf(constructorDefinition.IsStatic, () => "static")
@@ -230,9 +230,12 @@ public static class TypeCodeWriter
     private static void WriteMethodDeclaration(MethodDefinition methodDefinition, CodeWriter typeBodyBlock)
     {
         var declarationStr = new DeclarationBuilder()
-            .AddIf(methodDefinition.Accessibility != null, () => methodDefinition.Accessibility!.Value.ToCodeString())
             .AddIf(
-                methodDefinition.MethodModifier != null,
+                methodDefinition.Accessibility is not null,
+                () => methodDefinition.Accessibility!.Value.ToCodeString()
+            )
+            .AddIf(
+                methodDefinition.MethodModifier is not null,
                 (Func<string>)(
                     () =>
                         methodDefinition.MethodModifier switch
@@ -264,7 +267,7 @@ public static class TypeCodeWriter
                         .Select(p => $" where {p.Name} : {string.Join(", ", p.Constraints)}")
                 )
                 : "";
-        var endSemicolon = methodDefinition.BodyWriter == null ? ";" : string.Empty;
+        var endSemicolon = methodDefinition.BodyWriter is null ? ";" : string.Empty;
 
         typeBodyBlock.AppendLine(
             $"{declarationStr}{genericParametersStr}({parametersStr}){genericParameterConstraints}{endSemicolon}"
@@ -291,10 +294,9 @@ public static class TypeCodeWriter
             ", ",
             methodParameters.Select(x =>
             {
-                var modifierStr =
-                    x.Modifier == null
-                        ? string.Empty
-                        : $"{x.Modifier switch {
+                var modifierStr = x.Modifier is null
+                    ? string.Empty
+                    : $"{x.Modifier switch {
 					MethodParameterModifier.In => "in",
 					MethodParameterModifier.Ref => "ref",
 					MethodParameterModifier.Out => "out",

@@ -116,7 +116,7 @@ public sealed class ListFormatter<T> : ArchiveFormatter<List<T?>>
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new List<T?>(length);
         }
@@ -151,7 +151,7 @@ public sealed class StackFormatter<T> : ArchiveFormatter<Stack<T?>>
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new Stack<T?>(length);
         }
@@ -191,7 +191,7 @@ public sealed class QueueFormatter<T> : ArchiveFormatter<Queue<T?>>
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new Queue<T?>(length);
         }
@@ -240,7 +240,7 @@ public sealed class LinkedListFormatter<T> : ArchiveFormatter<LinkedList<T?>>
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new LinkedList<T?>();
         }
@@ -289,7 +289,7 @@ public sealed class HashSetFormatter<T>(IEqualityComparer<T?>? comparer) : Archi
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new HashSet<T?>(length, comparer);
         }
@@ -342,7 +342,7 @@ public sealed class SortedSetFormatter<T>(IComparer<T?>? comparer) : ArchiveForm
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new SortedSet<T?>(comparer);
         }
@@ -376,7 +376,7 @@ public sealed class PriorityQueueFormatter<TElement, TPriority> : ArchiveFormatt
         scoped in PriorityQueue<TElement?, TPriority?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullCollectionHeader();
             return;
@@ -399,7 +399,7 @@ public sealed class PriorityQueueFormatter<TElement, TPriority> : ArchiveFormatt
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new PriorityQueue<TElement?, TPriority?>(length);
         }
@@ -700,7 +700,7 @@ public sealed class DictionaryFormatter<TKey, TValue>(IEqualityComparer<TKey>? c
         scoped in Dictionary<TKey, TValue?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullCollectionHeader();
             return;
@@ -724,7 +724,7 @@ public sealed class DictionaryFormatter<TKey, TValue>(IEqualityComparer<TKey>? c
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new Dictionary<TKey, TValue?>(length, comparer);
         }
@@ -756,7 +756,7 @@ public sealed class SortedDictionaryFormatter<TKey, TValue>(IComparer<TKey>? com
         scoped in SortedDictionary<TKey, TValue?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullCollectionHeader();
             return;
@@ -780,7 +780,7 @@ public sealed class SortedDictionaryFormatter<TKey, TValue>(IComparer<TKey>? com
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new SortedDictionary<TKey, TValue?>(comparer);
         }
@@ -812,7 +812,7 @@ public sealed class SortedListFormatter<TKey, TValue>(IComparer<TKey>? comparer)
         scoped in SortedList<TKey, TValue?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullCollectionHeader();
             return;
@@ -836,7 +836,7 @@ public sealed class SortedListFormatter<TKey, TValue>(IComparer<TKey>? comparer)
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new SortedList<TKey, TValue?>(length, comparer);
         }
@@ -868,7 +868,7 @@ public sealed class ConcurrentDictionaryFormatter<TKey, TValue>(IEqualityCompare
         scoped in ConcurrentDictionary<TKey, TValue?>? value
     )
     {
-        if (value == null)
+        if (value is null)
         {
             writer.WriteNullCollectionHeader();
             return;
@@ -898,7 +898,7 @@ public sealed class ConcurrentDictionaryFormatter<TKey, TValue>(IEqualityCompare
             return;
         }
 
-        if (value == null)
+        if (value is null)
         {
             value = new ConcurrentDictionary<TKey, TValue?>(comparer);
         }

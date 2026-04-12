@@ -100,7 +100,7 @@ internal sealed class ReusableReadOnlySequenceBuilder
         {
             if (_returnToPool)
             {
-                if (MemoryMarshal.TryGetArray(Memory, out var segment) && segment.Array != null)
+                if (MemoryMarshal.TryGetArray(Memory, out var segment) && segment.Array is not null)
                 {
                     ArrayPool<byte>.Shared.Return(segment.Array, clearArray: false);
                 }

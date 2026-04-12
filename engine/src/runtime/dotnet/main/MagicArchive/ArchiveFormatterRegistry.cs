@@ -15,6 +15,13 @@ public static class ArchiveFormatterRegistry
 {
     private static readonly ConcurrentDictionary<Type, IArchiveFormatter> Formatters = new();
 
+    private static readonly ImmutableDictionary<Type, Type> KnownGenericTypeFormatters =
+        ImmutableDictionary.CreateRange([
+            new KeyValuePair<Type, Type>(typeof(KeyValuePair<,>), typeof(KeyValuePairFormatter<,>)),
+            new KeyValuePair<Type, Type>(typeof(Lazy<>), typeof(LazyFormatter<>)),
+            new KeyValuePair<Type, Type>(typeof(Nullable<>), typeof(NullableFormatter<>)),
+        ]);
+
     static ArchiveFormatterRegistry()
     {
         WellKnownTypeRegistration.RegisterWellKnownTypesFormatters();
@@ -177,6 +184,7 @@ public static class ArchiveFormatterRegistry
             ReadOnlySpan<ImmutableDictionary<Type, Type>> possibleFormatters =
             [
                 TupleFormatters.FormatterTypes,
+                KnownGenericTypeFormatters,
                 CollectionFormatters.FormatterTypes,
             ];
 

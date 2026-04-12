@@ -21,7 +21,7 @@ public sealed record TypeDefinition
     {
         get
         {
-            if (field != null)
+            if (field is not null)
             {
                 return field;
             }

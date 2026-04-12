@@ -57,9 +57,23 @@ internal static class WellKnownTypeRegistration
         ArchiveFormatterRegistry.Register(new DateTimeOffsetFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<DateTimeOffset>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<DateTimeOffset>());
-        ArchiveFormatterRegistry.Register(new VersionFormatter());
-        ArchiveFormatterRegistry.Register(new ArrayFormatter<Version>());
         ArchiveFormatterRegistry.Register(new StringFormatter());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<String>());
+        ArchiveFormatterRegistry.Register(new VersionFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<Version>());
+        ArchiveFormatterRegistry.Register(new UriFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<Uri>());
+        ArchiveFormatterRegistry.Register(new TimeZoneInfoFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<TimeZoneInfo>());
+        ArchiveFormatterRegistry.Register(new BigIntegerFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<BigInteger>());
+        ArchiveFormatterRegistry.Register(new BitArrayFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<BitArray>());
+        ArchiveFormatterRegistry.Register(new StringBuilderFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<StringBuilder>());
+        ArchiveFormatterRegistry.Register(new TypeFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<Type>());
+        ArchiveFormatterRegistry.Register(new CultureInfoFormatter());
+        ArchiveFormatterRegistry.Register(new ArrayFormatter<CultureInfo>());
     }
 }

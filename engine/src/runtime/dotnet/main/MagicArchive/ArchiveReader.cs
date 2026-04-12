@@ -698,7 +698,7 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReadUnmanagedArray<T>(scoped ref T[]? value, int length)
+    internal void ReadUnmanagedArray<T>(scoped ref T[]? value, int length)
     {
         var byteCount = length * Unsafe.SizeOf<T>();
         ref var src = ref GetSpanReference(byteCount);

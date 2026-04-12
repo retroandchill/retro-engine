@@ -29,7 +29,7 @@ internal static class MetadataExtensions
     public static IEnumerable<ISymbol> GetAllMembers(this INamedTypeSymbol symbol, bool withoutOverride = true)
     {
         // Iterate Parent -> Derived
-        if (symbol.BaseType != null)
+        if (symbol.BaseType is not null)
         {
             foreach (var item in symbol.BaseType.GetAllMembers())
             {

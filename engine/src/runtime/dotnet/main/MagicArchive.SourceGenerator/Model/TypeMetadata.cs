@@ -255,7 +255,7 @@ public class TypeMetadata
             noError = false;
         }
 
-        if (_ctorInvalid != null)
+        if (_ctorInvalid is not null)
         {
             context.ReportDiagnostic(Diagnostic.Create(_ctorInvalid, syntax.Identifier.GetLocation(), Symbol.Name));
             noError = false;
@@ -309,7 +309,7 @@ public class TypeMetadata
             }
         }
 
-        if (Symbol.BaseType != null)
+        if (Symbol.BaseType is not null)
         {
             // Member override member can't annotate[Ignore][Include]
             foreach (var item in Symbol.GetAllMembers(withoutOverride: false))
