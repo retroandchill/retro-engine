@@ -301,25 +301,6 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(Guid value)
-    {
-        const int size = 16;
-        ref var spanRef = ref GetSpanReference(size);
-        value.TryWriteBytes(
-            MemoryMarshal.CreateSpan(ref spanRef, size),
-            Options.ByteOrder == ByteOrder.BigEndian,
-            out _
-        );
-        Advance(size);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(DateTimeOffset value)
-    {
-        Write(value.ToUnixTimeMilliseconds());
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(string? value)
     {
         if (_serializeStringAsUtf8)

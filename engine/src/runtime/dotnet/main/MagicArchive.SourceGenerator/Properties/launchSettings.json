@@ -2,7 +2,7 @@
   "profiles": {
     "MemoryPack.Generator": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\RetroEngine.Portable\\RetroEngine.Portable.csproj"
+      "targetProject": "..\\..\\test\\MagicArchive.Test\\MagicArchive.Test.csproj"
     }
   }
 }

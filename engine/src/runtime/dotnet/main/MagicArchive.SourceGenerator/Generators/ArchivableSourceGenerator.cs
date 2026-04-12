@@ -24,6 +24,7 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
         handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
         handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
+        handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);
         handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
         _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
     }
@@ -67,7 +68,8 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         SemanticModel semanticModel
     )
     {
-        var typeMetadata = new TypeMetadata(typeSymbol, semanticModel);
+        var referenceSymbols = new ReferenceSymbols(semanticModel.Compilation, semanticModel);
+        var typeMetadata = new TypeMetadata(typeSymbol, referenceSymbols);
         if (typeMetadata.GenerateType == GenerateType.NoGenerate)
             return;
 

@@ -28,7 +28,9 @@ public static class ArchiveFormatterRegistry
 
     public static void Register<T>(ArchiveFormatter<T> formatter)
     {
-        Formatters.TryAdd(typeof(T), formatter);
+        Check<T>.Registered = true;
+        Formatters[typeof(T)] = formatter;
+        Cache<T>.Formatter = formatter;
     }
 
     public static bool IsRegistered<T>() => Check<T>.Registered;
@@ -130,7 +132,7 @@ public static class ArchiveFormatterRegistry
         }
         else if (type.IsEnum)
         {
-            formatterType = typeof(BlittableFormatter<>).MakeGenericType(type);
+            formatterType = typeof(EnumFormatter<>).MakeGenericType(type);
         }
         else
         {

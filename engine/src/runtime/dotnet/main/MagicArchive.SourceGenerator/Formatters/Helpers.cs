@@ -28,6 +28,15 @@ public static class Helpers
         writer.Write(member.EmitDeserialize(readerName));
     }
 
+    public static void MemberRefReader(EncodedTextWriter writer, Context context, Arguments arguments)
+    {
+        if (context.Value is not MemberMetadata member)
+            return;
+
+        var readerName = arguments.At<string>(0);
+        writer.Write(member.EmitRefDeserialize(readerName));
+    }
+
     public static void ConstructorParameters(EncodedTextWriter writer, Context context, Arguments arguments)
     {
         if (context.Value is not TypeMetadata type)

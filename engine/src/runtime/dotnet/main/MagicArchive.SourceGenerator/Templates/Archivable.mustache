@@ -3,6 +3,7 @@ using System;
 using MagicArchive;
 using System.Buffers;
 using MagicArchive.Formatters;
+using MagicArchive.Utilities;
 
 namespace {{Namespace}};
 
@@ -19,14 +20,24 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
     static void IArchivable.RegisterFormatters()
     {
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}>())
-            ArchiveFormatterRegistry.Register<{{Name}}>();
+            ArchiveFormatterRegistry.Register(new ArchivableFormatter<{{Name}}>());
         {{#IsValueType}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}?>())
             ArchiveFormatterRegistry.Register(new NullableFormatter<{{Name}}>());
         {{/IsValueType}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}[]>())
             ArchiveFormatterRegistry.Register(new ArrayFormatter<{{Name}}>());
+        {{#AdditionalTypeRegistrations}}
+        if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}>())
+            ArchiveFormatterRegistry.Register(new {{FormatterName}}());
+        {{/AdditionalTypeRegistrations}}
+        {{#IsCustom}}
+        RegisterAdditionalFormatters();
+        {{/IsCustom}}
     }
+    {{#IsCustom}}
+    static partial void RegisterAdditionalFormatters();
+    {{/IsCustom}}
     {{^IsCustom}}
 
     static void IArchivable<{{Name}}>.Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
@@ -39,10 +50,60 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         }
 
         {{/IsValueType}}
+        {{#IsTolerant}}
+        {{#IsCircularReference}}
+        var (existsReference, id) = writer.State.GetOrAddReference(value);
+        if (existReference)
+        {
+            writer.WriteObjectReferenceId(id);
+            return;
+        }
+
+        {{/IsCircularReference}}
+
+        var tempBuffer = ReusableLinkedArrayBufferWriterPool.Rent();
+        try
+        {
+            Span<int> offsets = stackalloc int[{{Members.Length}}];
+            var tempWriter = ArchiveWriter.Create(ref tempBuffer, writer.State);
+            {{#Members}}
+            {{MemberWriter "tempWriter"}}
+            offset[{{Index}}] = tempWriter.WrittenBytes;
+            {{/Members}}
+
+            tempWriter.Flush();
+
+            writer.WriteObjectHeader({{MemberCount}});
+            for (var i = 0; i < {{MemberCount}}; i++)
+            {
+                int delta;
+                if (i == 0)
+                {
+                    delta = offsets[i];
+                }
+                else
+                {
+                    delta = offsets[i] - offsets[i - 1];
+                }
+                writer.WriteInt32(delta);
+            }
+            {{#IsCircularReference}}
+            writer.WriteInt32(id);
+            {{/IsCircularReference}}
+            tempBuffer.WriteToAndReset(ref writer);
+        }
+        finally
+        {
+            ReusableLinkedArrayBufferWriterPool.Return(tempBuffer);
+        }
+        {{/IsTolerant}}
+        {{^IsVersionTolerant}}
+
         writer.WriteObjectHeader({{MemberCount}});
         {{#Members}}
         {{MemberWriter "writer"}}
         {{/Members}}
+        {{/IsVersionTolerant}}
     }
 
     static void IArchivable<{{Name}}>.Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
@@ -57,32 +118,177 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
             return;
             {{/IsValueType}}
         }
-        {{#RequiresConstruct}}
 
-        {{#PreConstructMembers}}
-        var __{{Name}}__ = count > {{Order}} ? {{MemberReader "reader"}} : {{DefaultValue}};
-        {{/PreConstructMembers}}
 
+        {{#IsCircularReference}}
+        uint id;
+        if (count == ArchiveCodes.ReferenceId)
+        {
+            id = reader.ReadUInt32();
+            value = ({{Name}}) reader.State.GetObjectReference(id);
+            return;
+        }
+        {{/IsCircularReference}}
+        {{#IsVersionTolerant}}
+        Span<int> deltas = stackalloc int[{{Members.Length}}];
+        for (var i = 0; i < {{Members.Length}}; i++)
+        {
+            deltas[i] = reader.ReadInt32();
+        }
+        {{/IsVersionTolerant}}
+        {{#IsCircularReference}}
+        id = reader.ReadUInt32();
+        if (value is null)
+        {
+            value = new {{Name}}();
+        }
+        reader.State.AddObjectReference(id, value);
+        {{/IsCircularReference}}
+        {{#Members}}
+        {{^IsBlank}}
+        {{MemberType}} __{{Name}}__;
+        {{/IsBlank}}
+        {{/Members}}
+        {{#IsVersionTolerant}}
+        var readCount = {{MemberCount}};
+        {{/IsVersionTolerant}}
+        if (count == {{MemberCount}})
+        {
+            {{^IsValueType}}
+            if (value is null)
+            {{/IsValueType}}
+            {
+                {{#Members}}
+                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}__{{Name}}__ = {{MemberReader "reader"}};
+                {{#IsTolerant}}
+                {{^IsBlank}}
+                __{{Name}}__ = {{DefaultValue}};
+                {{/IsBlank}}
+                {{/IsTolerant}}
+                {{/Members}}
+
+                goto NEW;
+            }
+            {{^IsValueType}}
+            else
+            {
+                {{#Members}}
+                {{^IsBlank}}
+                __{{Name}}__ = value.{{Name}};
+                {{/IsBlank}}
+                {{/Members}}
+
+                {{#Members}}
+                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}{{MemberRefReader "reader"}};
+                {{/Members}}
+
+                goto SET;
+            }
+            {{/IsValueType}}
+        }
+        {{^IsVersionTolerant}}
+        else if (count > {{MemberCount}})
+        {
+            ArchiveSerializationException.ThrowInvalidPropertyCount(typeof({{Name}}), {{MemberCount}}, count);
+            return;
+        }
+        {{/IsVersionTolerant}}
+        else
+        {
+            {{^IsValueType}}
+            if (value is null)
+            {{/IsValueType}}
+            {
+                {{#Members}}
+                {{^IsBlank}}
+                __{{Name}}__ = {{DefaultValue}};
+                {{/IsBlank}}
+                {{/Members}}
+            }
+            {{^IsValueType}}
+            {
+                {{#Members}}
+                {{^IsBlank}}
+                __{{Name}}__ = value.{{Name}};
+                {{/IsBlank}}
+                {{/Members}}
+
+                if (count == 0) goto SKIP_READ;
+                {{#Members}}
+
+                {{#IsTolerant}}if (deltas[{{Index}}] != 0) {{/IsTolerant}}{{MemberRefReader "reader"}};
+                if (count == {{IndexPlusOne}}) goto SKIP_READ;
+                {{/Members}}
+
+                SKIP_READ:
+                {{^IsValueType}}
+                if (value is null)
+                {{/IsValueType}}
+                {
+                    goto NEW;
+                }
+                {{^IsValueType}}
+                else
+                {
+                    goto SET;
+                }
+                {{/IsValueType}}
+            }
+            {{/IsValueType}}
+        }
+
+        SET:
+        {{#UsesEmptyConstructor}}
+        {{#Members}}
+        {{#IsAssignable}}
+        value.{{Name}} = __{{Name}}__;
+        {{/IsAssignable}}
+        {{/Members}}
+        goto READ_END;
+        {{/UsesEmptyConstructor}}
+
+        NEW:
         value = new {{Name}}({{ConstructorParameters}})
         {
-            {{#PreConstructMembers}}
-            {{^IsConstructorParameters}}
+            {{#Members}}
+            {{#IsSettable}}
+            {{^IsConstructorParameter}}
+            {{^SupressDefaultInitialization}}
             {{Name}} = __{{Name}}__,
-            {{/IsConstructorParameters}}
-            {{/PreConstructMembers}}
+            {{/SupressDefaultInitialization}}
+            {{/IsConstructorParameter}}
+            {{/IsSettable}}
+            {{/Members}}
         };
-        {{/RequiresConstruct}}
-        {{^RequiresConstruct}}
-        {{^IsValueType}}
+        {{#IsTolerant}}
+        {{#Members}}
+        {{#SuppressDefaultInitialization}}
+        if (deltas.Length > {{Index}} && deltas[{{Index}}] != 0)
+            value.{{Name}} = __{{Name}}__;
+        {{/SuppressDefaultInitialization}}
+        {{/Members}}
+        {{/IsTolerant}}
+        {{^IsTolerant}}
+        {{#Members}}
+        {{#SuppressDefaultInitialization}}
+        if ({{IndexPlusOne}} <= count)
+            value.{{Name}} = __{{Name}}__;
+        {{/SuppressDefaultInitialization}}
+        {{/Members}}
+        {{/IsTolerant}}
 
-        value ??= new {{Name}}();
-        {{/IsValueType}}
-        {{/RequiresConstruct}}
-        {{#PostConstructMembers}}
+        READ_END:
+        {{#IsTolerant}}
+        if (count == readCount)
+            return;
 
-        if (count <= {{Order}}) return;
-        value.{{Name}} = {{MemberReader "reader"}};
-        {{/PostConstructMembers}}
+        for (var i = readCount; i < count; i++)
+        {
+            reader.Advance(deltas[i]);
+        }
+        {{/IsTolerant}}
+
+        return;
     }
     {{/IsCustom}}
 }

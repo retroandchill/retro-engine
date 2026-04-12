@@ -4,6 +4,8 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using JetBrains.Annotations;
+using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
@@ -19,37 +21,72 @@ public enum ClassType
     Interface,
 }
 
+[UsedImplicitly]
+public readonly record struct AdditionalTypeRegistration(string TypeName, string FormatterName);
+
 public class TypeMetadata
 {
     private DiagnosticDescriptor? _ctorInvalid;
 
+    private readonly ReferenceSymbols _reference;
     public GenerateType GenerateType { get; }
     public SerializeLayout SerializeLayout { get; }
     public INamedTypeSymbol Symbol { get; }
+
+    [UsedImplicitly]
     public string Namespace { get; }
+
+    [UsedImplicitly]
     public ClassType ClassType { get; }
+
+    [UsedImplicitly]
     public string Name { get; }
+
+    [UsedImplicitly]
     public string NullableName { get; }
-    public ImmutableArray<MemberMetadata> Members { get; private set; }
-    public ImmutableArray<MemberMetadata> PreConstructMembers { get; private set; }
-    public ImmutableArray<MemberMetadata> PostConstructMembers { get; private set; }
+
+    [UsedImplicitly]
+    public ImmutableArray<AdditionalTypeRegistration> AdditionalTypeRegistrations { get; }
+    public ImmutableArray<MemberMetadata> Members { get; }
+
+    [UsedImplicitly]
+    public ImmutableArray<MemberMetadata> PreConstructMembers { get; }
+
+    [UsedImplicitly]
+    public ImmutableArray<MemberMetadata> PostConstructMembers { get; }
+
+    [UsedImplicitly]
     public int MemberCount => Members.Length;
+
+    [UsedImplicitly]
     public bool IsValueType { get; }
     public bool IsInterfaceOrAbstract { get; }
     public bool IsUnion { get; }
     public bool IsRecord { get; }
-    public bool RequiresConstruct => PreConstructMembers.Length > 0 || Constructor is { Parameters.Length: > 0 };
-    public bool HasDefault { get; }
-    public bool HasImplicitConstructor => Constructor is null;
 
+    [UsedImplicitly]
+    public bool IsTolerant => GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference;
+
+    [UsedImplicitly]
+    public bool IsCircularReference => GenerateType is GenerateType.CircularReference;
+
+    [UsedImplicitly]
+    public bool RequiresConstruct => PreConstructMembers.Length > 0 || Constructor is { Parameters.Length: > 0 };
+
+    [UsedImplicitly]
+    public bool HasDefault { get; }
+
+    [UsedImplicitly]
     public bool IsCustom => GenerateType is GenerateType.Custom;
+
     public bool UsesEmptyConstructor => Constructor is null || Constructor.Parameters.IsEmpty;
 
     public IMethodSymbol? Constructor { get; }
 
-    public TypeMetadata(INamedTypeSymbol symbol, SemanticModel semanticModel)
+    public TypeMetadata(INamedTypeSymbol symbol, ReferenceSymbols referenceSymbols)
     {
         Symbol = symbol;
+        _reference = referenceSymbols;
 
         symbol.TryGetArchivableType(out var generateType, out var serializeLayout);
         GenerateType = generateType;
@@ -86,20 +123,20 @@ public class TypeMetadata
                 })
                 .Where(x =>
                 {
-                    if (x is IPropertySymbol p)
-                    {
-                        if (p.GetMethod is null && p.SetMethod is not null)
-                            return false;
+                    if (x is not IPropertySymbol p)
+                        return true;
+                    if (p.GetMethod is null && p.SetMethod is not null)
+                        return false;
 
-                        if (p.IsIndexer)
-                            return false;
-                    }
-
-                    return true;
+                    return !p.IsIndexer;
                 })
-                .Select((x, i) => new MemberMetadata(x, Constructor, semanticModel, i))
+                .Select((x, i) => new MemberMetadata(x, Constructor, _reference, i))
                 .OrderBy(x => x.Order),
         ];
+        for (var i = 0; i < Members.Length; i++)
+        {
+            Members[i].Index = i;
+        }
 
         var preConstructEnd = Members.Length - 1;
         while (preConstructEnd >= 0)
@@ -112,6 +149,8 @@ public class TypeMetadata
 
         PreConstructMembers = Members[..(preConstructEnd + 1)];
         PostConstructMembers = Members[(preConstructEnd + 1)..];
+
+        AdditionalTypeRegistrations = GetAdditionalTypeRegistrations();
 
         IsValueType = symbol.IsValueType;
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
@@ -286,7 +325,6 @@ public class TypeMetadata
             foreach (var item in Symbol.GetParentMembers())
             {
                 var include = item.HasAttribute<ArchiveIncludeAttribute>();
-                var ignore = item.HasAttribute<ArchiveIgnoreAttribute>();
                 if (!include || item.DeclaredAccessibility != Accessibility.Private)
                     continue;
                 var location = item.Locations.FirstOrDefault() ?? syntax.Identifier.GetLocation();
@@ -449,5 +487,22 @@ public class TypeMetadata
                 .Where(x => x.IsConstructorParameter)
                 .Select(x => $"{x.ConstructorParameterName}: __{x.Name}__")
         );
+    }
+
+    private ImmutableArray<AdditionalTypeRegistration> GetAdditionalTypeRegistrations()
+    {
+        if (IsCustom)
+            return [];
+
+        var collector = new TypeCollector();
+        collector.Visit(this, false);
+
+        return
+        [
+            .. collector
+                .Select(x => (Type: x, Formatter: _reference.KnownTypes.GetNonDefaultFormatterName(x)))
+                .Where(x => x.Formatter is not null)
+                .Select(x => new AdditionalTypeRegistration(x.Type.FullyQualifiedToString(), x.Formatter!)),
+        ];
     }
 }

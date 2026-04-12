@@ -143,6 +143,23 @@ internal static class MetadataExtensions
                 yield return member;
             }
         }
+
+        public bool EqualsUnconstructedGenericType(INamedTypeSymbol right)
+        {
+            var l = typeSymbol.IsGenericType ? typeSymbol.ConstructUnboundGenericType() : typeSymbol;
+            var r = right.IsGenericType ? right.ConstructUnboundGenericType() : right;
+            return SymbolEqualityComparer.Default.Equals(l, r);
+        }
+
+        public IEnumerable<INamedTypeSymbol> GetAllBaseTypes()
+        {
+            var t = typeSymbol.BaseType;
+            while (t is not null)
+            {
+                yield return t;
+                t = t.BaseType;
+            }
+        }
     }
 
     public static string FullyQualifiedToString(this ISymbol symbol)

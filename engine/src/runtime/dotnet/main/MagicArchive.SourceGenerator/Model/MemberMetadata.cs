@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
@@ -27,11 +28,10 @@ public enum MemberKind
     UInt64,
     Single,
     Double,
-    Guid,
-    DateTimeOffset,
+    KnownType,
     String,
     Array,
-    List,
+    BlittableArray,
     ArchivableArray,
     ArchivableList,
     ArchivableCollection,
@@ -63,11 +63,13 @@ public class MemberMetadata
     public bool IsConstructorParameter { get; }
     public string? ConstructorParameterName { get; }
     public int Order { get; }
-    public int OrderPlusOne => Order + 1;
+    public int Index { get; set; }
+    public int IndexPlusOne => Index + 1;
     public bool HasExplicitOrder { get; }
     public MemberKind Kind { get; }
     public bool SuppressDefaultInitialization { get; }
     public string DefaultValue { get; }
+    public bool IsBlank => Kind == MemberKind.Blank;
 
     private MemberMetadata(int order)
     {
@@ -79,7 +81,7 @@ public class MemberMetadata
         Kind = MemberKind.Blank;
     }
 
-    public MemberMetadata(ISymbol symbol, IMethodSymbol? constructor, SemanticModel semanticModel, int sequentialOrder)
+    public MemberMetadata(ISymbol symbol, IMethodSymbol? constructor, ReferenceSymbols reference, int sequentialOrder)
     {
         Symbol = symbol;
         Name = symbol.Name;
@@ -147,7 +149,7 @@ public class MemberMetadata
                     var defaultValue = property
                         .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
                         .OfType<PropertyDeclarationSyntax>()
-                        .Where(x => IsValidInitializer(x.Initializer, semanticModel))
+                        .Where(x => IsValidInitializer(x.Initializer, reference.SemanticModel))
                         .Select(x => x.Initializer!.Value.ToString())
                         .FirstOrDefault();
                     if (defaultValue is not null)
@@ -162,7 +164,7 @@ public class MemberMetadata
 
         // TODO: Eventually we will want to allow for custom formatters, but not right now
 
-        Kind = ParseMemberKind(symbol, MemberType);
+        Kind = ParseMemberKind(symbol, MemberType, reference);
     }
 
     private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, SemanticModel semanticModel)
@@ -191,7 +193,11 @@ public class MemberMetadata
         return location;
     }
 
-    private static MemberKind ParseMemberKind(ISymbol? memberSymbol, ITypeSymbol memberType)
+    private static MemberKind ParseMemberKind(
+        ISymbol? memberSymbol,
+        ITypeSymbol memberType,
+        ReferenceSymbols referenceSymbols
+    )
     {
         switch (memberType.SpecialType)
         {
@@ -237,7 +243,7 @@ public class MemberMetadata
                 return MemberKind.Enum;
         }
 
-        if (memberType.AllInterfaces.Any(x => x.IsArchivableInterface))
+        if (memberType.AllInterfaces.Any(x => x.EqualsUnconstructedGenericType(referenceSymbols.IArchivable)))
         {
             return MemberKind.Archivable;
         }
@@ -250,7 +256,9 @@ public class MemberMetadata
                 case GenerateType.VersionTolerant:
                 case GenerateType.CircularReference:
                 case GenerateType.Custom:
-                    return MemberKind.Object;
+                    return MemberKind.Archivable;
+                case GenerateType.Union:
+                    return MemberKind.ArchivableUnion;
                 case GenerateType.Collection:
                     return MemberKind.ArchivableCollection;
                 case GenerateType.NoGenerate:
@@ -297,10 +305,13 @@ public class MemberMetadata
             if (namedTypeSymbol.IsRefLikeType)
                 return MemberKind.RefLike;
 
-            if (namedTypeSymbol.IsNullableValueType)
+            if (namedTypeSymbol.Equals(referenceSymbols.KnownTypes.Rune, SymbolEqualityComparer.Default))
+                return MemberKind.Rune;
+
+            if (namedTypeSymbol.EqualsUnconstructedGenericType(referenceSymbols.KnownTypes.Nullable))
                 return MemberKind.Nullable;
 
-            if (namedTypeSymbol.IsListType)
+            if (namedTypeSymbol.EqualsUnconstructedGenericType(referenceSymbols.KnownTypes.List))
             {
                 if (
                     namedTypeSymbol.TypeArguments[0].TryGetArchivableType(out var elemGenerateType, out _)
@@ -314,15 +325,13 @@ public class MemberMetadata
                     return MemberKind.ArchivableList;
                 }
 
-                return MemberKind.List;
+                return MemberKind.KnownType;
             }
 
-            if (namedTypeSymbol.IsSameType<Guid>())
-                return MemberKind.Guid;
-            if (namedTypeSymbol.IsSameType<DateTimeOffset>())
-                return MemberKind.DateTimeOffset;
-            if (namedTypeSymbol.ToDisplayString() == "System.Test.Rune")
-                return MemberKind.Rune;
+            if (referenceSymbols.KnownTypes.Contains(memberType))
+            {
+                return MemberKind.KnownType;
+            }
         }
 
         if (memberSymbol is not null && memberSymbol.HasAttribute<ArchiveAllowSerializeAttribute>())
@@ -336,6 +345,7 @@ public class MemberMetadata
     public string EmitSerialize(string writer)
     {
         // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (Kind)
         {
             case MemberKind.Archivable:
@@ -391,10 +401,6 @@ public class MemberMetadata
                 return $"{reader}.ReadSingle()";
             case MemberKind.Double:
                 return $"{reader}.ReadDouble()";
-            case MemberKind.Guid:
-                return $"{reader}.ReadGuid()";
-            case MemberKind.DateTimeOffset:
-                return $"{reader}.ReadDateTimeOffset()";
             case MemberKind.String:
                 return $"{reader}.ReadString()";
             case MemberKind.Array:
@@ -411,7 +417,7 @@ public class MemberMetadata
             case MemberKind.Enum:
                 return $"{reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
             case MemberKind.Blank:
-                break;
+                return $"reader.Advance(deltas[{Index}])";
             case MemberKind.CustomFormatter:
             {
                 var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -420,5 +426,57 @@ public class MemberMetadata
         }
 
         return $"{reader}.Read<{MemberType.FullyQualifiedToString()}>();";
+    }
+
+    public string EmitRefDeserialize(string reader)
+    {
+        switch (Kind)
+        {
+            case MemberKind.Archivable:
+                return $"{reader}.ReadArchivable(ref __{Name}__)";
+            case MemberKind.Bool:
+                return $"__{Name}__ = {reader}.ReadBool()";
+            case MemberKind.Char:
+                return $"__{Name}__ = {reader}.ReadChar()";
+            case MemberKind.Rune:
+                return $"__{Name}__ = {reader}.ReadRune()";
+            case MemberKind.Byte:
+                return $"__{Name}__ = {reader}.ReadByte()";
+            case MemberKind.SByte:
+                return $"__{Name}__ = {reader}.ReadSByte()";
+            case MemberKind.Int16:
+                return $"__{Name}__ = {reader}.ReadInt16()";
+            case MemberKind.UInt16:
+                return $"__{Name}__ = {reader}.ReadUInt16()";
+            case MemberKind.Int32:
+                return $"__{Name}__ = {reader}.ReadInt32()";
+            case MemberKind.UInt32:
+                return $"__{Name}__ = {reader}.ReadUInt32()";
+            case MemberKind.Int64:
+                return $"__{Name}__ = {reader}.ReadInt64()";
+            case MemberKind.UInt64:
+                return $"__{Name}__ = {reader}.ReadUInt64()";
+            case MemberKind.Single:
+                return $"__{Name}__ = {reader}.ReadSingle()";
+            case MemberKind.Double:
+                return $"__{Name}__ = {reader}.ReadDouble()";
+            case MemberKind.String:
+                return $"__{Name}__ = {reader}.ReadString()";
+            case MemberKind.Array:
+                return $"{reader}.ReadArray(ref __{Name}__)";
+            case MemberKind.ArchivableList:
+                return $"{reader}.ReadArchivableList(ref __{Name}__)";
+            case MemberKind.Enum:
+                return $"__{Name}__ = {reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
+            case MemberKind.Blank:
+                return $"reader.Advance(deltas[{Index}])";
+            case MemberKind.CustomFormatter:
+            {
+                var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                return $"reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter)";
+            }
+        }
+
+        return $"{reader}.Read(ref __{Name}__);";
     }
 }

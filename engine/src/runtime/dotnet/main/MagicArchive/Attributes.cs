@@ -13,6 +13,8 @@ public enum GenerateType
     Collection,
     Custom,
     NoGenerate,
+
+    Union,
 }
 
 public enum SerializeLayout

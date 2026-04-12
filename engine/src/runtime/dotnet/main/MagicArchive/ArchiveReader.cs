@@ -387,23 +387,6 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Guid ReadGuid()
-    {
-        const int guidSize = 16;
-        ref var spanRef = ref GetSpanReference(guidSize);
-        var span = MemoryMarshal.CreateReadOnlySpan(ref spanRef, guidSize);
-        Advance(guidSize);
-        return new Guid(span, Options.ByteOrder == ByteOrder.BigEndian);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public DateTimeOffset ReadDateTimeOffset()
-    {
-        var unixTimestamp = ReadInt64();
-        return DateTimeOffset.FromUnixTimeMilliseconds(unixTimestamp);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string? ReadString()
     {
         if (!TryReadCollectionHeader(out var length))

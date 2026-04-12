@@ -44,4 +44,8 @@
         <DependentUpon>TupleFormatter.tt</DependentUpon>
       </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Structured\" />
+    </ItemGroup>
 </Project>

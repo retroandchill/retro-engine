@@ -5,7 +5,7 @@ public partial class Overwrite
 {
     public int MyProperty1 { get; set; }
     public int MyProperty2 { get; set; }
-    public String? MyProperty3 { get; set; }
+    public string? MyProperty3 { get; set; }
     public string? MyProperty4 { get; set; }
 }
 
