@@ -26,6 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" />
       <PackageReference Include="LinkDotNet.StringBuilder" />
       <PackageReference Include="ZLinq" />
     </ItemGroup>
