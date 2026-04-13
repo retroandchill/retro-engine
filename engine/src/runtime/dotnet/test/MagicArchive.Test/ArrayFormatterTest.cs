@@ -68,15 +68,15 @@ public class ArrayFormatterTest
         var three = new ValueTuple<int, int, int>[dataI, dataJ, dataK];
         var four = new ValueTuple<int, int, int, int>[dataI, dataJ, dataK, dataL];
 
-        for (int i = 0; i < dataI; i++)
+        for (var i = 0; i < dataI; i++)
         {
-            for (int j = 0; j < dataJ; j++)
+            for (var j = 0; j < dataJ; j++)
             {
                 two[i, j] = (i, j);
-                for (int k = 0; k < dataK; k++)
+                for (var k = 0; k < dataK; k++)
                 {
                     three[i, j, k] = (i, j, k);
-                    for (int l = 0; l < dataL; l++)
+                    for (var l = 0; l < dataL; l++)
                     {
                         four[i, j, k, l] = (i, j, k, l);
                     }

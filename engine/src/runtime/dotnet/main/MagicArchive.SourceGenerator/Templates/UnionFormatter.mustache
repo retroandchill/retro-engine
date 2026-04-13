@@ -90,3 +90,20 @@ partial {{ClassType}} {{Name}} : ArchiveFormatter<{{UnionTarget}}>
         }
     }
 }
+
+public static class {{InitializerName}}
+{
+    [ModuleInitializer]
+    public static void RegisterFormatter()
+    {
+        {{#IsGenericDefinition}}
+        ArchiveFormatterRegistry.RegisterGenericType(typeof({{BaseUnionTarget}}), typeof({{BaseDefinitionName}}));
+        {{/IsGenericDefinition}}
+        {{^IsGenericDefinition}}
+        if (!ArchiveFormatterRegistry.IsRegistered<{{UnionTarget}}>())
+        {
+            ArchiveFormatterRegistry.Register(new {{Name}}());
+        }
+        {{/IsGenericDefinition}}
+    }
+}

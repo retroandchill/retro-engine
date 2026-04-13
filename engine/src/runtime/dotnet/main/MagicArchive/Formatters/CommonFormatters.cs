@@ -13,7 +13,7 @@ public sealed class BooleanFormatter : ArchiveFormatter<bool>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in bool value)
     {
-        writer.Write(value);
+        writer.WriteBool(value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref bool value)
@@ -52,13 +52,13 @@ public sealed class DecimalFormatter : ArchiveFormatter<decimal>
     {
         Span<int> bits = stackalloc int[4];
         decimal.GetBits(value, bits);
-        writer.Write(bits[0], bits[1], bits[2], bits[3]);
+        writer.WriteBlittable(bits[0], bits[1], bits[2], bits[3]);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref decimal value)
     {
         Span<int> bits = stackalloc int[4];
-        reader.Read(out bits[0], out bits[1], out bits[2], out bits[3]);
+        reader.ReadBlittable(out bits[0], out bits[1], out bits[2], out bits[3]);
         value = new decimal(bits);
     }
 }
@@ -70,12 +70,12 @@ public sealed class DateTimeOffsetFormatter : ArchiveFormatter<DateTimeOffset>
         scoped in DateTimeOffset value
     )
     {
-        writer.Write(value.UtcTicks, value.TotalOffsetMinutes);
+        writer.WriteBlittable(value.UtcTicks, value.TotalOffsetMinutes);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref DateTimeOffset value)
     {
-        reader.Read(out long utcTicks, out int offsetMinutes);
+        reader.ReadBlittable(out long utcTicks, out int offsetMinutes);
         value = new DateTimeOffset(utcTicks, TimeSpan.FromMinutes(offsetMinutes));
     }
 }
@@ -84,7 +84,7 @@ public sealed class StringFormatter : ArchiveFormatter<string>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in string? value)
     {
-        writer.Write(value);
+        writer.WriteString(value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref string? value)

@@ -15,7 +15,7 @@ using MagicArchive.Utilities;
 
 namespace MagicArchive;
 
-public ref struct ArchiveReader : IDisposable
+public ref partial struct ArchiveReader : IDisposable
 {
     private ReadOnlySequence<byte> _sequence;
     public long TotalSize { get; }
@@ -220,7 +220,7 @@ public ref struct ArchiveReader : IDisposable
                 tag = firstTag;
                 return true;
             case ArchiveCodes.WideTag:
-                tag = ReadUInt16();
+                ReadBlittable(out tag);
                 return true;
             default:
                 tag = 0;
@@ -231,7 +231,7 @@ public ref struct ArchiveReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryReadCollectionHeader(out int length)
     {
-        length = ReadInt32();
+        ReadBlittable(out length);
 
         if (RemainingBytes < length)
         {
@@ -265,7 +265,7 @@ public ref struct ArchiveReader : IDisposable
                 tag = firstTag;
                 return true;
             case ArchiveCodes.WideTag:
-                tag = ReadUInt16();
+                ReadBlittable(out tag);
                 return true;
             default:
                 tag = 0;
@@ -293,7 +293,7 @@ public ref struct ArchiveReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ReadBool()
     {
-        var value = ReadByte();
+        var value = ReadBlittable<byte>();
         return value switch
         {
             0 => false,
@@ -303,87 +303,49 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal T ReadBlittable<T>()
+    public T ReadBlittable<T>()
+        where T : unmanaged
     {
-        var size = Unsafe.SizeOf<T>();
-        ref var spanRef = ref GetSpanReference(size);
-        var value = !IsByteSwapping
-            ? Unsafe.ReadUnaligned<T>(ref spanRef)
-            : BinaryHandling.ReverseEndianness(Unsafe.ReadUnaligned<T>(ref spanRef));
-        Advance(size);
+        return UnsafeReadBlittable<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadBlittable<T>(out T value)
+        where T : unmanaged
+    {
+        UnsafeReadBlittable(out value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal T? UnsafeReadBlittable<T>()
+    {
+        UnsafeReadBlittable<T>(out var value);
         return value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public char ReadChar()
+    internal void UnsafeReadBlittable<T>(out T? value)
     {
-        return ReadBlittable<char>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Rune ReadRune()
-    {
-        return ReadBlittable<Rune>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte ReadByte()
-    {
-        return ReadBlittable<byte>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public sbyte ReadSByte()
-    {
-        return ReadBlittable<sbyte>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public short ReadInt16()
-    {
-        return ReadBlittable<short>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort ReadUInt16()
-    {
-        return ReadBlittable<ushort>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int ReadInt32()
-    {
-        return ReadBlittable<int>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public uint ReadUInt32()
-    {
-        return ReadBlittable<uint>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long ReadInt64()
-    {
-        return ReadBlittable<long>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong ReadUInt64()
-    {
-        return ReadBlittable<ulong>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public float ReadSingle()
-    {
-        return ReadBlittable<float>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public double ReadDouble()
-    {
-        return ReadBlittable<double>();
+        if (!IsByteSwapping)
+        {
+            var size = Unsafe.SizeOf<T>();
+            ref var spanRef = ref GetSpanReference(size);
+            value = Unsafe.ReadUnaligned<T>(ref spanRef);
+            Advance(size);
+        }
+        else if (BlittableMarshalling.IsBlittable<T>())
+        {
+            var size = Unsafe.SizeOf<T>();
+            ref var spanRef = ref GetSpanReference(size);
+            value = Unsafe.ReadUnaligned<T>(ref spanRef);
+            BlittableMarshalling.ReverseEndianness(ref value);
+            Advance(size);
+        }
+        else
+        {
+            value = default;
+            GetFormatter<T>().Deserialize(ref this, ref value);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -549,20 +511,6 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T ReadEnum<T>()
-        where T : unmanaged, Enum
-    {
-        return ReadBlittable<T>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ReadEnum<T>(ref T value)
-        where T : unmanaged, Enum
-    {
-        value = ReadBlittable<T>();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? ReadArchivable<T>()
         where T : IArchivable<T>
     {
@@ -614,38 +562,32 @@ public ref struct ArchiveReader : IDisposable
         }
     }
 
-    public object? Read(Type type)
+    public object? ReadValue(Type type)
     {
-        object? value = default;
+        object? value = null;
         GetFormatter(type).Deserialize(ref this, ref value);
         return value;
     }
 
-    public void Read(Type type, ref object? value)
+    public void ReadValue(Type type, ref object? value)
     {
         GetFormatter(type).Deserialize(ref this, ref value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? Read<T>()
+    public T? ReadValue<T>()
     {
-        if (BinaryHandling.IsBlittable<T>())
-        {
-            return ReadBlittable<T>();
-        }
-
-        var formatter = GetFormatter<T>();
-        var value = default(T)!;
-        formatter.Deserialize(ref this, ref value);
+        T? value = default;
+        ReadValue(ref value);
         return value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Read<T>(ref T? value)
+    public void ReadValue<T>(ref T? value)
     {
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
-            value = ReadBlittable<T>();
+            UnsafeReadBlittable(out value);
             return;
         }
 
@@ -665,7 +607,7 @@ public ref struct ArchiveReader : IDisposable
         if (memberCount != 1)
             ArchiveSerializationException.ThrowInvalidPropertyCount(1, memberCount);
 
-        return Read<T>();
+        return ReadValue<T>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -691,9 +633,9 @@ public ref struct ArchiveReader : IDisposable
             return;
         }
 
-        if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
-            ReadUnmanagedArray(ref value, length);
+            UnsafeReadBlittableArray(ref value, length);
             return;
         }
 
@@ -710,7 +652,14 @@ public ref struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ReadUnmanagedArray<T>(scoped ref T[]? value, int length)
+    internal void ReadBlittableArray<T>(scoped ref T[]? value, int length)
+        where T : unmanaged
+    {
+        UnsafeReadBlittableArray(ref value, length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UnsafeReadBlittableArray<T>(scoped ref T[]? value, int length)
     {
         var byteCount = length * Unsafe.SizeOf<T>();
         ref var src = ref GetSpanReference(byteCount);
@@ -747,7 +696,7 @@ public ref struct ArchiveReader : IDisposable
 
     internal void ReadInto<T>(Span<T?> buffer)
     {
-        if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
             ReadIntoUnmanaged(buffer);
             return;

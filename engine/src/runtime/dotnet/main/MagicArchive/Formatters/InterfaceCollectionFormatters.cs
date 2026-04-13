@@ -54,10 +54,10 @@ file static class InterfaceCollectionFormatterUtils
         switch (value)
         {
             case TElement?[] array:
-                writer.Write(array);
+                writer.WriteArray(array);
                 return true;
             case List<TElement?> list:
-                writer.Write(CollectionsMarshal.AsSpan(list));
+                writer.WriteSpan(CollectionsMarshal.AsSpan(list));
                 return true;
             default:
 
@@ -424,8 +424,8 @@ public sealed class InterfaceGroupingFormatter<TKey, TElement> : ArchiveFormatte
         }
 
         writer.WriteObjectHeader(2);
-        writer.Write(value.Key);
-        writer.Write<IEnumerable<TElement>>(value);
+        writer.WriteValue(value.Key);
+        writer.WriteValue<IEnumerable<TElement>>(value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref IGrouping<TKey, TElement>? value)
@@ -439,7 +439,7 @@ public sealed class InterfaceGroupingFormatter<TKey, TElement> : ArchiveFormatte
         if (count != 2)
             ArchiveSerializationException.ThrowInvalidPropertyCount(2, count);
 
-        var key = reader.Read<TKey>();
+        var key = reader.ReadValue<TKey>();
         var values = reader.ReadArray<TElement>();
 
         if (key is null)

@@ -27,6 +27,19 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
 {
     static {{SimpleName}}()
     {
+        {{#BlittableRegistrations}}
+        {{#IsBlittable}}
+        {{#IsComplex}}
+        BlittableMarshalling.RegisterComplexBlittable<{{TypeName}}>();
+        {{/IsComplex}}
+        {{^IsComplex}}
+        BlittableMarshalling.RegisterSimpleBlittable<{{TypeName}}>();
+        {{/IsComplex}}
+        {{/IsBlittable}}
+        {{^IsBlittable}}
+        BlittableMarshalling.RegisterNotBlittable<{{TypeName}}>();
+        {{/IsBlittable}}
+        {{/BlittableRegistrations}}
         ArchiveFormatterRegistry.Register<{{Name}}>();
         StaticInit();
     }
@@ -101,10 +114,10 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
                 {
                     delta = offsets[i] - offsets[i - 1];
                 }
-                writer.Write(delta);
+                writer.WriteBlittable(delta);
             }
             {{#IsCircularReference}}
-            writer.Write(id);
+            writer.WriteBlittable(id);
             {{/IsCircularReference}}
             tempBuffer.WriteToAndReset(ref writer);
         }
@@ -140,7 +153,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         uint id;
         if (count == ArchiveCodes.ReferenceId)
         {
-            id = reader.ReadUInt32();
+            id = reader.ReadBlittable<uint>();
             value = ({{Name}}) reader.State.GetObjectReference(id);
             return;
         }
@@ -149,11 +162,11 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         Span<int> deltas = stackalloc int[count];
         for (var i = 0; i < count; i++)
         {
-            deltas[i] = reader.ReadInt32();
+            deltas[i] = reader.ReadBlittable<int>();
         }
         {{/IsTolerant}}
         {{#IsCircularReference}}
-        id = reader.ReadUInt32();
+        id = reader.ReadBlittable<uint>();
         if (value is null)
         {
             value = new {{Name}}();

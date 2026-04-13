@@ -44,54 +44,48 @@ internal static class CollectionFormatters
 
 public static class ListFormatter
 {
-    extension<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Serialize<TBufferWriter, T>(ref ArchiveWriter<TBufferWriter> writer, List<T?>? value)
         where TBufferWriter : IBufferWriter<byte>
+        where T : IArchivable<T>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteArchivable<T>(List<T?>? value)
-            where T : IArchivable<T>
+        if (value is null)
         {
-            if (value is null)
-            {
-                writer.WriteNullCollectionHeader();
-                return;
-            }
-
-            writer.WriteArchivable(CollectionsMarshal.AsSpan(value));
+            writer.WriteNullCollectionHeader();
+            return;
         }
+
+        writer.WriteArchivableSpan(CollectionsMarshal.AsSpan(value));
     }
 
-    extension(ref ArchiveReader reader)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static List<T?>? Deserialize<T>(ref ArchiveReader reader)
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public List<T?>? ReadArchivableList<T>()
+        List<T?>? value = null;
+        Deserialize(ref reader, ref value);
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Deserialize<T>(ref ArchiveReader reader, ref List<T?>? value)
+    {
+        if (!reader.TryReadCollectionHeader(out var length))
         {
-            List<T?>? value = null;
-            reader.ReadArchivableList(ref value);
-            return value;
+            value = null;
+            return;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ReadArchivableList<T>(ref List<T?>? value)
+        if (value is null)
         {
-            if (!reader.TryReadCollectionHeader(out var length))
-            {
-                value = null;
-                return;
-            }
-
-            if (value is null)
-            {
-                value = [];
-            }
-            else if (value.Count == length)
-            {
-                value.Clear();
-            }
-
-            var span = CollectionsMarshalEx.CreateSpan(value, length);
-            reader.ReadInto(span);
+            value = [];
         }
+        else if (value.Count == length)
+        {
+            value.Clear();
+        }
+
+        var span = CollectionsMarshalEx.CreateSpan(value, length);
+        reader.ReadInto(span);
     }
 }
 
@@ -105,7 +99,7 @@ public sealed class ListFormatter<T> : ArchiveFormatter<List<T?>>
             return;
         }
 
-        writer.Write(CollectionsMarshal.AsSpan(value));
+        writer.WriteSpan(CollectionsMarshal.AsSpan(value));
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref List<T?>? value)
@@ -140,7 +134,7 @@ public sealed class StackFormatter<T> : ArchiveFormatter<Stack<T?>>
             return;
         }
 
-        writer.Write(CollectionsMarshalEx.AsSpan(value));
+        writer.WriteSpan(CollectionsMarshalEx.AsSpan(value));
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Stack<T?>? value)

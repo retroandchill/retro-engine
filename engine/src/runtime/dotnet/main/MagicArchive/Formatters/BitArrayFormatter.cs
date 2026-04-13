@@ -16,8 +16,8 @@ public sealed class BitArrayFormatter : ArchiveFormatter<BitArray>
         ref var view = ref Unsafe.As<BitArray, BitArrayView>(ref Unsafe.AsRef(in value));
 
         writer.WriteObjectHeader(2);
-        writer.Write(view.Length);
-        writer.Write(view.Array);
+        writer.WriteBlittable(view.Length);
+        writer.WriteArray(view.Array);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref BitArray? value)
@@ -31,12 +31,12 @@ public sealed class BitArrayFormatter : ArchiveFormatter<BitArray>
         if (count != 2)
             ArchiveSerializationException.ThrowInvalidPropertyCount(2, count);
 
-        var length = reader.ReadInt32();
+        var length = reader.ReadBlittable<int>();
 
         var bitArray = new BitArray(length, false); // create internal int[] and set m_length to length
 
         ref var view = ref Unsafe.As<BitArray, BitArrayView>(ref bitArray);
-        reader.Read(ref view.Array!);
+        reader.ReadValue(ref view.Array!);
 
         value = bitArray;
     }

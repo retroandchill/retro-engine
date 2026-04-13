@@ -23,7 +23,8 @@
     };
     var blittableTypeNames = blittableTypes
         .Select(x => x.Name)
-        .Concat(["Rune"]);
+        .Concat(["Rune"])
+        .ToArray();
 
     var knownStructTypes = new Type[]
     {
@@ -34,7 +35,8 @@
     };
 
     var knownStructTypeNames = knownStructTypes
-        .Select(x => x.Name);
+        .Select(x => x.Name)
+        .ToArray();
 
     var knownTypes = new Type[]
     {
@@ -52,7 +54,8 @@
             "StringBuilder",
             "Type",
             "CultureInfo"
-        ]);
+        ])
+        .ToArray();
 #>
 using MagicArchive.Formatters;
 using System.Collections;
@@ -68,7 +71,7 @@ internal static class WellKnownTypeRegistration
     public static void RegisterWellKnownTypesFormatters()
     {
 <# foreach(var item in blittableTypeNames) { #>
-        ArchiveFormatterRegistry.Register(new BlittableFormatter<<#= item #>>());
+        ArchiveFormatterRegistry.Register(new SimpleBlittableFormatter<<#= item #>>());
         ArchiveFormatterRegistry.Register(new ArrayFormatter<<#= item #>>());
         ArchiveFormatterRegistry.Register(new NullableFormatter<<#= item #>>());
 <# } #>

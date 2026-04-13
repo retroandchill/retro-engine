@@ -46,7 +46,7 @@ public sealed class ImmutableArrayFormatter<T> : ArchiveFormatter<ImmutableArray
         }
         else
         {
-            writer.Write(value.AsSpan());
+            writer.WriteSpan(value.AsSpan());
         }
     }
 
@@ -93,7 +93,7 @@ public sealed class ImmutableListFormatter<T> : ArchiveFormatter<ImmutableList<T
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableList.Create(item);
                 break;
             }
@@ -168,7 +168,7 @@ public sealed class ImmutableQueueFormatter<T> : ArchiveFormatter<ImmutableQueue
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableQueue.Create(item);
                 break;
             }
@@ -258,7 +258,7 @@ public sealed class ImmutableStackFormatter<T> : ArchiveFormatter<ImmutableStack
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableStack.Create(item);
                 break;
             }
@@ -560,7 +560,7 @@ public sealed class InterfaceImmutableListFormatter<T> : ArchiveFormatter<IImmut
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableList.Create(item);
                 break;
             }
@@ -635,7 +635,7 @@ public sealed class InterfaceImmutableQueueFormatter<T> : ArchiveFormatter<IImmu
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableQueue.Create(item);
                 break;
             }
@@ -722,7 +722,7 @@ public sealed class InterfaceImmutableStackFormatter<T> : ArchiveFormatter<IImmu
                 break;
             case 1:
             {
-                var item = reader.Read<T>();
+                var item = reader.ReadValue<T>();
                 value = ImmutableStack.Create(item);
                 break;
             }

@@ -10,12 +10,12 @@ public sealed class BigIntegerFormatter : ArchiveFormatter<BigInteger>
         Span<byte> temp = stackalloc byte[255];
         if (value.TryWriteBytes(temp, out var written))
         {
-            writer.Write(temp[written..]);
+            writer.WriteSpan(temp[written..]);
             return;
         }
 
         var byteArray = value.ToByteArray();
-        writer.Write(byteArray);
+        writer.WriteSpan(byteArray);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref BigInteger value)

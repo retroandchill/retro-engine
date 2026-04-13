@@ -18,7 +18,7 @@ public sealed class VersionFormatter : ArchiveFormatter<Version>
         }
 
         writer.WriteObjectHeader(4);
-        writer.Write(value.Major, value.Minor, value.Build, value.Revision);
+        writer.WriteBlittable(value.Major, value.Minor, value.Build, value.Revision);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Version? value)
@@ -32,7 +32,7 @@ public sealed class VersionFormatter : ArchiveFormatter<Version>
         if (count != 4)
             ArchiveSerializationException.ThrowInvalidPropertyCount(4, count);
 
-        reader.Read(out int major, out int minor, out int build, out int revision);
+        reader.ReadBlittable(out int major, out int minor, out int build, out int revision);
 
         if (revision == -1)
         {

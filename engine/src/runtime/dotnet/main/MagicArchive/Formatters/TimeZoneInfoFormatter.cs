@@ -7,7 +7,7 @@ public sealed class TimeZoneInfoFormatter : ArchiveFormatter<TimeZoneInfo>
         scoped in TimeZoneInfo? value
     )
     {
-        writer.Write(value?.ToSerializedString());
+        writer.WriteString(value?.ToSerializedString());
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref TimeZoneInfo? value)

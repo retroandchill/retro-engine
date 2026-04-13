@@ -36,7 +36,7 @@ public sealed class TupleFormatter<T1> : ArchiveFormatter<Tuple<T1?>>
         }
 
         writer.WriteObjectHeader(1);
-        writer.Write(value.Item1);
+        writer.WriteValue(value.Item1);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?>? value)
@@ -50,7 +50,7 @@ public sealed class TupleFormatter<T1> : ArchiveFormatter<Tuple<T1?>>
         if (count != 1)
             ArchiveSerializationException.ThrowInvalidPropertyCount(1, count);
 
-        value = new Tuple<T1?>(reader.Read<T1?>());
+        value = new Tuple<T1?>(reader.ReadValue<T1?>());
     }
 }
 
@@ -68,8 +68,8 @@ public sealed class TupleFormatter<T1, T2> : ArchiveFormatter<Tuple<T1?, T2?>>
         }
 
         writer.WriteObjectHeader(2);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?, T2?>? value)
@@ -83,7 +83,7 @@ public sealed class TupleFormatter<T1, T2> : ArchiveFormatter<Tuple<T1?, T2?>>
         if (count != 2)
             ArchiveSerializationException.ThrowInvalidPropertyCount(2, count);
 
-        value = new Tuple<T1?, T2?>(reader.Read<T1?>(), reader.Read<T2?>());
+        value = new Tuple<T1?, T2?>(reader.ReadValue<T1?>(), reader.ReadValue<T2?>());
     }
 }
 
@@ -101,9 +101,9 @@ public sealed class TupleFormatter<T1, T2, T3> : ArchiveFormatter<Tuple<T1?, T2?
         }
 
         writer.WriteObjectHeader(3);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?, T2?, T3?>? value)
@@ -117,7 +117,7 @@ public sealed class TupleFormatter<T1, T2, T3> : ArchiveFormatter<Tuple<T1?, T2?
         if (count != 3)
             ArchiveSerializationException.ThrowInvalidPropertyCount(3, count);
 
-        value = new Tuple<T1?, T2?, T3?>(reader.Read<T1?>(), reader.Read<T2?>(), reader.Read<T3?>());
+        value = new Tuple<T1?, T2?, T3?>(reader.ReadValue<T1?>(), reader.ReadValue<T2?>(), reader.ReadValue<T3?>());
     }
 }
 
@@ -135,10 +135,10 @@ public sealed class TupleFormatter<T1, T2, T3, T4> : ArchiveFormatter<Tuple<T1?,
         }
 
         writer.WriteObjectHeader(4);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
-        writer.Write(value.Item4);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?, T2?, T3?, T4?>? value)
@@ -153,10 +153,10 @@ public sealed class TupleFormatter<T1, T2, T3, T4> : ArchiveFormatter<Tuple<T1?,
             ArchiveSerializationException.ThrowInvalidPropertyCount(4, count);
 
         value = new Tuple<T1?, T2?, T3?, T4?>(
-            reader.Read<T1?>(),
-            reader.Read<T2?>(),
-            reader.Read<T3?>(),
-            reader.Read<T4?>()
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>()
         );
     }
 }
@@ -175,11 +175,11 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5> : ArchiveFormatter<Tuple<
         }
 
         writer.WriteObjectHeader(5);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
-        writer.Write(value.Item4);
-        writer.Write(value.Item5);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?, T2?, T3?, T4?, T5?>? value)
@@ -194,11 +194,11 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5> : ArchiveFormatter<Tuple<
             ArchiveSerializationException.ThrowInvalidPropertyCount(5, count);
 
         value = new Tuple<T1?, T2?, T3?, T4?, T5?>(
-            reader.Read<T1?>(),
-            reader.Read<T2?>(),
-            reader.Read<T3?>(),
-            reader.Read<T4?>(),
-            reader.Read<T5?>()
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>()
         );
     }
 }
@@ -217,12 +217,12 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : ArchiveFormatter<Tu
         }
 
         writer.WriteObjectHeader(6);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
-        writer.Write(value.Item4);
-        writer.Write(value.Item5);
-        writer.Write(value.Item6);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Tuple<T1?, T2?, T3?, T4?, T5?, T6?>? value)
@@ -237,12 +237,12 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6> : ArchiveFormatter<Tu
             ArchiveSerializationException.ThrowInvalidPropertyCount(6, count);
 
         value = new Tuple<T1?, T2?, T3?, T4?, T5?, T6?>(
-            reader.Read<T1?>(),
-            reader.Read<T2?>(),
-            reader.Read<T3?>(),
-            reader.Read<T4?>(),
-            reader.Read<T5?>(),
-            reader.Read<T6?>()
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>()
         );
     }
 }
@@ -262,13 +262,13 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7>
         }
 
         writer.WriteObjectHeader(7);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
-        writer.Write(value.Item4);
-        writer.Write(value.Item5);
-        writer.Write(value.Item6);
-        writer.Write(value.Item7);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
+        writer.WriteValue(value.Item7);
     }
 
     public override void Deserialize(
@@ -286,13 +286,13 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7>
             ArchiveSerializationException.ThrowInvalidPropertyCount(7, count);
 
         value = new Tuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>(
-            reader.Read<T1?>(),
-            reader.Read<T2?>(),
-            reader.Read<T3?>(),
-            reader.Read<T4?>(),
-            reader.Read<T5?>(),
-            reader.Read<T6?>(),
-            reader.Read<T7?>()
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>(),
+            reader.ReadValue<T7?>()
         );
     }
 }
@@ -313,14 +313,14 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest>
         }
 
         writer.WriteObjectHeader(8);
-        writer.Write(value.Item1);
-        writer.Write(value.Item2);
-        writer.Write(value.Item3);
-        writer.Write(value.Item4);
-        writer.Write(value.Item5);
-        writer.Write(value.Item6);
-        writer.Write(value.Item7);
-        writer.Write(value.Rest);
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
+        writer.WriteValue(value.Item7);
+        writer.WriteValue(value.Rest);
     }
 
     public override void Deserialize(
@@ -338,14 +338,14 @@ public sealed class TupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest>
             ArchiveSerializationException.ThrowInvalidPropertyCount(8, count);
 
         value = new Tuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest>(
-            reader.Read<T1?>(),
-            reader.Read<T2?>(),
-            reader.Read<T3?>(),
-            reader.Read<T4?>(),
-            reader.Read<T5?>(),
-            reader.Read<T6?>(),
-            reader.Read<T7?>(),
-            reader.Read<TRest>()!
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>(),
+            reader.ReadValue<T7?>(),
+            reader.ReadValue<TRest>()!
         );
     }
 }
@@ -357,14 +357,24 @@ public sealed class ValueTupleFormatter<T1> : ArchiveFormatter<ValueTuple<T1?>>
         scoped in ValueTuple<T1?> value
     )
     {
-        writer.Write(value.Item1);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<T1?> value)
     {
-        reader.Read(out T1? item1);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?>(item1);
+        value = new ValueTuple<T1?>(reader.ReadValue<T1?>());
     }
 }
 
@@ -375,14 +385,25 @@ public sealed class ValueTupleFormatter<T1, T2> : ArchiveFormatter<ValueTuple<T1
         scoped in ValueTuple<T1?, T2?> value
     )
     {
-        writer.Write(value.Item1, value.Item2);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<T1?, T2?> value)
     {
-        reader.Read(out T1? item1, out T2? item2);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?>(item1, item2);
+        value = new ValueTuple<T1?, T2?>(reader.ReadValue<T1?>(), reader.ReadValue<T2?>());
     }
 }
 
@@ -393,14 +414,30 @@ public sealed class ValueTupleFormatter<T1, T2, T3> : ArchiveFormatter<ValueTupl
         scoped in ValueTuple<T1?, T2?, T3?> value
     )
     {
-        writer.Write(value.Item1, value.Item2, value.Item3);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<T1?, T2?, T3?> value)
     {
-        reader.Read(out T1? item1, out T2? item2, out T3? item3);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?, T3?>(item1, item2, item3);
+        value = new ValueTuple<T1?, T2?, T3?>(
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>()
+        );
     }
 }
 
@@ -411,14 +448,32 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4> : ArchiveFormatter<Value
         scoped in ValueTuple<T1?, T2?, T3?, T4?> value
     )
     {
-        writer.Write(value.Item1, value.Item2, value.Item3, value.Item4);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<T1?, T2?, T3?, T4?> value)
     {
-        reader.Read(out T1? item1, out T2? item2, out T3? item3, out T4? item4);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?, T3?, T4?>(item1, item2, item3, item4);
+        value = new ValueTuple<T1?, T2?, T3?, T4?>(
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>()
+        );
     }
 }
 
@@ -429,14 +484,34 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5> : ArchiveFormatter<V
         scoped in ValueTuple<T1?, T2?, T3?, T4?, T5?> value
     )
     {
-        writer.Write(value.Item1, value.Item2, value.Item3, value.Item4, value.Item5);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<T1?, T2?, T3?, T4?, T5?> value)
     {
-        reader.Read(out T1? item1, out T2? item2, out T3? item3, out T4? item4, out T5? item5);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?>(item1, item2, item3, item4, item5);
+        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?>(
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>()
+        );
     }
 }
 
@@ -448,7 +523,18 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6>
         scoped in ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?> value
     )
     {
-        writer.Write(value.Item1, value.Item2, value.Item3, value.Item4, value.Item5, value.Item6);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
     }
 
     public override void Deserialize(
@@ -456,9 +542,20 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6>
         scoped ref ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?> value
     )
     {
-        reader.Read(out T1? item1, out T2? item2, out T3? item3, out T4? item4, out T5? item5, out T6? item6);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?>(item1, item2, item3, item4, item5, item6);
+        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?>(
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>()
+        );
     }
 }
 
@@ -470,7 +567,19 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7>
         scoped in ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?> value
     )
     {
-        writer.Write(value.Item1, value.Item2, value.Item3, value.Item4, value.Item5, value.Item6, value.Item7);
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
+        writer.WriteValue(value.Item7);
     }
 
     public override void Deserialize(
@@ -478,17 +587,21 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7>
         scoped ref ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?> value
     )
     {
-        reader.Read(
-            out T1? item1,
-            out T2? item2,
-            out T3? item3,
-            out T4? item4,
-            out T5? item5,
-            out T6? item6,
-            out T7? item7
-        );
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
-        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>(item1, item2, item3, item4, item5, item6, item7);
+        value = new ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?>(
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>(),
+            reader.ReadValue<T7?>()
+        );
     }
 }
 
@@ -501,16 +614,20 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest>
         scoped in ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest> value
     )
     {
-        writer.Write(
-            value.Item1,
-            value.Item2,
-            value.Item3,
-            value.Item4,
-            value.Item5,
-            value.Item6,
-            value.Item7,
-            value.Rest
-        );
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest>>())
+        {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
+        writer.WriteValue(value.Item1);
+        writer.WriteValue(value.Item2);
+        writer.WriteValue(value.Item3);
+        writer.WriteValue(value.Item4);
+        writer.WriteValue(value.Item5);
+        writer.WriteValue(value.Item6);
+        writer.WriteValue(value.Item7);
+        writer.WriteValue(value.Rest);
     }
 
     public override void Deserialize(
@@ -518,26 +635,21 @@ public sealed class ValueTupleFormatter<T1, T2, T3, T4, T5, T6, T7, TRest>
         scoped ref ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest> value
     )
     {
-        reader.Read(
-            out T1? item1,
-            out T2? item2,
-            out T3? item3,
-            out T4? item4,
-            out T5? item5,
-            out T6? item6,
-            out T7? item7,
-            out TRest item8
-        );
+        if (BlittableMarshalling.IsBlittable<ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest>>())
+        {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
         value = new ValueTuple<T1?, T2?, T3?, T4?, T5?, T6?, T7?, TRest>(
-            item1,
-            item2,
-            item3,
-            item4,
-            item5,
-            item6,
-            item7,
-            item8!
+            reader.ReadValue<T1?>(),
+            reader.ReadValue<T2?>(),
+            reader.ReadValue<T3?>(),
+            reader.ReadValue<T4?>(),
+            reader.ReadValue<T5?>(),
+            reader.ReadValue<T6?>(),
+            reader.ReadValue<T7?>(),
+            reader.ReadValue<TRest>()!
         );
     }
 }

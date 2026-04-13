@@ -199,7 +199,7 @@ public static class ArchiveFormatterRegistry
         }
         else if (type.IsEnum)
         {
-            formatterType = typeof(EnumFormatter<>).MakeGenericType(type);
+            formatterType = typeof(SimpleBlittableFormatter<>).MakeGenericType(type);
         }
         else
         {

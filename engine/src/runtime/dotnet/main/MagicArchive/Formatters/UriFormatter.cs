@@ -6,7 +6,7 @@ public sealed class UriFormatter : ArchiveFormatter<Uri>
 
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Uri? value)
     {
-        writer.Write(value?.OriginalString);
+        writer.WriteString(value?.OriginalString);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Uri? value)

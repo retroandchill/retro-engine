@@ -38,7 +38,7 @@ public static class ArchiveWriter
     }
 }
 
-public ref struct ArchiveWriter<TBufferWriter>
+public ref partial struct ArchiveWriter<TBufferWriter>
     where TBufferWriter : IBufferWriter<byte>
 {
     private const string BufferLimitReached = "Buffer limit reached, writer can not provide more data.";
@@ -183,20 +183,20 @@ public ref struct ArchiveWriter<TBufferWriter>
             ArchiveSerializationException.ThrowWriteInvalidMemberCount(memberCount);
         }
 
-        Write(memberCount);
+        WriteBlittable(memberCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteNullObjectHeader()
     {
-        Write(ArchiveCodes.NullObject);
+        WriteBlittable(ArchiveCodes.NullObject);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteObjectReferenceId(uint referenceId)
     {
-        Write(ArchiveCodes.ReferenceId);
-        Write(referenceId);
+        WriteBlittable(ArchiveCodes.ReferenceId);
+        WriteBlittable(referenceId);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +204,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     {
         if (tag < ArchiveCodes.WideTag)
         {
-            Write((byte)tag);
+            WriteBlittable((byte)tag);
         }
         else
         {
@@ -225,89 +225,17 @@ public ref struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteCollectionHeader(int length)
     {
-        Write(length);
+        WriteBlittable(length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteNullCollectionHeader()
     {
-        Write(ArchiveCodes.NullCollection);
+        WriteBlittable(ArchiveCodes.NullCollection);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(bool value)
-    {
-        Write(value ? (byte)1 : (byte)0);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(char value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(byte value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(sbyte value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(short value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(ushort value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(int value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(uint value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(long value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(ulong value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(float value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(double value)
-    {
-        WriteBlittable(value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(string? value)
+    public void WriteString(string? value)
     {
         if (_serializeStringAsUtf8)
         {
@@ -320,7 +248,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write(scoped ReadOnlySpan<char> value)
+    public void WriteString(scoped ReadOnlySpan<char> value)
     {
         if (_serializeStringAsUtf8)
         {
@@ -415,20 +343,39 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittable<T>(in T value)
+    public void WriteBool(bool value)
     {
-        var size = Unsafe.SizeOf<T>();
-        ref var spanRef = ref GetSpanReference(size);
-        if (IsByteSwapping)
+        WriteBlittable(value ? (byte)1 : (byte)0);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteBlittable<T>(in T value)
+        where T : unmanaged
+    {
+        UnsafeWriteBlittable(in value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UnsafeWriteBlittable<T>(in T value)
+    {
+        if (!IsByteSwapping)
         {
-            Unsafe.WriteUnaligned(ref spanRef, BinaryHandling.ReverseEndianness(value));
+            var size = Unsafe.SizeOf<T>();
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, value);
+            Advance(size);
+        }
+        else if (BlittableMarshalling.IsSimpleBlittable<T>())
+        {
+            var size = Unsafe.SizeOf<T>();
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value));
+            Advance(size);
         }
         else
         {
-            Unsafe.WriteUnaligned(ref spanRef, value);
+            GetFormatter<T>().Serialize(ref this, in value);
         }
-
-        Advance(size);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -439,7 +386,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteArchivable<T>(T[]? value)
+    public void WriteArchivableArray<T>(T[]? value)
         where T : IArchivable<T>
     {
         if (value is null)
@@ -448,24 +395,11 @@ public ref struct ArchiveWriter<TBufferWriter>
             return;
         }
 
-        WriteArchivable(value.AsSpan());
+        WriteArchivableSpan(value.AsSpan());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteArchivable<T>(List<T?>? value)
-        where T : IArchivable<T>
-    {
-        if (value is null)
-        {
-            WriteNullCollectionHeader();
-            return;
-        }
-
-        WriteArchivable(CollectionsMarshal.AsSpan(value));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteArchivable<T>(scoped ReadOnlySpan<T?> value)
+    public void WriteArchivableSpan<T>(scoped ReadOnlySpan<T?> value)
         where T : IArchivable<T>
     {
         WriteCollectionHeader(value.Length);
@@ -476,18 +410,17 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteEnum<T>(in T value)
-        where T : unmanaged, Enum
+    public void WriteValue(Type type, object? value)
     {
-        WriteBlittable(value);
+        GetFormatter(type).Serialize(ref this, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write<T>(in T value)
+    public void WriteValue<T>(in T value)
     {
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
-            WriteBlittable(in value);
+            UnsafeWriteBlittable(in value);
             return;
         }
 
@@ -496,7 +429,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write<T>(in T? value)
+    public void WriteNullable<T>(in T? value)
         where T : struct
     {
         if (!value.HasValue)
@@ -506,11 +439,11 @@ public ref struct ArchiveWriter<TBufferWriter>
         }
 
         WriteObjectHeader(1);
-        Write(value.Value);
+        WriteValue(value.Value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write<T>(T[]? value)
+    public void WriteArray<T>(T[]? value)
     {
         if (value is null)
         {
@@ -519,29 +452,22 @@ public ref struct ArchiveWriter<TBufferWriter>
         }
 
         WriteCollectionHeader(value.Length);
-        WriteSpan(value);
+        WriteSpanWithoutHeader(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Write<T>(scoped ReadOnlySpan<T> value)
+    public void WriteSpan<T>(scoped ReadOnlySpan<T> value)
     {
-        if (typeof(T) == typeof(char))
-        {
-            var charSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<char>>(value);
-            Write(charSpan);
-            return;
-        }
-
         WriteCollectionHeader(value.Length);
-        WriteSpan(value);
+        WriteSpanWithoutHeader(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteSpan<T>(scoped ReadOnlySpan<T> value)
+    internal void WriteSpanWithoutHeader<T>(scoped ReadOnlySpan<T> value)
     {
-        if (!IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
-            WriteUnmanagedSpan(value);
+            UnsafeWriteBlittableSpan(value);
             return;
         }
 
@@ -553,7 +479,7 @@ public ref struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteUnmanagedSpan<T>(scoped ReadOnlySpan<T> value)
+    internal void UnsafeWriteBlittableSpan<T>(scoped ReadOnlySpan<T> value)
     {
         if (value.Length == 0)
             return;

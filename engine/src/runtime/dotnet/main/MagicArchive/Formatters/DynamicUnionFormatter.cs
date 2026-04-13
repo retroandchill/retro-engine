@@ -31,7 +31,7 @@ public sealed class DynamicUnionFormatter<T> : ArchiveFormatter<T>
         if (_typeToTag.TryGetValue(type, out var tag))
         {
             writer.WriteUnionHeader(tag);
-            writer.Write(value);
+            writer.WriteValue(type, value);
         }
         else
         {
@@ -50,7 +50,7 @@ public sealed class DynamicUnionFormatter<T> : ArchiveFormatter<T>
         if (_tagToType.TryGetValue(tag, out var type))
         {
             object? v = value;
-            reader.Read(type, ref v);
+            reader.ReadValue(type, ref v);
             value = (T?)v;
         }
         else

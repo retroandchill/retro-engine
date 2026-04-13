@@ -32,6 +32,8 @@ public record UnionTag(ushort Tag, INamedTypeSymbol Type)
     public required string ReadMethod { get; init; }
 }
 
+public readonly record struct BlittableRegistration(bool IsBlittable, bool IsComplex, string TypeName);
+
 public class TypeMetadata
 {
     private DiagnosticDescriptor? _ctorInvalid;
@@ -57,6 +59,12 @@ public class TypeMetadata
     public string NullableName { get; }
 
     public string? UnionTarget { get; }
+    public string? BaseUnionTarget { get; }
+
+    public string? InitializerName { get; }
+
+    public string BaseDefinitionName =>
+        IsGenericDefinition ? Symbol.ConstructUnboundGenericType().FullyQualifiedToString() : Name;
 
     [UsedImplicitly]
     public ImmutableArray<AdditionalTypeRegistration> AdditionalTypeRegistrations { get; }
@@ -76,6 +84,7 @@ public class TypeMetadata
     public bool IsInterfaceOrAbstract { get; }
     public bool IsUnion { get; }
     public bool IsRecord { get; }
+    public bool IsGenericDefinition { get; }
 
     public ImmutableArray<UnionTag> UnionTags { get; }
 
@@ -98,6 +107,8 @@ public class TypeMetadata
 
     public IMethodSymbol? Constructor { get; }
 
+    public ImmutableArray<BlittableRegistration> BlittableRegistrations { get; }
+
     public TypeMetadata(INamedTypeSymbol symbol, ReferenceSymbols referenceSymbols)
     {
         Symbol = symbol;
@@ -112,6 +123,7 @@ public class TypeMetadata
         Name = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         SimpleName = symbol.Name;
         NullableName = symbol.IsValueType ? Name : $"{Name}?";
+        InitializerName = $"{Name.Replace("<", "_").Replace(">", "").Replace(",", "_").Replace(" ", "")}Initializer";
 
         Constructor = ChooseConstructor(symbol);
 
@@ -228,12 +240,31 @@ public class TypeMetadata
             UnionTags = [];
         }
 
+        if (IsCustom)
+        {
+            BlittableRegistrations = [.. GetBlittableSubTypes(symbol, referenceSymbols).Distinct()];
+        }
+        else
+        {
+            BlittableRegistrations =
+            [
+                .. Members
+                    .SelectMany(x => GetBlittableSubTypes(x.MemberType, referenceSymbols))
+                    .Concat(GetBlittableSubTypes(symbol, referenceSymbols))
+                    .Distinct(),
+            ];
+        }
+
         if (symbol.TypeKind != TypeKind.Class)
             return;
 
         if (symbol.TryGetArchivableUnionFormatterInfo(out var info))
         {
             UnionTarget = ToUnionTagTypeFullyQualifiedToString((INamedTypeSymbol)info.Type);
+            IsGenericDefinition = info.Type is INamedTypeSymbol { IsGenericType: true, IsUnboundGenericType: true };
+            BaseUnionTarget = IsGenericDefinition
+                ? ((INamedTypeSymbol)info.Type).ConstructUnboundGenericType().FullyQualifiedToString()
+                : ((INamedTypeSymbol)info.Type).FullyQualifiedToString();
         }
     }
 
@@ -290,6 +321,64 @@ public class TypeMetadata
         else
         {
             return type.FullyQualifiedToString();
+        }
+    }
+
+    private static IEnumerable<BlittableRegistration> GetBlittableSubTypes(
+        ITypeSymbol? type,
+        ReferenceSymbols referenceSymbols
+    )
+    {
+        if (
+            type is null
+            || type.SpecialType
+                is SpecialType.System_Enum
+                    or SpecialType.System_Char
+                    or SpecialType.System_SByte
+                    or SpecialType.System_Byte
+                    or SpecialType.System_Int16
+                    or SpecialType.System_UInt16
+                    or SpecialType.System_Int32
+                    or SpecialType.System_UInt32
+                    or SpecialType.System_Int64
+                    or SpecialType.System_UInt64
+                    or SpecialType.System_Single
+                    or SpecialType.System_Double
+                    or SpecialType.System_DateTime
+            || referenceSymbols.KnownTypes.Contains(type)
+        )
+            yield break;
+
+        if (type.IsBlittable(referenceSymbols, out var isComplex))
+        {
+            yield return new BlittableRegistration(true, isComplex, type.FullyQualifiedToString());
+        }
+
+        switch (type)
+        {
+            case IArrayTypeSymbol arrayType:
+            {
+                foreach (var item in GetBlittableSubTypes(arrayType.ElementType, referenceSymbols))
+                {
+                    yield return item;
+                }
+
+                break;
+            }
+            case INamedTypeSymbol { IsGenericType: true } namedType:
+            {
+                foreach (var item in namedType.TypeArguments.SelectMany(x => GetBlittableSubTypes(x, referenceSymbols)))
+                {
+                    yield return item;
+                }
+
+                break;
+            }
+        }
+
+        if (type.IsUnmanagedType)
+        {
+            yield return new BlittableRegistration(false, false, type.FullyQualifiedToString());
         }
     }
 

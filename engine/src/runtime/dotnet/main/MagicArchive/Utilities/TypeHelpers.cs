@@ -12,8 +12,8 @@ namespace MagicArchive.Utilities;
 
 internal static class TypeHelpers
 {
-    private static readonly MethodInfo IsBlittableMethod = typeof(BinaryHandling).GetMethod(
-        nameof(BinaryHandling.IsBlittable),
+    private static readonly MethodInfo IsBlittableMethod = typeof(BlittableMarshalling).GetMethod(
+        nameof(BlittableMarshalling.IsBlittable),
         BindingFlags.Static | BindingFlags.Public
     )!;
     private static readonly MethodInfo UnsafeSizeOf = typeof(Unsafe).GetMethod(

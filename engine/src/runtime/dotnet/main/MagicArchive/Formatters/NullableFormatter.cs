@@ -10,7 +10,7 @@ public sealed class NullableFormatter<T> : ArchiveFormatter<T?>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T? value)
     {
-        writer.Write(in value);
+        writer.WriteNullable(in value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref T? value)

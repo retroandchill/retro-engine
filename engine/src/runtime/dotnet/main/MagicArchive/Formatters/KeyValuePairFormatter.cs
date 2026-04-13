@@ -46,12 +46,12 @@ public sealed class KeyValuePairFormatter<TKey, TValue> : ArchiveFormatter<KeyVa
         scoped in KeyValuePair<TKey?, TValue?> value
     )
     {
-        writer.Write(value.Key);
-        writer.Write(value.Value);
+        writer.WriteValue(value.Key);
+        writer.WriteValue(value.Value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref KeyValuePair<TKey?, TValue?> value)
     {
-        value = new KeyValuePair<TKey?, TValue?>(reader.Read<TKey>(), reader.Read<TValue>());
+        value = new KeyValuePair<TKey?, TValue?>(reader.ReadValue<TKey>(), reader.ReadValue<TValue>());
     }
 }

@@ -11,7 +11,7 @@ public sealed class LazyFormatter<T> : ArchiveFormatter<Lazy<T?>>
         }
 
         writer.WriteObjectHeader(1);
-        writer.Write(value.Value);
+        writer.WriteValue(value.Value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Lazy<T?>? value)
@@ -25,7 +25,7 @@ public sealed class LazyFormatter<T> : ArchiveFormatter<Lazy<T?>>
         if (count != 1)
             ArchiveSerializationException.ThrowInvalidPropertyCount(1, count);
 
-        var v = reader.Read<T>();
+        var v = reader.ReadValue<T>();
         value = new Lazy<T?>(v);
     }
 }

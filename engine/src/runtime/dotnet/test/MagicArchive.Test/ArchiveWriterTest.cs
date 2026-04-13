@@ -84,20 +84,20 @@ public class ArchiveWriterTest
 
     [Test]
     [TestCaseSource(nameof(GetUnmanagedWriteableValues))]
-    public void CanWriteUnmanagedValuesToTheArchive<T>(T value, ByteOrder byteOrder)
+    public void CanWriteBlittableValuesToTheArchive<T>(T value, ByteOrder byteOrder)
         where T : unmanaged
     {
         using var state = ArchiveWriterStatePool.Rent(new ArchiveSerializerOptions { ByteOrder = byteOrder });
         var bufferWriter = new ArrayBufferWriter<byte>(Unsafe.SizeOf<T>());
         var writer = ArchiveWriter.Create(ref bufferWriter, state);
-        writer.Write(in value);
+        writer.WriteValue(in value);
         writer.Flush();
 
         var span = bufferWriter.WrittenSpan;
         Assert.That(span.Length, Is.EqualTo(Unsafe.SizeOf<T>()));
 
         var rawValue = Unsafe.ReadUnaligned<T>(in span.GetPinnableReference());
-        var readValue = byteOrder == ByteOrder.BigEndian ? BinaryHandling.ReverseEndianness(rawValue) : rawValue;
+        var readValue = byteOrder == ByteOrder.BigEndian ? BlittableMarshalling.ReverseEndianness(rawValue) : rawValue;
         Assert.That(readValue, Is.EqualTo(value));
     }
 }

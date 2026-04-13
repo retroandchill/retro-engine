@@ -17,7 +17,7 @@ public sealed partial class TypeFormatter : ArchiveFormatter<Type>
         }
 
         var shortName = ShortTypeNameRegex().Replace(full, "");
-        writer.Write(shortName);
+        writer.WriteString(shortName);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Type? value)

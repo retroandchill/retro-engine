@@ -7,14 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="Utilities\MultiReadExtensions.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-        <LastGenOutput>MultiReadExtensions.cs</LastGenOutput>
-      </None>
-      <None Update="Utilities\MultiWriteExtensions.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-        <LastGenOutput>MultiWriteExtensions.cs</LastGenOutput>
-      </None>
       <None Update="Utilities\WellKnownTypesRegistration.tt">
         <Generator>TextTemplatingFileGenerator</Generator>
         <LastGenOutput>WellKnownTypesRegistration.cs</LastGenOutput>
@@ -22,6 +14,14 @@
         <None Update="Formatters\TupleFormatter.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>TupleFormatter.cs</LastGenOutput>
+        </None>
+        <None Update="ArchiveReader.Blittable.tt">
+          <Generator>TextTemplatingFileGenerator</Generator>
+          <LastGenOutput>ArchiveReader.Blittable.cs</LastGenOutput>
+        </None>
+        <None Update="ArchiveWriter.Blittable.tt">
+          <Generator>TextTemplatingFileGenerator</Generator>
+          <LastGenOutput>ArchiveWriter.Blittable.cs</LastGenOutput>
         </None>
     </ItemGroup>
 
@@ -44,6 +44,17 @@
         <DesignTime>True</DesignTime>
         <DependentUpon>TupleFormatter.tt</DependentUpon>
       </Compile>
+
+        <Compile Update="ArchiveReader.Blittable.cs">
+            <AutoGen>True</AutoGen>
+            <DesignTime>True</DesignTime>
+            <DependentUpon>ArchiveReader.Blittable.tt</DependentUpon>
+        </Compile>
+        <Compile Update="ArchiveWriter.Blittable.cs">
+            <AutoGen>True</AutoGen>
+            <DesignTime>True</DesignTime>
+            <DependentUpon>ArchiveWriter.Blittable.tt</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

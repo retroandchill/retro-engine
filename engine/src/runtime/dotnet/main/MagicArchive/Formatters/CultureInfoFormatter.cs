@@ -6,7 +6,7 @@ public sealed class CultureInfoFormatter : ArchiveFormatter<CultureInfo>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in CultureInfo? value)
     {
-        writer.Write(value?.Name);
+        writer.WriteString(value?.Name);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref CultureInfo? value)

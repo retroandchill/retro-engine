@@ -44,7 +44,7 @@ public sealed class TupleFormatter<<#= CreateT(i) #>> : ArchiveFormatter<Tuple<<
 
         writer.WriteObjectHeader(<#= i #>);
 <# for ( var j = 1; j <= i; j++ ) { #>
-        writer.Write(value.<#= ItemOrRest(j) #>);
+        writer.WriteValue(value.<#= ItemOrRest(j) #>);
 <# } #>
     }
 
@@ -60,7 +60,7 @@ public sealed class TupleFormatter<<#= CreateT(i) #>> : ArchiveFormatter<Tuple<<
 
         value = new Tuple<<#= CreateTNull(i) #>>(
 <# for ( var j = 1; j <= i; j++ ) { #>
-            reader.Read<<#= TOrRest(j) #>>()<#= (j == 8) ? "!" : (j != i) ? "," : "" #>
+            reader.ReadValue<<#= TOrRest(j) #>>()<#= (j == 8) ? "!" : (j != i) ? "," : "" #>
 <# } #>
         );
     }
@@ -76,24 +76,26 @@ public sealed class ValueTupleFormatter<<#= CreateT(i) #>> : ArchiveFormatter<Va
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in ValueTuple<<#= CreateTNull(i) #>> value)
     {
-        writer.Write(
+        if (BlittableMarshalling.IsBlittable<ValueTuple<<#= CreateTNull(i) #>>>()) {
+            writer.UnsafeWriteBlittable(in value);
+            return;
+        }
+
 <# for ( var j = 1; j <= i; j++ ) { #>
-            value.<#= ItemOrRest(j) #><#= (j != i) ? "," : "" #>
+        writer.WriteValue(value.<#= ItemOrRest(j) #>);
 <# } #>
-        );
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ValueTuple<<#= CreateTNull(i) #>> value)
     {
-        reader.Read(
-<# for ( var j = 1; j <= i; j++ ) { #>
-            out <#= TOrRest(j) #> item<#= j #><#= (j != i) ? "," : "" #>
-<# } #>
-        );
+        if (BlittableMarshalling.IsBlittable<ValueTuple<<#= CreateTNull(i) #>>>()) {
+            reader.UnsafeReadBlittable(out value);
+            return;
+        }
 
         value = new ValueTuple<<#= CreateTNull(i) #>>(
 <# for ( var j = 1; j <= i; j++ ) { #>
-            item<#= j #><#= (j == 8) ? "!" : (j != i) ? "," : "" #>
+            reader.ReadValue<<#= TOrRest(j) #>>()<#= (j == 8) ? "!" : (j != i) ? "," : "" #>
 <# } #>
         );
     }

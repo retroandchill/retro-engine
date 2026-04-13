@@ -22,7 +22,7 @@ public sealed class ArrayFormatter<T> : ArchiveFormatter<T?[]>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in T?[]? value)
     {
-        writer.Write(value);
+        writer.WriteArray(value);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref T?[]? value)
@@ -38,7 +38,7 @@ public sealed class ArraySegmentFormatter<T> : ArchiveFormatter<ArraySegment<T?>
         scoped in ArraySegment<T?> value
     )
     {
-        writer.Write(value.AsMemory().Span);
+        writer.WriteSpan(value.AsMemory().Span);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ArraySegment<T?> value)
@@ -52,7 +52,7 @@ public sealed class MemoryFormatter<T> : ArchiveFormatter<Memory<T?>>
 {
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Memory<T?> value)
     {
-        writer.Write(value.Span);
+        writer.WriteSpan(value.Span);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Memory<T?> value)
@@ -68,7 +68,7 @@ public sealed class ReadOnlyMemoryFormatter<T> : ArchiveFormatter<ReadOnlyMemory
         scoped in ReadOnlyMemory<T?> value
     )
     {
-        writer.Write(value.Span);
+        writer.WriteSpan(value.Span);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref ReadOnlyMemory<T?> value)
@@ -86,14 +86,14 @@ public sealed class ReadOnlySequenceFormatter<T> : ArchiveFormatter<ReadOnlySequ
     {
         if (value.IsSingleSegment)
         {
-            writer.Write(value.First.Span);
+            writer.WriteSpan(value.First.Span);
             return;
         }
 
         writer.WriteCollectionHeader(checked((int)value.Length));
         foreach (var memory in value)
         {
-            writer.WriteSpan(memory.Span);
+            writer.WriteSpanWithoutHeader(memory.Span);
         }
     }
 

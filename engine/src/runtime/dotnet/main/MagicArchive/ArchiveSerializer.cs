@@ -27,12 +27,12 @@ public static class ArchiveSerializer
     {
         var writeLittleEndian = options is null || options.ByteOrder == ByteOrder.LittleEndian;
         var byteSwapping = writeLittleEndian ? !BitConverter.IsLittleEndian : BitConverter.IsLittleEndian;
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
             var array = GC.AllocateUninitializedArray<byte>(Unsafe.SizeOf<T>());
             Unsafe.WriteUnaligned(
                 ref MemoryMarshal.GetArrayDataReference(array),
-                !byteSwapping ? value : BinaryHandling.ReverseEndianness(value)
+                !byteSwapping ? value : BlittableMarshalling.ReverseEndianness(value)
             );
             return array;
         }
@@ -117,7 +117,7 @@ public static class ArchiveSerializer
             head = ref Unsafe.Add(ref head, sizeof(int));
             for (var i = 0; i < length; i++)
             {
-                Unsafe.WriteUnaligned(ref head, BinaryHandling.ReverseEndianness(srcArray.GetValue(i)));
+                Unsafe.WriteUnaligned(ref head, BlittableMarshalling.ReverseEndianness(srcArray.GetValue(i)));
                 head = ref Unsafe.Add(ref head, elementSize);
             }
         }
@@ -133,12 +133,12 @@ public static class ArchiveSerializer
         ref var bufferWriterRef = ref Unsafe.AsRef(in bufferWriter);
         var writeLittleEndian = options is null || options.ByteOrder == ByteOrder.LittleEndian;
         var byteSwapping = writeLittleEndian ? !BitConverter.IsLittleEndian : BitConverter.IsLittleEndian;
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
             var buffer = bufferWriterRef.GetSpan(Unsafe.SizeOf<T>());
             Unsafe.WriteUnaligned(
                 ref MemoryMarshal.GetReference(buffer),
-                !byteSwapping ? value : BinaryHandling.ReverseEndianness(value)
+                !byteSwapping ? value : BlittableMarshalling.ReverseEndianness(value)
             );
             bufferWriterRef.Advance(Unsafe.SizeOf<T>());
             return;
@@ -188,7 +188,7 @@ public static class ArchiveSerializer
     public static void Serialize<T, TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, in T? value)
         where TBufferWriter : IBufferWriter<byte>
     {
-        writer.Write(value);
+        writer.WriteValue(value);
         writer.Flush();
     }
 
@@ -330,7 +330,7 @@ public static class ArchiveSerializer
     {
         var writeLittleEndian = options is null || options.ByteOrder == ByteOrder.LittleEndian;
         var byteSwapping = writeLittleEndian ? !BitConverter.IsLittleEndian : BitConverter.IsLittleEndian;
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
             if (buffer.Length < Unsafe.SizeOf<T>())
             {
@@ -339,7 +339,7 @@ public static class ArchiveSerializer
 
             value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(buffer));
             if (byteSwapping)
-                BinaryHandling.ReverseEndianness(ref value);
+                BlittableMarshalling.ReverseEndianness(ref value);
             return Unsafe.SizeOf<T>();
         }
 
@@ -349,7 +349,7 @@ public static class ArchiveSerializer
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
         try
         {
-            reader.Read(ref value);
+            reader.ReadValue(ref value);
             return reader.ConsumedBytes;
         }
         finally
@@ -377,7 +377,7 @@ public static class ArchiveSerializer
     {
         var writeLittleEndian = options is null || options.ByteOrder == ByteOrder.LittleEndian;
         var byteSwapping = writeLittleEndian ? !BitConverter.IsLittleEndian : BitConverter.IsLittleEndian;
-        if (BinaryHandling.IsBlittable<T>())
+        if (BlittableMarshalling.IsBlittable<T>())
         {
             var sizeOfT = Unsafe.SizeOf<T>();
             if (buffer.Length < sizeOfT)
@@ -391,7 +391,7 @@ public static class ArchiveSerializer
             {
                 value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(buffer.FirstSpan));
                 if (byteSwapping)
-                    BinaryHandling.ReverseEndianness(ref value);
+                    BlittableMarshalling.ReverseEndianness(ref value);
                 return sizeOfT;
             }
 
@@ -409,7 +409,7 @@ public static class ArchiveSerializer
                 slice.CopyTo(tempSpan);
                 value = Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(tempSpan));
                 if (byteSwapping)
-                    BinaryHandling.ReverseEndianness(ref value);
+                    BlittableMarshalling.ReverseEndianness(ref value);
                 return sizeOfT;
             }
             finally
@@ -425,7 +425,7 @@ public static class ArchiveSerializer
         var reader = new ArchiveReader(buffer, _threadStaticReaderState);
         try
         {
-            reader.Read(ref value);
+            reader.ReadValue(ref value);
             return reader.ConsumedBytes;
         }
         finally

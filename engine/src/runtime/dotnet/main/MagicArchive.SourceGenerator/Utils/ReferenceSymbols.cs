@@ -14,7 +14,7 @@ namespace MagicArchive.SourceGenerator.Utils;
 
 public sealed class ReferenceSymbols
 {
-    private const string FormatterNamespace = "global::MagicArchive.Formatters";
+    public const string FormatterNamespace = "global::MagicArchive.Formatters";
 
     public Compilation Compilation { get; }
 
@@ -377,7 +377,7 @@ public sealed class ReferenceSymbols
             switch (type.TypeKind)
             {
                 case TypeKind.Enum:
-                    return $"{FormatterNamespace}.EnumFormatter<{type.FullyQualifiedToString()}>";
+                    return $"{FormatterNamespace}.SimpleBlittableFormatter<{type.FullyQualifiedToString()}>";
                 case TypeKind.Array:
                     if (type is not IArrayTypeSymbol array)
                         return null;

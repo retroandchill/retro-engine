@@ -24,9 +24,9 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,]?>
         writer.WriteObjectHeader(HeaderValue);
         var iLength = value.GetLength(0);
         var jLength = value.GetLength(1);
-        writer.Write(iLength, jLength);
+        writer.WriteBlittable(iLength, jLength);
 
-        if (!writer.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!writer.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
             var byteCount = Unsafe.SizeOf<T>() * iLength * jLength;
             ref var src = ref MemoryMarshal.GetArrayDataReference(value);
@@ -58,14 +58,14 @@ public class TwoDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,]?>
             ArchiveSerializationException.ThrowInvalidPropertyCount(HeaderValue, propertyCount);
         }
 
-        reader.Read(out int iLength, out int jLength);
+        reader.ReadBlittable(out int iLength, out int jLength);
 
         if (value is null || value.GetLength(0) != iLength || value.GetLength(1) != jLength)
         {
             value = new T?[iLength, jLength];
         }
 
-        if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!reader.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
             var byteCount = Unsafe.SizeOf<T>() * iLength * jLength;
             ref var dest = ref MemoryMarshal.GetArrayDataReference(value);
@@ -114,9 +114,9 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,]?>
         var iLength = value.GetLength(0);
         var jLength = value.GetLength(1);
         var kLength = value.GetLength(2);
-        writer.Write(iLength, jLength, kLength);
+        writer.WriteBlittable(iLength, jLength, kLength);
 
-        if (!writer.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!writer.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
             var byteCount = Unsafe.SizeOf<T>() * iLength * jLength * kLength;
             ref var src = ref MemoryMarshal.GetArrayDataReference(value);
@@ -148,7 +148,7 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,]?>
             ArchiveSerializationException.ThrowInvalidPropertyCount(HeaderValue, propertyCount);
         }
 
-        reader.Read(out int iLength, out int jLength, out int kLength);
+        reader.ReadBlittable(out int iLength, out int jLength, out int kLength);
 
         if (
             value is null
@@ -160,9 +160,9 @@ public class ThreeDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,]?>
             value = new T?[iLength, jLength, kLength];
         }
 
-        if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!reader.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
-            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength;
+            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength * kLength;
             ref var dest = ref MemoryMarshal.GetArrayDataReference(value);
             ref var src = ref reader.GetSpanReference(byteCount);
             Unsafe.CopyBlockUnaligned(ref dest, ref src, (uint)byteCount);
@@ -217,11 +217,11 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,,]?>
         var jLength = value.GetLength(1);
         var kLength = value.GetLength(2);
         var lLength = value.GetLength(3);
-        writer.Write(iLength, jLength, kLength, lLength);
+        writer.WriteBlittable(iLength, jLength, kLength, lLength);
 
-        if (!writer.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!writer.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
-            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength * kLength;
+            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength * kLength * lLength;
             ref var src = ref MemoryMarshal.GetArrayDataReference(value);
             ref var dest = ref writer.GetSpanReference(byteCount);
 
@@ -251,7 +251,7 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,,]?>
             ArchiveSerializationException.ThrowInvalidPropertyCount(HeaderValue, propertyCount);
         }
 
-        reader.Read(out int iLength, out int jLength, out int kLength, out int lLength);
+        reader.ReadBlittable(out int iLength, out int jLength, out int kLength, out int lLength);
 
         if (
             value is null
@@ -264,9 +264,9 @@ public class FourDimensionalArrayFormatter<T> : ArchiveFormatter<T?[,,,]?>
             value = new T?[iLength, jLength, kLength, lLength];
         }
 
-        if (!reader.IsByteSwapping && BinaryHandling.IsBlittable<T>())
+        if (!reader.IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
-            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength;
+            var byteCount = Unsafe.SizeOf<T>() * iLength * jLength * kLength * lLength;
             ref var dest = ref MemoryMarshal.GetArrayDataReference(value);
             ref var src = ref reader.GetSpanReference(byteCount);
             Unsafe.CopyBlockUnaligned(ref dest, ref src, (uint)byteCount);

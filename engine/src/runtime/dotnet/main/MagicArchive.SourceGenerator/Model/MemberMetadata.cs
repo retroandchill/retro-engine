@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,20 +15,10 @@ namespace MagicArchive.SourceGenerator.Model;
 public enum MemberKind
 {
     Archivable,
-    Nullable,
     Bool,
-    Char,
-    Rune,
-    Byte,
-    SByte,
-    Int16,
-    UInt16,
-    Int32,
-    UInt32,
-    Int64,
-    UInt64,
-    Single,
-    Double,
+    Blittable,
+    Nullable,
+    BlittableNullable,
     KnownType,
     String,
     Array,
@@ -164,7 +155,7 @@ public class MemberMetadata
 
         // TODO: Eventually we will want to allow for custom formatters, but not right now
 
-        Kind = ParseMemberKind(symbol, MemberType, reference);
+        Kind = ParseMemberKind(symbol, MemberType, reference, out _);
     }
 
     private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, SemanticModel semanticModel)
@@ -196,9 +187,11 @@ public class MemberMetadata
     private static MemberKind ParseMemberKind(
         ISymbol? memberSymbol,
         ITypeSymbol memberType,
-        ReferenceSymbols referenceSymbols
+        ReferenceSymbols referenceSymbols,
+        out bool isComplex
     )
     {
+        isComplex = false;
         switch (memberType.SpecialType)
         {
             case SpecialType.System_Object
@@ -206,32 +199,10 @@ public class MemberMetadata
             or SpecialType.System_Delegate
             or SpecialType.System_MulticastDelegate:
                 return MemberKind.NonSerializable; // object, Array, delegate is not allowed
-            case SpecialType.System_Boolean:
-                return MemberKind.Bool;
-            case SpecialType.System_Char:
-                return MemberKind.Char;
-            case SpecialType.System_Byte:
-                return MemberKind.Byte;
-            case SpecialType.System_SByte:
-                return MemberKind.SByte;
-            case SpecialType.System_Int16:
-                return MemberKind.Int16;
-            case SpecialType.System_UInt16:
-                return MemberKind.UInt16;
-            case SpecialType.System_Int32:
-                return MemberKind.Int32;
-            case SpecialType.System_UInt32:
-                return MemberKind.UInt32;
-            case SpecialType.System_Int64:
-                return MemberKind.Int64;
-            case SpecialType.System_UInt64:
-                return MemberKind.UInt64;
-            case SpecialType.System_Single:
-                return MemberKind.Single;
-            case SpecialType.System_Double:
-                return MemberKind.Double;
             case SpecialType.System_String:
                 return MemberKind.String;
+            case SpecialType.System_Boolean:
+                return MemberKind.Bool;
         }
 
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
@@ -241,6 +212,11 @@ public class MemberMetadata
                 return MemberKind.NonSerializable;
             case TypeKind.Enum:
                 return MemberKind.Enum;
+        }
+
+        if (memberType.IsBlittable(referenceSymbols, out isComplex))
+        {
+            return MemberKind.Blittable;
         }
 
         if (memberType.AllInterfaces.Any(x => x.EqualsUnconstructedGenericType(referenceSymbols.IArchivable)))
@@ -305,9 +281,6 @@ public class MemberMetadata
             if (namedTypeSymbol.IsRefLikeType)
                 return MemberKind.RefLike;
 
-            if (namedTypeSymbol.Equals(referenceSymbols.KnownTypes.Rune, SymbolEqualityComparer.Default))
-                return MemberKind.Rune;
-
             if (namedTypeSymbol.EqualsUnconstructedGenericType(referenceSymbols.KnownTypes.Nullable))
                 return MemberKind.Nullable;
 
@@ -349,17 +322,27 @@ public class MemberMetadata
         switch (Kind)
         {
             case MemberKind.Archivable:
-            case MemberKind.ArchivableArray:
-            case MemberKind.ArchivableList:
                 return $"{writer}.WriteArchivable(value.@{Name});";
+            case MemberKind.ArchivableArray:
+                return $"{writer}.WriteArchivableArray(value.@{Name});";
+            case MemberKind.ArchivableList:
+                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter.Serialize(ref {writer}, value.@{Name});";
+            case MemberKind.Nullable:
+            case MemberKind.BlittableNullable:
+                return $"{writer}.WriteNullable(value.@{Name});";
+            case MemberKind.Blittable:
             case MemberKind.Enum:
-                return $"{writer}.WriteEnum(value.@{Name});";
+                return $"{writer}.WriteBlittable(value.@{Name});";
+            case MemberKind.Array:
+                return $"{writer}.WriteArray(value.@{Name});";
+            case MemberKind.BlittableArray:
+                return $"{writer}.WriteBlittableArray(value.@{Name});";
             case MemberKind.Blank:
                 return "";
             case MemberKind.CustomFormatter:
                 return $"{writer}.WriteWithFormatter(__{Name}Formatter, value.@{Name});";
             default:
-                return $"{writer}.Write(value.@{Name});";
+                return $"{writer}.WriteValue(value.@{Name});";
         }
     }
 
@@ -370,6 +353,7 @@ public class MemberMetadata
         {
             case MemberKind.Archivable:
                 return $"{reader}.ReadArchivable<{MemberType.FullyQualifiedToString()}>()";
+            case MemberKind.BlittableNullable:
             case MemberKind.Nullable:
             {
                 var namedNullable = (INamedTypeSymbol)MemberType;
@@ -377,30 +361,9 @@ public class MemberMetadata
             }
             case MemberKind.Bool:
                 return $"{reader}.ReadBool()";
-            case MemberKind.Char:
-                return $"{reader}.ReadChar()";
-            case MemberKind.Rune:
-                return $"{reader}.ReadRune()";
-            case MemberKind.Byte:
-                return $"{reader}.ReadByte()";
-            case MemberKind.SByte:
-                return $"{reader}.ReadSByte()";
-            case MemberKind.Int16:
-                return $"{reader}.ReadInt16()";
-            case MemberKind.UInt16:
-                return $"{reader}.ReadUInt16()";
-            case MemberKind.Int32:
-                return $"{reader}.ReadInt32()";
-            case MemberKind.UInt32:
-                return $"{reader}.ReadUInt32()";
-            case MemberKind.Int64:
-                return $"{reader}.ReadInt64()";
-            case MemberKind.UInt64:
-                return $"{reader}.ReadUInt64()";
-            case MemberKind.Single:
-                return $"{reader}.ReadSingle()";
-            case MemberKind.Double:
-                return $"{reader}.ReadDouble()";
+            case MemberKind.Blittable:
+            case MemberKind.Enum:
+                return $"{reader}.ReadBlittable<{MemberType.FullyQualifiedToString()}>()";
             case MemberKind.String:
                 return $"{reader}.ReadString()";
             case MemberKind.Array:
@@ -409,13 +372,24 @@ public class MemberMetadata
                 var elemType = arrayType.ElementType;
                 return $"{reader}.ReadArray<{elemType.FullyQualifiedToString()}>()";
             }
+            case MemberKind.BlittableArray:
+            {
+                var arrayType = (IArrayTypeSymbol)MemberType;
+                var elemType = arrayType.ElementType;
+                return $"{reader}.ReadBlittableArray<{elemType.FullyQualifiedToString()}>()";
+            }
+            case MemberKind.ArchivableArray:
+            {
+                var arrayType = (IArrayTypeSymbol)MemberType;
+                var elemType = arrayType.ElementType;
+                return $"{reader}.ReadArchivableArray<{elemType.FullyQualifiedToString()}>()";
+            }
             case MemberKind.ArchivableList:
             {
                 var listType = (INamedTypeSymbol)MemberType;
-                return $"{reader}.ReadArchivableList<{listType.TypeArguments[0].FullyQualifiedToString()}>()";
+                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter."
+                    + $"Deserialize<{listType.TypeArguments[0].FullyQualifiedToString()}>(ref {reader})";
             }
-            case MemberKind.Enum:
-                return $"{reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
             case MemberKind.Blank:
                 return $"reader.Advance(deltas[{Index}])";
             case MemberKind.CustomFormatter:
@@ -425,7 +399,7 @@ public class MemberMetadata
             }
         }
 
-        return $"{reader}.Read<{MemberType.FullyQualifiedToString()}>()";
+        return $"{reader}.ReadValue<{MemberType.FullyQualifiedToString()}>()";
     }
 
     public string EmitRefDeserialize(string reader)
@@ -436,38 +410,20 @@ public class MemberMetadata
                 return $"{reader}.ReadArchivable(ref __{Name}__)";
             case MemberKind.Bool:
                 return $"__{Name}__ = {reader}.ReadBool()";
-            case MemberKind.Char:
-                return $"__{Name}__ = {reader}.ReadChar()";
-            case MemberKind.Rune:
-                return $"__{Name}__ = {reader}.ReadRune()";
-            case MemberKind.Byte:
-                return $"__{Name}__ = {reader}.ReadByte()";
-            case MemberKind.SByte:
-                return $"__{Name}__ = {reader}.ReadSByte()";
-            case MemberKind.Int16:
-                return $"__{Name}__ = {reader}.ReadInt16()";
-            case MemberKind.UInt16:
-                return $"__{Name}__ = {reader}.ReadUInt16()";
-            case MemberKind.Int32:
-                return $"__{Name}__ = {reader}.ReadInt32()";
-            case MemberKind.UInt32:
-                return $"__{Name}__ = {reader}.ReadUInt32()";
-            case MemberKind.Int64:
-                return $"__{Name}__ = {reader}.ReadInt64()";
-            case MemberKind.UInt64:
-                return $"__{Name}__ = {reader}.ReadUInt64()";
-            case MemberKind.Single:
-                return $"__{Name}__ = {reader}.ReadSingle()";
-            case MemberKind.Double:
-                return $"__{Name}__ = {reader}.ReadDouble()";
+            case MemberKind.Blittable:
+            case MemberKind.Enum:
+                return $"{reader}.ReadBlittable<{MemberType.FullyQualifiedToString()}>(out __{Name}__)";
+            case MemberKind.BlittableNullable:
+            case MemberKind.Nullable:
+                return $"{reader}.ReadNullable(ref __{Name}__)";
             case MemberKind.String:
                 return $"__{Name}__ = {reader}.ReadString()";
             case MemberKind.Array:
                 return $"{reader}.ReadArray(ref __{Name}__)";
+            case MemberKind.BlittableArray:
+                return $"{reader}.ReadBlittableArray(ref __{Name}__)";
             case MemberKind.ArchivableList:
-                return $"{reader}.ReadArchivableList(ref __{Name}__)";
-            case MemberKind.Enum:
-                return $"__{Name}__ = {reader}.ReadEnum<{MemberType.FullyQualifiedToString()}>()";
+                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter.Deserialize(ref {reader}, ref __{Name}__)";
             case MemberKind.Blank:
                 return $"reader.Advance(deltas[{Index}])";
             case MemberKind.CustomFormatter:
@@ -477,6 +433,6 @@ public class MemberMetadata
             }
         }
 
-        return $"{reader}.Read(ref __{Name}__)";
+        return $"{reader}.ReadValue(ref __{Name}__)";
     }
 }
