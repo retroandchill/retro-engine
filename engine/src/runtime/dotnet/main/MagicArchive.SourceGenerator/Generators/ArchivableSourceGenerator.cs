@@ -16,23 +16,7 @@ namespace MagicArchive.SourceGenerator.Generators;
 [Generator]
 public class ArchivableSourceGenerator : IIncrementalGenerator
 {
-    private readonly HandlebarsTemplate<object?, object?> _archivableTemplate;
-    private readonly HandlebarsTemplate<object?, object?> _unionTemplate;
-    private readonly HandlebarsTemplate<object?, object?> _unionFormatterTemplate;
-
-    public ArchivableSourceGenerator()
-    {
-        var handlebars = Handlebars.Create();
-        handlebars.Configuration.TextEncoder = null;
-        handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
-        handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
-        handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
-        handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);
-        handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
-        _archivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));
-        _unionTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Union"));
-        _unionFormatterTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("UnionFormatter"));
-    }
+    private readonly TemplateSource _templates = new();
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -104,30 +88,38 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         if (!typeMetadata.Validate(syntax, context))
             return;
 
-        if (typeSymbol.HasAttribute<ArchivableUnionFormatterAttribute>())
+        string? debugInfo;
+        if (
+            typeMetadata.GenerateType
+            is GenerateType.Object
+                or GenerateType.VersionTolerant
+                or GenerateType.CircularReference
+        )
         {
-            context.AddSource($"{typeSymbol.Name}.g.cs", _unionFormatterTemplate(typeMetadata));
+            var debugInfoArgs = new
+            {
+                XmlDocument = true,
+                typeMetadata.IsBlittable,
+                GenerateType = typeMetadata.GenerateType.ToString(),
+                typeMetadata.Symbol,
+                typeMetadata.Members,
+            };
+            debugInfo = _templates.DebugInfoTemplate(debugInfoArgs);
         }
         else
         {
-            switch (typeMetadata.GenerateType)
-            {
-                case GenerateType.Object:
-                case GenerateType.VersionTolerant:
-                case GenerateType.CircularReference:
-                case GenerateType.Custom:
-                    context.AddSource($"{typeSymbol.Name}.g.cs", _archivableTemplate(typeMetadata));
-                    break;
-                case GenerateType.Collection:
-                    break;
-                case GenerateType.NoGenerate:
-                    break;
-                case GenerateType.Union:
-                    context.AddSource($"{typeSymbol.Name}.g.cs", _unionTemplate(typeMetadata));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            debugInfo = null;
         }
+
+        var templateArgs = new
+        {
+            Namespace = typeSymbol.ContainingNamespace.ToDisplayString(),
+            DebugInfo = debugInfo,
+            ClassBody = typeSymbol.HasAttribute<ArchivableUnionFormatterAttribute>()
+                ? typeMetadata.EmitUnionFormatterTemplate(_templates, context)
+                : typeMetadata.Emit(_templates, context),
+        };
+
+        context.AddSource($"{typeSymbol.Name}.g.cs", _templates.CommonTemplate(templateArgs));
     }
 }

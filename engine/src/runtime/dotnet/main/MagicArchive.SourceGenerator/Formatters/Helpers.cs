@@ -5,11 +5,28 @@
 
 using HandlebarsDotNet;
 using MagicArchive.SourceGenerator.Model;
+using Microsoft.CodeAnalysis;
 
 namespace MagicArchive.SourceGenerator.Formatters;
 
 public static class Helpers
 {
+    public static void Escaped(EncodedTextWriter writer, Context context, Arguments arguments)
+    {
+        var argument = arguments.At<string>(0);
+
+        var xmlDocument = context["XmlDocument"] as bool? ?? false;
+        var argValue = context[argument];
+        if (argValue is not ISymbol symbol)
+        {
+            writer.Write(argValue);
+            return;
+        }
+
+        var str = symbol.FullyQualifiedToString().Replace("global::", "");
+        writer.Write(xmlDocument ? str.Replace("<", "&lt;").Replace(">", "&gt;") : str);
+    }
+
     public static void MemberWriter(EncodedTextWriter writer, Context context, Arguments arguments)
     {
         if (context.Value is not MemberMetadata member)

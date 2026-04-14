@@ -1,0 +1,16 @@
+{{#XmlDocument}}
+/// <remarks>
+/// MagicArchive GenerateType{{#IsBlittable}}blittable{{/IsBlittable}}{{^IsBlittable}}{{GenerateType}}{{/IsBlittable}}<br/>
+/// <code>
+{{/XmlDocument}}
+{{^XmlDocument}}
+GenerateType{{#IsBlittable}}blittable{{/IsBlittable}}{{^IsBlittable}}{{GenerateType}}{{/IsBlittable}}{{Escaped "Symbol"}}
+---
+{{/XmlDocument}}
+{{#Members}}
+{{#if ../XmlDocument}}/// <b>{{/if}}{{Escaped "MemberType"}}{{#if ../XmlDocument}}</b>{{/if}} {{Name}}{{#if ../XmlDocument}}<br/>{{/if}}
+{{/Members}}
+{{#XmlDocument}}
+/// </code>
+/// </remarks>
+{{/XmlDocument}}

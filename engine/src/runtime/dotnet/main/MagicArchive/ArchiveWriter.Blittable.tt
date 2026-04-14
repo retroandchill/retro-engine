@@ -9,6 +9,7 @@
     string MakeArgs(int count) => string.Join(", ", Enumerable.Range(1, count).Select(x => $"in T{x} value{x}"));
     string MakeSize(int count) => string.Join(" + ", Enumerable.Range(1, count).Select(x => $"Unsafe.SizeOf<T{x}>()"));
     string MakeWhere(int count) => string.Join("\r\n        ", Enumerable.Range(1, count).Select(x => $"where T{x} : unmanaged"));
+    string MakeSimpleBlittableCheck(int count) => string.Join(" && ", Enumerable.Range(1, count).Select(x => $"BlittableMarshalling.IsSimpleBlittable<T{x}>()"));
 #>
 using System.Buffers;
 using System.Runtime.CompilerServices;
@@ -21,9 +22,9 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         where TBufferWriter : IBufferWriter<byte>
 {
 <# foreach(var dangerous in new[] { false, true }) { #>
-<# for(var i = 2; i < 16; i++ ) { #>
+<# for(var i = 1; i < 16; i++ ) { #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    <#= dangerous ? "public" : "internal" #> void <#= dangerous ? "Unsafe" : "" #>WriteBlittable<<#= MakeT(i) #>>(<#= MakeArgs(i) #>)
+    <#= dangerous ? "internal" : "public" #> void <#= dangerous ? "Unsafe" : "" #>WriteBlittable<<#= MakeT(i) #>>(<#= MakeArgs(i) #>)
 <# if(!dangerous) { #>
         <#= MakeWhere(i) #>
 <# } #>
@@ -32,16 +33,63 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = <#= MakeSize(i) #>;
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, value1!);
 <# for(var j = 2; j <= i; j++) { #>
             Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), value<#= j #>!);
+<# } #>
+            Advance(size);
+        }
+        else if (<#= MakeSimpleBlittableCheck(i) #>)
+        {
+                        var size = <#= MakeSize(i) #>;
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, value1!);
+<# for(var j = 2; j <= i; j++) { #>
+            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), BlittableMarshalling.ReverseEndianness(value<#= j #>)!);
 <# } #>
             Advance(size);
         }
         else
         {
 <# for(var j = 1; j <= i; j++) { #>
-            <#= dangerous ? "Unsafe" : "" #>WriteBlittable<T<#= j #>>(in value<#= j #>!);
+            GetFormatter<T<#= i #>>().Serialize(ref this, in value<#= i #>);
+<# } #>
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    <#= dangerous ? "public" : "internal" #> void <#= dangerous ? "Unsafe" : "" #>WriteBlittableWithObjectHeader<<#= MakeT(i) #>>(byte propertyCount,<#= MakeArgs(i) #>)
+<# if(!dangerous) { #>
+        <#= MakeWhere(i) #>
+<# } #>
+    {
+        if (!IsByteSwapping)
+        {
+            var size = <#= MakeSize(i) #> + sizeof(byte);
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, propertyCount);
+            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+<# for(var j = 2; j <= i; j++) { #>
+            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), value<#= j #>!);
+<# } #>
+            Advance(size);
+        }
+        else if (<#= MakeSimpleBlittableCheck(i) #>)
+        {
+                        var size = <#= MakeSize(i) #>;
+            ref var spanRef = ref GetSpanReference(size);
+            Unsafe.WriteUnaligned(ref spanRef, propertyCount);
+            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+<# for(var j = 2; j <= i; j++) { #>
+            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), BlittableMarshalling.ReverseEndianness(value<#= j #>)!);
+<# } #>
+            Advance(size);
+        }
+        else
+        {
+            WriteBlittable(propertyCount);
+<# for(var j = 1; j <= i; j++) { #>
+            GetFormatter<T<#= i #>>().Serialize(ref this, in value<#= i #>);
 <# } #>
         }
     }

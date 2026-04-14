@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
@@ -228,7 +229,7 @@ internal static class MetadataExtensions
         } while (enumerator.MoveNext());
     }
 
-    private static readonly Dictionary<
+    private static readonly ConcurrentDictionary<
         ITypeSymbol,
         (bool Blittable, int Size, int Alignment, bool Complex)
     > BlittableCache = new(SymbolEqualityComparer.Default);
@@ -324,7 +325,7 @@ internal static class MetadataExtensions
                 )
             )
             {
-                BlittableCache.Add(memberType, (false, 0, 0, false));
+                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
                 size = 0;
                 alignment = 0;
                 isComplex = false;
@@ -340,7 +341,7 @@ internal static class MetadataExtensions
         {
             if (!IsBlittable(field.Type, referenceSymbols, out var c, out var s, out var align))
             {
-                BlittableCache.Add(memberType, (false, 0, 0, false));
+                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
                 size = 0;
                 alignment = 0;
                 isComplex = false;
@@ -359,7 +360,7 @@ internal static class MetadataExtensions
 
             if (runningSize % align != 0)
             {
-                BlittableCache.Add(memberType, (false, 0, 0, false));
+                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
                 size = 0;
                 alignment = 0;
                 return false;
@@ -371,13 +372,13 @@ internal static class MetadataExtensions
 
         if (maxAlignment == 0 || runningSize % maxAlignment != 0)
         {
-            BlittableCache.Add(memberType, (false, 0, 0, false));
+            BlittableCache.TryAdd(memberType, (false, 0, 0, false));
             size = 0;
             alignment = 0;
             return false;
         }
 
-        BlittableCache.Add(memberType, (true, runningSize, maxAlignment, isComplex));
+        BlittableCache.TryAdd(memberType, (true, runningSize, maxAlignment, isComplex));
         size = runningSize;
         alignment = maxAlignment;
         return true;

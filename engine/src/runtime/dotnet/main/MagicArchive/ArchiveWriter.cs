@@ -349,36 +349,6 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteBlittable<T>(in T value)
-        where T : unmanaged
-    {
-        UnsafeWriteBlittable(in value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void UnsafeWriteBlittable<T>(in T value)
-    {
-        if (!IsByteSwapping)
-        {
-            var size = Unsafe.SizeOf<T>();
-            ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value);
-            Advance(size);
-        }
-        else if (BlittableMarshalling.IsSimpleBlittable<T>())
-        {
-            var size = Unsafe.SizeOf<T>();
-            ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value));
-            Advance(size);
-        }
-        else
-        {
-            GetFormatter<T>().Serialize(ref this, in value);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteArchivable<T>(in T value)
         where T : IArchivable<T>
     {

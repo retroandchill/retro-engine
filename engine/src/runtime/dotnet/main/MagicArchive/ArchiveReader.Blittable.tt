@@ -9,6 +9,7 @@
     string MakeArgs(int count) => string.Join(", ", Enumerable.Range(1, count).Select(x => $"out T{x} value{x}"));
     string MakeSize(int count) => string.Join(" + ", Enumerable.Range(1, count).Select(x => $"Unsafe.SizeOf<T{x}>()"));
     string MakeWhere(int count) => string.Join("\r\n        ", Enumerable.Range(1, count).Select(x => $"where T{x} : unmanaged"));
+    string MakeSimpleBlittableCheck(int count) => string.Join(" && ", Enumerable.Range(1, count).Select(x => $"BlittableMarshalling.IsSimpleBlittable<T{x}>()"));
 #>
 using System.Buffers;
 using System.Runtime.CompilerServices;
@@ -20,9 +21,9 @@ namespace MagicArchive;
 public ref partial struct ArchiveReader
 {
 <# foreach(var dangerous in new[] { false, true }) { #>
-<# for(var i = 2; i < 16; i++ ) { #>
+<# for(var i = 1; i < 16; i++ ) { #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    <#= dangerous ? "public" : "internal" #> void <#= dangerous ? "Unsafe" : "" #>ReadBlittable<<#= MakeT(i) #>>(<#= MakeArgs(i) #>)
+    <#= dangerous ? "internal" : "public" #> void <#= dangerous ? "Unsafe" : "" #>ReadBlittable<<#= MakeT(i) #>>(<#= MakeArgs(i) #>)
 <# if(!dangerous) { #>
         <#= MakeWhere(i) #>
 <# } #>
@@ -37,10 +38,23 @@ public ref partial struct ArchiveReader
 <# } #>
             Advance(size);
         }
+        else if (<#= MakeSimpleBlittableCheck(i) #>)
+        {
+            var size = <#= MakeSize(i) #>;
+            ref var spanRef = ref GetSpanReference(size);
+            value1 = Unsafe.ReadUnaligned<T1>(ref spanRef);
+            BlittableMarshalling.ReverseEndianness(ref value1);
+<# for(var j = 2; j <= i; j++) { #>
+            value<#= j #> = Unsafe.ReadUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>));
+            BlittableMarshalling.ReverseEndianness(ref value<#= j #>);
+<# } #>
+            Advance(size);
+        }
         else
         {
 <# for(var j = 1; j <= i; j++) { #>
-            value<#= j #> = <#= dangerous ? "Unsafe" : "" #>ReadBlittable<T<#= j #>>();
+            value<#= j #> = default;
+            GetFormatter<T<#= j #>>().Deserialize(ref this, ref value<#= j #>);
 <# } #>
         }
     }

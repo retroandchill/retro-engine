@@ -84,6 +84,7 @@ public class TypeMetadata
     public bool IsInterfaceOrAbstract { get; }
     public bool IsUnion { get; }
     public bool IsRecord { get; }
+    public bool IsBlittable { get; }
     public bool IsGenericDefinition { get; }
 
     public ImmutableArray<UnionTag> UnionTags { get; }
@@ -179,6 +180,7 @@ public class TypeMetadata
         IsValueType = symbol.IsValueType;
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
+        IsBlittable = symbol.IsBlittable(_reference, out _);
         IsRecord = symbol.IsRecord;
         HasDefault = Constructor is null || Constructor.Parameters.IsEmpty;
 
@@ -685,5 +687,108 @@ public class TypeMetadata
                 .Where(x => x.Formatter is not null)
                 .Select(x => new AdditionalTypeRegistration(x.Type.FullyQualifiedToString(), x.Formatter!)),
         ];
+    }
+
+    public string Emit(TemplateSource source, SourceProductionContext context)
+    {
+        if (IsUnion)
+        {
+            return EmitUnionTemplate(source, context);
+        }
+
+        if (GenerateType == GenerateType.Collection)
+        {
+            return EmitGenericCollectionTemplate(source, context);
+        }
+
+        return source.ArchivableTemplate(this);
+    }
+
+    private string EmitUnionTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        return source.UnionTemplate(this);
+    }
+
+    public string EmitUnionFormatterTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        return source.UnionFormatterTemplate(this);
+    }
+
+    private string EmitGenericCollectionTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    private record SerializeMemberLine(
+        bool WriteObjectHeader,
+        int TotalMembers,
+        ImmutableArray<MemberMetadata> Members,
+        string Writer = "writer"
+    );
+
+    private ImmutableArray<SerializeMemberLine> EmitSerializeMembers(
+        ImmutableArray<MemberMetadata> members,
+        bool toTempWriter,
+        bool writeObjectHeader
+    )
+    {
+        if (members.Length == 0 && writeObjectHeader)
+        {
+            return [new SerializeMemberLine(true, 0, [])];
+        }
+
+        var writer = toTempWriter ? "tempWriter" : "writer";
+
+        var builder = ImmutableArray.CreateBuilder<SerializeMemberLine>(Members.Length + (writeObjectHeader ? 1 : 0));
+        for (var i = 0; i < members.Length; i++)
+        {
+            if (members[i].Kind is not (MemberKind.Blittable or MemberKind.Enum) || toTempWriter)
+            {
+                if (i == 0 && writeObjectHeader)
+                {
+                    builder.Add(new SerializeMemberLine(true, members.Length, [], writer));
+                }
+
+                builder.Add(new SerializeMemberLine(false, 0, [members[i]], writer));
+                continue;
+            }
+
+            var optimizeFrom = i;
+            var optimizeTo = i;
+            var limit = Math.Min(members.Length, i + 15);
+            for (var j = i; j < limit; j++)
+            {
+                if (members[j].Kind is MemberKind.Blittable or MemberKind.Enum)
+                {
+                    optimizeTo = j;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (optimizeFrom == 0 && writeObjectHeader)
+            {
+                builder.Add(
+                    new SerializeMemberLine(
+                        true,
+                        members.Length,
+                        members.Slice(optimizeFrom, optimizeTo - optimizeFrom),
+                        writer
+                    )
+                );
+            }
+            else
+            {
+                builder.Add(
+                    new SerializeMemberLine(false, 0, members.Slice(optimizeFrom, optimizeTo - optimizeFrom), writer)
+                );
+            }
+
+            i = optimizeTo;
+        }
+
+        return builder.ToImmutable();
     }
 }

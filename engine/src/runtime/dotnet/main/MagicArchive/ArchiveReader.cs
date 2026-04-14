@@ -310,42 +310,10 @@ public ref partial struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ReadBlittable<T>(out T value)
-        where T : unmanaged
-    {
-        UnsafeReadBlittable(out value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal T? UnsafeReadBlittable<T>()
     {
         UnsafeReadBlittable<T>(out var value);
         return value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void UnsafeReadBlittable<T>(out T? value)
-    {
-        if (!IsByteSwapping)
-        {
-            var size = Unsafe.SizeOf<T>();
-            ref var spanRef = ref GetSpanReference(size);
-            value = Unsafe.ReadUnaligned<T>(ref spanRef);
-            Advance(size);
-        }
-        else if (BlittableMarshalling.IsBlittable<T>())
-        {
-            var size = Unsafe.SizeOf<T>();
-            ref var spanRef = ref GetSpanReference(size);
-            value = Unsafe.ReadUnaligned<T>(ref spanRef);
-            BlittableMarshalling.ReverseEndianness(ref value);
-            Advance(size);
-        }
-        else
-        {
-            value = default;
-            GetFormatter<T>().Deserialize(ref this, ref value);
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
