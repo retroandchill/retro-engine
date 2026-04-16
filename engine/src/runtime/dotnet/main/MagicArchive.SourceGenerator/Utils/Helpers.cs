@@ -184,6 +184,63 @@ public static class Helpers
         }
     }
 
+    public static void DeserializeMembers(
+        EncodedTextWriter output,
+        BlockHelperOptions options,
+        Context context,
+        Arguments arguments
+    )
+    {
+        if (arguments.Length != 2)
+        {
+            throw new HandlebarsException($"{nameof(DeserializeMembers)} helper requires exactly two argument");
+        }
+
+        var members = arguments.At<IReadOnlyList<MemberMetadata>>(0);
+        var isTolerant = arguments.At<bool>(1);
+        for (var i = 0; i < members.Count; i++)
+        {
+            if (members[i].Kind is not (MemberKind.Blittable or MemberKind.Enum) || isTolerant)
+            {
+                options.Template(output, members[i].EmitReadToDeserialize(i, isTolerant));
+                continue;
+            }
+
+            var optimizeFrom = i;
+            var optimizeTo = i;
+            var limit = Math.Min(members.Count, i + 15);
+            for (var j = i; j < limit; j++)
+            {
+                if (members[j].Kind is MemberKind.Blittable or MemberKind.Enum)
+                {
+                    optimizeTo = j;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            var builder = new StringBuilder();
+            builder.Append("reader.ReadBlittable(");
+            for (var index = optimizeFrom; index <= optimizeTo; index++)
+            {
+                if (index != i)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append("out __");
+                builder.Append(members[index].Name);
+                builder.Append("__");
+            }
+            builder.Append(");");
+            options.Template(output, builder.ToString());
+
+            i = optimizeTo;
+        }
+    }
+
     public static void MemberWriter(EncodedTextWriter writer, Context context, Arguments arguments)
     {
         if (context.Value is not MemberMetadata member)

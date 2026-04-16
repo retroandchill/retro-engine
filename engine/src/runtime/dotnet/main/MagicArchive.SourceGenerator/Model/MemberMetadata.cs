@@ -348,6 +348,41 @@ public class MemberMetadata
         }
     }
 
+    public string EmitReadToDeserialize(int i, bool requireDeltaCheck)
+    {
+        var equalDefault = Kind == MemberKind.Blank ? "{ }" : $"{{ __{Name}__ = default; }}";
+
+        var pre = requireDeltaCheck ? $"if (deltas[{i}] == 0) {equalDefault} else " : "";
+
+        switch (Kind)
+        {
+            case MemberKind.Archivable:
+                return $"{pre}__{Name}__ = reader.ReadArchivable<{MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
+            case MemberKind.Nullable:
+                return $"{pre}reader.ReadNullable(ref __{Name}__);";
+            case MemberKind.Blittable:
+            case MemberKind.Enum:
+                return $"{pre}reader.ReadBlittable(out __{Name}__);";
+            case MemberKind.String:
+                return $"{pre}__{Name}__ = reader.ReadString();";
+            case MemberKind.ArchivableArray:
+                return $"{pre}__{Name}__ = reader.ReadArchivableArray<{(MemberType as IArrayTypeSymbol)!.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
+            case MemberKind.ArchivableList:
+                return $"{pre}__{Name}__ = {ReferenceSymbols.FormatterNamespace}.ListFormatter.Deserialize<{(MemberType as INamedTypeSymbol)!.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>(ref reader);";
+            case MemberKind.Array or MemberKind.BlittableArray:
+                return $"{pre}__{Name}__ = reader.ReadArray<{(MemberType as IArrayTypeSymbol)!.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
+            case MemberKind.Blank:
+                return $"{pre}reader.Advance(deltas[{i}]);";
+            case MemberKind.CustomFormatter:
+            {
+                var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                return $"{pre}__{Name}__ = reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter);";
+            }
+            default:
+                return $"{pre}__{Name}__ = reader.ReadValue<{MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
+        }
+    }
+
     public string EmitDeserialize(string reader)
     {
         // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault

@@ -24,6 +24,7 @@ public sealed class TemplateSource
         handlebars.RegisterHelper("Escaped", Helpers.Escaped);
         handlebars.RegisterHelper("Joined", Helpers.Joined);
         handlebars.RegisterHelper("SerializeMembers", Helpers.SerializeMembers);
+        handlebars.RegisterHelper("DeserializeMembers", Helpers.DeserializeMembers);
         handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
         handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
         handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);

@@ -175,14 +175,9 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
             if (value is null)
             {{/IsValueType}}
             {
-                {{#Members}}
-                {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{^IsBlank}}__{{Name}}__ = {{/IsBlank}}{{MemberReader "reader"}};
-                {{#if ../IsTolerant}}
-                {{^IsBlank}}
-                else __{{Name}}__ = {{DefaultValue}};
-                {{/IsBlank}}
-                {{/if}}
-                {{/Members}}
+                {{#DeserializeMembers Members IsTolerant}}
+                {{.}}
+                {{/DeserializeMembers}}
 
                 goto NEW;
             }
