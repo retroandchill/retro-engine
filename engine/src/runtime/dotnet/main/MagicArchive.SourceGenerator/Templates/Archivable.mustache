@@ -1,36 +1,35 @@
-partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
+{{#ContainingTypeDeclarations}}
+partial {{.}}
 {
-    static {{SimpleName}}()
-    {
-        {{#BlittableRegistrations}}
-        {{#IsBlittable}}
-        {{#IsComplex}}
-        BlittableMarshalling.RegisterComplexBlittable<{{TypeName}}>();
-        {{/IsComplex}}
-        {{^IsComplex}}
-        BlittableMarshalling.RegisterSimpleBlittable<{{TypeName}}>();
-        {{/IsComplex}}
-        {{/IsBlittable}}
-        {{^IsBlittable}}
-        BlittableMarshalling.RegisterNotBlittable<{{TypeName}}>();
-        {{/IsBlittable}}
-        {{/BlittableRegistrations}}
-        ArchiveFormatterRegistry.Register<{{Name}}>();
-        StaticInit();
-    }
+{{/ContainingTypeDeclarations}}
+partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, IFixedSizeArchivable{{/IsFixedSize}}
+{
+    {{#CustomFormatters}}
+    private static readonly {{CustomFormatterName}} __{{Name}}Formatter = typeof({{Symbol}}).Get{{Type}}("{{Name}}", BindingFlags.Public | BindingFlags.NonPulic | BindingFlags.Instance).GetCustomAttribute<{{CustomFormatter}}>().GetFormatter();
+    {{/CustomFormatters}}
 
     static partial void StaticInit();
 
+    static {{SimpleName}}()
+    {
+        ArchiveFormatterRegistry.Register<{{TypeName}}>();
+        StaticInit();
+    }
+    {{#IsFixedSize}}
+
+    static int IFixedSizeArchivable.Size => 1{{#SizeOfTypes}} + Unsafe.SizeOf<{{.}}>()){{/SizeOfTypes}};
+    {{/IsFixedSize}}
+
     static void IArchivable.RegisterFormatters()
     {
-        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}>())
-            ArchiveFormatterRegistry.Register(new ArchivableFormatter<{{Name}}>());
+        if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}>())
+            ArchiveFormatterRegistry.Register<{{TypeName}}>();
+        if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}[]>())
+            ArchiveFormatterRegistry.Register(new ArrayFormatter<{{TypeName}}>());
         {{#IsValueType}}
-        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}?>())
-            ArchiveFormatterRegistry.Register(new NullableFormatter<{{Name}}>());
+        if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}?>())
+            ArchiveFormatterRegistry.Register(new NullableFormatter<{{TypeName}}>());
         {{/IsValueType}}
-        if (!ArchiveFormatterRegistry.IsRegistered<{{Name}}[]>())
-            ArchiveFormatterRegistry.Register(new ArrayFormatter<{{Name}}>());
         {{#AdditionalTypeRegistrations}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}>())
             ArchiveFormatterRegistry.Register(new {{FormatterName}}());
@@ -39,12 +38,12 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         RegisterAdditionalFormatters();
         {{/IsCustom}}
     }
+
     {{#IsCustom}}
     static partial void RegisterAdditionalFormatters();
     {{/IsCustom}}
     {{^IsCustom}}
-
-    static void IArchivable<{{Name}}>.Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
+    static void IArchivable<{{TypeName}}>.Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{TypeName}}{{Nullable}} value)
     {
         {{#IsBlittable}}
         if (!writer.IsByteSwapping)
@@ -78,10 +77,9 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {
             Span<int> offsets = stackalloc int[{{Members.Length}}];
             var tempWriter = ArchiveWriter.Create(ref tempBuffer, writer.State);
-            {{#Members}}
-            {{MemberWriter "tempWriter"}}
-            offsets[{{Index}}] = tempWriter.WrittenBytes;
-            {{/Members}}
+            {{#SerializeMembers Members true false}}
+            {{.}}
+            {{/SerializeMembers}}
 
             tempWriter.Flush();
 
@@ -111,16 +109,15 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {{/IsTolerant}}
         {{^IsTolerant}}
 
-        writer.WriteObjectHeader({{MemberCount}});
-        {{#Members}}
-        {{MemberWriter "writer"}}
-        {{/Members}}
+        {{#SerializeMembers Members false true}}
+        {{.}}
+        {{/SerializeMembers}}
         {{/IsTolerant}}
     }
 
-    static void IArchivable<{{Name}}>.Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
+    static void IArchivable<{{TypeName}}>.Deserialize(ref ArchiveReader reader, scoped ref {{TypeName}}{{Nullable}} value)
     {
-        {{#IsBlittable}}
+       {{#IsBlittable}}
         if (!reader.IsByteSwapping)
         {
             reader.ReadBlittable(out value);
@@ -131,7 +128,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         if (!reader.TryReadObjectHeader(out var count))
         {
             {{#IsValueType}}
-            ArchiveSerializationException.ThrowDeserializeObjectIsNull("{{Name}}");
+            ArchiveSerializationException.ThrowDeserializeObjectIsNull("{{TypeName}}");
             {{/IsValueType}}
             {{^IsValueType}}
             value = null;
@@ -145,7 +142,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         if (count == ArchiveCodes.ReferenceId)
         {
             id = reader.ReadBlittable<uint>();
-            value = ({{Name}}) reader.State.GetObjectReference(id);
+            value = ({{TypeName}}) reader.State.GetObjectReference(id);
             return;
         }
         {{/IsCircularReference}}
@@ -160,7 +157,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         id = reader.ReadBlittable<uint>();
         if (value is null)
         {
-            value = new {{Name}}();
+            value = new {{TypeName}}();
         }
         reader.State.AddObjectReference(id, value);
         {{/IsCircularReference}}
@@ -209,7 +206,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {{^IsTolerant}}
         else if (count > {{MemberCount}})
         {
-            ArchiveSerializationException.ThrowInvalidPropertyCount(typeof({{Name}}), {{MemberCount}}, count);
+            ArchiveSerializationException.ThrowInvalidPropertyCount(typeof({{TypeName}}), {{MemberCount}}, count);
             return;
         }
         {{/IsTolerant}}
@@ -269,7 +266,7 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
         {{/UsesEmptyConstructor}}
 
         NEW:
-        value = new {{Name}}({{ConstructorParameters}})
+        value = new {{TypeName}}({{ConstructorParameters Constructor Members}})
         {
             {{#Members}}
             {{#IsSettable}}
@@ -313,3 +310,6 @@ partial {{ClassType}} {{Name}} : IArchivable<{{Name}}>
     }
     {{/IsCustom}}
 }
+{{#ContainingTypeDeclarations}}
+}
+{{/ContainingTypeDeclarations}}

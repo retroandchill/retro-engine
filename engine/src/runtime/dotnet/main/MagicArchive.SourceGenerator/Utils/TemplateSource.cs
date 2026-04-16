@@ -22,6 +22,8 @@ public sealed class TemplateSource
         handlebars.Configuration.TextEncoder = null;
         handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
         handlebars.RegisterHelper("Escaped", Helpers.Escaped);
+        handlebars.RegisterHelper("Joined", Helpers.Joined);
+        handlebars.RegisterHelper("SerializeMembers", Helpers.SerializeMembers);
         handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
         handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
         handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);

@@ -28,6 +28,7 @@
     <Project Path="engine/src/runtime/dotnet/main/ZParse/ZParse.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/dotnet/test/">
+    <Project Path="engine/src/runtime/dotnet/test/MagicArchive.SourceGenerator.Test/MagicArchive.SourceGenerator.Test.csproj" />
     <Project Path="engine/src/runtime/dotnet/test/MagicArchive.Test/MagicArchive.Test.csproj" />
     <Project Path="engine/src/runtime/dotnet/test/RetroEngine.Portable.Test/RetroEngine.Portable.Test.csproj" />
   </Folder>

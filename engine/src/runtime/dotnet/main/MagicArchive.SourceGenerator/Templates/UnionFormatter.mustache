@@ -1,4 +1,4 @@
-partial {{ClassType}} {{Name}} : ArchiveFormatter<{{UnionTarget}}>
+partial {{ClassType}} {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
 {
     private static readonly Dictionary<Type, ushort> _typeToTag = new({{UnionTags.Length}})
     {
@@ -32,7 +32,7 @@ partial {{ClassType}} {{Name}} : ArchiveFormatter<{{UnionTarget}}>
         }
         else
         {
-            ArchiveSerializationException.ThrowNotFoundInUnionType(value.GetType(), typeof({{Name}}));
+            ArchiveSerializationException.ThrowNotFoundInUnionType(value.GetType(), typeof({{TypeName}}));
         }
     }
 
@@ -59,7 +59,7 @@ partial {{ClassType}} {{Name}} : ArchiveFormatter<{{UnionTarget}}>
                 break;
             {{/UnionTags}}
             default:
-                ArchiveSerializationException.ThrowInvalidTag(tag, typeof({{Name}}));
+                ArchiveSerializationException.ThrowInvalidTag(tag, typeof({{TypeName}}));
                 break;
         }
     }
@@ -76,7 +76,7 @@ public static class {{InitializerName}}
         {{^IsGenericDefinition}}
         if (!ArchiveFormatterRegistry.IsRegistered<{{UnionTarget}}>())
         {
-            ArchiveFormatterRegistry.Register(new {{Name}}());
+            ArchiveFormatterRegistry.Register(new {{TypeName}}());
         }
         {{/IsGenericDefinition}}
     }

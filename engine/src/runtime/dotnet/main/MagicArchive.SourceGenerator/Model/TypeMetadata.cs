@@ -23,7 +23,7 @@ public enum ClassType
 }
 
 [UsedImplicitly]
-public readonly record struct AdditionalTypeRegistration(string TypeName, string FormatterName);
+public record AdditionalTypeRegistration(string TypeName, string FormatterName);
 
 public record UnionTag(ushort Tag, INamedTypeSymbol Type)
 {
@@ -50,7 +50,7 @@ public class TypeMetadata
     public ClassType ClassType { get; }
 
     [UsedImplicitly]
-    public string Name { get; }
+    public string TypeName { get; }
 
     [UsedImplicitly]
     public string SimpleName { get; }
@@ -64,7 +64,7 @@ public class TypeMetadata
     public string? InitializerName { get; }
 
     public string BaseDefinitionName =>
-        IsGenericDefinition ? Symbol.ConstructUnboundGenericType().FullyQualifiedToString() : Name;
+        IsGenericDefinition ? Symbol.ConstructUnboundGenericType().FullyQualifiedToString() : TypeName;
 
     [UsedImplicitly]
     public ImmutableArray<AdditionalTypeRegistration> AdditionalTypeRegistrations { get; }
@@ -121,10 +121,11 @@ public class TypeMetadata
 
         Namespace = symbol.ContainingNamespace.ToDisplayString();
         ClassType = GetClassType();
-        Name = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        TypeName = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         SimpleName = symbol.Name;
-        NullableName = symbol.IsValueType ? Name : $"{Name}?";
-        InitializerName = $"{Name.Replace("<", "_").Replace(">", "").Replace(",", "_").Replace(" ", "")}Initializer";
+        NullableName = symbol.IsValueType ? TypeName : $"{TypeName}?";
+        InitializerName =
+            $"{TypeName.Replace("<", "_").Replace(">", "").Replace(",", "_").Replace(" ", "")}Initializer";
 
         Constructor = ChooseConstructor(symbol);
 
@@ -175,30 +176,12 @@ public class TypeMetadata
         PreConstructMembers = Members[..(preConstructEnd + 1)];
         PostConstructMembers = Members[(preConstructEnd + 1)..];
 
-        AdditionalTypeRegistrations = GetAdditionalTypeRegistrations();
-
         IsValueType = symbol.IsValueType;
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
         IsBlittable = symbol.IsBlittable(_reference, out _);
         IsRecord = symbol.IsRecord;
         HasDefault = Constructor is null || Constructor.Parameters.IsEmpty;
-
-        if (GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference)
-        {
-            if (Members.Length != 0)
-            {
-                var maxOrder = Members.Max(x => x.Order);
-                var tempMembers = new MemberMetadata[maxOrder + 1];
-                for (var i = 0; i <= maxOrder; i++)
-                {
-                    tempMembers[i] = Members.FirstOrDefault(x => x.Order == i) ?? MemberMetadata.CreateEmpty(i);
-                    tempMembers[i].Index = i;
-                }
-
-                Members = ImmutableCollectionsMarshal.AsImmutableArray(tempMembers);
-            }
-        }
 
         if (IsUnion)
         {
@@ -662,14 +645,112 @@ public class TypeMetadata
         return noError;
     }
 
-    public string EmitConstructorParameters()
+    public string Emit(TemplateSource source, SourceProductionContext context)
     {
-        return string.Join(
-            ", ",
-            PreConstructMembers
-                .Where(x => x.IsConstructorParameter)
-                .Select(x => $"{x.ConstructorParameterName}: __{x.Name}__")
+        if (IsUnion)
+        {
+            return EmitUnionTemplate(source, context);
+        }
+
+        if (GenerateType == GenerateType.Collection)
+        {
+            return EmitGenericCollectionTemplate(source, context);
+        }
+
+        ImmutableArray<MemberMetadata> members;
+        if (GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference && Members.Length != 0)
+        {
+            var maxOrder = Members.Max(x => x.Order);
+            var tempMembers = new MemberMetadata[maxOrder + 1];
+            for (var i = 0; i <= maxOrder; i++)
+            {
+                tempMembers[i] = Members.FirstOrDefault(x => x.Order == i) ?? MemberMetadata.CreateEmpty(i);
+            }
+            members = ImmutableCollectionsMarshal.AsImmutableArray(tempMembers);
+        }
+        else
+        {
+            members = Members;
+        }
+
+        var classOrStructOrRecord = (IsRecord, IsValueType) switch
+        {
+            (true, true) => "record struct",
+            (true, false) => "record",
+            (false, true) => "struct",
+            (false, false) => "class",
+        };
+
+        var containingTypeDeclarations = new List<string>();
+        var containingType = Symbol.ContainingType;
+        while (containingType is not null)
+        {
+            containingTypeDeclarations.Add(
+                (containingType.IsRecord, containingType.IsValueType) switch
+                {
+                    (true, true) => $"partial record struct {containingType.Name}",
+                    (true, false) => $"partial record {containingType.Name}",
+                    (false, true) => $"partial struct {containingType.Name}",
+                    (false, false) => $"partial class {containingType.Name}",
+                }
+            );
+            containingType = containingType.ContainingType;
+        }
+        containingTypeDeclarations.Reverse();
+
+        var nullable = !IsValueType ? "?" : "";
+
+        var fixedSize = Members.All(x =>
+            x.Kind is MemberKind.Bool or MemberKind.Blittable or MemberKind.Enum or MemberKind.Blank
         );
+        string[]? sizeofTypes;
+        if (fixedSize && GenerateType == GenerateType.Object && IsValueType)
+        {
+            sizeofTypes = Members
+                .Select(x => x.Kind == MemberKind.Bool ? "byte" : x.MemberType.FullyQualifiedToString())
+                .ToArray();
+        }
+        else
+        {
+            sizeofTypes = null;
+        }
+
+        var archivableType = new
+        {
+            ContainingTypeDeclarations = containingTypeDeclarations,
+            ClassType = classOrStructOrRecord,
+            TypeName,
+            SimpleName = Symbol.Name,
+            Nullable = nullable,
+            IsFixedSize = fixedSize && sizeofTypes is not null,
+            SizeOfTypes = sizeofTypes,
+            IsValueType,
+            IsCustom = GenerateType == GenerateType.Custom,
+            IsBlittable,
+            IsTolerant = GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference,
+            IsCircularReference = GenerateType == GenerateType.CircularReference,
+            MemberCount = Members.Length,
+            Constructor,
+            Members = members,
+            AdditionalTypeRegistrations = GetAdditionalTypeRegistrations(),
+        };
+
+        return source.ArchivableTemplate(archivableType);
+    }
+
+    private string EmitUnionTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        return source.UnionTemplate(this);
+    }
+
+    public string EmitUnionFormatterTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        return source.UnionFormatterTemplate(this);
+    }
+
+    private string EmitGenericCollectionTemplate(TemplateSource source, SourceProductionContext context)
+    {
+        throw new NotImplementedException();
     }
 
     private ImmutableArray<AdditionalTypeRegistration> GetAdditionalTypeRegistrations()
@@ -689,106 +770,19 @@ public class TypeMetadata
         ];
     }
 
-    public string Emit(TemplateSource source, SourceProductionContext context)
+    private IReadOnlyList<string> GetConstructorParameters()
     {
-        if (IsUnion)
+        if (Constructor is not { Parameters.Length: > 0 })
         {
-            return EmitUnionTemplate(source, context);
+            return [];
         }
 
-        if (GenerateType == GenerateType.Collection)
-        {
-            return EmitGenericCollectionTemplate(source, context);
-        }
-
-        return source.ArchivableTemplate(this);
-    }
-
-    private string EmitUnionTemplate(TemplateSource source, SourceProductionContext context)
-    {
-        return source.UnionTemplate(this);
-    }
-
-    public string EmitUnionFormatterTemplate(TemplateSource source, SourceProductionContext context)
-    {
-        return source.UnionFormatterTemplate(this);
-    }
-
-    private string EmitGenericCollectionTemplate(TemplateSource source, SourceProductionContext context)
-    {
-        throw new NotImplementedException();
-    }
-
-    private record SerializeMemberLine(
-        bool WriteObjectHeader,
-        int TotalMembers,
-        ImmutableArray<MemberMetadata> Members,
-        string Writer = "writer"
-    );
-
-    private ImmutableArray<SerializeMemberLine> EmitSerializeMembers(
-        ImmutableArray<MemberMetadata> members,
-        bool toTempWriter,
-        bool writeObjectHeader
-    )
-    {
-        if (members.Length == 0 && writeObjectHeader)
-        {
-            return [new SerializeMemberLine(true, 0, [])];
-        }
-
-        var writer = toTempWriter ? "tempWriter" : "writer";
-
-        var builder = ImmutableArray.CreateBuilder<SerializeMemberLine>(Members.Length + (writeObjectHeader ? 1 : 0));
-        for (var i = 0; i < members.Length; i++)
-        {
-            if (members[i].Kind is not (MemberKind.Blittable or MemberKind.Enum) || toTempWriter)
-            {
-                if (i == 0 && writeObjectHeader)
-                {
-                    builder.Add(new SerializeMemberLine(true, members.Length, [], writer));
-                }
-
-                builder.Add(new SerializeMemberLine(false, 0, [members[i]], writer));
-                continue;
-            }
-
-            var optimizeFrom = i;
-            var optimizeTo = i;
-            var limit = Math.Min(members.Length, i + 15);
-            for (var j = i; j < limit; j++)
-            {
-                if (members[j].Kind is MemberKind.Blittable or MemberKind.Enum)
-                {
-                    optimizeTo = j;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            if (optimizeFrom == 0 && writeObjectHeader)
-            {
-                builder.Add(
-                    new SerializeMemberLine(
-                        true,
-                        members.Length,
-                        members.Slice(optimizeFrom, optimizeTo - optimizeFrom),
-                        writer
-                    )
-                );
-            }
-            else
-            {
-                builder.Add(
-                    new SerializeMemberLine(false, 0, members.Slice(optimizeFrom, optimizeTo - optimizeFrom), writer)
-                );
-            }
-
-            i = optimizeTo;
-        }
-
-        return builder.ToImmutable();
+        var nameDict = Members
+            .Where(x => x.IsConstructorParameter)
+            .ToDictionary(x => x.ConstructorParameterName, x => x.Name, StringComparer.OrdinalIgnoreCase);
+        return Constructor
+            .Parameters.Select(x => nameDict.TryGetValue(x.Name, out var memberName) ? memberName : null)
+            .OfType<string>()
+            .ToArray();
     }
 }

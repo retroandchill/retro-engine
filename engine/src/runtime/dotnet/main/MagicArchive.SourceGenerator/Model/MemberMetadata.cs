@@ -18,7 +18,6 @@ public enum MemberKind
     Bool,
     Blittable,
     Nullable,
-    BlittableNullable,
     KnownType,
     String,
     Array,
@@ -328,11 +327,14 @@ public class MemberMetadata
             case MemberKind.ArchivableList:
                 return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter.Serialize(ref {writer}, value.@{Name});";
             case MemberKind.Nullable:
-            case MemberKind.BlittableNullable:
                 return $"{writer}.WriteNullable(value.@{Name});";
+            case MemberKind.Bool:
+                return $"{writer}.WriteBool(value.@{Name});";
             case MemberKind.Blittable:
             case MemberKind.Enum:
                 return $"{writer}.WriteBlittable(value.@{Name});";
+            case MemberKind.String:
+                return $"{writer}.WriteString(value.@{Name});";
             case MemberKind.Array:
                 return $"{writer}.WriteArray(value.@{Name});";
             case MemberKind.BlittableArray:
@@ -353,7 +355,6 @@ public class MemberMetadata
         {
             case MemberKind.Archivable:
                 return $"{reader}.ReadArchivable<{MemberType.FullyQualifiedToString()}>()";
-            case MemberKind.BlittableNullable:
             case MemberKind.Nullable:
             {
                 var namedNullable = (INamedTypeSymbol)MemberType;
@@ -413,7 +414,6 @@ public class MemberMetadata
             case MemberKind.Blittable:
             case MemberKind.Enum:
                 return $"{reader}.ReadBlittable<{MemberType.FullyQualifiedToString()}>(out __{Name}__)";
-            case MemberKind.BlittableNullable:
             case MemberKind.Nullable:
                 return $"{reader}.ReadNullable(ref __{Name}__)";
             case MemberKind.String:
