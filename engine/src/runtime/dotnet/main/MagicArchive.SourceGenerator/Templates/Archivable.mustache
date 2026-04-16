@@ -12,6 +12,19 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
 
     static {{SimpleName}}()
     {
+        {{#BlittableRegistrations}}
+        {{#IsBlittable}}
+        {{#IsComplex}}
+        BlittableMarshalling.RegisterComplexBlittable<{{TypeName}}>();
+        {{/IsComplex}}
+        {{^IsComplex}}
+        BlittableMarshalling.RegisterSimpleBlittable<{{TypeName}}>();
+        {{/IsComplex}}
+        {{/IsBlittable}}
+        {{^IsBlittable}}
+        BlittableMarshalling.RegisterNotBlittable<{{TypeName}}>();
+        {{/IsBlittable}}
+        {{/BlittableRegistrations}}
         ArchiveFormatterRegistry.Register<{{TypeName}}>();
         StaticInit();
     }

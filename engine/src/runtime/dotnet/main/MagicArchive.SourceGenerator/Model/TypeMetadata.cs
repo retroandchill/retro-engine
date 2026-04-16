@@ -43,19 +43,14 @@ public class TypeMetadata
     public SerializeLayout SerializeLayout { get; }
     public INamedTypeSymbol Symbol { get; }
 
-    [UsedImplicitly]
     public string Namespace { get; }
 
-    [UsedImplicitly]
     public ClassType ClassType { get; }
 
-    [UsedImplicitly]
     public string TypeName { get; }
 
-    [UsedImplicitly]
     public string SimpleName { get; }
 
-    [UsedImplicitly]
     public string NullableName { get; }
 
     public string? UnionTarget { get; }
@@ -107,8 +102,6 @@ public class TypeMetadata
     public bool UsesEmptyConstructor => Constructor is null || Constructor.Parameters.IsEmpty;
 
     public IMethodSymbol? Constructor { get; }
-
-    public ImmutableArray<BlittableRegistration> BlittableRegistrations { get; }
 
     public TypeMetadata(INamedTypeSymbol symbol, ReferenceSymbols referenceSymbols)
     {
@@ -223,21 +216,6 @@ public class TypeMetadata
         else
         {
             UnionTags = [];
-        }
-
-        if (IsCustom)
-        {
-            BlittableRegistrations = [.. GetBlittableSubTypes(symbol, referenceSymbols).Distinct()];
-        }
-        else
-        {
-            BlittableRegistrations =
-            [
-                .. Members
-                    .SelectMany(x => GetBlittableSubTypes(x.MemberType, referenceSymbols))
-                    .Concat(GetBlittableSubTypes(symbol, referenceSymbols))
-                    .Distinct(),
-            ];
         }
 
         if (symbol.TypeKind != TypeKind.Class)
@@ -715,6 +693,23 @@ public class TypeMetadata
             sizeofTypes = null;
         }
 
+        var isCustom = GenerateType == GenerateType.Custom;
+        ImmutableArray<BlittableRegistration> blittableRegistrations;
+        if (isCustom)
+        {
+            blittableRegistrations = [.. GetBlittableSubTypes(Symbol, _reference).Distinct()];
+        }
+        else
+        {
+            blittableRegistrations =
+            [
+                .. Members
+                    .SelectMany(x => GetBlittableSubTypes(x.MemberType, _reference))
+                    .Concat(GetBlittableSubTypes(Symbol, _reference))
+                    .Distinct(),
+            ];
+        }
+
         var archivableType = new
         {
             ContainingTypeDeclarations = containingTypeDeclarations,
@@ -725,7 +720,7 @@ public class TypeMetadata
             IsFixedSize = fixedSize && sizeofTypes is not null,
             SizeOfTypes = sizeofTypes,
             IsValueType,
-            IsCustom = GenerateType == GenerateType.Custom,
+            IsCustom = isCustom,
             IsBlittable,
             IsTolerant = GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference,
             IsCircularReference = GenerateType == GenerateType.CircularReference,
@@ -733,6 +728,7 @@ public class TypeMetadata
             Constructor,
             Members = members,
             AdditionalTypeRegistrations = GetAdditionalTypeRegistrations(),
+            BlittableRegistrations = blittableRegistrations,
         };
 
         return source.ArchivableTemplate(archivableType);
