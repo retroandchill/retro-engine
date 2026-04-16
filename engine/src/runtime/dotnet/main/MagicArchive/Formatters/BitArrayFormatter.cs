@@ -15,8 +15,7 @@ public sealed class BitArrayFormatter : ArchiveFormatter<BitArray>
 
         ref var view = ref Unsafe.As<BitArray, BitArrayView>(ref Unsafe.AsRef(in value));
 
-        writer.WriteObjectHeader(2);
-        writer.WriteBlittable(view.Length);
+        writer.WriteBlittableWithObjectHeader(2, view.Length);
         writer.WriteArray(view.Array);
     }
 

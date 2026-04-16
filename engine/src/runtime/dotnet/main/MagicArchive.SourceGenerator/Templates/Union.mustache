@@ -25,11 +25,17 @@ partial {{ClassType}} {{TypeName}} : IArchivable
             {{/UnionTags}}
         };
 
-        public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{NullableName}} value)
-        {
+       public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{TypeName}} value)
+       {
+            {{#OnSerializing}}
+            {{MethodBody}}
+            {{/OnSerializing}}
             if (value is null)
             {
                 writer.WriteNullObjectHeader();
+                {{#OnSerialized}}
+                {{MethodBody}}
+                {{/OnSerialized}}
                 return;
             }
 
@@ -41,7 +47,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable
                 {
                     {{#UnionTags}}
                     case {{Tag}}:
-                        writer.{{WriteMethod}}(Unsafe.As<{{../NullableName}}, {{FullyQualifiedName}}>(ref Unsafe.AsRef(in value)));
+                        writer.{{WriteMethod}}(Unsafe.As<{{../TypeName}}, {{FullyQualifiedName}}>(ref Unsafe.AsRef(in value)));
                         break;
                     {{/UnionTags}}
                     default:
@@ -52,13 +58,22 @@ partial {{ClassType}} {{TypeName}} : IArchivable
             {
                 ArchiveSerializationException.ThrowNotFoundInUnionType(value.GetType(), typeof({{TypeName}}));
             }
+            {{#OnSerialized}}
+            {{MethodBody}}
+            {{/OnSerialized}}
         }
 
-        public override void Deserialize(ref ArchiveReader reader, scoped ref {{NullableName}} value)
+        public override void Deserialize(ref ArchiveReader reader, scoped ref {{TypeName}} value)
         {
+            {{#OnDeserializing}}
+            {{MethodBody}}
+            {{/OnDeserializing}}
             if (!reader.TryReadUnionHeader(out var tag))
             {
                 value = null;
+                {{#OnDeserialized}}
+                {{MethodBody}}
+                {{/OnDeserialized}}
                 return;
             }
 
@@ -68,7 +83,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable
                 case {{Tag}}:
                     if (value is {{FullyQualifiedName}})
                     {
-                        reader.{{ReadMethod}}(ref Unsafe.As<{{../NullableName}}, {{FullyQualifiedName}}>(ref value));
+                        reader.{{ReadMethod}}(ref Unsafe.As<{{../TypeName}}, {{FullyQualifiedName}}>(ref value));
                     }
                     else
                     {
@@ -80,6 +95,9 @@ partial {{ClassType}} {{TypeName}} : IArchivable
                     ArchiveSerializationException.ThrowInvalidTag(tag, typeof({{TypeName}}));
                     break;
             }
+            {{#OnDeserialized}}
+            {{MethodBody}}
+            {{/OnDeserialized}}
         }
     }
 }

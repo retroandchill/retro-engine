@@ -23,12 +23,13 @@ public sealed class TemplateSource
         handlebars.Configuration.FormatterProviders.Add(new ClassTypeFormatter());
         handlebars.RegisterHelper("Escaped", Helpers.Escaped);
         handlebars.RegisterHelper("Joined", Helpers.Joined);
+        handlebars.RegisterHelper("Indexed", Helpers.Indexed);
+        handlebars.RegisterHelper("Add", Helpers.Add);
         handlebars.RegisterHelper("SerializeMembers", Helpers.SerializeMembers);
         handlebars.RegisterHelper("DeserializeMembers", Helpers.DeserializeMembers);
-        handlebars.RegisterHelper("MemberWriter", Helpers.MemberWriter);
-        handlebars.RegisterHelper("MemberReader", Helpers.MemberReader);
         handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);
         handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
+        handlebars.RegisterHelper("MethodCall", Helpers.MethodCall);
         CommonTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Common"));
         DebugInfoTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("DebugInfo"));
         ArchivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));

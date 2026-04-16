@@ -41,9 +41,9 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         }
         else if (<#= MakeSimpleBlittableCheck(i) #>)
         {
-                        var size = <#= MakeSize(i) #>;
+            var size = <#= MakeSize(i) #>;
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
 <# for(var j = 2; j <= i; j++) { #>
             Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), BlittableMarshalling.ReverseEndianness(value<#= j #>)!);
 <# } #>
@@ -68,20 +68,20 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = <#= MakeSize(i) #> + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
 <# for(var j = 2; j <= i; j++) { #>
-            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), value<#= j #>!);
+            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #> + sizeof(byte)), value<#= j #>!);
 <# } #>
             Advance(size);
         }
         else if (<#= MakeSimpleBlittableCheck(i) #>)
         {
-                        var size = <#= MakeSize(i) #>;
+            var size = <#= MakeSize(i) #>;
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
 <# for(var j = 2; j <= i; j++) { #>
-            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #>), BlittableMarshalling.ReverseEndianness(value<#= j #>)!);
+            Unsafe.WriteUnaligned<T<#= j #>>(ref Unsafe.Add(ref spanRef, <#= MakeSize(j - 1) #> + sizeof(byte)), BlittableMarshalling.ReverseEndianness(value<#= j #>)!);
 <# } #>
             Advance(size);
         }

@@ -39,69 +39,24 @@ public class TypeMetadata
     private DiagnosticDescriptor? _ctorInvalid;
 
     private readonly ReferenceSymbols _reference;
+    public INamedTypeSymbol Symbol { get; set; }
     public GenerateType GenerateType { get; }
     public SerializeLayout SerializeLayout { get; }
-    public INamedTypeSymbol Symbol { get; }
-
-    public string Namespace { get; }
-
-    public ClassType ClassType { get; }
-
     public string TypeName { get; }
-
-    public string SimpleName { get; }
-
-    public string NullableName { get; }
-
-    public string? UnionTarget { get; }
-    public string? BaseUnionTarget { get; }
-
-    public string? InitializerName { get; }
-
-    public string BaseDefinitionName =>
-        IsGenericDefinition ? Symbol.ConstructUnboundGenericType().FullyQualifiedToString() : TypeName;
-
-    [UsedImplicitly]
-    public ImmutableArray<AdditionalTypeRegistration> AdditionalTypeRegistrations { get; }
     public ImmutableArray<MemberMetadata> Members { get; }
-
-    [UsedImplicitly]
-    public ImmutableArray<MemberMetadata> PreConstructMembers { get; }
-
-    [UsedImplicitly]
-    public ImmutableArray<MemberMetadata> PostConstructMembers { get; }
-
-    [UsedImplicitly]
-    public int MemberCount => Members.Length;
-
-    [UsedImplicitly]
     public bool IsValueType { get; }
-    public bool IsInterfaceOrAbstract { get; }
+    public bool IsBlittable { get; }
     public bool IsUnion { get; }
     public bool IsRecord { get; }
-    public bool IsBlittable { get; }
-    public bool IsGenericDefinition { get; }
-
+    public bool IsInterfaceOrAbstract { get; }
+    public IMethodSymbol? Constructor { get; }
+    public ImmutableArray<MethodMetadata> OnSerializing { get; }
+    public ImmutableArray<MethodMetadata> OnSerialized { get; }
+    public ImmutableArray<MethodMetadata> OnDeserializing { get; }
+    public ImmutableArray<MethodMetadata> OnDeserialized { get; }
     public ImmutableArray<UnionTag> UnionTags { get; }
 
-    [UsedImplicitly]
-    public bool IsTolerant => GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference;
-
-    [UsedImplicitly]
-    public bool IsCircularReference => GenerateType is GenerateType.CircularReference;
-
-    [UsedImplicitly]
-    public bool RequiresConstruct => PreConstructMembers.Length > 0 || Constructor is { Parameters.Length: > 0 };
-
-    [UsedImplicitly]
-    public bool HasDefault { get; }
-
-    [UsedImplicitly]
-    public bool IsCustom => GenerateType is GenerateType.Custom;
-
     public bool UsesEmptyConstructor => Constructor is null || Constructor.Parameters.IsEmpty;
-
-    public IMethodSymbol? Constructor { get; }
 
     public TypeMetadata(INamedTypeSymbol symbol, ReferenceSymbols referenceSymbols)
     {
@@ -112,13 +67,7 @@ public class TypeMetadata
         GenerateType = generateType;
         SerializeLayout = serializeLayout;
 
-        Namespace = symbol.ContainingNamespace.ToDisplayString();
-        ClassType = GetClassType();
         TypeName = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        SimpleName = symbol.Name;
-        NullableName = symbol.IsValueType ? TypeName : $"{TypeName}?";
-        InitializerName =
-            $"{TypeName.Replace("<", "_").Replace(">", "").Replace(",", "_").Replace(" ", "")}Initializer";
 
         Constructor = ChooseConstructor(symbol);
 
@@ -157,24 +106,15 @@ public class TypeMetadata
                 .OrderBy(x => x.Order),
         ];
 
-        var preConstructEnd = Members.Length - 1;
-        while (preConstructEnd >= 0)
-        {
-            if (!Members[preConstructEnd].IsAssignable || Members[preConstructEnd].IsConstructorParameter)
-                break;
-
-            preConstructEnd--;
-        }
-
-        PreConstructMembers = Members[..(preConstructEnd + 1)];
-        PostConstructMembers = Members[(preConstructEnd + 1)..];
-
         IsValueType = symbol.IsValueType;
+        IsBlittable = symbol.IsBlittable(_reference, out _);
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
-        IsBlittable = symbol.IsBlittable(_reference, out _);
         IsRecord = symbol.IsRecord;
-        HasDefault = Constructor is null || Constructor.Parameters.IsEmpty;
+        OnSerializing = CollectMethods<ArchivableOnSerializingAttribute>(IsValueType, false);
+        OnSerialized = CollectMethods<ArchivableOnSerializedAttribute>(IsValueType, false);
+        OnDeserializing = CollectMethods<ArchivableOnDeserializingAttribute>(IsValueType, true);
+        OnDeserialized = CollectMethods<ArchivableOnDeserializedAttribute>(IsValueType, true);
 
         if (IsUnion)
         {
@@ -220,28 +160,6 @@ public class TypeMetadata
 
         if (symbol.TypeKind != TypeKind.Class)
             return;
-
-        if (symbol.TryGetArchivableUnionFormatterInfo(out var info))
-        {
-            UnionTarget = ToUnionTagTypeFullyQualifiedToString((INamedTypeSymbol)info.Type);
-            IsGenericDefinition = info.Type is INamedTypeSymbol { IsGenericType: true, IsUnboundGenericType: true };
-            BaseUnionTarget = IsGenericDefinition
-                ? ((INamedTypeSymbol)info.Type).ConstructUnboundGenericType().FullyQualifiedToString()
-                : ((INamedTypeSymbol)info.Type).FullyQualifiedToString();
-        }
-    }
-
-    private ClassType GetClassType()
-    {
-        if (Symbol.TypeKind == TypeKind.Interface)
-            return ClassType.Interface;
-
-        if (Symbol.IsValueType)
-        {
-            return Symbol.IsRecord ? ClassType.RecordStruct : ClassType.Struct;
-        }
-
-        return Symbol.IsRecord ? ClassType.Record : ClassType.Class;
     }
 
     private IMethodSymbol? ChooseConstructor(INamedTypeSymbol symbol)
@@ -271,6 +189,19 @@ public class TypeMetadata
                 }
             }
         }
+    }
+
+    private ImmutableArray<MethodMetadata> CollectMethods<TAttribute>(bool isValueType, bool isReader)
+        where TAttribute : Attribute
+    {
+        return
+        [
+            .. Symbol
+                .GetMembers()
+                .OfType<IMethodSymbol>()
+                .Where(x => x.HasAttribute<TAttribute>())
+                .Select(x => new MethodMetadata(x, isValueType, isReader)),
+        ];
     }
 
     private string ToUnionTagTypeFullyQualifiedToString(INamedTypeSymbol type)
@@ -345,9 +276,13 @@ public class TypeMetadata
         }
     }
 
-    public bool Validate(TypeDeclarationSyntax syntax, SourceProductionContext context)
+    public bool Validate(TypeDeclarationSyntax syntax, SourceProductionContext context, bool unionFormatter)
     {
         var noError = true;
+        if (unionFormatter)
+        {
+            return UnionValidations(syntax, context);
+        }
 
         switch (GenerateType)
         {
@@ -428,6 +363,33 @@ public class TypeMetadata
                 context.ReportDiagnostic(
                     Diagnostic.Create(
                         DiagnosticDescriptors.SuppressDefaultInitializationMustBeSettable,
+                        item.GetLocation(syntax),
+                        Symbol.Name,
+                        item.Name
+                    )
+                );
+                noError = false;
+            }
+        }
+
+        foreach (var item in OnSerializing.Concat(OnSerialized).Concat(OnDeserializing).Concat(OnDeserialized))
+        {
+            if (item.Symbol.Parameters.Length != 0)
+            {
+                if (item.Symbol.Parameters.Length != 0)
+                {
+                    if (
+                        item.Symbol.Parameters[0].RefKind == RefKind.Ref
+                        && item.Symbol.Parameters[1].RefKind is RefKind.Ref or RefKind.In
+                    )
+                    {
+                        continue;
+                    }
+                }
+
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.OnMethodHasParameter,
                         item.GetLocation(syntax),
                         Symbol.Name,
                         item.Name
@@ -556,20 +518,17 @@ public class TypeMetadata
         if (SerializeLayout == SerializeLayout.Explicit)
         {
             // All members must annotate MemoryPackOrder
-            foreach (var item in Members)
+            foreach (var item in Members.Where(item => !item.HasExplicitOrder))
             {
-                if (!item.HasExplicitOrder && !item.IsBlank)
-                {
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.AllMembersMustAnnotateOrder,
-                            item.GetLocation(syntax),
-                            Symbol.Name,
-                            item.Name
-                        )
-                    );
-                    noError = false;
-                }
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.AllMembersMustAnnotateOrder,
+                        item.GetLocation(syntax),
+                        Symbol.Name,
+                        item.Name
+                    )
+                );
+                noError = false;
             }
 
             // don't allow duplicate order
@@ -620,6 +579,129 @@ public class TypeMetadata
             }
         }
 
+        return noError;
+    }
+
+    private bool UnionValidations(TypeDeclarationSyntax syntax, SourceProductionContext context)
+    {
+        if (!IsUnion)
+            return true;
+
+        var noError = true;
+        if (Symbol.IsSealed)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.SealedTypeCantBeUnion,
+                    syntax.Identifier.GetLocation(),
+                    Symbol.Name
+                )
+            );
+            noError = false;
+        }
+
+        if (!Symbol.IsAbstract)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.ConcreteTypeCantBeUnion,
+                    syntax.Identifier.GetLocation(),
+                    Symbol.Name
+                )
+            );
+            noError = false;
+        }
+
+        if (GenerateType != GenerateType.Union)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.GenerateTypeCannotSpeciyToUnionBaseType,
+                    syntax.Identifier.GetLocation(),
+                    Symbol.Name,
+                    GenerateType
+                )
+            );
+            noError = false;
+        }
+
+        if (UnionTags.Select(x => x.Tag).HasDuplicate())
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(DiagnosticDescriptors.UnionTagDuplicate, syntax.Identifier.GetLocation(), Symbol.Name)
+            );
+            noError = false;
+        }
+
+        foreach (var item in UnionTags)
+        {
+            // type does not derived target symbol
+            if (Symbol.TypeKind == TypeKind.Interface)
+            {
+                // interface, check interfaces.
+                var check = item.Type.IsGenericType
+                    ? item.Type.OriginalDefinition.AllInterfaces.Any(x => x.EqualsUnconstructedGenericType(Symbol))
+                    : item.Type.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(x, Symbol));
+
+                if (!check)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.UnionMemberTypeNotImplementBaseType,
+                            syntax.Identifier.GetLocation(),
+                            Symbol.Name,
+                            item.Type.Name
+                        )
+                    );
+                    noError = false;
+                }
+            }
+            else
+            {
+                // abstract type, check base.
+                var check = item.Type.IsGenericType
+                    ? item.Type.OriginalDefinition.GetAllBaseTypes().Any(x => x.EqualsUnconstructedGenericType(Symbol))
+                    : item.Type.GetAllBaseTypes().Any(x => SymbolEqualityComparer.Default.Equals(x, Symbol));
+
+                if (!check)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.UnionMemberTypeNotDerivedBaseType,
+                            syntax.Identifier.GetLocation(),
+                            Symbol.Name,
+                            item.Type.Name
+                        )
+                    );
+                    noError = false;
+                }
+            }
+
+            if (item.Type.IsValueType)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.UnionMemberNotAllowStruct,
+                        syntax.Identifier.GetLocation(),
+                        Symbol.Name,
+                        item.Type.Name
+                    )
+                );
+                noError = false;
+            }
+
+            if (item.Type.HasAttribute<ArchivableAttribute>())
+                continue;
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.UnionMemberMustBeArchivable,
+                    syntax.Identifier.GetLocation(),
+                    Symbol.Name,
+                    item.Type.Name
+                )
+            );
+            noError = false;
+        }
         return noError;
     }
 
@@ -681,8 +763,11 @@ public class TypeMetadata
         var fixedSize = Members.All(x =>
             x.Kind is MemberKind.Bool or MemberKind.Blittable or MemberKind.Enum or MemberKind.Blank
         );
+        var callbackCount = new[] { OnSerialized, OnSerializing, OnDeserialized, OnDeserializing }
+            .Select(x => x.Length)
+            .Sum();
         string[]? sizeofTypes;
-        if (fixedSize && GenerateType == GenerateType.Object && IsValueType)
+        if (fixedSize && GenerateType == GenerateType.Object && IsValueType && callbackCount == 0)
         {
             sizeofTypes = Members
                 .Select(x => x.Kind == MemberKind.Bool ? "byte" : x.MemberType.FullyQualifiedToString())
@@ -724,9 +809,14 @@ public class TypeMetadata
             IsBlittable,
             IsTolerant = GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference,
             IsCircularReference = GenerateType == GenerateType.CircularReference,
-            MemberCount = Members.Length,
+            MemberCount = members.Length,
             Constructor,
+            OnSerializing,
+            OnSerialized,
+            OnDeserializing,
+            OnDeserialized,
             Members = members,
+            UsesEmptyConstructor,
             AdditionalTypeRegistrations = GetAdditionalTypeRegistrations(),
             BlittableRegistrations = blittableRegistrations,
         };
@@ -736,12 +826,60 @@ public class TypeMetadata
 
     private string EmitUnionTemplate(TemplateSource source, SourceProductionContext context)
     {
-        return source.UnionTemplate(this);
+        var classType = this switch
+        {
+            { IsRecord: true } => "record",
+            { Symbol.TypeKind: TypeKind.Interface } => "interface",
+            _ => "class",
+        };
+
+        var parameters = new
+        {
+            ClassType = classType,
+            TypeName,
+            SimpleName = Symbol.Name,
+            UnionTags,
+            OnSerializing,
+            OnSerialized,
+            OnDeserializing,
+            OnDeserialized,
+        };
+
+        return source.UnionTemplate(parameters);
     }
 
-    public string EmitUnionFormatterTemplate(TemplateSource source, SourceProductionContext context)
+    public string EmitUnionFormatterTemplate(TemplateSource source, INamedTypeSymbol formatterSymbol)
     {
-        return source.UnionFormatterTemplate(this);
+        var isGenericDefinition = Symbol is { IsGenericType: true, IsUnboundGenericType: true };
+        string baseUnionTarget;
+        string baseDefinitionName;
+        if (isGenericDefinition)
+        {
+            baseUnionTarget = Symbol.ConstructUnboundGenericType().FullyQualifiedToString();
+            baseDefinitionName = formatterSymbol.ConstructUnboundGenericType().FullyQualifiedToString();
+        }
+        else
+        {
+            baseUnionTarget = "";
+            baseDefinitionName = "";
+        }
+
+        var templateArgs = new
+        {
+            TypeName,
+            UnionTarget = ToUnionTagTypeFullyQualifiedToString(Symbol),
+            InitializerName = $"{TypeName.Replace("global::", "").Replace('<', '_').Replace('>', '_')}Initializer",
+            UnionTags,
+            OnSerializing,
+            OnSerialized,
+            OnDeserializing,
+            OnDeserialized,
+            IsGenericDefinition = isGenericDefinition,
+            BaseUnionTarget = baseUnionTarget,
+            BaseDefinitionName = baseDefinitionName,
+        };
+
+        return source.UnionFormatterTemplate(templateArgs);
     }
 
     private string EmitGenericCollectionTemplate(TemplateSource source, SourceProductionContext context)
@@ -751,7 +889,7 @@ public class TypeMetadata
 
     private ImmutableArray<AdditionalTypeRegistration> GetAdditionalTypeRegistrations()
     {
-        if (IsCustom)
+        if (GenerateType == GenerateType.Custom)
             return [];
 
         var collector = new TypeCollector();

@@ -1,4 +1,4 @@
-partial {{ClassType}} {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
+partial class {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
 {
     private static readonly Dictionary<Type, ushort> _typeToTag = new({{UnionTags.Length}})
     {
@@ -9,9 +9,15 @@ partial {{ClassType}} {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
 
     public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{UnionTarget}}? value)
     {
+        {{#OnSerializing}}
+        {{MethodBody}}
+        {{/OnSerializing}}
         if (value is null)
         {
             writer.WriteNullObjectHeader();
+            {{#OnSerialized}}
+            {{MethodBody}}
+            {{/OnSerialized}}
             return;
         }
 
@@ -34,13 +40,22 @@ partial {{ClassType}} {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
         {
             ArchiveSerializationException.ThrowNotFoundInUnionType(value.GetType(), typeof({{TypeName}}));
         }
+        {{#OnSerialized}}
+        {{MethodBody}}
+        {{/OnSerialized}}
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref {{UnionTarget}}? value)
     {
+        {{#OnDeserializing}}
+        {{MethodBody}}
+        {{/OnDeserializing}}
         if (!reader.TryReadUnionHeader(out var tag))
         {
             value = null;
+            {{#OnDeserialized}}
+            {{MethodBody}}
+            {{/OnDeserialized}}
             return;
         }
 
@@ -62,6 +77,10 @@ partial {{ClassType}} {{TypeName}} : ArchiveFormatter<{{UnionTarget}}>
                 ArchiveSerializationException.ThrowInvalidTag(tag, typeof({{TypeName}}));
                 break;
         }
+
+        {{#OnDeserialized}}
+        {{MethodBody}}
+        {{/OnDeserialized}}
     }
 }
 

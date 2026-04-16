@@ -84,8 +84,8 @@ public class CircularReferenceTest
             holder.List.AddRange([parent, parent, parent2, parent, parent2]);
         }
         {
-            var pure1 = new PureNode() { Id = 10, Id2 = 1000 };
-            var pure2 = new PureNode() { Id = 100, Id2 = 100000 };
+            var pure1 = new PureNode { Id = 10, Id2 = 1000 };
+            var pure2 = new PureNode { Id = 100, Id2 = 100000 };
 
             holder.ListPure.Add(pure1);
             holder.ListPure.Add(pure1);
@@ -98,9 +98,13 @@ public class CircularReferenceTest
         var value2 = ArchiveSerializer.Deserialize<CircularHolder>(bin);
 
         {
-            var parent = value2!.List![0];
+            Assert.That(value2, Is.Not.Null);
+            Assert.That(value2.List, Is.Not.Null);
+            var parent = value2.List[0];
+            Assert.That(parent, Is.Not.Null);
             var parent2 = value2.List[2];
-            _ = parent.Children![0];
+            Assert.That(parent.Children, Is.Not.Null);
+            _ = parent.Children[0];
             var a2 = parent.Children[1];
             _ = parent.Children[2];
 
@@ -117,7 +121,8 @@ public class CircularReferenceTest
             }
         }
         {
-            var pure1 = value2.ListPure![0];
+            Assert.That(value2.ListPure, Is.Not.Null);
+            var pure1 = value2.ListPure[0];
             var pure2 = value2.ListPure[2];
 
             using (Assert.EnterMultipleScope())

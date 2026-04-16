@@ -80,7 +80,7 @@ public static class Helpers
         writer.Write(xmlDocument ? str.Replace("<", "&lt;").Replace(">", "&gt;") : str);
     }
 
-    public static void Indented(
+    public static void Indexed(
         EncodedTextWriter output,
         BlockHelperOptions options,
         Context context,
@@ -89,12 +89,31 @@ public static class Helpers
     {
         if (arguments.Length != 1)
         {
-            throw new HandlebarsException("Intented helper requires exactly one argument");
+            throw new HandlebarsException("Indexed helper requires exactly one argument");
         }
 
-        var indent = arguments.At<string>(0);
-        options.Data.CreateProperty("Indent", indent, out _);
-        options.Template(output, context);
+        var items = arguments.At<IEnumerable>(0);
+
+        var i = 0;
+        foreach (var item in items)
+        {
+            options.Data.CreateProperty("Index", i, out _);
+            options.Template(output, item);
+            i++;
+        }
+    }
+
+    public static void Add(EncodedTextWriter writer, Context context, Arguments arguments)
+    {
+        if (arguments.Length != 2)
+        {
+            throw new HandlebarsException("Add helper requires exactly two argument");
+        }
+
+        var left = arguments.At<int>(0);
+        var right = arguments.At<int>(1);
+
+        writer.Write(left + right);
     }
 
     public static void SerializeMembers(
@@ -241,31 +260,13 @@ public static class Helpers
         }
     }
 
-    public static void MemberWriter(EncodedTextWriter writer, Context context, Arguments arguments)
-    {
-        if (context.Value is not MemberMetadata member)
-            return;
-
-        var writerName = arguments.At<string>(0);
-        writer.Write(member.EmitSerialize(writerName));
-    }
-
-    public static void MemberReader(EncodedTextWriter writer, Context context, Arguments arguments)
-    {
-        if (context.Value is not MemberMetadata member)
-            return;
-
-        var readerName = arguments.At<string>(0);
-        writer.Write(member.EmitDeserialize(readerName));
-    }
-
     public static void MemberRefReader(EncodedTextWriter writer, Context context, Arguments arguments)
     {
         if (context.Value is not MemberMetadata member)
             return;
 
-        var readerName = arguments.At<string>(0);
-        writer.Write(member.EmitRefDeserialize(readerName));
+        var index = arguments.At<int>(0);
+        writer.Write(member.EmitRefDeserialize(index));
     }
 
     public static void ConstructorParameters(EncodedTextWriter writer, Context context, Arguments arguments)
@@ -300,5 +301,23 @@ public static class Helpers
             writer.Write("__");
             i++;
         }
+    }
+
+    public static void MethodCall(EncodedTextWriter writer, Context context, Arguments arguments)
+    {
+        if (context.Value is not MethodMetadata method)
+            return;
+
+        writer.Write(method.Emit());
+    }
+
+    public static void FullyQualified(EncodedTextWriter writer, Context context, Arguments arguments)
+    {
+        if (arguments.Length != 1)
+        {
+            throw new HandlebarsException($"{nameof(FullyQualified)} helper requires exactly one argument");
+        }
+
+        var type = arguments.At<INamedTypeSymbol>(0);
     }
 }

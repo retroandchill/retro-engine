@@ -60,7 +60,7 @@ public class ArchiveReaderTest
         writer.WriteBlittable(testValueS64);
         writer.WriteBlittable(testValueF);
         writer.WriteBlittable(testValueD);
-        writer.WriteBlittable(testValueB);
+        writer.WriteBool(testValueB);
         writer.WriteBlittable(testValueCh);
         writer.WriteString(testAnsiStr);
         writer.WriteString(testUtf16Str);
@@ -78,7 +78,7 @@ public class ArchiveReaderTest
         Assert.That(reader.ReadBlittable<long>(), Is.EqualTo(testValueS64));
         Assert.That(reader.ReadBlittable<float>(), Is.EqualTo(testValueF));
         Assert.That(reader.ReadBlittable<double>(), Is.EqualTo(testValueD));
-        Assert.That(reader.ReadBlittable<bool>(), Is.EqualTo(testValueB));
+        Assert.That(reader.ReadBool(), Is.EqualTo(testValueB));
         Assert.That(reader.ReadBlittable<char>(), Is.EqualTo(testValueCh));
         Assert.That(reader.ReadString(), Is.EqualTo(testAnsiStr));
         Assert.That(reader.ReadString(), Is.EqualTo(testUtf16Str));

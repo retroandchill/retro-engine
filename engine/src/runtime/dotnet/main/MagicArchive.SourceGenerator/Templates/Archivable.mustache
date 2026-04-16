@@ -36,7 +36,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
     static void IArchivable.RegisterFormatters()
     {
         if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}>())
-            ArchiveFormatterRegistry.Register<{{TypeName}}>();
+            ArchiveFormatterRegistry.Register(new ArchivableFormatter<{{TypeName}}>());
         if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}[]>())
             ArchiveFormatterRegistry.Register(new ArrayFormatter<{{TypeName}}>());
         {{#IsValueType}}
@@ -58,11 +58,14 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
     {{^IsCustom}}
     static void IArchivable<{{TypeName}}>.Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in {{TypeName}}{{Nullable}} value)
     {
+        {{#OnSerializing}}
+        {{MethodBody}}
+        {{/OnSerializing}}
         {{#IsBlittable}}
         if (!writer.IsByteSwapping)
         {
             writer.WriteBlittable(value);
-            return;
+            goto END;
         }
         {{/IsBlittable}}
 
@@ -70,7 +73,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         if (value is null)
         {
             writer.WriteNullObjectHeader();
-            return;
+            goto END;
         }
 
         {{/IsValueType}}
@@ -80,7 +83,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         if (existsReference)
         {
             writer.WriteObjectReferenceId(id);
-            return;
+            goto END;
         }
 
         {{/IsCircularReference}}
@@ -126,15 +129,23 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         {{.}}
         {{/SerializeMembers}}
         {{/IsTolerant}}
+    END:
+        {{#OnSerialized}}
+        {{MethodBody}}
+        {{/OnSerialized}}
+        return;
     }
 
     static void IArchivable<{{TypeName}}>.Deserialize(ref ArchiveReader reader, scoped ref {{TypeName}}{{Nullable}} value)
     {
+       {{#OnDeserializing}}
+       {{MethodBody}}
+       {{/OnDeserializing}}
        {{#IsBlittable}}
         if (!reader.IsByteSwapping)
         {
             reader.ReadBlittable(out value);
-            return;
+            goto END;
         }
         {{/IsBlittable}}
 
@@ -145,7 +156,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
             {{/IsValueType}}
             {{^IsValueType}}
             value = null;
-            return;
+            goto END;
             {{/IsValueType}}
         }
 
@@ -156,7 +167,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         {
             id = reader.ReadBlittable<uint>();
             value = ({{TypeName}}) reader.State.GetObjectReference(id);
-            return;
+            goto END;
         }
         {{/IsCircularReference}}
         {{#IsTolerant}}
@@ -203,9 +214,9 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
                 {{/IsBlank}}
                 {{/Members}}
 
-                {{#Members}}
-                {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{MemberRefReader "reader"}};
-                {{/Members}}
+                {{#Indexed Members}}
+                {{#if ../IsTolerant}}if (deltas[{{@Index}}] != 0) {{/if}}{{MemberRefReader @Index}};
+                {{/Indexed}}
 
                 goto SET;
             }
@@ -242,11 +253,11 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
             {{/IsValueType}}
 
             if (count == 0) goto SKIP_READ;
-            {{#Members}}
+            {{#Indexed Members}}
 
-            {{#if ../IsTolerant}}if (deltas[{{Index}}] != 0) {{/if}}{{MemberRefReader "reader"}};
-            if (count == {{IndexPlusOne}}) goto SKIP_READ;
-            {{/Members}}
+            {{#if ../IsTolerant}}if (deltas[{{@Index}}] != 0) {{/if}}{{MemberRefReader @Index}};
+            if (count == {{Add @Index 1}}) goto SKIP_READ;
+            {{/Indexed}}
 
             SKIP_READ:
             {{^IsValueType}}
@@ -263,7 +274,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
             {{/IsValueType}}
         }
 
-        SET:
+    SET:
         {{#UsesEmptyConstructor}}
         {{#Members}}
         {{#IsAssignable}}
@@ -273,7 +284,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         goto READ_END;
         {{/UsesEmptyConstructor}}
 
-        NEW:
+    NEW:
         value = new {{TypeName}}({{ConstructorParameters Constructor Members}})
         {
             {{#Members}}
@@ -287,23 +298,23 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
             {{/Members}}
         };
         {{#IsTolerant}}
-        {{#Members}}
+        {{#Indexed Members}}
         {{#SuppressDefaultInitialization}}
-        if (deltas.Length > {{Index}} && deltas[{{Index}}] != 0)
+        if (deltas.Length > {{@Index}} && deltas[{{@Index}}] != 0)
             value.{{Name}} = __{{Name}}__;
         {{/SuppressDefaultInitialization}}
-        {{/Members}}
+        {{/Indexed}}
         {{/IsTolerant}}
         {{^IsTolerant}}
-        {{#Members}}
+        {{#Indexed Members}}
         {{#SuppressDefaultInitialization}}
-        if ({{IndexPlusOne}} <= count)
+        if ({{Add @Index 1}} <= count)
             value.{{Name}} = __{{Name}}__;
         {{/SuppressDefaultInitialization}}
-        {{/Members}}
+        {{/Indexed}}
         {{/IsTolerant}}
 
-        READ_END:
+    READ_END:
         {{#IsTolerant}}
         if (count == readCount)
             return;
@@ -314,6 +325,10 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         }
         {{/IsTolerant}}
 
+    END:
+       {{#OnDeserialized}}
+       {{MethodBody}}
+       {{/OnDeserialized}}
         return;
     }
     {{/IsCustom}}

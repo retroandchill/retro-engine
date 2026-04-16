@@ -17,8 +17,7 @@ public sealed class VersionFormatter : ArchiveFormatter<Version>
             return;
         }
 
-        writer.WriteObjectHeader(4);
-        writer.WriteBlittable(value.Major, value.Minor, value.Build, value.Revision);
+        writer.WriteBlittableWithObjectHeader(4, value.Major, value.Minor, value.Build, value.Revision);
     }
 
     public override void Deserialize(ref ArchiveReader reader, scoped ref Version? value)

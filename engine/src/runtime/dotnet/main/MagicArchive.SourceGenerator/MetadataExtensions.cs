@@ -104,50 +104,6 @@ internal static class MetadataExtensions
 
     extension(INamedTypeSymbol typeSymbol)
     {
-        public bool IsArchivableInterface
-        {
-            get
-            {
-                if (!typeSymbol.IsGenericType)
-                    return false;
-
-                return typeSymbol is { MetadataName: "IArchivable`1", TypeArguments.Length: 1 }
-                    && typeSymbol.ContainingNamespace.Name == "MagicArchive";
-            }
-        }
-
-        public bool IsNullableValueType
-        {
-            get
-            {
-                if (!typeSymbol.IsGenericType)
-                    return false;
-
-                return typeSymbol is { MetadataName: "INullable`1", TypeArguments.Length: 1, IsValueType: true }
-                    && typeSymbol.ContainingNamespace.Name == "System";
-            }
-        }
-
-        public bool IsListType
-        {
-            get
-            {
-                if (!typeSymbol.IsGenericType)
-                    return false;
-
-                return typeSymbol
-                    is {
-                        MetadataName: "List`1",
-                        TypeArguments.Length: 1,
-                        ContainingNamespace:
-                        {
-                            Name: "Generic",
-                            ContainingNamespace: { Name: "Collections", ContainingNamespace.Name: "System" }
-                        }
-                    };
-            }
-        }
-
         public IEnumerable<ISymbol> GetParentMembers()
         {
             if (typeSymbol.BaseType is null)
@@ -205,6 +161,12 @@ internal static class MetadataExtensions
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector, IEqualityComparer<TKey>? comparer)
         {
             return DistinctByIterator(source, keySelector, comparer);
+        }
+
+        public bool HasDuplicate()
+        {
+            var set = new HashSet<TSource>();
+            return source.Any(item => !set.Add(item));
         }
     }
 

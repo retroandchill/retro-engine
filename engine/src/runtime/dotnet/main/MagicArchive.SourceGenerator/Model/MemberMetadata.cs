@@ -21,7 +21,6 @@ public enum MemberKind
     KnownType,
     String,
     Array,
-    BlittableArray,
     ArchivableArray,
     ArchivableList,
     ArchivableCollection,
@@ -53,8 +52,6 @@ public class MemberMetadata
     public bool IsConstructorParameter { get; }
     public string? ConstructorParameterName { get; }
     public int Order { get; }
-    public int Index { get; set; }
-    public int IndexPlusOne => Index + 1;
     public bool HasExplicitOrder { get; }
     public MemberKind Kind { get; }
     public bool SuppressDefaultInitialization { get; }
@@ -337,8 +334,6 @@ public class MemberMetadata
                 return $"{writer}.WriteString(value.@{Name});";
             case MemberKind.Array:
                 return $"{writer}.WriteArray(value.@{Name});";
-            case MemberKind.BlittableArray:
-                return $"{writer}.WriteBlittableArray(value.@{Name});";
             case MemberKind.Blank:
                 return "";
             case MemberKind.CustomFormatter:
@@ -369,7 +364,7 @@ public class MemberMetadata
                 return $"{pre}__{Name}__ = reader.ReadArchivableArray<{(MemberType as IArrayTypeSymbol)!.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
             case MemberKind.ArchivableList:
                 return $"{pre}__{Name}__ = {ReferenceSymbols.FormatterNamespace}.ListFormatter.Deserialize<{(MemberType as INamedTypeSymbol)!.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>(ref reader);";
-            case MemberKind.Array or MemberKind.BlittableArray:
+            case MemberKind.Array:
                 return $"{pre}__{Name}__ = reader.ReadArray<{(MemberType as IArrayTypeSymbol)!.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>();";
             case MemberKind.Blank:
                 return $"{pre}reader.Advance(deltas[{i}]);";
@@ -383,51 +378,29 @@ public class MemberMetadata
         }
     }
 
-    public string EmitDeserialize(string reader)
+    public string EmitRefDeserialize(int i)
     {
-        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         switch (Kind)
         {
             case MemberKind.Archivable:
-                return $"{reader}.ReadArchivable<{MemberType.FullyQualifiedToString()}>()";
-            case MemberKind.Nullable:
-            {
-                var namedNullable = (INamedTypeSymbol)MemberType;
-                return $"{reader}.ReadNullable<{namedNullable.TypeArguments[0].FullyQualifiedToString()}>()";
-            }
+                return $"reader.ReadArchivable(ref __{Name}__)";
             case MemberKind.Bool:
-                return $"{reader}.ReadBool()";
+                return $"__{Name}__ = reader.ReadBool()";
             case MemberKind.Blittable:
             case MemberKind.Enum:
-                return $"{reader}.ReadBlittable<{MemberType.FullyQualifiedToString()}>()";
+                return $"reader.ReadBlittable<{MemberType.FullyQualifiedToString()}>(out __{Name}__)";
+            case MemberKind.Nullable:
+                return $"reader.ReadNullable(ref __{Name}__)";
             case MemberKind.String:
-                return $"{reader}.ReadString()";
+                return $"__{Name}__ = reader.ReadString()";
             case MemberKind.Array:
-            {
-                var arrayType = (IArrayTypeSymbol)MemberType;
-                var elemType = arrayType.ElementType;
-                return $"{reader}.ReadArray<{elemType.FullyQualifiedToString()}>()";
-            }
-            case MemberKind.BlittableArray:
-            {
-                var arrayType = (IArrayTypeSymbol)MemberType;
-                var elemType = arrayType.ElementType;
-                return $"{reader}.ReadBlittableArray<{elemType.FullyQualifiedToString()}>()";
-            }
+                return $"reader.ReadArray(ref __{Name}__)";
             case MemberKind.ArchivableArray:
-            {
-                var arrayType = (IArrayTypeSymbol)MemberType;
-                var elemType = arrayType.ElementType;
-                return $"{reader}.ReadArchivableArray<{elemType.FullyQualifiedToString()}>()";
-            }
+                return $"reader.ReadArchivableArray(ref __{Name}__)";
             case MemberKind.ArchivableList:
-            {
-                var listType = (INamedTypeSymbol)MemberType;
-                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter."
-                    + $"Deserialize<{listType.TypeArguments[0].FullyQualifiedToString()}>(ref {reader})";
-            }
+                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter.Deserialize(ref reader, ref __{Name}__)";
             case MemberKind.Blank:
-                return $"reader.Advance(deltas[{Index}])";
+                return $"reader.Advance(deltas[{i}])";
             case MemberKind.CustomFormatter:
             {
                 var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -435,39 +408,6 @@ public class MemberMetadata
             }
         }
 
-        return $"{reader}.ReadValue<{MemberType.FullyQualifiedToString()}>()";
-    }
-
-    public string EmitRefDeserialize(string reader)
-    {
-        switch (Kind)
-        {
-            case MemberKind.Archivable:
-                return $"{reader}.ReadArchivable(ref __{Name}__)";
-            case MemberKind.Bool:
-                return $"__{Name}__ = {reader}.ReadBool()";
-            case MemberKind.Blittable:
-            case MemberKind.Enum:
-                return $"{reader}.ReadBlittable<{MemberType.FullyQualifiedToString()}>(out __{Name}__)";
-            case MemberKind.Nullable:
-                return $"{reader}.ReadNullable(ref __{Name}__)";
-            case MemberKind.String:
-                return $"__{Name}__ = {reader}.ReadString()";
-            case MemberKind.Array:
-                return $"{reader}.ReadArray(ref __{Name}__)";
-            case MemberKind.BlittableArray:
-                return $"{reader}.ReadBlittableArray(ref __{Name}__)";
-            case MemberKind.ArchivableList:
-                return $"{ReferenceSymbols.FormatterNamespace}.ListFormatter.Deserialize(ref {reader}, ref __{Name}__)";
-            case MemberKind.Blank:
-                return $"reader.Advance(deltas[{Index}])";
-            case MemberKind.CustomFormatter:
-            {
-                var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                return $"reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter)";
-            }
-        }
-
-        return $"{reader}.ReadValue(ref __{Name}__)";
+        return $"reader.ReadValue(ref __{Name}__)";
     }
 }

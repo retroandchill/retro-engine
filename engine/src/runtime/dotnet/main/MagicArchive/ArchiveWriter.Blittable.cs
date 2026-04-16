@@ -23,7 +23,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Advance(size);
         }
         else
@@ -41,7 +41,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Advance(size);
         }
         else if (BlittableMarshalling.IsSimpleBlittable<T1>())
@@ -49,7 +49,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Advance(size);
         }
         else
@@ -76,7 +76,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -100,8 +100,8 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
             Advance(size);
         }
         else if (BlittableMarshalling.IsSimpleBlittable<T1>() && BlittableMarshalling.IsSimpleBlittable<T2>())
@@ -109,9 +109,9 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Advance(size);
@@ -147,7 +147,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -182,9 +182,12 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Advance(size);
         }
         else if (
@@ -196,13 +199,13 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Advance(size);
@@ -245,7 +248,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -288,11 +291,17 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Advance(size);
@@ -307,17 +316,20 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Advance(size);
@@ -380,7 +392,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T4>()
                 + Unsafe.SizeOf<T5>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -438,17 +450,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -470,23 +488,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T5>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -573,7 +594,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T5>()
                 + Unsafe.SizeOf<T6>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -646,17 +667,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -668,6 +695,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -691,23 +719,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T6>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -719,6 +750,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -823,7 +855,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T6>()
                 + Unsafe.SizeOf<T7>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -912,17 +944,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -934,6 +972,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -946,6 +985,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -971,23 +1011,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T7>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -999,6 +1042,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -1011,6 +1055,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -1134,7 +1179,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T7>()
                 + Unsafe.SizeOf<T8>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -1240,17 +1285,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -1262,6 +1313,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -1274,6 +1326,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -1287,6 +1340,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -1314,23 +1368,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T8>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -1342,6 +1399,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -1354,6 +1412,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -1367,6 +1426,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -1510,7 +1570,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T8>()
                 + Unsafe.SizeOf<T9>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -1634,17 +1694,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -1656,6 +1722,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -1668,6 +1735,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -1681,6 +1749,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -1695,6 +1764,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -1724,23 +1794,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T9>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -1752,6 +1825,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -1764,6 +1838,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -1777,6 +1852,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -1791,6 +1867,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -1955,7 +2032,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T9>()
                 + Unsafe.SizeOf<T10>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -2098,17 +2175,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -2120,6 +2203,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -2132,6 +2216,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -2145,6 +2230,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -2159,6 +2245,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -2174,6 +2261,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -2205,23 +2293,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T10>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -2233,6 +2324,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -2245,6 +2337,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -2258,6 +2351,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -2272,6 +2366,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -2287,6 +2382,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -2473,7 +2569,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T10>()
                 + Unsafe.SizeOf<T11>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -2636,17 +2732,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -2658,6 +2760,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -2670,6 +2773,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -2683,6 +2787,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -2697,6 +2802,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -2712,6 +2818,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -2728,6 +2835,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -2761,23 +2869,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T11>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -2789,6 +2900,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -2801,6 +2913,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -2814,6 +2927,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -2828,6 +2942,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -2843,6 +2958,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -2859,6 +2975,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -3068,7 +3185,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T11>()
                 + Unsafe.SizeOf<T12>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -3252,17 +3369,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -3274,6 +3397,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -3286,6 +3410,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -3299,6 +3424,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -3313,6 +3439,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -3328,6 +3455,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -3344,6 +3472,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -3361,6 +3490,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -3396,23 +3526,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T12>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -3424,6 +3557,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -3436,6 +3570,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -3449,6 +3584,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -3463,6 +3599,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -3478,6 +3615,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -3494,6 +3632,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -3511,6 +3650,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -3744,7 +3884,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T12>()
                 + Unsafe.SizeOf<T13>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -3950,17 +4090,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -3972,6 +4118,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -3984,6 +4131,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -3997,6 +4145,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -4011,6 +4160,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -4026,6 +4176,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -4042,6 +4193,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -4059,6 +4211,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -4077,6 +4230,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -4114,23 +4268,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T13>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -4142,6 +4299,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -4154,6 +4312,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -4167,6 +4326,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -4181,6 +4341,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -4196,6 +4357,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -4212,6 +4374,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -4229,6 +4392,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -4247,6 +4411,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -4505,7 +4670,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T13>()
                 + Unsafe.SizeOf<T14>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -4734,17 +4899,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -4756,6 +4927,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -4768,6 +4940,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -4781,6 +4954,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -4795,6 +4969,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -4810,6 +4985,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -4826,6 +5002,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -4843,6 +5020,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -4861,6 +5039,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -4880,6 +5059,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 value14!
             );
@@ -4919,23 +5099,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T14>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -4947,6 +5130,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -4959,6 +5143,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -4972,6 +5157,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -4986,6 +5172,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -5001,6 +5188,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -5017,6 +5205,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -5034,6 +5223,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -5052,6 +5242,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -5071,6 +5262,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value14)!
             );
@@ -5355,7 +5547,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T14>()
                 + Unsafe.SizeOf<T15>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -5608,17 +5800,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -5630,6 +5828,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -5642,6 +5841,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -5655,6 +5855,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -5669,6 +5870,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -5684,6 +5886,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -5700,6 +5903,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -5717,6 +5921,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -5735,6 +5940,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -5754,6 +5960,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 value14!
             );
@@ -5774,6 +5981,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
                         + Unsafe.SizeOf<T14>()
+                        + sizeof(byte)
                 ),
                 value15!
             );
@@ -5815,23 +6023,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T15>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -5843,6 +6054,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -5855,6 +6067,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -5868,6 +6081,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -5882,6 +6096,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -5897,6 +6112,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -5913,6 +6129,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -5930,6 +6147,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -5948,6 +6166,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -5967,6 +6186,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value14)!
             );
@@ -5987,6 +6207,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
                         + Unsafe.SizeOf<T14>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value15)!
             );
@@ -6027,7 +6248,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Advance(size);
         }
         else
@@ -6044,7 +6265,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Advance(size);
         }
         else if (BlittableMarshalling.IsSimpleBlittable<T1>())
@@ -6052,7 +6273,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Advance(size);
         }
         else
@@ -6077,7 +6298,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6099,8 +6320,8 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
             Advance(size);
         }
         else if (BlittableMarshalling.IsSimpleBlittable<T1>() && BlittableMarshalling.IsSimpleBlittable<T2>())
@@ -6108,9 +6329,9 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Advance(size);
@@ -6143,7 +6364,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6175,9 +6396,12 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Advance(size);
         }
         else if (
@@ -6189,13 +6413,13 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Advance(size);
@@ -6234,7 +6458,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         {
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6273,11 +6497,17 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Advance(size);
@@ -6292,17 +6522,20 @@ public ref partial struct ArchiveWriter<TBufferWriter>
             var size = Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Advance(size);
@@ -6366,7 +6599,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T4>()
                 + Unsafe.SizeOf<T5>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6419,17 +6652,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -6451,23 +6690,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T5>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -6548,7 +6790,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T5>()
                 + Unsafe.SizeOf<T6>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6615,17 +6857,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -6637,6 +6885,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -6660,23 +6909,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T6>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -6688,6 +6940,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -6785,7 +7038,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T6>()
                 + Unsafe.SizeOf<T7>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -6867,17 +7120,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -6889,6 +7148,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -6901,6 +7161,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -6926,23 +7187,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T7>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -6954,6 +7218,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -6966,6 +7231,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -7081,7 +7347,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T7>()
                 + Unsafe.SizeOf<T8>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -7179,17 +7445,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -7201,6 +7473,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -7213,6 +7486,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -7226,6 +7500,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -7253,23 +7528,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T8>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -7281,6 +7559,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -7293,6 +7572,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -7306,6 +7586,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -7440,7 +7721,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T8>()
                 + Unsafe.SizeOf<T9>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -7555,17 +7836,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -7577,6 +7864,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -7589,6 +7877,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -7602,6 +7891,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -7616,6 +7906,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -7645,23 +7936,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T9>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -7673,6 +7967,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -7685,6 +7980,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -7698,6 +7994,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -7712,6 +8009,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -7866,7 +8164,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T9>()
                 + Unsafe.SizeOf<T10>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -7999,17 +8297,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -8021,6 +8325,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -8033,6 +8338,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -8046,6 +8352,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -8060,6 +8367,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -8075,6 +8383,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -8106,23 +8415,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T10>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -8134,6 +8446,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -8146,6 +8459,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -8159,6 +8473,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -8173,6 +8488,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -8188,6 +8504,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -8363,7 +8680,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T10>()
                 + Unsafe.SizeOf<T11>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -8515,17 +8832,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -8537,6 +8860,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -8549,6 +8873,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -8562,6 +8887,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -8576,6 +8902,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -8591,6 +8918,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -8607,6 +8935,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -8640,23 +8969,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T11>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -8668,6 +9000,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -8680,6 +9013,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -8693,6 +9027,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -8707,6 +9042,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -8722,6 +9058,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -8738,6 +9075,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -8935,7 +9273,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T11>()
                 + Unsafe.SizeOf<T12>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -9107,17 +9445,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -9129,6 +9473,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -9141,6 +9486,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -9154,6 +9500,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -9168,6 +9515,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -9183,6 +9531,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -9199,6 +9548,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -9216,6 +9566,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -9251,23 +9602,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T12>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -9279,6 +9633,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -9291,6 +9646,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -9304,6 +9660,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -9318,6 +9675,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -9333,6 +9691,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -9349,6 +9708,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -9366,6 +9726,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -9586,7 +9947,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T12>()
                 + Unsafe.SizeOf<T13>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -9779,17 +10140,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -9801,6 +10168,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -9813,6 +10181,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -9826,6 +10195,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -9840,6 +10210,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -9855,6 +10226,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -9871,6 +10243,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -9888,6 +10261,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -9906,6 +10280,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -9943,23 +10318,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T13>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -9971,6 +10349,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -9983,6 +10362,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -9996,6 +10376,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -10010,6 +10391,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -10025,6 +10407,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -10041,6 +10424,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -10058,6 +10442,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -10076,6 +10461,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -10320,7 +10706,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T13>()
                 + Unsafe.SizeOf<T14>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -10535,17 +10921,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -10557,6 +10949,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -10569,6 +10962,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -10582,6 +10976,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -10596,6 +10991,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -10611,6 +11007,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -10627,6 +11024,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -10644,6 +11042,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -10662,6 +11061,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -10681,6 +11081,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 value14!
             );
@@ -10720,23 +11121,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T14>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -10748,6 +11152,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -10760,6 +11165,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -10773,6 +11179,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -10787,6 +11194,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -10802,6 +11210,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -10818,6 +11227,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -10835,6 +11245,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -10853,6 +11264,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -10872,6 +11284,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value14)!
             );
@@ -11141,7 +11554,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T14>()
                 + Unsafe.SizeOf<T15>();
             ref var spanRef = ref GetSpanReference(size);
-            Unsafe.WriteUnaligned(ref spanRef, value1!);
+            Unsafe.WriteUnaligned(ref spanRef, BlittableMarshalling.ReverseEndianness(value1)!);
             Unsafe.WriteUnaligned<T2>(
                 ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
                 BlittableMarshalling.ReverseEndianness(value2)!
@@ -11379,17 +11792,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + sizeof(byte);
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
-            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()), value2!);
-            Unsafe.WriteUnaligned<T3>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()), value3!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
+            Unsafe.WriteUnaligned<T2>(ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)), value2!);
+            Unsafe.WriteUnaligned<T3>(
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
+                value3!
+            );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 value4!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 value5!
             );
@@ -11401,6 +11820,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 value6!
             );
@@ -11413,6 +11833,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 value7!
             );
@@ -11426,6 +11847,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 value8!
             );
@@ -11440,6 +11862,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 value9!
             );
@@ -11455,6 +11878,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 value10!
             );
@@ -11471,6 +11895,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 value11!
             );
@@ -11488,6 +11913,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 value12!
             );
@@ -11506,6 +11932,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 value13!
             );
@@ -11525,6 +11952,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 value14!
             );
@@ -11545,6 +11973,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
                         + Unsafe.SizeOf<T14>()
+                        + sizeof(byte)
                 ),
                 value15!
             );
@@ -11586,23 +12015,26 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                 + Unsafe.SizeOf<T15>();
             ref var spanRef = ref GetSpanReference(size);
             Unsafe.WriteUnaligned(ref spanRef, propertyCount);
-            Unsafe.WriteUnaligned<T1>(ref spanRef, value1!);
+            Unsafe.WriteUnaligned<T1>(ref Unsafe.Add(ref spanRef, sizeof(byte)), value1!);
             Unsafe.WriteUnaligned<T2>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value2)!
             );
             Unsafe.WriteUnaligned<T3>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>()),
+                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + sizeof(byte)),
                 BlittableMarshalling.ReverseEndianness(value3)!
             );
             Unsafe.WriteUnaligned<T4>(
-                ref Unsafe.Add(ref spanRef, Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>()),
+                ref Unsafe.Add(
+                    ref spanRef,
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + sizeof(byte)
+                ),
                 BlittableMarshalling.ReverseEndianness(value4)!
             );
             Unsafe.WriteUnaligned<T5>(
                 ref Unsafe.Add(
                     ref spanRef,
-                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>()
+                    Unsafe.SizeOf<T1>() + Unsafe.SizeOf<T2>() + Unsafe.SizeOf<T3>() + Unsafe.SizeOf<T4>() + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value5)!
             );
@@ -11614,6 +12046,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T3>()
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value6)!
             );
@@ -11626,6 +12059,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T4>()
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value7)!
             );
@@ -11639,6 +12073,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T5>()
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value8)!
             );
@@ -11653,6 +12088,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T6>()
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value9)!
             );
@@ -11668,6 +12104,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T7>()
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value10)!
             );
@@ -11684,6 +12121,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T8>()
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value11)!
             );
@@ -11701,6 +12139,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T9>()
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value12)!
             );
@@ -11719,6 +12158,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T10>()
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value13)!
             );
@@ -11738,6 +12178,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T11>()
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value14)!
             );
@@ -11758,6 +12199,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
                         + Unsafe.SizeOf<T12>()
                         + Unsafe.SizeOf<T13>()
                         + Unsafe.SizeOf<T14>()
+                        + sizeof(byte)
                 ),
                 BlittableMarshalling.ReverseEndianness(value15)!
             );

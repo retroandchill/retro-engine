@@ -77,5 +77,17 @@ public sealed class ArchiveIncludeAttribute : Attribute;
 [AttributeUsage(AttributeTargets.Constructor)]
 public sealed class ArchivableConstructorAttribute : Attribute;
 
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+public sealed class ArchivableOnSerializingAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+public sealed class ArchivableOnSerializedAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+public sealed class ArchivableOnDeserializingAttribute : Attribute;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+public sealed class ArchivableOnDeserializedAttribute : Attribute;
+
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public sealed class SuppressDefaultInitializationAttribute : Attribute;

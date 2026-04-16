@@ -8,6 +8,7 @@ using MagicArchive.SourceGenerator.Formatters;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
 
@@ -20,72 +21,89 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var archivableTypes = context
-            .SyntaxProvider.ForAttributeWithMetadataName(
-                typeof(ArchivableAttribute).FullName!,
-                (syntaxNode, _) =>
-                    syntaxNode
-                        is ClassDeclarationSyntax
-                            or StructDeclarationSyntax
-                            or RecordDeclarationSyntax
-                            or InterfaceDeclarationSyntax,
-                (ctx, _) =>
-                {
-                    var type = (TypeDeclarationSyntax)ctx.TargetNode;
-                    return (
-                        Syntax: type,
-                        Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol,
-                        ctx.SemanticModel
-                    );
-                }
-            )
-            .Where(x => x.Symbol is not null);
+        var archivableTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+            typeof(ArchivableAttribute).FullName!,
+            (syntaxNode, _) =>
+                syntaxNode
+                    is ClassDeclarationSyntax
+                        or StructDeclarationSyntax
+                        or RecordDeclarationSyntax
+                        or InterfaceDeclarationSyntax,
+            (ctx, _) => (TypeDeclarationSyntax)ctx.TargetNode
+        );
 
-        var unionFormatters = context
-            .SyntaxProvider.ForAttributeWithMetadataName(
-                typeof(ArchivableUnionFormatterAttribute).FullName!,
-                (node, _) => node is ClassDeclarationSyntax,
-                (ctx, _) =>
-                {
-                    var type = (TypeDeclarationSyntax)ctx.TargetNode;
-                    return (
-                        Syntax: type,
-                        Symbol: ctx.SemanticModel.GetDeclaredSymbol(type) as INamedTypeSymbol,
-                        ctx.SemanticModel
-                    );
-                }
-            )
-            .Where(x => x.Symbol is not null);
+        var unionFormatters = context.SyntaxProvider.ForAttributeWithMetadataName(
+            typeof(ArchivableUnionFormatterAttribute).FullName!,
+            (node, _) => node is ClassDeclarationSyntax,
+            (ctx, _) => (TypeDeclarationSyntax)ctx.TargetNode
+        );
 
         context.RegisterSourceOutput(
-            archivableTypes,
+            archivableTypes.Combine(context.CompilationProvider),
             (ctx, t) =>
             {
-                Execute(ctx, t.Syntax, t.Symbol!, t.SemanticModel);
+                var (typeDeclaration, compilation) = t;
+                Execute(ctx, typeDeclaration, compilation);
             }
         );
         context.RegisterSourceOutput(
-            unionFormatters,
+            unionFormatters.Combine(context.CompilationProvider),
             (ctx, t) =>
             {
-                Execute(ctx, t.Syntax, t.Symbol!, t.SemanticModel);
+                var (typeDeclaration, compilation) = t;
+                Execute(ctx, typeDeclaration, compilation);
             }
         );
     }
 
-    private void Execute(
-        SourceProductionContext context,
-        TypeDeclarationSyntax syntax,
-        INamedTypeSymbol typeSymbol,
-        SemanticModel semanticModel
-    )
+    private void Execute(SourceProductionContext context, TypeDeclarationSyntax syntax, Compilation compilation)
     {
-        var referenceSymbols = new ReferenceSymbols(semanticModel.Compilation, semanticModel);
-        var typeMetadata = new TypeMetadata(typeSymbol, referenceSymbols);
-        if (typeMetadata.GenerateType == GenerateType.NoGenerate)
+        var semanticModel = compilation.GetSemanticModel(syntax.SyntaxTree);
+
+        if (
+            ModelExtensions.GetDeclaredSymbol(semanticModel, syntax, context.CancellationToken)
+            is not INamedTypeSymbol typeSymbol
+        )
             return;
 
-        if (!typeMetadata.Validate(syntax, context))
+        var generateType = typeSymbol.TryGetArchivableType(out var g, out _) ? g : GenerateType.Union;
+        if (!IsPartial(syntax) && generateType != GenerateType.NoGenerate)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(DiagnosticDescriptors.MustBePartial, syntax.Identifier.GetLocation(), typeSymbol.Name)
+            );
+            return;
+        }
+
+        if (IsNested(syntax) && !IsNestedContainingTypesPartial(syntax))
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.NestedContainingTypesMustBePartial,
+                    syntax.Identifier.GetLocation(),
+                    typeSymbol.Name
+                )
+            );
+            return;
+        }
+
+        var referenceSymbols = new ReferenceSymbols(compilation, semanticModel);
+        INamedTypeSymbol? unionSymbol = null;
+        if (typeSymbol.TypeKind is TypeKind.Class && typeSymbol.TryGetArchivableUnionFormatterInfo(out var info))
+        {
+            unionSymbol = info.Type as INamedTypeSymbol;
+        }
+
+        var typeMetadata = new TypeMetadata(typeSymbol, referenceSymbols);
+        if (unionSymbol is not null)
+        {
+            typeMetadata.Symbol = unionSymbol;
+        }
+
+        if (unionSymbol is null && typeMetadata is { IsUnion: false, GenerateType: GenerateType.NoGenerate })
+            return;
+
+        if (!typeMetadata.Validate(syntax, context, unionSymbol is not null))
             return;
 
         string? debugInfo;
@@ -115,11 +133,35 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         {
             Namespace = typeSymbol.ContainingNamespace.ToDisplayString(),
             DebugInfo = debugInfo,
-            ClassBody = typeSymbol.HasAttribute<ArchivableUnionFormatterAttribute>()
-                ? typeMetadata.EmitUnionFormatterTemplate(_templates, context)
+            ClassBody = unionSymbol is not null
+                ? typeMetadata.EmitUnionFormatterTemplate(_templates, typeSymbol)
                 : typeMetadata.Emit(_templates, context),
         };
 
         context.AddSource($"{typeSymbol.Name}.g.cs", _templates.CommonTemplate(templateArgs));
+    }
+
+    private static bool IsPartial(TypeDeclarationSyntax syntax)
+    {
+        return syntax.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
+    }
+
+    private static bool IsNestedContainingTypesPartial(TypeDeclarationSyntax typeDeclaration)
+    {
+        var parent = typeDeclaration.Parent;
+        while (parent is TypeDeclarationSyntax parentTypeSyntax)
+        {
+            if (!IsPartial(parentTypeSyntax))
+                return false;
+
+            parent = parentTypeSyntax.Parent;
+        }
+
+        return true;
+    }
+
+    private static bool IsNested(TypeDeclarationSyntax typeDeclaration)
+    {
+        return typeDeclaration.Parent is TypeDeclarationSyntax;
     }
 }

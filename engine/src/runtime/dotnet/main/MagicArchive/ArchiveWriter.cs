@@ -195,7 +195,8 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteObjectReferenceId(uint referenceId)
     {
-        WriteBlittable(ArchiveCodes.ReferenceId);
+        GetSpanReference(sizeof(byte)) = ArchiveCodes.ReferenceId;
+        Advance(sizeof(byte));
         WriteBlittable(referenceId);
     }
 

@@ -526,7 +526,7 @@ public ref partial struct ArchiveReader : IDisposable
 
         for (var i = 0; i < length; i++)
         {
-            value[i] = ReadArchivable<T>();
+            T.Deserialize(ref this, ref value[i]);
         }
     }
 
