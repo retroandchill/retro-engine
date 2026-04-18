@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
@@ -12,8 +13,10 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryAsCurrency : TextHistoryFormatNumber, ITextHistory
 {
+    [ArchiveInclude]
     private readonly string? _currencyCode;
 
     public TextHistoryAsCurrency(

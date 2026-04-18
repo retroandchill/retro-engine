@@ -3,10 +3,13 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using MagicArchive;
+using MagicArchive.Utilities;
 using MessagePack;
 using RetroEngine.Portable.Serialization.Json;
 using RetroEngine.Portable.Serialization.MessagePack;
@@ -15,7 +18,11 @@ namespace RetroEngine.Portable.Localization;
 
 [StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(TextKeyJsonConverter))]
-public readonly struct TextKey : IEquatable<TextKey>, IComparable<TextKey>, IComparisonOperators<TextKey, TextKey, bool>
+[Archivable(GenerateType.Custom)]
+public readonly partial struct TextKey
+    : IEquatable<TextKey>,
+        IComparable<TextKey>,
+        IComparisonOperators<TextKey, TextKey, bool>
 {
     public uint Id { get; }
 
@@ -88,6 +95,17 @@ public readonly struct TextKey : IEquatable<TextKey>, IComparable<TextKey>, ICom
     public override int GetHashCode()
     {
         return Id.GetHashCode();
+    }
+
+    public static void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in TextKey value)
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        writer.WriteString(value.ToString());
+    }
+
+    public static void Deserialize(ref ArchiveReader reader, scoped ref TextKey value)
+    {
+        value = new TextKey(reader.ReadString());
     }
 }
 

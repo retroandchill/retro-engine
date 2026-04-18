@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
@@ -11,21 +12,29 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsTime : TextHistoryGenerated, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryAsTime : TextHistoryGenerated, ITextHistory
 {
+    [ArchiveInclude]
     private readonly DateTimeOffset _sourceDateTime;
+
+    [ArchiveInclude]
     private readonly DateTimeFormatStyle _formatStyle;
+
+    [ArchiveInclude]
     private readonly string? _timeZoneId;
+
+    [ArchiveInclude]
     private readonly Culture? _targetCulture;
 
     public TextHistoryAsTime(
-        DateTimeOffset dateTime,
+        DateTimeOffset sourceDateTime,
         DateTimeFormatStyle formatStyle,
         string? timeZoneId,
         Culture? targetCulture
     )
     {
-        _sourceDateTime = dateTime;
+        _sourceDateTime = sourceDateTime;
         _formatStyle = formatStyle;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;

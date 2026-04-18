@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MagicArchive;
 using MessagePack;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
@@ -15,10 +16,13 @@ internal abstract class TextHistoryFormatNumber(
     Culture? targetCulture
 ) : TextHistoryGenerated
 {
+    [ArchiveInclude]
     protected FormatNumericArg SourceValue { get; } = sourceValue;
 
+    [ArchiveInclude]
     protected NumberFormattingOptions? FormattingOptions { get; } = formattingOptions;
 
+    [ArchiveInclude]
     protected Culture? TargetCulture { get; } = targetCulture;
 
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)

@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using MagicArchive;
 using MessagePack;
 
 namespace RetroEngine.Portable.Localization.History;
@@ -10,10 +11,11 @@ namespace RetroEngine.Portable.Localization.History;
 internal abstract class TextHistoryBase : TextHistory
 {
     [Key(0)]
+    [ArchiveIgnore]
     public sealed override TextId TextId { get; } = TextId.Empty;
 
     [Key(1)]
-    protected string Source { get; } = "";
+    private readonly string _source = "";
 
     [IgnoreMember]
     private string? _localized;
@@ -23,17 +25,17 @@ internal abstract class TextHistoryBase : TextHistory
     protected TextHistoryBase(TextId id, string source, string? localized = null)
     {
         TextId = id;
-        Source = source;
+        _source = source;
         _localized = localized;
     }
 
-    public override string SourceString => Source;
-    public override string DisplayString => _localized ?? Source;
+    public override string SourceString => _source;
+    public override string DisplayString => _localized ?? _source;
     public override string? LocalizedString => _localized;
 
     public override string BuildInvariantDisplayString()
     {
-        return Source;
+        return _source;
     }
 
     public override bool IdenticalTo(TextHistory other, TextIdenticalModeFlags flags)
@@ -45,6 +47,6 @@ internal abstract class TextHistoryBase : TextHistory
 
     internal override void UpdateDisplayString()
     {
-        _localized = LocalizationManager.Instance.GetDisplayString(TextId.Namespace, TextId.Key, Source);
+        _localized = LocalizationManager.Instance.GetDisplayString(TextId.Namespace, TextId.Key, _source);
     }
 }

@@ -3,9 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Text;
 using LinkDotNet.StringBuilder;
+using MagicArchive;
 using ZParse;
 
 namespace RetroEngine.Portable.Localization.Formatting;
@@ -18,7 +20,8 @@ public enum TextFormatFlags : byte
     Default = EvaluateArgumentModifiers,
 }
 
-public sealed class TextFormat
+[Archivable(GenerateType.Custom)]
+public sealed partial class TextFormat
 {
     private enum SourceType : byte
     {
@@ -350,5 +353,34 @@ public sealed class TextFormat
         {
             Compile();
         }
+    }
+
+    static void IArchivable<TextFormat>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in TextFormat? value
+    )
+    {
+        if (value is null)
+        {
+            writer.WriteNullObjectHeader();
+            return;
+        }
+
+        writer.WriteObjectHeader(1);
+        writer.WriteArchivable(value._sourceText);
+    }
+
+    static void IArchivable<TextFormat>.Deserialize(ref ArchiveReader reader, scoped ref TextFormat? value)
+    {
+        if (!reader.TryReadObjectHeader(out var count))
+        {
+            value = null;
+            return;
+        }
+
+        if (count != 1)
+            ArchiveSerializationException.ThrowInvalidPropertyCount(typeof(TextFormat), 1, count);
+
+        value = new TextFormat(reader.ReadArchivable<Text>());
     }
 }

@@ -136,7 +136,7 @@ public class MemberMetadata
                     var defaultValue = property
                         .DeclaringSyntaxReferences.Select(x => x.GetSyntax())
                         .OfType<PropertyDeclarationSyntax>()
-                        .Where(x => IsValidInitializer(x.Initializer, reference.SemanticModel))
+                        .Where(x => IsValidInitializer(x.Initializer, reference.Compilation))
                         .Select(x => x.Initializer!.Value.ToString())
                         .FirstOrDefault();
                     if (defaultValue is not null)
@@ -166,15 +166,15 @@ public class MemberMetadata
         Kind = ParseMemberKind(symbol, MemberType, reference);
     }
 
-    private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, SemanticModel semanticModel)
+    private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, Compilation compilation)
     {
         if (initializer is null)
             return false;
 
         foreach (var id in initializer.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>())
         {
-            var symbol = semanticModel.GetSymbolInfo(id).Symbol;
-            if (symbol is IParameterSymbol param)
+            var symbol = compilation.GetSemanticModel(id.SyntaxTree).GetSymbolInfo(id).Symbol;
+            if (symbol is IParameterSymbol)
                 return false;
         }
 

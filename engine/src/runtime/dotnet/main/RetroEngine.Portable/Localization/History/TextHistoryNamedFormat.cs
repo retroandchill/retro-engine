@@ -5,6 +5,7 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
 using ZLinq;
@@ -12,11 +13,16 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryNamedFormat : TextHistoryGenerated, ITextHistory
 {
+    [ArchiveInclude]
     private readonly TextFormat _sourceFormat;
+
+    [ArchiveInclude]
     private readonly ImmutableSortedDictionary<string, FormatArg> _args;
 
+    [ArchivableConstructor]
     public TextHistoryNamedFormat(TextFormat sourceFormat, ImmutableSortedDictionary<string, FormatArg> args)
     {
         _sourceFormat = sourceFormat;

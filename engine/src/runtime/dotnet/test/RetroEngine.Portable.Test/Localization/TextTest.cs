@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using MagicArchive;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
@@ -597,6 +598,57 @@ public class TextTest
                 Assert.Fail($"{caller} did not rebuild correct in French-Canadian\nValue: {localized}");
             }
         }
+    }
+
+    [Test]
+    public void CanSerializeAndDeserializeText()
+    {
+        var args = new OrderedDictionary<string, FormatArg>
+        {
+            ["String1"] = Localized("RebuildFTextTest1_Lorem", "Lorem"),
+            ["String2"] = Localized("RebuildFTextTest1_Ipsum", "Ipsum"),
+        };
+        var formattedTest1 = Text.Format(Localized("RebuildNamedText1", "{String1} \"Lorem Ipsum\" {String2}"), args);
+
+        var argsOrdered = ImmutableArray.Create<FormatArg>(
+            Localized("RebuildFTextTest1_Lorem", "Lorem"),
+            Localized("RebuildFTextTest1_Ipsum", "Ipsum")
+        );
+        var formattedTestOrdered1 = Text.Format(
+            Localized("RebuildOrderedText1", "{0} \"Lorem Ipsum\" {1}"),
+            argsOrdered
+        );
+
+        var asNumberTest1 = Text.AsNumber(5.5421);
+
+        var asPercentTest1 = Text.AsPercent(0.925);
+        var asCurrencyTest1 = Text.AsCurrency(10025, "USD");
+
+        DateTimeOffset dateTimeInfo = new DateTime(2080, 8, 20, 9, 33, 22, DateTimeKind.Utc);
+        var asDateTimeTest1 = Text.AsDateTime(dateTimeInfo, timeZoneId: "UTC");
+
+        var argLayers2 = new OrderedDictionary<string, FormatArg>()
+        {
+            ["NamedLayer1"] = formattedTest1,
+            ["OrderedLayer1"] = formattedTestOrdered1,
+            ["FTextNumber"] = asNumberTest1,
+            ["Number"] = 5010.89221,
+            ["DateTime"] = asDateTimeTest1,
+            ["Percent"] = asPercentTest1,
+            ["Currency"] = asCurrencyTest1,
+        };
+        var formattedTestLayer2 = Text.Format(
+            Localized(
+                "RebuildTextLayer2",
+                "{NamedLayer1} | {OrderedLayer1} | {FTextNumber} | {Number} | {DateTime} | {Percent} | {Currency}"
+            ),
+            argLayers2
+        );
+
+        var textBytes = ArchiveSerializer.Serialize(formattedTestLayer2);
+        var deserializedText = ArchiveSerializer.Deserialize<Text>(textBytes);
+
+        Assert.That(deserializedText, Is.EqualTo(formattedTestLayer2));
     }
 
     private static readonly ImmutableArray<double> InputValues =

@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Stringification;
 using ZParse;
@@ -11,7 +12,8 @@ using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryTransformed : TextHistoryGenerated, ITextHistory
 {
     public enum TransformType
     {
@@ -19,9 +21,13 @@ internal sealed class TextHistoryTransformed : TextHistoryGenerated, ITextHistor
         ToLower,
     }
 
+    [ArchiveInclude]
     private readonly Text _sourceText;
+
+    [ArchiveInclude]
     private readonly TransformType _transformType;
 
+    [ArchivableConstructor]
     public TextHistoryTransformed(Text sourceText, TransformType transformType)
     {
         _sourceText = sourceText;

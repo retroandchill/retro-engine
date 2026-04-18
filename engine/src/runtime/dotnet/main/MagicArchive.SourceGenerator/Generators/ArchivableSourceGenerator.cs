@@ -64,80 +64,97 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
             is not INamedTypeSymbol typeSymbol
         )
             return;
-
-        var generateType = typeSymbol.TryGetArchivableType(out var g, out _) ? g : GenerateType.Union;
-        if (!IsPartial(syntax) && generateType != GenerateType.NoGenerate)
+        try
         {
-            context.ReportDiagnostic(
-                Diagnostic.Create(DiagnosticDescriptors.MustBePartial, syntax.Identifier.GetLocation(), typeSymbol.Name)
-            );
-            return;
-        }
+            var generateType = typeSymbol.TryGetArchivableType(out var g, out _) ? g : GenerateType.Union;
+            if (!IsPartial(syntax) && generateType != GenerateType.NoGenerate)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.MustBePartial,
+                        syntax.Identifier.GetLocation(),
+                        typeSymbol.Name
+                    )
+                );
+                return;
+            }
 
-        if (IsNested(syntax) && !IsNestedContainingTypesPartial(syntax))
+            if (IsNested(syntax) && !IsNestedContainingTypesPartial(syntax))
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.NestedContainingTypesMustBePartial,
+                        syntax.Identifier.GetLocation(),
+                        typeSymbol.Name
+                    )
+                );
+                return;
+            }
+
+            var referenceSymbols = new ReferenceSymbols(compilation, semanticModel);
+            INamedTypeSymbol? unionSymbol = null;
+            if (typeSymbol.TypeKind is TypeKind.Class && typeSymbol.TryGetArchivableUnionFormatterInfo(out var info))
+            {
+                unionSymbol = info.Type as INamedTypeSymbol;
+            }
+
+            var typeMetadata = new TypeMetadata(typeSymbol, referenceSymbols);
+            if (unionSymbol is not null)
+            {
+                typeMetadata.Symbol = unionSymbol;
+            }
+
+            if (unionSymbol is null && typeMetadata is { IsUnion: false, GenerateType: GenerateType.NoGenerate })
+                return;
+
+            if (!typeMetadata.Validate(syntax, context, unionSymbol is not null))
+                return;
+
+            string? debugInfo;
+            if (
+                typeMetadata.GenerateType
+                is GenerateType.Object
+                    or GenerateType.VersionTolerant
+                    or GenerateType.CircularReference
+            )
+            {
+                var debugInfoArgs = new
+                {
+                    XmlDocument = true,
+                    typeMetadata.IsBlittable,
+                    GenerateType = typeMetadata.GenerateType.ToString(),
+                    typeMetadata.Symbol,
+                    typeMetadata.Members,
+                };
+                debugInfo = _templates.DebugInfoTemplate(debugInfoArgs);
+            }
+            else
+            {
+                debugInfo = null;
+            }
+
+            var templateArgs = new
+            {
+                Namespace = typeSymbol.ContainingNamespace.ToDisplayString(),
+                DebugInfo = debugInfo,
+                ClassBody = unionSymbol is not null
+                    ? typeMetadata.EmitUnionFormatterTemplate(_templates, typeSymbol)
+                    : typeMetadata.Emit(_templates, context),
+            };
+
+            context.AddSource($"{typeSymbol.Name}.g.cs", _templates.CommonTemplate(templateArgs));
+        }
+        catch (Exception e)
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
-                    DiagnosticDescriptors.NestedContainingTypesMustBePartial,
-                    syntax.Identifier.GetLocation(),
-                    typeSymbol.Name
+                    DiagnosticDescriptors.UnknownError,
+                    typeSymbol.Locations.First(),
+                    typeSymbol.Name,
+                    e.Message
                 )
             );
-            return;
         }
-
-        var referenceSymbols = new ReferenceSymbols(compilation, semanticModel);
-        INamedTypeSymbol? unionSymbol = null;
-        if (typeSymbol.TypeKind is TypeKind.Class && typeSymbol.TryGetArchivableUnionFormatterInfo(out var info))
-        {
-            unionSymbol = info.Type as INamedTypeSymbol;
-        }
-
-        var typeMetadata = new TypeMetadata(typeSymbol, referenceSymbols);
-        if (unionSymbol is not null)
-        {
-            typeMetadata.Symbol = unionSymbol;
-        }
-
-        if (unionSymbol is null && typeMetadata is { IsUnion: false, GenerateType: GenerateType.NoGenerate })
-            return;
-
-        if (!typeMetadata.Validate(syntax, context, unionSymbol is not null))
-            return;
-
-        string? debugInfo;
-        if (
-            typeMetadata.GenerateType
-            is GenerateType.Object
-                or GenerateType.VersionTolerant
-                or GenerateType.CircularReference
-        )
-        {
-            var debugInfoArgs = new
-            {
-                XmlDocument = true,
-                typeMetadata.IsBlittable,
-                GenerateType = typeMetadata.GenerateType.ToString(),
-                typeMetadata.Symbol,
-                typeMetadata.Members,
-            };
-            debugInfo = _templates.DebugInfoTemplate(debugInfoArgs);
-        }
-        else
-        {
-            debugInfo = null;
-        }
-
-        var templateArgs = new
-        {
-            Namespace = typeSymbol.ContainingNamespace.ToDisplayString(),
-            DebugInfo = debugInfo,
-            ClassBody = unionSymbol is not null
-                ? typeMetadata.EmitUnionFormatterTemplate(_templates, typeSymbol)
-                : typeMetadata.Emit(_templates, context),
-        };
-
-        context.AddSource($"{typeSymbol.Name}.g.cs", _templates.CommonTemplate(templateArgs));
     }
 
     private static bool IsPartial(TypeDeclarationSyntax syntax)

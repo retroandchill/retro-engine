@@ -20,6 +20,15 @@ public class DiagnosticDescriptors
         isEnabledByDefault: true
     );
 
+    public static readonly DiagnosticDescriptor UnknownError = new(
+        id: "MAGARCH002",
+        title: "Unexpected error occured during code generation",
+        messageFormat: "An unexpected error occurred during code generation for type '{0}': {1}",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true
+    );
+
     public static readonly DiagnosticDescriptor AbstractMustUnion = new(
         id: "MAGARCH003",
         title: "abstract/interface type of Archivable object must annotate with Union",
@@ -236,82 +245,10 @@ public class DiagnosticDescriptors
         isEnabledByDefault: true
     );
 
-    public static readonly DiagnosticDescriptor GenerateTypeScriptMustBeArchivable = new(
-        id: "MAGARCH027",
-        title: "GenerateTypeScript must be Archivable",
-        messageFormat: "Type '{0}' is annotated GenerateTypeScript but not annotated Archivable",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor GenerateTypeScriptOnlyAllowsGenerateTypeObject = new(
-        id: "MAGARCH028",
-        title: "GenerateTypeScript must be Archivable(GenerateType.Object)",
-        messageFormat: "Type '{0}' is annotated GenerateTypeScript, its Archivable only allows GenerateType.Object",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor GenerateTypeScriptDoesNotAllowGenerics = new(
-        id: "MAGARCH029",
-        title: "GenerateTypeScript type does not allow generics",
-        messageFormat: "Type '{0}' is annotated GenerateTypeScript that does not allow generics parameter",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor GenerateTypeScriptDoesNotAllowLongEnum = new(
-        id: "MAGARCH030",
-        title: "GenerateTypeScript type does not allow 64bit enum",
-        messageFormat: "GenerateTypeScript type '{0}' has not support 64bit(long/ulong) enum type '{1}', 64bit enum is not supported in typescript generation",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor GenerateTypeScriptNotSupportedType = new(
-        id: "MAGARCH031",
-        title: "not allow GenerateTypeScript type",
-        messageFormat: "GenerateTypeScript type '{0}' member '{1}' type '{2}' is not supported type in typescript generation",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor GenerateTypeScriptNotSupportedCustomFormatter = new(
-        id: "MAGARCH032",
-        title: "not allow GenerateTypeScript type",
-        messageFormat: "GenerateTypeScript type '{0}' member '{1}' is annnotated [ArchiveCustomFormatter] that not supported in typescript generation",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
     public static readonly DiagnosticDescriptor CircularReferenceOnlyAllowsParameterlessConstructor = new(
         id: "MAGARCH033",
         title: "CircularReference Archive Object must require parameterless constructor",
         messageFormat: "The Archivable object '{0}' is GenerateType.CircularReference but not exists parameterless constructor.",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor UnamangedStructWithLayoutAutoField = new(
-        id: "MAGARCH034",
-        title: "Before .NET 7 unmanaged struct must annotate LayoutKind.Auto or Explicit",
-        messageFormat: "The unmanaged struct '{0}' has LayoutKind.Auto field('{1}'). Before .NET 7, if field contains Auto then automatically promote to LayoutKind.Auto but .NET 7 is Sequential so breaking binary compatibility when runtime upgraded. To safety, you have to annotate [StructLayout(LayoutKind.Auto)] or LayoutKind.Explicit to type.",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor UnamangedStructArchiveCtor = new(
-        id: "MAGARCH035",
-        title: "Unamanged strcut does not allow [ArchiveConstructor]",
-        messageFormat: "The unamanged struct '{0}' can not annotate with [ArchiveConstructor] because don't call any constructors",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
@@ -357,15 +294,6 @@ public class DiagnosticDescriptors
         id: "MAGARCH040",
         title: "Readonly member cannot specify [SuppressDefaultInitialization]",
         messageFormat: "The Archivable object '{0}' member '{1}' has [SuppressDefaultInitialization], it cannot be readonly, init-only and required.",
-        category: Category,
-        defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true
-    );
-
-    public static readonly DiagnosticDescriptor VersionTolerantOnUnmanagedStruct = new(
-        id: "MAGARCH041",
-        title: "Invalid usage of VersionTolerant on unmanaged struct",
-        messageFormat: "The unmanaged struct '{0}' cannot be used for VersionTolerant serialization.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true

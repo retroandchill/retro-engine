@@ -58,7 +58,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    <#= dangerous ? "public" : "internal" #> void <#= dangerous ? "Unsafe" : "" #>WriteBlittableWithObjectHeader<<#= MakeT(i) #>>(byte propertyCount,<#= MakeArgs(i) #>)
+    <#= dangerous ? "internal" : "public" #> void <#= dangerous ? "Unsafe" : "" #>WriteBlittableWithObjectHeader<<#= MakeT(i) #>>(byte propertyCount,<#= MakeArgs(i) #>)
 <# if(!dangerous) { #>
         <#= MakeWhere(i) #>
 <# } #>

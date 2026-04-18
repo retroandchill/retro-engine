@@ -5,6 +5,7 @@
 
 using System.Diagnostics;
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Portable.Localization.StringTables;
 using RetroEngine.Portable.Strings;
@@ -14,7 +15,8 @@ using ZParse.Parsers;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryStringTableEntry : TextHistory, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryStringTableEntry : TextHistory, ITextHistory
 {
     private enum StringTableLoadingPhase : byte
     {
@@ -29,6 +31,7 @@ internal sealed class TextHistoryStringTableEntry : TextHistory, ITextHistory
         public TextKey Key { get; }
         private StringTableLoadingPhase _loadingPhase;
 
+        [ArchiveIgnore]
         public TextId TextId => ResolveStringTableEntry()?.DisplayStringId ?? TextId.Empty;
 
         private WeakReference<StringTableEntry>? _entry;
@@ -156,6 +159,12 @@ internal sealed class TextHistoryStringTableEntry : TextHistory, ITextHistory
 
     private readonly StringTableReferenceData _stringTableReferenceData;
 
+    [ArchiveInclude]
+    private Name TableId => _stringTableReferenceData.TableId;
+
+    [ArchiveInclude]
+    private TextKey Key => _stringTableReferenceData.Key;
+
     public override TextId TextId => _stringTableReferenceData.TextId;
 
     public override string? LocalizedString => _stringTableReferenceData.ResolveDisplayString();
@@ -164,6 +173,13 @@ internal sealed class TextHistoryStringTableEntry : TextHistory, ITextHistory
         _stringTableReferenceData.ResolveStringTableEntry()?.SourceString ?? StringTableEntry.PlaceholderSourceString;
 
     public override string DisplayString => LocalizedString ?? SourceString;
+
+    [ArchivableConstructor]
+    private TextHistoryStringTableEntry(Name tableId, TextKey key)
+    {
+        _stringTableReferenceData = new StringTableReferenceData(tableId, key, StringTableLoadingPolicy.FindOrLoad);
+        MarkDisplayStringUpToDate();
+    }
 
     public TextHistoryStringTableEntry(Name tableId, TextKey key, StringTableLoadingPolicy loadingPolicy)
     {

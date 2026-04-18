@@ -5,20 +5,26 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
 using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryOrderedFormat : TextHistoryGenerated, ITextHistory
 {
+    [ArchiveInclude]
     private readonly TextFormat _sourceFormat;
+
+    [ArchiveInclude]
     private readonly ImmutableArray<FormatArg> _args;
 
     public TextHistoryOrderedFormat(TextFormat sourceFormat, IReadOnlyList<FormatArg> args)
         : this(sourceFormat, args.ToImmutableArray()) { }
 
+    [ArchivableConstructor]
     public TextHistoryOrderedFormat(TextFormat sourceFormat, ImmutableArray<FormatArg> args)
     {
         _sourceFormat = sourceFormat;

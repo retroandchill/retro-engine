@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
@@ -11,13 +12,25 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
 {
+    [ArchiveInclude]
     private readonly DateTimeOffset _sourceDateTime;
+
+    [ArchiveInclude]
     private readonly string? _customPattern;
+
+    [ArchiveInclude]
     private readonly DateTimeFormatStyle _dateFormatStyle;
+
+    [ArchiveInclude]
     private readonly DateTimeFormatStyle _timeFormatStyle;
+
+    [ArchiveInclude]
     private readonly string? _timeZoneId;
+
+    [ArchiveInclude]
     private readonly Culture? _targetCulture;
 
     public TextHistoryAsDateTime(
@@ -47,19 +60,20 @@ internal sealed class TextHistoryAsDateTime : TextHistoryGenerated, ITextHistory
         UpdateDisplayString();
     }
 
+    [ArchivableConstructor]
     private TextHistoryAsDateTime(
-        DateTimeOffset dateTime,
+        DateTimeOffset sourceDateTime,
         DateTimeFormatStyle dateFormatStyle,
         DateTimeFormatStyle timeFormatStyle,
-        string? pattern,
+        string? customPattern,
         string timeZoneId,
         Culture? targetCulture
     )
     {
-        _sourceDateTime = dateTime;
+        _sourceDateTime = sourceDateTime;
         _dateFormatStyle = dateFormatStyle;
         _timeFormatStyle = timeFormatStyle;
-        _customPattern = pattern;
+        _customPattern = customPattern;
         _timeZoneId = timeZoneId;
         _targetCulture = targetCulture;
         UpdateDisplayString();

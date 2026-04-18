@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using RetroEngine.Utilities.Concurrency;
 using ZParse;
 
@@ -17,15 +18,34 @@ internal interface ITextHistory : ITextData
     }
 }
 
-internal abstract class TextHistory : ITextData
+[Archivable]
+[ArchivableUnion(0, typeof(TextHistorySimple))]
+[ArchivableUnion(1, typeof(TextHistoryNamedFormat))]
+[ArchivableUnion(2, typeof(TextHistoryOrderedFormat))]
+[ArchivableUnion(3, typeof(TextHistoryAsNumber))]
+[ArchivableUnion(4, typeof(TextHistoryAsPercent))]
+[ArchivableUnion(5, typeof(TextHistoryAsCurrency))]
+[ArchivableUnion(6, typeof(TextHistoryAsDate))]
+[ArchivableUnion(7, typeof(TextHistoryAsTime))]
+[ArchivableUnion(8, typeof(TextHistoryAsDateTime))]
+[ArchivableUnion(9, typeof(TextHistoryTransformed))]
+[ArchivableUnion(10, typeof(TextHistoryStringTableEntry))]
+internal abstract partial class TextHistory : ITextData
 {
     private readonly ReaderWriterLockSlim _lock = new();
 
+    [ArchiveIgnore]
     public virtual string SourceString => DisplayString;
+
+    [ArchiveIgnore]
     public abstract string DisplayString { get; }
+
+    [ArchiveIgnore]
     public virtual string? LocalizedString => null;
 
     private TextRevisions _revisions;
+
+    [ArchiveIgnore]
     public TextRevisions Revisions
     {
         get
@@ -35,8 +55,10 @@ internal abstract class TextHistory : ITextData
         }
     }
 
+    [ArchiveIgnore]
     public TextHistory History => this;
 
+    [ArchiveIgnore]
     public virtual TextId TextId => TextId.Empty;
 
     public abstract string BuildInvariantDisplayString();

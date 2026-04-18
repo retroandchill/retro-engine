@@ -3,11 +3,14 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using MagicArchive;
+using MagicArchive.Utilities;
 using MessagePack;
 using MessagePack.Formatters;
 using RetroEngine.Portable.Localization.Cultures;
@@ -35,8 +38,8 @@ public enum FormatArgumentType : byte
     Gender,
 }
 
-[MessagePackFormatter(typeof(MessagePackFormatter))]
-public readonly struct FormatArg : IEquatable<FormatArg>, IEqualityOperators<FormatArg, FormatArg, bool>
+[Archivable(GenerateType.Custom)]
+public readonly partial struct FormatArg : IEquatable<FormatArg>, IEqualityOperators<FormatArg, FormatArg, bool>
 {
     public FormatArgumentType Type { get; }
 
@@ -411,60 +414,57 @@ public readonly struct FormatArg : IEquatable<FormatArg>, IEqualityOperators<For
             : throw new ArgumentException($"Cannot convert {arg} to a number");
     }
 
-    public sealed class MessagePackFormatter : IMessagePackFormatter<FormatArg>
+    static partial void StaticInit()
     {
-        public void Serialize(ref MessagePackWriter writer, FormatArg value, MessagePackSerializerOptions options)
+        if (!BlittableMarshalling.IsRegistered<FormatArgumentType>())
+            BlittableMarshalling.RegisterSimpleBlittable<FormatArgumentType>();
+        if (!BlittableMarshalling.IsRegistered<TextGender>())
+            BlittableMarshalling.RegisterSimpleBlittable<TextGender>();
+    }
+
+    static void IArchivable<FormatArg>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in FormatArg value
+    )
+    {
+        writer.WriteBlittable(value.Type);
+        switch (value.Type)
         {
-            var formatterResolver = options.Resolver;
-            formatterResolver.GetFormatterWithVerify<FormatArgumentType>().Serialize(ref writer, value.Type, options);
-
-            switch (value.Type)
-            {
-                case FormatArgumentType.Text:
-                    formatterResolver.GetFormatterWithVerify<Text>().Serialize(ref writer, value._textData, options);
-                    break;
-                case FormatArgumentType.Int:
-                    writer.Write(value._blittableData.IntValue);
-                    break;
-                case FormatArgumentType.UInt:
-                    writer.Write(value._blittableData.UIntValue);
-                    break;
-                case FormatArgumentType.Float:
-                    writer.Write(value._blittableData.FloatValue);
-                    break;
-                case FormatArgumentType.Double:
-                    writer.Write(value._blittableData.DoubleValue);
-                    break;
-                case FormatArgumentType.Gender:
-                    formatterResolver
-                        .GetFormatterWithVerify<TextGender>()
-                        .Serialize(ref writer, value._blittableData.GenderValue, options);
-                    break;
-                default:
-                    throw new InvalidOperationException("Invalid format argument type.");
-            }
+            case FormatArgumentType.Text:
+                writer.WriteArchivable(value._textData);
+                break;
+            case FormatArgumentType.Int:
+                writer.WriteBlittable(value._blittableData.IntValue);
+                break;
+            case FormatArgumentType.UInt:
+                writer.WriteBlittable(value._blittableData.UIntValue);
+                break;
+            case FormatArgumentType.Float:
+                writer.WriteBlittable(value._blittableData.FloatValue);
+                break;
+            case FormatArgumentType.Double:
+                writer.WriteBlittable(value._blittableData.DoubleValue);
+                break;
+            case FormatArgumentType.Gender:
+                writer.WriteBlittable(value._blittableData.GenderValue);
+                break;
+            default:
+                throw new InvalidOperationException("Invalid format argument type.");
         }
+    }
 
-        public FormatArg Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+    static void IArchivable<FormatArg>.Deserialize(ref ArchiveReader reader, scoped ref FormatArg value)
+    {
+        value = reader.ReadBlittable<FormatArgumentType>() switch
         {
-            var formatterResolver = options.Resolver;
-            var type = formatterResolver.GetFormatterWithVerify<FormatArgumentType>().Deserialize(ref reader, options);
-
-            return type switch
-            {
-                FormatArgumentType.Text => formatterResolver
-                    .GetFormatterWithVerify<Text>()
-                    .Deserialize(ref reader, options),
-                FormatArgumentType.Int => reader.ReadInt64(),
-                FormatArgumentType.UInt => reader.ReadUInt64(),
-                FormatArgumentType.Float => reader.ReadSingle(),
-                FormatArgumentType.Double => reader.ReadDouble(),
-                FormatArgumentType.Gender => formatterResolver
-                    .GetFormatterWithVerify<TextGender>()
-                    .Deserialize(ref reader, options),
-                _ => throw new InvalidOperationException("Invalid format argument type."),
-            };
-        }
+            FormatArgumentType.Text => reader.ReadArchivable<Text>(),
+            FormatArgumentType.Int => reader.ReadBlittable<long>(),
+            FormatArgumentType.UInt => reader.ReadBlittable<ulong>(),
+            FormatArgumentType.Float => reader.ReadBlittable<float>(),
+            FormatArgumentType.Double => reader.ReadBlittable<double>(),
+            FormatArgumentType.Gender => reader.ReadBlittable<TextGender>(),
+            _ => throw new InvalidOperationException("Invalid format argument type."),
+        };
     }
 }
 
@@ -477,7 +477,8 @@ public enum FormatNumericArgumentType : byte
 }
 
 [MessagePackFormatter(typeof(MessagePackFormatter))]
-public readonly struct FormatNumericArg
+[Archivable(GenerateType.Custom)]
+public readonly partial struct FormatNumericArg
     : IEquatable<FormatNumericArg>,
         IEqualityOperators<FormatNumericArg, FormatNumericArg, bool>
 {
@@ -761,5 +762,47 @@ public readonly struct FormatNumericArg
                 _ => throw new InvalidOperationException("Invalid format argument type."),
             };
         }
+    }
+
+    static partial void StaticInit()
+    {
+        if (!BlittableMarshalling.IsRegistered<FormatNumericArgumentType>())
+            BlittableMarshalling.RegisterSimpleBlittable<FormatNumericArgumentType>();
+    }
+
+    static void IArchivable<FormatNumericArg>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in FormatNumericArg value
+    )
+    {
+        switch (value.Type)
+        {
+            case FormatNumericArgumentType.Int:
+                writer.WriteBlittable(value.Type, value._blittableData.IntValue);
+                break;
+            case FormatNumericArgumentType.UInt:
+                writer.WriteBlittable(value.Type, value._blittableData.UIntValue);
+                break;
+            case FormatNumericArgumentType.Float:
+                writer.WriteBlittable(value.Type, value._blittableData.FloatValue);
+                break;
+            case FormatNumericArgumentType.Double:
+                writer.WriteBlittable(value.Type, value._blittableData.DoubleValue);
+                break;
+            default:
+                throw new InvalidOperationException("Invalid format argument type.");
+        }
+    }
+
+    static void IArchivable<FormatNumericArg>.Deserialize(ref ArchiveReader reader, scoped ref FormatNumericArg value)
+    {
+        value = reader.ReadBlittable<FormatNumericArgumentType>() switch
+        {
+            FormatNumericArgumentType.Int => reader.ReadBlittable<long>(),
+            FormatNumericArgumentType.UInt => reader.ReadBlittable<ulong>(),
+            FormatNumericArgumentType.Float => reader.ReadBlittable<float>(),
+            FormatNumericArgumentType.Double => reader.ReadBlittable<double>(),
+            _ => throw new InvalidOperationException("Invalid format argument type."),
+        };
     }
 }

@@ -300,13 +300,7 @@ public ref partial struct ArchiveReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ReadBool()
     {
-        var value = ReadBlittable<byte>();
-        return value switch
-        {
-            0 => false,
-            1 => true,
-            _ => throw new ArchiveSerializationException($"Invalid boolean value: {value}."),
-        };
+        return ReadBlittable<byte>() != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -685,7 +679,7 @@ public ref partial struct ArchiveReader : IDisposable
         return true;
     }
 
-    internal void ReadInto<T>(Span<T?> buffer)
+    internal void ReadInto<T>(scoped Span<T?> buffer)
     {
         if (!IsByteSwapping && BlittableMarshalling.IsBlittable<T>())
         {
@@ -701,7 +695,7 @@ public ref partial struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReadIntoUnmanaged<T>(Span<T> buffer)
+    private void ReadIntoUnmanaged<T>(scoped Span<T> buffer)
     {
         var byteCount = buffer.Length * Unsafe.SizeOf<T>();
         ref var src = ref GetSpanReference(byteCount);

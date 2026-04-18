@@ -33,7 +33,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1>(byte propertyCount, in T1 value1)
+    public void WriteBlittableWithObjectHeader<T1>(byte propertyCount, in T1 value1)
         where T1 : unmanaged
     {
         if (!IsByteSwapping)
@@ -91,7 +91,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2>(byte propertyCount, in T1 value1, in T2 value2)
+    public void WriteBlittableWithObjectHeader<T1, T2>(byte propertyCount, in T1 value1, in T2 value2)
         where T1 : unmanaged
         where T2 : unmanaged
     {
@@ -167,12 +167,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3>(
-        byte propertyCount,
-        in T1 value1,
-        in T2 value2,
-        in T3 value3
-    )
+    public void WriteBlittableWithObjectHeader<T1, T2, T3>(byte propertyCount, in T1 value1, in T2 value2, in T3 value3)
         where T1 : unmanaged
         where T2 : unmanaged
         where T3 : unmanaged
@@ -273,7 +268,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -425,7 +420,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -639,7 +634,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -913,7 +908,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -1251,7 +1246,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -1657,7 +1652,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -2135,7 +2130,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -2689,7 +2684,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -3323,7 +3318,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -4041,7 +4036,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -4847,7 +4842,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -5745,7 +5740,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(
+    public void WriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -6258,7 +6253,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1>(byte propertyCount, in T1 value1)
+    internal void UnsafeWriteBlittableWithObjectHeader<T1>(byte propertyCount, in T1 value1)
     {
         if (!IsByteSwapping)
         {
@@ -6313,7 +6308,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2>(byte propertyCount, in T1 value1, in T2 value2)
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2>(byte propertyCount, in T1 value1, in T2 value2)
     {
         if (!IsByteSwapping)
         {
@@ -6384,7 +6379,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -6483,7 +6478,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -6632,7 +6627,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -6835,7 +6830,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -7096,7 +7091,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -7419,7 +7414,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -7808,7 +7803,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -8267,7 +8262,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -8800,7 +8795,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -9411,7 +9406,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -10104,7 +10099,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -10883,7 +10878,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(
+    internal void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(
         byte propertyCount,
         in T1 value1,
         in T2 value2,
@@ -11752,7 +11747,23 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UnsafeWriteBlittableWithObjectHeader<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(
+    internal void UnsafeWriteBlittableWithObjectHeader<
+        T1,
+        T2,
+        T3,
+        T4,
+        T5,
+        T6,
+        T7,
+        T8,
+        T9,
+        T10,
+        T11,
+        T12,
+        T13,
+        T14,
+        T15
+    >(
         byte propertyCount,
         in T1 value1,
         in T2 value2,

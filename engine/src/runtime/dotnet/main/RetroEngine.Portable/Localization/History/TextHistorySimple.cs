@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using MagicArchive;
 using MessagePack;
 using MessagePack.Formatters;
 using RetroEngine.Portable.Localization.Stringification;
@@ -12,12 +13,26 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistorySimple : TextHistoryBase, ITextHistory
+[Archivable]
+internal sealed partial class TextHistorySimple : TextHistoryBase, ITextHistory
 {
+    [ArchiveInclude]
+    private TextKey Namespace => TextId.Namespace;
+
+    [ArchiveInclude]
+    private TextKey Key => TextId.Key;
+
+    [ArchiveInclude]
+    private string Source => SourceString;
+
     public TextHistorySimple() { }
 
     public TextHistorySimple(TextId id, string source, string? localized = null)
         : base(id, source, localized) { }
+
+    [ArchivableConstructor]
+    public TextHistorySimple(TextKey @namespace, TextKey key, string source)
+        : base(new TextId(@namespace, key), source) { }
 
     private static readonly TextParser<ITextData> NsLocTextParser = TextStringReader.Marked(
         Markers.NsLocText,

@@ -5,6 +5,7 @@
 
 using System.Numerics;
 using System.Text;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.Stringification;
@@ -12,7 +13,8 @@ using ZParse;
 
 namespace RetroEngine.Portable.Localization.History;
 
-internal sealed class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistory
+[Archivable]
+internal sealed partial class TextHistoryAsNumber : TextHistoryFormatNumber, ITextHistory
 {
     public TextHistoryAsNumber(
         FormatNumericArg sourceValue,

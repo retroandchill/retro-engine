@@ -29,5 +29,6 @@ public record ArchiveSerializerOptions
 
     public StringEncoding StringEncoding { get; init; } = StringEncoding.Utf8;
     public ByteOrder ByteOrder { get; init; } = ByteOrder.LittleEndian;
+    public bool IsPersistent { get; init; } = false;
     public IServiceProvider? ServiceProvider { get; init; }
 }

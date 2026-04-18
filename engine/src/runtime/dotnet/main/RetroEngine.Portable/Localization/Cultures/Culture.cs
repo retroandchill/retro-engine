@@ -3,16 +3,19 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Numerics;
+using MagicArchive;
 using RetroEngine.Portable.Localization.Formatting;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
 internal enum IcuErrorCode;
 
-public sealed class Culture : IDisposable
+[Archivable(GenerateType.Custom)]
+public sealed partial class Culture : IDisposable
 {
     internal const int KeywordAndValuesCapacity = 100;
 
@@ -566,5 +569,25 @@ public sealed class Culture : IDisposable
         _ordinalPluralRules.Dispose();
         _collator?.Dispose();
         _dateTimeDecimalFormat?.Dispose();
+    }
+
+    static void IArchivable<Culture>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in Culture? value
+    )
+    {
+        writer.WriteString(value?._locale.Name);
+    }
+
+    static void IArchivable<Culture>.Deserialize(ref ArchiveReader reader, scoped ref Culture? value)
+    {
+        var name = reader.ReadString();
+        if (name is null)
+        {
+            value = null;
+            return;
+        }
+
+        value = new Culture(name);
     }
 }

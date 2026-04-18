@@ -21,8 +21,6 @@ public sealed class ReferenceSymbols
 
     public Compilation Compilation { get; }
 
-    public SemanticModel SemanticModel { get; }
-
     public INamedTypeSymbol ArchiveCustomFormatterAttribute { get; }
     public INamedTypeSymbol IArchivable { get; }
 
@@ -31,7 +29,6 @@ public sealed class ReferenceSymbols
     public ReferenceSymbols(Compilation compilation, SemanticModel semanticModel)
     {
         Compilation = compilation;
-        SemanticModel = semanticModel;
 
         ArchiveCustomFormatterAttribute = GetTypeByMetadataName("MagicArchive.ArchiveCustomFormatterAttribute`2")
             .ConstructUnboundGenericType();

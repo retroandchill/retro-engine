@@ -3,11 +3,13 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
+using MagicArchive;
 using MessagePack;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
@@ -76,7 +78,8 @@ public enum TextComparisonLevel
 
 [JsonConverter(typeof(TextJsonConverter))]
 [MessagePackFormatter(typeof(TextMessagePackFormatter))]
-public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
+[Archivable(GenerateType.Custom)]
+public readonly partial struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {
     internal ITextData TextData => field ?? EmptyTextData;
 
@@ -507,5 +510,48 @@ public readonly struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOp
     internal void Rebuild()
     {
         TextData.History.UpdateDisplayStringIfOutOfDate();
+    }
+
+    static void IArchivable<Text>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in Text value
+    )
+    {
+        writer.WriteBlittableWithObjectHeader(
+            2,
+            value.Flags & ~(TextFlag.ConvertedProperty | TextFlag.InitializedFromString)
+        );
+        if (value.IsEmpty || value.IsCultureInvariant)
+        {
+            writer.WriteNullObjectHeader();
+            writer.WriteString(
+                value is { IsEmpty: false, IsCultureInvariant: true } ? value.TextData.SourceString : null
+            );
+        }
+        else
+        {
+            writer.WriteValue(value.TextData.History);
+        }
+    }
+
+    static void IArchivable<Text>.Deserialize(ref ArchiveReader reader, scoped ref Text value)
+    {
+        reader.TryReadObjectHeader(out var count);
+        if (count != 2)
+            ArchiveSerializationException.ThrowInvalidPropertyCount(typeof(Text), 2, count);
+
+        var flags = reader.ReadBlittable<TextFlag>();
+        var history = reader.ReadValue<TextHistory>();
+        if (history is not null)
+        {
+            value = new Text(history, flags);
+        }
+        else
+        {
+            var cultureInvariantString = reader.ReadString();
+            value = cultureInvariantString is not null
+                ? new Text(new TextHistorySimple(new TextId(), cultureInvariantString), flags)
+                : Empty;
+        }
     }
 }
