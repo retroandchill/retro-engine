@@ -69,11 +69,6 @@ public class ArchiveWriterTest
                 TypeArgs = [typeof(double)],
                 TestName = $"{byteOrder} double",
             };
-            yield return new TestCaseData<bool, ByteOrder>(true, byteOrder)
-            {
-                TypeArgs = [typeof(bool)],
-                TestName = $"{byteOrder} bool",
-            };
             yield return new TestCaseData<char, ByteOrder>('\xF2', byteOrder)
             {
                 TypeArgs = [typeof(char)],

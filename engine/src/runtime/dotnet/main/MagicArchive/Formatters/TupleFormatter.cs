@@ -23,6 +23,18 @@ internal static class TupleFormatters
         new KeyValuePair<Type, Type>(typeof(Tuple<,,,,,,,>), typeof(TupleFormatter<,,,,,,,>)),
         new KeyValuePair<Type, Type>(typeof(ValueTuple<,,,,,,,>), typeof(ValueTupleFormatter<,,,,,,,>)),
     ]);
+
+    public static readonly ImmutableArray<Type> ValueTupleTypes =
+    [
+        typeof(ValueTuple<>),
+        typeof(ValueTuple<,>),
+        typeof(ValueTuple<,,>),
+        typeof(ValueTuple<,,,>),
+        typeof(ValueTuple<,,,,>),
+        typeof(ValueTuple<,,,,,>),
+        typeof(ValueTuple<,,,,,,>),
+        typeof(ValueTuple<,,,,,,,>),
+    ];
 }
 
 public sealed class TupleFormatter<T1> : ArchiveFormatter<Tuple<T1?>>

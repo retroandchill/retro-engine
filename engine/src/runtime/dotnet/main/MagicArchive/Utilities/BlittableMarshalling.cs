@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using MagicArchive.Formatters;
 
 // ReSharper disable StaticMemberInGenericType
 
@@ -53,7 +54,6 @@ public static class BlittableMarshalling
         RegisterSimpleBlittable<UInt128>();
         RegisterSimpleBlittable<Rune>();
         RegisterSimpleBlittable<DateTime>();
-        RegisterSimpleBlittable<DateTime>();
 
         RegisterNotBlittable<bool>();
         RegisterNotBlittable<decimal>();
@@ -62,6 +62,8 @@ public static class BlittableMarshalling
         RegisterNotBlittable<DateTimeOffset>();
         RegisterNotBlittable<Guid>();
     }
+
+    public static bool IsRegistered<T>() => Check<T>.IsRegistered;
 
     public static bool IsBlittable<T>() => Cache<T>.Type != BlittableType.NotBlittable;
 
@@ -107,7 +109,7 @@ public static class BlittableMarshalling
 
     public static void RegisterNotBlittable<T>()
     {
-        RegisterBlittable<T>(BlittableType.BlittableSimple);
+        RegisterBlittable<T>(BlittableType.NotBlittable);
     }
 
     public static void RegisterSimpleBlittable<T>()
@@ -173,6 +175,13 @@ public static class BlittableMarshalling
         if (typeof(T).IsEnum)
             return new BlittableTypeInfo(BlittableType.BlittableSimple, Unsafe.SizeOf<T>(), Unsafe.SizeOf<T>());
 
+        if (!typeof(T).IsGenericType)
+            return BlittableTypeInfo.NotBlittable;
+
+        var definition = typeof(T).GetGenericTypeDefinition();
+        if (!TupleFormatters.ValueTupleTypes.Contains(definition))
+            return BlittableTypeInfo.NotBlittable;
+
         var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         var blittableType = BlittableType.BlittableSimple;
         var maxAlignment = 0;
@@ -214,10 +223,9 @@ public static class BlittableMarshalling
             i++;
         }
 
-        if (Unsafe.SizeOf<T>() - runningSize != 0)
-            return BlittableTypeInfo.NotBlittable;
-
-        return new BlittableTypeInfo(blittableType, Unsafe.SizeOf<T>(), maxAlignment);
+        return Unsafe.SizeOf<T>() - runningSize == 0
+            ? new BlittableTypeInfo(blittableType, Unsafe.SizeOf<T>(), maxAlignment)
+            : BlittableTypeInfo.NotBlittable;
     }
 
     private static BlittableTypeInfo CheckIfTypeIsBlittable(Type type)

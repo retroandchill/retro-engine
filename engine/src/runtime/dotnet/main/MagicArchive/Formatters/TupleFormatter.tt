@@ -26,6 +26,12 @@ internal static class TupleFormatters
         new KeyValuePair<Type, Type>(typeof(ValueTuple<<#= comma #>>), typeof(ValueTupleFormatter<<#= comma #>>)),
 <# } #>
     ]);
+
+    public static readonly ImmutableArray<Type> ValueTupleTypes = [
+<# for (var i = 0; i <= 7; i++ ) { var comma = new string(',', i); #>
+        typeof(ValueTuple<<#= comma #>>),
+<# } #>
+    ];
 }
 
 <# for (var i = 1; i <= 8; i++ ) { #>
