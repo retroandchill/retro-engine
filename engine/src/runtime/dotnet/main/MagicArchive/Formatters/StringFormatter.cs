@@ -108,7 +108,7 @@ public sealed class BrotliStringFormatter(
         var quality = BrotliUtils.GetQualityFromCompressionLevel(compressionLevel);
         using var encoder = new BrotliEncoder(quality, window);
 
-        var srcLength = value.Length * 2;
+        var srcLength = value.Length * sizeof(char);
         var maxLength = BrotliUtils.BrotliEncoderMaxCompressedSize(srcLength);
 
         const int headerSize = sizeof(int);
@@ -146,7 +146,7 @@ public sealed class BrotliStringFormatter(
             if (bytesConsumed != srcLength)
                 ArchiveSerializationException.ThrowCompressionFailed();
 
-            Unsafe.WriteUnaligned(ref spanRef, bytesWritten);
+            Unsafe.WriteUnaligned(ref spanRef, value.Length);
             if (writer.IsByteSwapping)
             {
                 BlittableMarshalling.ReverseEndianness(ref Unsafe.As<byte, int>(ref spanRef));

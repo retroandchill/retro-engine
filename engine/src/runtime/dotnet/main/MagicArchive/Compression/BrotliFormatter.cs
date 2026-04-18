@@ -7,6 +7,7 @@ using System.Buffers;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using MagicArchive.Utilities;
 
 namespace MagicArchive.Compression;
 
@@ -16,7 +17,7 @@ public sealed class BrotliFormatter(
     int decompressionSizeLimit = BrotliFormatter.DefaultDecompressionSizeLimit
 ) : ArchiveFormatter<byte[]>
 {
-    internal const int DefaultDecompressionSizeLimit = 1024 * 1024 + 128; // 128MB
+    internal const int DefaultDecompressionSizeLimit = 1024 * 1024 * 128; // 128MB
 
     public static readonly BrotliFormatter Default = new();
 
@@ -51,6 +52,12 @@ public sealed class BrotliFormatter(
 
         Unsafe.WriteUnaligned(ref head, value.Length);
         Unsafe.WriteUnaligned(ref Unsafe.Add(ref head, sizeof(int)), bytesWritten);
+
+        if (writer.IsByteSwapping)
+        {
+            BlittableMarshalling.ReverseEndianness(ref Unsafe.As<byte, int>(ref head));
+            BlittableMarshalling.ReverseEndianness(ref Unsafe.As<byte, int>(ref Unsafe.Add(ref head, sizeof(int))));
+        }
 
         writer.Advance(bytesWritten + headerSize);
     }
@@ -128,6 +135,6 @@ public sealed class BrotliFormatter<T>(
                 : decompressor.Decompress(remainingSource, out consumed);
         using var coReader = new ArchiveReader(decompressedSource, reader.State);
         coReader.ReadValue(ref value);
-        coReader.Advance(consumed);
+        reader.Advance(consumed);
     }
 }
