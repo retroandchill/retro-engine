@@ -2,7 +2,6 @@
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
-
 using System.Collections.Immutable;
 using System.Text;
 using MagicArchive.Utilities;
@@ -50,7 +49,11 @@ public class BlittableMarshallingTest
     [TestCaseSource(nameof(PredefinedTypesData))]
     public void PredefinedGenericTypeCheck<T>(bool isBlittable)
     {
-        Assert.That(BlittableMarshalling.IsBlittable<T>(), Is.EqualTo(isBlittable));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<T>(), Is.EqualTo(isBlittable));
+            Assert.That(BlittableMarshalling.IsSimpleBlittable<T>(), Is.EqualTo(isBlittable));
+        }
     }
 
     private static IEnumerable<TestCaseData<Type, bool>> NonGenericPredefinedTypesData()
@@ -65,13 +68,24 @@ public class BlittableMarshallingTest
     [TestCaseSource(nameof(NonGenericPredefinedTypesData))]
     public void PredefinedNonGenericTypeCheck(Type type, bool isBlittable)
     {
-        Assert.That(BlittableMarshalling.IsBlittable(type), Is.EqualTo(isBlittable));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable(type), Is.EqualTo(isBlittable));
+            Assert.That(BlittableMarshalling.IsSimpleBlittable(type), Is.EqualTo(isBlittable));
+        }
     }
 
     [Test]
     public void EnumTypesAreBlittable()
     {
-        Assert.That(BlittableMarshalling.IsBlittable<DayOfWeek>(), Is.True);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<DayOfWeek>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<FileMode>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<ConsoleColor>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<FileMode>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<TypeCode>(), Is.True);
+        }
     }
 
     [Test]
@@ -92,6 +106,45 @@ public class BlittableMarshallingTest
         {
             Assert.That(BlittableMarshalling.IsBlittable<(int, long, long)>(), Is.False);
             Assert.That(BlittableMarshalling.IsBlittable<(byte, int, int)>(), Is.False);
+        }
+    }
+
+    // ReSharper disable NotAccessedPositionalProperty.Local
+    private readonly record struct SimpleStruct(int Value);
+
+    private readonly record struct ComplexStruct(int Value, float Float);
+
+    private readonly record struct NestedStruct(ComplexStruct Value);
+
+    // ReSharper restore NotAccessedPositionalProperty.Local
+
+    [Test]
+    public void UnmanagedStructsWithSingleSimpleBlittableField()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<SimpleStruct>(), Is.True);
+            Assert.That(BlittableMarshalling.IsSimpleBlittable<SimpleStruct>(), Is.True);
+        }
+    }
+
+    [Test]
+    public void UnmanagedStructsWithMultipleBlittableFields()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<ComplexStruct>(), Is.False);
+            Assert.That(BlittableMarshalling.IsSimpleBlittable<ComplexStruct>(), Is.False);
+        }
+    }
+
+    [Test]
+    public void UnmanagedStructsWithNestedComplexBlittableField()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<NestedStruct>(), Is.False);
+            Assert.That(BlittableMarshalling.IsSimpleBlittable<NestedStruct>(), Is.False);
         }
     }
 }

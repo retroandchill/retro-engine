@@ -69,18 +69,25 @@ public static class BlittableMarshalling
 
     public static bool IsBlittable(Type type)
     {
+        return GetBlittableTypeInfo(type).Type != BlittableType.NotBlittable;
+    }
+
+    private static BlittableTypeInfo GetBlittableTypeInfo(Type type)
+    {
         if (BlittableCache.TryGetValue(type, out var blittableType))
         {
-            return blittableType.Type != BlittableType.NotBlittable;
+            return blittableType;
         }
 
         var blittableState = CheckIfTypeIsBlittable(type);
         BlittableCache[type] = blittableState;
 
-        return blittableState.Type != BlittableType.NotBlittable;
+        return blittableState;
     }
 
     public static bool IsSimpleBlittable<T>() => Cache<T>.Type == BlittableType.BlittableSimple;
+
+    public static bool IsSimpleBlittable(Type type) => GetBlittableTypeInfo(type).Type == BlittableType.BlittableSimple;
 
     private struct AlignmentHelper<T>
     {
@@ -175,6 +182,14 @@ public static class BlittableMarshalling
         if (typeof(T).IsEnum)
             return new BlittableTypeInfo(BlittableType.BlittableSimple, Unsafe.SizeOf<T>(), Unsafe.SizeOf<T>());
 
+        var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        if (
+            fields.Length == 1
+            && BlittableCache.TryGetValue(fields[0].FieldType, out var singleField)
+            && singleField.Type == BlittableType.BlittableSimple
+        )
+            return singleField;
+
         if (!typeof(T).IsGenericType)
             return BlittableTypeInfo.NotBlittable;
 
@@ -182,7 +197,6 @@ public static class BlittableMarshalling
         if (!TupleFormatters.ValueTupleTypes.Contains(definition))
             return BlittableTypeInfo.NotBlittable;
 
-        var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         var blittableType = BlittableType.BlittableSimple;
         var maxAlignment = 0;
         var runningSize = 0;
