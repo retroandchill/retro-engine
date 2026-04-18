@@ -151,7 +151,7 @@ public class MemberMetadata
 
         // TODO: Eventually we will want to allow for custom formatters, but not right now
 
-        Kind = ParseMemberKind(symbol, MemberType, reference, out _);
+        Kind = ParseMemberKind(symbol, MemberType, reference);
     }
 
     private static bool IsValidInitializer(EqualsValueClauseSyntax? initializer, SemanticModel semanticModel)
@@ -183,11 +183,9 @@ public class MemberMetadata
     private static MemberKind ParseMemberKind(
         ISymbol? memberSymbol,
         ITypeSymbol memberType,
-        ReferenceSymbols referenceSymbols,
-        out bool isComplex
+        ReferenceSymbols referenceSymbols
     )
     {
-        isComplex = false;
         switch (memberType.SpecialType)
         {
             case SpecialType.System_Object
@@ -210,7 +208,7 @@ public class MemberMetadata
                 return MemberKind.Enum;
         }
 
-        if (memberType.IsBlittable(referenceSymbols, out isComplex))
+        if (referenceSymbols.KnownTypes.GetBlittableTypeInfo(memberType).IsBlittable)
         {
             return MemberKind.Blittable;
         }

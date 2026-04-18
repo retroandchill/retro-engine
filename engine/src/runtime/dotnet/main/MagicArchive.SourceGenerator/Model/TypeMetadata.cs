@@ -107,7 +107,7 @@ public class TypeMetadata
         ];
 
         IsValueType = symbol.IsValueType;
-        IsBlittable = symbol.IsBlittable(_reference, out _);
+        IsBlittable = _reference.KnownTypes.GetBlittableTypeInfo(symbol).IsBlittable;
         IsInterfaceOrAbstract = symbol.TypeKind is TypeKind.Interface || symbol.IsAbstract;
         IsUnion = symbol.HasAttribute<ArchivableUnionAttribute>();
         IsRecord = symbol.IsRecord;
@@ -220,39 +220,30 @@ public class TypeMetadata
 
     private static IEnumerable<BlittableRegistration> GetBlittableSubTypes(
         ITypeSymbol? type,
+        ITypeSymbol original,
         ReferenceSymbols referenceSymbols
     )
     {
-        if (
-            type is null
-            || type.SpecialType
-                is SpecialType.System_Enum
-                    or SpecialType.System_Char
-                    or SpecialType.System_SByte
-                    or SpecialType.System_Byte
-                    or SpecialType.System_Int16
-                    or SpecialType.System_UInt16
-                    or SpecialType.System_Int32
-                    or SpecialType.System_UInt32
-                    or SpecialType.System_Int64
-                    or SpecialType.System_UInt64
-                    or SpecialType.System_Single
-                    or SpecialType.System_Double
-                    or SpecialType.System_DateTime
-            || referenceSymbols.KnownTypes.Contains(type)
-        )
+        if (type?.SpecialType is not SpecialType.None || referenceSymbols.KnownTypes.Contains(type))
             yield break;
 
-        if (type.IsBlittable(referenceSymbols, out var isComplex))
+        if (referenceSymbols.KnownTypes.GetBlittableTypeInfo(type) is { IsBlittable: true } blittableTypeInfo)
         {
-            yield return new BlittableRegistration(true, isComplex, type.FullyQualifiedToString());
+            yield return new BlittableRegistration(true, blittableTypeInfo.IsComplex, type.FullyQualifiedToString());
+        }
+        else if (
+            type.IsUnmanagedType
+            && (!type.TryGetArchivableType(out _, out _) || SymbolEqualityComparer.Default.Equals(original, type))
+        )
+        {
+            yield return new BlittableRegistration(false, false, type.FullyQualifiedToString());
         }
 
         switch (type)
         {
             case IArrayTypeSymbol arrayType:
             {
-                foreach (var item in GetBlittableSubTypes(arrayType.ElementType, referenceSymbols))
+                foreach (var item in GetBlittableSubTypes(arrayType.ElementType, original, referenceSymbols))
                 {
                     yield return item;
                 }
@@ -261,18 +252,17 @@ public class TypeMetadata
             }
             case INamedTypeSymbol { IsGenericType: true } namedType:
             {
-                foreach (var item in namedType.TypeArguments.SelectMany(x => GetBlittableSubTypes(x, referenceSymbols)))
+                foreach (
+                    var item in namedType.TypeArguments.SelectMany(x =>
+                        GetBlittableSubTypes(x, original, referenceSymbols)
+                    )
+                )
                 {
                     yield return item;
                 }
 
                 break;
             }
-        }
-
-        if (type.IsUnmanagedType)
-        {
-            yield return new BlittableRegistration(false, false, type.FullyQualifiedToString());
         }
     }
 
@@ -782,15 +772,15 @@ public class TypeMetadata
         ImmutableArray<BlittableRegistration> blittableRegistrations;
         if (isCustom)
         {
-            blittableRegistrations = [.. GetBlittableSubTypes(Symbol, _reference).Distinct()];
+            blittableRegistrations = [.. GetBlittableSubTypes(Symbol, Symbol, _reference).Distinct()];
         }
         else
         {
             blittableRegistrations =
             [
                 .. Members
-                    .SelectMany(x => GetBlittableSubTypes(x.MemberType, _reference))
-                    .Concat(GetBlittableSubTypes(Symbol, _reference))
+                    .SelectMany(x => GetBlittableSubTypes(x.MemberType, Symbol, _reference))
+                    .Concat(GetBlittableSubTypes(Symbol, Symbol, _reference))
                     .Distinct(),
             ];
         }

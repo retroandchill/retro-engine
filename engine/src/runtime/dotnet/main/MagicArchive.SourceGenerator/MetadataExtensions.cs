@@ -8,6 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
 
 namespace MagicArchive.SourceGenerator;
@@ -191,158 +193,32 @@ internal static class MetadataExtensions
         } while (enumerator.MoveNext());
     }
 
-    private static readonly ConcurrentDictionary<
-        ITypeSymbol,
-        (bool Blittable, int Size, int Alignment, bool Complex)
-    > BlittableCache = new(SymbolEqualityComparer.Default);
-
-    public static bool IsBlittable(this ITypeSymbol memberType, ReferenceSymbols referenceSymbols, out bool isComplex)
+    public static bool HasBackingField(this PropertyDeclarationSyntax property)
     {
-        return IsBlittable(memberType, referenceSymbols, out isComplex, out _, out _);
+        var getter = property.AccessorList?.Accessors.FirstOrDefault(x =>
+            x.Kind() == SyntaxKind.GetAccessorDeclaration
+        );
+        var setter = property.AccessorList?.Accessors.FirstOrDefault(x =>
+            x.Kind() == SyntaxKind.SetAccessorDeclaration
+        );
+
+        return (getter is null || CheckIfAutoAccessor(getter)) && (setter is null || CheckIfAutoAccessor(setter));
     }
 
-    private static bool IsBlittable(
-        ITypeSymbol memberType,
-        ReferenceSymbols referenceSymbols,
-        out bool isComplex,
-        out int size,
-        out int alignment
-    )
+    private static bool CheckIfAutoAccessor(AccessorDeclarationSyntax syntax)
     {
-        if (!memberType.IsUnmanagedType)
+        if (syntax.ExpressionBody is not null)
         {
-            size = 0;
-            alignment = 0;
-            isComplex = false;
-            return false;
+            return CheckForFieldKeyword(syntax.ExpressionBody.Expression);
         }
 
-        switch (memberType.SpecialType)
-        {
-            case SpecialType.System_Enum:
-                return IsBlittable(
-                    ((INamedTypeSymbol)memberType).EnumUnderlyingType!,
-                    referenceSymbols,
-                    out isComplex,
-                    out size,
-                    out alignment
-                );
-            case SpecialType.System_Boolean:
-            case SpecialType.System_Decimal:
-            case SpecialType.System_IntPtr:
-            case SpecialType.System_UIntPtr:
-                size = 0;
-                alignment = 0;
-                isComplex = false;
-                return false;
-            case SpecialType.System_SByte:
-            case SpecialType.System_Byte:
-                size = 1;
-                alignment = 1;
-                isComplex = false;
-                return true;
-            case SpecialType.System_Int16:
-            case SpecialType.System_UInt16:
-            case SpecialType.System_Char:
-                size = 2;
-                alignment = 2;
-                isComplex = false;
-                return true;
-            case SpecialType.System_Int32:
-            case SpecialType.System_UInt32:
-            case SpecialType.System_Single:
-                size = 4;
-                alignment = 4;
-                isComplex = false;
-                return true;
-            case SpecialType.System_Int64:
-            case SpecialType.System_UInt64:
-            case SpecialType.System_Double:
-            case SpecialType.System_DateTime:
-                size = 8;
-                alignment = 8;
-                isComplex = false;
-                return true;
-        }
+        return syntax.Body is null || CheckForFieldKeyword(syntax.Body);
+    }
 
-        if (BlittableCache.TryGetValue(memberType, out var cached))
-        {
-            isComplex = cached.Complex;
-            size = cached.Size;
-            alignment = cached.Alignment;
-            return cached.Blittable;
-        }
-
-        if (memberType is INamedTypeSymbol unmanagedNts)
-        {
-            if (
-                unmanagedNts.IsRefLikeType
-                || unmanagedNts.EqualsUnconstructedGenericType(referenceSymbols.KnownTypes.Nullable)
-                || (
-                    unmanagedNts.TryGetArchivableType(out var generateType, out _)
-                    && generateType
-                        is GenerateType.VersionTolerant
-                            or GenerateType.CircularReference
-                            or GenerateType.Custom
-                )
-            )
-            {
-                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
-                size = 0;
-                alignment = 0;
-                isComplex = false;
-                return false;
-            }
-        }
-
-        var maxAlignment = 0;
-        var runningSize = 0;
-        isComplex = true;
-        var i = 0;
-        foreach (var field in memberType.GetMembers().OfType<IFieldSymbol>().Where(x => !x.IsStatic && !x.IsConst))
-        {
-            if (!IsBlittable(field.Type, referenceSymbols, out var c, out var s, out var align))
-            {
-                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
-                size = 0;
-                alignment = 0;
-                isComplex = false;
-                return false;
-            }
-
-            if (i > 0 || c)
-            {
-                isComplex = true;
-            }
-
-            if (align > maxAlignment)
-            {
-                maxAlignment = align;
-            }
-
-            if (runningSize % align != 0)
-            {
-                BlittableCache.TryAdd(memberType, (false, 0, 0, false));
-                size = 0;
-                alignment = 0;
-                return false;
-            }
-
-            runningSize += s;
-            i++;
-        }
-
-        if (maxAlignment == 0 || runningSize % maxAlignment != 0)
-        {
-            BlittableCache.TryAdd(memberType, (false, 0, 0, false));
-            size = 0;
-            alignment = 0;
-            return false;
-        }
-
-        BlittableCache.TryAdd(memberType, (true, runningSize, maxAlignment, isComplex));
-        size = runningSize;
-        alignment = maxAlignment;
-        return true;
+    private static bool CheckForFieldKeyword(SyntaxNode node)
+    {
+        return node.DescendantNodesAndSelf()
+            .OfType<FieldExpressionSyntax>()
+            .Any(f => f.Token.IsKind(SyntaxKind.FieldKeyword));
     }
 }

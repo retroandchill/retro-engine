@@ -123,14 +123,15 @@ public static class Helpers
         Arguments arguments
     )
     {
-        if (arguments.Length != 3)
+        if (arguments.Length != 4)
         {
-            throw new HandlebarsException($"{nameof(SerializeMembers)} helper requires exactly three arguments");
+            throw new HandlebarsException($"{nameof(SerializeMembers)} helper requires exactly four arguments");
         }
 
         var members = arguments.At<IReadOnlyList<MemberMetadata>>(0);
         var toTempWriter = arguments.At<bool>(1);
         var writeObjectHeader = arguments.At<bool>(2);
+        var isBlittable = arguments.At<bool>(3);
 
         if (members.Count == 0 && writeObjectHeader)
         {
@@ -144,7 +145,7 @@ public static class Helpers
         {
             if (members[i].Kind is not (MemberKind.Blittable or MemberKind.Enum) || toTempWriter)
             {
-                if (i == 0 && writeObjectHeader)
+                if (i == 0 && writeObjectHeader && !isBlittable)
                 {
                     options.Template(output, $"{writer}.WriteObjectHeader({members.Count});");
                 }
@@ -175,7 +176,7 @@ public static class Helpers
 
             var builder = new StringBuilder();
             builder.Append(writer);
-            if (optimizeFrom == 0 && writeObjectHeader)
+            if (optimizeFrom == 0 && writeObjectHeader && !isBlittable)
             {
                 builder.Append(".WriteBlittableWithObjectHeader(");
                 builder.Append(members.Count);

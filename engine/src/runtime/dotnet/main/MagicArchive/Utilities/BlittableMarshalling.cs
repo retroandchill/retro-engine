@@ -145,6 +145,7 @@ public static class BlittableMarshalling
 
         static Cache()
         {
+            RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
             if (Check<T>.IsRegistered)
                 return;
 
@@ -181,6 +182,17 @@ public static class BlittableMarshalling
 
         if (typeof(T).IsEnum)
             return new BlittableTypeInfo(BlittableType.BlittableSimple, Unsafe.SizeOf<T>(), Unsafe.SizeOf<T>());
+
+        var layoutAttribute = typeof(T).StructLayoutAttribute;
+        if (layoutAttribute is not null)
+        {
+            if (
+                layoutAttribute.Value != LayoutKind.Sequential
+                || (layoutAttribute.Size != Unsafe.SizeOf<T>() && layoutAttribute.Size != 0)
+                || layoutAttribute.Pack != 0
+            )
+                return BlittableTypeInfo.NotBlittable;
+        }
 
         var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         if (

@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System.Collections.Immutable;
 using System.Text;
+using MagicArchive.Test.Models;
 using MagicArchive.Utilities;
 
 namespace MagicArchive.Test;
@@ -145,6 +146,25 @@ public class BlittableMarshallingTest
         {
             Assert.That(BlittableMarshalling.IsBlittable<NestedStruct>(), Is.False);
             Assert.That(BlittableMarshalling.IsSimpleBlittable<NestedStruct>(), Is.False);
+        }
+    }
+
+    [Test]
+    public void ArchivableBlittableTypesGetRegistered()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(BlittableMarshalling.IsBlittable<BlittableStruct>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<BlittableStruct2>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<BlittableStruct3>(), Is.True);
+            Assert.That(BlittableMarshalling.IsBlittable<BlittableStruct4>(), Is.True);
+
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct>(), Is.False);
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct2>(), Is.False);
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct3>(), Is.False);
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct4>(), Is.False);
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct5>(), Is.False);
+            Assert.That(BlittableMarshalling.IsBlittable<NonBlittableStruct6>(), Is.False);
         }
     }
 }
