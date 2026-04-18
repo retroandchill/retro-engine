@@ -13,7 +13,7 @@
   <Folder Name="/engine/src/runtime/" />
   <Folder Name="/engine/src/runtime/dotnet/" />
   <Folder Name="/engine/src/runtime/dotnet/benchmarks/">
-    <Project Path="engine/src/runtime/dotnet/MagicArchive.Benchmark/MagicArchive.Benchmark.csproj" />
+    <Project Path="engine/src/runtime/dotnet/benchmarks/MagicArchive.Benchmark/MagicArchive.Benchmark.csproj" />
   </Folder>
   <Folder Name="/engine/src/runtime/dotnet/main/">
     <Project Path="engine/src/runtime/dotnet/main/MagicArchive.SourceGenerator/MagicArchive.SourceGenerator.csproj" />
