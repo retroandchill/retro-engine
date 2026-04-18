@@ -64,6 +64,19 @@ public static class ArchiveFormatterRegistry
         Register(new GenericCollectionFormatter<TCollection, TElement>());
     }
 
+    public static void RegisterSet<TSet, TElement>()
+        where TSet : ISet<TElement?>, new()
+    {
+        Register(new GenericSetFormatter<TSet, TElement>());
+    }
+
+    public static void RegisterDictionary<TDictionary, TKey, TValue>()
+        where TKey : notnull
+        where TDictionary : IDictionary<TKey, TValue?>, new()
+    {
+        Register(new GenericDictionaryFormatter<TDictionary, TKey, TValue>());
+    }
+
     public static IArchiveFormatter GetFormatter(Type type)
     {
         if (Formatters.TryGetValue(type, out var formatter))

@@ -1,0 +1,16 @@
+partial class {{TypeName}} : IArchivable
+{
+    static {{SimpleName}}()
+    {
+        ArchiveFormatterRegistry.Register<{{TypeName}}>();
+        StaticInit();
+    }
+
+    static partial void StaticInit();
+
+    static void IArchivable.RegisterFormatters()
+    {
+        if (!ArchiveFormatterRegistry.IsRegistered<{{TypeName}}>())
+            ArchiveFormatterRegistry.Register{{MethodName}}<{{TypeName}}{{#TypeArgs}}, {{.}}{{/TypeArgs}}>();
+    }
+}

@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using HandlebarsDotNet;
-using MagicArchive.SourceGenerator.Formatters;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
 using Microsoft.CodeAnalysis;

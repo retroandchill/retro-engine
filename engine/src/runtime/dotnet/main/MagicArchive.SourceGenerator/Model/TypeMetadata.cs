@@ -13,13 +13,12 @@ using Retro.SourceGeneratorUtilities.Utilities.Attributes;
 
 namespace MagicArchive.SourceGenerator.Model;
 
-public enum ClassType
+public enum CollectionKind
 {
-    Class,
-    Struct,
-    Record,
-    RecordStruct,
-    Interface,
+    None,
+    Collection,
+    Set,
+    Dictionary,
 }
 
 [UsedImplicitly]
@@ -279,8 +278,47 @@ public class TypeMetadata
             case GenerateType.NoGenerate or GenerateType.Custom:
                 return true;
             case GenerateType.Collection:
-                // TODO: We'll do collections later
+            {
+                if (Symbol.IsAbstract)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.CollectionGenerateIsAbstract,
+                            syntax.Identifier.GetLocation(),
+                            Symbol.Name
+                        )
+                    );
+                    return false;
+                }
+
+                var (kind, _) = ParseCollectionKind(Symbol, _reference);
+                if (kind == CollectionKind.None)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.CollectionGenerateNotImplementedInterface,
+                            syntax.Identifier.GetLocation(),
+                            Symbol.Name
+                        )
+                    );
+                    return false;
+                }
+
+                var hasParameterlessConstructor = Symbol
+                    .InstanceConstructors.Where(x => x.DeclaredAccessibility == Accessibility.Public)
+                    .Any(x => x.Parameters.Length == 0);
+                if (hasParameterlessConstructor)
+                    return true;
+
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.CollectionGenerateNoParameterlessConstructor,
+                        syntax.Identifier.GetLocation(),
+                        Symbol.Name
+                    )
+                );
                 return false;
+            }
             case GenerateType.CircularReference when !UsesEmptyConstructor:
                 context.ReportDiagnostic(
                     Diagnostic.Create(
@@ -875,7 +913,66 @@ public class TypeMetadata
 
     private string EmitGenericCollectionTemplate(TemplateSource source, SourceProductionContext context)
     {
-        throw new NotImplementedException();
+        var (collectionKind, collectionSymbol) = ParseCollectionKind(Symbol, _reference);
+        var methodName = collectionKind switch
+        {
+            CollectionKind.Collection => "Collection",
+            CollectionKind.Set => "Set",
+            CollectionKind.Dictionary => "Dictionary",
+            _ => "",
+        };
+
+        var typeArgs = collectionSymbol!.TypeArguments.Select(x => x.FullyQualifiedToString()).ToArray();
+
+        var templateArgs = new
+        {
+            TypeName,
+            SimpleName = Symbol.Name,
+            MethodName = methodName,
+            TypeArgs = typeArgs,
+        };
+
+        return source.CollectionTemplate(templateArgs);
+    }
+
+    private static (CollectionKind, INamedTypeSymbol?) ParseCollectionKind(
+        INamedTypeSymbol? symbol,
+        ReferenceSymbols reference
+    )
+    {
+        if (symbol is null)
+            return (CollectionKind.None, null);
+
+        INamedTypeSymbol? dictionary = default;
+        INamedTypeSymbol? set = default;
+        INamedTypeSymbol? collection = default;
+        foreach (var item in symbol.AllInterfaces)
+        {
+            if (item.EqualsUnconstructedGenericType(reference.KnownTypes.IDictionary))
+            {
+                dictionary = item;
+            }
+            else if (item.EqualsUnconstructedGenericType(reference.KnownTypes.ISet))
+            {
+                set = item;
+            }
+            else if (item.EqualsUnconstructedGenericType(reference.KnownTypes.ICollection))
+            {
+                collection = item;
+            }
+        }
+
+        if (dictionary is not null)
+        {
+            return (CollectionKind.Dictionary, dictionary);
+        }
+
+        if (set is not null)
+        {
+            return (CollectionKind.Set, set);
+        }
+
+        return collection is not null ? (CollectionKind.Collection, collection) : (CollectionKind.None, null);
     }
 
     private ImmutableArray<AdditionalTypeRegistration> GetAdditionalTypeRegistrations()
