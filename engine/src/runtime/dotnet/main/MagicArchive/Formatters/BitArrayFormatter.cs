@@ -45,7 +45,7 @@ public sealed class BitArrayFormatter : ArchiveFormatter<BitArray>
 
 internal class BitArrayView
 {
-    public int[] Array;
+    public byte[] Array;
     public int Length;
     public int Version;
 }

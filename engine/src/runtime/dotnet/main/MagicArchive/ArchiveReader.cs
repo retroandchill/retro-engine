@@ -242,6 +242,13 @@ public ref partial struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool UnsafeTryReadCollectionHeader(out int length)
+    {
+        ReadBlittable(out length);
+        return length != ArchiveCodes.NullCollection;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool PeekIsNull()
     {
         var code = GetSpanReference(1);
@@ -564,6 +571,22 @@ public ref partial struct ArchiveReader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReadValueWithFormatter<TFormatter, T>(TFormatter formatter, scoped ref T? value)
+        where TFormatter : IArchiveFormatter<T>
+    {
+        formatter.Deserialize(ref this, ref value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? ReadValueWithFormatter<TFormatter, T>(TFormatter formatter)
+        where TFormatter : IArchiveFormatter<T>
+    {
+        T? value = default;
+        formatter.Deserialize(ref this, ref value);
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T? ReadNullable<T>()
         where T : struct
     {
@@ -686,5 +709,31 @@ public ref partial struct ArchiveReader : IDisposable
         ref var dest = ref Unsafe.As<T, byte>(ref MemoryMarshal.GetReference(buffer));
         Unsafe.CopyBlockUnaligned(ref dest, ref src, (uint)byteCount);
         Advance(byteCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UnsafeReadBlittableSpanView<T>(out bool isNull, out ReadOnlySpan<byte> view)
+    {
+        if (!TryReadCollectionHeader(out var length))
+        {
+            isNull = true;
+            view = default;
+            return;
+        }
+
+        isNull = false;
+
+        if (length == 0)
+        {
+            view = [];
+            return;
+        }
+
+        var byteCount = length * Unsafe.SizeOf<T>();
+        ref var src = ref GetSpanReference(byteCount);
+
+        var span = MemoryMarshal.CreateReadOnlySpan(ref src, byteCount);
+        Advance(byteCount);
+        view = span;
     }
 }

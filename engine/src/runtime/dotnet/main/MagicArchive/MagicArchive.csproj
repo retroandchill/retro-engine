@@ -4,6 +4,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <ImplicitUsings>true</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -55,9 +57,5 @@
             <DesignTime>True</DesignTime>
             <DependentUpon>ArchiveWriter.Blittable.tt</DependentUpon>
         </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Structured\" />
     </ItemGroup>
 </Project>

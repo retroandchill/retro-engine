@@ -23,6 +23,7 @@ public sealed class ReferenceSymbols
 
     public SemanticModel SemanticModel { get; }
 
+    public INamedTypeSymbol ArchiveCustomFormatterAttribute { get; }
     public INamedTypeSymbol IArchivable { get; }
 
     public WellKnownTypes KnownTypes { get; }
@@ -32,6 +33,8 @@ public sealed class ReferenceSymbols
         Compilation = compilation;
         SemanticModel = semanticModel;
 
+        ArchiveCustomFormatterAttribute = GetTypeByMetadataName("MagicArchive.ArchiveCustomFormatterAttribute`2")
+            .ConstructUnboundGenericType();
         IArchivable = GetTypeByMetadataName("MagicArchive.IArchivable`1");
         KnownTypes = new WellKnownTypes(this);
     }

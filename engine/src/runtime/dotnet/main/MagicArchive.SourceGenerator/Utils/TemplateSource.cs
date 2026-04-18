@@ -29,7 +29,7 @@ public sealed class TemplateSource
         handlebars.RegisterHelper("DeserializeMembers", Helpers.DeserializeMembers);
         handlebars.RegisterHelper("MemberRefReader", Helpers.MemberRefReader);
         handlebars.RegisterHelper("ConstructorParameters", Helpers.ConstructorParameters);
-        handlebars.RegisterHelper("MethodCall", Helpers.MethodCall);
+        handlebars.RegisterHelper("MethodBody", Helpers.MethodBody);
         CommonTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Common"));
         DebugInfoTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("DebugInfo"));
         ArchivableTemplate = handlebars.Compile(TemplateLoader.LoadTemplate("Archivable"));

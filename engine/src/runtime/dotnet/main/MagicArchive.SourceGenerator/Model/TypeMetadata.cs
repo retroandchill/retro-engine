@@ -738,10 +738,10 @@ public class TypeMetadata
             containingTypeDeclarations.Add(
                 (containingType.IsRecord, containingType.IsValueType) switch
                 {
-                    (true, true) => $"partial record struct {containingType.Name}",
-                    (true, false) => $"partial record {containingType.Name}",
-                    (false, true) => $"partial struct {containingType.Name}",
-                    (false, false) => $"partial class {containingType.Name}",
+                    (true, true) => $"record struct {containingType.Name}",
+                    (true, false) => $"record {containingType.Name}",
+                    (false, true) => $"struct {containingType.Name}",
+                    (false, false) => $"class {containingType.Name}",
                 }
             );
             containingType = containingType.ContainingType;
@@ -800,7 +800,8 @@ public class TypeMetadata
             IsTolerant = GenerateType is GenerateType.VersionTolerant or GenerateType.CircularReference,
             IsCircularReference = GenerateType == GenerateType.CircularReference,
             MemberCount = members.Length,
-            Constructor,
+            CustomFormatters = GetCustomFormatters(),
+            ConstructorParameters = GetConstructorParameters(),
             OnSerializing,
             OnSerialized,
             OnDeserializing,
@@ -894,7 +895,7 @@ public class TypeMetadata
         ];
     }
 
-    private IReadOnlyList<string> GetConstructorParameters()
+    private string[] GetConstructorParameters()
     {
         if (Constructor is not { Parameters.Length: > 0 })
         {
@@ -907,6 +908,25 @@ public class TypeMetadata
         return Constructor
             .Parameters.Select(x => nameDict.TryGetValue(x.Name, out var memberName) ? memberName : null)
             .OfType<string>()
+            .ToArray();
+    }
+
+    private record CustomFormatterInfo(string CustomFormatterName, string Member, string Type, string CustomFormatter);
+
+    private CustomFormatterInfo[] GetCustomFormatters()
+    {
+        return Members
+            .Where(x => x.Kind == MemberKind.CustomFormatter)
+            .Select(item =>
+            {
+                var fieldOrProp = item.IsField ? "Field" : "Property";
+                return new CustomFormatterInfo(
+                    item.CustomFormatterName!,
+                    item.Name,
+                    fieldOrProp,
+                    item.CustomFormatter!.FullyQualifiedToString()
+                );
+            })
             .ToArray();
     }
 }

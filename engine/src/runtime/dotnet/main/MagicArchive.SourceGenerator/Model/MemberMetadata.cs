@@ -149,7 +149,19 @@ public class MemberMetadata
 
         DefaultValue ??= $"default({MemberType.FullyQualifiedToString()})";
 
-        // TODO: Eventually we will want to allow for custom formatters, but not right now
+        var customFormatterAttr = symbol.GetImplAttribute(reference.ArchiveCustomFormatterAttribute);
+        if (customFormatterAttr is not null)
+        {
+            CustomFormatter = customFormatterAttr.AttributeClass!;
+            Kind = MemberKind.CustomFormatter;
+
+            CustomFormatterName = CustomFormatter
+                .GetAllBaseTypes()
+                .First(x => x.EqualsUnconstructedGenericType(reference.ArchiveCustomFormatterAttribute))
+                .TypeArguments[0]
+                .FullyQualifiedToString();
+            return;
+        }
 
         Kind = ParseMemberKind(symbol, MemberType, reference);
     }
@@ -335,7 +347,7 @@ public class MemberMetadata
             case MemberKind.Blank:
                 return "";
             case MemberKind.CustomFormatter:
-                return $"{writer}.WriteWithFormatter(__{Name}Formatter, value.@{Name});";
+                return $"{writer}.WriteValueWithFormatter(__{Name}Formatter, value.@{Name});";
             default:
                 return $"{writer}.WriteValue(value.@{Name});";
         }
@@ -402,7 +414,7 @@ public class MemberMetadata
             case MemberKind.CustomFormatter:
             {
                 var mt = MemberType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                return $"reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter)";
+                return $"reader.ReadValueWithFormatter<{CustomFormatterName}, {mt}>(__{Name}Formatter, ref __{Name}__)";
             }
         }
 

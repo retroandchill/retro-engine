@@ -5,7 +5,7 @@ partial {{.}}
 partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, IFixedSizeArchivable{{/IsFixedSize}}
 {
     {{#CustomFormatters}}
-    private static readonly {{CustomFormatterName}} __{{Name}}Formatter = typeof({{Symbol}}).Get{{Type}}("{{Name}}", BindingFlags.Public | BindingFlags.NonPulic | BindingFlags.Instance).GetCustomAttribute<{{CustomFormatter}}>().GetFormatter();
+    private static readonly {{CustomFormatterName}} __{{Member}}Formatter = typeof({{../TypeName}}).Get{{Type}}("{{Member}}", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetCustomAttribute<{{CustomFormatter}}>().GetFormatter();
     {{/CustomFormatters}}
 
     static partial void StaticInit();
@@ -293,7 +293,7 @@ partial {{ClassType}} {{TypeName}} : IArchivable<{{TypeName}}>{{#IsFixedSize}}, 
         {{/IsValueType}}
 
     NEW:
-        value = new {{TypeName}}({{ConstructorParameters Constructor Members}})
+        value = new {{TypeName}}({{#Joined ", " ConstructorParameters}}__{{.}}__{{/Joined}})
         {
             {{#Members}}
             {{#IsSettable}}

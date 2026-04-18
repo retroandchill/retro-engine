@@ -304,7 +304,7 @@ public static class Helpers
         }
     }
 
-    public static void MethodCall(EncodedTextWriter writer, Context context, Arguments arguments)
+    public static void MethodBody(EncodedTextWriter writer, Context context, Arguments arguments)
     {
         if (context.Value is not MethodMetadata method)
             return;

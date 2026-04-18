@@ -10,6 +10,7 @@
 
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
+        <DefineConstants>MAGIC_ARCHIVE_GENERATOR;$(DefineConstants)</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

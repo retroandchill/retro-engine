@@ -353,7 +353,11 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     public void WriteArchivable<T>(in T value)
         where T : IArchivable<T>
     {
+        _depth++;
+        if (_depth == DepthLimit)
+            ArchiveSerializationException.ThrowReachedDepthLimit(typeof(T));
         T.Serialize(ref this, in value);
+        _depth--;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -383,12 +387,19 @@ public ref partial struct ArchiveWriter<TBufferWriter>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteValue(Type type, object? value)
     {
+        _depth++;
+        if (_depth == DepthLimit)
+            ArchiveSerializationException.ThrowReachedDepthLimit(type);
         GetFormatter(type).Serialize(ref this, value);
+        _depth--;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteValue<T>(in T value)
     {
+        _depth++;
+        if (_depth == DepthLimit)
+            ArchiveSerializationException.ThrowReachedDepthLimit(typeof(T));
         if (BlittableMarshalling.IsBlittable<T>())
         {
             UnsafeWriteBlittable(in value);
@@ -397,6 +408,16 @@ public ref partial struct ArchiveWriter<TBufferWriter>
 
         var formatter = GetFormatter<T>();
         formatter.Serialize(ref this, in value);
+        _depth--;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteValueWithFormatter<TFormatter, T>(TFormatter formatter, in T value)
+        where TFormatter : IArchiveFormatter<T>
+    {
+        _depth++;
+        formatter.Serialize(ref this, in value);
+        _depth--;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

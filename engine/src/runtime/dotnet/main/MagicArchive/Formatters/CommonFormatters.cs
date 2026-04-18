@@ -79,16 +79,3 @@ public sealed class DateTimeOffsetFormatter : ArchiveFormatter<DateTimeOffset>
         value = new DateTimeOffset(utcTicks, TimeSpan.FromMinutes(offsetMinutes));
     }
 }
-
-public sealed class StringFormatter : ArchiveFormatter<string>
-{
-    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in string? value)
-    {
-        writer.WriteString(value);
-    }
-
-    public override void Deserialize(ref ArchiveReader reader, scoped ref string? value)
-    {
-        value = reader.ReadString();
-    }
-}

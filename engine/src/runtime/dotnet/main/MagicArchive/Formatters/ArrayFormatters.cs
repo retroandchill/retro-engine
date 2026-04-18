@@ -103,3 +103,62 @@ public sealed class ReadOnlySequenceFormatter<T> : ArchiveFormatter<ReadOnlySequ
         value = array is not null ? new ReadOnlySequence<T?>(array) : default;
     }
 }
+
+public sealed class MemoryPoolFormatter<T> : ArchiveFormatter<Memory<T?>>
+{
+    public override void Serialize<TBufferWriter>(ref ArchiveWriter<TBufferWriter> writer, scoped in Memory<T?> value)
+    {
+        writer.WriteSpan(value.Span);
+    }
+
+    public override void Deserialize(ref ArchiveReader reader, scoped ref Memory<T?> value)
+    {
+        if (!reader.TryReadCollectionHeader(out var length))
+        {
+            value = null;
+            return;
+        }
+
+        if (length == 0)
+        {
+            value = Memory<T?>.Empty;
+            return;
+        }
+
+        var memory = ArrayPool<T?>.Shared.Rent(length).AsMemory(0, length);
+        var span = memory.Span;
+        reader.ReadInto(span);
+        value = memory;
+    }
+}
+
+public sealed class ReadOnlyMemoryPoolFormatter<T> : ArchiveFormatter<ReadOnlyMemory<T?>>
+{
+    public override void Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in ReadOnlyMemory<T?> value
+    )
+    {
+        writer.WriteSpan(value.Span);
+    }
+
+    public override void Deserialize(ref ArchiveReader reader, scoped ref ReadOnlyMemory<T?> value)
+    {
+        if (!reader.TryReadCollectionHeader(out var length))
+        {
+            value = null;
+            return;
+        }
+
+        if (length == 0)
+        {
+            value = Memory<T?>.Empty;
+            return;
+        }
+
+        var memory = ArrayPool<T?>.Shared.Rent(length).AsMemory(0, length);
+        var span = memory.Span;
+        reader.ReadInto(span);
+        value = memory;
+    }
+}

@@ -16,6 +16,20 @@ namespace MagicArchive.SourceGenerator;
 
 internal static class MetadataExtensions
 {
+    public static AttributeData? GetImplAttribute(this ISymbol symbol, INamedTypeSymbol implAttribute)
+    {
+        return symbol
+            .GetAttributes()
+            .FirstOrDefault(x =>
+            {
+                if (x.AttributeClass == null)
+                    return false;
+                return x.AttributeClass.EqualsUnconstructedGenericType(implAttribute)
+                    || x.AttributeClass.GetAllBaseTypes()
+                        .Any(item => item.EqualsUnconstructedGenericType(implAttribute));
+            });
+    }
+
     public static bool TryGetArchivableType(this ITypeSymbol symbol, out GenerateType type, out SerializeLayout layout)
     {
         if (symbol.TypeKind is not (TypeKind.Class or TypeKind.Struct or TypeKind.Interface))
@@ -41,27 +55,6 @@ internal static class MetadataExtensions
         layout = SerializeLayout.Sequential;
 
         return true;
-    }
-
-    public static IEnumerable<ISymbol> GetAllMembers(this INamedTypeSymbol symbol, bool withoutOverride = true)
-    {
-        // Iterate Parent -> Derived
-        if (symbol.BaseType is not null)
-        {
-            foreach (var item in symbol.BaseType.GetAllMembers())
-            {
-                // override item already iterated in parent type
-                if (!withoutOverride || !item.IsOverride)
-                {
-                    yield return item;
-                }
-            }
-        }
-
-        foreach (var item in symbol.GetMembers().Where(item => !withoutOverride || !item.IsOverride))
-        {
-            yield return item;
-        }
     }
 
     public static bool TryGetArchiveOrder(this ISymbol symbol, out int order)
@@ -131,6 +124,27 @@ internal static class MetadataExtensions
             {
                 yield return t;
                 t = t.BaseType;
+            }
+        }
+
+        public IEnumerable<ISymbol> GetAllMembers(bool withoutOverride = true)
+        {
+            // Iterate Parent -> Derived
+            if (typeSymbol.BaseType is not null)
+            {
+                foreach (var item in typeSymbol.BaseType.GetAllMembers())
+                {
+                    // override item already iterated in parent type
+                    if (!withoutOverride || !item.IsOverride)
+                    {
+                        yield return item;
+                    }
+                }
+            }
+
+            foreach (var item in typeSymbol.GetMembers().Where(item => !withoutOverride || !item.IsOverride))
+            {
+                yield return item;
             }
         }
     }
