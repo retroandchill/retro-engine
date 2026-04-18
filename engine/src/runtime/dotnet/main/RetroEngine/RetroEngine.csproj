@@ -23,6 +23,8 @@
       </PackageReference>
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="Avalonia" VersionOverride="11.3.14" />
+      <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
       <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
       <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
