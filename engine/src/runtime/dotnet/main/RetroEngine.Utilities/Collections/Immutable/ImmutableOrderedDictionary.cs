@@ -6,10 +6,13 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using MagicArchive;
+using MagicArchive.Formatters;
 
 namespace RetroEngine.Utilities.Collections.Immutable;
 
-public class ImmutableOrderedDictionary<TKey, TValue>
+[Archivable(GenerateType.Custom)]
+public sealed partial class ImmutableOrderedDictionary<TKey, TValue>
     : IImmutableDictionary<TKey, TValue>,
         IImmutableList<KeyValuePair<TKey, TValue>>
     where TKey : notnull
@@ -782,6 +785,57 @@ public class ImmutableOrderedDictionary<TKey, TValue>
         {
             // Nothing to dispose
         }
+    }
+
+    static void IArchivable<ImmutableOrderedDictionary<TKey, TValue>>.Serialize<TBufferWriter>(
+        ref ArchiveWriter<TBufferWriter> writer,
+        scoped in ImmutableOrderedDictionary<TKey, TValue>? value
+    )
+    {
+        if (value is null)
+        {
+            writer.WriteNullCollectionHeader();
+            return;
+        }
+
+        var keyFormatter = writer.GetFormatter<TKey>();
+        var valueFormatter = writer.GetFormatter<TValue>();
+
+        writer.WriteCollectionHeader(value.Count);
+        foreach (var pair in value)
+        {
+            KeyValuePairFormatter.Serialize(keyFormatter, valueFormatter, ref writer, pair!);
+        }
+    }
+
+    static void IArchivable<ImmutableOrderedDictionary<TKey, TValue>>.Deserialize(
+        ref ArchiveReader reader,
+        scoped ref ImmutableOrderedDictionary<TKey, TValue>? value
+    )
+    {
+        if (!reader.TryReadCollectionHeader(out var length))
+        {
+            value = null;
+            return;
+        }
+
+        if (length == 0)
+        {
+            value = Empty;
+            return;
+        }
+
+        var keyFormatter = reader.GetFormatter<TKey>();
+        var valueFormatter = reader.GetFormatter<TValue>();
+
+        var builder = ImmutableOrderedDictionary.CreateBuilder<TKey, TValue>(length);
+        for (var i = 0; i < length; i++)
+        {
+            KeyValuePairFormatter.Deserialize(keyFormatter, valueFormatter, ref reader, out var k, out var v);
+            builder.Add(k!, v!);
+        }
+
+        value = builder.ToImmutable();
     }
 }
 
