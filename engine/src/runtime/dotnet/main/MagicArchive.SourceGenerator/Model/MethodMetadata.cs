@@ -44,8 +44,8 @@ public sealed class MethodMetadata
     public string Emit()
     {
         var instance =
-            (IsStatic) ? ""
-            : (IsValueType) ? "value."
+            IsStatic ? ""
+            : IsValueType ? "value."
             : "value?.";
 
         if (UseReaderArgument)
@@ -53,6 +53,6 @@ public sealed class MethodMetadata
             return $"{instance}{Name}(ref reader, ref value);";
         }
 
-        return UseWriterArgument ? $"{instance}{Name}(ref writer, ref value);" : $"{instance}{Name}();";
+        return UseWriterArgument ? $"{instance}{Name}(ref writer, value);" : $"{instance}{Name}();";
     }
 }

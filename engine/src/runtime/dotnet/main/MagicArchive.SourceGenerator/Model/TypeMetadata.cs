@@ -407,8 +407,14 @@ public class TypeMetadata
                 if (item.Symbol.Parameters.Length != 0)
                 {
                     if (
-                        item.Symbol.Parameters[0].RefKind == RefKind.Ref
-                        && item.Symbol.Parameters[1].RefKind is RefKind.Ref or RefKind.In
+                        item.Symbol.Parameters is [{ RefKind: RefKind.Ref }, _]
+                        && (
+                            (item.UseReaderArgument && item.Symbol.Parameters[1].RefKind is RefKind.Ref)
+                            || (
+                                item.UseWriterArgument
+                                && item.Symbol.Parameters[1].RefKind is RefKind.In or RefKind.None
+                            )
+                        )
                     )
                     {
                         continue;
