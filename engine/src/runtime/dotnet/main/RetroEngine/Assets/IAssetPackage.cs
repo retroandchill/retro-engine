@@ -7,15 +7,33 @@ using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
 
+public enum AssetPackageLoadState
+{
+    Unloaded,
+    Loading,
+    Loaded,
+}
+
 public interface IAssetPackage
 {
     Name PackageName { get; }
+
+    AssetPackageLoadState LoadState { get; }
+
+    public ValueTask LoadAsync(CancellationToken cancellationToken = default);
+
+    public void Unload();
 
     bool HasAsset(Name assetName);
 
     Name GetAssetType(Name assetName);
 
-    ValueTask<Name> GetAssetTypeAsync(Name assetName, CancellationToken cancellationToken = default);
-
     Stream OpenAsset(Name assetName);
+}
+
+public interface IAssetPackageFactory
+{
+    bool CanCreate(Name packageName, string path);
+
+    IAssetPackage Create(Name packageName, string path);
 }

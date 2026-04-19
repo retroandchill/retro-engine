@@ -9,10 +9,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using MagicArchive;
-using MagicArchive.Utilities;
-using MessagePack;
 using RetroEngine.Portable.Serialization.Json;
-using RetroEngine.Portable.Serialization.MessagePack;
 
 namespace RetroEngine.Portable.Localization;
 
@@ -115,7 +112,6 @@ public readonly record struct TextId(TextKey Namespace, TextKey Key)
 {
     public static readonly TextId Empty = new(TextKey.Empty, TextKey.Empty);
 
-    [IgnoreMember]
     public bool IsEmpty => Namespace.IsEmpty && Key.IsEmpty;
 
     public int CompareTo(TextId other)

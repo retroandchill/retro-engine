@@ -14,13 +14,12 @@ namespace RetroEngine.Assets;
 [RegisterSingleton]
 public sealed partial class AssetManager(
     ILogger<AssetManager> logger,
-    IEnumerable<IAssetPackage> packages,
+    IEnumerable<IAssetPackageFactory> packageFactories,
     IEnumerable<IAssetDecoder> decoders
 )
 {
-    private readonly ImmutableDictionary<Name, IAssetPackage> _packages = packages.ToImmutableDictionary(x =>
-        x.PackageName
-    );
+    private readonly ImmutableArray<IAssetPackageFactory> _packageFactories = [.. packageFactories];
+    private readonly ConcurrentDictionary<Name, IAssetPackage> _packages = new();
 
     private readonly ImmutableDictionary<Name, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
         x.AssetType
@@ -28,6 +27,44 @@ public sealed partial class AssetManager(
 
     private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
     private readonly ConcurrentDictionary<AssetPath, WeakReference<Asset>> _assetCache = new();
+
+    public async ValueTask LoadPackageAsync(
+        Name packageName,
+        string path,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var factory = _packageFactories.FirstOrDefault(x => x.CanCreate(packageName, path));
+        if (factory is null)
+            throw new AssetLoadException($"No package factory found for package '{packageName}'");
+
+        var package = factory.Create(packageName, path);
+        if (!_packages.TryAdd(packageName, package))
+            throw new AssetLoadException($"Package '{packageName}' already exists");
+
+        await package.LoadAsync(cancellationToken);
+    }
+
+    public void UnloadPackage(Name packageName)
+    {
+        if (_packages.Remove(packageName, out var package))
+        {
+            package.Unload();
+        }
+        else
+        {
+            throw new AssetLoadException($"Package '{packageName}' does not exist");
+        }
+    }
+
+    public void UnloadAllPackages()
+    {
+        foreach (var package in _packages.Values)
+        {
+            package.Unload();
+        }
+        _packages.Clear();
+    }
 
     [CreateSyncVersion]
     public async ValueTask<Asset?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
@@ -67,7 +104,7 @@ public sealed partial class AssetManager(
                 return null;
             }
 
-            var assetType = await package.GetAssetTypeAsync(path.AssetName, cancellationToken);
+            var assetType = package.GetAssetType(path.AssetName);
             if (!_decoders.TryGetValue(assetType, out var decoder))
             {
                 logger.LogError("No decoder found for asset type '{AssetType}'", assetType);

@@ -10,10 +10,8 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MagicArchive;
-using MessagePack;
 using RetroEngine.Interop;
 using RetroEngine.Portable.Serialization.Json;
-using RetroEngine.Portable.Serialization.MessagePack;
 
 namespace RetroEngine.Portable.Strings;
 
@@ -130,14 +128,13 @@ public enum FindName : byte
 /// <remarks>
 /// The <c>Name</c> struct offers efficient equality and comparison operations,
 /// as well as interop between <see cref="string"/> and <see cref="ReadOnlySpan{char}"/>.
-/// It also provides serialization support for MessagePack and JSON via custom formatters.
+/// It also provides serialization support for MagicArchive and JSON via custom formatters.
 /// </remarks>
 /// <threadsafety>
 /// This type is thread-safe due to its immutable nature.
 /// </threadsafety>
 [StructLayout(LayoutKind.Sequential)]
 [JsonConverter(typeof(NameJsonConverter))]
-[MessagePackFormatter(typeof(NameMessagePackFormatter))]
 [Archivable(GenerateType.Custom)]
 public readonly partial struct Name
     : IEquatable<Name>,

@@ -4,6 +4,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
+using HanumanInstitute.MvvmDialogs.Avalonia.MessageBox;
 using Injectio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,8 +82,7 @@ public class App(Engine engine) : Application
     {
         services
             .AddSingleton<IDialogManager, DialogManager>()
-            .AddSingleton<IDialogFactory, DialogFactory>(_ => new DialogFactory())
-            .AddSingleton<IDialogService, DialogService>()
+            .AddSingleton<IDialogFactory>(_ => new DialogFactory().AddMessageBox())
             .AddSingleton(
                 IDialogService (provider) =>
                 {

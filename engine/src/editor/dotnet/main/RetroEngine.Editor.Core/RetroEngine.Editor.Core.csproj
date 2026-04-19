@@ -13,6 +13,7 @@
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="EFCore.NamingConventions" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia" />
+      <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia.MessageBox" />
       <PackageReference Include="IconPacks.Avalonia" />
       <PackageReference Include="Injectio" />
       <PackageReference Include="JetBrains.Annotations" />

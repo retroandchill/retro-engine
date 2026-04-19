@@ -21,9 +21,9 @@
     <ItemGroup>
         <PackageReference Include="CsvHelper" />
         <PackageReference Include="JetBrains.Annotations" />
-        <PackageReference Include="MessagePack" />
         <PackageReference Include="System.IO.Hashing" />
         <PackageReference Include="TimeZoneNames" />
+        <PackageReference Include="VYaml" />
         <PackageReference Include="ZLinq" />
         <PackageReference Include="Zomp.SyncMethodGenerator">
           <PrivateAssets>all</PrivateAssets>

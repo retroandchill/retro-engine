@@ -14,6 +14,11 @@ public interface IAssetDecoder
 {
     Name AssetType { get; }
 
+    bool CanCreateFromExtension(ReadOnlySpan<char> extension)
+    {
+        return false;
+    }
+
     bool TryLoadFromNativeCache(AssetDecodeContext context, [NotNullWhen(true)] out Asset? asset)
     {
         asset = null;

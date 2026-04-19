@@ -6,9 +6,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using RetroEngine.Assets;
 using RetroEngine.Editor.Core.Data;
 using RetroEngine.Editor.Core.Data.Entities;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.Services;
 
@@ -16,9 +18,12 @@ namespace RetroEngine.Editor.Core.Services;
 public sealed class ProjectManagementService(
     IFileSystem fileSystem,
     IProjectDescriptorSerializer serializer,
-    IDbContextFactory<CachedDbContext> dbContextFactory
+    IDbContextFactory<CachedDbContext> dbContextFactory,
+    AssetManager assetManager
 ) : IProjectManagementService
 {
+    private static readonly Name GamePackage = "game";
+
     private ProjectDescriptorFile? CurrentProjectFile
     {
         get;
@@ -97,6 +102,7 @@ public sealed class ProjectManagementService(
             }
         );
         await dbContext.SaveChangesAsync(cancellationToken);
+        await LoadProjectAssetsAsync(path, cancellationToken);
     }
 
     public async Task OpenProjectAsync(string path, CancellationToken cancellationToken = default)
@@ -123,10 +129,18 @@ public sealed class ProjectManagementService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await LoadProjectAssetsAsync(path, cancellationToken);
+    }
+
+    private async ValueTask LoadProjectAssetsAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var contentDir = fileSystem.Path.Join(fileSystem.Path.GetDirectoryName(path), "content");
+        await assetManager.LoadPackageAsync(GamePackage, contentDir, cancellationToken);
     }
 
     public void CloseProject()
     {
+        assetManager.UnloadPackage(GamePackage);
         CurrentProjectFile = null;
     }
 

@@ -10,13 +10,11 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
 using MagicArchive;
-using MessagePack;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.History;
 using RetroEngine.Portable.Localization.StringTables;
 using RetroEngine.Portable.Serialization.Json;
-using RetroEngine.Portable.Serialization.MessagePack;
 using RetroEngine.Portable.Strings;
 using ZLinq;
 
@@ -77,7 +75,6 @@ public enum TextComparisonLevel
 }
 
 [JsonConverter(typeof(TextJsonConverter))]
-[MessagePackFormatter(typeof(TextMessagePackFormatter))]
 [Archivable(GenerateType.Custom)]
 public readonly partial struct Text : IEquatable<Text>, IComparable<Text>, IComparisonOperators<Text, Text, bool>
 {

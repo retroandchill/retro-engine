@@ -5,8 +5,6 @@
 
 using System.Text;
 using MagicArchive;
-using MessagePack;
-using MessagePack.Formatters;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Utilities;
 using ZParse;

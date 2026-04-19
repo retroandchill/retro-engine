@@ -11,8 +11,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MagicArchive;
 using MagicArchive.Utilities;
-using MessagePack;
-using MessagePack.Formatters;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Portable.Localization.Stringification;
 using RetroEngine.Utilities;
@@ -476,7 +474,6 @@ public enum FormatNumericArgumentType : byte
     Double,
 }
 
-[MessagePackFormatter(typeof(MessagePackFormatter))]
 [Archivable(GenerateType.Custom)]
 public readonly partial struct FormatNumericArg
     : IEquatable<FormatNumericArg>,
@@ -712,56 +709,6 @@ public readonly partial struct FormatNumericArg
     public static bool operator !=(FormatNumericArg left, FormatNumericArg right)
     {
         return !(left == right);
-    }
-
-    public sealed class MessagePackFormatter : IMessagePackFormatter<FormatNumericArg>
-    {
-        public void Serialize(
-            ref MessagePackWriter writer,
-            FormatNumericArg value,
-            MessagePackSerializerOptions options
-        )
-        {
-            var formatterResolver = options.Resolver;
-            formatterResolver
-                .GetFormatterWithVerify<FormatNumericArgumentType>()
-                .Serialize(ref writer, value.Type, options);
-
-            switch (value.Type)
-            {
-                case FormatNumericArgumentType.Int:
-                    writer.Write(value._blittableData.IntValue);
-                    break;
-                case FormatNumericArgumentType.UInt:
-                    writer.Write(value._blittableData.UIntValue);
-                    break;
-                case FormatNumericArgumentType.Float:
-                    writer.Write(value._blittableData.FloatValue);
-                    break;
-                case FormatNumericArgumentType.Double:
-                    writer.Write(value._blittableData.DoubleValue);
-                    break;
-                default:
-                    throw new InvalidOperationException("Invalid format argument type.");
-            }
-        }
-
-        public FormatNumericArg Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-        {
-            var formatterResolver = options.Resolver;
-            var type = formatterResolver
-                .GetFormatterWithVerify<FormatNumericArgumentType>()
-                .Deserialize(ref reader, options);
-
-            return type switch
-            {
-                FormatNumericArgumentType.Int => reader.ReadInt64(),
-                FormatNumericArgumentType.UInt => reader.ReadUInt64(),
-                FormatNumericArgumentType.Float => reader.ReadSingle(),
-                FormatNumericArgumentType.Double => reader.ReadDouble(),
-                _ => throw new InvalidOperationException("Invalid format argument type."),
-            };
-        }
     }
 
     static partial void StaticInit()

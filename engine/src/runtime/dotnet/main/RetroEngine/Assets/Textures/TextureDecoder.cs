@@ -16,6 +16,11 @@ public partial class TextureDecoder : IAssetDecoder
 {
     public Name AssetType => Texture.TypeName;
 
+    public bool CanCreateFromExtension(ReadOnlySpan<char> extension)
+    {
+        return extension.Equals("png", StringComparison.OrdinalIgnoreCase);
+    }
+
     public bool TryLoadFromNativeCache(AssetDecodeContext context, [NotNullWhen(true)] out Asset? asset)
     {
         var nativeTexture = NativeLoad(context.Path, out var width, out var height);

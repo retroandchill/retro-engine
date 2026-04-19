@@ -4,20 +4,16 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using MagicArchive;
-using MessagePack;
 
 namespace RetroEngine.Portable.Localization.History;
 
 internal abstract class TextHistoryBase : TextHistory
 {
-    [Key(0)]
     [ArchiveIgnore]
     public sealed override TextId TextId { get; } = TextId.Empty;
 
-    [Key(1)]
     private readonly string _source = "";
 
-    [IgnoreMember]
     private string? _localized;
 
     protected TextHistoryBase() { }

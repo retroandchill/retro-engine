@@ -16,11 +16,15 @@
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Serilog.Extensions.Logging" />
       <PackageReference Include="System.IO.Abstractions" />
+      <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
+      <PackageReference Include="Utf8StreamReader" />
+      <PackageReference Include="VYaml" />
       <PackageReference Include="ZLinq" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="ZString" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
