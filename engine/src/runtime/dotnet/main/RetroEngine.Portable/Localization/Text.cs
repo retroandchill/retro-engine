@@ -15,7 +15,9 @@ using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Localization.History;
 using RetroEngine.Portable.Localization.StringTables;
 using RetroEngine.Portable.Serialization.Json;
+using RetroEngine.Portable.Serialization.Yaml;
 using RetroEngine.Portable.Strings;
+using VYaml.Serialization;
 using ZLinq;
 
 namespace RetroEngine.Portable.Localization;
@@ -507,6 +509,11 @@ public readonly partial struct Text : IEquatable<Text>, IComparable<Text>, IComp
     internal void Rebuild()
     {
         TextData.History.UpdateDisplayStringIfOutOfDate();
+    }
+
+    static partial void StaticInit()
+    {
+        GeneratedResolver.Register(new TextYamlConverter());
     }
 
     static void IArchivable<Text>.Serialize<TBufferWriter>(

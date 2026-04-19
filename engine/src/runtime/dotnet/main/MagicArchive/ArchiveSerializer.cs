@@ -515,38 +515,7 @@ public static class ArchiveSerializer
         var builder = ReusableReadOnlySequenceBuilderPool.Rent();
         try
         {
-            var buffer = ArrayPool<byte>.Shared.Rent(65536); // initial 64K
-            var offset = 0;
-            do
-            {
-                if (offset == buffer.Length)
-                {
-                    builder.Add(buffer, returnToPool: true);
-                    buffer = ArrayPool<byte>.Shared.Rent(MathEx.NewArrayCapacity(buffer.Length));
-                    offset = 0;
-                }
-
-                int read;
-                try
-                {
-                    read = await stream
-                        .ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch
-                {
-                    // buffer is not added in builder, so return here.
-                    ArrayPool<byte>.Shared.Return(buffer);
-                    throw;
-                }
-
-                offset += read;
-
-                if (read != 0)
-                    continue;
-                builder.Add(buffer.AsMemory(0, offset), returnToPool: true);
-                break;
-            } while (true);
+            await builder.ReadFromStreamAsync(stream, cancellationToken);
 
             // If single buffer, we can avoid ReadOnlySequence build cost.
             if (builder.TryGetSingleMemory(out var memory))
@@ -562,7 +531,7 @@ public static class ArchiveSerializer
         }
         finally
         {
-            builder.Reset();
+            ReusableReadOnlySequenceBuilderPool.Return(builder);
         }
     }
 
@@ -593,37 +562,7 @@ public static class ArchiveSerializer
         var builder = ReusableReadOnlySequenceBuilderPool.Rent();
         try
         {
-            var buffer = ArrayPool<byte>.Shared.Rent(65536);
-            var offset = 0;
-            do
-            {
-                if (offset == buffer.Length)
-                {
-                    builder.Add(buffer, returnToPool: true);
-                    buffer = ArrayPool<byte>.Shared.Rent(MathEx.NewArrayCapacity(buffer.Length));
-                    offset = 0;
-                }
-
-                int read;
-                try
-                {
-                    read = await stream
-                        .ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch
-                {
-                    ArrayPool<byte>.Shared.Return(buffer);
-                    throw;
-                }
-
-                offset += read;
-
-                if (read != 0)
-                    continue;
-                builder.Add(buffer.AsMemory(0, offset), returnToPool: true);
-                break;
-            } while (true);
+            await builder.ReadFromStreamAsync(stream, cancellationToken);
 
             if (builder.TryGetSingleMemory(out var memory))
             {
@@ -637,7 +576,7 @@ public static class ArchiveSerializer
         }
         finally
         {
-            builder.Reset();
+            ReusableReadOnlySequenceBuilderPool.Return(builder);
         }
     }
 

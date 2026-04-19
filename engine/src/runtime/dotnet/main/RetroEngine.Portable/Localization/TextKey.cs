@@ -14,7 +14,6 @@ using RetroEngine.Portable.Serialization.Json;
 namespace RetroEngine.Portable.Localization;
 
 [StructLayout(LayoutKind.Sequential)]
-[JsonConverter(typeof(TextKeyJsonConverter))]
 [Archivable(GenerateType.Custom)]
 public readonly partial struct TextKey
     : IEquatable<TextKey>,

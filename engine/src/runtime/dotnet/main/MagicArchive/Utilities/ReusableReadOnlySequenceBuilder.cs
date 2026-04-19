@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace MagicArchive.Utilities;
 
-internal static class ReusableReadOnlySequenceBuilderPool
+public static class ReusableReadOnlySequenceBuilderPool
 {
     private static readonly ConcurrentQueue<ReusableReadOnlySequenceBuilder> Queue = new();
 
@@ -25,7 +25,7 @@ internal static class ReusableReadOnlySequenceBuilderPool
     }
 }
 
-internal sealed class ReusableReadOnlySequenceBuilder
+public sealed class ReusableReadOnlySequenceBuilder
 {
     private readonly Stack<Segment> _segmentPool = new();
     private readonly List<Segment> _list = [];
@@ -50,6 +50,74 @@ internal sealed class ReusableReadOnlySequenceBuilder
         }
         memory = default;
         return false;
+    }
+
+    public void ReadFromStream(Stream stream)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(65536);
+        var offset = 0;
+        do
+        {
+            if (offset == buffer.Length)
+            {
+                Add(buffer, returnToPool: true);
+                buffer = ArrayPool<byte>.Shared.Rent(MathEx.NewArrayCapacity(buffer.Length));
+                offset = 0;
+            }
+
+            int read;
+            try
+            {
+                read = stream.Read(buffer.AsSpan(offset, buffer.Length - offset));
+            }
+            catch
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+                throw;
+            }
+
+            offset += read;
+
+            if (read != 0)
+                continue;
+            Add(buffer.AsMemory(0, offset), returnToPool: true);
+            break;
+        } while (true);
+    }
+
+    public async ValueTask ReadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(65536);
+        var offset = 0;
+        do
+        {
+            if (offset == buffer.Length)
+            {
+                Add(buffer, returnToPool: true);
+                buffer = ArrayPool<byte>.Shared.Rent(MathEx.NewArrayCapacity(buffer.Length));
+                offset = 0;
+            }
+
+            int read;
+            try
+            {
+                read = await stream
+                    .ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+                throw;
+            }
+
+            offset += read;
+
+            if (read != 0)
+                continue;
+            Add(buffer.AsMemory(0, offset), returnToPool: true);
+            break;
+        } while (true);
     }
 
     public ReadOnlySequence<byte> Build()

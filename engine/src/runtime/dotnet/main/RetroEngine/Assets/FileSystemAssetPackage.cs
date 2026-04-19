@@ -18,11 +18,11 @@ using Zomp.SyncMethodGenerator;
 namespace RetroEngine.Assets;
 
 [YamlObject(NamingConvention.SnakeCase)]
-public readonly partial record struct AssetFileHeader(Name AssetType);
+internal readonly partial record struct AssetFileHeader(Name AssetType);
 
-public readonly record struct AssetFileEntry(Name AssetType, string FullPath, long DataOffset);
+internal readonly record struct AssetFileEntry(Name AssetType, string FullPath, long DataOffset);
 
-public sealed class FilesystemAssetPackage(
+public sealed class FileSystemAssetPackage(
     IFileSystem fileSystem,
     Name packageName,
     string path,
@@ -44,6 +44,8 @@ public sealed class FilesystemAssetPackage(
             };
         }
     }
+
+    public string SourcePath { get; } = path;
 
     private CancellationTokenSource? _loadCancellationSource;
     private Task? _loadTask;
@@ -77,9 +79,9 @@ public sealed class FilesystemAssetPackage(
 
     private async Task LoadInternalAsync(CancellationToken cancellationToken)
     {
-        var rootDirectory = fileSystem.DirectoryInfo.New(path);
+        var rootDirectory = fileSystem.DirectoryInfo.New(SourcePath);
         if (!rootDirectory.Exists)
-            throw new AssetLoadException($"Asset package directory '{path}' does not exist");
+            throw new AssetLoadException($"Asset package directory '{SourcePath}' does not exist");
 
         var assetFileEntries = new Dictionary<Name, AssetFileEntry>();
         foreach (var file in rootDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
@@ -210,6 +212,17 @@ public sealed class FilesystemAssetPackage(
 
         throw new FileNotFoundException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
+
+    public void Serialize<T, TBufferWriter>(in TBufferWriter writer, T? data)
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        YamlSerializer.Serialize(writer, data);
+    }
+
+    public T Deserialize<T>(in ReadOnlySequence<byte> sequence)
+    {
+        return YamlSerializer.Deserialize<T>(sequence);
+    }
 }
 
 [RegisterSingleton]
@@ -225,6 +238,6 @@ public sealed class FilesystemAssetPackageFactory(IFileSystem fileSystem, IEnume
 
     public IAssetPackage Create(Name packageName, string path)
     {
-        return new FilesystemAssetPackage(fileSystem, packageName, path, _decoders);
+        return new FileSystemAssetPackage(fileSystem, packageName, path, _decoders);
     }
 }

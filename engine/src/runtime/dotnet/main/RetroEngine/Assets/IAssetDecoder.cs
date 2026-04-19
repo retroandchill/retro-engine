@@ -3,12 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
-
-public readonly record struct AssetDecodeContext(AssetPath Path);
 
 public interface IAssetDecoder
 {
@@ -19,17 +18,18 @@ public interface IAssetDecoder
         return false;
     }
 
-    bool TryLoadFromNativeCache(AssetDecodeContext context, [NotNullWhen(true)] out Asset? asset)
+    bool TryLoadFromNativeCache(AssetPath path, [NotNullWhen(true)] out Asset? asset)
     {
         asset = null;
         return false;
     }
 
-    Asset Decode(AssetDecodeContext context, Stream stream);
+    Asset Decode(IAssetPackage package, Name assetName, ReadOnlySequence<byte> bytes);
 
     ValueTask<Asset> DecodeAsync(
-        AssetDecodeContext context,
-        Stream stream,
+        IAssetPackage package,
+        Name assetName,
+        ReadOnlySequence<byte> bytes,
         CancellationToken cancellationToken = default
     );
 }

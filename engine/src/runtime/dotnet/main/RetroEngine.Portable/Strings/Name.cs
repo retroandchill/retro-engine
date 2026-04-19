@@ -12,6 +12,8 @@ using JetBrains.Annotations;
 using MagicArchive;
 using RetroEngine.Interop;
 using RetroEngine.Portable.Serialization.Json;
+using RetroEngine.Portable.Serialization.Yaml;
+using VYaml.Serialization;
 
 namespace RetroEngine.Portable.Strings;
 
@@ -412,6 +414,11 @@ public readonly partial struct Name
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf16")]
     private static partial int NativeToString(Name name, ReadOnlySpan<char> buffer, int bufferLength);
+
+    static partial void StaticInit()
+    {
+        GeneratedResolver.Register(new NameYamlConverter());
+    }
 
     static void IArchivable<Name>.Serialize<TBufferWriter>(
         ref ArchiveWriter<TBufferWriter> writer,

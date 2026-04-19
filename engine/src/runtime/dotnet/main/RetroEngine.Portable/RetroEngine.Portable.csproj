@@ -34,8 +34,4 @@
     <ItemGroup>
         <InternalsVisibleTo Include="RetroEngine.Portable.Test"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Serialization\Binary\" />
-    </ItemGroup>
 </Project>

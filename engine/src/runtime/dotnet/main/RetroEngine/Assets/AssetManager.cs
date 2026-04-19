@@ -3,8 +3,10 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using MagicArchive.Utilities;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Portable.Strings;
 using Zomp.SyncMethodGenerator;
@@ -111,17 +113,26 @@ public sealed partial class AssetManager(
                 return null;
             }
 
-            var decodeContext = new AssetDecodeContext(path);
-            if (decoder.TryLoadFromNativeCache(decodeContext, out cachedAsset))
+            if (decoder.TryLoadFromNativeCache(path, out cachedAsset))
             {
                 _assetCache[path] = new WeakReference<Asset>(cachedAsset);
                 return cachedAsset;
             }
 
-            await using var assetStream = package.OpenAsset(path.AssetName);
-            var decoded = await decoder.DecodeAsync(decodeContext, assetStream, cancellationToken);
-            _assetCache[path] = new WeakReference<Asset>(decoded);
-            return decoded;
+            await using var stream = package.OpenAsset(path.AssetName);
+            var builder = ReusableReadOnlySequenceBuilderPool.Rent();
+            try
+            {
+                await builder.ReadFromStreamAsync(stream, cancellationToken);
+
+                var decoded = await decoder.DecodeAsync(package, path.AssetName, builder.Build(), cancellationToken);
+                _assetCache[path] = new WeakReference<Asset>(decoded);
+                return decoded;
+            }
+            finally
+            {
+                ReusableReadOnlySequenceBuilderPool.Return(builder);
+            }
         }
         finally
         {

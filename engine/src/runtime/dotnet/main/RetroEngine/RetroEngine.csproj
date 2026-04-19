@@ -6,6 +6,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
         <IsPackable>false</IsPackable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
@@ -18,7 +19,6 @@
       <PackageReference Include="System.IO.Abstractions" />
       <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
       <PackageReference Include="Utf8StreamReader" />
-      <PackageReference Include="VYaml" />
       <PackageReference Include="ZLinq" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
         <PrivateAssets>all</PrivateAssets>
@@ -31,5 +31,6 @@
       <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
+      <ProjectReference Include="..\MagicArchive.SourceGenerator\MagicArchive.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 </Project>
