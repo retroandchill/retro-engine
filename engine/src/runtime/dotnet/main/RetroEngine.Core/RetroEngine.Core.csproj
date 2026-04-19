@@ -10,6 +10,7 @@
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="Avalonia" VersionOverride="12.0.1" />
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
     </ItemGroup>
 </Project>
