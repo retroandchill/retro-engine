@@ -27,6 +27,7 @@
       <PackageReference Include="ZString" />
     </ItemGroup>
     <ItemGroup>
+      <PackageReference Include="Avalonia" VersionOverride="12.0.1" />
       <ProjectReference Include="..\RetroEngine.Core\RetroEngine.Core.csproj" />
       <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
