@@ -37,35 +37,29 @@ public readonly record struct InteropError(InteropErrorCode ErrorCode, string? N
 
     public void ThrowIfError()
     {
-        switch (ErrorCode)
+        var exception = ToException();
+        if (exception is not null)
+            throw exception;
+    }
+
+    public Exception? ToException()
+    {
+        return ErrorCode switch
         {
-            case InteropErrorCode.None:
-                break;
-            case InteropErrorCode.Unknown:
-                throw new NativeInteropException(FullErrorMessage);
-            case InteropErrorCode.IoError:
-                throw new IOException(FullErrorMessage);
-            case InteropErrorCode.ResourceError:
-                throw new ResourceException(FullErrorMessage);
-            case InteropErrorCode.InvalidState:
-                throw new InvalidStateException(FullErrorMessage);
-            case InteropErrorCode.UnsupportedOperation:
-                throw new NotSupportedException(FullErrorMessage);
-            case InteropErrorCode.NotImplemented:
-                throw new NotImplementedException(FullErrorMessage);
-            case InteropErrorCode.PlatformError:
-                throw new PlatformNotSupportedException(FullErrorMessage);
-            case InteropErrorCode.GraphicsError:
-                throw new GraphicsException(FullErrorMessage);
-            case InteropErrorCode.InvalidArgument:
-                throw new ArgumentException(FullErrorMessage);
-            case InteropErrorCode.OutOfRange:
-                throw new ArgumentOutOfRangeException(null, FullErrorMessage);
-            case InteropErrorCode.BadAlloc:
-                throw new OutOfMemoryException(FullErrorMessage);
-            default:
-                throw new InvalidOperationException("Unknown error code.");
-        }
+            InteropErrorCode.None => null,
+            InteropErrorCode.Unknown => new NativeInteropException(FullErrorMessage),
+            InteropErrorCode.IoError => new IOException(FullErrorMessage),
+            InteropErrorCode.ResourceError => new ResourceException(FullErrorMessage),
+            InteropErrorCode.InvalidState => new InvalidStateException(FullErrorMessage),
+            InteropErrorCode.UnsupportedOperation => new NotSupportedException(FullErrorMessage),
+            InteropErrorCode.NotImplemented => new NotImplementedException(FullErrorMessage),
+            InteropErrorCode.PlatformError => new PlatformNotSupportedException(FullErrorMessage),
+            InteropErrorCode.GraphicsError => new GraphicsException(FullErrorMessage),
+            InteropErrorCode.InvalidArgument => new ArgumentException(FullErrorMessage),
+            InteropErrorCode.OutOfRange => new ArgumentOutOfRangeException(null, FullErrorMessage),
+            InteropErrorCode.BadAlloc => new OutOfMemoryException(FullErrorMessage),
+            _ => new InvalidOperationException("Unknown error code."),
+        };
     }
 }
 

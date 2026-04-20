@@ -56,7 +56,7 @@ namespace retro
         requires std::is_void_v<InteropResult<Functor>>
     constexpr InteropResult<Functor> invalid_interop_result<Functor> = false;
 
-    inline InteropErrorCode get_error_code(const std::exception &e)
+    export inline InteropErrorCode get_error_code(const std::exception &e)
     {
         if (dynamic_cast<const IoException *>(&e) != nullptr)
         {
@@ -144,7 +144,7 @@ namespace retro
         }
         catch (const std::exception &e)
         {
-            error.error_code = InteropErrorCode::unknown;
+            error.error_code = get_error_code(e);
             auto &type_id = typeid(e);
             error.native_exception_type = type_id.name();
             error.message = e.what();
