@@ -11,8 +11,8 @@ import retro.interop.interop_error;
 
 extern "C"
 {
-    RETRO_API retro::PlatformBackend *retro_platform_backend_create(retro::PlatformBackendKind kind,
-                                                                    retro::PlatformInitFlags flags,
+    RETRO_API retro::PlatformBackend *retro_platform_backend_create(const retro::PlatformBackendKind kind,
+                                                                    const retro::PlatformInitFlags flags,
                                                                     retro::InteropError *error_message)
     {
         return retro::try_execute(
