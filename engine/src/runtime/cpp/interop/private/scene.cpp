@@ -178,7 +178,7 @@ extern "C"
 
     RETRO_API void retro_sprite_set_texture(retro::Sprite *node, retro::Texture *texture)
     {
-        node->set_texture(retro::RefCountPtr(texture));
+        node->set_texture(retro::RefCountPtr<retro::Texture>::ref(texture));
     }
 
     RETRO_API void retro_sprite_set_tint(retro::Sprite *node, const retro::Color tint)

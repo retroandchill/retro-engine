@@ -22,7 +22,7 @@ namespace retro
             std::shared_lock lock{asset_cache_mutex_};
             if (const auto existing_asset = asset_cache_.find(path); existing_asset != asset_cache_.end())
             {
-                return RefCountPtr{existing_asset->second};
+                return RefCountPtr<Asset>::ref(existing_asset->second);
             }
         }
 

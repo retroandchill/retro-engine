@@ -11,85 +11,46 @@ import std;
 
 namespace retro
 {
-    template <typename T>
-    concept SelfRetainable = requires(T *p) {
+    export template <typename T>
+    concept RefCounted = requires(T *p) {
         {
             p->retain()
         } noexcept;
-    };
-
-    template <typename T>
-    concept SelfReleaseable = requires(T *p) {
         {
             p->release()
         } noexcept;
     };
 
-    template <SelfRetainable T>
-    void intrusive_retain(T *p) noexcept
-    {
-        p->retain();
-    }
-
-    template <SelfReleaseable T>
-    void intrusive_release(T *p) noexcept
-    {
-        p->release();
-    }
-
-    export template <typename T>
-    concept RefCounted = requires(T *p) {
+    export template <typename Block, typename T>
+    concept ControlBlockFor = RefCounted<T> && requires(T *p, Block &&b) {
         {
-            intrusive_retain(p)
+            b.strong_retain(p)
         } noexcept;
         {
-            intrusive_release(p)
+            b.strong_release(p)
         } noexcept;
-    };
-
-    export class IntrusiveRefCounted
-    {
-      protected:
-        IntrusiveRefCounted() noexcept = default;
-        ~IntrusiveRefCounted() noexcept = default;
-
-      public:
-        IntrusiveRefCounted(const IntrusiveRefCounted &) noexcept = delete;
-        IntrusiveRefCounted &operator=(const IntrusiveRefCounted &) noexcept = delete;
-        IntrusiveRefCounted(IntrusiveRefCounted &&) noexcept = delete;
-        IntrusiveRefCounted &operator=(IntrusiveRefCounted &&) noexcept = delete;
-
-        inline void retain() const noexcept
         {
-            ref_count_.fetch_add(1, std::memory_order_relaxed);
-        }
-
-        template <typename Self>
-        inline void release(this const Self &self) noexcept
+            b.weak_retain()
+        } noexcept;
         {
-            if (static_cast<const IntrusiveRefCounted &>(self).ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1)
-            {
-                delete std::addressof(self); // NOSONAR
-            }
-        }
-
-        [[nodiscard]] inline std::uint32_t ref_count() const noexcept
+            b.weak_release()
+        } noexcept;
         {
-            return ref_count_.load(std::memory_order_relaxed);
-        }
-
-      private:
-        mutable std::atomic<std::uint32_t> ref_count_{0};
+            b.strong_ref_count()
+        } noexcept -> std::convertible_to<std::uint64_t>;
+        {
+            b.weak_ref_count()
+        } noexcept -> std::convertible_to<std::uint64_t>;
     };
-
-    struct RefCountInternal
-    {
-    };
-
-    constexpr RefCountInternal ref_count_internal{};
 
     export template <typename T>
-        requires RefCounted<T>
+    concept WeakRefCountable = RefCounted<T> && requires(T *p) {
+        {
+            p->control_block()
+        } -> ControlBlockFor<T>;
+    };
+
+    export template <RefCounted T>
     class RefCountPtr
     {
       public:
@@ -101,20 +62,16 @@ namespace retro
         {
         }
 
+      private:
         explicit constexpr RefCountPtr(T *ptr) noexcept : ptr_(ptr)
         {
-            if (ptr_ != nullptr)
-                intrusive_retain(ptr_);
         }
 
-        explicit constexpr RefCountPtr(RefCountInternal, T *ptr) noexcept : ptr_(ptr)
-        {
-        }
-
+      public:
         constexpr RefCountPtr(const RefCountPtr &other) noexcept : ptr_{other.ptr_}
         {
             if (ptr_ != nullptr)
-                intrusive_retain(ptr_);
+                ptr_->retain();
         }
 
         template <std::derived_from<T> U>
@@ -122,7 +79,7 @@ namespace retro
         explicit(false) constexpr RefCountPtr(const RefCountPtr<U> &other) noexcept : ptr_(other.get())
         {
             if (ptr_ != nullptr)
-                intrusive_retain(ptr_);
+                ptr_->retain();
         }
 
         constexpr RefCountPtr(RefCountPtr &&other) noexcept : ptr_(other.ptr_)
@@ -132,7 +89,7 @@ namespace retro
 
         template <std::derived_from<T> U>
             requires std::constructible_from<T *, U *>
-        explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release(RefCountInternal{}))
+        explicit(false) constexpr RefCountPtr(RefCountPtr<U> &&other) noexcept : ptr_(other.release())
         {
             other.ptr_ = nullptr;
         }
@@ -140,7 +97,7 @@ namespace retro
         ~RefCountPtr() noexcept
         {
             if (ptr_ != nullptr)
-                intrusive_release(ptr_);
+                ptr_->release();
         }
 
         constexpr RefCountPtr &operator=(const RefCountPtr &other) noexcept
@@ -166,7 +123,7 @@ namespace retro
             {
                 if (ptr_)
                 {
-                    intrusive_release(ptr_);
+                    ptr_->release();
                 }
 
                 ptr_ = other.ptr_;
@@ -181,7 +138,7 @@ namespace retro
         {
             if (ptr_)
             {
-                intrusive_release(ptr_);
+                ptr_->release();
             }
 
             ptr_ = other.ptr_;
@@ -194,6 +151,18 @@ namespace retro
         {
             reset(ptr);
             return *this;
+        }
+
+        constexpr static RefCountPtr no_ref(T *ptr) noexcept
+        {
+            return RefCountPtr{ptr};
+        }
+
+        constexpr static RefCountPtr ref(T *ptr) noexcept
+        {
+            if (ptr != nullptr)
+                ptr->retain();
+            return RefCountPtr{ptr};
         }
 
         [[nodiscard]] constexpr T *get() const noexcept
@@ -211,7 +180,7 @@ namespace retro
             return *ptr_;
         }
 
-        T *release(RefCountInternal) noexcept
+        T *release() noexcept
         {
             auto ptr = ptr_;
             ptr_ = nullptr;
@@ -222,7 +191,7 @@ namespace retro
         {
             if (ptr_ != nullptr)
             {
-                intrusive_release(ptr_);
+                ptr_->release();
                 ptr_ = nullptr;
             }
         }
@@ -233,11 +202,11 @@ namespace retro
                 return;
 
             if (ptr_ != nullptr)
-                intrusive_release(ptr_);
+                ptr_->release();
 
             ptr_ = ptr;
             if (ptr_ != nullptr)
-                intrusive_retain(ptr_);
+                ptr_->retain();
         }
 
         constexpr void swap(RefCountPtr &other) noexcept
@@ -315,15 +284,11 @@ namespace retro
         }
 
       private:
-        template <typename U>
-            requires RefCounted<U>
+        template <RefCounted U>
         friend class RefCountPtr;
 
         T *ptr_ = nullptr;
     };
-
-    export template <RefCounted T>
-    RefCountPtr(T *) -> RefCountPtr<T>;
 
     export template <typename T>
         requires RefCounted<std::remove_cv_t<T>>
@@ -332,11 +297,202 @@ namespace retro
         a.swap(b);
     }
 
+    template <WeakRefCountable T>
+    using ControlBlockType = std::remove_cvref_t<decltype(std::declval<T>().control_block())>;
+
+    export template <WeakRefCountable T>
+    class WeakRefCountPtr
+    {
+        using ControlBlock = ControlBlockType<T>;
+
+        template <WeakRefCountable U>
+        friend class WeakRefCountPtr;
+
+      public:
+        constexpr WeakRefCountPtr() noexcept = default;
+
+        explicit(false) WeakRefCountPtr(std::nullptr_t) noexcept
+        {
+        }
+
+        explicit WeakRefCountPtr(T *ptr) noexcept
+            : ptr_{ptr}, control_block_{ptr != nullptr ? std::addressof(ptr->control_block()) : nullptr}
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+        }
+
+        WeakRefCountPtr(const WeakRefCountPtr &other) noexcept : ptr_{other.ptr_}, control_block_{other.control_block_}
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+        }
+
+        WeakRefCountPtr(WeakRefCountPtr &&other) noexcept : ptr_{other.ptr_}, control_block_{other.control_block_}
+        {
+            other.ptr_ = nullptr;
+            other.control_block_ = nullptr;
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        WeakRefCountPtr(const WeakRefCountPtr &other) noexcept : ptr_{other.ptr_}, control_block_{other.control_block_}
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        WeakRefCountPtr(WeakRefCountPtr &&other) noexcept : ptr_{other.ptr_}, control_block_{other.control_block_}
+        {
+            other.ptr_ = nullptr;
+            other.control_block_ = nullptr;
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        explicit(false) WeakRefCountPtr(const RefCountPtr<U> &other) noexcept
+            : ptr_{other.get()}, control_block_{std::addressof(other->control_block())}
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+        }
+
+        ~WeakRefCountPtr() noexcept
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+        }
+
+        WeakRefCountPtr &operator=(const WeakRefCountPtr &other) noexcept
+        {
+            if (this == std::addressof(other))
+                return *this;
+
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+
+            ptr_ = other.ptr_;
+            control_block_ = other.control_block_;
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+
+            return *this;
+        }
+
+        WeakRefCountPtr &operator=(WeakRefCountPtr &&other) noexcept
+        {
+            if (this == std::addressof(other))
+                return *this;
+
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+
+            ptr_ = other.ptr_;
+            control_block_ = other.control_block_;
+            other.ptr_ = nullptr;
+            other.control_block_ = nullptr;
+            return *this;
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        WeakRefCountPtr &operator=(const WeakRefCountPtr<U> &other) noexcept
+        {
+            if (this == std::addressof(other))
+                return *this;
+
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+
+            ptr_ = other.ptr_;
+            control_block_ = other.control_block_;
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+
+            return *this;
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        WeakRefCountPtr &operator=(WeakRefCountPtr<U> &&other) noexcept
+        {
+            if (this == std::addressof(other))
+                return *this;
+
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+
+            ptr_ = other.ptr_;
+            control_block_ = other.control_block_;
+            other.ptr_ = nullptr;
+            other.control_block_ = nullptr;
+            return *this;
+        }
+
+        template <WeakRefCountable U>
+            requires std::convertible_to<U *, T *> && std::convertible_to<ControlBlockType<U> *, ControlBlock *>
+        WeakRefCountPtr &operator=(const RefCountPtr<U> &other)
+        {
+            if (control_block_ != nullptr)
+                control_block_->weak_release();
+
+            ptr_ = other.get();
+            control_block_ = std::addressof(other->control_block());
+            if (control_block_ != nullptr)
+                control_block_->weak_retain();
+
+            return *this;
+        }
+
+        void reset() noexcept
+        {
+            if (control_block_ == nullptr)
+                return;
+
+            control_block_->weak_release();
+            ptr_ = nullptr;
+            control_block_ = nullptr;
+        }
+
+        void swap(WeakRefCountPtr &other) noexcept
+        {
+            std::swap(ptr_, other.ptr_);
+            std::swap(control_block_, other.control_block_);
+        }
+
+        [[nodiscard]] std::uint64_t use_count() const noexcept
+        {
+            return control_block_ != nullptr ? control_block_->strong_ref_count() : 0;
+        }
+
+        [[nodiscard]] bool expired() const noexcept
+        {
+            return use_count() == 0;
+        }
+
+        [[nodiscard]] RefCountPtr<T> lock() const noexcept
+        {
+            return expired() ? RefCountPtr<T>{nullptr} : RefCountPtr<T>::ref(ptr_);
+        }
+
+      private:
+        T *ptr_ = nullptr;
+        ControlBlock *control_block_ = nullptr;
+    };
+
+    template <WeakRefCountable T>
+    WeakRefCountPtr(T *) -> WeakRefCountPtr<T>;
+
+    template <WeakRefCountable T>
+    WeakRefCountPtr(RefCountPtr<T>) -> WeakRefCountPtr<T>;
+
     export template <RefCounted T, typename... Args>
         requires std::constructible_from<T, Args...>
     constexpr RefCountPtr<T> make_ref_counted(Args &&...args)
     {
-        return RefCountPtr<T>{new std::remove_cv_t<T>{std::forward<Args>(args)...}};
+        return RefCountPtr<T>::no_ref(new std::remove_cv_t<T>{std::forward<Args>(args)...});
     }
 
     export template <RefCounted T, RefCounted U>
@@ -344,15 +500,15 @@ namespace retro
     constexpr RefCountPtr<T> static_pointer_cast(const RefCountPtr<U> &ptr) noexcept
     {
         auto *p = static_cast<T *>(ptr.get());
-        return RefCountPtr<T>{p};
+        return RefCountPtr<T>::ref(p);
     }
 
     export template <RefCounted T, RefCounted U>
         requires CanStaticCast<U *, T *>
     constexpr RefCountPtr<U> static_pointer_cast(RefCountPtr<T> &&ptr) noexcept
     {
-        auto *p = static_cast<T *>(ptr.release(ref_count_internal));
-        return RefCountPtr<T>{ref_count_internal, p};
+        auto *p = static_cast<T *>(ptr.release());
+        return RefCountPtr<T>::no_ref(p);
     }
 
     export template <RefCounted T, RefCounted U>
@@ -360,16 +516,157 @@ namespace retro
     constexpr RefCountPtr<T> dynamic_pointer_cast(const RefCountPtr<U> &ptr) noexcept
     {
         auto *p = dynamic_cast<T *>(ptr.get());
-        return RefCountPtr<T>{p};
+        return RefCountPtr<T>::ref(p);
     }
 
     export template <RefCounted T, RefCounted U>
         requires std::derived_from<T, U> || std::derived_from<U, T>
     constexpr RefCountPtr<T> dynamic_pointer_cast(RefCountPtr<U> &&ptr) noexcept
     {
-        auto *p = dynamic_cast<T *>(ptr.release(ref_count_internal));
-        return RefCountPtr<T>{ref_count_internal, p};
+        auto *p = dynamic_cast<T *>(ptr.release());
+        return RefCountPtr<T>::no_ref(p);
     }
+
+    export class IntrusiveRefCounted
+    {
+      protected:
+        IntrusiveRefCounted() noexcept = default;
+        ~IntrusiveRefCounted() noexcept = default;
+
+      public:
+        IntrusiveRefCounted(const IntrusiveRefCounted &) noexcept = delete;
+        IntrusiveRefCounted &operator=(const IntrusiveRefCounted &) noexcept = delete;
+        IntrusiveRefCounted(IntrusiveRefCounted &&) noexcept = delete;
+        IntrusiveRefCounted &operator=(IntrusiveRefCounted &&) noexcept = delete;
+
+        inline void retain() const noexcept
+        {
+            ref_count_.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        template <typename Self>
+        inline void release(this const Self &self) noexcept
+        {
+            if (static_cast<const IntrusiveRefCounted &>(self).ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1)
+            {
+                delete std::addressof(self); // NOSONAR
+            }
+        }
+
+        [[nodiscard]] inline std::uint32_t ref_count() const noexcept
+        {
+            return ref_count_.load(std::memory_order_relaxed);
+        }
+
+        template <typename Self>
+        [[nodiscard]] RefCountPtr<Self> shared_from_this(this const Self &self) noexcept
+        {
+            return RefCountPtr<Self>::ref(const_cast<Self *>(std::addressof(self)));
+        }
+
+      private:
+        mutable std::atomic<std::uint32_t> ref_count_{1};
+    };
+
+    class RefCountedControlBlock
+    {
+      public:
+        template <RefCounted T>
+        void strong_retain([[maybe_unused]] T *ptr) const noexcept
+        {
+            strong_ref_count_.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        template <RefCounted T>
+        void strong_release(T *ptr) const noexcept
+        {
+            if (strong_ref_count_.fetch_sub(1, std::memory_order_relaxed) == 1)
+                delete ptr;
+
+            if (weak_ref_count_.load(std::memory_order_relaxed) == 0)
+                delete this;
+        }
+
+        inline void weak_retain() const noexcept
+        {
+            weak_ref_count_.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        inline void weak_release() const noexcept
+        {
+            if (const auto old_value = weak_ref_count_.fetch_sub(1, std::memory_order_relaxed);
+                old_value == 1 && strong_ref_count_.load(std::memory_order_relaxed) == 0)
+                delete this;
+        }
+
+        [[nodiscard]] inline std::uint32_t strong_ref_count() const noexcept
+        {
+            return strong_ref_count_.load(std::memory_order_relaxed);
+        }
+
+        [[nodiscard]] inline std::uint32_t weak_ref_count() const noexcept
+        {
+            return weak_ref_count_.load(std::memory_order_relaxed);
+        }
+
+      private:
+        mutable std::atomic<std::uint32_t> strong_ref_count_{1};
+        mutable std::atomic<std::uint32_t> weak_ref_count_{1};
+    };
+
+    export class WeakRefCounted
+    {
+      protected:
+        WeakRefCounted() noexcept = default;
+
+        ~WeakRefCounted() noexcept
+        {
+            control_block_->weak_release();
+        }
+
+      public:
+        WeakRefCounted(const WeakRefCounted &) noexcept = delete;
+        WeakRefCounted &operator=(const WeakRefCounted &) noexcept = delete;
+        WeakRefCounted(WeakRefCounted &&) noexcept = delete;
+        WeakRefCounted &operator=(WeakRefCounted &&) noexcept = delete;
+
+        template <typename Self>
+        void retain(this const Self &self) noexcept
+        {
+            self.control_block_->strong_retain(std::addressof(self));
+        }
+
+        template <typename Self>
+        void release(this const Self &self) noexcept
+        {
+            self.control_block_->strong_release(std::addressof(self));
+        }
+
+        [[nodiscard]] inline std::uint32_t ref_count() const noexcept
+        {
+            return control_block_->strong_ref_count();
+        }
+
+        [[nodiscard]] RefCountedControlBlock &control_block() const noexcept
+        {
+            return *control_block_;
+        }
+
+        template <typename Self>
+        [[nodiscard]] RefCountPtr<Self> shared_from_this(this const Self &self) noexcept
+        {
+            return RefCountPtr<Self>::ref(const_cast<Self *>(std::addressof(self)));
+        }
+
+        template <typename Self>
+        [[nodiscard]] WeakRefCountPtr<Self> weak_from_this(this const Self &self) noexcept
+        {
+            return WeakRefCountPtr<Self>{const_cast<Self *>(std::addressof(self))};
+        }
+
+      private:
+        RefCountedControlBlock *control_block_ = new RefCountedControlBlock{};
+    };
 } // namespace retro
 
 template <retro::RefCounted T>
