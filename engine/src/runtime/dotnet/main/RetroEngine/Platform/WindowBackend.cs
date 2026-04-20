@@ -7,6 +7,7 @@ namespace RetroEngine.Platform;
 
 public enum WindowBackend : byte
 {
+    Headless,
     SDL3,
 }
 

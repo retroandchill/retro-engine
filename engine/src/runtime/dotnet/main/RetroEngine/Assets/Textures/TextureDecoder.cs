@@ -10,6 +10,9 @@ using System.Runtime.InteropServices;
 using MagicArchive;
 using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.PixelFormats;
 using VYaml.Annotations;
 using Zomp.SyncMethodGenerator;
 
@@ -42,6 +45,11 @@ internal readonly partial record struct TextureData
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public partial class TextureDecoder(IFileSystem fileSystem) : IAssetDecoder
 {
+    private static readonly DecoderOptions ImageDecoderOptions = new()
+    {
+        Configuration = new Configuration { PreferContiguousImageBuffers = true },
+    };
+
     public Name AssetType => Texture.TypeName;
 
     public bool CanCreateFromExtension(ReadOnlySpan<char> extension)
@@ -81,31 +89,26 @@ public partial class TextureDecoder(IFileSystem fileSystem) : IAssetDecoder
             throw new AssetLoadException($"Texture file {absoluteTexturePath} does not exist");
 
         await using var stream = fileSystem.File.OpenRead(absoluteTexturePath);
-        var buffer = ArrayPool<byte>.Shared.Rent((int)stream.Length);
-        try
-        {
-            var bytesRead = await stream.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
-            var assetPath = new AssetPath(package.PackageName, assetName);
-            var nativeTexture = NativeCreate(assetPath, buffer, bytesRead, out var width, out var height);
-            return nativeTexture != IntPtr.Zero
-                ? new Texture(assetPath, nativeTexture, width, height)
-                : throw new InvalidOperationException("Failed to load texture from stream.");
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
+        using var image = await Image
+            .LoadAsync<Rgba32>(ImageDecoderOptions, stream, cancellationToken)
+            .ConfigureAwait(false);
+
+        image.DangerousTryGetSinglePixelMemory(out var pixelMemory);
+
+        var assetPath = new AssetPath(package.PackageName, assetName);
+        var buffer = MemoryMarshal.AsBytes(pixelMemory.Span);
+        if (buffer.Length != image.Width * image.Height * 4)
+            throw new AssetLoadException($"Texture file {absoluteTexturePath} has invalid dimensions");
+
+        var nativeTexture = NativeCreate(assetPath, buffer, image.Width, image.Height);
+        return nativeTexture != IntPtr.Zero
+            ? new Texture(assetPath, nativeTexture, image.Width, image.Height)
+            : throw new InvalidOperationException("Failed to load texture from stream.");
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load_existing")]
     private static partial IntPtr NativeLoad(in AssetPath path, out int width, out int height);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load")]
-    private static partial IntPtr NativeCreate(
-        in AssetPath path,
-        ReadOnlySpan<byte> bytes,
-        int length,
-        out int width,
-        out int height
-    );
+    private static partial IntPtr NativeCreate(in AssetPath path, ReadOnlySpan<byte> bytes, int width, int height);
 }

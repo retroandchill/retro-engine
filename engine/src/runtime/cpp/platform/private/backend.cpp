@@ -8,6 +8,7 @@ module retro.platform.backend;
 
 import retro.platform.exceptions;
 import :sdl;
+import :headless;
 
 namespace retro
 {
@@ -15,6 +16,8 @@ namespace retro
     {
         switch (info.kind)
         {
+            case PlatformBackendKind::headless:
+                return std::make_unique<HeadlessPlatformBackend>();
             case PlatformBackendKind::sdl3:
                 return std::make_unique<Sdl3PlatformBackend>(info.flags);
             default:

@@ -309,6 +309,13 @@ namespace retro
         State state_{};
     };
 
+    export template <typename T>
+        requires(!std::is_void_v<T> && std::is_constructible_v<std::remove_cvref_t<T>, T>)
+    Task<std::remove_cvref_t<T>> create_task_from_result(T &&result)
+    {
+        return Task<std::remove_cvref_t<T>>::from_result(std::forward<T>(result));
+    }
+
     template <typename T, typename Result>
     template <typename Self>
     Task<Result> TaskPromiseBase<T, Result>::get_return_object(this Self &self) noexcept

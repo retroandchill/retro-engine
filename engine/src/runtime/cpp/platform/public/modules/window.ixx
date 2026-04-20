@@ -18,6 +18,7 @@ namespace retro
 {
     export enum class WindowBackend : std::uint8_t
     {
+        headless,
         sdl3
     };
 

@@ -9,6 +9,7 @@ namespace RetroEngine.Platform;
 
 public enum PlatformBackendKind : byte
 {
+    Headless,
     SDL3,
 }
 

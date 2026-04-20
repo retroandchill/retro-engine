@@ -24,6 +24,7 @@ namespace retro
 {
     export enum class PlatformBackendKind : std::uint8_t
     {
+        headless,
         sdl3
     };
 

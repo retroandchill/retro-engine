@@ -9,7 +9,8 @@ set(RETRO_PLATFORM_SOURCES
 set(RETRO_PLATFORM_HEADERS
 )
 
-set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx)
+set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx
+        private/backend/headless.ixx)
 
 set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/dll.ixx
