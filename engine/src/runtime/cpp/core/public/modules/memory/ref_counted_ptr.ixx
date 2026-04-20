@@ -111,7 +111,7 @@ namespace retro
         {
         }
 
-        constexpr RefCountPtr(const RefCountPtr &other) noexcept : ptr_(other.ptr_)
+        constexpr RefCountPtr(const RefCountPtr &other) noexcept : ptr_{other.ptr_}
         {
             if (ptr_ != nullptr)
                 intrusive_retain(ptr_);
@@ -218,7 +218,7 @@ namespace retro
             return ptr;
         }
 
-        [[nodiscard]] constexpr void reset() noexcept
+        constexpr void reset() noexcept
         {
             if (ptr_ != nullptr)
             {
