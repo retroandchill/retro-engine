@@ -104,7 +104,15 @@ namespace retro
         {
             if (this != std::addressof(other))
             {
-                reset(other.ptr_);
+                if (other.ptr_ == ptr_)
+                    return *this;
+
+                if (ptr_ != nullptr)
+                    ptr_->release();
+
+                ptr_ = other.ptr_;
+                if (ptr_ != nullptr)
+                    ptr_->retain();
             }
             return *this;
         }
@@ -194,19 +202,6 @@ namespace retro
                 ptr_->release();
                 ptr_ = nullptr;
             }
-        }
-
-        constexpr void reset(T *ptr) noexcept
-        {
-            if (ptr == ptr_)
-                return;
-
-            if (ptr_ != nullptr)
-                ptr_->release();
-
-            ptr_ = ptr;
-            if (ptr_ != nullptr)
-                ptr_->retain();
         }
 
         constexpr void swap(RefCountPtr &other) noexcept

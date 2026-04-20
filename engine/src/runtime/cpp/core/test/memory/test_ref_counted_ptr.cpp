@@ -216,46 +216,6 @@ TEST(RefCountPtr, ResetOnNullIsNoOp)
     EXPECT_EQ(TestObject::destruction_count(), 1);
 }
 
-TEST(RefCountPtr, ResetWithRawPointerTakesOwnershipAndRetains)
-{
-    TestObject::reset_counters();
-
-    auto p = make_ref_counted<TestObject>(1);
-    p.reset(); // release first created one
-    EXPECT_EQ(TestObject::live_count(), 0);
-    EXPECT_EQ(TestObject::destruction_count(), 1);
-
-    auto *raw2 = new TestObject{2};
-    EXPECT_EQ(TestObject::live_count(), 1);
-    EXPECT_EQ(raw2->ref_count(), 0u); // initial refcount
-
-    p.reset(raw2);
-    EXPECT_EQ(p.get(), raw2);
-    EXPECT_EQ(raw2->ref_count(), 1u); // reset retains
-
-    p.reset();
-    EXPECT_EQ(TestObject::live_count(), 0);
-    EXPECT_EQ(TestObject::destruction_count(), 2);
-}
-
-TEST(RefCountPtr, ResetWithSamePointerIsNoOp)
-{
-    TestObject::reset_counters();
-
-    auto p = make_ref_counted<TestObject>(3);
-    auto *raw = p.get();
-    auto old_ref_count = raw->ref_count();
-
-    p.reset(raw);
-
-    EXPECT_EQ(p.get(), raw);
-    EXPECT_EQ(raw->ref_count(), old_ref_count);
-    EXPECT_EQ(TestObject::live_count(), 1);
-
-    p.reset();
-    EXPECT_EQ(TestObject::live_count(), 0);
-}
-
 TEST(RefCountPtr, EqualityAndOrderingArePointerBased)
 {
     TestObject::reset_counters();
