@@ -58,7 +58,7 @@ extern "C"
 
     RETRO_API void retro_release_asset(const retro::Asset *asset)
     {
-        asset->release();
+        asset->sub_ref();
     }
 
     RETRO_API retro::Texture *retro_texture_load_existing(const retro::AssetPath *path,
@@ -75,7 +75,7 @@ extern "C"
 
         *width = asset->width();
         *height = asset->height();
-        asset->retain();
+        asset->add_ref();
         return std::addressof(*asset);
     }
 
@@ -97,7 +97,7 @@ extern "C"
         const auto asset = *std::move(loaded_texture);
         *width = asset->width();
         *height = asset->height();
-        asset->retain();
+        asset->add_ref();
         return asset.get();
     }
 

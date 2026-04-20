@@ -12,6 +12,8 @@ import std;
 using retro::IntrusiveRefCounted;
 using retro::make_ref_counted;
 using retro::RefCountPtr;
+using retro::WeakRefCounted;
+using retro::WeakRefCountPtr;
 
 // Simple intrusive ref-counted test object
 class TestObject : public IntrusiveRefCounted
@@ -67,6 +69,48 @@ class DerivedTestObject : public TestObject
 {
   public:
     using TestObject::TestObject;
+};
+
+class WeakTestObject : public WeakRefCounted
+{
+  public:
+    explicit WeakTestObject(const std::int32_t value) noexcept : value_{value}
+    {
+        ++live_count_;
+    }
+
+    ~WeakTestObject() noexcept
+    {
+        --live_count_;
+        ++destruction_count_;
+    }
+
+    [[nodiscard]] std::int32_t value() const noexcept
+    {
+        return value_;
+    }
+
+    [[nodiscard]] static std::int32_t live_count() noexcept
+    {
+        return live_count_;
+    }
+
+    [[nodiscard]] static std::int32_t destruction_count() noexcept
+    {
+        return destruction_count_;
+    }
+
+    static void reset_counters() noexcept
+    {
+        live_count_ = 0;
+        destruction_count_ = 0;
+    }
+
+  private:
+    std::int32_t value_{};
+
+    inline static std::int32_t live_count_{0};
+    inline static std::int32_t destruction_count_{0};
 };
 
 TEST(RefCountPtr, BasicConstructionAndDestruction)
@@ -312,4 +356,112 @@ TEST(RefCountPtr, CrossTypeConstructionAndAssignmentBaseDerived)
 
     EXPECT_EQ(TestObject::live_count(), 0);
     EXPECT_EQ(TestObject::destruction_count(), 1);
+}
+
+TEST(WeakRefCountPtr, ConstructionAndWeakCountTracking)
+{
+    WeakTestObject::reset_counters();
+
+    auto strong = make_ref_counted<WeakTestObject>(77);
+    ASSERT_NE(strong.get(), nullptr);
+    ASSERT_EQ(WeakTestObject::live_count(), 1);
+    ASSERT_EQ(strong->control_block().strong_ref_count(), 1u);
+    ASSERT_EQ(strong->control_block().weak_ref_count(), 1u);
+
+    {
+        WeakRefCountPtr<WeakTestObject> weak{strong};
+        EXPECT_EQ(weak.use_count(), 1u);
+        EXPECT_FALSE(weak.expired());
+        EXPECT_EQ(strong->control_block().weak_ref_count(), 2u);
+    }
+
+    EXPECT_EQ(strong->control_block().weak_ref_count(), 1u);
+    strong.reset();
+    EXPECT_EQ(WeakTestObject::live_count(), 0);
+    EXPECT_EQ(WeakTestObject::destruction_count(), 1);
+}
+
+TEST(WeakRefCountPtr, LockPromotesWhileAliveAndExpiresAfterLastStrongRelease)
+{
+    WeakTestObject::reset_counters();
+
+    auto strong = make_ref_counted<WeakTestObject>(99);
+    WeakRefCountPtr<WeakTestObject> weak{strong};
+    ASSERT_EQ(strong->ref_count(), 1u);
+
+    {
+        auto locked = weak.lock();
+        ASSERT_NE(locked.get(), nullptr);
+        EXPECT_EQ(locked.get(), strong.get());
+        EXPECT_EQ(strong->ref_count(), 2u);
+    }
+
+    EXPECT_EQ(strong->ref_count(), 1u);
+    strong.reset();
+    EXPECT_EQ(WeakTestObject::live_count(), 0);
+    EXPECT_EQ(WeakTestObject::destruction_count(), 1);
+    EXPECT_TRUE(weak.expired());
+    EXPECT_EQ(weak.use_count(), 0u);
+
+    auto locked_after_expire = weak.lock();
+    EXPECT_EQ(locked_after_expire.get(), nullptr);
+    weak.reset();
+}
+
+TEST(WeakRefCountPtr, CopyMoveAndAssignmentMaintainWeakCounts)
+{
+    WeakTestObject::reset_counters();
+
+    auto strong = make_ref_counted<WeakTestObject>(7);
+    auto &control_block = strong->control_block();
+    EXPECT_EQ(control_block.weak_ref_count(), 1u);
+
+    WeakRefCountPtr<WeakTestObject> weak1{strong};
+    EXPECT_EQ(control_block.weak_ref_count(), 2u);
+
+    WeakRefCountPtr<WeakTestObject> weak2{weak1};
+    EXPECT_EQ(control_block.weak_ref_count(), 3u);
+
+    WeakRefCountPtr<WeakTestObject> weak3{std::move(weak2)};
+    EXPECT_EQ(control_block.weak_ref_count(), 3u);
+    EXPECT_TRUE(weak2.expired());
+
+    WeakRefCountPtr<WeakTestObject> weak4;
+    weak4 = weak1;
+    EXPECT_EQ(control_block.weak_ref_count(), 4u);
+
+    weak4 = std::move(weak3);
+    EXPECT_EQ(control_block.weak_ref_count(), 3u);
+    EXPECT_TRUE(weak3.expired());
+
+    strong.reset();
+    EXPECT_TRUE(weak1.expired());
+    EXPECT_TRUE(weak4.expired());
+    EXPECT_EQ(WeakTestObject::live_count(), 0);
+    EXPECT_EQ(WeakTestObject::destruction_count(), 1);
+
+    weak1.reset();
+    weak4.reset();
+}
+
+TEST(WeakRefCountPtr, WeakFromThisMatchesSharedObjectLifetime)
+{
+    WeakTestObject::reset_counters();
+
+    auto strong = make_ref_counted<WeakTestObject>(11);
+    auto weak = strong->weak_from_this();
+
+    EXPECT_FALSE(weak.expired());
+    EXPECT_EQ(weak.use_count(), 1u);
+
+    auto locked = weak.lock();
+    ASSERT_NE(locked.get(), nullptr);
+    EXPECT_EQ(locked->value(), 11);
+    locked.reset();
+
+    strong.reset();
+    EXPECT_TRUE(weak.expired());
+    EXPECT_EQ(weak.lock().get(), nullptr);
+    weak.reset();
+    EXPECT_EQ(WeakTestObject::destruction_count(), 1);
 }
