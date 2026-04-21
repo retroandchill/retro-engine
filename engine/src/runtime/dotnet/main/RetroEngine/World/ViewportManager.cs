@@ -9,11 +9,14 @@ using RetroEngine.Interop;
 
 namespace RetroEngine.World;
 
+[RegisterSingleton]
 [NativeMarshalling(typeof(ViewportManagerMarshaller))]
 public sealed partial class ViewportManager : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; } = NativeCreate();
     private readonly List<Viewport> _viewports = [];
+
+    public IReadOnlyList<Viewport> Viewports => _viewports;
 
     public bool Disposed => NativeHandle == IntPtr.Zero;
 
