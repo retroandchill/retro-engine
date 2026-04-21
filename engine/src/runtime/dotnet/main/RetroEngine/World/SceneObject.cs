@@ -4,17 +4,24 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Core.Math;
 using RetroEngine.Interop;
 
 namespace RetroEngine.World;
 
+[NativeMarshalling(typeof(SceneObjectMarshaller))]
 public abstract partial class SceneObject : IDisposable
 {
-    protected SceneObject(Scene scene, SceneObject? parent, IntPtr id)
+    private readonly List<SceneObject> _children = [];
+
+    protected SceneObject(Scene scene, SceneObject? parent, Func<Scene, SceneObject?, IntPtr> nativePtrFactory)
     {
+        parent?.ThrowIfDisposed();
+        scene.ThrowIfDisposed();
         Scene = scene;
-        NativeObject = id;
+        NativeObject = nativePtrFactory(scene, parent);
+        Scene.AddObject(this);
         Parent = parent;
         Scale = Vector2F.One;
     }
@@ -23,7 +30,7 @@ public abstract partial class SceneObject : IDisposable
 
     public IntPtr NativeObject { get; }
 
-    protected bool Disposed
+    public bool Disposed
     {
         get => field || Scene.Disposed;
         private set;
@@ -36,13 +43,13 @@ public abstract partial class SceneObject : IDisposable
         {
             ThrowIfDisposed();
             field = value;
-            if (field is not null)
+            if (value is not null)
             {
-                NativeAttachToParent(NativeObject, field.NativeObject);
+                NativeAttachToParent(this, field);
             }
             else
             {
-                NativeDetachFromParent(NativeObject);
+                NativeDetachFromParent(this);
             }
         }
     }
@@ -54,7 +61,7 @@ public abstract partial class SceneObject : IDisposable
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetTransform(NativeObject, value);
+            NativeSetTransform(this, value);
         }
     }
 
@@ -82,13 +89,29 @@ public abstract partial class SceneObject : IDisposable
         set
         {
             ThrowIfDisposed();
-            field = NativeSetZOrder(NativeObject, value);
+            field = NativeSetZOrder(this, value);
+        }
+    }
+
+    private void AddChild(SceneObject child)
+    {
+        _children.Add(child);
+    }
+
+    private void RemoveChild(SceneObject child)
+    {
+        for (var i = 0; i < _children.Count; i++)
+        {
+            if (!ReferenceEquals(_children[i], child))
+                continue;
+            _children.RemoveAt(i);
+            break;
         }
     }
 
     protected void ThrowIfDisposed()
     {
-        ObjectDisposedException.ThrowIf(Scene.Disposed, Scene);
+        Scene.ThrowIfDisposed();
         ObjectDisposedException.ThrowIf(Disposed, this);
     }
 
@@ -97,23 +120,29 @@ public abstract partial class SceneObject : IDisposable
         if (Disposed)
             return;
 
-        NativeDispose(Scene.NativeHandle, NativeObject);
+        NativeDispose(Scene, this);
         Disposed = true;
         GC.SuppressFinalize(this);
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_transform")]
-    private static partial void NativeSetTransform(IntPtr obj, in Transform transform);
+    private static partial void NativeSetTransform(SceneObject obj, in Transform transform);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_z_order")]
-    private static partial int NativeSetZOrder(IntPtr obj, int zOrder);
+    private static partial int NativeSetZOrder(SceneObject obj, int zOrder);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_attach_to_parent")]
-    private static partial void NativeAttachToParent(IntPtr obj, IntPtr parent);
+    private static partial void NativeAttachToParent(SceneObject obj, SceneObject? parent);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_detach_from_parent")]
-    private static partial void NativeDetachFromParent(IntPtr obj);
+    private static partial void NativeDetachFromParent(SceneObject obj);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_dispose")]
-    private static partial void NativeDispose(IntPtr scene, IntPtr obj);
+    private static partial void NativeDispose(Scene scene, SceneObject obj);
+}
+
+[CustomMarshaller(typeof(SceneObject), MarshalMode.ManagedToUnmanagedIn, typeof(SceneObjectMarshaller))]
+public static class SceneObjectMarshaller
+{
+    public static IntPtr ConvertToUnmanaged(SceneObject? scene) => scene?.NativeObject ?? IntPtr.Zero;
 }

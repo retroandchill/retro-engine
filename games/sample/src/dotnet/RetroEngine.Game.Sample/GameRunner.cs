@@ -16,8 +16,12 @@ using Serilog;
 
 namespace RetroEngine.Game.Sample;
 
-public sealed class GameRunner(AssetManager assetManager, IHostApplicationLifetime lifetime, TickManager tickManager)
-    : AsyncGameSession(lifetime)
+public sealed class GameRunner(
+    AssetManager assetManager,
+    IHostApplicationLifetime lifetime,
+    TickManager tickManager,
+    SceneManager sceneManager
+) : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
     {
@@ -31,8 +35,8 @@ public sealed class GameRunner(AssetManager assetManager, IHostApplicationLifeti
             cancellationToken
         );
 
-        using var scene1 = new Scene();
-        using var scene2 = new Scene();
+        using var scene1 = new Scene(sceneManager);
+        using var scene2 = new Scene(sceneManager);
 
         using var viewport1 = new Viewport();
         viewport1.Scene = scene1;

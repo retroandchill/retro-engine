@@ -12,6 +12,7 @@
       <PackageReference Include="LinkDotNet.StringBuilder" />
       <PackageReference Include="Serilog" />
       <PackageReference Include="ZLinq" />
+        <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>

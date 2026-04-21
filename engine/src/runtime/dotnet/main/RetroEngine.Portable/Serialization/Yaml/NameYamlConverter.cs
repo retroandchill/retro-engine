@@ -23,8 +23,6 @@ public sealed class NameYamlConverter : IYamlFormatter<Name>
     public Name Deserialize(ref YamlParser parser, YamlDeserializationContext context)
     {
         var stringText = parser.GetScalarAsUtf8();
-        return stringText.Length < Name.MaxLength
-            ? new Name(stringText)
-            : throw new YamlSerializerException("Name exceeds maximum length");
+        return new Name(stringText);
     }
 }

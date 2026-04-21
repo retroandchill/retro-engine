@@ -6,7 +6,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Utilities;
-using RetroEngine.Utils;
 
 namespace RetroEngine.Interop;
 
@@ -42,7 +41,7 @@ public readonly record struct InteropError(InteropErrorCode ErrorCode, string? N
             throw exception;
     }
 
-    public Exception? ToException()
+    private Exception? ToException()
     {
         return ErrorCode switch
         {

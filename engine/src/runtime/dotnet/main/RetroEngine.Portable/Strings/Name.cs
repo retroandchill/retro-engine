@@ -7,6 +7,7 @@ using System.Buffers.Binary;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using MagicArchive;
@@ -146,12 +147,11 @@ public readonly partial struct Name
         IEqualityOperators<Name, Name, bool>,
         IEqualityOperators<Name, string?, bool>
 {
-    [PublicAPI]
-    public const int MaxLength = 1024;
+    private const int MaxLength = 1024;
 
     private const int MaxDigits = 10;
 
-    internal const int MaxRenderedLength = MaxLength + MaxDigits + 1;
+    public const int MaxRenderedLength = MaxLength + MaxDigits + 1;
 
     private const int NoNumberInternal = 0;
 
@@ -191,7 +191,8 @@ public readonly partial struct Name
 
     internal Name(ReadOnlySpan<byte> name, FindName findType = FindName.Add)
     {
-        this = NativeLookup(name, name.Length, findType);
+        _ = NativeLookup(name, name.Length, findType, out this, out var error);
+        error.ThrowIfError();
     }
 
     /// <summary>
@@ -203,7 +204,8 @@ public readonly partial struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
-        this = NativeLookup(name, name.Length, findType);
+        _ = NativeLookup(name, name.Length, findType, out this, out var error);
+        error.ThrowIfError();
     }
 
     /// <summary>
@@ -380,7 +382,8 @@ public readonly partial struct Name
     /// <inheritdoc />
     public override string ToString()
     {
-        Span<char> buffer = stackalloc char[MaxLength];
+        var maxLength = Encoding.UTF8.GetMaxCharCount(MaxRenderedLength);
+        Span<char> buffer = stackalloc char[maxLength];
         var newLength = NativeToString(this, buffer, buffer.Length);
         return buffer[..newLength].ToString();
     }
@@ -397,10 +400,24 @@ public readonly partial struct Name
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf8")]
-    private static partial Name NativeLookup(ReadOnlySpan<byte> name, int nameLength, FindName findType);
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static partial bool NativeLookup(
+        ReadOnlySpan<byte> name,
+        int nameLength,
+        FindName findType,
+        out Name result,
+        out InteropError error
+    );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf16")]
-    private static partial Name NativeLookup(ReadOnlySpan<char> name, int nameLength, FindName findType);
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static partial bool NativeLookup(
+        ReadOnlySpan<char> name,
+        int nameLength,
+        FindName findType,
+        out Name result,
+        out InteropError error
+    );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_is_valid")]
     [return: MarshalAs(UnmanagedType.U1)]

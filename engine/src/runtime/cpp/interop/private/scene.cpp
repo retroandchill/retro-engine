@@ -19,6 +19,7 @@ import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.runtime.engine;
 import std;
+import retro.interop.interop_error;
 
 namespace retro
 {
@@ -60,14 +61,24 @@ namespace retro
 
 extern "C"
 {
-    RETRO_API retro::Scene *retro_scene_create()
+    RETRO_API retro::SceneManager *retro_scene_manager_create()
     {
-        return std::addressof(retro::Engine::instance().scenes().create_scene());
+        return new retro::SceneManager{};
     }
 
-    RETRO_API void retro_scene_destroy(retro::Scene *scene)
+    RETRO_API void retro_scene_manager_destroy(const retro::SceneManager *manager)
     {
-        retro::Engine::instance().scenes().destroy_scene(*scene);
+        delete manager;
+    }
+
+    RETRO_API retro::Scene *retro_scene_create(retro::SceneManager *manager, retro::InteropError *error)
+    {
+        return retro::try_execute([manager] { return std::addressof(manager->create_scene()); }, *error);
+    }
+
+    RETRO_API bool retro_scene_destroy(retro::SceneManager *manager, retro::Scene *scene, retro::InteropError *error)
+    {
+        return retro::try_execute([manager, scene] { manager->destroy_scene(*scene); }, *error);
     }
 
     RETRO_API retro::Viewport *retro_viewport_create()

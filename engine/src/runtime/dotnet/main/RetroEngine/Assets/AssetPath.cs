@@ -5,6 +5,7 @@
 
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
 
@@ -37,7 +38,8 @@ public readonly partial struct AssetPath : IEquatable<AssetPath>, IEqualityOpera
 
     public override string ToString()
     {
-        Span<char> buffer = stackalloc char[Name.MaxLength * 2 + 1];
+        var maxLength = Encoding.UTF8.GetMaxCharCount(Name.MaxRenderedLength * 2 + 1);
+        Span<char> buffer = stackalloc char[maxLength];
         var newLength = NativeToString(in this, buffer);
         return buffer[..newLength].ToString();
     }

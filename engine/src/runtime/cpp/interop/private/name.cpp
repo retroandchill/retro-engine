@@ -10,6 +10,7 @@
 
 import std;
 import retro.core.strings.name;
+import retro.interop.interop_error;
 
 namespace
 {
@@ -25,18 +26,30 @@ namespace
 
 extern "C"
 {
-    RETRO_API retro::Name retro_name_lookup_utf8(const char *name,
-                                                 const std::int32_t length,
-                                                 const retro::FindType find_type)
+    RETRO_API bool retro_name_lookup_utf8(const char *name,
+                                          const std::int32_t length,
+                                          const retro::FindType find_type,
+                                          retro::Name *result,
+                                          retro::InteropError *error)
     {
-        return retro::Name{std::string_view{name, static_cast<std::size_t>(length)}, find_type};
+        return retro::try_execute(
+            [&] {
+                *result = retro::Name{std::string_view{name, static_cast<std::size_t>(length)}, find_type};
+            },
+            *error);
     }
 
-    RETRO_API retro::Name retro_name_lookup_utf16(const char16_t *name,
-                                                  const std::int32_t length,
-                                                  const retro::FindType find_type)
+    RETRO_API bool retro_name_lookup_utf16(const char16_t *name,
+                                           const std::int32_t length,
+                                           const retro::FindType find_type,
+                                           retro::Name *result,
+                                           retro::InteropError *error)
     {
-        return retro::Name{std::u16string_view{name, static_cast<std::size_t>(length)}, find_type};
+        return retro::try_execute(
+            [&] {
+                *result = retro::Name{std::u16string_view{name, static_cast<std::size_t>(length)}, find_type};
+            },
+            *error);
     }
 
     RETRO_API bool retro_name_is_valid(const retro::Name name)

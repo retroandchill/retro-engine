@@ -4,7 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
-using RetroEngine.Assets;
+using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Interop;
@@ -14,6 +14,7 @@ namespace RetroEngine.World;
 
 public readonly record struct UVs(Vector2F Min, Vector2F Max);
 
+[NativeMarshalling(typeof(SpriteMarshaller))]
 public partial class Sprite : SceneObject
 {
     public Texture? Texture
@@ -23,7 +24,7 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetTexture(NativeObject, value?.NativeObject ?? IntPtr.Zero);
+            NativeSetTexture(this, value?.NativeObject ?? IntPtr.Zero);
             if (value is null)
                 return;
 
@@ -40,7 +41,7 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetSize(NativeObject, value);
+            NativeSetSize(this, value);
         }
     }
 
@@ -51,7 +52,7 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetTint(NativeObject, value);
+            NativeSetTint(this, value);
         }
     }
 
@@ -62,7 +63,7 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetPivot(NativeObject, value);
+            NativeSetPivot(this, value);
         }
     }
 
@@ -73,12 +74,12 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetUVs(NativeObject, value);
+            NativeSetUVs(this, value);
         }
     }
 
     private Sprite(Scene scene, SceneObject? parent)
-        : base(scene, parent, NativeCreate(scene.NativeHandle, parent?.NativeObject ?? IntPtr.Zero))
+        : base(scene, parent, NativeCreate)
     {
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);
@@ -92,20 +93,26 @@ public partial class Sprite : SceneObject
         : this(parent.Scene, parent) { }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_create")]
-    private static partial IntPtr NativeCreate(IntPtr scene, IntPtr id);
+    private static partial IntPtr NativeCreate(Scene scene, SceneObject? id);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_texture")]
-    private static partial void NativeSetTexture(IntPtr id, IntPtr texture);
+    private static partial void NativeSetTexture(Sprite id, IntPtr texture);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_tint")]
-    private static partial void NativeSetTint(IntPtr id, Color color);
+    private static partial void NativeSetTint(Sprite id, Color color);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_pivot")]
-    private static partial void NativeSetPivot(IntPtr id, Vector2F pivot);
+    private static partial void NativeSetPivot(Sprite id, Vector2F pivot);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_size")]
-    private static partial void NativeSetSize(IntPtr id, Vector2F size);
+    private static partial void NativeSetSize(Sprite id, Vector2F size);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_uv_rect")]
-    private static partial void NativeSetUVs(IntPtr id, UVs size);
+    private static partial void NativeSetUVs(Sprite id, UVs size);
+}
+
+[CustomMarshaller(typeof(Sprite), MarshalMode.ManagedToUnmanagedIn, typeof(SpriteMarshaller))]
+public static class SpriteMarshaller
+{
+    public static IntPtr ConvertToUnmanaged(Sprite sprite) => sprite.NativeObject;
 }
