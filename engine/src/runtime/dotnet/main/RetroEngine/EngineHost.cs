@@ -6,6 +6,7 @@
 using System.Collections.Immutable;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RetroEngine.Tickables;
 
 namespace RetroEngine;
 
@@ -24,7 +25,9 @@ public sealed class EngineHost : IHost, IAsyncDisposable
         _gameSession = serviceProvider.GetService<IGameSession>();
         Services = serviceProvider;
 
-        _lifetime.ApplicationStopping.Register(() => engine.ThreadSync.RunOnPrimaryThread(() => StopAsync()));
+        var tickManager = serviceProvider.GetRequiredService<TickManager>();
+
+        _lifetime.ApplicationStopping.Register(() => tickManager.ThreadSync.RunOnPrimaryThread(() => StopAsync()));
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)

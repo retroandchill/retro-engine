@@ -17,7 +17,6 @@ using RetroEngine.Platform;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Tickables;
-using RetroEngine.Utilities.Async;
 using Serilog;
 using ZLinq;
 using Zomp.SyncMethodGenerator;
@@ -31,18 +30,12 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private Thread? _gameThread;
     private Thread? _renderThread;
     private ulong _windowId;
-    public ulong FrameCount { get; private set; }
     private readonly EngineLifetime _lifetime = new();
     private readonly EngineHost _host;
-    private GameThreadSynchronizationContext? _synchronizationContext;
 
     public IServiceProvider Services => _host.Services;
-    private readonly TickManager _tickManager;
 
     private static Engine? _instance;
-
-    public IThreadSync ThreadSync =>
-        _synchronizationContext ?? throw new InvalidOperationException("Engine has not been initialized.");
 
     public static Engine Instance =>
         _instance ?? throw new InvalidOperationException("Engine has not been initialized.");
@@ -56,7 +49,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
         _host = new EngineHost(this, serviceProviderFactory(serviceCollection), _lifetime);
-        _tickManager = _host.Services.GetRequiredService<TickManager>();
     }
 
     [MemberNotNull(nameof(_gameThread))]
@@ -176,11 +168,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     private void RunGameThread()
     {
-        _synchronizationContext = new GameThreadSynchronizationContext();
-        _synchronizationContext.UnhandledException += ex => Log.Error(ex, "Unhandled exception in game thread.");
-        SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
-
-        LocalizationManager.Instance.ThreadSync = _synchronizationContext;
+        var tickManager = _host.Services.GetRequiredService<TickManager>();
+        tickManager.InitTickSynchronizationContext();
+        LocalizationManager.Instance.ThreadSync = tickManager.ThreadSync;
 
         var stopWatch = new Stopwatch();
 
@@ -192,9 +182,11 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
                 var deltaTime = (float)stopWatch.Elapsed.TotalSeconds;
                 stopWatch.Restart();
 
-                Tick(deltaTime);
+                _ = NativePumpTasks(_nativeEngine, -1, out var errorMessage);
+                errorMessage.ThrowIfError();
+                tickManager.Tick(deltaTime);
 
-                _ = NativeSyncRenderState(_nativeEngine, out var errorMessage);
+                _ = NativeSyncRenderState(_nativeEngine, out errorMessage);
                 errorMessage.ThrowIfError();
             }
             catch (Exception ex)
@@ -214,16 +206,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
             _ = NativeRender(_nativeEngine, out var errorMessage);
             errorMessage.ThrowIfError();
         }
-    }
-
-    private void Tick(float deltaTime)
-    {
-        _ = NativePumpTasks(_nativeEngine, -1, out var errorMessage);
-        errorMessage.ThrowIfError();
-
-        _tickManager.Tick(deltaTime);
-        _synchronizationContext!.Pump();
-        FrameCount++;
     }
 
     public void PollPlatformEvents()
@@ -316,7 +298,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-        _synchronizationContext?.Dispose();
         await _host.DisposeAsync();
 
         CultureManager.Instance.Dispose();
