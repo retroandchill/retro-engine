@@ -169,7 +169,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private void RunGameThread()
     {
         var tickManager = _host.Services.GetRequiredService<TickManager>();
-        tickManager.InitTickSynchronizationContext();
+        tickManager.BindSynchronizationContext();
         LocalizationManager.Instance.ThreadSync = tickManager.ThreadSync;
 
         var stopWatch = new Stopwatch();

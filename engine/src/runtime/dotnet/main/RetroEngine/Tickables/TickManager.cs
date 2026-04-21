@@ -37,7 +37,7 @@ public sealed class TickManager : IDisposable
         _tickables.Remove(tickable);
     }
 
-    public void InitTickSynchronizationContext()
+    public void BindSynchronizationContext()
     {
         SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
     }
