@@ -21,7 +21,6 @@ import retro.runtime.rendering.layout.margin;
 import retro.runtime.rendering.layout.anchors;
 import retro.core.math.rect;
 import retro.platform.window;
-import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -71,7 +70,7 @@ namespace retro
       public:
         using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
         using WindowChanged =
-            MulticastDelegate<void(Viewport &, const WeakRefCountPtr<Window> &, const WeakRefCountPtr<Window> &)>;
+            MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
 
         Viewport(const ScreenLayout &layout, std::int32_t z_order);
 
@@ -122,7 +121,7 @@ namespace retro
             scene_ = scene;
         }
 
-        [[nodiscard]] inline Optional<RefCountPtr<Window>> window() const noexcept
+        [[nodiscard]] inline Optional<std::shared_ptr<Window>> window() const noexcept
         {
             if (auto win = window_.lock(); win != nullptr)
             {
@@ -150,7 +149,7 @@ namespace retro
         std::int32_t z_order_ = 0;
         ZOrderChanged on_z_order_changed_;
         Scene *scene_ = nullptr;
-        WeakRefCountPtr<Window> window_;
+        std::weak_ptr<Window> window_;
         WindowChanged on_window_changed_;
     };
 

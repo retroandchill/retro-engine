@@ -139,4 +139,11 @@ public sealed partial class AssetManager(
             semaphore.Release();
         }
     }
+
+    [CreateSyncVersion]
+    public async ValueTask<T?> LoadAssetAsync<T>(AssetPath path, CancellationToken cancellationToken = default)
+        where T : Asset
+    {
+        return await LoadAssetAsync(path, cancellationToken) as T;
+    }
 }

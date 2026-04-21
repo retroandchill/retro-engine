@@ -3,18 +3,21 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
 using RetroEngine.Assets.Textures;
 using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Platform;
+using RetroEngine.Tickables;
 using RetroEngine.World;
 using Serilog;
 
 namespace RetroEngine.Game.Sample;
 
-public sealed class GameRunner : AsyncGameSession
+public sealed class GameRunner(AssetManager assetManager, IHostApplicationLifetime lifetime, TickManager tickManager)
+    : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
     {
@@ -40,17 +43,20 @@ public sealed class GameRunner : AsyncGameSession
         viewport2.CameraPivot = new Vector2F(0.5f, 0.5f);
         viewport2.ZOrder = -1;
 
-        var eeveeTexture = await Asset.LoadAsync<Texture>(new AssetPath("graphics", "133.png"), cancellationToken);
+        var eeveeTexture = await assetManager.LoadAssetAsync<Texture>(
+            new AssetPath("graphics", "133.png"),
+            cancellationToken
+        );
         if (eeveeTexture is null)
         {
             return 1;
         }
-        var backgroundTexture = await Asset.LoadAsync<Texture>(
+        var backgroundTexture = await assetManager.LoadAssetAsync<Texture>(
             new AssetPath("graphics", "background.png"),
             cancellationToken
         );
 
-        using var flipbook = new SimpleFlipbook(scene1, eeveeTexture, 10.0f);
+        using var flipbook = new SimpleFlipbook(scene1, eeveeTexture, tickManager, 10.0f);
         flipbook.Scale = new Vector2F(3, 3);
         flipbook.Tint = new Color(1, 1, 1);
 

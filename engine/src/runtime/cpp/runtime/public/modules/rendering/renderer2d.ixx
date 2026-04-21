@@ -22,7 +22,6 @@ import retro.runtime.rendering.render_pipeline;
 import retro.runtime.world.viewport;
 import retro.runtime.rendering.draw_command;
 import retro.core.functional.function_ref;
-import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -51,7 +50,7 @@ namespace retro
     export class RETRO_API RendererRef
     {
       public:
-        explicit RendererRef(RefCountPtr<Window> window, ServiceScopeFactory &scope_factory);
+        explicit RendererRef(std::shared_ptr<Window> window, ServiceScopeFactory &scope_factory);
 
         [[nodiscard]] inline Renderer2D &get() const
         {

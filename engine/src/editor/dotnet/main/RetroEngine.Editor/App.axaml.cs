@@ -40,7 +40,7 @@ public class App(Engine engine) : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
 
-            desktop.MainWindow = new MainWindow { DataContext = _navigationService.MainWindow };
+            desktop.MainWindow = new MainWindow { DataContext = _navigationService.MainWindow, Engine = engine };
 
             desktop.MainWindow.Closing += (_, _) =>
             {

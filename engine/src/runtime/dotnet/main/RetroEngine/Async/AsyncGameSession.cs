@@ -1,8 +1,9 @@
-﻿using Serilog;
+﻿using Microsoft.Extensions.Hosting;
+using Serilog;
 
 namespace RetroEngine.Async;
 
-public abstract class AsyncGameSession : IGameSession, IDisposable
+public abstract class AsyncGameSession(IHostApplicationLifetime lifetime) : IGameSession, IDisposable
 {
     private Task? _gameTask;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -21,16 +22,16 @@ public abstract class AsyncGameSession : IGameSession, IDisposable
         try
         {
             await RunAsync(cancellationToken);
-            Engine.Instance.RequestShutdown();
+            lifetime.StopApplication();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Engine.Instance.RequestShutdown();
+            lifetime.StopApplication();
         }
         catch (Exception e)
         {
             Log.Fatal(e, "Game session failed.");
-            Engine.Instance.RequestShutdown();
+            lifetime.StopApplication();
         }
     }
 

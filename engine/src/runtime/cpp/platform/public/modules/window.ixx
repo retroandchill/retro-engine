@@ -4,12 +4,15 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/exports.h"
+
 export module retro.platform.window;
 
 import std;
 import retro.core.strings.cstring_view;
 import retro.core.math.vector;
-import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -59,7 +62,7 @@ namespace retro
         WindowFlags flags = WindowFlags::resizable;
     };
 
-    export class Window : public WeakRefCounted
+    export class Window : public std::enable_shared_from_this<Window>
     {
       public:
         virtual ~Window() = default;

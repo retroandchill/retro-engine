@@ -31,15 +31,13 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     private Thread? _gameThread;
     private Thread? _renderThread;
     private ulong _windowId;
-    private readonly HashSet<ITickable> _tickables = [];
     public ulong FrameCount { get; private set; }
     private readonly EngineLifetime _lifetime = new();
     private readonly EngineHost _host;
     private GameThreadSynchronizationContext? _synchronizationContext;
 
     public IServiceProvider Services => _host.Services;
-
-    private readonly AssetManager _assetManager;
+    private readonly TickManager _tickManager;
 
     private static Engine? _instance;
 
@@ -48,8 +46,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     public static Engine Instance =>
         _instance ?? throw new InvalidOperationException("Engine has not been initialized.");
-
-    public static bool IsInitialized => _instance is not null;
 
     internal Engine(
         IntPtr nativeEngine,
@@ -60,7 +56,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
         _host = new EngineHost(this, serviceProviderFactory(serviceCollection), _lifetime);
-        _assetManager = _host.Services.GetRequiredService<AssetManager>();
+        _tickManager = _host.Services.GetRequiredService<TickManager>();
     }
 
     [MemberNotNull(nameof(_gameThread))]
@@ -225,10 +221,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _ = NativePumpTasks(_nativeEngine, -1, out var errorMessage);
         errorMessage.ThrowIfError();
 
-        foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
-        {
-            tickable.Tick(deltaTime);
-        }
+        _tickManager.Tick(deltaTime);
         _synchronizationContext!.Pump();
         FrameCount++;
     }
@@ -236,16 +229,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     public void PollPlatformEvents()
     {
         NativePollPlatformEvents(_nativeEngine);
-    }
-
-    public void RegisterTickable(ITickable tickable)
-    {
-        _tickables.Add(tickable);
-    }
-
-    public void UnregisterTickable(ITickable tickable)
-    {
-        _tickables.Remove(tickable);
     }
 
     public void RequestShutdown()
@@ -319,12 +302,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     public void WaitForGameThread()
     {
         _gameThread?.Join();
-    }
-
-    [CreateSyncVersion]
-    public ValueTask<Asset?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
-    {
-        return _assetManager.LoadAssetAsync(path, cancellationToken);
     }
 
     [CreateSyncVersion]

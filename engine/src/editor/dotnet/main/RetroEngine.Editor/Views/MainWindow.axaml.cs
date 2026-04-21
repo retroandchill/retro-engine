@@ -7,6 +7,8 @@ namespace RetroEngine.Editor.Views;
 
 public partial class MainWindow : Window
 {
+    public Engine? Engine { get; init; }
+
     public MainWindow()
     {
         InitializeComponent();
@@ -15,11 +17,7 @@ public partial class MainWindow : Window
 
     private void Tick(TimeSpan time)
     {
-        if (Engine.IsInitialized)
-        {
-            Engine.Instance.PollPlatformEvents();
-        }
-
+        Engine?.PollPlatformEvents();
         RequestAnimationFrame(Tick);
     }
 }
