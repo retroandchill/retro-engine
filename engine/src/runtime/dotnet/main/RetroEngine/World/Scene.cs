@@ -79,5 +79,5 @@ public sealed partial class Scene : IDisposable
 [CustomMarshaller(typeof(Scene), MarshalMode.ManagedToUnmanagedIn, typeof(SceneMarshaller))]
 public static class SceneMarshaller
 {
-    public static IntPtr ConvertToUnmanaged(Scene scene) => scene.NativeHandle;
+    public static IntPtr ConvertToUnmanaged(Scene? scene) => scene?.NativeHandle ?? IntPtr.Zero;
 }

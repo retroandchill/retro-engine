@@ -20,7 +20,8 @@ public sealed class GameRunner(
     AssetManager assetManager,
     IHostApplicationLifetime lifetime,
     TickManager tickManager,
-    SceneManager sceneManager
+    SceneManager sceneManager,
+    ViewportManager viewportManager
 ) : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -38,11 +39,11 @@ public sealed class GameRunner(
         using var scene1 = new Scene(sceneManager);
         using var scene2 = new Scene(sceneManager);
 
-        using var viewport1 = new Viewport();
+        using var viewport1 = new Viewport(viewportManager);
         viewport1.Scene = scene1;
         viewport1.CameraPivot = new Vector2F(0.5f, 0.5f);
 
-        using var viewport2 = new Viewport();
+        using var viewport2 = new Viewport(viewportManager);
         viewport2.Scene = scene2;
         viewport2.CameraPivot = new Vector2F(0.5f, 0.5f);
         viewport2.ZOrder = -1;

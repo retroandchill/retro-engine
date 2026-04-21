@@ -27,6 +27,11 @@ public sealed partial class SceneManager : IDisposable
         }
     }
 
+    ~SceneManager()
+    {
+        Dispose();
+    }
+
     internal void AddScene(Scene scene)
     {
         _scenes.Add(scene);
@@ -49,6 +54,7 @@ public sealed partial class SceneManager : IDisposable
 
         NativeDestroy(this);
         NativeHandle = IntPtr.Zero;
+        GC.SuppressFinalize(this);
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_manager_create")]
@@ -61,5 +67,5 @@ public sealed partial class SceneManager : IDisposable
 [CustomMarshaller(typeof(SceneManager), MarshalMode.ManagedToUnmanagedIn, typeof(SceneManagerMarshaller))]
 public static class SceneManagerMarshaller
 {
-    public static IntPtr ConvertToUnmanaged(SceneManager scene) => scene.NativeHandle;
+    public static IntPtr ConvertToUnmanaged(SceneManager? manager) => manager?.NativeHandle ?? IntPtr.Zero;
 }

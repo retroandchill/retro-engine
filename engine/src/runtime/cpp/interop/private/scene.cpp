@@ -81,23 +81,42 @@ extern "C"
         return retro::try_execute([manager, scene] { manager->destroy_scene(*scene); }, *error);
     }
 
-    RETRO_API retro::Viewport *retro_viewport_create()
+    RETRO_API retro::ViewportManager *retro_viewport_manager_create()
     {
-
-        auto &viewport = retro::Engine::instance().viewports().create_viewport();
-
-        // TODO: Remove this and make this configurable in C#
-        if (const auto primary_renderer = retro::Engine::instance().primary_renderer(); primary_renderer.has_value())
-        {
-            viewport.set_window(primary_renderer->window());
-        }
-
-        return std::addressof(viewport);
+        return new retro::ViewportManager{};
     }
 
-    RETRO_API void retro_viewport_destroy(retro::Viewport *viewport)
+    RETRO_API void retro_viewport_manager_destroy(const retro::ViewportManager *manager)
     {
-        retro::Engine::instance().viewports().destroy_viewport(*viewport);
+        delete manager;
+    }
+
+    RETRO_API retro::Viewport *retro_viewport_create(retro::ViewportManager *viewport_manager,
+                                                     retro::InteropError *error)
+    {
+
+        return retro::try_execute(
+            [viewport_manager]
+            {
+                auto &viewport = viewport_manager->create_viewport();
+
+                /*
+                // TODO: Remove this and make this configurable in C#
+                if (const auto primary_renderer = retro::Engine::instance().primary_renderer();
+                primary_renderer.has_value())
+                {
+                    viewport.set_window(primary_renderer->window());
+                }
+                */
+
+                return std::addressof(viewport);
+            },
+            *error);
+    }
+
+    RETRO_API void retro_viewport_destroy(retro::ViewportManager *viewport_manager, retro::Viewport *viewport)
+    {
+        viewport_manager->destroy_viewport(*viewport);
     }
 
     RETRO_API void retro_viewport_set_scene(retro::Viewport *viewport, retro::Scene *scene)

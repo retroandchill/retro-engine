@@ -114,5 +114,5 @@ public partial class Sprite : SceneObject
 [CustomMarshaller(typeof(Sprite), MarshalMode.ManagedToUnmanagedIn, typeof(SpriteMarshaller))]
 public static class SpriteMarshaller
 {
-    public static IntPtr ConvertToUnmanaged(Sprite sprite) => sprite.NativeObject;
+    public static IntPtr ConvertToUnmanaged(Sprite? sprite) => sprite?.NativeObject ?? IntPtr.Zero;
 }
