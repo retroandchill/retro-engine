@@ -76,9 +76,9 @@ extern "C"
         return retro::try_execute([manager] { return std::addressof(manager->create_scene()); }, *error);
     }
 
-    RETRO_API bool retro_scene_destroy(retro::SceneManager *manager, retro::Scene *scene, retro::InteropError *error)
+    RETRO_API void retro_scene_destroy(retro::SceneManager *manager, retro::Scene *scene)
     {
-        return retro::try_execute([manager, scene] { manager->destroy_scene(*scene); }, *error);
+        manager->destroy_scene(*scene);
     }
 
     RETRO_API retro::ViewportManager *retro_viewport_manager_create()
@@ -95,23 +95,8 @@ extern "C"
                                                      retro::InteropError *error)
     {
 
-        return retro::try_execute(
-            [viewport_manager]
-            {
-                auto &viewport = viewport_manager->create_viewport();
-
-                /*
-                // TODO: Remove this and make this configurable in C#
-                if (const auto primary_renderer = retro::Engine::instance().primary_renderer();
-                primary_renderer.has_value())
-                {
-                    viewport.set_window(primary_renderer->window());
-                }
-                */
-
-                return std::addressof(viewport);
-            },
-            *error);
+        return retro::try_execute([viewport_manager] { return std::addressof(viewport_manager->create_viewport()); },
+                                  *error);
     }
 
     RETRO_API void retro_viewport_destroy(retro::ViewportManager *viewport_manager, retro::Viewport *viewport)

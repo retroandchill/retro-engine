@@ -26,26 +26,26 @@ namespace
 
 extern "C"
 {
-    RETRO_API bool retro_name_lookup_utf8(const char *name,
+    RETRO_API void retro_name_lookup_utf8(const char *name,
                                           const std::int32_t length,
                                           const retro::FindType find_type,
                                           retro::Name *result,
                                           retro::InteropError *error)
     {
-        return retro::try_execute(
+        retro::try_execute(
             [&] {
                 *result = retro::Name{std::string_view{name, static_cast<std::size_t>(length)}, find_type};
             },
             *error);
     }
 
-    RETRO_API bool retro_name_lookup_utf16(const char16_t *name,
+    RETRO_API void retro_name_lookup_utf16(const char16_t *name,
                                            const std::int32_t length,
                                            const retro::FindType find_type,
                                            retro::Name *result,
                                            retro::InteropError *error)
     {
-        return retro::try_execute(
+        retro::try_execute(
             [&] {
                 *result = retro::Name{std::u16string_view{name, static_cast<std::size_t>(length)}, find_type};
             },

@@ -16,6 +16,7 @@ using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Cultures;
+using RetroEngine.Rendering;
 using RetroEngine.Tickables;
 using Serilog;
 using ZLinq;
@@ -25,6 +26,7 @@ namespace RetroEngine;
 
 public sealed partial class Engine : IDisposable, IAsyncDisposable
 {
+    private readonly PlatformBackend _platformBackend;
     private readonly IntPtr _nativeEngine;
     private bool _disposed;
     private Thread? _gameThread;
@@ -41,13 +43,21 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _instance ?? throw new InvalidOperationException("Engine has not been initialized.");
 
     internal Engine(
+        PlatformBackend platformBackend,
         IntPtr nativeEngine,
         IServiceCollection serviceCollection,
         Func<IServiceCollection, IServiceProvider> serviceProviderFactory
     )
     {
+        _platformBackend = platformBackend;
         _nativeEngine = nativeEngine;
+        serviceCollection.AddSingleton(_platformBackend);
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
+        serviceCollection.AddSingleton(serviceProvider =>
+        {
+            var b = serviceProvider.GetRequiredService<PlatformBackend>();
+            return new RenderBackend(b, RenderBackendType.Vulkan);
+        });
         _host = new EngineHost(this, serviceProviderFactory(serviceCollection), _lifetime);
     }
 
@@ -298,6 +308,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
+        _platformBackend.Dispose();
         await _host.DisposeAsync();
 
         CultureManager.Instance.Dispose();

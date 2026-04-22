@@ -13,6 +13,7 @@ export module retro.platform.window;
 import std;
 import retro.core.strings.cstring_view;
 import retro.core.math.vector;
+import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
@@ -62,7 +63,7 @@ namespace retro
         WindowFlags flags = WindowFlags::resizable;
     };
 
-    export class Window : public std::enable_shared_from_this<Window>
+    export class Window : public WeakRefCounted
     {
       public:
         virtual ~Window() = default;

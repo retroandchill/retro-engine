@@ -31,10 +31,9 @@ namespace retro
     export class RETRO_API PipelineManager
     {
       public:
-        using Dependencies = TypeList<const std::vector<RenderPipeline *> &>;
         static constexpr std::size_t default_pool_size = 1024 * 1024 * 16;
 
-        explicit PipelineManager(const std::vector<RenderPipeline *> &pipelines);
+        explicit PipelineManager(std::span<RenderPipeline *> pipelines);
 
         [[nodiscard]] inline auto pipelines() const noexcept
         {

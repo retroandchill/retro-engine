@@ -16,7 +16,7 @@ extern "C"
 
     RETRO_API void retro_add_rendering_services(retro::EngineConfigContext *config_context,
                                                 const retro::WindowBackend window_backend,
-                                                const retro::RenderBackend render_backend)
+                                                const retro::RenderBackendType render_backend)
     {
         retro::add_rendering_services(config_context->services, window_backend, render_backend);
     }

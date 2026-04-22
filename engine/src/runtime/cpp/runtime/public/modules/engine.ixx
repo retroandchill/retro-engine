@@ -89,7 +89,7 @@ namespace retro
             return primary_renderer_;
         }
 
-        RETRO_API Task<PlatformResult<std::shared_ptr<Window>>> create_new_window(WindowDesc window_desc);
+        RETRO_API Task<PlatformResult<RefCountPtr<Window>>> create_new_window(WindowDesc window_desc);
 
         RETRO_API void add_window(Window &window);
 

@@ -31,8 +31,7 @@ namespace retro
 
     void add_engine_services(ServiceCollection &services)
     {
-        services.add_singleton<PipelineManager>()
-            .add_singleton<RenderPipeline, GeometryRenderPipeline>()
+        services.add_singleton<RenderPipeline, GeometryRenderPipeline>()
             .add_singleton<RenderPipeline, SpriteRenderPipeline>()
             .add_singleton<AssetManager>()
             .add_singleton<AssetDecoder, TextureDecoder>();
@@ -153,7 +152,7 @@ namespace retro
         }
     }
 
-    Task<PlatformResult<std::shared_ptr<Window>>> Engine::create_new_window(WindowDesc window_desc)
+    Task<PlatformResult<RefCountPtr<Window>>> Engine::create_new_window(WindowDesc window_desc)
     {
         AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
         add_window(*window);

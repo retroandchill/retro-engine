@@ -64,7 +64,7 @@ namespace retro
         constexpr static std::size_t default_pool_size = 1024 * 1024 * 10;
 
       public:
-        VulkanDevice(const VulkanDeviceConfig &config, vk::UniqueDevice device);
+        VulkanDevice(const VulkanInstance &instance, PlatformBackend &platform_backend);
 
         static std::unique_ptr<VulkanDevice> create(const VulkanInstance &instance, PlatformBackend &platform_backend);
 

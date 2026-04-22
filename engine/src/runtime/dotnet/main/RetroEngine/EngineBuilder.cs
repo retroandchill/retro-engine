@@ -20,8 +20,6 @@ namespace RetroEngine;
 
 public sealed partial class EngineBuilder : IHostApplicationBuilder
 {
-    private readonly List<Action<NativeConfigureContext>> _configureActions = [];
-
     public IDictionary<object, object> Properties { get; } = new Dictionary<object, object>();
     public IConfigurationManager Configuration { get; } = new ConfigurationManager();
     public IHostEnvironment Environment { get; } = new HostEnvironment();
@@ -37,19 +35,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         Logging = new LoggingBuilder(Services);
         Metrics = new MetricsBuilder(Services);
 
-        ConfigureNative(ctx =>
-        {
-            NativeAddRenderingServices(ctx, WindowBackend.SDL3, RenderBackend.Vulkan);
-        });
-
         Services.AddLogging(builder => builder.AddSerilog()).AddRetroEngine();
-    }
-
-    [PublicAPI]
-    public EngineBuilder ConfigureNative(Action<NativeConfigureContext> configure)
-    {
-        _configureActions.Add(configure);
-        return this;
     }
 
     public void ConfigureContainer<TContainerBuilder>(
@@ -70,45 +56,26 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
     {
         _ = CultureManager.Instance;
 
-        var configureListHandle = GCHandle.Alloc(_configureActions);
+        var platformBackend = new PlatformBackend(PlatformBackendKind.SDL3, PlatformInitFlags.Video);
         try
         {
-            unsafe
-            {
-                var nativeEngine = CreateNativeEngine(
-                    new PlatformBackendInfo(PlatformBackendKind.SDL3, PlatformInitFlags.Video),
-                    &PerformNativeConfiguration,
-                    GCHandle.ToIntPtr(configureListHandle),
-                    out var errorMessage
-                );
-                errorMessage.ThrowIfError();
+            var nativeEngine = CreateNativeEngine(platformBackend, out var errorMessage);
+            errorMessage.ThrowIfError();
 
-                try
-                {
-                    return new Engine(nativeEngine, Services, _serviceProviderFactory);
-                }
-                catch
-                {
-                    Engine.NativeDestroy(nativeEngine);
-                    throw;
-                }
+            try
+            {
+                return new Engine(platformBackend, nativeEngine, Services, _serviceProviderFactory);
+            }
+            catch
+            {
+                Engine.NativeDestroy(nativeEngine);
+                throw;
             }
         }
-        finally
+        catch
         {
-            configureListHandle.Free();
-        }
-    }
-
-    [UnmanagedCallersOnly]
-    private static void PerformNativeConfiguration(IntPtr ptr, IntPtr userData)
-    {
-        var userDataHandle = GCHandle.FromIntPtr(userData);
-        var configurers = (List<Action<NativeConfigureContext>>)userDataHandle.Target!;
-        var nativeContext = new NativeConfigureContext(ptr);
-        foreach (var configurer in configurers)
-        {
-            configurer(nativeContext);
+            platformBackend.Dispose();
+            throw;
         }
     }
 
@@ -137,16 +104,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_engine")]
     private static unsafe partial IntPtr CreateNativeEngine(
-        PlatformBackendInfo platformInfo,
-        delegate* unmanaged<IntPtr, IntPtr, void> configureCallback,
-        IntPtr userData,
+        PlatformBackend platformBackend,
         out InteropError errorMessage
-    );
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_add_rendering_services")]
-    private static partial void NativeAddRenderingServices(
-        NativeConfigureContext ctx,
-        WindowBackend windowBackend,
-        RenderBackend renderBackend
     );
 }

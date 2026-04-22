@@ -20,12 +20,9 @@ namespace retro
 {
     export class VulkanInstance
     {
-        explicit VulkanInstance(
-            vk::UniqueInstance instance,
-            std::unique_ptr<vk::detail::DispatchLoaderDynamic> dldi,
-            vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::detail::DispatchLoaderDynamic> debug_messenger);
-
       public:
+        explicit VulkanInstance(WindowBackend backend);
+
         static VulkanInstance create(WindowBackend backend);
 
         [[nodiscard]] inline vk::UniqueSurfaceKHR create_surface(const Window &window) const

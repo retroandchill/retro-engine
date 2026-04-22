@@ -14,6 +14,8 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/scene_node.cpp
         private/world/viewport.cpp
         private/rendering/renderer2d.cpp
+        private/rendering/renderer_manager.cpp
+        private/rendering/headless_render_backend.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -43,6 +45,10 @@ set(RETRO_RUNTIME_MODULES
         public/modules/rendering/layout/margin.ixx
         public/modules/rendering/layout/anchors.ixx
         public/modules/exceptions.ixx
+        public/modules/rendering/renderer_manager.ixx
+        public/modules/rendering/render_backend.ixx
+        public/modules/rendering/headless_render_backend.ixx
+        public/modules/rendering/headless_renderer2d.ixx
 )
 
 

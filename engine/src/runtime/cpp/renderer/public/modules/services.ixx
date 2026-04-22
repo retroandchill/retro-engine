@@ -13,15 +13,22 @@ export module retro.renderer.services;
 import std;
 import retro.core.di;
 import retro.platform.window;
+import retro.runtime.rendering.render_backend;
+import retro.core.memory.ref_counted_ptr;
+import retro.platform.backend;
 
 namespace retro
 {
-    export enum class RenderBackend : std::uint8_t
+    export enum class RenderBackendType : std::uint8_t
     {
+        headless,
         vulkan
     };
 
+    export RETRO_API RefCountPtr<RenderBackend> create_render_backend(PlatformBackend &platform_backend,
+                                                                      RenderBackendType backend);
+
     export RETRO_API void add_rendering_services(ServiceCollection &services,
                                                  WindowBackend window_backend,
-                                                 RenderBackend backend = RenderBackend::vulkan);
+                                                 RenderBackendType backend = RenderBackendType::vulkan);
 } // namespace retro

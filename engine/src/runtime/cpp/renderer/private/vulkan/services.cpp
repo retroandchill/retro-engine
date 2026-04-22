@@ -26,15 +26,6 @@ namespace retro
 {
     void add_vulkan_services(ServiceCollection &services, WindowBackend window_backend)
     {
-        services.add_scoped<Renderer2D, VulkanRenderer2D>()
-            .add_singleton<TextureManager, VulkanTextureManager>()
-            .add_singleton([window_backend] { return VulkanInstance::create(window_backend); })
-            .add_scoped([](const Window &window, VulkanInstance &instance) { return instance.create_surface(window); })
-            .add_scoped<VulkanPresenter>()
-            .add_singleton([](const VulkanInstance &instance, PlatformBackend &platform_backend)
-                           { return VulkanDevice::create(instance, platform_backend); })
-            .add_singleton([](const VulkanDevice &device) { return device.create_buffer_manager(); })
-            .add_scoped<VulkanPipelineManager>()
-            .add_singleton([](const VulkanDevice &device) { return device.create_command_pool(); });
+        // Do nothing for now
     }
 } // namespace retro

@@ -63,8 +63,7 @@ extern "C"
             {
                 retro::EngineConfigContext context;
                 context.services.add(retro::PlatformBackend::create(platform_config));
-                context.services.add_singleton<retro::PipelineManager>()
-                    .add_singleton<retro::RenderPipeline, retro::GeometryRenderPipeline>()
+                context.services.add_singleton<retro::RenderPipeline, retro::GeometryRenderPipeline>()
                     .add_singleton<retro::RenderPipeline, retro::SpriteRenderPipeline>()
                     .add_singleton<retro::AssetManager>()
                     .add_singleton<retro::AssetDecoder, retro::TextureDecoder>();

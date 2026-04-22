@@ -129,16 +129,7 @@ namespace retro
         device_.unmapMemory(memory_.get());
     }
 
-    VulkanDevice::VulkanDevice(const VulkanDeviceConfig &config, vk::UniqueDevice device)
-        : physical_device_{config.physical_device}, device_{std::move(device)},
-          graphics_family_index_{config.graphics_family}, present_family_index_{config.present_family},
-          graphics_queue_{device_->getQueue(graphics_family_index_, 0)},
-          present_queue_{device_->getQueue(present_family_index_, 0)}
-    {
-    }
-
-    std::unique_ptr<VulkanDevice> VulkanDevice::create(const VulkanInstance &instance,
-                                                       PlatformBackend &platform_backend)
+    VulkanDevice::VulkanDevice(const VulkanInstance &instance, PlatformBackend &platform_backend)
     {
         // Create a hidden window and surface to test against for the device so we can properly separate device
         // selection from surface creation.
@@ -149,8 +140,20 @@ namespace retro
             throw GraphicsException{"VulkanDevice: failed to create hidden window"};
         }
         auto surface = instance.create_surface(**window);
-        auto config = pick_physical_device(instance, surface.get());
-        return std::make_unique<VulkanDevice>(config, create_device(config));
+        const auto config = pick_physical_device(instance, surface.get());
+
+        physical_device_ = config.physical_device;
+        device_ = create_device(config);
+        graphics_family_index_ = config.graphics_family;
+        present_family_index_ = config.present_family;
+        graphics_queue_ = device_->getQueue(graphics_family_index_, 0);
+        present_queue_ = device_->getQueue(present_family_index_, 0);
+    }
+
+    std::unique_ptr<VulkanDevice> VulkanDevice::create(const VulkanInstance &instance,
+                                                       PlatformBackend &platform_backend)
+    {
+        return std::make_unique<VulkanDevice>(instance, platform_backend);
     }
 
     vk::UniquePipeline VulkanDevice::create_graphics_pipeline(const vk::PipelineCache cache,

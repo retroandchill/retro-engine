@@ -21,6 +21,8 @@ import vulkan;
 import std;
 import retro.runtime.rendering.draw_command;
 import retro.core.memory.arena_allocator;
+import retro.core.memory.ref_counted_ptr;
+import retro.renderer.vulkan.vulkan_render_backend;
 
 namespace retro
 {
@@ -41,21 +43,12 @@ namespace retro
       public:
         static constexpr std::uint32_t max_frames_in_flight = 2;
 
-        using Dependencies = TypeList<Window &,
-                                      vk::SurfaceKHR,
-                                      VulkanDevice &,
-                                      VulkanPresenter &,
-                                      VulkanBufferManager &,
-                                      vk::CommandPool,
-                                      VulkanPipelineManager &>;
-
-        explicit VulkanRenderer2D(Window &window,
-                                  vk::SurfaceKHR surface,
+        explicit VulkanRenderer2D(VulkanRenderBackend &backend,
+                                  RefCountPtr<Window> window,
+                                  vk::UniqueSurfaceKHR surface,
                                   VulkanDevice &device,
-                                  VulkanPresenter &presenter,
                                   VulkanBufferManager &buffer_manager,
-                                  vk::CommandPool command_pool,
-                                  VulkanPipelineManager &pipeline_manager);
+                                  vk::CommandPool command_pool);
 
         VulkanRenderer2D(const VulkanRenderer2D &) = delete;
         VulkanRenderer2D(VulkanRenderer2D &&) noexcept = delete;
@@ -80,14 +73,15 @@ namespace retro
         void remove_render_pipeline(std::type_index type) override;
 
       private:
-        Window &window_;
+        RefCountPtr<VulkanRenderBackend> backend_;
+        RefCountPtr<Window> window_;
 
-        vk::SurfaceKHR surface_;
+        vk::UniqueSurfaceKHR surface_;
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
-        VulkanPresenter &presenter_;
         vk::CommandPool command_pool_;
-        VulkanPipelineManager &pipeline_manager_;
+        VulkanPipelineManager pipeline_manager_;
+        VulkanPresenter presenter_;
         std::stop_source renderer_teardown_source_;
     };
 } // namespace retro

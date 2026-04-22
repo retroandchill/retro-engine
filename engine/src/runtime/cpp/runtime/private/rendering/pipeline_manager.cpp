@@ -8,9 +8,9 @@ module retro.runtime.rendering.pipeline_manager;
 
 namespace retro
 {
-    PipelineManager::PipelineManager(const std::vector<RenderPipeline *> &pipelines)
+    PipelineManager::PipelineManager(const std::span<RenderPipeline *> pipelines)
     {
-        for (auto &pipeline : pipelines)
+        for (auto *pipeline : pipelines)
         {
             std::type_index type = pipeline->component_type();
             pipelines_[type] = PipelineUsage{.pipeline = pipeline, .usage_count = 1};

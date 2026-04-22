@@ -191,7 +191,7 @@ public readonly partial struct Name
 
     internal Name(ReadOnlySpan<byte> name, FindName findType = FindName.Add)
     {
-        _ = NativeLookup(name, name.Length, findType, out this, out var error);
+        NativeLookup(name, name.Length, findType, out this, out var error);
         error.ThrowIfError();
     }
 
@@ -204,7 +204,7 @@ public readonly partial struct Name
     /// </param>
     public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
-        _ = NativeLookup(name, name.Length, findType, out this, out var error);
+        NativeLookup(name, name.Length, findType, out this, out var error);
         error.ThrowIfError();
     }
 
@@ -400,8 +400,7 @@ public readonly partial struct Name
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf8")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeLookup(
+    private static partial void NativeLookup(
         ReadOnlySpan<byte> name,
         int nameLength,
         FindName findType,
@@ -410,8 +409,7 @@ public readonly partial struct Name
     );
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf16")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeLookup(
+    private static partial void NativeLookup(
         ReadOnlySpan<char> name,
         int nameLength,
         FindName findType,

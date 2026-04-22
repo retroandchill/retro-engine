@@ -27,8 +27,9 @@ public enum PlatformInitFlags : uint
     Camera = 1 << 7,
 }
 
-public enum RenderBackend : byte
+public enum RenderBackendType : byte
 {
+    Headless,
     Vulkan,
 }
 

@@ -18,15 +18,16 @@ import retro.core.util.deferred;
 
 namespace retro
 {
-    VulkanRenderer2D::VulkanRenderer2D(Window &window,
-                                       const vk::SurfaceKHR surface,
+    VulkanRenderer2D::VulkanRenderer2D(VulkanRenderBackend &backend,
+                                       RefCountPtr<Window> window,
+                                       vk::UniqueSurfaceKHR surface,
                                        VulkanDevice &device,
-                                       VulkanPresenter &presenter,
                                        VulkanBufferManager &buffer_manager,
-                                       const vk::CommandPool command_pool,
-                                       VulkanPipelineManager &pipeline_manager)
-        : window_{window}, surface_{surface}, device_{device}, buffer_manager_{buffer_manager}, presenter_(presenter),
-          command_pool_(command_pool), pipeline_manager_{pipeline_manager}
+                                       const vk::CommandPool command_pool)
+        : backend_{backend.shared_from_this()}, window_{std::move(window)}, surface_{std::move(surface)},
+          device_{device}, buffer_manager_{buffer_manager}, command_pool_{command_pool},
+          pipeline_manager_{device_, buffer_manager_},
+          presenter_{*window, surface.get(), device_, command_pool, pipeline_manager_}
     {
     }
 
@@ -65,7 +66,7 @@ namespace retro
 
     Window &VulkanRenderer2D::window() const
     {
-        return window_;
+        return *window_;
     }
 
     void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)

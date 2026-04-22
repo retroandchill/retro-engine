@@ -16,6 +16,8 @@ set(RETRO_INTEROP_SOURCES
         private/localization/time_zone.cpp
         private/localization/collator.cpp
         private/localization/plural_rules.cpp
+        private/platform.cpp
+        private/rendering.cpp
 )
 
 set(RETRO_INTEROP_PRIVATE_MODULES
