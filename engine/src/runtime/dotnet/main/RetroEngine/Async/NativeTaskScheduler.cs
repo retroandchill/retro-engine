@@ -14,7 +14,8 @@ internal sealed partial class NativeTaskScheduler : IDisposable
 
     public void PumpTasks(int maxTasks = int.MaxValue)
     {
-        NativePumpTasks(_nativeScheduler, maxTasks);
+        NativePumpTasks(_nativeScheduler, maxTasks, out var error);
+        error.ThrowIfError();
     }
 
     public void Dispose()
@@ -61,5 +62,5 @@ internal sealed partial class NativeTaskScheduler : IDisposable
     private static partial void NativeDestroyScope(scoped ref Scope scheduler);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_pump_tasks")]
-    private static partial void NativePumpTasks(IntPtr scheduler, int maxTasks);
+    private static partial void NativePumpTasks(IntPtr scheduler, int maxTasks, out InteropError error);
 }

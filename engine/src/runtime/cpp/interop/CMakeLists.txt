@@ -17,6 +17,7 @@ set(RETRO_INTEROP_SOURCES
         private/localization/plural_rules.cpp
         private/platform.cpp
         private/rendering.cpp
+        private/async.cpp
 )
 
 set(RETRO_INTEROP_PRIVATE_MODULES
