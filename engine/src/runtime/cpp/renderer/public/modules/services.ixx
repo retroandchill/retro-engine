@@ -27,8 +27,4 @@ namespace retro
 
     export RETRO_API RefCountPtr<RenderBackend> create_render_backend(PlatformBackend &platform_backend,
                                                                       RenderBackendType backend);
-
-    export RETRO_API void add_rendering_services(ServiceCollection &services,
-                                                 WindowBackend window_backend,
-                                                 RenderBackendType backend = RenderBackendType::vulkan);
 } // namespace retro

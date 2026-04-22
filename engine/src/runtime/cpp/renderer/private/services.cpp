@@ -13,7 +13,6 @@ module;
 module retro.renderer.services;
 
 import std;
-import retro.renderer.vulkan.services;
 import retro.runtime.rendering.headless_render_backend;
 import retro.renderer.vulkan.vulkan_render_backend;
 
@@ -30,11 +29,5 @@ namespace retro
             default:
                 throw std::invalid_argument("Invalid render backend");
         }
-    }
-    void add_rendering_services(ServiceCollection &services,
-                                const WindowBackend window_backend,
-                                const RenderBackendType backend)
-    {
-        // Don't do anything anymore
     }
 } // namespace retro

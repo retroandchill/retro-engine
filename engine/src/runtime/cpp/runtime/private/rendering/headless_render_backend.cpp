@@ -9,9 +9,23 @@ import retro.runtime.rendering.headless_renderer2d;
 
 namespace retro
 {
-
-    std::unique_ptr<Renderer2D> HeadlessRenderBackend::create_renderer(RefCountPtr<Window> window)
+    class HeadlessTextureRenderData final : public TextureRenderData
     {
-        return std::make_unique<HeadlessRenderer2D>(std::move(window));
+      public:
+        HeadlessTextureRenderData(const std::int32_t width, const std::int32_t height)
+            : TextureRenderData(width, height)
+        {
+        }
+    };
+
+    std::shared_ptr<Renderer2D> HeadlessRenderBackend::create_renderer(std::shared_ptr<Window> window)
+    {
+        return std::make_shared<HeadlessRenderer2D>(std::move(window));
+    }
+    std::unique_ptr<TextureRenderData> HeadlessRenderBackend::upload_texture(std::span<const std::byte> bytes,
+                                                                             std::int32_t width,
+                                                                             std::int32_t height)
+    {
+        return std::make_unique<HeadlessTextureRenderData>(width, height);
     }
 } // namespace retro

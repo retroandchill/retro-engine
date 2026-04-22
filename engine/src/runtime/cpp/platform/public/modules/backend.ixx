@@ -77,9 +77,9 @@ namespace retro
 
         [[nodiscard]] virtual WindowBackend window_backend() const noexcept = 0;
 
-        virtual PlatformResult<RefCountPtr<Window>> create_window(const WindowDesc &desc) = 0;
+        virtual PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) = 0;
 
-        virtual Task<PlatformResult<RefCountPtr<Window>>> create_window_async(WindowDesc desc) = 0;
+        virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) = 0;
 
         virtual Optional<Event> poll_event() = 0;
 

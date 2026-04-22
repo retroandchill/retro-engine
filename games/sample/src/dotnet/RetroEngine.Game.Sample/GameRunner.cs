@@ -10,6 +10,7 @@ using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Platform;
+using RetroEngine.Rendering;
 using RetroEngine.Tickables;
 using RetroEngine.World;
 using Serilog;
@@ -20,6 +21,7 @@ public sealed class GameRunner(
     AssetManager assetManager,
     IHostApplicationLifetime lifetime,
     TickManager tickManager,
+    RenderManager renderManager,
     SceneManager sceneManager,
     ViewportManager viewportManager
 ) : AsyncGameSession(lifetime)
@@ -28,7 +30,7 @@ public sealed class GameRunner(
     {
         Log.Information("Starting game runner.");
 
-        await Engine.Instance.CreateMainWindowAsync(
+        await renderManager.CreateMainWindowAsync(
             "Retro Engine",
             1280,
             720,

@@ -17,7 +17,7 @@ namespace retro
     export class HeadlessRenderer2D final : public Renderer2D
     {
       public:
-        explicit inline HeadlessRenderer2D(RefCountPtr<Window> window) : window_{std::move(window)}
+        explicit inline HeadlessRenderer2D(std::shared_ptr<Window> window) : window_{std::move(window)}
         {
         }
 
@@ -57,6 +57,6 @@ namespace retro
         }
 
       private:
-        RefCountPtr<Window> window_;
+        std::shared_ptr<Window> window_;
     };
 } // namespace retro

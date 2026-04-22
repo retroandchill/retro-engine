@@ -10,14 +10,14 @@ namespace retro
 {
     namespace
     {
-        std::shared_ptr<ServiceScope> create_service_scope(ServiceScopeFactory &factory, RefCountPtr<Window> window)
+        std::shared_ptr<ServiceScope> create_service_scope(ServiceScopeFactory &factory, std::shared_ptr<Window> window)
         {
             auto scope = factory.create_scope([window](ServiceCollection &collection) { collection.add(window); });
             return scope;
         }
     } // namespace
 
-    RendererRef::RendererRef(RefCountPtr<Window> window, ServiceScopeFactory &scope_factory)
+    RendererRef::RendererRef(std::shared_ptr<Window> window, ServiceScopeFactory &scope_factory)
         : scope_(create_service_scope(scope_factory, std::move(window))),
           renderer_{scope_->service_provider().get_required<Renderer2D>()}
     {

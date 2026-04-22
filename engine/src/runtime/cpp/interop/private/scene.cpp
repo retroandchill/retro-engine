@@ -14,7 +14,6 @@ import retro.core.memory.ref_counted_ptr;
 import retro.runtime.world.scene;
 import retro.runtime.world.viewport;
 import retro.runtime.world.scene_node;
-import retro.runtime.assets.textures.texture;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.runtime.engine;

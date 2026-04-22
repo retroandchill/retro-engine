@@ -6,36 +6,24 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/scene.cpp
         private/rendering/objects/geometry.cpp
         private/rendering/pipeline_manager.cpp
-        private/assets/asset_manager.cpp
         private/rendering/objects/sprite.cpp
-        private/assets/asset.cpp
-        private/assets/textures/texture_decoder.cpp
-        private/rendering/texture_manager.cpp
         private/world/scene_node.cpp
         private/world/viewport.cpp
         private/rendering/renderer2d.cpp
-        private/rendering/renderer_manager.cpp
+        private/rendering/render_manager.cpp
         private/rendering/headless_render_backend.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
-        private/assets/textures/texture.cpp
 )
 
 set(RETRO_RUNTIME_MODULES
         public/modules/world/scene.ixx
         public/modules/rendering/renderer2d.ixx
         public/modules/rendering/objects/geometry.ixx
-        public/modules/assets/asset_manager.ixx
-        public/modules/assets/textures/texture.ixx
         public/modules/engine.ixx
         public/modules/rendering/objects/sprite.ixx
         public/modules/assets/asset_path.ixx
-        public/modules/assets/asset.ixx
-        public/modules/rendering/texture_manager.ixx
-        public/modules/assets/asset_decoder.ixx
-        public/modules/assets/asset_load_result.ixx
-        public/modules/assets/textures/texture_decoder.ixx
         public/modules/rendering/shader_layout.ixx
         public/modules/rendering/draw_command.ixx
         public/modules/rendering/render_pipeline.ixx
@@ -45,10 +33,11 @@ set(RETRO_RUNTIME_MODULES
         public/modules/rendering/layout/margin.ixx
         public/modules/rendering/layout/anchors.ixx
         public/modules/exceptions.ixx
-        public/modules/rendering/renderer_manager.ixx
+        public/modules/rendering/render_manager.ixx
         public/modules/rendering/render_backend.ixx
         public/modules/rendering/headless_render_backend.ixx
         public/modules/rendering/headless_renderer2d.ixx
+        public/modules/rendering/texture.ixx
 )
 
 

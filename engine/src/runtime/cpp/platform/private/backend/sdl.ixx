@@ -178,33 +178,33 @@ namespace retro
             return WindowBackend::sdl3;
         }
 
-        PlatformResult<RefCountPtr<Window>> create_window(const WindowDesc &desc) override
+        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
         {
             if (SDL_IsMainThread())
             {
-                return make_ref_counted<Sdl3Window>(desc);
+                return std::make_shared<Sdl3Window>(desc);
             }
 
-            Promise<RefCountPtr<Window>> promise;
+            Promise<std::shared_ptr<Window>> promise;
             EXPECT(push_event(CallbackEvent{.callback = [&promise, &desc]
                                             {
-                                                promise.emplace(make_ref_counted<Sdl3Window>(desc));
+                                                promise.emplace(std::make_shared<Sdl3Window>(desc));
                                             }}));
 
             return promise.get_future().get();
         }
 
-        Task<PlatformResult<RefCountPtr<Window>>> create_window_async(WindowDesc desc) override
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) override
         {
             if (SDL_IsMainThread())
             {
-                co_return make_ref_counted<Sdl3Window>(desc);
+                co_return std::make_shared<Sdl3Window>(desc);
             }
 
-            auto promise = std::make_shared<Promise<RefCountPtr<Window>>>();
+            auto promise = std::make_shared<Promise<std::shared_ptr<Window>>>();
             CO_EXPECT(push_event(CallbackEvent{.callback = [promise, desc = std::move(desc)]
                                                {
-                                                   promise->emplace(make_ref_counted<Sdl3Window>(desc));
+                                                   promise->emplace(std::make_shared<Sdl3Window>(desc));
                                                }}));
 
             co_return co_await promise->get_future();

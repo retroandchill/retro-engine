@@ -17,7 +17,7 @@ import retro.logging;
 import std;
 import retro.platform.window;
 import retro.core.di;
-import retro.runtime.rendering.texture_manager;
+import retro.runtime.rendering.texture;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.world.viewport;
 import retro.runtime.rendering.draw_command;
@@ -51,7 +51,7 @@ namespace retro
     export class RETRO_API RendererRef
     {
       public:
-        explicit RendererRef(RefCountPtr<Window> window, ServiceScopeFactory &scope_factory);
+        explicit RendererRef(std::shared_ptr<Window> window, ServiceScopeFactory &scope_factory);
 
         [[nodiscard]] inline Renderer2D &get() const
         {

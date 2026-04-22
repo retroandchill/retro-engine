@@ -25,14 +25,4 @@ extern "C"
     {
         delete backend;
     }
-
-    RETRO_API void retro_window_add_ref(const Window *window)
-    {
-        window->add_ref();
-    }
-
-    RETRO_API void retro_window_sub_ref(const Window *window)
-    {
-        window->sub_ref();
-    }
 }

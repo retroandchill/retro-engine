@@ -14,17 +14,40 @@ import retro.platform.backend;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
-import retro.runtime.rendering.pipeline_manager.renderer_manager;
+import retro.runtime.rendering.pipeline_manager.render_manager;
 import retro.runtime.world.viewport;
 import retro.runtime.rendering.pipeline_manager;
 import retro.platform.window;
 import retro.core.strings.encoding;
 import retro.core.async.task;
+import retro.core.functional.interop_function;
 
 using namespace retro;
 
-using WindowCreatedCallback = void (*)(void *, std::uint64_t);
-using OnErrorCallback = void (*)(void *, InteropError);
+namespace
+{
+    struct WindowRemovedBinding
+    {
+        InteropFunction<void(std::uint64_t)> function;
+
+        void operator()(const Window &window) const
+        {
+            function(window.id());
+        }
+
+        bool operator==(const WindowRemovedBinding &other) const noexcept
+        {
+            return function == other.function;
+        }
+    };
+
+    using DeleteCallback = void (*)(void *);
+    using EqualsCallback = bool (*)(void *, void *);
+    using WindowRemovedCallback = void (*)(void *, std::uint64_t);
+
+    using WindowCreatedCallback = void (*)(void *, std::uint64_t);
+    using OnErrorCallback = void (*)(void *, InteropError);
+} // namespace
 
 extern "C"
 {
@@ -55,17 +78,17 @@ extern "C"
         return try_execute([] { return new SpriteRenderPipeline(); }, *error);
     }
 
-    RETRO_API RendererManager *retro_renderer_manager_create(PlatformBackend *platform_backend,
-                                                             RenderBackend *render_backend,
-                                                             ViewportManager *viewports,
-                                                             RenderPipeline **pipelines,
-                                                             std::int32_t pipeline_count,
-                                                             InteropError *error)
+    RETRO_API RenderManager *retro_render_manager_create(PlatformBackend *platform_backend,
+                                                         RenderBackend *render_backend,
+                                                         ViewportManager *viewports,
+                                                         RenderPipeline **pipelines,
+                                                         std::int32_t pipeline_count,
+                                                         InteropError *error)
     {
         return try_execute(
             [&]
             {
-                return new RendererManager(
+                return new RenderManager(
                     *platform_backend,
                     *render_backend,
                     *viewports,
@@ -74,18 +97,18 @@ extern "C"
             *error);
     }
 
-    RETRO_API void retro_renderer_manager_destroy(const RendererManager *manager)
+    RETRO_API void retro_render_manager_destroy(const RenderManager *manager)
     {
         delete manager;
     }
 
-    RETRO_API std::uint64_t retro_renderer_manager_create_window(RendererManager *manager,
-                                                                 const char16_t *window_title,
-                                                                 const std::int32_t window_tile_length,
-                                                                 const std::int32_t width,
-                                                                 const std::int32_t height,
-                                                                 const WindowFlags flags,
-                                                                 InteropError *error)
+    RETRO_API std::uint64_t retro_render_manager_create_window(RenderManager *manager,
+                                                               const char16_t *window_title,
+                                                               const std::int32_t window_tile_length,
+                                                               const std::int32_t width,
+                                                               const std::int32_t height,
+                                                               const WindowFlags flags,
+                                                               InteropError *error)
     {
         try
         {
@@ -103,12 +126,13 @@ extern "C"
                 return 0;
             }
 
-            return window->get()->id();
+            return *window;
         }
         catch (const std::exception &e)
         {
+            auto &type_id = typeid(e);
             *error = InteropError{.error_code = get_error_code(e),
-                                  .native_exception_type = typeid(e).name(),
+                                  .native_exception_type = type_id.name(),
                                   .message = e.what()};
         }
         catch (...)
@@ -119,18 +143,18 @@ extern "C"
         return 0;
     }
 
-    RETRO_API void retro_renderer_manager_create_window_async(RendererManager *manager,
-                                                              const char16_t *window_title,
-                                                              const std::int32_t window_tile_length,
-                                                              const std::int32_t width,
-                                                              const std::int32_t height,
-                                                              const WindowFlags flags,
-                                                              void *user_data,
-                                                              const WindowCreatedCallback created_callback,
-                                                              const OnErrorCallback error_callback)
+    RETRO_API void retro_render_manager_create_window_async(RenderManager *manager,
+                                                            const char16_t *window_title,
+                                                            const std::int32_t window_tile_length,
+                                                            const std::int32_t width,
+                                                            const std::int32_t height,
+                                                            const WindowFlags flags,
+                                                            void *user_data,
+                                                            const WindowCreatedCallback created_callback,
+                                                            const OnErrorCallback error_callback)
     {
         std::ignore = [](WindowDesc &&desc,
-                         RendererManager *local_manager,
+                         RenderManager *local_manager,
                          void *local_user_data,
                          const WindowCreatedCallback on_created,
                          const OnErrorCallback on_error) -> Task<>
@@ -145,13 +169,14 @@ extern "C"
                                           .message = window.error().message.data()});
                 }
 
-                on_created(local_user_data, window->get()->id());
+                on_created(local_user_data, *window);
             }
             catch (const std::exception &e)
             {
+                auto &type_id = typeid(e);
                 on_error(local_user_data,
                          InteropError{.error_code = get_error_code(e),
-                                      .native_exception_type = typeid(e).name(),
+                                      .native_exception_type = type_id.name(),
                                       .message = e.what()});
             }
             catch (...)
@@ -171,5 +196,44 @@ extern "C"
             user_data,
             created_callback,
             error_callback);
+    }
+
+    RETRO_API void retro_render_manager_on_window_removed_add(RenderManager *engine,
+                                                              void *user_data,
+                                                              const WindowRemovedCallback removed_callback,
+                                                              const DeleteCallback delete_callback,
+                                                              const EqualsCallback equals_callback)
+    {
+        InteropFunction<void(std::uint64_t)> function{removed_callback,
+                                                      std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                                                      equals_callback};
+        engine->on_window_removed().add(WindowRemovedBinding{std::move(function)});
+    }
+
+    RETRO_API void retro_render_manager_on_window_removed_remove(RenderManager *engine,
+                                                                 void *user_data,
+                                                                 const WindowRemovedCallback removed_callback,
+                                                                 const DeleteCallback delete_callback,
+                                                                 const EqualsCallback equals_callback)
+    {
+        InteropFunction<void(std::uint64_t)> function{removed_callback,
+                                                      std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                                                      equals_callback};
+        engine->on_window_removed().remove(WindowRemovedBinding{std::move(function)});
+    }
+
+    RETRO_API void retro_render_manager_sync_render_state(RenderManager *engine, InteropError *error)
+    {
+        try_execute([&] { engine->sync_renderer_state(); }, *error);
+    }
+
+    RETRO_API void retro_render_manager_render(const RenderManager *engine, InteropError *error_message)
+    {
+        try_execute([&] { engine->render(); }, *error_message);
+    }
+
+    RETRO_API void retro_render_manager_on_engine_shutdown(RenderManager *engine)
+    {
+        engine->on_engine_shutdown();
     }
 }

@@ -10,6 +10,7 @@ import std;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.rendering.renderer2d;
 import retro.platform.window;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {
@@ -18,6 +19,10 @@ namespace retro
       public:
         virtual ~RenderBackend() = default;
 
-        virtual std::unique_ptr<Renderer2D> create_renderer(RefCountPtr<Window> window) = 0;
+        virtual std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) = 0;
+
+        virtual std::unique_ptr<TextureRenderData> upload_texture(std::span<const std::byte> bytes,
+                                                                  std::int32_t width,
+                                                                  std::int32_t height) = 0;
     };
 } // namespace retro

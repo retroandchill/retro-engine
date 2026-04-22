@@ -1,5 +1,5 @@
 /**
- * @file renderer_manager.ixx
+ * @file render_manager.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,7 +8,7 @@ module;
 
 #include <retro/core/exports.h>
 
-export module retro.runtime.rendering.pipeline_manager.renderer_manager;
+export module retro.runtime.rendering.pipeline_manager.render_manager;
 
 import std;
 import retro.runtime.world.viewport;
@@ -26,26 +26,32 @@ namespace retro
 {
     export using OnWindowRemoved = MulticastDelegate<void(const Window &)>;
 
-    export class RendererManager
+    export class RETRO_API RenderManager
     {
       public:
-        explicit RendererManager(PlatformBackend &platform_backend_,
-                                 RenderBackend &render_backend,
-                                 ViewportManager &viewports,
-                                 PipelineManager pipeline_manager);
+        explicit RenderManager(PlatformBackend &platform_backend_,
+                               RenderBackend &render_backend,
+                               ViewportManager &viewports,
+                               PipelineManager pipeline_manager);
 
         [[nodiscard]] inline Optional<Renderer2D &> primary_renderer() const noexcept
         {
             return primary_renderer_;
         }
 
-        RETRO_API PlatformResult<RefCountPtr<Window>> create_new_window(WindowDesc window_desc);
+        PlatformResult<std::uint64_t> create_new_window(WindowDesc window_desc);
 
-        RETRO_API Task<PlatformResult<RefCountPtr<Window>>> create_new_window_async(WindowDesc window_desc);
+        Task<PlatformResult<std::uint64_t>> create_new_window_async(WindowDesc window_desc);
 
-        RETRO_API void add_window(Window &window);
+        void add_window(Window &window);
 
-        RETRO_API void remove_window(const Window &window);
+        void remove_window(std::uint64_t window_id);
+
+        void sync_renderer_state();
+
+        void render() const;
+
+        void on_engine_shutdown();
 
         inline OnWindowRemoved::Event on_window_removed()
         {
@@ -53,12 +59,14 @@ namespace retro
         }
 
       private:
+        [[nodiscard]] std::vector<std::shared_ptr<Renderer2D>> get_current_renderers() const;
+
         PlatformBackend &platform_backend_;
         RenderBackend &render_backend_;
         ViewportManager &viewports_;
         PipelineManager pipeline_manager_;
         mutable std::shared_mutex renderers_mutex_;
-        std::map<std::uint64_t, std::unique_ptr<Renderer2D>> renderers_;
+        std::map<std::uint64_t, std::shared_ptr<Renderer2D>> renderers_;
         Optional<Renderer2D &> primary_renderer_;
 
         OnWindowRemoved on_window_removed_;

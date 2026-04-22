@@ -16,6 +16,7 @@ public sealed class TickManager : IDisposable
 {
     private readonly HashSet<ITickable> _tickables = new(ReferenceEqualityComparer.Default);
     private readonly GameThreadSynchronizationContext _synchronizationContext = new();
+    private readonly NativeTaskScheduler _nativeTaskScheduler = new();
     private readonly ILogger<TickManager> _logger;
 
     public IThreadSync ThreadSync => _synchronizationContext;
@@ -37,9 +38,9 @@ public sealed class TickManager : IDisposable
         _tickables.Remove(tickable);
     }
 
-    public void BindSynchronizationContext()
+    internal SyncContextScope BindSynchronizationContext()
     {
-        SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+        return new SyncContextScope(_synchronizationContext, _nativeTaskScheduler);
     }
 
     private void OnUnhandledException(Exception ex)
@@ -47,8 +48,9 @@ public sealed class TickManager : IDisposable
         _logger.LogError(ex, "Unhandled exception in game thread.");
     }
 
-    public void Tick(float deltaTime)
+    internal void Tick(float deltaTime)
     {
+        _nativeTaskScheduler.PumpTasks();
         foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
         {
             tickable.Tick(deltaTime);
@@ -86,6 +88,30 @@ public sealed class TickManager : IDisposable
         finally
         {
             UnregisterTickable(timeline);
+        }
+    }
+
+    internal ref struct SyncContextScope : IDisposable
+    {
+        private bool _disposed;
+        private readonly SynchronizationContext? _previous;
+        private NativeTaskScheduler.Scope _nativeScope;
+
+        public SyncContextScope(SynchronizationContext context, NativeTaskScheduler scheduler)
+        {
+            _previous = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(context);
+            _nativeScope = scheduler.CreateThreadScope();
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            SynchronizationContext.SetSynchronizationContext(_previous);
+            _nativeScope.Dispose();
+            _disposed = true;
         }
     }
 

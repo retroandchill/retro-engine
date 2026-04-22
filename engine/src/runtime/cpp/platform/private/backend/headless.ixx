@@ -65,12 +65,12 @@ namespace retro
             return WindowBackend::headless;
         }
 
-        PlatformResult<RefCountPtr<Window>> create_window(const WindowDesc &desc) override
+        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
         {
-            return make_ref_counted<HeadlessWindow>(desc);
+            return std::make_shared<HeadlessWindow>(desc);
         }
 
-        Task<PlatformResult<RefCountPtr<Window>>> create_window_async(const WindowDesc desc) override
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(const WindowDesc desc) override
         {
             return create_task_from_result(create_window(desc));
         }

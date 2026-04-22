@@ -7,7 +7,6 @@
 export module retro.renderer.vulkan.renderer;
 
 import retro.runtime.rendering.render_pipeline;
-import retro.runtime.rendering.texture_manager;
 import retro.runtime.rendering.renderer2d;
 import retro.runtime.world.viewport;
 import retro.renderer.vulkan.components.device;
@@ -44,7 +43,7 @@ namespace retro
         static constexpr std::uint32_t max_frames_in_flight = 2;
 
         explicit VulkanRenderer2D(VulkanRenderBackend &backend,
-                                  RefCountPtr<Window> window,
+                                  std::shared_ptr<Window> window,
                                   vk::UniqueSurfaceKHR surface,
                                   VulkanDevice &device,
                                   VulkanBufferManager &buffer_manager,
@@ -74,7 +73,7 @@ namespace retro
 
       private:
         RefCountPtr<VulkanRenderBackend> backend_;
-        RefCountPtr<Window> window_;
+        std::shared_ptr<Window> window_;
 
         vk::UniqueSurfaceKHR surface_;
         VulkanDevice &device_;

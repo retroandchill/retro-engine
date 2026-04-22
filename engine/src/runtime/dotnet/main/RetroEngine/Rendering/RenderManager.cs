@@ -5,10 +5,12 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using Microsoft.Extensions.Hosting;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.World;
 using ZLinq;
+using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Rendering;
 
@@ -16,12 +18,14 @@ namespace RetroEngine.Rendering;
 public sealed partial class RenderManager : IDisposable
 {
     private IntPtr _nativeHandle;
+    private readonly IHostApplicationLifetime _lifetime;
 
     public RenderManager(
         PlatformBackend platformBackend,
         RenderBackend renderBackend,
         ViewportManager viewportManager,
-        IEnumerable<RenderPipeline> pipelines
+        IEnumerable<RenderPipeline> pipelines,
+        IHostApplicationLifetime lifetime
     )
     {
         var pipelineHandles = pipelines.AsValueEnumerable().Select(x => x.NativeHandle).ToArray();
@@ -34,16 +38,103 @@ public sealed partial class RenderManager : IDisposable
             out var error
         );
         error.ThrowIfError();
+        _lifetime = lifetime;
     }
 
-    public Window CreateWindow(ReadOnlySpan<char> title, int width, int height, WindowFlags flags)
+    public event Action<ulong>? OnWindowRemoved
+    {
+        add
+        {
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeOnWindowRemovedAdd(
+                    _nativeHandle,
+                    GCHandle.ToIntPtr(handle),
+                    &InvokeWindowRemoved,
+                    &DisposeDelegate,
+                    &EqualsDelegates
+                );
+            }
+        }
+        remove
+        {
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeOnWindowRemovedRemove(
+                    _nativeHandle,
+                    GCHandle.ToIntPtr(handle),
+                    &InvokeWindowRemoved,
+                    &DisposeDelegate,
+                    &EqualsDelegates
+                );
+            }
+        }
+    }
+
+    [UnmanagedCallersOnly]
+    private static void InvokeWindowRemoved(IntPtr userData, ulong windowId)
+    {
+        var handle = GCHandle.FromIntPtr(userData);
+        var action = (Action<ulong>?)handle.Target;
+        action?.Invoke(windowId);
+    }
+
+    [UnmanagedCallersOnly]
+    private static void DisposeDelegate(IntPtr userData)
+    {
+        var handle = GCHandle.FromIntPtr(userData);
+        handle.Free();
+    }
+
+    [UnmanagedCallersOnly]
+    private static byte EqualsDelegates(IntPtr lhs, IntPtr rhs)
+    {
+        var lhsHandle = GCHandle.FromIntPtr(lhs);
+        var rhsHandle = GCHandle.FromIntPtr(rhs);
+        return Equals(lhsHandle.Target, rhsHandle.Target) ? (byte)1 : (byte)0;
+    }
+
+    public ValueTask CreateMainWindowAsync(
+        string title,
+        int width,
+        int height,
+        WindowFlags flags,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return CreateMainWindowAsync(title.AsMemory(), width, height, flags, cancellationToken);
+    }
+
+    [CreateSyncVersion]
+    public async ValueTask CreateMainWindowAsync(
+        ReadOnlyMemory<char> title,
+        int width,
+        int height,
+        WindowFlags flags,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var windowId = await CreateWindowAsync(title, width, height, flags, cancellationToken);
+
+        OnWindowRemoved += id =>
+        {
+            if (id != windowId)
+                return;
+
+            _lifetime.StopApplication();
+        };
+    }
+
+    public ulong CreateWindow(ReadOnlySpan<char> title, int width, int height, WindowFlags flags)
     {
         var window = NativeCreateWindow(_nativeHandle, title, title.Length, width, height, flags, out var error);
         error.ThrowIfError();
-        return new Window(window, true);
+        return window;
     }
 
-    public Task<Window> CreateWindowAsync(
+    public Task<ulong> CreateWindowAsync(
         string title,
         int width,
         int height,
@@ -54,7 +145,7 @@ public sealed partial class RenderManager : IDisposable
         return CreateWindowAsync(title.AsMemory(), width, height, flags, cancellationToken);
     }
 
-    public async Task<Window> CreateWindowAsync(
+    public async Task<ulong> CreateWindowAsync(
         ReadOnlyMemory<char> title,
         int width,
         int height,
@@ -62,7 +153,7 @@ public sealed partial class RenderManager : IDisposable
         CancellationToken cancellationToken = default
     )
     {
-        var tcs = new TaskCompletionSource<Window>(cancellationToken);
+        var tcs = new TaskCompletionSource<ulong>(cancellationToken);
         var tcsHandle = GCHandle.Alloc(tcs);
         try
         {
@@ -90,17 +181,34 @@ public sealed partial class RenderManager : IDisposable
     }
 
     [UnmanagedCallersOnly]
-    private static void OnWindowCreated(IntPtr userData, IntPtr windowId)
+    private static void OnWindowCreated(IntPtr userData, ulong windowId)
     {
-        var tcs = (TaskCompletionSource<Window>)GCHandle.FromIntPtr(userData).Target!;
-        tcs.TrySetResult(new Window(windowId, true));
+        var tcs = (TaskCompletionSource<ulong>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetResult(windowId);
     }
 
     [UnmanagedCallersOnly]
     private static unsafe void OnWindowError(IntPtr userData, byte* errorMessage)
     {
-        var tcs = (TaskCompletionSource<Window>)GCHandle.FromIntPtr(userData).Target!;
+        var tcs = (TaskCompletionSource<ulong>)GCHandle.FromIntPtr(userData).Target!;
         tcs.TrySetException(new PlatformNotSupportedException(Utf8StringMarshaller.ConvertToManaged(errorMessage)));
+    }
+
+    internal void SyncRenderState()
+    {
+        NativeSyncRenderState(_nativeHandle, out var error);
+        error.ThrowIfError();
+    }
+
+    internal void Render()
+    {
+        NativeRender(_nativeHandle, out var error);
+        error.ThrowIfError();
+    }
+
+    internal void OnEngineShutdown()
+    {
+        NativeOnEngineShutdown(_nativeHandle);
     }
 
     public void Dispose()
@@ -112,7 +220,7 @@ public sealed partial class RenderManager : IDisposable
         _nativeHandle = IntPtr.Zero;
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_renderer_manager_create")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create")]
     private static partial IntPtr NativeCreate(
         PlatformBackend platformBackend,
         RenderBackend renderBackend,
@@ -122,11 +230,11 @@ public sealed partial class RenderManager : IDisposable
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_renderer_manager_destroy")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_renderer_manager_create_window")]
-    private static unsafe partial IntPtr NativeCreateWindow(
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window")]
+    private static unsafe partial ulong NativeCreateWindow(
         IntPtr engine,
         ReadOnlySpan<char> title,
         int tileLength,
@@ -136,7 +244,7 @@ public sealed partial class RenderManager : IDisposable
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_renderer_manager_create_window_async")]
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window_async")]
     private static unsafe partial void NativeCreateWindowAsync(
         IntPtr engine,
         ReadOnlySpan<char> title,
@@ -145,7 +253,34 @@ public sealed partial class RenderManager : IDisposable
         int height,
         WindowFlags flags,
         IntPtr userData,
-        delegate* unmanaged<IntPtr, IntPtr, void> onWindowCreated,
+        delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
         delegate* unmanaged<IntPtr, byte*, void> onError
     );
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_sync_render_state")]
+    private static unsafe partial void NativeSyncRenderState(IntPtr engine, out InteropError error);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_render")]
+    private static unsafe partial void NativeRender(IntPtr engine, out InteropError error);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_window_removed_add")]
+    private static unsafe partial void NativeOnWindowRemovedAdd(
+        IntPtr engine,
+        IntPtr callback,
+        delegate* unmanaged<IntPtr, ulong, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_window_removed_remove")]
+    private static unsafe partial void NativeOnWindowRemovedRemove(
+        IntPtr engine,
+        IntPtr callback,
+        delegate* unmanaged<IntPtr, ulong, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_engine_shutdown")]
+    private static unsafe partial void NativeOnEngineShutdown(IntPtr engine);
 }

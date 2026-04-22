@@ -8,14 +8,12 @@
 
 #include <boost/pool/pool_alloc.hpp>
 
-import retro.runtime.assets.asset;
-import retro.runtime.assets.asset_load_result;
-import retro.runtime.assets.textures.texture;
 import retro.runtime.engine;
 import retro.core.strings.name;
 import retro.runtime.assets.asset_path;
 import retro.core.math.vector;
 import std;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {
@@ -56,49 +54,14 @@ extern "C"
         return static_cast<std::int32_t>(string_length);
     }
 
-    RETRO_API void retro_release_asset(const retro::Asset *asset)
+    RETRO_API void retro_texture_render_data_destroy(retro::TextureRenderData *texture)
     {
-        asset->sub_ref();
+        delete texture;
     }
 
-    RETRO_API retro::Texture *retro_texture_load_existing(const retro::AssetPath *path,
-                                                          std::int32_t *width,
-                                                          std::int32_t *height)
+    RETRO_API void retro_texture_destroy(retro::Texture *texture)
     {
-        const auto asset = retro::Engine::instance().load_asset_from_cache<retro::Texture>(*path);
-        if (!asset.has_value())
-        {
-            *width = 0;
-            *height = 0;
-            return nullptr;
-        }
-
-        *width = asset->width();
-        *height = asset->height();
-        asset->add_ref();
-        return std::addressof(*asset);
-    }
-
-    RETRO_API retro::Texture *retro_texture_load(const retro::AssetPath *path,
-                                                 const std::byte *buffer,
-                                                 std::int32_t buffer_length,
-                                                 std::int32_t *width,
-                                                 std::int32_t *height)
-    {
-        std::span buffer_span{buffer, static_cast<std::size_t>(buffer_length)};
-        auto loaded_texture = retro::Engine::instance().load_asset<retro::Texture>(*path, buffer_span);
-        if (!loaded_texture.has_value())
-        {
-            *width = 0;
-            *height = 0;
-            return nullptr;
-        }
-
-        const auto asset = *std::move(loaded_texture);
-        *width = asset->width();
-        *height = asset->height();
-        asset->add_ref();
-        return asset.get();
+        delete texture;
     }
 
     RETRO_API retro::CVector2i retro_texture_get_size(const retro::Texture *texture)

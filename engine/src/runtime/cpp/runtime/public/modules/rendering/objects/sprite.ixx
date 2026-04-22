@@ -21,8 +21,8 @@ import retro.runtime.rendering.shader_layout;
 import retro.runtime.world.scene;
 import retro.runtime.world.viewport;
 import retro.runtime.world.scene_node;
-import retro.runtime.assets.textures.texture;
 import retro.core.memory.small_unique_ptr;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {

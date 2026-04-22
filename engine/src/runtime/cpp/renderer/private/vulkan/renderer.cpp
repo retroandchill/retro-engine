@@ -19,7 +19,7 @@ import retro.core.util.deferred;
 namespace retro
 {
     VulkanRenderer2D::VulkanRenderer2D(VulkanRenderBackend &backend,
-                                       RefCountPtr<Window> window,
+                                       std::shared_ptr<Window> window,
                                        vk::UniqueSurfaceKHR surface,
                                        VulkanDevice &device,
                                        VulkanBufferManager &buffer_manager,

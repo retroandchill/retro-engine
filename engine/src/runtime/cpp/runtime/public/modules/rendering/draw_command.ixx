@@ -7,11 +7,11 @@
 export module retro.runtime.rendering.draw_command;
 
 import std;
-import retro.runtime.rendering.texture_manager;
 import retro.core.containers.inline_list;
 import retro.core.memory.small_unique_ptr;
 import retro.runtime.world.viewport;
 import retro.core.strings.name;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {
