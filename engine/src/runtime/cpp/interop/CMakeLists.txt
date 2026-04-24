@@ -18,6 +18,7 @@ set(RETRO_INTEROP_SOURCES
         private/platform.cpp
         private/rendering.cpp
         private/async.cpp
+        private/interop_error.cpp
 )
 
 set(RETRO_INTEROP_PRIVATE_MODULES

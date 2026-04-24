@@ -40,6 +40,7 @@ public sealed class TickManager : IDisposable
 
     internal SyncContextScope BindSynchronizationContext()
     {
+        _synchronizationContext.AssignToGameThread();
         return new SyncContextScope(_synchronizationContext, _nativeTaskScheduler);
     }
 

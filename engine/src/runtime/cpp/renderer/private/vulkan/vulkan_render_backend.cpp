@@ -29,21 +29,29 @@ namespace retro
                                                   command_pool_.get());
     }
 
-    std::unique_ptr<TextureRenderData> VulkanRenderBackend::upload_texture(std::span<const std::byte> bytes,
-                                                                           std::int32_t width,
-                                                                           std::int32_t height)
+    RefCountPtr<Texture> VulkanRenderBackend::upload_texture(const std::span<const std::byte> bytes,
+                                                             const std::int32_t width,
+                                                             const std::int32_t height,
+                                                             const TextureFormat format)
     {
         auto command_pool = get_thread_command_pool();
 
         auto image_size = bytes.size();
-        auto image_format = vk::Format::eR8G8B8A8Srgb;
-
-        vk::BufferCreateInfo staging_info{.size = image_size,
-                                          .usage = vk::BufferUsageFlagBits::eTransferSrc,
-                                          .sharingMode = vk::SharingMode::eExclusive};
+        auto image_format = vk::Format::eUndefined;
+        switch (format)
+        {
+            case TextureFormat::rgba8:
+                image_format = vk::Format::eR8G8B8A8Srgb;
+                break;
+            case TextureFormat::rgba16f:
+                image_format = vk::Format::eR16G16B16A16Sfloat;
+                break;
+            default:
+                throw GraphicsException{"VulkanRenderer2D: unsupported texture format"};
+        }
 
         auto staging_buffer = device_.create_staging_buffer(image_size);
-        staging_buffer.copy_to_buffer(bytes);
+        staging_buffer.read_from_buffer(bytes);
 
         vk::ImageCreateInfo image_info{
             .imageType = vk::ImageType::e2D,
@@ -62,7 +70,7 @@ namespace retro
 
         // Perform the copy + transitions
         {
-            vk::UniqueCommandBuffer cmd = begin_one_shot_commands(command_pool);
+            auto cmd = begin_one_shot_commands(command_pool);
 
             transition_image_layout(cmd.get(),
                                     image.get(),
@@ -103,12 +111,64 @@ namespace retro
 
         vk::UniqueImageView image_view = device_.create_image_view(view_info);
 
-        return std::make_unique<VulkanTextureRenderData>(std::move(image),
-                                                         std::move(img_memory),
-                                                         std::move(image_view),
-                                                         linear_sampler_.get(),
-                                                         width,
-                                                         height);
+        return make_ref_counted<VulkanTexture>(shared_from_this(),
+                                               std::move(image),
+                                               std::move(img_memory),
+                                               std::move(image_view),
+                                               linear_sampler_.get(),
+                                               width,
+                                               height,
+                                               format);
+    }
+
+    std::pair<bool, std::size_t> VulkanRenderBackend::export_texture(const Texture &texture,
+                                                                     std::span<std::byte> buffer)
+    {
+        auto &vulkan_texture = dynamic_cast<const VulkanTexture &>(texture);
+        std::size_t expected_size = 0;
+        switch (vulkan_texture.format())
+        {
+            case TextureFormat::rgba8:
+                expected_size = vulkan_texture.width() * vulkan_texture.height() * 4;
+                break;
+            case TextureFormat::rgba16f:
+                expected_size = vulkan_texture.width() * vulkan_texture.height() * 8;
+                break;
+        }
+
+        if (buffer.size() < expected_size)
+        {
+            return {false, 0};
+        }
+
+        const auto command_pool = get_thread_command_pool();
+        auto cmd = begin_one_shot_commands(command_pool);
+        transition_image_layout(cmd.get(),
+                                vulkan_texture.image(),
+                                vk::ImageLayout::eShaderReadOnlyOptimal,
+                                vk::ImageLayout::eTransferSrcOptimal);
+        constexpr vk::BufferImageCopy region{.bufferOffset = 0,
+                                             .bufferRowLength = 0,
+                                             .bufferImageHeight = 0,
+                                             .imageSubresource = vk::ImageSubresourceLayers{
+                                                 .aspectMask = vk::ImageAspectFlagBits::eColor,
+                                                 .mipLevel = 0,
+                                                 .baseArrayLayer = 0,
+                                                 .layerCount = 1,
+                                             }};
+
+        const auto staging_buffer = device_.create_staging_buffer(buffer.size());
+        cmd->copyImageToBuffer(vulkan_texture.image(),
+                               vk::ImageLayout::eTransferSrcOptimal,
+                               staging_buffer.get(),
+                               region);
+        const auto result = staging_buffer.write_to_buffer(buffer);
+        transition_image_layout(cmd.get(),
+                                vulkan_texture.image(),
+                                vk::ImageLayout::eTransferSrcOptimal,
+                                vk::ImageLayout::eShaderReadOnlyOptimal);
+        end_one_shot_commands(std::move(cmd));
+        return result;
     }
 
     vk::CommandPool VulkanRenderBackend::get_thread_command_pool() const
@@ -194,6 +254,22 @@ namespace retro
                  new_layout == vk::ImageLayout::eShaderReadOnlyOptimal)
         {
             src_access = vk::AccessFlagBits::eTransferWrite;
+            dst_access = vk::AccessFlagBits::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        }
+        else if (old_layout == vk::ImageLayout::eShaderReadOnlyOptimal &&
+                 new_layout == vk::ImageLayout::eTransferSrcOptimal)
+        {
+            src_access = vk::AccessFlagBits::eShaderRead;
+            dst_access = vk::AccessFlagBits::eTransferRead;
+            src_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        }
+        else if (old_layout == vk::ImageLayout::eTransferSrcOptimal &&
+                 new_layout == vk::ImageLayout::eShaderReadOnlyOptimal)
+        {
+            src_access = vk::AccessFlagBits::eTransferRead;
             dst_access = vk::AccessFlagBits::eShaderRead;
             src_stage = vk::PipelineStageFlagBits::eTransfer;
             dst_stage = vk::PipelineStageFlagBits::eFragmentShader;

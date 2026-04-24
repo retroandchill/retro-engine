@@ -122,11 +122,22 @@ namespace retro
         }
     } // namespace
 
-    void VulkanStagingBuffer::copy_to_buffer(const std::span<const std::byte> buffer)
+    void VulkanStagingBuffer::read_from_buffer(const std::span<const std::byte> buffer)
     {
         auto *data = device_.mapMemory(memory_.get(), 0, size_);
         std::memcpy(data, buffer.data(), buffer.size());
         device_.unmapMemory(memory_.get());
+    }
+
+    std::pair<bool, std::size_t> VulkanStagingBuffer::write_to_buffer(const std::span<std::byte> buffer) const
+    {
+        if (buffer.size() > size_)
+            return {false, 0};
+
+        auto *data_ptr = device_.mapMemory(memory_.get(), 0, size_);
+        std::memcpy(data_ptr, buffer.data(), buffer.size());
+        device_.unmapMemory(memory_.get());
+        return {true, size_};
     }
 
     VulkanDevice::VulkanDevice(const VulkanInstance &instance, PlatformBackend &platform_backend)

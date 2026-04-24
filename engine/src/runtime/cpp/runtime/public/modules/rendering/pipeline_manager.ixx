@@ -11,7 +11,6 @@ module;
 export module retro.runtime.rendering.pipeline_manager;
 
 import std;
-import retro.core.di;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;

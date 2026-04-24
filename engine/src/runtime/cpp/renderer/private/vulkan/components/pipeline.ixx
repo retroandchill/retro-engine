@@ -8,7 +8,6 @@ export module retro.renderer.vulkan.components.pipeline;
 
 import retro.runtime.rendering.render_pipeline;
 import retro.core.math.vector;
-import retro.core.di;
 import vulkan;
 import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
@@ -61,8 +60,6 @@ namespace retro
     export class VulkanPipelineManager : NonCopyable
     {
       public:
-        using Dependencies = TypeList<VulkanDevice &, VulkanBufferManager &>;
-
         explicit inline VulkanPipelineManager(VulkanDevice &device, VulkanBufferManager &buffer_manager)
             : device_{device}, buffer_manager_{buffer_manager}, cache_{device_.create_pipeline_cache()}
         {

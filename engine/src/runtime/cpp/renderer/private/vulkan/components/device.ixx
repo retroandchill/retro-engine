@@ -13,7 +13,6 @@ module;
 export module retro.renderer.vulkan.components.device;
 
 import vulkan;
-import retro.core.di;
 import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.platform.backend;
@@ -48,7 +47,9 @@ namespace retro
             return buffer_.get();
         }
 
-        void copy_to_buffer(std::span<const std::byte> data);
+        void read_from_buffer(std::span<const std::byte> buffer);
+
+        std::pair<bool, std::size_t> write_to_buffer(std::span<std::byte> buffer) const;
 
       private:
         friend class VulkanDevice;

@@ -11,16 +11,22 @@ import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
-    export class TextureRenderData
+    export enum class TextureFormat : std::uint8_t
+    {
+        rgba8,
+        rgba16f
+    };
+
+    export class Texture : public IntrusiveRefCounted
     {
       protected:
-        inline TextureRenderData(const std::int32_t width, const std::int32_t height) noexcept
-            : width_(width), height_(height)
+        inline Texture(const std::int32_t width, const std::int32_t height, const TextureFormat format) noexcept
+            : width_{width}, height_{height}, format_{format}
         {
         }
 
       public:
-        virtual ~TextureRenderData() = default;
+        virtual ~Texture() = default;
 
         [[nodiscard]] inline std::int32_t width() const noexcept
         {
@@ -31,35 +37,14 @@ namespace retro
             return height_;
         }
 
+        [[nodiscard]] inline TextureFormat format() const noexcept
+        {
+            return format_;
+        }
+
       private:
         std::int32_t width_{};
         std::int32_t height_{};
-    };
-
-    export class Texture final : public IntrusiveRefCounted
-    {
-      public:
-        [[nodiscard]] inline const TextureRenderData *render_data() const noexcept
-        {
-            return render_data_.get();
-        }
-
-        [[nodiscard]] inline std::int32_t width() const noexcept
-        {
-            return render_data_->width();
-        }
-
-        [[nodiscard]] inline std::int32_t height() const noexcept
-        {
-            return render_data_->height();
-        }
-
-        inline void clear_render_data() noexcept
-        {
-            render_data_.reset();
-        }
-
-      private:
-        std::unique_ptr<TextureRenderData> render_data_;
+        TextureFormat format_{};
     };
 } // namespace retro

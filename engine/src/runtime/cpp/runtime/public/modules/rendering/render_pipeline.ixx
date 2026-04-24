@@ -12,7 +12,6 @@ import retro.runtime.rendering.draw_command;
 import retro.runtime.world.scene_node;
 import retro.runtime.world.viewport;
 import retro.core.math.vector;
-import retro.core.di;
 import retro.core.memory.small_unique_ptr;
 
 namespace retro

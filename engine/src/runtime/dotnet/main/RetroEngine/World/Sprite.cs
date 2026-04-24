@@ -8,6 +8,7 @@ using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Interop;
+using RetroEngine.Rendering;
 using Texture = RetroEngine.Assets.Textures.Texture;
 
 namespace RetroEngine.World;
@@ -24,7 +25,7 @@ public partial class Sprite : SceneObject
         {
             ThrowIfDisposed();
             field = value;
-            NativeSetTexture(this, value?.NativeObject ?? IntPtr.Zero);
+            NativeSetTexture(this, value?.NativeTexture);
             if (value is null)
                 return;
 
@@ -96,7 +97,7 @@ public partial class Sprite : SceneObject
     private static partial IntPtr NativeCreate(Scene scene, SceneObject? id);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_texture")]
-    private static partial void NativeSetTexture(Sprite id, IntPtr texture);
+    private static partial void NativeSetTexture(Sprite id, NativeTexture? texture);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_tint")]
     private static partial void NativeSetTint(Sprite id, Color color);

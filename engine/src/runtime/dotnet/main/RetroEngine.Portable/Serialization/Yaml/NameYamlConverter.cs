@@ -23,6 +23,7 @@ public sealed class NameYamlConverter : IYamlFormatter<Name>
     public Name Deserialize(ref YamlParser parser, YamlDeserializationContext context)
     {
         var stringText = parser.GetScalarAsUtf8();
+        parser.Read();
         return new Name(stringText);
     }
 }

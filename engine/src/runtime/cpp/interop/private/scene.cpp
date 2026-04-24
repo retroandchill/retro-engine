@@ -19,6 +19,7 @@ import retro.runtime.rendering.objects.sprite;
 import retro.runtime.engine;
 import std;
 import retro.interop.interop_error;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {

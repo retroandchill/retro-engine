@@ -12,10 +12,15 @@ public sealed class GameThreadSynchronizationContext : SynchronizationContext, I
 {
     private readonly ConcurrentQueue<(SendOrPostCallback Callback, object? State)> _workItems = new();
 
-    public int SyncThreadId { get; } = Environment.CurrentManagedThreadId;
+    public int SyncThreadId { get; private set; } = Environment.CurrentManagedThreadId;
     public bool IsOnGameThread => SyncThreadId == Environment.CurrentManagedThreadId;
 
     public event Action<Exception>? UnhandledException;
+
+    public void AssignToGameThread()
+    {
+        SyncThreadId = Environment.CurrentManagedThreadId;
+    }
 
     public override void Post(SendOrPostCallback d, object? state)
     {

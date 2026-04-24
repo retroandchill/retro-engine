@@ -8,7 +8,6 @@
 
 import std;
 import retro.runtime.engine;
-import retro.core.di;
 import retro.core.functional.interop_function;
 import retro.core.async.task;
 import retro.core.strings.encoding;

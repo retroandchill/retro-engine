@@ -13,7 +13,6 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.presenter;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.renderer.vulkan.components.pipeline;
-import retro.core.di;
 import retro.core.math.vector;
 import retro.platform.window;
 import vulkan;

@@ -21,6 +21,7 @@ import retro.platform.window;
 import retro.core.strings.encoding;
 import retro.core.async.task;
 import retro.core.functional.interop_function;
+import retro.runtime.rendering.texture;
 
 using namespace retro;
 
@@ -61,6 +62,43 @@ extern "C"
     RETRO_API void retro_render_backend_destroy(const RenderBackend *backend)
     {
         backend->sub_ref();
+    }
+
+    RETRO_API Texture *retro_render_backend_upload_texture(RenderBackend *backend,
+                                                           const std::byte *bytes,
+                                                           const std::int32_t length,
+                                                           const std::int32_t width,
+                                                           const std::int32_t height,
+                                                           const TextureFormat format,
+                                                           InteropError *error)
+    {
+        return try_execute(
+            [&]
+            {
+                return backend
+                    ->upload_texture(std::span{bytes, static_cast<std::size_t>(length)}, width, height, format)
+                    .release();
+            },
+            *error);
+    }
+
+    RETRO_API bool retro_render_backend_export_texture(RenderBackend *backend,
+                                                       const Texture *texture,
+                                                       std::byte *buffer,
+                                                       const std::int32_t length,
+                                                       std::int32_t *bytes_written,
+                                                       InteropError *error)
+    {
+        bool success = false;
+        try_execute(
+            [&]
+            {
+                auto [s, w] = backend->export_texture(*texture, std::span{buffer, static_cast<std::size_t>(length)});
+                success = s;
+                *bytes_written = static_cast<std::int32_t>(w);
+            },
+            *error);
+        return success;
     }
 
     RETRO_API void retro_render_pipeline_destroy(const RenderPipeline *pipeline)

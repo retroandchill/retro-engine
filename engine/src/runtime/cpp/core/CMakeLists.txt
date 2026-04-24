@@ -5,13 +5,10 @@
 set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/io/file_stream.cpp
         private/functional/delegate.cpp
-        private/di/service_provider.cpp
         private/io/stream.cpp
         private/io/buffered_stream.cpp
         private/async/task_scheduler.cpp
         private/async/manual_task_scheduler.cpp
-        private/di/service_collection.cpp
-        private/di/scoped_service_provider.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -20,7 +17,6 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 )
 
 set(RETRO_CORE_PRIVATE_MODULES
-        private/di/scoped_service_provider.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -35,8 +31,6 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/memory/arena_allocator.ixx
         public/modules/async/task.ixx
         public/modules/containers/optional.ixx
-        public/modules/di/service_provider.ixx
-        public/modules/di/metadata.ixx
         public/modules/util/exceptions.ixx
         public/modules/containers/inline_list.ixx
         public/modules/util/noncopyable.ixx
@@ -61,14 +55,8 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/strings/encoding.ixx
         public/modules/strings/deps/uni_algo.ixx
         public/modules/math/rect.ixx
-        public/modules/di/service_instance.ixx
-        public/modules/di/service_call_site.ixx
-        public/modules/di/service_identifier.ixx
-        public/modules/di/service_collection.ixx
-        public/modules/di.ixx
         public/modules/util/deferred.ixx
         public/modules/memory/small_unique_ptr.ixx
-        public/modules/di/service_scope.ixx
         public/modules/util/enum_class_flags.ixx
         public/modules/functional/function_ref.ixx
         public/modules/functional/interop_function.ixx

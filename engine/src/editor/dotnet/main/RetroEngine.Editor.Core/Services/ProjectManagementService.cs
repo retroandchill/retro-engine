@@ -135,6 +135,10 @@ public sealed class ProjectManagementService(
     private async ValueTask LoadProjectAssetsAsync(string path, CancellationToken cancellationToken = default)
     {
         var contentDir = fileSystem.Path.Join(fileSystem.Path.GetDirectoryName(path), "content");
+        if (!fileSystem.Directory.Exists(contentDir))
+        {
+            fileSystem.Directory.CreateDirectory(contentDir);
+        }
         await assetManager.LoadPackageAsync(GamePackage, contentDir, cancellationToken);
     }
 

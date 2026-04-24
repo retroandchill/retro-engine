@@ -231,9 +231,9 @@ namespace retro
                                             static_cast<std::uint32_t>(descriptor_data.size()));
                                         write_set.pBufferInfo = &buffer_info;
                                     },
-                                    [&](const TextureRenderData *render_data)
+                                    [&](const Texture *render_data)
                                     {
-                                        auto &textureData = dynamic_cast<const VulkanTextureRenderData &>(*render_data);
+                                        auto &textureData = dynamic_cast<const VulkanTexture &>(*render_data);
                                         write_set.descriptorType = vk::DescriptorType::eCombinedImageSampler;
 
                                         const auto &img_info =

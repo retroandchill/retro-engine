@@ -23,8 +23,10 @@ namespace retro
     {
       public:
         std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) override;
-        std::unique_ptr<TextureRenderData> upload_texture(std::span<const std::byte> bytes,
-                                                          std::int32_t width,
-                                                          std::int32_t height) override;
+        RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
+                                            std::int32_t width,
+                                            std::int32_t height,
+                                            TextureFormat format) override;
+        std::pair<bool, std::size_t> export_texture(const Texture &texture, std::span<std::byte> buffer) override;
     };
 } // namespace retro

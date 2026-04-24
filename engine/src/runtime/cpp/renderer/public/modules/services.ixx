@@ -11,7 +11,6 @@ module;
 export module retro.renderer.services;
 
 import std;
-import retro.core.di;
 import retro.platform.window;
 import retro.runtime.rendering.render_backend;
 import retro.core.memory.ref_counted_ptr;

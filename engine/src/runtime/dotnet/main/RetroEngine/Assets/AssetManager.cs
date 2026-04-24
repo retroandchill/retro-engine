@@ -113,12 +113,6 @@ public sealed partial class AssetManager(
                 return null;
             }
 
-            if (decoder.TryLoadFromNativeCache(path, out cachedAsset))
-            {
-                _assetCache[path] = new WeakReference<Asset>(cachedAsset);
-                return cachedAsset;
-            }
-
             await using var stream = package.OpenAsset(path.AssetName);
             var builder = ReusableReadOnlySequenceBuilderPool.Rent();
             try

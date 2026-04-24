@@ -200,10 +200,18 @@ public sealed partial class RenderManager : IDisposable
         error.ThrowIfError();
     }
 
-    internal void Render()
+    private void Render()
     {
         NativeRender(_nativeHandle, out var error);
         error.ThrowIfError();
+    }
+
+    internal void RenderLoop()
+    {
+        while (!_lifetime.ApplicationStopped.IsCancellationRequested)
+        {
+            Render();
+        }
     }
 
     internal void OnEngineShutdown()

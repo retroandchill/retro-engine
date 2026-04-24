@@ -11,7 +11,6 @@ module;
 export module retro.runtime.engine;
 
 import std;
-import retro.core.di;
 import retro.core.async.task;
 import retro.core.async.manual_task_scheduler;
 import retro.core.functional.delegate;

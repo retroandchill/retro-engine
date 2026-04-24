@@ -54,14 +54,9 @@ extern "C"
         return static_cast<std::int32_t>(string_length);
     }
 
-    RETRO_API void retro_texture_render_data_destroy(retro::TextureRenderData *texture)
-    {
-        delete texture;
-    }
-
     RETRO_API void retro_texture_destroy(retro::Texture *texture)
     {
-        delete texture;
+        texture->sub_ref();
     }
 
     RETRO_API retro::CVector2i retro_texture_get_size(const retro::Texture *texture)

@@ -16,7 +16,6 @@ import retro.core.math.vector;
 import retro.logging;
 import std;
 import retro.platform.window;
-import retro.core.di;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.world.viewport;
@@ -46,31 +45,6 @@ namespace retro
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
         [[nodiscard]] virtual Window &window() const = 0;
-    };
-
-    export class RETRO_API RendererRef
-    {
-      public:
-        explicit RendererRef(std::shared_ptr<Window> window, ServiceScopeFactory &scope_factory);
-
-        [[nodiscard]] inline Renderer2D &get() const
-        {
-            return renderer_;
-        }
-
-        [[nodiscard]] inline Renderer2D &operator*() const
-        {
-            return renderer_;
-        }
-
-        [[nodiscard]] inline Renderer2D *operator->() const
-        {
-            return std::addressof(renderer_);
-        }
-
-      private:
-        std::shared_ptr<ServiceScope> scope_;
-        Renderer2D &renderer_;
     };
 
 } // namespace retro

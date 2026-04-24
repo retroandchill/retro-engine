@@ -17,7 +17,7 @@ namespace retro
 {
     export constexpr std::size_t draw_array_size = 8;
 
-    export using DescriptorSetData = std::variant<std::span<const std::byte>, const TextureRenderData *>;
+    export using DescriptorSetData = std::variant<std::span<const std::byte>, const Texture *>;
 
     export struct DrawCommand
     {

@@ -15,6 +15,8 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Rendering;
 using RetroEngine.Tickables;
 using Serilog;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine;
@@ -47,7 +49,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
             var b = serviceProvider.GetRequiredService<PlatformBackend>();
             return new RenderBackend(b, RenderBackendType.Vulkan);
         });
-        _host = new EngineHost(this, serviceProviderFactory(serviceCollection), _lifetime);
+        _host = new EngineHost(serviceProviderFactory(serviceCollection), _lifetime);
     }
 
     [MemberNotNull(nameof(_gameThread))]
@@ -55,8 +57,9 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     {
         _ = CultureManager.Instance;
 
+        var renderManager = _host.Services.GetRequiredService<RenderManager>();
         _gameThread = new Thread(RunGameThread) { Name = "Game Thread" };
-        _renderThread = new Thread(RunRenderThread) { Name = "Render Thread" };
+        _renderThread = new Thread(renderManager.RenderLoop) { Name = "Render Thread" };
 
         _renderThread.Start();
         _gameThread.Start();
@@ -124,15 +127,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         finally
         {
             renderManager.OnEngineShutdown();
-        }
-    }
-
-    private void RunRenderThread()
-    {
-        var renderManager = _host.Services.GetRequiredService<RenderManager>();
-        while (!_lifetime.ApplicationStopped.IsCancellationRequested)
-        {
-            renderManager.Render();
         }
     }
 

@@ -59,8 +59,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         var platformBackend = new PlatformBackend(PlatformBackendKind.SDL3, PlatformInitFlags.Video);
         try
         {
-            var nativeEngine = CreateNativeEngine(platformBackend, out var errorMessage);
-            errorMessage.ThrowIfError();
+            var nativeEngine = CreateNativeEngine(platformBackend);
 
             try
             {
@@ -103,8 +102,5 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
     }
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_engine")]
-    private static unsafe partial IntPtr CreateNativeEngine(
-        PlatformBackend platformBackend,
-        out InteropError errorMessage
-    );
+    private static unsafe partial IntPtr CreateNativeEngine(PlatformBackend platformBackend);
 }

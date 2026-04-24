@@ -7,7 +7,6 @@
 export module retro.renderer.vulkan.components.presenter;
 
 import vulkan;
-import retro.core.di;
 import retro.core.functional.delegate;
 import retro.core.memory.arena_allocator;
 import retro.renderer.vulkan.components.device;
@@ -58,9 +57,6 @@ namespace retro
         static constexpr std::uint32_t max_frames_in_flight = 2;
 
       public:
-        using Dependencies =
-            TypeList<Window &, vk::SurfaceKHR, VulkanDevice &, vk::CommandPool, VulkanPipelineManager &>;
-
         explicit VulkanPresenter(Window &window,
                                  vk::SurfaceKHR surface,
                                  VulkanDevice &device,

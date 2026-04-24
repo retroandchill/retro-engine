@@ -18,7 +18,7 @@ public sealed class EngineHost : IHost, IAsyncDisposable
 
     public IServiceProvider Services { get; }
 
-    public EngineHost(Engine engine, IServiceProvider serviceProvider, EngineLifetime lifetime)
+    public EngineHost(IServiceProvider serviceProvider, EngineLifetime lifetime)
     {
         _lifetime = lifetime;
         _hostedServices = [.. serviceProvider.GetServices<IHostedService>()];

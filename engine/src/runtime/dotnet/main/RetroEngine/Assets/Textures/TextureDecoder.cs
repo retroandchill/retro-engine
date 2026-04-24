@@ -4,12 +4,12 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using MagicArchive;
-using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
+using RetroEngine.Rendering;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
@@ -23,7 +23,7 @@ namespace RetroEngine.Assets.Textures;
 internal readonly partial record struct TextureData
 {
     [ArchiveIgnore]
-    public string? SourcePath { get; private init; }
+    public string? SourcePath { get; init; }
 
     [YamlIgnore]
     public ReadOnlyMemory<byte> Data { get; init; }
@@ -35,7 +35,7 @@ internal readonly partial record struct TextureData
     public int Height { get; init; }
 
     [YamlIgnore]
-    public int Channels { get; init; }
+    public TextureFormat Format { get; init; }
 
     [ArchiveIgnore]
     [YamlIgnore]
@@ -43,25 +43,18 @@ internal readonly partial record struct TextureData
 }
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public partial class TextureDecoder(IFileSystem fileSystem) : IAssetDecoder
+public partial class TextureDecoder(IFileSystem fileSystem, RenderBackend renderBackend) : IAssetDecoder
 {
-    private static readonly DecoderOptions ImageDecoderOptions = new()
-    {
-        Configuration = new Configuration { PreferContiguousImageBuffers = true },
-    };
-
     public Name AssetType => Texture.TypeName;
+
+    static TextureDecoder()
+    {
+        Configuration.Default.PreferContiguousImageBuffers = true;
+    }
 
     public bool CanCreateFromExtension(ReadOnlySpan<char> extension)
     {
-        return extension.Equals("png", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public bool TryLoadFromNativeCache(AssetPath path, [NotNullWhen(true)] out Asset? asset)
-    {
-        var nativeTexture = NativeLoad(path, out var width, out var height);
-        asset = nativeTexture != IntPtr.Zero ? new Texture(path, nativeTexture, width, height) : null;
-        return asset is not null;
+        return extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
     }
 
     [CreateSyncVersion]
@@ -72,11 +65,17 @@ public partial class TextureDecoder(IFileSystem fileSystem) : IAssetDecoder
         CancellationToken cancellationToken = default
     )
     {
+        var assetPath = new AssetPath(package.PackageName, assetName);
         var textureData = package.Deserialize<TextureData>(bytes);
         if (textureData.IsLoaded)
         {
-            // TODO: We need to actually be able to load a texture like this
-            throw new NotImplementedException();
+            return CreateTextureFromBuffer(
+                assetPath,
+                textureData.Data.Span,
+                textureData.Width,
+                textureData.Width,
+                textureData.Format
+            );
         }
 
         if (string.IsNullOrWhiteSpace(textureData.SourcePath))
@@ -88,27 +87,79 @@ public partial class TextureDecoder(IFileSystem fileSystem) : IAssetDecoder
         if (!fileSystem.File.Exists(absoluteTexturePath))
             throw new AssetLoadException($"Texture file {absoluteTexturePath} does not exist");
 
-        await using var stream = fileSystem.File.OpenRead(absoluteTexturePath);
-        using var image = await Image
-            .LoadAsync<Rgba32>(ImageDecoderOptions, stream, cancellationToken)
-            .ConfigureAwait(false);
+        var file = fileSystem.FileInfo.New(absoluteTexturePath);
+        return await ImportFromFileAsync(package, assetName, file, cancellationToken);
+    }
+
+    public void Encode<TBufferWriter>(IAssetPackage package, Asset asset, in TBufferWriter writer)
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        var texture = (Texture)asset;
+        var sizePerPixel = texture.Format switch
+        {
+            TextureFormat.Rgba8 => Unsafe.SizeOf<Rgba32>(),
+            TextureFormat.Rgba16F => Unsafe.SizeOf<Rgba64>(),
+            _ => throw new InvalidOperationException($"Unsupported texture format: {texture.Format}"),
+        };
+        var expectedSize = texture.Width * texture.Height * sizePerPixel;
+        var buffer = ArrayPool<byte>.Shared.Rent(expectedSize);
+        try
+        {
+            var bytesWritten = renderBackend.ExportTexture(texture.NativeTexture, buffer);
+            var textureData = new TextureData
+            {
+                SourcePath = texture.FilePath,
+                Data = buffer.AsMemory(0, bytesWritten),
+                Width = texture.Width,
+                Height = texture.Height,
+                Format = texture.Format,
+            };
+            package.Serialize(in writer, textureData);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    [CreateSyncVersion]
+    public async ValueTask<Asset> ImportFromFileAsync(
+        IAssetPackage package,
+        Name assetName,
+        IFileInfo sourceFile,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await using var stream = sourceFile.OpenRead();
+        var assetPath = new AssetPath(package.PackageName, assetName);
+        using var image = await Image.LoadAsync<Rgba32>(stream, cancellationToken).ConfigureAwait(false);
 
         image.DangerousTryGetSinglePixelMemory(out var pixelMemory);
 
-        var assetPath = new AssetPath(package.PackageName, assetName);
         var buffer = MemoryMarshal.AsBytes(pixelMemory.Span);
         if (buffer.Length != image.Width * image.Height * 4)
-            throw new AssetLoadException($"Texture file {absoluteTexturePath} has invalid dimensions");
+            throw new AssetLoadException($"Texture has invalid dimensions");
 
-        var nativeTexture = NativeCreate(assetPath, buffer, image.Width, image.Height);
-        return nativeTexture != IntPtr.Zero
-            ? new Texture(assetPath, nativeTexture, image.Width, image.Height)
-            : throw new InvalidOperationException("Failed to load texture from stream.");
+        return CreateTextureFromBuffer(
+            assetPath,
+            buffer,
+            image.Width,
+            image.Height,
+            TextureFormat.Rgba8,
+            sourceFile.Name
+        );
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load_existing")]
-    private static partial IntPtr NativeLoad(in AssetPath path, out int width, out int height);
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_load")]
-    private static partial IntPtr NativeCreate(in AssetPath path, ReadOnlySpan<byte> bytes, int width, int height);
+    private Texture CreateTextureFromBuffer(
+        AssetPath assetPath,
+        ReadOnlySpan<byte> buffer,
+        int width,
+        int height,
+        TextureFormat format,
+        string? sourcePath = null
+    )
+    {
+        var nativeTexture = renderBackend.UploadTexture(buffer, width, height, format);
+        return new Texture(assetPath, nativeTexture, sourcePath);
+    }
 }

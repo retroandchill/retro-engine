@@ -36,6 +36,8 @@ namespace retro
         const char *message = nullptr;
     };
 
+    const char *cache_error_message(const char *message);
+
     template <typename T>
     concept ValidInteropFunctor = std::invocable<T> && (std::is_void_v<std::invoke_result_t<T>> ||
                                                         std::is_lvalue_reference_v<std::invoke_result_t<T>> ||
@@ -147,7 +149,7 @@ namespace retro
             error.error_code = get_error_code(e);
             auto &type_id = typeid(e);
             error.native_exception_type = type_id.name();
-            error.message = e.what();
+            error.message = cache_error_message(e.what());
             return invalid_interop_result<Functor>;
         }
         catch (...)

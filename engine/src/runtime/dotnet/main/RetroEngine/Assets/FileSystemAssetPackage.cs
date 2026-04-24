@@ -13,7 +13,6 @@ using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Concurrency;
 using VYaml.Annotations;
 using VYaml.Serialization;
-using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets;
 
@@ -86,7 +85,7 @@ public sealed class FileSystemAssetPackage(
         var assetFileEntries = new Dictionary<Name, AssetFileEntry>();
         foreach (var file in rootDirectory.EnumerateFiles("*", SearchOption.AllDirectories))
         {
-            var nameWithoutExtension = file.FullName.AsSpan(0, file.Name.Length - file.Extension.Length);
+            var nameWithoutExtension = file.FullName.AsSpan(0, file.FullName.Length - file.Extension.Length);
             var assetName = new Name(nameWithoutExtension);
             if (assetFileEntries.ContainsKey(assetName))
                 continue;
@@ -115,7 +114,8 @@ public sealed class FileSystemAssetPackage(
                     entry = await WriteAssetFileEntryAsync(
                         assetFileInfo.FullName,
                         decoder,
-                        file.OpenWrite(),
+                        assetName,
+                        file,
                         cancellationToken
                     );
                 }
@@ -147,7 +147,8 @@ public sealed class FileSystemAssetPackage(
             if (line.Span.StartsWith("---"u8))
                 break;
 
-            builder.AppendLine(line);
+            builder.AppendLiteral(line.Span);
+            builder.AppendLine();
         }
 
         var header = YamlSerializer.Deserialize<AssetFileHeader>(builder.AsMemory());
@@ -155,19 +156,26 @@ public sealed class FileSystemAssetPackage(
         return new AssetFileEntry(header.AssetType, fullPath, stream.Position);
     }
 
-    private static async ValueTask<AssetFileEntry> WriteAssetFileEntryAsync(
+    private async ValueTask<AssetFileEntry> WriteAssetFileEntryAsync(
         string fullPath,
         IAssetDecoder decoder,
-        Stream stream,
+        Name assetName,
+        IFileInfo sourceFile,
         CancellationToken cancellationToken = default
     )
     {
         var fileHeader = new AssetFileHeader(decoder.AssetType);
         var bufferWriter = new ArrayBufferWriter<byte>();
         YamlSerializer.Serialize(bufferWriter, fileHeader);
-        bufferWriter.Write("\n---\n"u8);
-        await stream.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
-        return new AssetFileEntry(decoder.AssetType, fullPath, stream.Position);
+        bufferWriter.Write("---\n"u8);
+        var offsetStart = bufferWriter.WrittenCount;
+
+        using var asset = await decoder.ImportFromFileAsync(this, assetName, sourceFile, cancellationToken);
+        decoder.Encode(this, asset, bufferWriter);
+
+        await using var fileStream = fileSystem.File.OpenWrite(fullPath);
+        await fileStream.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
+        return new AssetFileEntry(decoder.AssetType, fullPath, offsetStart);
     }
 
     public void Unload()
