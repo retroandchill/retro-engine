@@ -7,6 +7,8 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
+        <Configurations>Debug;Release;DebugGame;Packaged</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Serilog.Enrichers.CallerInfo" />

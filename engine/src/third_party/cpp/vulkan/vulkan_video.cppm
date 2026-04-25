@@ -1,4 +1,4 @@
-// Copyright 2021-2025 The Khronos Group Inc.
+// Copyright 2021-2026 The Khronos Group Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 //
 
@@ -9,13 +9,22 @@ module;
 #define VULKAN_HPP_CXX_MODULE 1
 
 #include <vulkan/vulkan_hpp_macros.hpp>
+
+#if !defined(VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING)
+#define VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING                                                                     \
+    "\n\tThe Vulkan-Hpp C++ named module is experimental. It is subject to change without prior notice.\n"             \
+    "\tTo silence this warning, define the VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING macro.\n"                        \
+    "\tFor feedback, go to: https://github.com/KhronosGroup/Vulkan-Hpp/issues"
+
+VULKAN_HPP_COMPILE_WARNING(VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING)
+#endif
+
 #include <vulkan/vulkan_video.hpp>
 
 export module vulkan:video;
 
 export namespace VULKAN_HPP_NAMESPACE::VULKAN_HPP_VIDEO_NAMESPACE
 {
-
     //=================
     //=== CONSTANTs ===
     //=================
@@ -310,5 +319,4 @@ export namespace VULKAN_HPP_NAMESPACE::VULKAN_HPP_VIDEO_NAMESPACE
     using VULKAN_HPP_NAMESPACE::VULKAN_HPP_VIDEO_NAMESPACE::EncodeAV1ReferenceInfo;
     using VULKAN_HPP_NAMESPACE::VULKAN_HPP_VIDEO_NAMESPACE::EncodeAV1ReferenceInfoFlags;
 #endif
-
 } // namespace VULKAN_HPP_NAMESPACE::VULKAN_HPP_VIDEO_NAMESPACE

@@ -10,6 +10,8 @@
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
         <Version>1.0.0-dev.4</Version>
+        <Configurations>Debug;Release;DebugGame;Packaged</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

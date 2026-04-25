@@ -17,7 +17,8 @@
       "displayName": "Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON"
       }
     },
     {
@@ -25,7 +26,26 @@
       "displayName": "Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON"
+      }
+    },
+    {
+      "name": "debug-game",
+      "displayName": "Debug Game",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF"
+      }
+    },
+    {
+      "name": "packaged",
+      "displayName": "Packaged",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF"
       }
     }
   ]

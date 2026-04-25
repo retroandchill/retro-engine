@@ -1,14 +1,32 @@
 <Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="DebugGame" />
+    <BuildType Name="Packaged" />
+    <BuildType Name="Release" />
+  </Configurations>
   <Folder Name="/engine/" />
   <Folder Name="/engine/src/" />
   <Folder Name="/engine/src/editor/" />
   <Folder Name="/engine/src/editor/dotnet/" />
   <Folder Name="/engine/src/editor/dotnet/main/" />
   <Folder Name="/engine/src/editor/dotnet/main/dotnet/">
-    <Project Path="engine/src/editor/dotnet/main/Dock.Model.RetroEngine/Dock.Model.RetroEngine.csproj" />
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj" />
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj" />
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj" />
+    <Project Path="engine/src/editor/dotnet/main/Dock.Model.RetroEngine/Dock.Model.RetroEngine.csproj">
+      <Build Solution="DebugGame|*" Project="false" />
+      <Build Solution="Packaged|*" Project="false" />
+    </Project>
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
+      <Build Solution="DebugGame|*" Project="false" />
+      <Build Solution="Packaged|*" Project="false" />
+    </Project>
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
+      <Build Solution="DebugGame|*" Project="false" />
+      <Build Solution="Packaged|*" Project="false" />
+    </Project>
+    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor/RetroEngine.Editor.csproj">
+      <Build Solution="DebugGame|*" Project="false" />
+      <Build Solution="Packaged|*" Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/engine/src/runtime/" />
   <Folder Name="/engine/src/runtime/dotnet/" />

@@ -8,6 +8,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 
 option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
+option(RETRO_WITH_CASE_PRESERVING_NAMES "Should names preserve casing or not" ON)
 
 set(INTERMEDIATE_LIB_TYPE OBJECT)
 set(BUILD_SHARED_LIBS OFF)
@@ -41,6 +42,13 @@ if (RETRO_WITH_EDITOR_DATA)
     add_compile_definitions(RETRO_WITH_EDITOR_DATA=1)
 else()
     add_compile_definitions(RETRO_WITH_EDITOR_DATA=0)
+endif()
+
+
+if (RETRO_WITH_CASE_PRESERVING_NAMES)
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAMES=1)
+else()
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAMES=1)
 endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} RETRO_BUILD_CONFIG)

@@ -5,6 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <Configurations>Debug;Release;DebugGame;Packaged</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
