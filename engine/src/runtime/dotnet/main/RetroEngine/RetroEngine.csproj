@@ -9,7 +9,6 @@
         <LangVersion>14</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="Injectio" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />

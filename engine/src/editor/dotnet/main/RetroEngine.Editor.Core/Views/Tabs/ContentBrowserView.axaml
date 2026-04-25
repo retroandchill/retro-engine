@@ -14,8 +14,7 @@
 
     <SplitView IsPaneOpen="{Binding NavigationPanelOpen}"
                DisplayMode="CompactInline"
-               OpenPaneLength="256"
-               x:DataType="tabs:ContentBrowserViewModel">
+               OpenPaneLength="256">
         <SplitView.Pane>
             <Grid RowDefinitions="Auto,*">
                 <Button Grid.Row="0" Content="{iconPacks:Codicons ThreeBars}" Command="{Binding ToggleNavigationPanelCommand}"

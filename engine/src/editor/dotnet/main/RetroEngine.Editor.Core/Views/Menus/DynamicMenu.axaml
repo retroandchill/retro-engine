@@ -9,7 +9,7 @@
         <menus:DynamicMenuViewModel/>
     </Design.DataContext>
 
-    <StackPanel x:DataType="menus:DynamicMenuViewModel">
+    <StackPanel>
         <Menu ItemsSource="{Binding Items}">
             <Menu.Styles>
                 <Style Selector="MenuItem">

@@ -5,14 +5,13 @@
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
-             xmlns:projectStructure="clr-namespace:RetroEngine.Editor.Core.Model.ProjectStructure"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.RecentProjectsTab">
     <Design.DataContext>
         <tabs:RecentProjectsViewModel/>
     </Design.DataContext>
 
-    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0" x:DataType="tabs:RecentProjectsViewModel">
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="15,0">
             <iconPacks:PackIconCodicons Kind="Search"
                                         Width="20"
@@ -56,10 +55,9 @@
                 <DataTemplate>
                     <!-- ReSharper disable once Xaml.PossibleNullReferenceException -->
                     <Button Background="Transparent" HorizontalAlignment="Stretch"
-                            Command="{Binding ((tabs:RecentProjectsViewModel)DataContext).OpenRecentProjectCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                            Command="{Binding DataContext.OpenRecentProjectCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                             CommandParameter="{Binding}">
-                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,AUto" ColumnSpacing="10" RowSpacing="5"
-                              x:DataType="projectStructure:RecentProjectInfo">
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,AUto" ColumnSpacing="10" RowSpacing="5">
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}"
                                        Classes.existing="{Binding Exists}"
                                        Classes.notFound="{Binding !Exists}"/>
@@ -68,7 +66,7 @@
                             <!-- ReSharper disable once Xaml.PossibleNullReferenceException -->
                             <Button Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
                                     Background="Transparent" VerticalAlignment="Center"
-                                    Command="{Binding ((tabs:RecentProjectsViewModel)DataContext).DeleteRecentProjectCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    Command="{Binding DataContext.DeleteRecentProjectCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                     CommandParameter="{Binding}">
                                 <iconPacks:PackIconCodicons Kind="Close"
                                                             Width="12"
