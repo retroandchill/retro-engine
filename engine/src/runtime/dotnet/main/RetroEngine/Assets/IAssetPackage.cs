@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using RetroEngine.Portable.Strings;
 
@@ -16,6 +17,13 @@ public enum AssetPackageLoadState
     Loaded,
 }
 
+public abstract record AssetPackageEntry(Name Name);
+
+public sealed record AssetPackageFolder(Name Name, ImmutableArray<AssetPackageEntry> Children)
+    : AssetPackageEntry(Name);
+
+public sealed record AssetPackageFile(Name Name, Name AssetType) : AssetPackageEntry(Name);
+
 public interface IAssetPackage
 {
     Name PackageName { get; }
@@ -25,6 +33,14 @@ public interface IAssetPackage
     public string SourcePath { get; }
 
     public bool IsReadOnly { get; }
+
+    public ImmutableArray<AssetPackageEntry> TopLevelEntries { get; }
+
+    public event Action<AssetPackageEntry>? OnEntryAdded;
+
+    public event Action<AssetPackageEntry>? OnEntryRemoved;
+
+    public event Action<AssetPackageEntry, AssetPackageEntry>? OnEntryRenamed;
 
     public ValueTask LoadAsync(CancellationToken cancellationToken = default);
 

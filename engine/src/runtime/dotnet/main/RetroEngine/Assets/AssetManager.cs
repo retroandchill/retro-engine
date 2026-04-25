@@ -3,7 +3,6 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using MagicArchive.Utilities;
@@ -18,7 +17,7 @@ public sealed partial class AssetManager(
     ILogger<AssetManager> logger,
     IEnumerable<IAssetPackageFactory> packageFactories,
     IEnumerable<IAssetDecoder> decoders
-)
+) : IDisposable
 {
     private readonly ImmutableArray<IAssetPackageFactory> _packageFactories = [.. packageFactories];
     private readonly ConcurrentDictionary<Name, IAssetPackage> _packages = new();
@@ -139,5 +138,24 @@ public sealed partial class AssetManager(
         where T : Asset
     {
         return await LoadAssetAsync(path, cancellationToken) as T;
+    }
+
+    public void Dispose()
+    {
+        foreach (var semaphore in _loadingSemaphores.Values)
+        {
+            semaphore.Dispose();
+        }
+
+        foreach (var asset in _assetCache.Values)
+        {
+            asset.TryGetTarget(out var target);
+            target?.Dispose();
+        }
+
+        foreach (var package in _packages.Values.OfType<IDisposable>())
+        {
+            package.Dispose();
+        }
     }
 }
