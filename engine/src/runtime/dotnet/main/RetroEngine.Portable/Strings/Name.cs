@@ -187,7 +187,11 @@ public readonly partial struct Name
     /// the correct case-sensitive string representation of the name.
     /// </summary>
     [UsedImplicitly]
+#if RETRO_WITH_CASE_PRESERVING_NAME
     public NameEntryId DisplayIndex { get; }
+#else
+    public NameEntryId DisplayIndex => ComparisonIndex;
+#endif
 
     internal Name(ReadOnlySpan<byte> name, FindName findType = FindName.Add)
     {

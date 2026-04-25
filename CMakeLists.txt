@@ -6,9 +6,11 @@ cmake_minimum_required(VERSION 4.1)
 
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 
+option(RETRO_BUILD_SHARED "Build the engine as shared libraries" ON)
+
 option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
-option(RETRO_WITH_CASE_PRESERVING_NAMES "Should names preserve casing or not" ON)
+option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
 
 set(INTERMEDIATE_LIB_TYPE OBJECT)
 set(BUILD_SHARED_LIBS OFF)
