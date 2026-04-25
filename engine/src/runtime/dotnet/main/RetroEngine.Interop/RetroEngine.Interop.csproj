@@ -6,28 +6,13 @@
         <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-        <ConfigFolder Condition="'$(Configuration)' == 'Debug'">debug</ConfigFolder>
-        <ConfigFolder Condition="'$(Configuration)' == 'Release'">release</ConfigFolder>
         <IsPackable>true</IsPackable>
         <Version>1.0.0-dev.4</Version>
-        <Configurations>Debug;Release;DebugGame;Packaged</Configurations>
-        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="$(SolutionDir)engine\bin\$(ConfigFolder)\**\*" Pack="true" PackagePath="runtimes\">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-
-        <None Include="$(SolutionDir)engine\bin\$(ConfigFolder)\win-x64\**\*" Pack="false" PackagePath="\">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
-        <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+      <ProjectReference Include="..\RetroEngine.Utilities.SourceGenerator\RetroEngine.Utilities.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

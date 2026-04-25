@@ -48,9 +48,9 @@ endif()
 
 
 if (RETRO_WITH_CASE_PRESERVING_NAMES)
-    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAMES=1)
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=1)
 else()
-    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAMES=1)
+    add_compile_definitions(RETRO_WITH_CASE_PRESERVING_NAME=0)
 endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} RETRO_BUILD_CONFIG)

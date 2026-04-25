@@ -1,12 +1,39 @@
 ﻿<Project>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DefineConstants>$(DefineConstants);CHECKED;</DefineConstants>
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <BuildConfigName>debug</BuildConfigName>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <BuildConfigName>release</BuildConfigName>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'DebugGame' ">
+        <DefineConstants>$(DefineConstants);CHECKED;DEBUG</DefineConstants>
+        <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <BuildConfigName>debug-game</BuildConfigName>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Packaged' ">
+        <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <BuildConfigName>packaged</BuildConfigName>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <PropertyGroup
+            Condition="'$(RetroEngineCasePreservingNames)' == 'true'"
+    >
+        <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">
         <AssemblyAttribute Include="System.Runtime.CompilerServices.DisableRuntimeMarshalling"/>
     </ItemGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DefineConstants>$(DefineConstants);CHECKED</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)' == 'DebugGame' ">
-        <DefineConstants>$(DefineConstants);CHECKED;DEBUG</DefineConstants>
-    </PropertyGroup>
 </Project>
