@@ -24,6 +24,8 @@ public interface IAssetPackage
 
     public string SourcePath { get; }
 
+    public bool IsReadOnly { get; }
+
     public ValueTask LoadAsync(CancellationToken cancellationToken = default);
 
     public void Unload();

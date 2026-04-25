@@ -46,6 +46,8 @@ public sealed class FileSystemAssetPackage(
 
     public string SourcePath { get; } = path;
 
+    public bool IsReadOnly => false;
+
     private CancellationTokenSource? _loadCancellationSource;
     private Task? _loadTask;
     private readonly ReaderWriterLockSlim _loadTaskLock = new();
