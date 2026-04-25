@@ -10,7 +10,7 @@
         <viewModels:MainEditorViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*" x:DataType="viewModels:MainEditorViewModel">
         <ContentControl Grid.Row="0" Content="{Binding Menu}"/>
         <DockControl Grid.Row="1" Layout="{Binding Layout}"/>
     </Grid>

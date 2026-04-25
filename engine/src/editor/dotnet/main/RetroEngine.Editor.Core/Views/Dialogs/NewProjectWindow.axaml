@@ -14,7 +14,7 @@
         <dialogs:NewProjectWindowViewModel/>
     </Design.DataContext>
 
-    <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
+    <StackPanel Spacing="10" Orientation="Vertical" Margin="30" x:DataType="dialogs:NewProjectWindowViewModel">
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,*" ColumnSpacing="10" RowSpacing="20">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectFolderText, Project Folder}"/>
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ProjectFolder}"/>
