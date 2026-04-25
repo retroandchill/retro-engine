@@ -18,6 +18,16 @@ set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_DEPS_DIR ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 set(VCPKG_BIN_DIR ${VCPKG_DEPS_DIR}/bin)
 
+if(WIN32)
+    set(RETRO_VENV_PYTHON "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
+else()
+    set(RETRO_VENV_PYTHON "${CMAKE_SOURCE_DIR}/.venv/bin/python")
+endif()
+
+if(EXISTS "${RETRO_VENV_PYTHON}")
+    set(Python3_EXECUTABLE "${RETRO_VENV_PYTHON}" CACHE FILEPATH "Python interpreter from project virtual environment")
+endif()
+
 project(retro_engine LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)

@@ -388,8 +388,8 @@ namespace retro
             .vertexAttributeDescriptionCount = static_cast<std::uint32_t>(attribute_descriptions.size()),
             .pVertexAttributeDescriptions = attribute_descriptions.data()};
 
-        auto vert_module = create_shader_module(device, shader_layout.vertex_shader);
-        auto frag_module = create_shader_module(device, shader_layout.fragment_shader);
+        auto vert_module = device.create_shader_module(shader_layout.vertex_shader);
+        auto frag_module = device.create_shader_module(shader_layout.fragment_shader);
 
         vk::PipelineShaderStageCreateInfo vert_stage{.stage = vk::ShaderStageFlagBits::eVertex,
                                                      .module = vert_module.get(),
@@ -468,18 +468,6 @@ namespace retro
                                                      .subpass = 0};
 
         return device.create_graphics_pipeline(nullptr, pipeline_info);
-    }
-
-    vk::UniqueShaderModule VulkanRenderPipeline::create_shader_module(const VulkanDevice &device,
-                                                                      const std::filesystem::path &path)
-    {
-        auto result = device.create_shader_module(path);
-        if (!result.has_value())
-        {
-            throw GraphicsException{"Failed to create shader module: " + path.string()};
-        }
-
-        return *std::move(result);
     }
 
     void VulkanPipelineManager::recreate_pipelines(vk::Extent2D extent, vk::RenderPass render_pass)

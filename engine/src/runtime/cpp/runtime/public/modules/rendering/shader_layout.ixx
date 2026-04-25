@@ -86,8 +86,8 @@ namespace retro
 
     export struct ShaderLayout
     {
-        std::filesystem::path vertex_shader{};
-        std::filesystem::path fragment_shader{};
+        std::span<const std::uint32_t> vertex_shader{};
+        std::span<const std::uint32_t> fragment_shader{};
         std::vector<VertexInputBinding> vertex_bindings{};
         std::vector<DescriptorBinding> descriptor_bindings{};
         Optional<PushConstantBinding> push_constant_bindings{};

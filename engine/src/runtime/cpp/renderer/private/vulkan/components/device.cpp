@@ -179,27 +179,10 @@ namespace retro
         return std::move(pipeline);
     }
 
-    StreamResult<vk::UniqueShaderModule> VulkanDevice::create_shader_module(const std::filesystem::path &path) const
+    vk::UniqueShaderModule VulkanDevice::create_shader_module(std::span<const uint32_t> data) const
     {
-        return FileStream::open(path, FileOpenMode::read_only)
-            .and_then([this](const std::unique_ptr<FileStream> &stream) { return create_shader_module(*stream); });
-    }
-
-    StreamResult<vk::UniqueShaderModule> VulkanDevice::create_shader_module(Stream &stream) const
-    {
-        return stream.read_all().and_then(
-            [this](std::span<const std::byte> bytes) -> StreamResult<vk::UniqueShaderModule>
-            {
-                const auto *code = reinterpret_cast<const std::uint32_t *>(bytes.data());
-
-                if (bytes.size() % sizeof(std::uint32_t) != 0)
-                {
-                    return std::unexpected{StreamError::invalid_argument};
-                }
-
-                const vk::ShaderModuleCreateInfo info{.codeSize = bytes.size(), .pCode = code};
-                return device_->createShaderModuleUnique(info);
-            });
+        const vk::ShaderModuleCreateInfo info{.codeSize = data.size(), .pCode = data.data()};
+        return device_->createShaderModuleUnique(info);
     }
 
     VulkanBufferManager VulkanDevice::create_buffer_manager(const std::size_t pool_size) const

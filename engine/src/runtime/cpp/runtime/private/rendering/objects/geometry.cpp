@@ -11,6 +11,7 @@ module;
 module retro.runtime.rendering.objects.geometry;
 
 import retro.logging;
+import retro.runtime.rendering.shaders;
 
 namespace retro
 {
@@ -73,8 +74,8 @@ namespace retro
     const ShaderLayout &GeometryRenderPipeline::shaders() const
     {
         static const ShaderLayout layout{
-            .vertex_shader = "shaders/geometry.vert.spv",
-            .fragment_shader = "shaders/geometry.frag.spv",
+            .vertex_shader = shaders::geometry_vert,
+            .fragment_shader = shaders::geometry_frag,
             .vertex_bindings = {VertexInputBinding{.type = VertexInputType::vertex,
                                                    .stride = sizeof(Vertex),
                                                    .attributes = {VertexAttribute{.type = ShaderDataType::vec2,

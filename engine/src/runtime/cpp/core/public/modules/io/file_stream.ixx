@@ -17,8 +17,6 @@ import retro.core.io.stream;
 
 namespace retro
 {
-    export RETRO_API std::vector<std::byte> read_binary_file(const std::filesystem::path &path);
-
     export enum class FileOpenMode
     {
         read_only,

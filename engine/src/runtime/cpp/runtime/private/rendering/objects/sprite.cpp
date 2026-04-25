@@ -10,6 +10,8 @@ module;
 
 module retro.runtime.rendering.objects.sprite;
 
+import retro.runtime.rendering.shaders;
+
 namespace retro
 {
     DrawCommand SpriteBatch::create_draw_command() const
@@ -32,8 +34,8 @@ namespace retro
     const ShaderLayout &SpriteRenderPipeline::shaders() const
     {
         static const ShaderLayout layout{
-            .vertex_shader = "shaders/sprite.vert.spv",
-            .fragment_shader = "shaders/sprite.frag.spv",
+            .vertex_shader = shaders::sprite_vert,
+            .fragment_shader = shaders::sprite_frag,
             .vertex_bindings = {VertexInputBinding{
                 .type = VertexInputType::instance,
                 .stride = sizeof(SpriteInstanceData),

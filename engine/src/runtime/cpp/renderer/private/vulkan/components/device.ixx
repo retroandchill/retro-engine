@@ -82,9 +82,7 @@ namespace retro
         vk::UniquePipeline create_graphics_pipeline(vk::PipelineCache cache,
                                                     const vk::GraphicsPipelineCreateInfo &create_info) const;
 
-        StreamResult<vk::UniqueShaderModule> create_shader_module(const std::filesystem::path &path) const;
-
-        StreamResult<vk::UniqueShaderModule> create_shader_module(Stream &stream) const;
+        vk::UniqueShaderModule create_shader_module(std::span<const uint32_t> data) const;
 
         template <std::invocable<vk::Queue> Functor>
         decltype(auto) submit_to_graphics_queue(Functor &&functor) const

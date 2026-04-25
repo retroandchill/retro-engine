@@ -48,23 +48,6 @@ namespace retro
         }
     } // namespace
 
-    std::vector<std::byte> read_binary_file(const std::filesystem::path &path)
-    {
-        auto target_path = find_on_path(path);
-        if (!target_path.has_value())
-            throw IoException{"Shader file not found"};
-
-        std::ifstream file{*target_path, std::ios::binary | std::ios::ate};
-        if (!file)
-            throw IoException{"Failed to open shader file"};
-
-        const auto size = static_cast<size_t>(file.tellg());
-        std::vector<std::byte> data(size);
-        file.seekg(0);
-        file.read(reinterpret_cast<char *>(data.data()), static_cast<std::streamsize>(size));
-        return data;
-    }
-
     namespace
     {
         boost::asio::io_context &global_io_context()
