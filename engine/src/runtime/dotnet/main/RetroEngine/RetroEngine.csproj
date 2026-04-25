@@ -9,6 +9,7 @@
         <LangVersion>14</LangVersion>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="Avalonia" VersionOverride="11.3.14" />
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="Injectio" />
       <PackageReference Include="Microsoft.Extensions.Configuration" />
