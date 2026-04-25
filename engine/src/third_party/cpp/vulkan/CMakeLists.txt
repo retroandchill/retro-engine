@@ -17,7 +17,6 @@ add_library(Vulkan::Cppm ALIAS vulkan_cppm)
 
 set_target_properties(vulkan_cppm PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
-        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
-        ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
+        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}")
 
 target_compile_definitions(vulkan_cppm PUBLIC VULKAN_HPP_NO_CONSTRUCTORS)

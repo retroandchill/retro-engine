@@ -119,5 +119,4 @@ add_dependencies(retro_runtime renderer_shaders)
 
 set_target_properties(retro_runtime PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
-        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
-        ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
+        LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}")
