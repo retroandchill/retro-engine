@@ -7,6 +7,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
+
 jobs:
   build:
     name: Build (${{ matrix.os }})
@@ -37,10 +40,16 @@ jobs:
       - name: Install Python Dependencies
         run: uv sync --all-packages
 
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ matrix.os }}-${{ hashFiles('vcpkg.json', 'vcpkg_overlay/**') }}
+
       - name: Setup VCPKG
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: '${{ github.workspace }}/b/vcpkg'
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg_cache'
           vcpkgGitCommitId: '89dd0f4d241136b843fb55813b2f0fa6448c204d'
           vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
           doNotCache: false
