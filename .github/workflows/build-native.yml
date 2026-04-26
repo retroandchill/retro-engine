@@ -38,6 +38,12 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt install autoconf autoconf-archive automake libtool libltdl-dev
 
+      - name: Setup UV
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+
+      - name: Install Python Dependencies
+        run: uv sync --all-packages
+
       - name: Setup VCPKG
         uses: lukka/run-vcpkg@v11
         with:
