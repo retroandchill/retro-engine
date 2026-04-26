@@ -18,4 +18,16 @@ public class AssetPathTest
         var path = default(AssetPath);
         Assert.That(path.IsValid, Is.False);
     }
+
+    [Test]
+    public void CreateFromStringPath()
+    {
+        var path = new AssetPath("Assets:foo.png");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(path.IsValid, Is.True);
+            Assert.That(path.PackageName.ToString(), Is.EqualTo("Assets"));
+            Assert.That(path.AssetName.ToString(), Is.EqualTo("foo.png"));
+        }
+    }
 }

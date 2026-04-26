@@ -436,7 +436,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "autopep8", specifier = ">=2.3.2" },
-    { name = "pathspec", specifier = ">=0.12.1" },
+    { name = "pathspec", specifier = ">=1.0.4" },
     { name = "pqdm", specifier = ">=0.2.0" },
     { name = "pre-commit", specifier = ">=4.5.1" },
 ]
