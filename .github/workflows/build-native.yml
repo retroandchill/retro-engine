@@ -50,6 +50,7 @@ jobs:
           vcpkgDirectory: '${{ github.workspace }}/b/vcpkg'
           vcpkgGitCommitId: '89dd0f4d241136b843fb55813b2f0fa6448c204d'
           vcpkgJsonGlob: '${{ github.workspace }}/vcpkg.json'
+          doNotCache: false
 
       - name: Run CMake with vcpkg.json manifest
         uses: lukka/run-cmake@v10
