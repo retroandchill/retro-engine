@@ -16,7 +16,7 @@ public sealed class NameYamlConverter : IYamlFormatter<Name>
     public void Serialize(ref Utf8YamlEmitter emitter, Name value, YamlSerializationContext context)
     {
         Span<byte> stringText = stackalloc byte[Name.MaxRenderedLength];
-        var actualLength = value.ToUtf8(stringText);
+        var actualLength = value.WriteUtf8Bytes(stringText);
         emitter.WriteScalar(MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(stringText), actualLength));
     }
 
@@ -24,6 +24,6 @@ public sealed class NameYamlConverter : IYamlFormatter<Name>
     {
         var stringText = parser.GetScalarAsUtf8();
         parser.Read();
-        return new Name(stringText);
+        return Name.FromUtf8Bytes(stringText);
     }
 }

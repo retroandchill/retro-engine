@@ -39,7 +39,7 @@ public sealed class NameJsonConverter : JsonConverter<Name>
     public override void Write(Utf8JsonWriter writer, Name value, JsonSerializerOptions options)
     {
         Span<byte> buffer = stackalloc byte[Name.MaxRenderedLength];
-        var writtenLength = value.ToUtf8(buffer);
+        var writtenLength = value.WriteUtf8Bytes(buffer);
         writer.WriteStringValue(buffer[..writtenLength]);
     }
 

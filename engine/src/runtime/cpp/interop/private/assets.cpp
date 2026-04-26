@@ -10,7 +10,6 @@
 
 import retro.runtime.engine;
 import retro.core.strings.name;
-import retro.runtime.assets.asset_path;
 import retro.core.math.vector;
 import std;
 import retro.runtime.rendering.texture;
@@ -26,34 +25,6 @@ namespace retro
 
 extern "C"
 {
-    RETRO_API bool retro_asset_path_from_string(const char16_t *path, const int32_t length, retro::AssetPath *out_path)
-    {
-        try
-        {
-            *out_path = retro::AssetPath{std::u16string_view{path, static_cast<std::size_t>(length)}};
-            return true;
-        }
-        catch (const std::invalid_argument &)
-        {
-            return false;
-        }
-    }
-
-    RETRO_API bool retro_asset_path_is_valid(const retro::AssetPath *path)
-    {
-        return path->is_valid();
-    }
-
-    RETRO_API std::int32_t retro_asset_path_to_string(const retro::AssetPath *path,
-                                                      char16_t *buffer,
-                                                      const int32_t length)
-    {
-        const auto utf16_string = path->to_string<char16_t>(boost::pool_allocator<char16_t>{});
-        const std::size_t string_length = std::min(utf16_string.size(), static_cast<std::size_t>(length));
-        std::memcpy(buffer, utf16_string.data(), string_length * sizeof(char16_t));
-        return static_cast<std::int32_t>(string_length);
-    }
-
     RETRO_API void retro_texture_destroy(retro::Texture *texture)
     {
         texture->sub_ref();

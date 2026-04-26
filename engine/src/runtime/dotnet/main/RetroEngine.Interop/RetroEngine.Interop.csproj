@@ -7,8 +7,17 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>true</IsPackable>
-        <Version>1.0.0-dev.4</Version>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(SolutionDir)engine\build\$(BuildConfigName)\runtimes\win-x64\native\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <PackagePath>runtimes\win-x64\native\%(Filename)%(Extension)</PackagePath>
+            <TargetPath>runtimes\win-x64\native\%(Filename)%(Extension)</TargetPath>
+            <Pack>true</Pack>
+            <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        </None>
+    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />

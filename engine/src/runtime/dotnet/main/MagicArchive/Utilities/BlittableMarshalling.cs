@@ -183,8 +183,19 @@ public static class BlittableMarshalling
         if (typeof(T).IsEnum)
             return new BlittableTypeInfo(BlittableType.BlittableSimple, Unsafe.SizeOf<T>(), Unsafe.SizeOf<T>());
 
+        bool isTupleType;
+        if (typeof(T).IsGenericType)
+        {
+            var definition = typeof(T).GetGenericTypeDefinition();
+            isTupleType = TupleFormatters.ValueTupleTypes.Contains(definition);
+        }
+        else
+        {
+            isTupleType = false;
+        }
+
         var layoutAttribute = typeof(T).StructLayoutAttribute;
-        if (layoutAttribute is not null)
+        if (layoutAttribute is not null && !isTupleType)
         {
             if (
                 layoutAttribute.Value != LayoutKind.Sequential
@@ -202,11 +213,7 @@ public static class BlittableMarshalling
         )
             return singleField;
 
-        if (!typeof(T).IsGenericType)
-            return BlittableTypeInfo.NotBlittable;
-
-        var definition = typeof(T).GetGenericTypeDefinition();
-        if (!TupleFormatters.ValueTupleTypes.Contains(definition))
+        if (!isTupleType)
             return BlittableTypeInfo.NotBlittable;
 
         var blittableType = BlittableType.BlittableSimple;

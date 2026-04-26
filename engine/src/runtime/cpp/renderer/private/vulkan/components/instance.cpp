@@ -153,7 +153,9 @@ namespace retro
             [](const vk::Instance::CType native_instance, const char *name)
             { return vk::Instance{native_instance}.getProcAddr(name); });
 
+#ifndef NDEBUG
         debug_messenger_ = instance_->createDebugUtilsMessengerEXTUnique(messenger_ci, nullptr, *dldi_);
+#endif
     }
 
     VulkanInstance VulkanInstance::create(const WindowBackend backend)

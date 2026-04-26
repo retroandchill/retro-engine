@@ -403,6 +403,7 @@ public ref partial struct ArchiveWriter<TBufferWriter>
         if (BlittableMarshalling.IsBlittable<T>())
         {
             UnsafeWriteBlittable(in value);
+            _depth--;
             return;
         }
 

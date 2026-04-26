@@ -69,7 +69,6 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/objects/geometry.ixx
         public/modules/engine.ixx
         public/modules/rendering/objects/sprite.ixx
-        public/modules/assets/asset_path.ixx
         public/modules/rendering/shader_layout.ixx
         public/modules/rendering/draw_command.ixx
         public/modules/rendering/render_pipeline.ixx

@@ -57,7 +57,7 @@ namespace retro
             }
             else
             {
-                InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+                InlineArena<name_inline_buffer_size> arena;
                 const auto as_lower = to_lower(name, make_allocator<char>(arena));
                 return NameHash{std::hash<std::string_view>{}(as_lower), static_cast<std::uint32_t>(name.size())};
             }
@@ -143,7 +143,7 @@ namespace retro
     {
         NameTable()
         {
-            get_or_add_entry_internal(NONE_STRING, FindType::add);
+            get_or_add_entry_internal(none_string, FindType::add);
         }
 
       public:
@@ -156,7 +156,7 @@ namespace retro
         NameIndices get_or_add_entry(const std::string_view str, const FindType find_type)
         {
 
-            if (retro::compare<StringComparison::case_insensitive>(str, NONE_STRING) == std::strong_ordering::equal)
+            if (retro::compare<StringComparison::case_insensitive>(str, none_string) == std::strong_ordering::equal)
             {
                 return NameIndices
                 {
@@ -174,7 +174,7 @@ namespace retro
         {
             if (id.is_none())
             {
-                return NONE_STRING;
+                return none_string;
             }
 
             std::shared_lock lock{mutex_};
@@ -262,7 +262,7 @@ namespace retro
 
         NameEntryId create_new_entry(const std::string_view str)
         {
-            if (str.size() > MAX_NAME_LENGTH)
+            if (str.size() > max_name_length)
                 throw std::length_error{"Name too long"};
 
             const std::size_t byte_size = (str.size() + 1) * sizeof(char);
@@ -304,7 +304,7 @@ namespace retro
 
     [[nodiscard]] bool operator==(const Name &lhs, std::u16string_view rhs)
     {
-        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+        InlineArena<name_inline_buffer_size> arena;
         const auto utf8_str = convert_string<char>(rhs, make_allocator<char>(arena));
         return lhs == utf8_str;
     }
@@ -323,7 +323,7 @@ namespace retro
 
     std::strong_ordering operator<=>(const Name &lhs, const std::u16string_view rhs)
     {
-        InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+        InlineArena<name_inline_buffer_size> arena;
         const auto utf8_str = convert_string<char>(rhs, make_allocator<char>(arena));
         return lhs <=> utf8_str;
     }
@@ -342,9 +342,9 @@ namespace retro
     Name::LookupResult Name::lookup_name(std::string_view value, const FindType find_type)
     {
         // If the name is too long, just truncate it
-        if (value.size() > MAX_NAME_LENGTH)
+        if (value.size() > max_name_length)
         {
-            value = value.substr(0, MAX_NAME_LENGTH);
+            value = value.substr(0, max_name_length);
         }
 
         if (value.empty())
@@ -356,7 +356,7 @@ namespace retro
                                         .display_index = NameEntryId::none(),
 #endif
                                     },
-                                .number = NAME_NO_NUMBER_INTERNAL};
+                                .number = name_no_number_internal};
         }
 
         auto [internal_number, new_length] = parse_number_from_name(value);

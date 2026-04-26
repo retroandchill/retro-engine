@@ -15,7 +15,6 @@ import retro.core.async.task;
 import retro.core.async.manual_task_scheduler;
 import retro.core.functional.delegate;
 import retro.runtime.rendering.renderer2d;
-import retro.runtime.assets.asset_path;
 import retro.core.memory.ref_counted_ptr;
 import retro.platform.window;
 import retro.core.containers.optional;

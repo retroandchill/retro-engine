@@ -155,6 +155,8 @@ public readonly partial struct Name
 
     private const int NoNumberInternal = 0;
 
+    public const string NoneString = "None";
+
     /// <summary>
     /// Represents a "none" or null-like state for <see cref="Name"/> instances.
     /// </summary>
@@ -193,10 +195,15 @@ public readonly partial struct Name
     public NameEntryId DisplayIndex => ComparisonIndex;
 #endif
 
-    internal Name(ReadOnlySpan<byte> name, FindName findType = FindName.Add)
+    private Name(scoped ReadOnlySpan<byte> name, FindName findType = FindName.Add)
     {
         NativeLookup(name, name.Length, findType, out this, out var error);
         error.ThrowIfError();
+    }
+
+    public static Name FromUtf8Bytes(scoped ReadOnlySpan<byte> name, FindName findType = FindName.Add)
+    {
+        return new Name(name, findType);
     }
 
     /// <summary>
@@ -206,7 +213,7 @@ public readonly partial struct Name
     /// <param name="findType">
     /// Used to determine if we should add a new name or simply try to retrieve an existing one.
     /// </param>
-    public Name(ReadOnlySpan<char> name, FindName findType = FindName.Add)
+    public Name(scoped ReadOnlySpan<char> name, FindName findType = FindName.Add)
     {
         NativeLookup(name, name.Length, findType, out this, out var error);
         error.ThrowIfError();
@@ -383,6 +390,12 @@ public readonly partial struct Name
         return ComparisonIndex.CompareTo(other.ComparisonIndex);
     }
 
+    public int CompareLexical(Name other, StringComparison comparison)
+    {
+        var lexicalCompare = ComparisonIndex.CompareLexical(other.ComparisonIndex, comparison);
+        return lexicalCompare != 0 ? lexicalCompare : _number.CompareTo(other._number);
+    }
+
     /// <inheritdoc />
     public override string ToString()
     {
@@ -392,7 +405,12 @@ public readonly partial struct Name
         return buffer[..newLength].ToString();
     }
 
-    internal int ToUtf8(Span<byte> buffer)
+    internal int WriteUtf8Bytes(scoped Span<byte> buffer)
+    {
+        return NativeToString(this, buffer, buffer.Length);
+    }
+
+    public int WriteUtf16Bytes(scoped Span<char> buffer)
     {
         return NativeToString(this, buffer, buffer.Length);
     }
@@ -426,13 +444,13 @@ public readonly partial struct Name
     private static partial bool NativeIsValid(Name name);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare_utf16")]
-    private static partial int NativeCompare(Name lhs, ReadOnlySpan<char> name, int nameLength);
+    private static partial int NativeCompare(Name lhs, scoped ReadOnlySpan<char> name, int nameLength);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf8")]
-    private static partial int NativeToString(Name name, ReadOnlySpan<byte> buffer, int bufferLength);
+    private static partial int NativeToString(Name name, scoped ReadOnlySpan<byte> buffer, int bufferLength);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf16")]
-    private static partial int NativeToString(Name name, ReadOnlySpan<char> buffer, int bufferLength);
+    private static partial int NativeToString(Name name, scoped ReadOnlySpan<char> buffer, int bufferLength);
 
     static partial void StaticInit()
     {
@@ -445,7 +463,7 @@ public readonly partial struct Name
     )
     {
         Span<byte> buffer = stackalloc byte[MaxRenderedLength];
-        var writtenLength = value.ToUtf8(buffer);
+        var writtenLength = value.WriteUtf8Bytes(buffer);
         ref var dest = ref writer.GetSpanReference(writtenLength + sizeof(int));
         if (!writer.IsByteSwapping)
         {

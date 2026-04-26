@@ -92,10 +92,10 @@ namespace retro
         add
     };
 
-    export RETRO_API constexpr std::size_t MAX_NAME_LENGTH = 1024;
-    constexpr std::size_t NAME_MAX_DIGITS = 10;
+    export RETRO_API constexpr std::size_t max_name_length = 1024;
+    constexpr std::size_t name_max_digits = 10;
 
-    export constexpr std::int32_t NAME_NO_NUMBER_INTERNAL = 0;
+    export constexpr std::int32_t name_no_number_internal = 0;
 
     constexpr std::int32_t name_internal_to_external(const std::int32_t x)
     {
@@ -107,7 +107,7 @@ namespace retro
         return x + 1;
     }
 
-    export constexpr RETRO_API std::int32_t NAME_NO_NUMBER = name_internal_to_external(NAME_NO_NUMBER_INTERNAL);
+    export constexpr RETRO_API std::int32_t NAME_NO_NUMBER = name_internal_to_external(name_no_number_internal);
 
     template <Char CharType>
     constexpr std::pair<std::int32_t, std::size_t> parse_number_from_name(std::basic_string_view<CharType> name)
@@ -119,7 +119,7 @@ namespace retro
         }
 
         auto *first_digit = name.data() + name.size() - digits;
-        if (digits > 0 && digits < name.size() && first_digit[-1] == '_' && digits <= NAME_MAX_DIGITS &&
+        if (digits > 0 && digits < name.size() && first_digit[-1] == '_' && digits <= name_max_digits &&
             (digits == 1 || *first_digit != '0'))
         {
             std::int64_t number = 0;
@@ -134,7 +134,7 @@ namespace retro
             }
         }
 
-        return std::make_pair(NAME_NO_NUMBER_INTERNAL, name.size());
+        return std::make_pair(name_no_number_internal, name.size());
     }
 
     struct NameEntryHeader
@@ -171,7 +171,7 @@ namespace retro
         union
         {
             // NOLINTNEXTLINE
-            char characters_[MAX_NAME_LENGTH]; // NOSONAR
+            char characters_[max_name_length]; // NOSONAR
 
             // NOLINTNEXTLINE
             std::byte data_[0]; // NOSONAR
@@ -183,9 +183,9 @@ namespace retro
      * Assuming sizeof(char) is 1 byte, this should allocate about 8KB of stack space, which should be support
      * multiple dynamic string resizes.
      */
-    constexpr std::size_t NAME_INLINE_BUFFER_SIZE = MAX_NAME_LENGTH * 8 * sizeof(char);
+    constexpr std::size_t name_inline_buffer_size = max_name_length * 8 * sizeof(char);
 
-    export RETRO_API constexpr std::string_view NONE_STRING = "None";
+    export RETRO_API constexpr std::string_view none_string = "None";
 
     struct NameIndices
     {
@@ -301,7 +301,7 @@ namespace retro
         [[nodiscard]] auto to_string(Allocator allocator = Allocator{}) const
         {
             const auto baseString = get_base_string();
-            if (number_ == NAME_NO_NUMBER_INTERNAL)
+            if (number_ == name_no_number_internal)
             {
                 return convert_string<CharType>(baseString, std::move(allocator));
             }
@@ -315,7 +315,7 @@ namespace retro
             requires std::same_as<CharType, typename Allocator::value_type>
         void append_string(std::basic_string<CharType, std::char_traits<CharType>, Allocator> &output) const
         {
-            InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+            InlineArena<name_inline_buffer_size> arena;
             output.append(to_string<CharType>(make_allocator<CharType>(arena)));
         }
 
@@ -360,14 +360,14 @@ namespace retro
             }
             else
             {
-                InlineArena<NAME_INLINE_BUFFER_SIZE> arena;
+                InlineArena<name_inline_buffer_size> arena;
                 const auto utf8_str = convert_string<char>(std::forward<Range>(value), make_allocator<char>(arena));
                 return lookup_name(utf8_str, find_type);
             }
         }
 
         NameEntryId comparison_index_;
-        std::int32_t number_ = NAME_NO_NUMBER_INTERNAL;
+        std::int32_t number_ = name_no_number_internal;
 #if RETRO_WITH_CASE_PRESERVING_NAME
         NameEntryId display_index_;
 #endif

@@ -6,19 +6,21 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
-using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly partial struct AssetPath : IEquatable<AssetPath>, IEqualityOperators<AssetPath, AssetPath, bool>
+public readonly struct AssetPath : IEquatable<AssetPath>, IEqualityOperators<AssetPath, AssetPath, bool>
 {
+    public const char PackageSeparator = ':';
+
     public Name PackageName { get; }
 
     public Name AssetName { get; }
 
-    public bool IsValid => NativeIsValid(this);
+    public bool IsValid =>
+        PackageName is { IsValid: true, IsNone: false } && AssetName is { IsValid: true, IsNone: false };
 
     public static AssetPath None => new(Name.None, Name.None);
 
@@ -30,18 +32,45 @@ public readonly partial struct AssetPath : IEquatable<AssetPath>, IEqualityOpera
 
     public AssetPath(ReadOnlySpan<char> path)
     {
-        if (!NativeFromString(path, out this))
+        var segments = 0;
+        foreach (var range in path.Split(PackageSeparator))
         {
-            throw new ArgumentException($"'{path}' is not a valid asset path.", nameof(path));
+            var segment = path[range];
+            segments++;
+
+            switch (segments)
+            {
+                case 1:
+                    PackageName = new Name(segment);
+                    break;
+                case 2:
+                    AssetName = new Name(segment);
+                    break;
+                default:
+                    throw new ArgumentException("Invalid asset path", nameof(path));
+            }
+        }
+
+        if (segments != 2)
+        {
+            throw new ArgumentException("Invalid asset path", nameof(path));
         }
     }
 
     public override string ToString()
     {
+        if (!IsValid)
+        {
+            return string.Empty;
+        }
+
         var maxLength = Encoding.UTF8.GetMaxCharCount(Name.MaxRenderedLength * 2 + 1);
         Span<char> buffer = stackalloc char[maxLength];
-        var newLength = NativeToString(in this, buffer);
-        return buffer[..newLength].ToString();
+        var writtenLength = PackageName.WriteUtf16Bytes(buffer);
+        buffer[writtenLength] = PackageSeparator;
+        writtenLength++;
+        writtenLength += AssetName.WriteUtf16Bytes(buffer[writtenLength..]);
+        return buffer[..writtenLength].ToString();
     }
 
     public bool Equals(AssetPath other)
@@ -68,21 +97,4 @@ public readonly partial struct AssetPath : IEquatable<AssetPath>, IEqualityOpera
     {
         return HashCode.Combine(PackageName, AssetName);
     }
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_from_string")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeFromString(ReadOnlySpan<char> path, int length, out AssetPath assetPath);
-
-    private static bool NativeFromString(ReadOnlySpan<char> path, out AssetPath assetPath) =>
-        NativeFromString(path, path.Length, out assetPath);
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_is_valid")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeIsValid(in AssetPath path);
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_asset_path_to_string")]
-    private static partial int NativeToString(in AssetPath path, Span<char> buffer, int bufferLength);
-
-    private static int NativeToString(in AssetPath path, Span<char> buffer) =>
-        NativeToString(in path, buffer, buffer.Length);
 }
