@@ -5,7 +5,6 @@
 
 using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
-using RetroEngine.Assets.Textures;
 using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;

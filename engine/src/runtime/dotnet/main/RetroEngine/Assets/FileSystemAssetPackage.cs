@@ -234,17 +234,6 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         throw new FileNotFoundException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
 
-    public void Serialize<T, TBufferWriter>(in TBufferWriter writer, T? data)
-        where TBufferWriter : IBufferWriter<byte>
-    {
-        YamlSerializer.Serialize(writer, data);
-    }
-
-    public T Deserialize<T>(in ReadOnlySequence<byte> sequence)
-    {
-        return YamlSerializer.Deserialize<T>(sequence);
-    }
-
     public void Dispose()
     {
         _watcher.Dispose();

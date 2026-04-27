@@ -115,9 +115,14 @@ public sealed partial class AssetManager(
 
             await using var stream = package.OpenAsset(path.AssetName);
             using var builder = new AssetReadBuffer();
-            await builder.ReadFromStreamAsync(stream, cancellationToken);
-
-            var decoded = decoder.Decode(AssetStorageType.File, builder.Buffer);
+            await builder.ReadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
+#if SYNC_ONLY
+            var decoded = decoder.Decode(AssetStorageType.File, builder.Span);
+#else
+            var decoded = await decoder
+                .DecodeAsync(AssetStorageType.File, builder.Memory, cancellationToken)
+                .ConfigureAwait(false);
+#endif
             _assetCache[path] = new WeakReference<object>(decoded);
             return decoded;
         }

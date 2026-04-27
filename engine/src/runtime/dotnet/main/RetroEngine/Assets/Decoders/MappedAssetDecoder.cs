@@ -1,4 +1,4 @@
-﻿// // @file DataAssetDecoder.cs
+﻿// // @file MappedAssetDecoder.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,27 +8,36 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using MagicArchive;
 using RetroEngine.Portable.Strings;
+using Zomp.SyncMethodGenerator;
 
-namespace RetroEngine.Assets;
+namespace RetroEngine.Assets.Decoders;
 
-public abstract class DataAssetDecoder<T> : IAssetDecoder
-    where T : class
+public abstract partial class MappedAssetDecoder<TAsset, TDto> : IAssetDecoder
+    where TAsset : class
 {
     public abstract Name AssetType { get; }
     public abstract ImmutableArray<string> Extensions { get; }
 
-    public object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source)
+    [CreateSyncVersion]
+    public async ValueTask<object> DecodeAsync(
+        AssetStorageType type,
+        ReadOnlyMemory<byte> source,
+        CancellationToken cancellationToken = default
+    )
     {
-        return DecodeInternal(type, source);
+        var dto = DecodeDto(type, source.Span);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return await ConvertAsync(dto, cancellationToken).ConfigureAwait(false);
     }
 
-    private static T DecodeInternal(AssetStorageType type, scoped ReadOnlySpan<byte> source)
+    private static TDto DecodeDto(AssetStorageType type, scoped ReadOnlySpan<byte> source)
     {
         return type switch
         {
-            AssetStorageType.File => JsonSerializer.Deserialize<T>(source)
+            AssetStorageType.File => JsonSerializer.Deserialize<TDto>(source)
                 ?? throw new InvalidOperationException("JSON deserialization failed"),
-            AssetStorageType.Packaged => ArchiveSerializer.Deserialize<T>(source)
+            AssetStorageType.Packaged => ArchiveSerializer.Deserialize<TDto>(source)
                 ?? throw new InvalidOperationException("Archive deserialization failed"),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
@@ -48,7 +57,7 @@ public abstract class DataAssetDecoder<T> : IAssetDecoder
             return;
         }
 
-        var sourceAsset = DecodeInternal(sourceType, source);
+        var sourceAsset = DecodeDto(sourceType, source);
         switch (sourceType)
         {
             case AssetStorageType.File:
@@ -61,5 +70,14 @@ public abstract class DataAssetDecoder<T> : IAssetDecoder
             default:
                 throw new ArgumentOutOfRangeException(nameof(sourceType), sourceType, null);
         }
+    }
+
+    protected abstract TAsset Convert(TDto dto);
+
+    protected virtual ValueTask<TAsset> ConvertAsync(TDto dto, CancellationToken cancellationToken = default)
+    {
+        return !cancellationToken.IsCancellationRequested
+            ? new ValueTask<TAsset>(Convert(dto))
+            : ValueTask.FromCanceled<TAsset>(cancellationToken);
     }
 }

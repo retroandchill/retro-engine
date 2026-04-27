@@ -13,7 +13,9 @@ internal partial struct AssetReadBuffer : IDisposable
     private byte[]? _buffer;
     private int _offset;
 
-    public ReadOnlySpan<byte> Buffer => _buffer is not null ? _buffer.AsSpan(_offset) : default;
+    public ReadOnlySpan<byte> Span => _buffer is not null ? _buffer.AsSpan(_offset) : default;
+
+    public ReadOnlyMemory<byte> Memory => _buffer?.AsMemory(_offset) ?? default;
 
     [CreateSyncVersion]
     public async ValueTask ReadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)

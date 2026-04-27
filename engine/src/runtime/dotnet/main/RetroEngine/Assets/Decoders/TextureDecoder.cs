@@ -10,7 +10,7 @@ using RetroEngine.Rendering;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace RetroEngine.Assets;
+namespace RetroEngine.Assets.Decoders;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder

@@ -25,6 +25,17 @@ public interface IAssetDecoder
 
     object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source);
 
+    ValueTask<object> DecodeAsync(
+        AssetStorageType type,
+        ReadOnlyMemory<byte> source,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return !cancellationToken.IsCancellationRequested
+            ? new ValueTask<object>(Decode(type, source.Span))
+            : ValueTask.FromCanceled<object>(cancellationToken);
+    }
+
     void Encode<TBufferWriter>(
         AssetStorageType sourceType,
         AssetStorageType destType,
