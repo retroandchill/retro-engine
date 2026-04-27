@@ -4,39 +4,37 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
-using System.IO.Abstractions;
+using System.Collections.Immutable;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
+
+public enum AssetStorageType
+{
+    File,
+    Packaged,
+}
 
 public interface IAssetDecoder
 {
     Name AssetType { get; }
 
-    bool CanCreateFromExtension(ReadOnlySpan<char> extension)
+    int Priority => 0;
+
+    ImmutableArray<string> Extensions { get; }
+
+    Asset Decode(AssetStorageType type, AssetPath assetPath, scoped ReadOnlySpan<byte> source);
+
+    void Encode<TBufferWriter>(
+        AssetStorageType type,
+        Name assetName,
+        scoped ReadOnlySpan<byte> source,
+        in TBufferWriter writer
+    )
+        where TBufferWriter : IBufferWriter<byte>
     {
-        return false;
+        var destBuffer = writer.GetSpan(source.Length);
+        source.CopyTo(destBuffer);
+        writer.Advance(source.Length);
     }
-
-    Asset Decode(IAssetPackage package, Name assetName, ReadOnlySequence<byte> bytes);
-
-    ValueTask<Asset> DecodeAsync(
-        IAssetPackage package,
-        Name assetName,
-        ReadOnlySequence<byte> bytes,
-        CancellationToken cancellationToken = default
-    );
-
-    void Encode<TBufferWriter>(IAssetPackage package, Asset asset, in TBufferWriter writer)
-        where TBufferWriter : IBufferWriter<byte>;
-
-    Asset ImportFromFile(IAssetPackage package, Name assetName, IFileInfo stream);
-
-    ValueTask<Asset> ImportFromFileAsync(
-        IAssetPackage package,
-        Name assetName,
-        IFileInfo sourceFile,
-        CancellationToken cancellationToken = default
-    );
 }

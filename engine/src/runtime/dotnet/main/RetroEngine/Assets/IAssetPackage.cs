@@ -5,7 +5,6 @@
 
 using System.Buffers;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
@@ -22,7 +21,13 @@ public abstract record AssetPackageEntry(Name Name);
 public sealed record AssetPackageFolder(Name Name, ImmutableArray<AssetPackageEntry> Children)
     : AssetPackageEntry(Name);
 
-public sealed record AssetPackageFile(Name Name, Name AssetType) : AssetPackageEntry(Name);
+public sealed record AssetPackageFile(Name Name, Name AssetType, string Extension = "") : AssetPackageEntry(Name)
+{
+    public string GetFullPath(string rootPath)
+    {
+        return $"{rootPath}/{Name}{Extension}";
+    }
+}
 
 public interface IAssetPackage
 {
@@ -41,6 +46,8 @@ public interface IAssetPackage
     public event Action<AssetPackageEntry>? OnEntryRemoved;
 
     public event Action<AssetPackageEntry, AssetPackageEntry>? OnEntryRenamed;
+
+    public void Load();
 
     public ValueTask LoadAsync(CancellationToken cancellationToken = default);
 

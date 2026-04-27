@@ -4,7 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
-using System.IO.Abstractions;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using MagicArchive;
@@ -43,96 +43,21 @@ internal readonly partial record struct TextureData
 }
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public partial class TextureDecoder(IFileSystem fileSystem, RenderBackend renderBackend) : IAssetDecoder
+public partial class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder
 {
     public Name AssetType => Texture.TypeName;
+
+    private static readonly ImmutableArray<string> Extensions = ["png", "jpg", "jpeg", "bmp"];
+    ImmutableArray<string> IAssetDecoder.Extensions => Extensions;
 
     static TextureDecoder()
     {
         Configuration.Default.PreferContiguousImageBuffers = true;
     }
 
-    public bool CanCreateFromExtension(ReadOnlySpan<char> extension)
+    public Asset Decode(AssetStorageType type, AssetPath assetPath, scoped ReadOnlySpan<byte> source)
     {
-        return extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
-    }
-
-    [CreateSyncVersion]
-    public async ValueTask<Asset> DecodeAsync(
-        IAssetPackage package,
-        Name assetName,
-        ReadOnlySequence<byte> bytes,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var assetPath = new AssetPath(package.PackageName, assetName);
-        var textureData = package.Deserialize<TextureData>(bytes);
-        if (textureData.IsLoaded)
-        {
-            return CreateTextureFromBuffer(
-                assetPath,
-                textureData.Data.Span,
-                textureData.Width,
-                textureData.Width,
-                textureData.Format
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(textureData.SourcePath))
-            throw new AssetLoadException($"Texture data for {assetName} has no source path specified");
-
-        var textureDirectory = fileSystem.Path.GetDirectoryName(package.SourcePath);
-        var absoluteTexturePath = fileSystem.Path.Combine(textureDirectory ?? ".", textureData.SourcePath);
-
-        if (!fileSystem.File.Exists(absoluteTexturePath))
-            throw new AssetLoadException($"Texture file {absoluteTexturePath} does not exist");
-
-        var file = fileSystem.FileInfo.New(absoluteTexturePath);
-        return await ImportFromFileAsync(package, assetName, file, cancellationToken);
-    }
-
-    public void Encode<TBufferWriter>(IAssetPackage package, Asset asset, in TBufferWriter writer)
-        where TBufferWriter : IBufferWriter<byte>
-    {
-        var texture = (Texture)asset;
-        var sizePerPixel = texture.Format switch
-        {
-            TextureFormat.Rgba8 => Unsafe.SizeOf<Rgba32>(),
-            TextureFormat.Rgba16F => Unsafe.SizeOf<Rgba64>(),
-            _ => throw new InvalidOperationException($"Unsupported texture format: {texture.Format}"),
-        };
-        var expectedSize = texture.Width * texture.Height * sizePerPixel;
-        var buffer = ArrayPool<byte>.Shared.Rent(expectedSize);
-        try
-        {
-            var bytesWritten = renderBackend.ExportTexture(texture.NativeTexture, buffer);
-            var textureData = new TextureData
-            {
-                SourcePath = texture.FilePath,
-                Data = buffer.AsMemory(0, bytesWritten),
-                Width = texture.Width,
-                Height = texture.Height,
-                Format = texture.Format,
-            };
-            package.Serialize(in writer, textureData);
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
-    }
-
-    [CreateSyncVersion]
-    public async ValueTask<Asset> ImportFromFileAsync(
-        IAssetPackage package,
-        Name assetName,
-        IFileInfo sourceFile,
-        CancellationToken cancellationToken = default
-    )
-    {
-        await using var stream = sourceFile.OpenRead();
-        var assetPath = new AssetPath(package.PackageName, assetName);
-        using var image = await Image.LoadAsync<Rgba32>(stream, cancellationToken).ConfigureAwait(false);
+        using var image = Image.Load<Rgba32>(source);
 
         image.DangerousTryGetSinglePixelMemory(out var pixelMemory);
 
@@ -140,14 +65,7 @@ public partial class TextureDecoder(IFileSystem fileSystem, RenderBackend render
         if (buffer.Length != image.Width * image.Height * 4)
             throw new AssetLoadException($"Texture has invalid dimensions");
 
-        return CreateTextureFromBuffer(
-            assetPath,
-            buffer,
-            image.Width,
-            image.Height,
-            TextureFormat.Rgba8,
-            sourceFile.Name
-        );
+        return CreateTextureFromBuffer(assetPath, buffer, image.Width, image.Height, TextureFormat.Rgba8);
     }
 
     private Texture CreateTextureFromBuffer(
@@ -160,6 +78,6 @@ public partial class TextureDecoder(IFileSystem fileSystem, RenderBackend render
     )
     {
         var nativeTexture = renderBackend.UploadTexture(buffer, width, height, format);
-        return new Texture(assetPath, nativeTexture, sourcePath);
+        return new Texture(assetPath, nativeTexture);
     }
 }

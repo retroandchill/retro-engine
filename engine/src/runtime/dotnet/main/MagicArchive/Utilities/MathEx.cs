@@ -7,17 +7,17 @@ using System.Runtime.CompilerServices;
 
 namespace MagicArchive.Utilities;
 
-internal class MathEx
+internal static class MathEx
 {
-    private const int ArrayMexLength = 0x7FFFFFC7;
+    private const int ArrayMaxLength = 0x7FFFFFC7;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NewArrayCapacity(int size)
     {
         var newSize = unchecked(size * 2);
-        if ((uint)newSize > ArrayMexLength)
+        if ((uint)newSize > ArrayMaxLength)
         {
-            newSize = ArrayMexLength;
+            newSize = ArrayMaxLength;
         }
         return newSize;
     }

@@ -16,13 +16,11 @@ public sealed class Texture : Asset
     public int Width => NativeTexture.Width;
     public int Height => NativeTexture.Height;
     public TextureFormat Format => NativeTexture.Format;
-    public string? FilePath { get; }
 
-    internal Texture(AssetPath path, NativeTexture nativeTexture, string? filePath)
+    internal Texture(AssetPath path, NativeTexture nativeTexture)
         : base(path)
     {
         NativeTexture = nativeTexture;
-        FilePath = filePath;
     }
 
     protected override void Dispose(bool disposing)

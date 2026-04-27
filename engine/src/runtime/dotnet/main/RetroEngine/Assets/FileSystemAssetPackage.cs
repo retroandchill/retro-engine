@@ -4,23 +4,13 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.IO.Abstractions;
-using Cysharp.IO;
-using Cysharp.Text;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Concurrency;
-using Serilog;
-using VYaml.Annotations;
 using VYaml.Serialization;
 
 namespace RetroEngine.Assets;
-
-[YamlObject(NamingConvention.SnakeCase)]
-internal readonly partial record struct AssetFileHeader(Name AssetType);
-
-internal readonly record struct AssetFileEntry(Name AssetType, string FullPath, long DataOffset);
 
 public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
 {
@@ -52,7 +42,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
     private Task? _loadTask;
     private readonly ReaderWriterLockSlim _loadTaskLock = new();
 
-    private ConcurrentDictionary<Name, AssetFileEntry>? _assetFileEntries;
+    private ImmutableDictionary<Name, AssetPackageEntry>? _assetFileEntries;
     private readonly IFileSystemWatcher _watcher;
     private readonly IFileSystem _fileSystem;
     private readonly ImmutableArray<IAssetDecoder> _decoders;
@@ -75,6 +65,27 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         _watcher.EnableRaisingEvents = true;
     }
 
+    public void Load()
+    {
+        var rootDirectory = _fileSystem.DirectoryInfo.New(SourcePath);
+        if (!rootDirectory.Exists)
+            throw new AssetLoadException($"Asset package directory '{SourcePath}' does not exist");
+
+        var assetFileEntries = new Dictionary<Name, AssetPackageEntry>();
+        var topLevelEntries = ImmutableArray.CreateBuilder<AssetPackageEntry>();
+        foreach (var file in rootDirectory.EnumerateFileSystemInfos("*"))
+        {
+            ProcessAssetFileInfo(file, "", assetFileEntries, topLevelEntries);
+        }
+
+        using (_loadTaskLock.EnterWriteScope())
+        {
+            TopLevelEntries = topLevelEntries.DrainToImmutable();
+            _assetFileEntries = assetFileEntries.ToImmutableDictionary();
+            _loadTask = Task.CompletedTask;
+        }
+    }
+
     public async ValueTask LoadAsync(CancellationToken cancellationToken)
     {
         Task targetTask;
@@ -87,7 +98,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
                     _loadCancellationSource.Token,
                     cancellationToken
                 );
-                targetTask = Task.Run(() => LoadInternalAsync(linkedToken.Token), linkedToken.Token);
+                targetTask = Task.Run(Load, linkedToken.Token);
                 _loadTask = targetTask;
             }
             else
@@ -99,155 +110,76 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         await targetTask;
     }
 
-    private async Task LoadInternalAsync(CancellationToken cancellationToken)
-    {
-        var rootDirectory = _fileSystem.DirectoryInfo.New(SourcePath);
-        if (!rootDirectory.Exists)
-            throw new AssetLoadException($"Asset package directory '{SourcePath}' does not exist");
-
-        var assetFileEntries = new Dictionary<Name, AssetFileEntry>();
-        var topLevelEntries = ImmutableArray.CreateBuilder<AssetPackageEntry>();
-        foreach (var file in rootDirectory.EnumerateFileSystemInfos("*"))
-        {
-            await ProcessAssetFileInfoAsync(file, assetFileEntries, topLevelEntries, cancellationToken);
-        }
-
-        using (_loadTaskLock.EnterWriteScope())
-        {
-            TopLevelEntries = topLevelEntries.DrainToImmutable();
-            _assetFileEntries = new ConcurrentDictionary<Name, AssetFileEntry>(assetFileEntries);
-            _loadTask = Task.CompletedTask;
-        }
-    }
-
-    private async ValueTask ProcessAssetFileInfoAsync(
+    private void ProcessAssetFileInfo(
         IFileSystemInfo file,
-        Dictionary<Name, AssetFileEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder,
-        CancellationToken cancellationToken
+        string parentPath,
+        Dictionary<Name, AssetPackageEntry> assetFileEntries,
+        ImmutableArray<AssetPackageEntry>.Builder builder
     )
     {
         switch (file)
         {
             case IFileInfo fileInfo:
-                await ProcessAssetFileAsync(fileInfo, assetFileEntries, builder, cancellationToken);
+                ProcessAssetFile(fileInfo, parentPath, assetFileEntries, builder);
                 break;
             case IDirectoryInfo directoryInfo:
-                await ProcessAssetDirectoryInfoAsync(directoryInfo, assetFileEntries, builder, cancellationToken);
+                ProcessAssetDirectoryInfoAsync(directoryInfo, parentPath, assetFileEntries, builder);
                 break;
         }
     }
 
-    private async ValueTask ProcessAssetDirectoryInfoAsync(
+    private void ProcessAssetDirectoryInfoAsync(
         IDirectoryInfo directory,
-        Dictionary<Name, AssetFileEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder,
-        CancellationToken cancellationToken
+        string parentPath,
+        Dictionary<Name, AssetPackageEntry> assetFileEntries,
+        ImmutableArray<AssetPackageEntry>.Builder builder
     )
     {
+        var currentPath = !string.IsNullOrEmpty(parentPath) ? $"{parentPath}/{directory.Name}" : directory.Name;
         var subBuilder = ImmutableArray.CreateBuilder<AssetPackageEntry>();
         foreach (var file in directory.EnumerateFileSystemInfos("*"))
         {
-            await ProcessAssetFileInfoAsync(file, assetFileEntries, subBuilder, cancellationToken);
+            ProcessAssetFileInfo(file, currentPath, assetFileEntries, subBuilder);
         }
 
-        builder.Add(new AssetPackageFolder(directory.Name, subBuilder.DrainToImmutable()));
+        builder.Add(new AssetPackageFolder(currentPath, subBuilder.DrainToImmutable()));
     }
 
-    private async ValueTask ProcessAssetFileAsync(
+    private void ProcessAssetFile(
         IFileInfo file,
-        Dictionary<Name, AssetFileEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder,
-        CancellationToken cancellationToken
+        string parentPath,
+        Dictionary<Name, AssetPackageEntry> assetFileEntries,
+        ImmutableArray<AssetPackageEntry>.Builder builder
     )
     {
-        var nameWithoutExtension = file.FullName.AsSpan(0, file.FullName.Length - file.Extension.Length);
-        var assetName = new Name(nameWithoutExtension);
+        var nameWithoutExtension = file.Name.AsSpan(0, file.Name.Length - file.Extension.Length);
+        var assetName = new Name(
+            !string.IsNullOrEmpty(parentPath) ? $"{parentPath}/{nameWithoutExtension}" : nameWithoutExtension
+        );
         if (assetFileEntries.ContainsKey(assetName))
             return;
 
-        IFileInfo assetFileInfo;
-        if (file.Extension == ".asset")
+        var extension = file.Extension.AsSpan(1);
+        AssetPackageFile? entry = null;
+        foreach (var decoder in _decoders)
         {
-            assetFileInfo = file;
-        }
-        else
-        {
-            var assetFileName = $"{nameWithoutExtension}.asset";
-            assetFileInfo = _fileSystem.FileInfo.New(assetFileName);
-        }
-
-        AssetFileEntry? entry = null;
-        if (assetFileInfo.Exists)
-        {
-            await using var stream = file.OpenRead();
-            entry = await ReadAssetFileEntryAsync(assetFileInfo.FullName, stream, cancellationToken);
-        }
-        else
-        {
-            foreach (var decoder in _decoders.Where(decoder => decoder.CanCreateFromExtension(file.Extension)))
+            foreach (var ext in decoder.Extensions)
             {
-                entry = await WriteAssetFileEntryAsync(
-                    assetFileInfo.FullName,
-                    decoder,
-                    assetName,
-                    file,
-                    cancellationToken
-                );
-            }
-        }
-
-        if (entry is not null)
-        {
-            assetFileEntries[assetName] = entry.Value;
-            builder.Add(new AssetPackageFile(assetName, entry.Value.AssetType));
-        }
-    }
-
-    private static async ValueTask<AssetFileEntry> ReadAssetFileEntryAsync(
-        string fullPath,
-        Stream stream,
-        CancellationToken cancellationToken = default
-    )
-    {
-        await using var reader = new Utf8StreamReader(stream);
-
-        using var builder = ZString.CreateUtf8StringBuilder();
-
-        await foreach (var line in reader.ReadAllLinesAsync(cancellationToken))
-        {
-            if (line.Span.StartsWith("---"u8))
+                if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                entry = new AssetPackageFile(assetName, decoder.AssetType, file.Extension);
                 break;
+            }
 
-            builder.AppendLiteral(line.Span);
-            builder.AppendLine();
+            if (entry is not null)
+                break;
         }
 
-        var header = YamlSerializer.Deserialize<AssetFileHeader>(builder.AsMemory());
+        if (entry is null)
+            return;
 
-        return new AssetFileEntry(header.AssetType, fullPath, stream.Position);
-    }
-
-    private async ValueTask<AssetFileEntry> WriteAssetFileEntryAsync(
-        string fullPath,
-        IAssetDecoder decoder,
-        Name assetName,
-        IFileInfo sourceFile,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var fileHeader = new AssetFileHeader(decoder.AssetType);
-        var bufferWriter = new ArrayBufferWriter<byte>();
-        YamlSerializer.Serialize(bufferWriter, fileHeader);
-        bufferWriter.Write("---\n"u8);
-        var offsetStart = bufferWriter.WrittenCount;
-
-        using var asset = await decoder.ImportFromFileAsync(this, assetName, sourceFile, cancellationToken);
-        decoder.Encode(this, asset, bufferWriter);
-
-        await using var fileStream = _fileSystem.File.OpenWrite(fullPath);
-        await fileStream.WriteAsync(bufferWriter.WrittenMemory, cancellationToken);
-        return new AssetFileEntry(decoder.AssetType, fullPath, offsetStart);
+        assetFileEntries[assetName] = entry;
+        builder.Add(entry);
     }
 
     public void Unload()
@@ -266,15 +198,22 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
     public bool HasAsset(Name assetName)
     {
         using var scope = _loadTaskLock.EnterReadScope();
-        return _assetFileEntries?.ContainsKey(assetName)
-            ?? throw new InvalidOperationException("Asset package is not loaded");
+        if (_assetFileEntries is null)
+            throw new InvalidOperationException("Asset package is not loaded");
+
+        return _assetFileEntries.TryGetValue(assetName, out var entry) && entry is AssetPackageFile;
     }
 
     public Name GetAssetType(Name assetName)
     {
         using var scope = _loadTaskLock.EnterReadScope();
-        return _assetFileEntries?.GetValueOrDefault(assetName).AssetType
-            ?? throw new InvalidOperationException("Asset package is not loaded");
+        if (_assetFileEntries is null)
+            throw new InvalidOperationException("Asset package is not loaded");
+
+        var entry = _assetFileEntries.GetValueOrDefault(assetName);
+        return entry is AssetPackageFile file
+            ? file.AssetType
+            : throw new InvalidOperationException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
 
     public Stream OpenAsset(Name assetName)
@@ -283,11 +222,13 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         if (_assetFileEntries is null)
             throw new InvalidOperationException("Asset package is not loaded");
 
-        if (_assetFileEntries.TryGetValue(assetName, out var entry) && _fileSystem.File.Exists(entry.FullPath))
+        if (_assetFileEntries.TryGetValue(assetName, out var entry) && entry is AssetPackageFile file)
         {
-            var stream = _fileSystem.File.OpenRead(entry.FullPath);
-            stream.Seek(entry.DataOffset, SeekOrigin.Begin);
-            return stream;
+            var fullPath = file.GetFullPath(SourcePath);
+            if (_fileSystem.File.Exists(fullPath))
+            {
+                return _fileSystem.File.OpenRead(fullPath);
+            }
         }
 
         throw new FileNotFoundException($"Asset '{assetName}' not found in package '{PackageName}'");
@@ -314,7 +255,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
 public sealed class FilesystemAssetPackageFactory(IFileSystem fileSystem, IEnumerable<IAssetDecoder> decoders)
     : IAssetPackageFactory
 {
-    private readonly ImmutableArray<IAssetDecoder> _decoders = [.. decoders];
+    private readonly ImmutableArray<IAssetDecoder> _decoders = [.. decoders.OrderBy(x => x.Priority)];
 
     public bool CanCreate(Name packageName, string path)
     {
