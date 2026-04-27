@@ -26,14 +26,14 @@ public sealed partial class RenderBackend : IDisposable
         Dispose();
     }
 
-    internal NativeTexture UploadTexture(ReadOnlySpan<byte> data, int width, int height, TextureFormat format)
+    internal Texture UploadTexture(ReadOnlySpan<byte> data, int width, int height, TextureFormat format)
     {
         var nativeHandle = NativeUploadTexture(this, data, data.Length, width, height, format, out var error);
         error.ThrowIfError();
-        return new NativeTexture(nativeHandle, width, height, format);
+        return new Texture(nativeHandle, width, height, format);
     }
 
-    internal int ExportTexture(NativeTexture texture, Span<byte> buffer)
+    internal int ExportTexture(Texture texture, Span<byte> buffer)
     {
         var success = NativeExportTexture(this, texture, buffer, buffer.Length, out var bytesWritten, out var error);
         error.ThrowIfError();
@@ -78,7 +78,7 @@ public sealed partial class RenderBackend : IDisposable
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeExportTexture(
         RenderBackend backend,
-        NativeTexture texture,
+        Texture texture,
         Span<byte> buffer,
         int bufferSize,
         out int bytesWritten,

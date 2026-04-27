@@ -28,7 +28,7 @@ public sealed partial class AssetManager(
     );
 
     private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
-    private readonly ConcurrentDictionary<AssetPath, WeakReference<Asset>> _assetCache = new();
+    private readonly ConcurrentDictionary<AssetPath, WeakReference<object>> _assetCache = new();
 
     public async ValueTask LoadPackageAsync(
         Name packageName,
@@ -69,7 +69,7 @@ public sealed partial class AssetManager(
     }
 
     [CreateSyncVersion]
-    public async ValueTask<Asset?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
+    public async ValueTask<object?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
         if (_assetCache.TryGetValue(path, out var asset) && asset.TryGetTarget(out var cachedAsset))
         {
@@ -117,8 +117,8 @@ public sealed partial class AssetManager(
             using var builder = new AssetReadBuffer();
             await builder.ReadFromStreamAsync(stream, cancellationToken);
 
-            var decoded = decoder.Decode(AssetStorageType.File, path, builder.Buffer);
-            _assetCache[path] = new WeakReference<Asset>(decoded);
+            var decoded = decoder.Decode(AssetStorageType.File, builder.Buffer);
+            _assetCache[path] = new WeakReference<object>(decoded);
             return decoded;
         }
         finally
@@ -129,7 +129,7 @@ public sealed partial class AssetManager(
 
     [CreateSyncVersion]
     public async ValueTask<T?> LoadAssetAsync<T>(AssetPath path, CancellationToken cancellationToken = default)
-        where T : Asset
+        where T : class
     {
         return await LoadAssetAsync(path, cancellationToken) as T;
     }
@@ -143,8 +143,8 @@ public sealed partial class AssetManager(
 
         foreach (var asset in _assetCache.Values)
         {
-            asset.TryGetTarget(out var target);
-            target?.Dispose();
+            if (asset.TryGetTarget(out var target) && target is IDisposable disposable)
+                disposable.Dispose();
         }
 
         foreach (var package in _packages.Values.OfType<IDisposable>())

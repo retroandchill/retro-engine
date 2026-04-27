@@ -23,14 +23,20 @@ public interface IAssetDecoder
 
     ImmutableArray<string> Extensions { get; }
 
-    Asset Decode(AssetStorageType type, AssetPath assetPath, scoped ReadOnlySpan<byte> source);
+    object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source);
 
     void Encode<TBufferWriter>(
-        AssetStorageType type,
-        Name assetName,
+        AssetStorageType sourceType,
+        AssetStorageType destType,
         scoped ReadOnlySpan<byte> source,
         in TBufferWriter writer
     )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        EncodeAsSource(source, writer);
+    }
+
+    protected static void EncodeAsSource<TBufferWriter>(scoped ReadOnlySpan<byte> source, in TBufferWriter writer)
         where TBufferWriter : IBufferWriter<byte>
     {
         var destBuffer = writer.GetSpan(source.Length);

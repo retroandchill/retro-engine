@@ -15,8 +15,8 @@ public enum TextureFormat : byte
     Rgba16F,
 }
 
-[NativeMarshalling(typeof(NativeTextureMarshaller))]
-public sealed partial class NativeTexture : IDisposable
+[NativeMarshalling(typeof(TextureMarshaller))]
+public sealed partial class Texture : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; }
 
@@ -26,7 +26,7 @@ public sealed partial class NativeTexture : IDisposable
 
     public TextureFormat Format { get; }
 
-    internal NativeTexture(IntPtr nativeHandle, int width, int height, TextureFormat format)
+    internal Texture(IntPtr nativeHandle, int width, int height, TextureFormat format)
     {
         NativeHandle = nativeHandle;
         Width = width;
@@ -34,7 +34,7 @@ public sealed partial class NativeTexture : IDisposable
         Format = format;
     }
 
-    ~NativeTexture()
+    ~Texture()
     {
         Dispose();
     }
@@ -53,8 +53,8 @@ public sealed partial class NativeTexture : IDisposable
     private static partial void NativeDestroy(IntPtr ptr);
 }
 
-[CustomMarshaller(typeof(NativeTexture), MarshalMode.ManagedToUnmanagedIn, typeof(NativeTextureMarshaller))]
-public static class NativeTextureMarshaller
+[CustomMarshaller(typeof(Texture), MarshalMode.ManagedToUnmanagedIn, typeof(TextureMarshaller))]
+public static class TextureMarshaller
 {
-    public static IntPtr ConvertToUnmanaged(NativeTexture? backend) => backend?.NativeHandle ?? IntPtr.Zero;
+    public static IntPtr ConvertToUnmanaged(Texture? backend) => backend?.NativeHandle ?? IntPtr.Zero;
 }
