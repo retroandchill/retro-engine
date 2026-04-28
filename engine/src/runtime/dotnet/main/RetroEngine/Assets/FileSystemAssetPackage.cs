@@ -3,12 +3,10 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Abstractions;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Concurrency;
-using VYaml.Serialization;
 
 namespace RetroEngine.Assets;
 
@@ -33,16 +31,31 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
     public string SourcePath { get; }
 
     public bool IsReadOnly => false;
-    public ImmutableArray<AssetPackageEntry> TopLevelEntries { get; private set; } = [];
-    public event Action<AssetPackageEntry>? OnEntryAdded;
-    public event Action<AssetPackageEntry>? OnEntryRemoved;
-    public event Action<AssetPackageEntry, AssetPackageEntry>? OnEntryRenamed;
+    public event Action<IAssetPackageEntry>? OnEntryAdded;
+    public event Action<IAssetPackageEntry>? OnEntryRemoved;
+    public event Action<IAssetPackageEntry, IAssetPackageEntry>? OnEntryRenamed;
 
     private CancellationTokenSource? _loadCancellationSource;
     private Task? _loadTask;
     private readonly ReaderWriterLockSlim _loadTaskLock = new();
 
-    private ImmutableDictionary<Name, AssetPackageEntry>? _assetFileEntries;
+    private AssetPackageEntryList<FileSystemAssetEntry> _topLevelEntries =
+        AssetPackageEntryList<FileSystemAssetEntry>.Empty;
+    public IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries
+    {
+        get
+        {
+            using var scope = _assetEntriesLock.EnterReadScope();
+            return _topLevelEntries;
+        }
+    }
+
+    private ImmutableDictionary<Name, FileSystemAssetEntry> _assetFileEntries = ImmutableDictionary<
+        Name,
+        FileSystemAssetEntry
+    >.Empty;
+    private readonly ReaderWriterLockSlim _assetEntriesLock = new();
+
     private readonly IFileSystemWatcher _watcher;
     private readonly IFileSystem _fileSystem;
     private readonly ImmutableArray<IAssetDecoder> _decoders;
@@ -67,23 +80,13 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
 
     public void Load()
     {
-        var rootDirectory = _fileSystem.DirectoryInfo.New(SourcePath);
-        if (!rootDirectory.Exists)
-            throw new AssetLoadException($"Asset package directory '{SourcePath}' does not exist");
-
-        var assetFileEntries = new Dictionary<Name, AssetPackageEntry>();
-        var topLevelEntries = ImmutableArray.CreateBuilder<AssetPackageEntry>();
-        foreach (var file in rootDirectory.EnumerateFileSystemInfos("*"))
+        using (_loadTaskLock.EnterReadScope())
         {
-            ProcessAssetFileInfo(file, "", assetFileEntries, topLevelEntries);
+            if (_loadTask is not null)
+                throw new InvalidOperationException("Asset package is already loading");
         }
 
-        using (_loadTaskLock.EnterWriteScope())
-        {
-            TopLevelEntries = topLevelEntries.DrainToImmutable();
-            _assetFileEntries = assetFileEntries.ToImmutableDictionary();
-            _loadTask = Task.CompletedTask;
-        }
+        LoadInternal();
     }
 
     public async ValueTask LoadAsync(CancellationToken cancellationToken)
@@ -98,7 +101,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
                     _loadCancellationSource.Token,
                     cancellationToken
                 );
-                targetTask = Task.Run(Load, linkedToken.Token);
+                targetTask = Task.Run(LoadInternal, linkedToken.Token);
                 _loadTask = targetTask;
             }
             else
@@ -110,11 +113,36 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         await targetTask;
     }
 
+    private void LoadInternal()
+    {
+        var rootDirectory = _fileSystem.DirectoryInfo.New(SourcePath);
+        if (!rootDirectory.Exists)
+            throw new AssetLoadException($"Asset package directory '{SourcePath}' does not exist");
+
+        var assetFileEntries = ImmutableDictionary.CreateBuilder<Name, FileSystemAssetEntry>();
+        var topLevelEntries = AssetPackageEntryList.CreateBuilder<FileSystemAssetEntry>();
+        foreach (var file in rootDirectory.EnumerateFileSystemInfos("*"))
+        {
+            ProcessAssetFileInfo(file, "", assetFileEntries, topLevelEntries);
+        }
+
+        using (_assetEntriesLock.EnterWriteScope())
+        {
+            _topLevelEntries = topLevelEntries.DrainToImmutable();
+            _assetFileEntries = assetFileEntries.ToImmutable();
+        }
+
+        using (_loadTaskLock.EnterWriteScope())
+        {
+            _loadTask = Task.CompletedTask;
+        }
+    }
+
     private void ProcessAssetFileInfo(
         IFileSystemInfo file,
         string parentPath,
-        Dictionary<Name, AssetPackageEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries,
+        AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
     )
     {
         switch (file)
@@ -131,25 +159,25 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
     private void ProcessAssetDirectoryInfoAsync(
         IDirectoryInfo directory,
         string parentPath,
-        Dictionary<Name, AssetPackageEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries,
+        AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
     )
     {
         var currentPath = !string.IsNullOrEmpty(parentPath) ? $"{parentPath}/{directory.Name}" : directory.Name;
-        var subBuilder = ImmutableArray.CreateBuilder<AssetPackageEntry>();
+        var subBuilder = AssetPackageEntryList.CreateBuilder<FileSystemAssetEntry>();
         foreach (var file in directory.EnumerateFileSystemInfos("*"))
         {
             ProcessAssetFileInfo(file, currentPath, assetFileEntries, subBuilder);
         }
 
-        builder.Add(new AssetPackageFolder(currentPath, subBuilder.DrainToImmutable()));
+        builder.Add(new FileSystemAssetFolder(currentPath, directory.FullName, subBuilder.DrainToImmutable()));
     }
 
     private void ProcessAssetFile(
         IFileInfo file,
         string parentPath,
-        Dictionary<Name, AssetPackageEntry> assetFileEntries,
-        ImmutableArray<AssetPackageEntry>.Builder builder
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries,
+        AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
     )
     {
         var nameWithoutExtension = file.Name.AsSpan(0, file.Name.Length - file.Extension.Length);
@@ -160,14 +188,14 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             return;
 
         var extension = file.Extension.AsSpan(1);
-        AssetPackageFile? entry = null;
+        FileSystemAssetFile? entry = null;
         foreach (var decoder in _decoders)
         {
             foreach (var ext in decoder.Extensions)
             {
                 if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
                     continue;
-                entry = new AssetPackageFile(assetName, decoder.AssetType, file.Extension);
+                entry = new FileSystemAssetFile(assetName, file.FullName, decoder.AssetType);
                 break;
             }
 
@@ -193,41 +221,40 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             _loadCancellationSource = null;
             _loadTask = null;
         }
+
+        using (_assetEntriesLock.EnterWriteScope())
+        {
+            _topLevelEntries = AssetPackageEntryList<FileSystemAssetEntry>.Empty;
+            _assetFileEntries = ImmutableDictionary<Name, FileSystemAssetEntry>.Empty;
+        }
     }
 
     public bool HasAsset(Name assetName)
     {
-        using var scope = _loadTaskLock.EnterReadScope();
+        using var scope = _assetEntriesLock.EnterReadScope();
         if (_assetFileEntries is null)
             throw new InvalidOperationException("Asset package is not loaded");
 
-        return _assetFileEntries.TryGetValue(assetName, out var entry) && entry is AssetPackageFile;
+        return _assetFileEntries.TryGetValue(assetName, out var entry) && entry is IAssetPackageFile;
     }
 
     public Name GetAssetType(Name assetName)
     {
-        using var scope = _loadTaskLock.EnterReadScope();
-        if (_assetFileEntries is null)
-            throw new InvalidOperationException("Asset package is not loaded");
-
+        using var scope = _assetEntriesLock.EnterReadScope();
         var entry = _assetFileEntries.GetValueOrDefault(assetName);
-        return entry is AssetPackageFile file
+        return entry is IAssetPackageFile file
             ? file.AssetType
             : throw new InvalidOperationException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
 
     public Stream OpenAsset(Name assetName)
     {
-        using var scope = _loadTaskLock.EnterReadScope();
-        if (_assetFileEntries is null)
-            throw new InvalidOperationException("Asset package is not loaded");
-
-        if (_assetFileEntries.TryGetValue(assetName, out var entry) && entry is AssetPackageFile file)
+        using var scope = _assetEntriesLock.EnterReadScope();
+        if (_assetFileEntries.TryGetValue(assetName, out var entry) && entry is FileSystemAssetFile file)
         {
-            var fullPath = file.GetFullPath(SourcePath);
-            if (_fileSystem.File.Exists(fullPath))
+            if (_fileSystem.File.Exists(file.Path))
             {
-                return _fileSystem.File.OpenRead(fullPath);
+                return _fileSystem.File.OpenRead(file.Path);
             }
         }
 
