@@ -34,7 +34,7 @@
                         </ContextMenu>
                     </StackPanel.ContextMenu>
 
-                    <iconPacks:PackIconCodicons Kind="Folder"
+                    <iconPacks:PackIconCodicons Kind="{Binding Icon}"
                                                 Width="16"
                                                 Height="16" VerticalAlignment="Center" />
                     <common:EditableTextBlock Text="{Binding Name}" IsEditing="{Binding IsRenaming}" />

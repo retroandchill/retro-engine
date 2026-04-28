@@ -8,6 +8,7 @@ using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
+using IconPacks.Avalonia.Codicons;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
@@ -19,6 +20,9 @@ public sealed partial class ContentBrowserItem : ObservableObject
 {
     [ObservableProperty]
     public partial string Name { get; set; } = "";
+
+    [ObservableProperty]
+    public partial PackIconCodiconsKind Icon { get; set; } = PackIconCodiconsKind.Folder;
 
     [ObservableProperty]
     public partial bool IsRenaming { get; set; }

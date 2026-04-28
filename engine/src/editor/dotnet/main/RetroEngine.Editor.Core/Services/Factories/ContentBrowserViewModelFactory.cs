@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.IO.Abstractions;
+using IconPacks.Avalonia.Codicons;
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -27,6 +28,7 @@ public sealed class ContentBrowserViewModelFactory(IFileSystem fileSystem, Asset
         return new ContentBrowserItem
         {
             Name = package.PackageName,
+            Icon = PackIconCodiconsKind.Package,
             CanEdit = false,
             Children = [.. package.TopLevelEntries.Select(CreateContentFolder)],
         };
@@ -35,6 +37,11 @@ public sealed class ContentBrowserViewModelFactory(IFileSystem fileSystem, Asset
     private static ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
     {
         var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
-        return new ContentBrowserItem { Name = entry.DisplayName, Children = [.. children] };
+        return new ContentBrowserItem
+        {
+            Name = entry.DisplayName,
+            Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
+            Children = [.. children],
+        };
     }
 }
