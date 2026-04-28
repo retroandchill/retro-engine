@@ -11,6 +11,8 @@ public interface IAssetPackageEntry
 {
     Name Name { get; }
 
+    public string DisplayName { get; }
+
     bool IsDirectory { get; }
 }
 
@@ -23,7 +25,7 @@ public readonly record struct AssetPackageEntryKey(Name Name, bool IsDirectory) 
         if (IsDirectory != other.IsDirectory)
             return IsDirectory ? -1 : 1;
 
-        return Name.CompareLexical(other.Name, StringComparison.OrdinalIgnoreCase);
+        return Name.CompareLexical(other.Name, NameCase.IgnoreCase);
     }
 }
 
@@ -53,7 +55,7 @@ internal sealed class AssetPackageEntryComparer : IComparer<IAssetPackageEntry>
         if (x.IsDirectory != y.IsDirectory)
             return x.IsDirectory ? -1 : 1;
 
-        return x.Name.CompareLexical(y.Name, StringComparison.OrdinalIgnoreCase);
+        return x.Name.CompareLexical(y.Name, NameCase.IgnoreCase);
     }
 }
 

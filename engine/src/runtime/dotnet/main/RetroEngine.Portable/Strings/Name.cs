@@ -40,22 +40,9 @@ public readonly partial struct NameEntryId(uint value)
         return Value == other.Value;
     }
 
-    public int CompareLexical(NameEntryId other, StringComparison comparison)
+    public int CompareLexical(NameEntryId other, NameCase comparison)
     {
-        return NativeCompareLexical(
-            this,
-            other,
-            comparison switch
-            {
-                StringComparison.CurrentCulture => NameCase.CaseSensitive,
-                StringComparison.CurrentCultureIgnoreCase => NameCase.IgnoreCase,
-                StringComparison.InvariantCulture => NameCase.CaseSensitive,
-                StringComparison.InvariantCultureIgnoreCase => NameCase.IgnoreCase,
-                StringComparison.Ordinal => NameCase.CaseSensitive,
-                StringComparison.OrdinalIgnoreCase => NameCase.IgnoreCase,
-                _ => throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null),
-            }
-        );
+        return NativeCompareLexical(this, other, comparison);
     }
 
     public int CompareTo(NameEntryId other)
@@ -390,7 +377,7 @@ public readonly partial struct Name
         return ComparisonIndex.CompareTo(other.ComparisonIndex);
     }
 
-    public int CompareLexical(Name other, StringComparison comparison)
+    public int CompareLexical(Name other, NameCase comparison)
     {
         var lexicalCompare = ComparisonIndex.CompareLexical(other.ComparisonIndex, comparison);
         return lexicalCompare != 0 ? lexicalCompare : _number.CompareTo(other._number);
@@ -493,5 +480,47 @@ public readonly partial struct Name
         var span = MemoryMarshal.CreateReadOnlySpan(ref spanRef, length);
         value = new Name(span);
         reader.Advance(length);
+    }
+}
+
+public sealed class NameComparer : IComparer<Name>, IEqualityComparer<Name>
+{
+    public static readonly NameComparer Index = new(NameComparerType.Index);
+    public static readonly NameComparer CaseSensitive = new(NameComparerType.CaseSensitive);
+    public static readonly NameComparer CaseInsensitive = new(NameComparerType.CaseInsensitive);
+
+    private enum NameComparerType
+    {
+        Index,
+        CaseSensitive,
+        CaseInsensitive,
+    }
+
+    private readonly NameComparerType _type;
+
+    private NameComparer(NameComparerType type)
+    {
+        _type = type;
+    }
+
+    public int Compare(Name x, Name y)
+    {
+        return _type switch
+        {
+            NameComparerType.Index => x.CompareTo(y),
+            NameComparerType.CaseSensitive => x.CompareLexical(y, NameCase.CaseSensitive),
+            NameComparerType.CaseInsensitive => x.CompareLexical(y, NameCase.IgnoreCase),
+            _ => throw new InvalidOperationException("Invalid NameComparerType"),
+        };
+    }
+
+    public bool Equals(Name x, Name y)
+    {
+        return Compare(x, y) == 0;
+    }
+
+    public int GetHashCode(Name obj)
+    {
+        return obj.GetHashCode();
     }
 }

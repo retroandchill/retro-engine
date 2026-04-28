@@ -30,6 +30,9 @@ public sealed partial class AssetManager(
     private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
     private readonly ConcurrentDictionary<AssetPath, WeakReference<object>> _assetCache = new();
 
+    public IEnumerable<IAssetPackage> LoadedPackages =>
+        _packages.Values.OrderBy(x => x.PackageName, NameComparer.CaseInsensitive);
+
     public async ValueTask LoadPackageAsync(
         Name packageName,
         string path,

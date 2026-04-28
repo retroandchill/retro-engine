@@ -170,7 +170,9 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             ProcessAssetFileInfo(file, currentPath, assetFileEntries, subBuilder);
         }
 
-        builder.Add(new FileSystemAssetFolder(currentPath, directory.FullName, subBuilder.DrainToImmutable()));
+        builder.Add(
+            new FileSystemAssetFolder(currentPath, directory.Name, directory.FullName, subBuilder.DrainToImmutable())
+        );
     }
 
     private void ProcessAssetFile(
@@ -195,7 +197,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             {
                 if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
                     continue;
-                entry = new FileSystemAssetFile(assetName, file.FullName, decoder.AssetType);
+                entry = new FileSystemAssetFile(assetName, file.Name, file.FullName, decoder.AssetType);
                 break;
             }
 

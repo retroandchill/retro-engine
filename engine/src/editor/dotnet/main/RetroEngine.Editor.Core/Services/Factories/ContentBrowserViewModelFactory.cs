@@ -4,30 +4,37 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.IO.Abstractions;
+using RetroEngine.Assets;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class ContentBrowserViewModelFactory(
-    IFileSystem fileSystem,
-    IProjectManagementService projectManagementService
-) : ViewModelFactory<ContentBrowserViewModel>
+public sealed class ContentBrowserViewModelFactory(IFileSystem fileSystem, AssetManager assetManager)
+    : ViewModelFactory<ContentBrowserViewModel>
 {
     public override ContentBrowserViewModel CreateViewModel()
     {
-        var browser = new ContentBrowserViewModel { FileSystem = fileSystem };
-
-        if (projectManagementService.CurrentProjectPath is null)
-            return browser;
-
-        var directoryName = fileSystem.Path.GetDirectoryName(projectManagementService.CurrentProjectPath)!;
-        var contentFolder = fileSystem.Path.Combine(directoryName, "content");
-        if (fileSystem.Directory.Exists(contentFolder))
+        return new ContentBrowserViewModel
         {
-            browser.Folders.Add(new ContentBrowserFolder(fileSystem) { Path = contentFolder, CanEdit = false });
-        }
+            FileSystem = fileSystem,
+            Items = [.. assetManager.LoadedPackages.Select(CreateContentFolder)],
+        };
+    }
 
-        return browser;
+    private static ContentBrowserItem CreateContentFolder(IAssetPackage package)
+    {
+        return new ContentBrowserItem
+        {
+            Name = package.PackageName,
+            CanEdit = false,
+            Children = [.. package.TopLevelEntries.Select(CreateContentFolder)],
+        };
+    }
+
+    private static ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
+    {
+        var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
+        return new ContentBrowserItem { Name = entry.DisplayName, Children = [.. children] };
     }
 }

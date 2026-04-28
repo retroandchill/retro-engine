@@ -12,11 +12,11 @@
         <tabs:ContentBrowserViewModel />
     </Design.DataContext>
 
-    <TreeView ItemsSource="{Binding Folders}"
+    <TreeView ItemsSource="{Binding Items}"
               SelectedItem="{Binding SelectedFolder}">
         <TreeView.Styles>
             <Style Selector="TreeViewItem">
-                <Setter x:DataType="tabs:ContentBrowserFolder" Property="IsExpanded" Value="{Binding IsExpanded}" />
+                <Setter x:DataType="tabs:ContentBrowserItem" Property="IsExpanded" Value="{Binding IsExpanded}" />
             </Style>
         </TreeView.Styles>
 
