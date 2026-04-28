@@ -25,57 +25,26 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
 
     public override IRootDock CreateLayout()
     {
-        var viewport = new SceneViewModel();
-        var outliner = new OutlinerViewModel();
-        var detailsPanel = new DetailsPanelViewModel();
         var contentBrowser = viewModelProvider.CreateViewModel<ContentBrowserViewModel>();
 
         const string levelEditorDockGroup = "LevelEditor";
 
-        var rightDock = new ProportionalDock
+        var documentDock = new DocumentDock
         {
-            Proportion = 0.25,
-            Orientation = Orientation.Vertical,
+            IsCollapsable = false,
             ActiveDockable = null,
-            VisibleDockables = CreateList<IDockable>(
-                new ToolDock
-                {
-                    ActiveDockable = outliner,
-                    VisibleDockables = CreateList<IDockable>(outliner),
-                    Alignment = Alignment.Top,
-                    GripMode = GripMode.Visible,
-                    DockGroup = levelEditorDockGroup,
-                },
-                new ProportionalDockSplitter { ResizePreview = true },
-                new ToolDock
-                {
-                    ActiveDockable = detailsPanel,
-                    VisibleDockables = CreateList<IDockable>(detailsPanel),
-                    Alignment = Alignment.Right,
-                    GripMode = GripMode.Visible,
-                    DockGroup = levelEditorDockGroup,
-                }
-            ),
-            DockGroup = levelEditorDockGroup,
-        };
-
-        var topDock = new ProportionalDock
-        {
-            Orientation = Orientation.Horizontal,
-            VisibleDockables = CreateList<IDockable>(
-                viewport,
-                new ProportionalDockSplitter { ResizePreview = true },
-                rightDock
-            ),
-            DockGroup = levelEditorDockGroup,
+            VisibleDockables = CreateList<IDockable>(),
+            CanCreateDocument = false,
+            CanCloseLastDockable = false,
+            AllowedDockOperations = DockOperationMask.Fill | DockOperationMask.Window,
+            AllowedDropOperations = DockOperationMask.Fill | DockOperationMask.Window,
+            DockGroup = "TopLevel",
         };
 
         var mainLayout = new ProportionalDock
         {
-            Orientation = Orientation.Vertical,
+            Orientation = Orientation.Horizontal,
             VisibleDockables = CreateList<IDockable>(
-                topDock,
-                new ProportionalDockSplitter { ResizePreview = true },
                 new ToolDock
                 {
                     Proportion = 0.25,
@@ -84,32 +53,11 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
                     Alignment = Alignment.Top,
                     GripMode = GripMode.Visible,
                     DockGroup = levelEditorDockGroup,
-                }
+                },
+                new ProportionalDockSplitter { ResizePreview = true },
+                documentDock
             ),
             DockGroup = levelEditorDockGroup,
-        };
-
-        var levelEditor = new RootDock
-        {
-            Id = levelEditorDockGroup,
-            Title = Text.AsLocalizable(TextNamespace, levelEditorDockGroup, "Level Editor"),
-            DockGroup = "TopLevel",
-            CanClose = false,
-            CanDrag = false,
-            ActiveDockable = mainLayout,
-            VisibleDockables = CreateList<IDockable>(mainLayout),
-        };
-
-        var documentDock = new DocumentDock
-        {
-            IsCollapsable = false,
-            ActiveDockable = levelEditor,
-            VisibleDockables = CreateList<IDockable>(levelEditor),
-            CanCreateDocument = false,
-            CanCloseLastDockable = false,
-            AllowedDockOperations = DockOperationMask.Fill | DockOperationMask.Window,
-            AllowedDropOperations = DockOperationMask.Fill | DockOperationMask.Window,
-            DockGroup = "TopLevel",
         };
 
         var rootDock = CreateRootDock();
@@ -119,9 +67,9 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
             dockingRestrictions.AllowedDropOperations = DockOperationMask.None;
         }
 
-        rootDock.ActiveDockable = documentDock;
-        rootDock.DefaultDockable = documentDock;
-        rootDock.VisibleDockables = CreateList<IDockable>(documentDock);
+        rootDock.ActiveDockable = mainLayout;
+        rootDock.DefaultDockable = mainLayout;
+        rootDock.VisibleDockables = CreateList<IDockable>(mainLayout);
 
         rootDock.LeftPinnedDockables = null;
         rootDock.RightPinnedDockables = null;

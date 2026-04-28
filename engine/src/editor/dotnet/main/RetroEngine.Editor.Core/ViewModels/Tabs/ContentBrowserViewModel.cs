@@ -127,9 +127,6 @@ public sealed partial class ContentBrowserViewModel : Tool
     public IFileSystem FileSystem { get; init; } = IFileSystem.Default;
 
     [ObservableProperty]
-    public partial bool NavigationPanelOpen { get; set; }
-
-    [ObservableProperty]
     public partial ContentBrowserFolder? SelectedFolder { get; internal set; }
 
     public ObservableCollection<ContentBrowserFolder> Folders { get; } = [];
@@ -137,11 +134,5 @@ public sealed partial class ContentBrowserViewModel : Tool
     public ContentBrowserViewModel()
     {
         Title = Text.AsLocalizable(TextNamespace, "ContentBrowser", "Content Browser");
-    }
-
-    [RelayCommand]
-    private void ToggleNavigationPanel()
-    {
-        NavigationPanelOpen = !NavigationPanelOpen;
     }
 }

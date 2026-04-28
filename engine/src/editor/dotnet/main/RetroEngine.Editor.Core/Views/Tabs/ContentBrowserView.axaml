@@ -9,49 +9,37 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView">
     <Design.DataContext>
-        <tabs:ContentBrowserViewModel/>
+        <tabs:ContentBrowserViewModel />
     </Design.DataContext>
 
-    <SplitView IsPaneOpen="{Binding NavigationPanelOpen}"
-               DisplayMode="CompactInline"
-               OpenPaneLength="256">
-        <SplitView.Pane>
-            <Grid RowDefinitions="Auto,*">
-                <Button Grid.Row="0" Content="{iconPacks:Codicons ThreeBars}" Command="{Binding ToggleNavigationPanelCommand}"
-                        HorizontalAlignment="Left"
-                        Background="Transparent"/>
-                <TreeView Grid.Row="1" ItemsSource="{Binding Folders}"
-                          SelectedItem="{Binding SelectedFolder}"
-                          IsVisible="{Binding NavigationPanelOpen}">
-                    <TreeView.Styles>
-                        <Style Selector="TreeViewItem">
-                            <Setter x:DataType="tabs:ContentBrowserFolder" Property="IsExpanded" Value="{Binding IsExpanded}"/>
-                        </Style>
-                    </TreeView.Styles>
+    <TreeView ItemsSource="{Binding Folders}"
+              SelectedItem="{Binding SelectedFolder}">
+        <TreeView.Styles>
+            <Style Selector="TreeViewItem">
+                <Setter x:DataType="tabs:ContentBrowserFolder" Property="IsExpanded" Value="{Binding IsExpanded}" />
+            </Style>
+        </TreeView.Styles>
 
-                    <TreeView.ItemTemplate>
-                        <TreeDataTemplate ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
-                                                  Command="{Binding NewFolderCommand}"/>
-                                        <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
-                                                  GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
-                                                  Command="{Binding RenameCommand}"
-                                                  IsEnabled="{Binding CanEdit}"/>
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
+        <TreeView.ItemTemplate>
+            <TreeDataTemplate ItemsSource="{Binding Children}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <StackPanel.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
+                                      Command="{Binding NewFolderCommand}" />
+                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
+                                      GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
+                                      Command="{Binding RenameCommand}"
+                                      IsEnabled="{Binding CanEdit}" />
+                        </ContextMenu>
+                    </StackPanel.ContextMenu>
 
-                                <iconPacks:PackIconCodicons Kind="Folder"
-                                                            Width="16"
-                                                            Height="16" VerticalAlignment="Center"/>
-                                <common:EditableTextBlock Text="{Binding Name}" IsEditing="{Binding IsRenaming}"/>
-                            </StackPanel>
-                        </TreeDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
-            </Grid>
-        </SplitView.Pane>
-    </SplitView>
+                    <iconPacks:PackIconCodicons Kind="Folder"
+                                                Width="16"
+                                                Height="16" VerticalAlignment="Center" />
+                    <common:EditableTextBlock Text="{Binding Name}" IsEditing="{Binding IsRenaming}" />
+                </StackPanel>
+            </TreeDataTemplate>
+        </TreeView.ItemTemplate>
+    </TreeView>
 </UserControl>
