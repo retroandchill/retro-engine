@@ -58,7 +58,7 @@ public static class AssetPackageExtensions
     {
         public IEnumerable<IAssetPackageEntry> WalkEntriesDepthFirst()
         {
-            return package.TopLevelEntries.SelectMany(GetSelfAndChildren);
+            return package.TopLevelEntries.SelectMany(GetSelfAndChildrenDepthFirst);
         }
 
         public IEnumerable<IAssetPackageEntry> WalkEntriesBreadthFirst()
@@ -72,21 +72,41 @@ public static class AssetPackageExtensions
 
                 foreach (var subEntry in folder.Children)
                 {
-                    yield return subEntry;
+                    exploreSet.Enqueue(subEntry);
                 }
             }
         }
     }
 
-    private static IEnumerable<IAssetPackageEntry> GetSelfAndChildren(this IAssetPackageEntry entry)
+    extension(IAssetPackageEntry entry)
     {
-        yield return entry;
-
-        if (entry is not IAssetPackageFolder folder)
-            yield break;
-        foreach (var subEntry in folder.Children.SelectMany(GetSelfAndChildren))
+        public IEnumerable<IAssetPackageEntry> GetSelfAndChildrenDepthFirst()
         {
-            yield return subEntry;
+            yield return entry;
+
+            if (entry is not IAssetPackageFolder folder)
+                yield break;
+            foreach (var subEntry in folder.Children.SelectMany(GetSelfAndChildrenDepthFirst))
+            {
+                yield return subEntry;
+            }
+        }
+
+        public IEnumerable<IAssetPackageEntry> GetSelfAndChildrenBreadthFirst()
+        {
+            var exploreSet = new Queue<IAssetPackageEntry>();
+            exploreSet.Enqueue(entry);
+            while (exploreSet.TryDequeue(out var e))
+            {
+                yield return e;
+                if (e is not IAssetPackageFolder folder)
+                    continue;
+
+                foreach (var subEntry in folder.Children)
+                {
+                    exploreSet.Enqueue(subEntry);
+                }
+            }
         }
     }
 }

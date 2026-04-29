@@ -349,4 +349,10 @@ internal static class AssetPackageEntryList
             ArrayPool<TEntry>.Shared.Return(output, true);
         }
     }
+
+    public static AssetPackageEntryList<TEntry> ToAssetPackageEntryList<TEntry>(this IEnumerable<TEntry> entries)
+        where TEntry : class, IAssetPackageEntry
+    {
+        return Create(entries);
+    }
 }
