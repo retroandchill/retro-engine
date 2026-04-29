@@ -43,7 +43,7 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto> : IAssetDecoder
         };
     }
 
-    public void Encode<TBufferWriter>(
+    public void Transcode<TBufferWriter>(
         AssetStorageType sourceType,
         AssetStorageType destType,
         scoped ReadOnlySpan<byte> source,

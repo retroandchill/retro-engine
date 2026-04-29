@@ -182,10 +182,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
     )
     {
-        var nameWithoutExtension = file.Name.AsSpan(0, file.Name.Length - file.Extension.Length);
-        var assetName = new Name(
-            !string.IsNullOrEmpty(parentPath) ? $"{parentPath}/{nameWithoutExtension}" : nameWithoutExtension
-        );
+        var assetName = new Name(!string.IsNullOrEmpty(parentPath) ? $"{parentPath}/{file.Name}" : file.Name);
         if (assetFileEntries.ContainsKey(assetName))
             return;
 

@@ -34,7 +34,7 @@ public abstract class DataAssetDecoder<T> : IAssetDecoder
         };
     }
 
-    public void Encode<TBufferWriter>(
+    public void Transcode<TBufferWriter>(
         AssetStorageType sourceType,
         AssetStorageType destType,
         scoped ReadOnlySpan<byte> source,

@@ -36,7 +36,7 @@ public interface IAssetDecoder
             : ValueTask.FromCanceled<object>(cancellationToken);
     }
 
-    void Encode<TBufferWriter>(
+    void Transcode<TBufferWriter>(
         AssetStorageType sourceType,
         AssetStorageType destType,
         scoped ReadOnlySpan<byte> source,
