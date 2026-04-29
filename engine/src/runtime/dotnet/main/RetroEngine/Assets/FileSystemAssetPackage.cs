@@ -124,7 +124,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         foreach (
             var entry in rootDirectory
                 .EnumerateFileSystemInfos("*")
-                .Select(file => ProcessAssetFileInfo(file, string.Empty))
+                .Select(ProcessAssetFileInfo)
                 .OfType<FileSystemAssetEntry>()
         )
         {
@@ -139,6 +139,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         {
             _topLevelEntries = topLevelEntries.DrainToImmutable();
             _assetFileEntries = assetFileEntries.ToImmutable();
+            _watcher.Created += AddEntry;
         }
 
         using (_loadTaskLock.EnterWriteScope())
@@ -147,37 +148,41 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         }
     }
 
-    private FileSystemAssetEntry? ProcessAssetFileInfo(IFileSystemInfo file, ReadOnlySpan<char> parentPath)
+    private ReadOnlySpan<char> GetRelativeAssetPath(ReadOnlySpan<char> path)
+    {
+        return !SourcePath.EndsWith(_fileSystem.Path.DirectorySeparatorChar)
+            ? path[(SourcePath.Length + 1)..]
+            : path[SourcePath.Length..];
+    }
+
+    private FileSystemAssetEntry? ProcessAssetFileInfo(IFileSystemInfo file)
     {
         return file switch
         {
-            IFileInfo fileInfo => ProcessAssetFile(fileInfo, parentPath),
-            IDirectoryInfo directoryInfo => ProcessAssetDirectoryInfoAsync(directoryInfo, parentPath),
+            IFileInfo fileInfo => ProcessAssetFile(fileInfo),
+            IDirectoryInfo directoryInfo => ProcessAssetDirectoryInfoAsync(directoryInfo),
             _ => throw new ArgumentException("Unsupported file system info type", nameof(file)),
         };
     }
 
-    private FileSystemAssetFolder ProcessAssetDirectoryInfoAsync(
-        IDirectoryInfo directory,
-        ReadOnlySpan<char> parentPath
-    )
+    private FileSystemAssetFolder ProcessAssetDirectoryInfoAsync(IDirectoryInfo directory)
     {
-        var currentPath = !parentPath.IsEmpty ? $"{parentPath}/{directory.Name}" : directory.Name;
+        var currentPath = GetRelativeAssetPath(directory.FullName);
         return new FileSystemAssetFolder(
-            currentPath,
+            new Name(currentPath),
             directory.Name,
             directory.FullName,
             directory
                 .EnumerateFileSystemInfos("*")
-                .Select(file => ProcessAssetFileInfo(file, currentPath))
+                .Select(ProcessAssetFileInfo)
                 .OfType<FileSystemAssetEntry>()
                 .ToAssetPackageEntryList()
         );
     }
 
-    private FileSystemAssetFile? ProcessAssetFile(IFileInfo file, ReadOnlySpan<char> parentPath)
+    private FileSystemAssetFile? ProcessAssetFile(IFileInfo file)
     {
-        var assetName = new Name(!parentPath.IsEmpty ? $"{parentPath}/{file.Name}" : file.Name);
+        var assetName = new Name(GetRelativeAssetPath(file.FullName));
         var extension = file.Extension.AsSpan(1);
         FileSystemAssetFile? entry = null;
         foreach (var decoder in _decoders)
@@ -213,6 +218,7 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         {
             _topLevelEntries = AssetPackageEntryList<FileSystemAssetEntry>.Empty;
             _assetFileEntries = ImmutableDictionary<Name, FileSystemAssetEntry>.Empty;
+            _watcher.Created -= AddEntry;
         }
     }
 
@@ -248,6 +254,8 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
         throw new FileNotFoundException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
 
+    private void AddEntry(object? sender, FileSystemEventArgs e) => AddEntry(e.FullPath);
+
     private void AddEntry(string path)
     {
         var normalizedPath = _fileSystem.Path.GetFullPath(path);
@@ -255,13 +263,16 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             throw new InvalidOperationException($"Asset '{path}' is not in package '{PackageName}'");
 
         IFileSystemInfo info;
+        bool isDirectory;
         if (_fileSystem.File.Exists(path))
         {
             info = _fileSystem.FileInfo.New(path);
+            isDirectory = false;
         }
         else if (_fileSystem.Directory.Exists(path))
         {
             info = _fileSystem.DirectoryInfo.New(path);
+            isDirectory = true;
         }
         else
         {
@@ -272,23 +283,46 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             ? SourcePath.Length
             : SourcePath.Length + 1;
         var relativeRoute = normalizedPath.AsSpan(trimLength);
+        var startCursor = new AssetPathCursor(relativeRoute, _fileSystem.Path.DirectorySeparatorChar);
 
-        using var scope = _assetEntriesLock.EnterWriteScope();
-        var (topEntry, innerEntry) = AddEntry(info, "", relativeRoute);
-        if (topEntry is null || innerEntry is null)
+        var newEntry = ProcessAssetFileInfo(info);
+        if (newEntry is null)
             return;
-        var fullName = new Name(relativeRoute);
-        _topLevelEntries = _topLevelEntries.AddOrReplace(topEntry);
-        _assetFileEntries = _assetFileEntries.Add(fullName, innerEntry);
+
+        using (_assetEntriesLock.EnterWriteScope())
+        {
+            var builder = _assetFileEntries.ToBuilder();
+            var topLevelEntry = InsertAssetEntry(newEntry, startCursor, builder);
+            _topLevelEntries = _topLevelEntries.AddOrReplace(topLevelEntry);
+            _assetFileEntries = builder.ToImmutable();
+        }
+
+        OnEntryAdded?.Invoke(newEntry);
     }
 
-    private (FileSystemAssetEntry? Top, FileSystemAssetEntry? Inner) AddEntry(
-        IFileSystemInfo info,
-        ReadOnlySpan<char> fullPath,
-        ReadOnlySpan<char> path
+    private static FileSystemAssetEntry InsertAssetEntry(
+        FileSystemAssetEntry entry,
+        AssetPathCursor cursor,
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder builder
     )
     {
-        throw new NotImplementedException();
+        if (!cursor.TryGetNextChild(out var nextCursor))
+        {
+            builder[entry.Name] = entry;
+            return entry;
+        }
+
+        var parentKey = new Name(cursor.CurrentPath);
+        var parent = builder.GetValueOrDefault(parentKey);
+        if (parent is not FileSystemAssetFolder parentFolder)
+            throw new InvalidOperationException($"Asset '{entry.Name}' is not a folder");
+
+        var newEntry = parentFolder with
+        {
+            Children = parentFolder.Children.AddOrReplace(InsertAssetEntry(entry, nextCursor, builder)),
+        };
+        builder[parentKey] = newEntry;
+        return newEntry;
     }
 
     public void Dispose()

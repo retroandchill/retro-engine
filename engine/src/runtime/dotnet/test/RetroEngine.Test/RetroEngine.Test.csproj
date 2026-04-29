@@ -13,9 +13,11 @@
     <ItemGroup>
         <PackageReference Include="coverlet.collector"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="Moq" />
         <PackageReference Include="NUnit"/>
         <PackageReference Include="NUnit.Analyzers"/>
         <PackageReference Include="NUnit3TestAdapter"/>
+        <PackageReference Include="Testably.Abstractions.Testing" />
     </ItemGroup>
 
     <ItemGroup>

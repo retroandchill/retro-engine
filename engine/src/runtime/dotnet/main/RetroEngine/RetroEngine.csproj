@@ -19,7 +19,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Serilog.Extensions.Logging" />
       <PackageReference Include="SixLabors.ImageSharp" />
-      <PackageReference Include="System.IO.Abstractions" />
+      <PackageReference Include="Testably.Abstractions" />
       <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
       <PackageReference Include="Utf8StreamReader" />
       <PackageReference Include="ZLinq" />

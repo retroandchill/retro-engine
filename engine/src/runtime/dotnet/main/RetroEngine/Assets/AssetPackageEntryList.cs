@@ -40,6 +40,12 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
         _entries = entries;
     }
 
+    public TEntry? GetOrDefault(AssetPackageEntryKey key)
+    {
+        var index = IndexOf(key);
+        return index >= 0 ? _entries[index] : null;
+    }
+
     public AssetPackageEntryList<TEntry> Add(TEntry entry)
     {
         var index = IndexOf(entry.Key);
@@ -60,13 +66,19 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
         if (index < 0)
         {
             index = ~index;
+            var newEntries = new TEntry[_entries.Length + 1];
+            Array.Copy(_entries, newEntries, index);
+            newEntries[index] = entry;
+            Array.Copy(_entries, index, newEntries, index + 1, _entries.Length - index);
+            return new AssetPackageEntryList<TEntry>(newEntries);
         }
-
-        var newEntries = new TEntry[_entries.Length + 1];
-        Array.Copy(_entries, newEntries, index);
-        newEntries[index] = entry;
-        Array.Copy(_entries, index, newEntries, index + 1, _entries.Length - index);
-        return new AssetPackageEntryList<TEntry>(newEntries);
+        else
+        {
+            var newEntries = new TEntry[_entries.Length];
+            Array.Copy(_entries, newEntries, _entries.Length);
+            newEntries[index] = entry;
+            return new AssetPackageEntryList<TEntry>(newEntries);
+        }
     }
 
     public AssetPackageEntryList<TEntry> Remove(TEntry entry)
@@ -329,7 +341,7 @@ internal static class AssetPackageEntryList
         where TEntry : class, IAssetPackageEntry
     {
         if (!entries.TryGetNonEnumeratedCount(out var count))
-            return [.. entries];
+            return new AssetPackageEntryList<TEntry>(entries);
 
         if (count == 0)
             return AssetPackageEntryList<TEntry>.Empty;

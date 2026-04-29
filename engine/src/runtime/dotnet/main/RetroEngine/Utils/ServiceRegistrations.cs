@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Interop;
 using RetroEngine.Rendering;
+using Testably.Abstractions;
 
 namespace RetroEngine.Utils;
 
@@ -17,7 +18,7 @@ internal static partial class ServiceRegistrations
     public static void AddFileSystem(this IServiceCollection services)
     {
         services
-            .AddSingleton<IFileSystem, FileSystem>()
+            .AddSingleton<IFileSystem, RealFileSystem>()
             .AddSingleton(_ => RenderPipeline.Create(CreateGeometryPipeline))
             .AddSingleton(_ => RenderPipeline.Create(CreateSpritePipeline));
     }
