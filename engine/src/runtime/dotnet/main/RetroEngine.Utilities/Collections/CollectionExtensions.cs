@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 
 namespace RetroEngine.Utilities.Collections;
 
@@ -190,5 +191,20 @@ public static class CollectionExtensions
 
             return dictionary;
         }
+    }
+
+    public static TValue GetOrAdd<TKey, TValue>(
+        this Dictionary<TKey, TValue> dictionary,
+        TKey key,
+        Func<TKey, TValue> valueFactory
+    )
+        where TKey : notnull
+    {
+        ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out var exists);
+        if (!exists)
+        {
+            value = valueFactory(key);
+        }
+        return value!;
     }
 }

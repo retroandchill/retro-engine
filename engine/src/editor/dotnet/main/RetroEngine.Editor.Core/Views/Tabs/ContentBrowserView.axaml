@@ -6,11 +6,16 @@
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              xmlns:common="clr-namespace:RetroEngine.Editor.Core.Views.Common"
+             xmlns:behaviors="clr-namespace:RetroEngine.Editor.Core.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView">
     <Design.DataContext>
         <tabs:ContentBrowserViewModel />
     </Design.DataContext>
+
+    <Interaction.Behaviors>
+        <behaviors:DisposeBehavior/>
+    </Interaction.Behaviors>
 
     <TreeView ItemsSource="{Binding Items}"
               SelectedItem="{Binding SelectedFolder}">

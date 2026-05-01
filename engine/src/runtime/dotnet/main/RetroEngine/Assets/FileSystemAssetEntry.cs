@@ -8,25 +8,27 @@ using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
 
-internal abstract record FileSystemAssetEntry(Name Name, string DisplayName, string Path) : IAssetPackageEntry
+internal abstract record FileSystemAssetEntry(Name Name, Name ParentName, string DisplayName, string Path)
+    : IAssetPackageEntry
 {
     public abstract bool IsDirectory { get; }
 }
 
 internal sealed record FileSystemAssetFolder(
     Name Name,
+    Name ParentName,
     string DisplayName,
     string Path,
     AssetPackageEntryList<FileSystemAssetEntry> Children
-) : FileSystemAssetEntry(Name, DisplayName, Path), IAssetPackageFolder
+) : FileSystemAssetEntry(Name, ParentName, DisplayName, Path), IAssetPackageFolder
 {
     public override bool IsDirectory => true;
 
     IReadOnlyCollection<IAssetPackageEntry> IAssetPackageFolder.Children => Children;
 }
 
-internal sealed record FileSystemAssetFile(Name Name, string DisplayName, string Path, Name AssetType)
-    : FileSystemAssetEntry(Name, DisplayName, Path),
+internal sealed record FileSystemAssetFile(Name Name, Name ParentName, string DisplayName, string Path, Name AssetType)
+    : FileSystemAssetEntry(Name, ParentName, DisplayName, Path),
         IAssetPackageFile
 {
     public override bool IsDirectory => false;

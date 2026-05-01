@@ -11,17 +11,29 @@ public interface IAssetPackageEntry
 {
     Name Name { get; }
 
+    Name ParentName { get; }
+
     public string DisplayName { get; }
 
     bool IsDirectory { get; }
 }
 
-public readonly record struct AssetPackageEntryKey(Name Name, bool IsDirectory) : IComparable<IAssetPackageEntry>
+public readonly record struct AssetPackageEntryKey(Name Name, bool IsDirectory)
+    : IComparable<IAssetPackageEntry>,
+        IComparable<AssetPackageEntryKey>
 {
     public int CompareTo(IAssetPackageEntry? other)
     {
         if (other is null)
             return 1;
+        if (IsDirectory != other.IsDirectory)
+            return IsDirectory ? -1 : 1;
+
+        return Name.CompareLexical(other.Name, NameCase.IgnoreCase);
+    }
+
+    public int CompareTo(AssetPackageEntryKey other)
+    {
         if (IsDirectory != other.IsDirectory)
             return IsDirectory ? -1 : 1;
 

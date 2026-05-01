@@ -3,12 +3,12 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using MagicArchive.Utilities;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Portable.Strings;
+using RetroEngine.Utilities.Memory;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets;
@@ -29,6 +29,7 @@ public sealed partial class AssetManager(
 
     private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
     private readonly ConcurrentDictionary<AssetPath, WeakReference<object>> _assetCache = new();
+    private readonly ConditionalWeakTable<object, ReadOnlyBox<AssetPath>> _assetPaths = new();
 
     public IEnumerable<IAssetPackage> LoadedPackages =>
         _packages.Values.OrderBy(x => x.PackageName, NameComparer.CaseInsensitive);
@@ -127,6 +128,7 @@ public sealed partial class AssetManager(
                 .ConfigureAwait(false);
 #endif
             _assetCache[path] = new WeakReference<object>(decoded);
+            _assetPaths.Add(decoded, Box.CreateReadOnly(path));
             return decoded;
         }
         finally
@@ -140,6 +142,25 @@ public sealed partial class AssetManager(
         where T : class
     {
         return await LoadAssetAsync(path, cancellationToken) as T;
+    }
+
+    public AssetPath GetAssetPath(object asset)
+    {
+        return TryGetAssetPath(asset, out var path)
+            ? path
+            : throw new InvalidOperationException("Object is not a loaded asset");
+    }
+
+    public bool TryGetAssetPath(object asset, out AssetPath path)
+    {
+        if (_assetPaths.TryGetValue(asset, out var wrapper))
+        {
+            path = wrapper.Value;
+            return true;
+        }
+
+        path = default;
+        return false;
     }
 
     public void Dispose()

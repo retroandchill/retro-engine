@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.IO.Abstractions;
-using IconPacks.Avalonia.Codicons;
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -16,32 +15,13 @@ public sealed class ContentBrowserViewModelFactory(IFileSystem fileSystem, Asset
 {
     public override ContentBrowserViewModel CreateViewModel()
     {
-        return new ContentBrowserViewModel
-        {
-            FileSystem = fileSystem,
-            Items = [.. assetManager.LoadedPackages.Select(CreateContentFolder)],
-        };
-    }
+        var model = new ContentBrowserViewModel { FileSystem = fileSystem };
 
-    private static ContentBrowserItem CreateContentFolder(IAssetPackage package)
-    {
-        return new ContentBrowserItem
+        foreach (var root in assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(x)))
         {
-            Name = package.PackageName,
-            Icon = PackIconCodiconsKind.Package,
-            CanEdit = false,
-            Children = [.. package.TopLevelEntries.Select(CreateContentFolder)],
-        };
-    }
+            model.Packages.Add(root);
+        }
 
-    private static ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
-    {
-        var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
-        return new ContentBrowserItem
-        {
-            Name = entry.DisplayName,
-            Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
-            Children = [.. children],
-        };
+        return model;
     }
 }

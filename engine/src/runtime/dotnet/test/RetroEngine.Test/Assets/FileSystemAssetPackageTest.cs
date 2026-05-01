@@ -71,13 +71,47 @@ public class FileSystemAssetPackageTest
         await package.LoadAsync();
 
         var taskCompletionSource = new TaskCompletionSource();
-        package.OnEntryAdded += _ => taskCompletionSource.SetResult();
+        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
 
         _mockFileSystem.FileInfo.New("/foo/bar/baz.asset").Create();
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
         var items = package.WalkEntriesBreadthFirst().Select(x => x.Name.ToString()).ToArray();
 
         Assert.That(items, Is.EquivalentTo(["bar", "foo.asset", "bar/bar.asset", "bar/baz.asset"]));
+    }
+
+    [Test]
+    public async Task RemoveEntryAfterLoad()
+    {
+        var package = _assetPackageFactory.Create("test", "/foo");
+        await package.LoadAsync();
+
+        var taskCompletionSource = new TaskCompletionSource();
+        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
+        _mockFileSystem.FileInfo.New("/foo/bar/bar.asset").Delete();
+
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+        var items = package.WalkEntriesBreadthFirst().Select(x => x.Name.ToString()).ToArray();
+
+        Assert.That(items, Is.EquivalentTo(["bar", "foo.asset"]));
+    }
+
+    [Test]
+    public async Task RenameEntryAfterLoad()
+    {
+        var package = _assetPackageFactory.Create("test", "/foo");
+        await package.LoadAsync();
+
+        var taskCompletionSource = new TaskCompletionSource();
+        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
+
+        _mockFileSystem.FileInfo.New("/foo/bar/bar.asset").MoveTo("/foo/bar/baz.asset");
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+        var items = package.WalkEntriesBreadthFirst().Select(x => x.Name.ToString()).ToArray();
+
+        Assert.That(items, Is.EquivalentTo(["bar", "foo.asset", "bar/baz.asset"]));
     }
 }

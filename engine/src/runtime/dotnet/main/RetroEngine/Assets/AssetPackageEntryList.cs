@@ -18,7 +18,8 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
 
     public int Count => _entries.Length;
 
-    public static AssetPackageEntryList<TEntry> Empty { get; } = [];
+    // ReSharper disable once UseCollectionExpression
+    public static AssetPackageEntryList<TEntry> Empty { get; } = new();
 
     public AssetPackageEntryList()
     {
@@ -152,10 +153,17 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
         return GetEnumerator();
     }
 
-    public sealed class Builder(int capacity) : ICollection<TEntry>
+    public Builder ToBuilder(int additionalCapacity = 0)
     {
-        private TEntry[] _entries = new TEntry[capacity];
-        private int _capacity = capacity;
+        var entriesCopy = new TEntry[_entries.Length + additionalCapacity];
+        Array.Copy(_entries, entriesCopy, _entries.Length);
+        return new Builder(entriesCopy, _entries.Length);
+    }
+
+    public sealed class Builder : ICollection<TEntry>
+    {
+        private TEntry[] _entries;
+        private int _capacity;
         private uint _version;
 
         public int Count { get; private set; }
@@ -164,6 +172,19 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
 
         public Builder()
             : this(8) { }
+
+        public Builder(int capacity)
+        {
+            _entries = new TEntry[capacity];
+            _capacity = capacity;
+        }
+
+        internal Builder(TEntry[] entries, int length)
+        {
+            _entries = entries;
+            _capacity = entries.Length;
+            Count = length;
+        }
 
         public Enumerator GetEnumerator() => new(this);
 
@@ -190,6 +211,25 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
             Array.Copy(_entries, index, _entries, index + 1, Count - index);
             _entries[index] = item;
             Count++;
+        }
+
+        public void AddOrReplace(TEntry item)
+        {
+            _version++;
+            if (_capacity == 0)
+                Grow(8);
+            if (Count == _capacity)
+                Grow(Count * 2);
+
+            var index = IndexOf(item.Key);
+            if (index < 0)
+            {
+                index = ~index;
+                Count++;
+                Array.Copy(_entries, index, _entries, index + 1, Count - index);
+            }
+
+            _entries[index] = item;
         }
 
         public void Clear()

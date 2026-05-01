@@ -26,6 +26,8 @@ public interface IAssetPackage
 
     public IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries { get; }
 
+    public event Action? OnEntriesRefreshed;
+
     public event Action<IAssetPackageEntry>? OnEntryAdded;
 
     public event Action<IAssetPackageEntry>? OnEntryRemoved;

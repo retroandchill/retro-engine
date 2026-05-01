@@ -11,6 +11,7 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
+      <PackageReference Include="DynamicData" />
       <PackageReference Include="EFCore.NamingConventions" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia.MessageBox" />
