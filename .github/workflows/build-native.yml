@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-build-${{ matrix.os }}
-          path: ${{ github.workspace }}/engine/build/release/runtimes/
+          path: ${{ github.workspace }}/engine/build/release/runtimes/**/*
           retention-days: 5
 
   build-managed:
