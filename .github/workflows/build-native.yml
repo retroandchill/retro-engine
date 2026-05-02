@@ -1,4 +1,4 @@
-name: Build Native
+name: Build
 
 on:
   push:
@@ -11,8 +11,8 @@ env:
   VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }})
+  build-native:
+    name: Build Native (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -58,3 +58,34 @@ jobs:
         with:
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           configurePreset: release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-build-${{ matrix.os }}
+          path: build/release/runtimes/
+          retention-days: 5
+
+  build-managed:
+    name: Build Managed
+    runs-on: windows-latest
+    needs: build-native
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: native-build-windows-latest
+          path: build/release/runtimes/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+
+      - name: Restore
+        run: dotnet restore RetroEngine.Managed.slnx
+
+      - name: Build
+        run: dotnet build RetroEngine.Managed.slnx --configuration Release --no-restore
