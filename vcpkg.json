@@ -9,7 +9,7 @@
       "features": [
         "vulkan"
       ],
-      "version>=": "3.4.2"
+      "version>=": "3.4.4"
     },
     {
       "name": "nethost",
@@ -21,7 +21,7 @@
     },
     {
       "name": "vulkan-sdk-components",
-      "version>=": "1.4.335.0"
+      "version>=": "1.4.341.0"
     },
     {
       "name": "boost-dll",
@@ -74,7 +74,7 @@
     },
     {
       "name": "icu",
-      "version>=": "78.2"
+      "version>=": "78.3"
     },
     {
       "name": "boost-algorithm",
