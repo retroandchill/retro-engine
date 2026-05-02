@@ -11,6 +11,7 @@ using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Async;
 using RetroEngine.Utilities.Collections;
 using RetroEngine.Utilities.Concurrency;
+using CollectionExtensions = System.Collections.Generic.CollectionExtensions;
 
 namespace RetroEngine.Assets;
 
@@ -274,6 +275,12 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         }
     }
 
+    public IAssetPackageEntry? GetEntry(Name entryName)
+    {
+        using var scope = _assetEntriesLock.EnterReadScope();
+        return _assetFileEntries.GetValueOrDefault(entryName);
+    }
+
     public bool HasAsset(Name assetName)
     {
         using var scope = _assetEntriesLock.EnterReadScope();
@@ -346,6 +353,51 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         void OnComplete(scoped in AssetPackageChangeManifest manifest)
         {
             taskCompletionSource.TrySetResult();
+        }
+
+        void OnRefreshFailed(Exception ex)
+        {
+            taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public async Task AddFolderAsync(Name name, CancellationToken cancellationToken = default)
+    {
+        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntriesRefreshed += OnAddComplete;
+            OnRefreshError += OnRefreshFailed;
+            _fileSystem.Directory.CreateDirectory(path);
+            using (_activeChangesLock.EnterScope())
+            {
+                _pendingChanges.AddSingleFileChange(name, false);
+            }
+
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntriesRefreshed -= OnAddComplete;
+            OnRefreshError -= OnRefreshFailed;
+        }
+
+        return;
+
+        void OnAddComplete(scoped in AssetPackageChangeManifest manifest)
+        {
+            foreach (var entry in manifest.RemovedEntries)
+            {
+                if (entry.Name == name)
+                {
+                    taskCompletionSource.TrySetResult();
+                }
+            }
         }
 
         void OnRefreshFailed(Exception ex)
@@ -623,17 +675,29 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         var childrenByParent = new Dictionary<Name, HashSet<Name>>();
         foreach (var root in normalizedScanRoots)
         {
+            if (root.IsNone)
+            {
+                var directoryInfo = _fileSystem.DirectoryInfo.New(SourcePath);
+                topLevelEntries = GetChildEntries(Name.None, directoryInfo, topLevelEntries, assetFileEntriesBuilder);
+                break;
+            }
+
             FileSystemAssetEntry entry;
             if (assetFileEntriesBuilder.TryGetValue(root, out var rootEntry))
             {
-                entry = RefreshEntry(rootEntry);
+                entry = RefreshEntry(rootEntry, assetFileEntriesBuilder);
                 if (ReferenceEquals(entry, rootEntry))
                     continue;
             }
             else
             {
-                var directoryInfo = _fileSystem.DirectoryInfo.New(root.ToString());
+                var rootDirectory = _fileSystem.Path.Combine(SourcePath, root.ToString());
+                var directoryInfo = _fileSystem.DirectoryInfo.New(rootDirectory);
                 entry = ProcessAssetDirectoryInfo(directoryInfo, Name.None);
+                foreach (var child in entry.GetSelfAndChildrenBreadthFirst().Cast<FileSystemAssetEntry>())
+                {
+                    assetFileEntriesBuilder[child.Name] = child;
+                }
             }
 
             assetFileEntriesBuilder[root] = entry;
@@ -684,7 +748,10 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         return topLevelEntries;
     }
 
-    private FileSystemAssetEntry RefreshEntry(FileSystemAssetEntry entry)
+    private FileSystemAssetEntry RefreshEntry(
+        FileSystemAssetEntry entry,
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntriesBuilder
+    )
     {
         var info = CreateFileSystemInfo(entry.Path);
         switch (entry)
@@ -696,7 +763,11 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
                         ?? throw new InvalidOperationException("Invalid asset file info");
 
                 if (file.LastModified < info.LastWriteTimeUtc || fileInfo.Length != file.Length)
-                    return file with { LastModified = info.LastWriteTimeUtc, Length = fileInfo.Length };
+                {
+                    var result = file with { LastModified = info.LastWriteTimeUtc, Length = fileInfo.Length };
+                    assetFileEntriesBuilder[entry.Name] = result;
+                    return result;
+                }
 
                 return file;
             }
@@ -706,48 +777,73 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
                     return ProcessAssetFileInfo(info, entry.ParentName)
                         ?? throw new InvalidOperationException("Invalid asset file info");
 
-                AssetPackageEntryList<FileSystemAssetEntry>.Builder? builder = null;
-                var foundChildren = new HashSet<AssetPackageEntryKey>();
-                foreach (var childInfo in directoryInfo.EnumerateFileSystemInfos("*", SearchOption.TopDirectoryOnly))
-                {
-                    var normalizedName = GetRelativeAssetPath(childInfo.FullName);
-                    var isDirectory = childInfo is IDirectoryInfo;
-                    var assetKey = new AssetPackageEntryKey(new Name(normalizedName), isDirectory);
-                    foundChildren.Add(assetKey);
-                    FileSystemAssetEntry updatedEntry;
-                    if (folder.Children.GetOrDefault(assetKey) is { } existingEntry)
-                    {
-                        updatedEntry = RefreshEntry(existingEntry);
-                        if (ReferenceEquals(updatedEntry, existingEntry))
-                            continue;
-                    }
-                    else
-                    {
-                        updatedEntry =
-                            ProcessAssetFileInfo(childInfo, entry.Name)
-                            ?? throw new InvalidOperationException("Invalid asset file info");
-                    }
+                var children = GetChildEntries(entry.Name, directoryInfo, folder.Children, assetFileEntriesBuilder);
 
-                    builder ??= folder.Children.ToBuilder();
-                    builder.AddOrReplace(updatedEntry);
-                }
+                if (ReferenceEquals(folder.Children, children))
+                    return folder;
 
-                AssetPackageEntryList<FileSystemAssetEntry> children;
-                if (builder is not null)
-                {
-                    builder.Intersect(foundChildren);
-                    children = builder.DrainToImmutable();
-                }
-                else
-                {
-                    children = folder.Children.Intersect(foundChildren);
-                }
-
-                return ReferenceEquals(folder.Children, children) ? folder : folder with { Children = children };
+                var result = folder with { Children = children };
+                assetFileEntriesBuilder[entry.Name] = result;
+                return result;
             }
             default:
                 throw new InvalidOperationException("Invalid asset file info");
         }
+    }
+
+    private AssetPackageEntryList<FileSystemAssetEntry> GetChildEntries(
+        Name entry,
+        IDirectoryInfo directoryInfo,
+        AssetPackageEntryList<FileSystemAssetEntry> children,
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntriesBuilder
+    )
+    {
+        AssetPackageEntryList<FileSystemAssetEntry>.Builder? builder = null;
+        var foundChildren = new HashSet<AssetPackageEntryKey>();
+        foreach (var childInfo in directoryInfo.EnumerateFileSystemInfos("*", SearchOption.TopDirectoryOnly))
+        {
+            var normalizedName = GetRelativeAssetPath(childInfo.FullName);
+            var isDirectory = childInfo is IDirectoryInfo;
+            var assetKey = new AssetPackageEntryKey(new Name(normalizedName), isDirectory);
+            foundChildren.Add(assetKey);
+            FileSystemAssetEntry updatedEntry;
+            if (children.GetOrDefault(assetKey) is { } existingEntry)
+            {
+                updatedEntry = RefreshEntry(existingEntry, assetFileEntriesBuilder);
+                if (ReferenceEquals(updatedEntry, existingEntry))
+                    continue;
+            }
+            else
+            {
+                updatedEntry =
+                    ProcessAssetFileInfo(childInfo, entry)
+                    ?? throw new InvalidOperationException("Invalid asset file info");
+            }
+
+            assetFileEntriesBuilder[updatedEntry.Name] = updatedEntry;
+            builder ??= children.ToBuilder();
+            builder.AddOrReplace(updatedEntry);
+        }
+
+        foreach (var child in children)
+        {
+            if (foundChildren.Contains(child.Key))
+                continue;
+
+            assetFileEntriesBuilder.Remove(child.Name);
+        }
+
+        if (builder is not null)
+        {
+            builder.Intersect(foundChildren);
+            children = builder.DrainToImmutable();
+        }
+        else
+        {
+            children = children.Intersect(foundChildren);
+        }
+
+        return children;
     }
 
     private static ImmutableArray<Name> NormalizeScanRoots(IReadOnlySet<Name> scanRoots)

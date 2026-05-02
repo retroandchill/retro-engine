@@ -289,11 +289,11 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
             if (index < 0)
             {
                 index = ~index;
-                Count++;
-                if (index < Count - 1)
+                if (index < Count)
                 {
                     Array.Copy(_entries, index, _entries, index + 1, Count - index);
                 }
+                Count++;
             }
 
             _entries[index] = item;

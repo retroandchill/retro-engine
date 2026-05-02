@@ -1,0 +1,35 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Dialogs"
+        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+        xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+        x:Class="RetroEngine.Editor.Core.Views.Dialogs.TextEntryWindow"
+        Title="{Binding WindowTitle}"
+        SizeToContent="Height">
+    <Design.DataContext>
+        <dialogs:TextEntryWindowViewModel/>
+    </Design.DataContext>
+
+    <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
+        <TextBlock Text="{Binding Prompt}"/>
+        <TextBox Text="{Binding TextEntry}"/>
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="20">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <iconPacks:PackIconCodicons Kind="Error"
+                                            Width="20"
+                                            Height="20" VerticalAlignment="Center"
+                                            Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
+                <TextBlock Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Text="{Binding ErrorText}"/>
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding ConfirmCommand}" IsEnabled="{Binding CanCreate}">
+                <TextBlock Text="{Binding ConfirmText}"/>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding CancelCommand}" IsEnabled="{Binding CanCreate}">
+                <TextBlock Text="{Binding CancelText}"/>
+            </Button>
+        </Grid>
+    </StackPanel>
+</Window>

@@ -9,19 +9,30 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
 using DynamicData;
+using HanumanInstitute.MvvmDialogs;
+using HanumanInstitute.MvvmDialogs.Avalonia;
+using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using IconPacks.Avalonia.Codicons;
+using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.Attributes;
+using RetroEngine.Editor.Core.Services;
+using RetroEngine.Editor.Core.ViewModels.Dialogs;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
+using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
+using RetroEngine.Utilities;
 using RetroEngine.Utils;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
 public sealed partial class ContentBrowserItem : ObservableObject
 {
+    private ILogger? _logger;
+    private readonly IDialogService _dialogService;
     private readonly IAssetPackage _package;
+    private readonly INavigationService _navigationService;
     internal AssetPackageEntryKey Key { get; set; }
 
     [ObservableProperty]
@@ -35,6 +46,9 @@ public sealed partial class ContentBrowserItem : ObservableObject
 
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsRenamable { get; set; } = true;
 
     [ObservableProperty]
     public partial bool CanEdit { get; set; } = true;
@@ -51,14 +65,90 @@ public sealed partial class ContentBrowserItem : ObservableObject
         init => ChildrenSource.AddRange(value);
     }
 
-    public ContentBrowserItem(IAssetPackage package)
+    public ContentBrowserItem(
+        IDialogService dialogService,
+        IAssetPackage package,
+        INavigationService navigationService,
+        ILogger? logger
+    )
     {
+        _dialogService = dialogService;
         _package = package;
+        _navigationService = navigationService;
+        _logger = logger;
         ChildrenSource.Connect().Sort(KeyComparer.Instance).Bind(out _sortedChildren).Subscribe();
     }
 
     [RelayCommand]
-    private void NewFolder() { }
+    private void NewFolder()
+    {
+        if (_package is IEditableAssetPackage editablePackage)
+        {
+            _ = NewFolderAsync(editablePackage);
+        }
+    }
+
+    private static readonly Text NewFolderName = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "NewFolderName",
+        "Create Folder"
+    );
+    private static readonly TextFormat NameIsAlreadyTaken = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "NameIsAlreadyTaken",
+        "A folder/file with the name '{0}' already exists"
+    );
+    private static readonly TextFormat ErrorFormat = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "ErrorFormat",
+        "The entered text '{0}' is not valid"
+    );
+
+    private async Task NewFolderAsync(IEditableAssetPackage editablePackage)
+    {
+        try
+        {
+            var viewModel = _dialogService.CreateViewModel<TextEntryWindowViewModel>();
+            viewModel.WindowTitle = NewFolderName;
+            viewModel.ValidationFunc = (str, out error) =>
+            {
+                var newName = Key.Name.IsNone ? str : $"{Key.Name}/{str}";
+                var asName = new Name(newName);
+                if (editablePackage.GetEntry(asName) is not null)
+                {
+                    error = Text.Format(NameIsAlreadyTaken, str);
+                    return false;
+                }
+
+                if (Path.IsValidPortableFileName(str))
+                {
+                    error = Text.Empty;
+                    return true;
+                }
+
+                error = Text.Format(ErrorFormat, str);
+                return false;
+            };
+            var result = await _dialogService.ShowDialogAsync(_navigationService.MainWindow, viewModel);
+            if (result is not true)
+            {
+                return;
+            }
+
+            var newName = Key.Name.IsNone ? viewModel.TextEntry : $"{Key.Name}/{viewModel.TextEntry}";
+            var nameKey = new Name(newName);
+            await editablePackage.AddFolderAsync(nameKey);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to create new folder.");
+
+            await _dialogService.ShowMessageBoxAsync(
+                _navigationService.MainWindow,
+                new MessageBoxSettings() { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
+        }
+    }
 
     [RelayCommand]
     private void Rename()
@@ -92,39 +182,50 @@ public sealed partial class ContentBrowserItem : ObservableObject
 
 public sealed class ContentBrowserPackageRoot : IDisposable
 {
+    private readonly IDialogService _dialogService;
     private readonly IAssetPackage _package;
+    private readonly INavigationService _navigationService;
+    private readonly ILogger? _logger;
 
     private readonly Dictionary<Name, ContentBrowserItem> _items = new();
 
     public ContentBrowserItem Item { get; }
 
-    public ContentBrowserPackageRoot(IAssetPackage package)
+    public ContentBrowserPackageRoot(
+        IDialogService dialogService,
+        IAssetPackage package,
+        INavigationService navigationService,
+        ILogger? logger
+    )
     {
+        _dialogService = dialogService;
         _package = package;
+        _navigationService = navigationService;
+        _logger = logger;
 
         _package.OnEntriesRefreshed += OnPackageChanged;
 
-        Item = new ContentBrowserItem(package)
+        Item = new ContentBrowserItem(dialogService, package, navigationService, logger)
         {
             Name = package.PackageName,
             Icon = PackIconCodiconsKind.Package,
-            CanEdit = false,
+            IsRenamable = false,
+            CanEdit = package is IEditableAssetPackage,
             IsDirectory = true,
         };
-        Item.ChildrenSource.AddRange(package.TopLevelEntries.Select(x => CreateContentFolder(package, x)));
+        Item.ChildrenSource.AddRange(package.TopLevelEntries.Select(CreateContentFolder));
         _items[Name.None] = Item;
     }
 
-    private ContentBrowserItem CreateContentFolder(IAssetPackage package, IAssetPackageEntry entry)
+    private ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
     {
-        var children = entry is IAssetPackageFolder folder
-            ? folder.Children.Select(x => CreateContentFolder(package, x))
-            : [];
-        var item = new ContentBrowserItem(package)
+        var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
+        var item = new ContentBrowserItem(_dialogService, _package, _navigationService, _logger)
         {
             Name = entry.DisplayName,
             Key = entry.Key,
             Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
+            CanEdit = _package is IEditableAssetPackage,
             IsDirectory = entry.IsDirectory,
         };
         item.ChildrenSource.AddRange(children);
@@ -137,7 +238,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
     {
         foreach (var entry in manifest.AddedEntries)
         {
-            OnEntryAdded(_package, entry);
+            OnEntryAdded(entry);
         }
 
         foreach (var entry in manifest.RemovedEntries)
@@ -151,10 +252,10 @@ public sealed class ContentBrowserPackageRoot : IDisposable
         }
     }
 
-    private void OnEntryAdded(IAssetPackage package, IAssetPackageEntry entry)
+    private void OnEntryAdded(IAssetPackageEntry entry)
     {
         var parent = _items[entry.ParentName];
-        parent.ChildrenSource.Add(CreateContentFolder(package, entry));
+        parent.ChildrenSource.Add(CreateContentFolder(entry));
     }
 
     private void OnEntryRemoved(IAssetPackageEntry entry)

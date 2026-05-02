@@ -39,7 +39,7 @@
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
                                       GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
                                       Command="{Binding RenameCommand}"
-                                      IsEnabled="{Binding CanEdit}"/>
+                                      IsEnabled="{Binding IsRenamable}"/>
                         </ContextMenu>
                     </StackPanel.ContextMenu>
 

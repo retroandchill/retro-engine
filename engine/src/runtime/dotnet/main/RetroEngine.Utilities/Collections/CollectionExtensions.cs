@@ -8,6 +8,45 @@ namespace RetroEngine.Utilities.Collections;
 /// </summary>
 public static class CollectionExtensions
 {
+    public static bool Contains(
+        this ImmutableArray<string> collection,
+        ReadOnlySpan<char> value,
+        StringComparison comparison = StringComparison.Ordinal
+    )
+    {
+        return collection.AsSpan().Contains(value, comparison);
+    }
+
+    public static bool Contains(
+        this ReadOnlySpan<string> collection,
+        ReadOnlySpan<char> value,
+        StringComparison comparison = StringComparison.Ordinal
+    )
+    {
+        foreach (var item in collection)
+        {
+            if (item.Equals(value, comparison))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool Contains(
+        this IEnumerable<string> collection,
+        ReadOnlySpan<char> value,
+        StringComparison comparison = StringComparison.Ordinal
+    )
+    {
+        foreach (var item in collection)
+        {
+            if (item.Equals(value, comparison))
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Removes all duplicate items from the list in place.
     /// </summary>

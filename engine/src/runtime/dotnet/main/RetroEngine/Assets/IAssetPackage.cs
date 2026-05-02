@@ -30,21 +30,23 @@ public interface IAssetPackage
 
     AssetPackageLoadState LoadState { get; }
 
-    public string SourcePath { get; }
+    string SourcePath { get; }
 
-    public bool IsReadOnly { get; }
+    bool IsReadOnly { get; }
 
-    public IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries { get; }
+    IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries { get; }
 
-    public event AssetPackageChangeEvent? OnEntriesRefreshed;
+    event AssetPackageChangeEvent? OnEntriesRefreshed;
 
     event Action<Exception>? OnRefreshError;
 
-    public void Load();
+    void Load();
 
-    public ValueTask LoadAsync(CancellationToken cancellationToken = default);
+    ValueTask LoadAsync(CancellationToken cancellationToken = default);
 
-    public void Unload();
+    void Unload();
+
+    IAssetPackageEntry? GetEntry(Name entryName);
 
     bool HasAsset(Name assetName);
 
@@ -66,6 +68,8 @@ public interface IAssetPackageFactory
 
 public interface IEditableAssetPackage : IAssetPackage
 {
+    Task AddFolderAsync(Name name, CancellationToken cancellationToken = default);
+
     Task RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
 
     Task DeleteAssetAsync(Name name, CancellationToken cancellationToken = default);
