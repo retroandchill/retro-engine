@@ -58,12 +58,13 @@ jobs:
         with:
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           configurePreset: release
+          buildPreset: release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: native-build-${{ matrix.os }}
-          path: ${{ github.workspace }}/engine/build/release/runtimes/**/*
+          path: engine/build/release/runtimes/
           retention-days: 5
 
   build-managed:
@@ -79,7 +80,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: native-build-windows-latest
-          path: ${{ github.workspace }}/engine/build/release/runtimes/
+          path: engine/build/release/runtimes/
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

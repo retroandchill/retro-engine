@@ -48,5 +48,27 @@
         "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF"
       }
     }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "configuration": "Release"
+    },
+    {
+      "name": "debug-game",
+      "configurePreset": "debu-game",
+      "configuration": "Debug"
+    },
+    {
+      "name": "packaged",
+      "configurePreset": "packaged",
+      "configuration": "Release"
+    }
   ]
 }
