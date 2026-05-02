@@ -12,7 +12,6 @@
       <ProjectReference Include="..\RetroEngine.Utilities\RetroEngine.Utilities.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Avalonia" VersionOverride="11.3.14" />
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="ObservableCollections" />
       <PackageReference Include="Xaml.Behaviors.Avalonia" />
