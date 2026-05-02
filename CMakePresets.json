@@ -62,7 +62,7 @@
     },
     {
       "name": "debug-game",
-      "configurePreset": "debu-game",
+      "configurePreset": "debug-game",
       "configuration": "Debug"
     },
     {
