@@ -12,7 +12,7 @@ using RetroEngine.Utilities.Concurrency;
 
 namespace RetroEngine.Assets;
 
-public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
+public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 {
     public Name PackageName { get; }
 
@@ -533,6 +533,66 @@ public sealed class FileSystemAssetPackage : IAssetPackage, IDisposable
             assetFileEntries.Remove(c.Name);
         }
         builder.Remove(entry);
+    }
+
+    public async ValueTask RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default)
+    {
+        var oldPath = _fileSystem.Path.Combine(SourcePath, oldName.ToString());
+        var newPath = _fileSystem.Path.Combine(SourcePath, newName.ToString());
+
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntryRenamed += OnRenameComplete;
+            _fileSystem.File.Move(oldPath, newPath);
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntryRenamed -= OnRenameComplete;
+        }
+        return;
+
+        void OnRenameComplete(IAssetPackageEntry oldEntry, IAssetPackageEntry newEntry)
+        {
+            if (oldEntry.Name == oldName && newEntry.Name == newName)
+            {
+                taskCompletionSource.TrySetResult();
+            }
+        }
+    }
+
+    public async ValueTask DeleteAssetAsync(Name name, CancellationToken cancellationToken = default)
+    {
+        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntryRemoved += OnDeleteComplete;
+            _fileSystem.File.Delete(path);
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntryRemoved -= OnDeleteComplete;
+        }
+        return;
+
+        void OnDeleteComplete(IAssetPackageEntry entry)
+        {
+            if (entry.Name == name)
+            {
+                taskCompletionSource.TrySetResult();
+            }
+        }
     }
 
     public void Dispose()

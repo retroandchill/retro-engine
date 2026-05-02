@@ -54,6 +54,13 @@ public interface IAssetPackageFactory
     IAssetPackage Create(Name packageName, string path);
 }
 
+public interface IEditableAssetPackage : IAssetPackage
+{
+    ValueTask RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
+
+    ValueTask DeleteAssetAsync(Name name, CancellationToken cancellationToken = default);
+}
+
 public static class AssetPackageExtensions
 {
     extension(IAssetPackage package)
