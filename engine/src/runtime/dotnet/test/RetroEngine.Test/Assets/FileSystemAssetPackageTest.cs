@@ -71,7 +71,7 @@ public class FileSystemAssetPackageTest
         await package.LoadAsync();
 
         var taskCompletionSource = new TaskCompletionSource();
-        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
+        package.OnEntriesRefreshed += (in _) => taskCompletionSource.SetResult();
 
         _mockFileSystem.FileInfo.New("/foo/bar/baz.asset").Create();
         await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));
@@ -88,7 +88,7 @@ public class FileSystemAssetPackageTest
         await package.LoadAsync();
 
         var taskCompletionSource = new TaskCompletionSource();
-        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
+        package.OnEntriesRefreshed += (in _) => taskCompletionSource.SetResult();
         _mockFileSystem.FileInfo.New("/foo/bar/bar.asset").Delete();
 
         await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));
@@ -105,7 +105,7 @@ public class FileSystemAssetPackageTest
         await package.LoadAsync();
 
         var taskCompletionSource = new TaskCompletionSource();
-        package.OnEntriesRefreshed += taskCompletionSource.SetResult;
+        package.OnEntriesRefreshed += (in _) => taskCompletionSource.SetResult();
 
         _mockFileSystem.FileInfo.New("/foo/bar/bar.asset").MoveTo("/foo/bar/baz.asset");
         await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(1));

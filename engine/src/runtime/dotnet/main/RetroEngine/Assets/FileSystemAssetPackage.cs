@@ -5,9 +5,11 @@
 
 using System.Collections.Immutable;
 using System.IO.Abstractions;
+using System.Text;
 using Cysharp.Text;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Async;
+using RetroEngine.Utilities.Collections;
 using RetroEngine.Utilities.Concurrency;
 
 namespace RetroEngine.Assets;
@@ -33,17 +35,15 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
     public string SourcePath { get; }
 
     public bool IsReadOnly => false;
-    public event Action? OnEntriesRefreshed;
-    public event Action<IAssetPackageEntry>? OnEntryAdded;
-    public event Action<IAssetPackageEntry>? OnEntryRemoved;
-    public event Action<IAssetPackageEntry, IAssetPackageEntry>? OnEntryRenamed;
+    public event AssetPackageChangeEvent? OnEntriesRefreshed;
+    public event Action<Exception>? OnRefreshError;
 
     private CancellationTokenSource? _loadCancellationSource;
     private Task? _loadTask;
     private readonly ReaderWriterLockSlim _loadTaskLock = new();
 
-    private AssetPackageEntryList<FileSystemAssetEntry> _topLevelEntries =
-        AssetPackageEntryList<FileSystemAssetEntry>.Empty;
+    private AssetPackageEntryList<FileSystemAssetEntry> _topLevelEntries = [];
+
     public IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries
     {
         get
@@ -57,6 +57,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         Name,
         FileSystemAssetEntry
     >.Empty;
+
     private readonly ReaderWriterLockSlim _assetEntriesLock = new();
 
     private readonly IFileSystemWatcher _watcher;
@@ -190,6 +191,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
             else
                 builder.Append(c);
         }
+
         return builder.ToString();
     }
 
@@ -198,12 +200,12 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         return file switch
         {
             IFileInfo fileInfo => ProcessAssetFile(fileInfo, parentName),
-            IDirectoryInfo directoryInfo => ProcessAssetDirectoryInfoAsync(directoryInfo, parentName),
+            IDirectoryInfo directoryInfo => ProcessAssetDirectoryInfo(directoryInfo, parentName),
             _ => throw new ArgumentException("Unsupported file system info type", nameof(file)),
         };
     }
 
-    private FileSystemAssetFolder ProcessAssetDirectoryInfoAsync(IDirectoryInfo directory, Name parentName)
+    private FileSystemAssetFolder ProcessAssetDirectoryInfo(IDirectoryInfo directory, Name parentName)
     {
         var currentPath = GetRelativeAssetPath(directory.FullName);
         var pathName = new Name(currentPath);
@@ -231,7 +233,15 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
             {
                 if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
                     continue;
-                entry = new FileSystemAssetFile(assetName, parentName, file.Name, file.FullName, decoder.AssetType);
+                entry = new FileSystemAssetFile(
+                    assetName,
+                    parentName,
+                    file.Name,
+                    file.FullName,
+                    file.LastWriteTimeUtc,
+                    file.Length,
+                    decoder.AssetType
+                );
                 break;
             }
 
@@ -296,13 +306,160 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         throw new FileNotFoundException($"Asset '{assetName}' not found in package '{PackageName}'");
     }
 
+    public Task RefreshAllAsync(CancellationToken cancellationToken = default)
+    {
+        return RefreshAsync(Name.None, cancellationToken);
+    }
+
+    public async Task RefreshAsync(Name entryName, CancellationToken cancellationToken = default)
+    {
+        if (!_assetFileEntries.TryGetValue(entryName, out var entry) && !entryName.IsNone)
+        {
+            return;
+        }
+        var isDirectory = entry?.IsDirectory ?? false;
+
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntriesRefreshed += OnComplete;
+            OnRefreshError += OnRefreshFailed;
+            using (_activeChangesLock.EnterScope())
+            {
+                _pendingChanges.AddSingleFileChange(entryName, isDirectory);
+            }
+
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntriesRefreshed -= OnComplete;
+            OnRefreshError -= OnRefreshFailed;
+        }
+
+        return;
+
+        void OnComplete(scoped in AssetPackageChangeManifest manifest)
+        {
+            taskCompletionSource.TrySetResult();
+        }
+
+        void OnRefreshFailed(Exception ex)
+        {
+            taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public async Task RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default)
+    {
+        var oldPath = _fileSystem.Path.Combine(SourcePath, oldName.ToString());
+        var newPath = _fileSystem.Path.Combine(SourcePath, newName.ToString());
+
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntriesRefreshed += OnRenameComplete;
+            OnRefreshError += OnRefreshFailed;
+            _fileSystem.File.Move(oldPath, newPath);
+            using (_activeChangesLock.EnterScope())
+            {
+                _pendingChanges.AddRename(oldName, newName, false);
+            }
+
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntriesRefreshed -= OnRenameComplete;
+            OnRefreshError -= OnRefreshFailed;
+        }
+
+        return;
+
+        void OnRenameComplete(scoped in AssetPackageChangeManifest manifest)
+        {
+            foreach (var (oldEntry, newEntry) in manifest.RenamedEntries)
+            {
+                if (oldEntry.Name != oldName || newEntry.Name != newName)
+                    continue;
+                taskCompletionSource.TrySetResult();
+                break;
+            }
+        }
+
+        void OnRefreshFailed(Exception ex)
+        {
+            taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public async Task DeleteAssetAsync(Name name, CancellationToken cancellationToken = default)
+    {
+        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        try
+        {
+            OnEntriesRefreshed += OnDeleteComplete;
+            OnRefreshError += OnRefreshFailed;
+            _fileSystem.File.Delete(path);
+            using (_activeChangesLock.EnterScope())
+            {
+                _pendingChanges.AddSingleFileChange(name, false);
+            }
+
+            await taskCompletionSource.Task;
+        }
+        finally
+        {
+            OnEntriesRefreshed -= OnDeleteComplete;
+            OnRefreshError -= OnRefreshFailed;
+        }
+
+        return;
+
+        void OnDeleteComplete(scoped in AssetPackageChangeManifest manifest)
+        {
+            foreach (var entry in manifest.RemovedEntries)
+            {
+                if (entry.Name == name)
+                {
+                    taskCompletionSource.TrySetResult();
+                }
+            }
+        }
+
+        void OnRefreshFailed(Exception ex)
+        {
+            taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public void Dispose()
+    {
+        _watcher.Dispose();
+    }
+
     private void OnFileEntryAdded(object? sender, FileSystemEventArgs e)
     {
         var normalizedPath = GetRelativeAssetPath(e.FullPath);
+        var isDirectory = _fileSystem.Directory.Exists(e.FullPath);
         using (_assetEntriesLock.EnterWriteScope())
         {
-            _pendingChanges.FileAdded(e.FullPath, normalizedPath);
+            _pendingChanges.AddSingleFileChange(normalizedPath, isDirectory);
         }
+
         RequestUpdate();
     }
 
@@ -311,8 +468,9 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         var normalizedPath = GetRelativeAssetPath(e.FullPath);
         using (_assetEntriesLock.EnterWriteScope())
         {
-            _pendingChanges.FileDeleted(e.FullPath, normalizedPath);
+            _pendingChanges.AddSingleFileChange(normalizedPath, false);
         }
+
         RequestUpdate();
     }
 
@@ -320,18 +478,21 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
     {
         var oldNormalizedPath = GetRelativeAssetPath(e.OldFullPath);
         var newNormalizedPath = GetRelativeAssetPath(e.FullPath);
+        var isDirectory = _fileSystem.Directory.Exists(e.FullPath);
         using (_assetEntriesLock.EnterWriteScope())
         {
-            _pendingChanges.FileRenamed(e.FullPath, oldNormalizedPath, newNormalizedPath);
+            _pendingChanges.AddRename(oldNormalizedPath, newNormalizedPath, isDirectory);
         }
+
         RequestUpdate();
     }
 
     private void RequestUpdate()
     {
+        const int debounceDelay = 100;
         _debouncer.Debounce(
             () => _ = ApplyPendingChangesAsync(_loadCancellationSource?.Token ?? CancellationToken.None),
-            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromMilliseconds(debounceDelay),
             _loadCancellationSource?.Token ?? CancellationToken.None
         );
     }
@@ -357,247 +518,315 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 
     private async Task ApplyPendingChangesAsync(CancellationToken cancellationToken = default)
     {
-        await _processingGate.WaitAsync(cancellationToken);
+        using var scope = await _processingGate.EnterScopeAsync(cancellationToken);
+        using (_activeChangesLock.EnterScope())
+        {
+            (_activeChanges, _pendingChanges) = (_pendingChanges, _activeChanges);
+        }
+
+        var normalizedScanRoots = NormalizeScanRoots(_activeChanges.ChangedDirectories);
+        var normalizedRenames = NormalizedRenames(_activeChanges.KnownRenames);
+
+        ImmutableDictionary<Name, FileSystemAssetEntry> assetFileEntries;
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntriesBuilder;
+        AssetPackageEntryList<FileSystemAssetEntry> topLevelEntries;
+        using (_assetEntriesLock.EnterReadScope())
+        {
+            assetFileEntries = _assetFileEntries;
+            assetFileEntriesBuilder = _assetFileEntries.ToBuilder();
+            topLevelEntries = _topLevelEntries;
+        }
+
         try
         {
-            using (_activeChangesLock.EnterScope())
-            {
-                (_activeChanges, _pendingChanges) = (_pendingChanges, _activeChanges);
-            }
-
-            AssetPackageEntryList<FileSystemAssetEntry> topLevelEntries;
-            ImmutableDictionary<Name, FileSystemAssetEntry> oldAssetFileEntries;
-            ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries;
-            using (_assetEntriesLock.EnterReadScope())
-            {
-                topLevelEntries = _topLevelEntries;
-                oldAssetFileEntries = _assetFileEntries;
-                assetFileEntries = _assetFileEntries.ToBuilder();
-            }
-
-            var newTopLevelEntries = ApplyPendingChanges(Name.None, topLevelEntries, assetFileEntries);
-            var newAssetFileEntries = assetFileEntries.ToImmutable();
-            using (_assetEntriesLock.EnterWriteScope())
-            {
-                _topLevelEntries = newTopLevelEntries;
-                _assetFileEntries = newAssetFileEntries;
-            }
-
-            foreach (var entry in _activeChanges.AllChanges)
-            {
-                switch (entry.Type)
-                {
-                    case ChangeType.Added:
-                        OnEntryAdded?.Invoke(newAssetFileEntries[entry.Path]);
-                        break;
-                    case ChangeType.Deleted:
-                        OnEntryRemoved?.Invoke(oldAssetFileEntries[entry.Path]);
-                        break;
-                    case ChangeType.Renamed:
-                        OnEntryRenamed?.Invoke(oldAssetFileEntries[entry.OldPath], newAssetFileEntries[entry.Path]);
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Unsupported change type '{entry.Type}'");
-                }
-            }
-            OnEntriesRefreshed?.Invoke();
-
-            using (_activeChangesLock.EnterScope())
-            {
-                _activeChanges.Clear();
-            }
+            topLevelEntries = ProcessFileSystemChanges(normalizedScanRoots, assetFileEntriesBuilder, topLevelEntries);
         }
-        finally
+        catch (Exception ex)
         {
-            _processingGate.Release();
+            OnRefreshError?.Invoke(ex);
+            return;
         }
-    }
 
-    private AssetPackageEntryList<FileSystemAssetEntry> ApplyPendingChanges(
-        Name parentName,
-        AssetPackageEntryList<FileSystemAssetEntry> currentList,
-        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries
-    )
-    {
-        if (!_activeChanges.FolderHasChanged(parentName))
-            return currentList;
+        var maxFileLength = Math.Max(assetFileEntriesBuilder.Count, assetFileEntries.Count);
+        using var addedEntries = new FixedList<IAssetPackageEntry>(maxFileLength);
+        using var removedEntries = new FixedList<IAssetPackageEntry>(maxFileLength);
+        using var renamedEntries = new FixedList<(IAssetPackageEntry Old, IAssetPackageEntry New)>(maxFileLength);
+        using var modifiedEntries = new FixedList<(IAssetPackageEntry Old, IAssetPackageEntry New)>(maxFileLength);
 
-        AssetPackageEntryList<FileSystemAssetEntry>.Builder? builder = null;
-        foreach (var child in currentList.OfType<FileSystemAssetFolder>())
+        var handledNames = new HashSet<Name>();
+        foreach (var (oldName, newName) in normalizedRenames)
         {
-            var newChildren = ApplyPendingChanges(child.Name, child.Children, assetFileEntries);
-            if (ReferenceEquals(newChildren, child.Children))
+            var oldEntry = assetFileEntries.GetValueOrDefault(oldName);
+            var newEntry = assetFileEntriesBuilder.GetValueOrDefault(newName);
+            if (oldEntry is null || newEntry is null)
                 continue;
 
-            builder ??= currentList.ToBuilder();
-            builder.AddOrReplace(child with { Children = newChildren });
+            renamedEntries.Add((oldEntry, newEntry));
+            handledNames.Add(oldName);
+            handledNames.Add(newName);
         }
 
-        var activeChanges = _activeChanges.GetChanges(parentName);
-        foreach (var change in activeChanges)
+        foreach (var key in assetFileEntries.Keys.Concat(assetFileEntriesBuilder.Keys))
         {
-            builder ??= currentList.ToBuilder(activeChanges.Count);
-            switch (change.Type)
+            if (!handledNames.Add(key))
+                continue;
+
+            var oldEntry = assetFileEntries.GetValueOrDefault(key);
+            var newEntry = assetFileEntriesBuilder.GetValueOrDefault(key);
+            if (oldEntry is not null && newEntry is not null)
             {
-                case ChangeType.Added:
-                    AddAssetAndChildren(change, assetFileEntries, builder);
-                    break;
-                case ChangeType.Deleted:
-                    RemoveAssetAndChildren(assetFileEntries, change, builder);
-                    break;
-                case ChangeType.Renamed when change.OldParent == change.Parent:
-                {
-                    if (assetFileEntries.Remove(change.OldPath, out var entry))
-                    {
-                        var oldPath = entry.Key;
-                        entry = ReplaceEntry(entry, change);
-                        assetFileEntries[change.Path] = entry;
-                        builder.Remove(oldPath);
-                        builder.AddOrReplace(entry);
-                    }
+                if (ReferenceEquals(oldEntry, newEntry))
+                    continue;
 
-                    break;
-                }
-                case ChangeType.Renamed when parentName == change.Parent:
-                    AddAssetAndChildren(change, assetFileEntries, builder);
-                    break;
-                case ChangeType.Renamed:
-                {
-                    if (parentName == change.OldParent)
-                    {
-                        RemoveAssetAndChildren(assetFileEntries, change, builder);
-                    }
-
-                    break;
-                }
-                default:
-                    throw new InvalidOperationException($"Unsupported change type '{change.Type}'");
+                modifiedEntries.Add((oldEntry, newEntry));
+            }
+            else if (oldEntry is not null)
+            {
+                removedEntries.Add(oldEntry);
+            }
+            else if (newEntry is not null)
+            {
+                addedEntries.Add(newEntry);
             }
         }
 
-        return builder is not null ? builder.DrainToImmutable() : currentList;
-    }
-
-    private FileSystemAssetEntry ReplaceEntry(FileSystemAssetEntry entry, FileSystemChange change)
-    {
-        if (
-            entry is FileSystemAssetFile file
-            && !_fileSystem
-                .Path.GetExtension(change.FullPath.AsSpan())
-                .Equals(_fileSystem.Path.GetExtension(file.Path.AsSpan()), StringComparison.OrdinalIgnoreCase)
-        )
+        var delta = new AssetPackageChangeManifest
         {
-            return file with
-            {
-                Name = change.Path,
-                DisplayName = _fileSystem.Path.GetFileName(change.FullPath),
-                Path = change.FullPath,
-                AssetType = GetAssetType(change.Path),
-            };
-        }
-
-        return entry with
-        {
-            Name = change.Path,
-            DisplayName = _fileSystem.Path.GetFileName(change.FullPath),
-            Path = change.FullPath,
+            AddedEntries = addedEntries.AsSpan(),
+            RemovedEntries = removedEntries.AsSpan(),
+            ModifiedEntries = modifiedEntries.AsSpan(),
+            RenamedEntries = renamedEntries.AsSpan(),
         };
+
+        using (_assetEntriesLock.EnterWriteScope())
+        {
+            _assetFileEntries = assetFileEntriesBuilder.ToImmutable();
+            _topLevelEntries = topLevelEntries;
+        }
+
+        OnEntriesRefreshed?.Invoke(delta);
+
+        using (_activeChangesLock.EnterScope())
+        {
+            _activeChanges.Clear();
+        }
     }
 
-    private void AddAssetAndChildren(
-        FileSystemChange change,
-        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries,
-        AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
+    private AssetPackageEntryList<FileSystemAssetEntry> ProcessFileSystemChanges(
+        ImmutableArray<Name> normalizedScanRoots,
+        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntriesBuilder,
+        AssetPackageEntryList<FileSystemAssetEntry> topLevelEntries
     )
     {
-        var entry = ProcessAssetFileInfo(CreateFileSystemInfo(change.FullPath), change.Parent);
-        if (entry is null)
-            return;
-
-        foreach (var c in entry.GetSelfAndChildrenBreadthFirst().Cast<FileSystemAssetEntry>())
+        var exploredParents = new HashSet<Name>();
+        var parentsQueue = new Queue<Name>();
+        var childrenByParent = new Dictionary<Name, HashSet<Name>>();
+        foreach (var root in normalizedScanRoots)
         {
-            assetFileEntries[c.Name] = c;
-        }
-        builder.Add(entry);
-    }
-
-    private static void RemoveAssetAndChildren(
-        ImmutableDictionary<Name, FileSystemAssetEntry>.Builder assetFileEntries,
-        FileSystemChange change,
-        AssetPackageEntryList<FileSystemAssetEntry>.Builder builder
-    )
-    {
-        var entry = assetFileEntries[change.Path];
-        foreach (var c in entry.GetSelfAndChildrenBreadthFirst())
-        {
-            assetFileEntries.Remove(c.Name);
-        }
-        builder.Remove(entry);
-    }
-
-    public async ValueTask RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default)
-    {
-        var oldPath = _fileSystem.Path.Combine(SourcePath, oldName.ToString());
-        var newPath = _fileSystem.Path.Combine(SourcePath, newName.ToString());
-
-        var taskCompletionSource = new TaskCompletionSource();
-        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
-            taskCompletionSource.TrySetCanceled()
-        );
-
-        try
-        {
-            OnEntryRenamed += OnRenameComplete;
-            _fileSystem.File.Move(oldPath, newPath);
-            await taskCompletionSource.Task;
-        }
-        finally
-        {
-            OnEntryRenamed -= OnRenameComplete;
-        }
-        return;
-
-        void OnRenameComplete(IAssetPackageEntry oldEntry, IAssetPackageEntry newEntry)
-        {
-            if (oldEntry.Name == oldName && newEntry.Name == newName)
+            FileSystemAssetEntry entry;
+            if (assetFileEntriesBuilder.TryGetValue(root, out var rootEntry))
             {
-                taskCompletionSource.TrySetResult();
+                entry = RefreshEntry(rootEntry);
+                if (ReferenceEquals(entry, rootEntry))
+                    continue;
+            }
+            else
+            {
+                var directoryInfo = _fileSystem.DirectoryInfo.New(root.ToString());
+                entry = ProcessAssetDirectoryInfo(directoryInfo, Name.None);
+            }
+
+            assetFileEntriesBuilder[root] = entry;
+            var currentEntry = entry;
+            if (exploredParents.Add(currentEntry.ParentName))
+                parentsQueue.Enqueue(currentEntry.ParentName);
+            while (currentEntry.ParentName != Name.None)
+            {
+                childrenByParent.GetOrAdd(currentEntry.ParentName, _ => []).Add(currentEntry.Name);
+                currentEntry = assetFileEntriesBuilder[currentEntry.ParentName];
+            }
+
+            childrenByParent.GetOrAdd(Name.None, _ => []).Add(currentEntry.Name);
+        }
+
+        while (parentsQueue.TryDequeue(out var parentName))
+        {
+            var entry = !parentName.IsNone ? (FileSystemAssetFolder)assetFileEntriesBuilder[parentName] : null;
+            var children = childrenByParent[parentName];
+            var childrenList = entry?.Children ?? topLevelEntries;
+            if (children.Count == 1)
+            {
+                childrenList = childrenList.AddOrReplace(assetFileEntriesBuilder[children.First()]);
+            }
+            else
+            {
+                var builder = childrenList.ToBuilder();
+                foreach (var childName in children)
+                {
+                    builder.AddOrReplace(assetFileEntriesBuilder[childName]);
+                }
+
+                childrenList = builder.ToImmutable();
+            }
+
+            if (entry is not null)
+            {
+                assetFileEntriesBuilder[parentName] = entry with { Children = childrenList };
+                if (exploredParents.Add(entry.ParentName))
+                    parentsQueue.Enqueue(entry.ParentName);
+            }
+            else
+            {
+                topLevelEntries = childrenList;
             }
         }
+
+        return topLevelEntries;
     }
 
-    public async ValueTask DeleteAssetAsync(Name name, CancellationToken cancellationToken = default)
+    private FileSystemAssetEntry RefreshEntry(FileSystemAssetEntry entry)
     {
-        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
-        var taskCompletionSource = new TaskCompletionSource();
-        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
-            taskCompletionSource.TrySetCanceled()
-        );
-
-        try
+        var info = CreateFileSystemInfo(entry.Path);
+        switch (entry)
         {
-            OnEntryRemoved += OnDeleteComplete;
-            _fileSystem.File.Delete(path);
-            await taskCompletionSource.Task;
-        }
-        finally
-        {
-            OnEntryRemoved -= OnDeleteComplete;
-        }
-        return;
-
-        void OnDeleteComplete(IAssetPackageEntry entry)
-        {
-            if (entry.Name == name)
+            case FileSystemAssetFile file:
             {
-                taskCompletionSource.TrySetResult();
+                if (info is not IFileInfo fileInfo)
+                    return ProcessAssetFileInfo(info, entry.ParentName)
+                        ?? throw new InvalidOperationException("Invalid asset file info");
+
+                if (file.LastModified < info.LastWriteTimeUtc || fileInfo.Length != file.Length)
+                    return file with { LastModified = info.LastWriteTimeUtc, Length = fileInfo.Length };
+
+                return file;
             }
+            case FileSystemAssetFolder folder:
+            {
+                if (info is not IDirectoryInfo directoryInfo)
+                    return ProcessAssetFileInfo(info, entry.ParentName)
+                        ?? throw new InvalidOperationException("Invalid asset file info");
+
+                AssetPackageEntryList<FileSystemAssetEntry>.Builder? builder = null;
+                var foundChildren = new HashSet<AssetPackageEntryKey>();
+                foreach (var childInfo in directoryInfo.EnumerateFileSystemInfos("*", SearchOption.TopDirectoryOnly))
+                {
+                    var normalizedName = GetRelativeAssetPath(childInfo.FullName);
+                    var isDirectory = childInfo is IDirectoryInfo;
+                    var assetKey = new AssetPackageEntryKey(new Name(normalizedName), isDirectory);
+                    foundChildren.Add(assetKey);
+                    FileSystemAssetEntry updatedEntry;
+                    if (folder.Children.GetOrDefault(assetKey) is { } existingEntry)
+                    {
+                        updatedEntry = RefreshEntry(existingEntry);
+                        if (ReferenceEquals(updatedEntry, existingEntry))
+                            continue;
+                    }
+                    else
+                    {
+                        updatedEntry =
+                            ProcessAssetFileInfo(childInfo, entry.Name)
+                            ?? throw new InvalidOperationException("Invalid asset file info");
+                    }
+
+                    builder ??= folder.Children.ToBuilder();
+                    builder.AddOrReplace(updatedEntry);
+                }
+
+                AssetPackageEntryList<FileSystemAssetEntry> children;
+                if (builder is not null)
+                {
+                    builder.Intersect(foundChildren);
+                    children = builder.DrainToImmutable();
+                }
+                else
+                {
+                    children = folder.Children.Intersect(foundChildren);
+                }
+
+                return ReferenceEquals(folder.Children, children) ? folder : folder with { Children = children };
+            }
+            default:
+                throw new InvalidOperationException("Invalid asset file info");
         }
     }
 
-    public void Dispose()
+    private static ImmutableArray<Name> NormalizeScanRoots(IReadOnlySet<Name> scanRoots)
     {
-        _watcher.Dispose();
+        if (scanRoots.Contains(Name.None))
+            return [Name.None];
+
+        var normalized = ImmutableArray.CreateBuilder<Name>(scanRoots.Count);
+
+        var maxNameLength = Encoding.UTF8.GetMaxCharCount(Name.MaxRenderedLength);
+        Span<char> rootBuffer = stackalloc char[maxNameLength];
+        Span<char> ancestorBuffer = stackalloc char[maxNameLength];
+        foreach (var root in scanRoots.OrderBy(x => x, NameComparer.CaseInsensitive))
+        {
+            if (normalized.Count > 0)
+            {
+                var rootLength = root.WriteUtf16Bytes(rootBuffer);
+                var rootSpan = rootBuffer[..rootLength];
+                var ancestorFound = false;
+                foreach (var normalizedRoot in normalized)
+                {
+                    var ancestorLength = normalizedRoot.WriteUtf16Bytes(ancestorBuffer);
+                    var ancestorSpan = ancestorBuffer[..ancestorLength];
+                    if (!IsAncestor(ancestorSpan, rootSpan))
+                        continue;
+
+                    ancestorFound = true;
+                    break;
+                }
+
+                if (ancestorFound)
+                    continue;
+            }
+
+            normalized.Add(root);
+        }
+
+        return normalized.DrainToImmutable();
+
+        static bool IsAncestor(ReadOnlySpan<char> root, ReadOnlySpan<char> ancestor)
+        {
+            if (root.Length < ancestor.Length)
+                return false;
+
+            var targetSpan = root;
+            while (!targetSpan.IsEmpty)
+            {
+                if (targetSpan.Equals(ancestor, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                var nextSeparator = targetSpan.LastIndexOf('/');
+                targetSpan = nextSeparator != -1 ? targetSpan[..nextSeparator] : [];
+            }
+
+            return false;
+        }
+    }
+
+    private static ImmutableDictionary<Name, Name> NormalizedRenames(IReadOnlyDictionary<Name, Name> renames)
+    {
+        var builder = ImmutableDictionary.CreateBuilder<Name, Name>();
+
+        foreach (var (source, d) in renames)
+        {
+            var destination = d;
+
+            while (renames.TryGetValue(destination, out var nextDestination))
+            {
+                destination = nextDestination;
+
+                if (destination == source)
+                    break;
+            }
+
+            if (source != destination)
+                builder[source] = destination;
+        }
+
+        return builder.ToImmutable();
     }
 }
 

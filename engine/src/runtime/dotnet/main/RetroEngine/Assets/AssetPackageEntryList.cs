@@ -138,6 +138,67 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
         return new AssetPackageEntryList<TEntry>(newEntries);
     }
 
+    public AssetPackageEntryList<TEntry> Intersect(IEnumerable<AssetPackageEntryKey> keys)
+    {
+        if (keys.TryGetNonEnumeratedCount(out var count) && count == 0)
+        {
+            return Empty;
+        }
+
+        var keyArray = keys.ToArray();
+        if (keyArray.Length == 0)
+        {
+            return Empty;
+        }
+
+        Array.Sort(keyArray);
+        var stagingBuffer = ArrayPool<TEntry>.Shared.Rent(count);
+        try
+        {
+            _entries.AsSpan().CopyTo(stagingBuffer);
+            var writeIndex = 0;
+            var entryIndex = 0;
+            var keyIndex = 0;
+
+            while (entryIndex < Count && keyIndex < keyArray.Length)
+            {
+                var entry = stagingBuffer[entryIndex];
+                var comparison = entry.Key.CompareTo(keyArray[keyIndex]);
+
+                switch (comparison)
+                {
+                    case < 0:
+                        entryIndex++;
+                        break;
+                    case > 0:
+                        keyIndex++;
+                        break;
+                    default:
+                    {
+                        stagingBuffer[writeIndex++] = entry;
+                        entryIndex++;
+
+                        var matchedKey = keyArray[keyIndex];
+                        do
+                        {
+                            keyIndex++;
+                        } while (
+                            keyIndex < keyArray.Length && stagingBuffer[entryIndex].Key.CompareTo(matchedKey) == 0
+                        );
+
+                        break;
+                    }
+                }
+            }
+
+            return writeIndex != Count ? new AssetPackageEntryList<TEntry>(stagingBuffer.AsSpan(0, writeIndex)) : this;
+        }
+        finally
+        {
+            ArrayPool<TEntry>.Shared.Return(stagingBuffer, true);
+        }
+    }
+
     private int IndexOf(AssetPackageEntryKey key)
     {
         return _entries.BinarySearch(key);
@@ -208,7 +269,10 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
             }
 
             index = ~index;
-            Array.Copy(_entries, index, _entries, index + 1, Count - index);
+            if (index < Count - 1)
+            {
+                Array.Copy(_entries, index, _entries, index + 1, Count - index);
+            }
             _entries[index] = item;
             Count++;
         }
@@ -226,7 +290,10 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
             {
                 index = ~index;
                 Count++;
-                Array.Copy(_entries, index, _entries, index + 1, Count - index);
+                if (index < Count - 1)
+                {
+                    Array.Copy(_entries, index, _entries, index + 1, Count - index);
+                }
             }
 
             _entries[index] = item;
@@ -255,7 +322,7 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
 
         public void CopyTo(TEntry[] array, int arrayIndex)
         {
-            _entries.AsSpan(0, Count).CopyTo(array.AsSpan(arrayIndex));
+            ActiveEntries.CopyTo(array.AsSpan(arrayIndex));
         }
 
         public bool Remove(TEntry entry)
@@ -285,6 +352,68 @@ internal sealed class AssetPackageEntryList<TEntry> : IReadOnlyCollection<TEntry
             _entries[Count - 1] = null!;
             Count--;
             return true;
+        }
+
+        public void Intersect(IEnumerable<AssetPackageEntryKey> keys)
+        {
+            if (keys.TryGetNonEnumeratedCount(out var count) && count == 0)
+            {
+                Clear();
+                return;
+            }
+
+            var keyArray = keys.ToArray();
+            if (keyArray.Length == 0)
+            {
+                Clear();
+                return;
+            }
+
+            Array.Sort(keyArray);
+
+            var writeIndex = 0;
+            var entryIndex = 0;
+            var keyIndex = 0;
+
+            while (entryIndex < Count && keyIndex < keyArray.Length)
+            {
+                var entry = _entries[entryIndex];
+                var comparison = entry.Key.CompareTo(keyArray[keyIndex]);
+
+                switch (comparison)
+                {
+                    case < 0:
+                        entryIndex++;
+                        break;
+                    case > 0:
+                        keyIndex++;
+                        break;
+                    default:
+                    {
+                        _entries[writeIndex++] = entry;
+                        entryIndex++;
+
+                        var matchedKey = keyArray[keyIndex];
+                        do
+                        {
+                            keyIndex++;
+                        } while (keyIndex < keyArray.Length && _entries[entryIndex].Key.CompareTo(matchedKey) == 0);
+
+                        break;
+                    }
+                }
+            }
+
+            if (writeIndex == Count)
+                return;
+
+            _version++;
+
+            for (var i = writeIndex; i < Count; i++)
+            {
+                _entries[i] = null!;
+            }
+            Count = writeIndex;
         }
 
         public void EnsureCapacity(int capacity)

@@ -14,6 +14,16 @@ public enum AssetPackageLoadState
     Loaded,
 }
 
+public ref struct AssetPackageChangeManifest
+{
+    public required ReadOnlySpan<IAssetPackageEntry> AddedEntries { get; init; }
+    public required ReadOnlySpan<IAssetPackageEntry> RemovedEntries { get; init; }
+    public required ReadOnlySpan<(IAssetPackageEntry Old, IAssetPackageEntry New)> RenamedEntries { get; init; }
+    public required ReadOnlySpan<(IAssetPackageEntry Old, IAssetPackageEntry New)> ModifiedEntries { get; init; }
+}
+
+public delegate void AssetPackageChangeEvent(scoped in AssetPackageChangeManifest manifest);
+
 public interface IAssetPackage
 {
     Name PackageName { get; }
@@ -26,13 +36,9 @@ public interface IAssetPackage
 
     public IReadOnlyCollection<IAssetPackageEntry> TopLevelEntries { get; }
 
-    public event Action? OnEntriesRefreshed;
+    public event AssetPackageChangeEvent? OnEntriesRefreshed;
 
-    public event Action<IAssetPackageEntry>? OnEntryAdded;
-
-    public event Action<IAssetPackageEntry>? OnEntryRemoved;
-
-    public event Action<IAssetPackageEntry, IAssetPackageEntry>? OnEntryRenamed;
+    event Action<Exception>? OnRefreshError;
 
     public void Load();
 
@@ -45,6 +51,10 @@ public interface IAssetPackage
     Name GetAssetType(Name assetName);
 
     Stream OpenAsset(Name assetName);
+
+    Task RefreshAllAsync(CancellationToken cancellationToken = default);
+
+    Task RefreshAsync(Name entryName, CancellationToken cancellationToken = default);
 }
 
 public interface IAssetPackageFactory
@@ -56,9 +66,9 @@ public interface IAssetPackageFactory
 
 public interface IEditableAssetPackage : IAssetPackage
 {
-    ValueTask RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
+    Task RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
 
-    ValueTask DeleteAssetAsync(Name name, CancellationToken cancellationToken = default);
+    Task DeleteAssetAsync(Name name, CancellationToken cancellationToken = default);
 }
 
 public static class AssetPackageExtensions

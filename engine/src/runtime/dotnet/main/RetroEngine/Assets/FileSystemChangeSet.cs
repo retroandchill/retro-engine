@@ -3,119 +3,62 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Collections;
 
 namespace RetroEngine.Assets;
 
-internal enum ChangeType
-{
-    Added,
-    Deleted,
-    Renamed,
-}
-
-internal sealed record FileSystemChange(
-    string FullPath,
-    Name Path,
-    Name Parent,
-    ChangeType Type,
-    Name OldPath = default,
-    Name OldParent = default
-);
-
 internal sealed class FileSystemAssetChangeSet
 {
-    private readonly List<FileSystemChange> _allChanges = [];
-    private readonly Dictionary<Name, List<FileSystemChange>> _pendingChanges = [];
     private readonly HashSet<Name> _changedDirectories = [];
+    private readonly Dictionary<Name, Name> _knownRenames = new();
 
-    public IReadOnlyList<FileSystemChange> AllChanges => _allChanges;
+    public IReadOnlySet<Name> ChangedDirectories => _changedDirectories;
+    public IReadOnlyDictionary<Name, Name> KnownRenames => _knownRenames;
 
-    public bool FolderHasChanged(Name folder) => _changedDirectories.Contains(folder);
-
-    public IReadOnlyList<FileSystemChange> GetChanges(Name folder)
+    public void AddSingleFileChange(ReadOnlySpan<char> path, bool isDirectory)
     {
-        return _pendingChanges.TryGetValue(folder, out var changes) ? changes : Array.Empty<FileSystemChange>();
-    }
-
-    public void FileAdded(string fullPath, ReadOnlySpan<char> relativePath)
-    {
-        var directoryName = AddParentDirectoryChanges(relativePath);
-
-        var change = new FileSystemChange(fullPath, new Name(relativePath), directoryName, ChangeType.Added);
-        _allChanges.Add(change);
-        _pendingChanges.GetOrAdd(directoryName, _ => []).Add(change);
-    }
-
-    public void FileDeleted(string fullPath, ReadOnlySpan<char> relativePath)
-    {
-        var directoryName = AddParentDirectoryChanges(relativePath);
-
-        var change = new FileSystemChange(fullPath, new Name(relativePath), directoryName, ChangeType.Deleted);
-        _allChanges.Add(change);
-        _pendingChanges.GetOrAdd(directoryName, _ => []).Add(change);
-    }
-
-    public void FileRenamed(string fullPath, ReadOnlySpan<char> oldPath, ReadOnlySpan<char> newPath)
-    {
-        var oldDirectoryName = AddParentDirectoryChanges(oldPath);
-        var newDirectoryName = AddParentDirectoryChanges(newPath);
-
-        var change = new FileSystemChange(
-            fullPath,
-            new Name(newPath),
-            newDirectoryName,
-            ChangeType.Renamed,
-            new Name(oldPath),
-            oldDirectoryName
-        );
-        _allChanges.Add(change);
-        _pendingChanges.GetOrAdd(oldDirectoryName, _ => []).Add(change);
-        if (oldDirectoryName != newDirectoryName)
+        if (!isDirectory)
         {
-            _pendingChanges.GetOrAdd(newDirectoryName, _ => []).Add(change);
+            path = GetDirectoryName(path);
         }
+        _changedDirectories.Add(new Name(path));
     }
 
-    private Name AddParentDirectoryChanges(ReadOnlySpan<char> directPath)
+    public void AddRename(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName, bool isDirectory)
     {
-        var directParent = Name.None;
-        var i = 0;
-        var currentName = directPath;
-        do
+        ReadOnlySpan<char> oldDirectory;
+        ReadOnlySpan<char> newDirectory;
+        if (!isDirectory)
         {
-            currentName = GetParentDirectory(currentName);
-            var asName = new Name(currentName);
-            if (i == 0)
-                directParent = asName;
+            oldDirectory = GetDirectoryName(oldName);
+            newDirectory = GetDirectoryName(newName);
+        }
+        else
+        {
+            oldDirectory = oldName;
+            newDirectory = newName;
+        }
 
-            _changedDirectories.Add(asName);
+        if (!oldDirectory.Equals(newDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            _changedDirectories.Add(new Name(oldDirectory));
+        }
+        _changedDirectories.Add(new Name(newDirectory));
 
-            i++;
-        } while (!currentName.IsEmpty);
-
-        return directParent;
+        _knownRenames[new Name(oldName)] = new Name(newName);
     }
 
-    private static ReadOnlySpan<char> GetParentDirectory(ReadOnlySpan<char> path)
+    private static ReadOnlySpan<char> GetDirectoryName(ReadOnlySpan<char> path)
     {
-        var index = path.LastIndexOf('/');
-        if (index == -1)
-            return "";
-
-        return path[..index];
+        var lastIndex = path.LastIndexOf('/');
+        return lastIndex != -1 ? path[..lastIndex] : Name.None;
     }
 
     public void Clear()
     {
-        // Keep the key changes so we don't end up reallocating lists after each change pass
-        foreach (var (_, changes) in _pendingChanges)
-        {
-            changes.Clear();
-        }
-
-        _allChanges.Clear();
         _changedDirectories.Clear();
+        _knownRenames.Clear();
     }
 }

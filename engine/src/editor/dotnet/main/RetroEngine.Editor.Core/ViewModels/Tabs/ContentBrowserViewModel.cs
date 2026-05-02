@@ -21,6 +21,7 @@ namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
 public sealed partial class ContentBrowserItem : ObservableObject
 {
+    private readonly IAssetPackage _package;
     internal AssetPackageEntryKey Key { get; set; }
 
     [ObservableProperty]
@@ -38,6 +39,9 @@ public sealed partial class ContentBrowserItem : ObservableObject
     [ObservableProperty]
     public partial bool CanEdit { get; set; } = true;
 
+    [ObservableProperty]
+    public partial bool IsDirectory { get; set; }
+
     internal SourceList<ContentBrowserItem> ChildrenSource { get; } = new();
     private readonly ReadOnlyObservableCollection<ContentBrowserItem> _sortedChildren;
 
@@ -47,8 +51,9 @@ public sealed partial class ContentBrowserItem : ObservableObject
         init => ChildrenSource.AddRange(value);
     }
 
-    public ContentBrowserItem()
+    public ContentBrowserItem(IAssetPackage package)
     {
+        _package = package;
         ChildrenSource.Connect().Sort(KeyComparer.Instance).Bind(out _sortedChildren).Subscribe();
     }
 
@@ -59,6 +64,12 @@ public sealed partial class ContentBrowserItem : ObservableObject
     private void Rename()
     {
         IsRenaming = true;
+    }
+
+    [RelayCommand]
+    private void Refresh()
+    {
+        _ = _package.RefreshAsync(Key.Name);
     }
 
     internal sealed class KeyComparer : IComparer<ContentBrowserItem>
@@ -91,28 +102,30 @@ public sealed class ContentBrowserPackageRoot : IDisposable
     {
         _package = package;
 
-        _package.OnEntryAdded += OnEntryAdded;
-        _package.OnEntryRemoved += OnEntryRemoved;
-        _package.OnEntryRenamed += OnEntryRenamed;
+        _package.OnEntriesRefreshed += OnPackageChanged;
 
-        Item = new ContentBrowserItem
+        Item = new ContentBrowserItem(package)
         {
             Name = package.PackageName,
             Icon = PackIconCodiconsKind.Package,
             CanEdit = false,
+            IsDirectory = true,
         };
-        Item.ChildrenSource.AddRange(package.TopLevelEntries.Select(CreateContentFolder));
+        Item.ChildrenSource.AddRange(package.TopLevelEntries.Select(x => CreateContentFolder(package, x)));
         _items[Name.None] = Item;
     }
 
-    private ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
+    private ContentBrowserItem CreateContentFolder(IAssetPackage package, IAssetPackageEntry entry)
     {
-        var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
-        var item = new ContentBrowserItem
+        var children = entry is IAssetPackageFolder folder
+            ? folder.Children.Select(x => CreateContentFolder(package, x))
+            : [];
+        var item = new ContentBrowserItem(package)
         {
             Name = entry.DisplayName,
             Key = entry.Key,
             Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
+            IsDirectory = entry.IsDirectory,
         };
         item.ChildrenSource.AddRange(children);
 
@@ -120,11 +133,28 @@ public sealed class ContentBrowserPackageRoot : IDisposable
         return item;
     }
 
-    private void OnEntryAdded(IAssetPackageEntry entry)
+    private void OnPackageChanged(scoped in AssetPackageChangeManifest manifest)
+    {
+        foreach (var entry in manifest.AddedEntries)
+        {
+            OnEntryAdded(_package, entry);
+        }
+
+        foreach (var entry in manifest.RemovedEntries)
+        {
+            OnEntryRemoved(entry);
+        }
+
+        foreach (var (oldEntry, newEntry) in manifest.RenamedEntries)
+        {
+            OnEntryRenamed(oldEntry, newEntry);
+        }
+    }
+
+    private void OnEntryAdded(IAssetPackage package, IAssetPackageEntry entry)
     {
         var parent = _items[entry.ParentName];
-        parent.ChildrenSource.Add(CreateContentFolder(entry));
-        //parent.Children.Sort(ContentBrowserItem.KeyComparer.Instance);
+        parent.ChildrenSource.Add(CreateContentFolder(package, entry));
     }
 
     private void OnEntryRemoved(IAssetPackageEntry entry)
@@ -152,9 +182,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
 
     public void Dispose()
     {
-        _package.OnEntryAdded -= OnEntryAdded;
-        _package.OnEntryRemoved -= OnEntryRemoved;
-        _package.OnEntryRenamed -= OnEntryRenamed;
+        _package.OnEntriesRefreshed -= OnPackageChanged;
     }
 }
 

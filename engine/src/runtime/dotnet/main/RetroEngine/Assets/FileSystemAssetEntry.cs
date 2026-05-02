@@ -3,7 +3,6 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets;
@@ -27,9 +26,15 @@ internal sealed record FileSystemAssetFolder(
     IReadOnlyCollection<IAssetPackageEntry> IAssetPackageFolder.Children => Children;
 }
 
-internal sealed record FileSystemAssetFile(Name Name, Name ParentName, string DisplayName, string Path, Name AssetType)
-    : FileSystemAssetEntry(Name, ParentName, DisplayName, Path),
-        IAssetPackageFile
+internal sealed record FileSystemAssetFile(
+    Name Name,
+    Name ParentName,
+    string DisplayName,
+    string Path,
+    DateTimeOffset LastModified,
+    long Length,
+    Name AssetType
+) : FileSystemAssetEntry(Name, ParentName, DisplayName, Path), IAssetPackageFile
 {
     public override bool IsDirectory => false;
 }

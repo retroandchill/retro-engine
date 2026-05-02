@@ -193,18 +193,28 @@ public static class CollectionExtensions
         }
     }
 
-    public static TValue GetOrAdd<TKey, TValue>(
-        this Dictionary<TKey, TValue> dictionary,
-        TKey key,
-        Func<TKey, TValue> valueFactory
-    )
+    extension<TKey, TValue>(Dictionary<TKey, TValue> dictionary)
         where TKey : notnull
     {
-        ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out var exists);
-        if (!exists)
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
-            value = valueFactory(key);
+            ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out var exists);
+            if (!exists)
+            {
+                value = valueFactory(key);
+            }
+            return value!;
         }
-        return value!;
+
+        public TValue GetOrAdd<TContext>(TKey key, scoped TContext context, Func<TKey, TContext, TValue> valueFactory)
+            where TContext : allows ref struct
+        {
+            ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, key, out var exists);
+            if (!exists)
+            {
+                value = valueFactory(key, context);
+            }
+            return value!;
+        }
     }
 }

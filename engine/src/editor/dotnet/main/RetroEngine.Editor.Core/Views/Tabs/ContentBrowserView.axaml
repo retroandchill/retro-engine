@@ -31,11 +31,15 @@
                     <StackPanel.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
-                                      Command="{Binding NewFolderCommand}" />
+                                      Command="{Binding NewFolderCommand}"
+                                      IsEnabled="{Binding CanEdit}"
+                                      IsVisible="{Binding IsDirectory}"/>
+                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Refresh, Refresh}"
+                                      Command="{Binding RefreshCommand}"/>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
                                       GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
                                       Command="{Binding RenameCommand}"
-                                      IsEnabled="{Binding CanEdit}" />
+                                      IsEnabled="{Binding CanEdit}"/>
                         </ContextMenu>
                     </StackPanel.ContextMenu>
 
