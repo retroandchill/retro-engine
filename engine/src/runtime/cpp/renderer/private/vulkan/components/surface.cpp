@@ -16,7 +16,7 @@ namespace retro
 {
     vk::UniqueSurfaceKHR create_surface(const Window &viewport, vk::Instance instance)
     {
-        switch (auto [backend, handle] = viewport.native_handle(); backend)
+        switch (auto [backend, handle] = viewport.platform_handle(); backend)
         {
             case WindowBackend::sdl3:
                 {

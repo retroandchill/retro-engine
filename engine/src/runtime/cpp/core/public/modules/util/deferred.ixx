@@ -16,7 +16,7 @@ namespace retro
       public:
         template <typename... Args>
             requires std::constructible_from<Functor, Args...>
-        explicit constexpr Deferred(Args &&...args) : functor_{std::forward<Args>(args)...}
+        explicit(false) constexpr Deferred(Args &&...args) : functor_{std::forward<Args>(args)...}
         {
         }
 

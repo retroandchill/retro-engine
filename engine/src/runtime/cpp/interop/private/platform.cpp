@@ -25,4 +25,9 @@ extern "C"
     {
         delete backend;
     }
+
+    RETRO_API WindowBackend retro_platform_backend_get_window_backend(const PlatformBackend *backend)
+    {
+        return backend->window_backend();
+    }
 }

@@ -64,7 +64,7 @@ namespace retro
     template <Awaitable T>
     using AwaiterType = decltype(get_awaiter(std::declval<T>()));
 
-    template <Awaitable T>
+    export template <Awaitable T>
     using AwaitResult = decltype(std::declval<AwaiterType<T>>().await_resume());
 
     export template <typename T = void>

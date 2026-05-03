@@ -23,10 +23,36 @@ namespace retro
         sdl3
     };
 
+    export struct PlatformWindowHandle
+    {
+        WindowBackend backend = WindowBackend::headless;
+        void *handle = nullptr;
+    };
+
+    export enum class NativeWindowType : std::uint8_t
+    {
+        win32_hwnd,
+        x11_window,
+        wayland_surface,
+        cocoa_window,
+        cocoa_view,
+        unknown = std::numeric_limits<std::uint8_t>::max()
+    };
+
+#ifdef _WIN32
+    constexpr auto default_native_window_type = NativeWindowType::win32_hwnd;
+#elifdef __linux__
+    constexpr auto default_native_window_type = NativeWindowType::x11_window;
+#elifdef __APPLE__
+    constexpr auto default_native_window_type = NativeWindowType::cocoa_window;
+#else
+    constexpr auto default_native_window_type = NativeWindowType::unknown;
+#endif
+
     export struct NativeWindowHandle
     {
-        WindowBackend backend;
-        void *handle;
+        NativeWindowType type = default_native_window_type;
+        void *handle = nullptr;
     };
 
     export enum class WindowFlags : std::uint64_t
@@ -70,7 +96,7 @@ namespace retro
 
         [[nodiscard]] virtual std::uint64_t id() const noexcept = 0;
 
-        [[nodiscard]] virtual NativeWindowHandle native_handle() const noexcept = 0;
+        [[nodiscard]] virtual PlatformWindowHandle platform_handle() const noexcept = 0;
 
         virtual void set_title(CStringView title) = 0;
 

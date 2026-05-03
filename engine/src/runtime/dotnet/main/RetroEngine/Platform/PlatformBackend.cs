@@ -14,6 +14,15 @@ public sealed partial class PlatformBackend : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; }
 
+    public WindowBackend WindowBackend
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(NativeHandle == IntPtr.Zero, this);
+            return NativeGetWindowBackend(NativeHandle);
+        }
+    }
+
     public PlatformBackend(PlatformBackendKind kind, PlatformInitFlags flags)
     {
         NativeHandle = NativeCreate(kind, flags, out var error);
@@ -38,6 +47,9 @@ public sealed partial class PlatformBackend : IDisposable
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_platform_backend_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_platform_backend_get_window_backend")]
+    private static partial WindowBackend NativeGetWindowBackend(IntPtr ptr);
 }
 
 [CustomMarshaller(typeof(PlatformBackend), MarshalMode.ManagedToUnmanagedIn, typeof(PlatformBackendMarshaller))]

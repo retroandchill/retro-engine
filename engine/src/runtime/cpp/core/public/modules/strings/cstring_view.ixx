@@ -75,6 +75,8 @@ namespace retro
 
         static constexpr size_type npos = ViewType::npos;
 
+        constexpr BasicCStringView() noexcept = default;
+
         template <size_type N>
         constexpr explicit(false) BasicCStringView(const T (&str)[N]) noexcept : view_{str, N - 1}
         {

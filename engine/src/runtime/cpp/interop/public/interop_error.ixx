@@ -10,6 +10,7 @@ import std;
 import retro.platform.exceptions;
 import retro.core.util.exceptions;
 import retro.runtime.exceptions;
+import retro.core.async.task;
 
 namespace retro
 {
@@ -36,12 +37,28 @@ namespace retro
         const char *message = nullptr;
     };
 
+    template <typename T>
+    concept ExpectedLike = requires(T t) {
+        {
+            t.has_value()
+        } -> std::convertible_to<bool>;
+        typename T::value_type;
+        {
+            *t
+        } -> std::convertible_to<typename T::value_type>;
+        typename T::error_type;
+        {
+            t.error()
+        } -> std::convertible_to<typename T::error_type>;
+    };
+
     const char *cache_error_message(const char *message);
 
     template <typename T>
-    concept ValidInteropFunctor = std::invocable<T> && (std::is_void_v<std::invoke_result_t<T>> ||
-                                                        std::is_lvalue_reference_v<std::invoke_result_t<T>> ||
-                                                        std::is_pointer_v<std::invoke_result_t<T>>);
+    concept ValidInteropResult = std::is_void_v<T> || std::is_lvalue_reference_v<T> || std::is_pointer_v<T>;
+
+    template <typename T>
+    concept ValidInteropFunctor = std::invocable<T> && ValidInteropResult<std::invoke_result_t<T>>;
 
     template <ValidInteropFunctor Functor>
     using InteropResult =
@@ -50,6 +67,31 @@ namespace retro
                            std::conditional_t<std::is_lvalue_reference_v<std::invoke_result_t<Functor>>,
                                               std::remove_reference_t<std::invoke_result_t<Functor>> *,
                                               std::invoke_result_t<Functor>>>;
+
+    template <typename T>
+    concept ValidExpectedResult = ExpectedLike<T> && std::is_default_constructible_v<typename T::value_type> &&
+                                  std::movable<typename T::value_type>;
+
+    template <typename T>
+    concept ValidExpectedFunctor = std::invocable<T> && ValidExpectedResult<std::invoke_result_t<T>>;
+
+    template <ValidExpectedFunctor T>
+    using ExpectedInteropResult = std::invoke_result_t<T>::value_type;
+
+    template <ValidExpectedFunctor T>
+    using ExpectedErrorType = std::invoke_result_t<T>::error_type;
+
+    template <typename T>
+    concept AwaitableExpected = Awaitable<T> && ExpectedLike<AwaitResult<T>>;
+
+    template <typename T>
+    concept AwaitableExpectedFunctor = std::invocable<T> && AwaitableExpected<std::invoke_result_t<T>>;
+
+    template <AwaitableExpectedFunctor T>
+    using AwaitedExpectedInteropResult = AwaitResult<std::invoke_result_t<T>>::value_type;
+
+    template <AwaitableExpectedFunctor T>
+    using AwaitedExpectedInteropError = AwaitResult<std::invoke_result_t<T>>::error_type;
 
     template <ValidInteropFunctor Functor>
     constexpr InteropResult<Functor> invalid_interop_result = nullptr;
@@ -159,5 +201,87 @@ namespace retro
             error.message = "Unknown error";
             return invalid_interop_result<Functor>;
         }
+    }
+
+    export template <ValidExpectedFunctor Functor, std::invocable<ExpectedErrorType<Functor>> ErrorHandler>
+        requires std::convertible_to<std::invoke_result_t<ErrorHandler, ExpectedErrorType<Functor>>, InteropError>
+    bool try_execute(Functor &&functor,
+                     ErrorHandler &&error_handle,
+                     ExpectedInteropResult<Functor> &success,
+                     InteropError &error)
+    {
+        try
+        {
+            auto result = std::invoke(std::forward<Functor>(functor));
+            if (!result.has_value())
+            {
+                success = {};
+                error = std::invoke(std::forward<ErrorHandler>(error_handle), std::move(result).error());
+                return false;
+            }
+
+            error = InteropError{};
+            success = *std::move(result);
+            return true;
+        }
+        catch (std::exception &e)
+        {
+            success = {};
+            error.error_code = get_error_code(e);
+            auto &type_id = typeid(e);
+            error.native_exception_type = type_id.name();
+            error.message = cache_error_message(e.what());
+            return false;
+        }
+        catch (...)
+        {
+            success = {};
+            error.error_code = InteropErrorCode::unknown;
+            error.native_exception_type = nullptr;
+            error.message = "Unknown error";
+            return false;
+        }
+    }
+
+    export template <AwaitableExpectedFunctor Functor,
+                     std::invocable<AwaitedExpectedInteropError<Functor>> ErrorHandler,
+                     std::invocable<AwaitedExpectedInteropResult<Functor>> OnSuccess,
+                     std::invocable<InteropError> OnError>
+        requires std::convertible_to<std::invoke_result_t<ErrorHandler, AwaitedExpectedInteropError<Functor>>,
+                                     InteropError>
+    void try_execute_async(Functor &&functor, ErrorHandler &&error_handle, OnSuccess &&on_success, OnError &&on_error)
+    {
+        std::ignore =
+            [](auto local_functor, auto local_error_handle, auto local_on_success, auto local_on_error) -> Task<>
+        {
+            try
+            {
+                auto result = co_await std::invoke(std::forward<Functor>(local_functor));
+                if (!result.has_value())
+                {
+                    std::invoke(std::forward<OnError>(local_on_error),
+                                std::invoke(std::forward<ErrorHandler>(local_error_handle), std::move(result).error()));
+                    co_return;
+                }
+
+                std::invoke(std::forward<OnSuccess>(local_on_success), *std::move(result));
+            }
+            catch (std::exception &e)
+            {
+                auto &type_id = typeid(e);
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = get_error_code(e),
+                                         .native_exception_type = type_id.name(),
+                                         .message = e.what()});
+            }
+            catch (...)
+            {
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"});
+            }
+        }(std::forward<Functor>(functor),
+          std::forward<ErrorHandler>(error_handle),
+          std::forward<OnSuccess>(on_success),
+          std::forward<OnError>(on_error));
     }
 } // namespace retro

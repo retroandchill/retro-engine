@@ -18,6 +18,7 @@ namespace RetroEngine.Rendering;
 public sealed partial class RenderManager : IDisposable
 {
     private IntPtr _nativeHandle;
+    private readonly PlatformBackend _platformBackend;
     private readonly IHostApplicationLifetime _lifetime;
 
     public RenderManager(
@@ -28,6 +29,7 @@ public sealed partial class RenderManager : IDisposable
         IHostApplicationLifetime lifetime
     )
     {
+        _platformBackend = platformBackend;
         var pipelineHandles = pipelines.AsValueEnumerable().Select(x => x.NativeHandle).ToArray();
         _nativeHandle = NativeCreate(
             platformBackend,
@@ -153,7 +155,8 @@ public sealed partial class RenderManager : IDisposable
         CancellationToken cancellationToken = default
     )
     {
-        var tcs = new TaskCompletionSource<ulong>(cancellationToken);
+        var tcs = new TaskCompletionSource<ulong>();
+        await using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
         var tcsHandle = GCHandle.Alloc(tcs);
         try
         {
@@ -178,6 +181,56 @@ public sealed partial class RenderManager : IDisposable
         {
             tcsHandle.Free();
         }
+    }
+
+    public ulong CreateWindowFromNative(NativeWindowHandle handle)
+    {
+        var window = NativeCreateWindow(_nativeHandle, handle, out var error);
+        error.ThrowIfError();
+        return window;
+    }
+
+    public async Task<ulong> CreateWindowFromNativeAsync(
+        NativeWindowHandle handle,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var tcs = new TaskCompletionSource<ulong>();
+        await using var registration = cancellationToken.Register(() => tcs.TrySetCanceled());
+        var tcsHandle = GCHandle.Alloc(tcs);
+        try
+        {
+            unsafe
+            {
+                NativeCreateWindowAsync(
+                    _nativeHandle,
+                    handle,
+                    GCHandle.ToIntPtr(tcsHandle),
+                    &OnWindowCreated,
+                    &OnWindowError
+                );
+            }
+
+            return await tcs.Task;
+        }
+        finally
+        {
+            tcsHandle.Free();
+        }
+    }
+
+    public void RemoveWindow(ulong windowId)
+    {
+        NativeRemoveWindow(_nativeHandle, windowId, out var error);
+        error.ThrowIfError();
+    }
+
+    public PlatformWindowHandle GetWindowById(ulong id)
+    {
+        var windowHandle = NativeGetWindowById(_nativeHandle, id);
+        return windowHandle != IntPtr.Zero
+            ? new PlatformWindowHandle(windowHandle, _platformBackend.WindowBackend)
+            : throw new InvalidOperationException("Window not found");
     }
 
     [UnmanagedCallersOnly]
@@ -252,6 +305,13 @@ public sealed partial class RenderManager : IDisposable
         out InteropError error
     );
 
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_create_window_from_handle")]
+    private static unsafe partial ulong NativeCreateWindow(
+        IntPtr engine,
+        NativeWindowHandle handle,
+        out InteropError error
+    );
+
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window_async")]
     private static unsafe partial void NativeCreateWindowAsync(
         IntPtr engine,
@@ -264,6 +324,21 @@ public sealed partial class RenderManager : IDisposable
         delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
         delegate* unmanaged<IntPtr, byte*, void> onError
     );
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window_from_handle_async")]
+    private static unsafe partial void NativeCreateWindowAsync(
+        IntPtr engine,
+        NativeWindowHandle handle,
+        IntPtr userData,
+        delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
+        delegate* unmanaged<IntPtr, byte*, void> onError
+    );
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_remove_window")]
+    private static unsafe partial void NativeRemoveWindow(IntPtr engine, ulong windowId, out InteropError error);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_get_window_by_id")]
+    private static unsafe partial IntPtr NativeGetWindowById(IntPtr engine, ulong id);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_sync_render_state")]
     private static unsafe partial void NativeSyncRenderState(IntPtr engine, out InteropError error);

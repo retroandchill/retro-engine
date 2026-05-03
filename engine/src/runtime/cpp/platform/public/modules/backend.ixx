@@ -81,6 +81,11 @@ namespace retro
 
         virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) = 0;
 
+        virtual PlatformResult<std::shared_ptr<Window>> create_window_from_native(NativeWindowHandle handle) = 0;
+
+        virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_from_native_async(
+            NativeWindowHandle handle) = 0;
+
         virtual Optional<Event> poll_event() = 0;
 
         virtual Optional<Event> wait_for_event() = 0;

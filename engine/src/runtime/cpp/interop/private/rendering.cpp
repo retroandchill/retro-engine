@@ -148,37 +148,28 @@ extern "C"
                                                                const WindowFlags flags,
                                                                InteropError *error)
     {
-        try
-        {
-            auto window = manager->create_new_window(WindowDesc{
-                .width = width,
-                .height = height,
-                .title = retro::convert_string<char>(
-                    std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
-                .flags = flags,
-            });
-            if (!window.has_value())
+        std::uint64_t id = 0;
+        const auto success = try_execute(
+            [&]
             {
-                *error = InteropError{.error_code = InteropErrorCode::platform_error,
-                                      .message = window.error().message.data()};
-                return 0;
-            }
+                return manager->create_new_window(WindowDesc{
+                    .width = width,
+                    .height = height,
+                    .title = retro::convert_string<char>(
+                        std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                    .flags = flags,
+                });
+            },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            id,
+            *error);
 
-            return *window;
-        }
-        catch (const std::exception &e)
+        if (!success)
         {
-            auto &type_id = typeid(e);
-            *error = InteropError{.error_code = get_error_code(e),
-                                  .native_exception_type = type_id.name(),
-                                  .message = e.what()};
+            return 0;
         }
-        catch (...)
-        {
-            *error = InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"};
-        }
-
-        return 0;
+        return id;
     }
 
     RETRO_API void retro_render_manager_create_window_async(RenderManager *manager,
@@ -191,49 +182,68 @@ extern "C"
                                                             const WindowCreatedCallback created_callback,
                                                             const OnErrorCallback error_callback)
     {
-        std::ignore = [](WindowDesc &&desc,
-                         RenderManager *local_manager,
-                         void *local_user_data,
-                         const WindowCreatedCallback on_created,
-                         const OnErrorCallback on_error) -> Task<>
-        {
-            try
-            {
-                auto window = co_await local_manager->create_new_window_async(std::move(desc));
-                if (!window.has_value())
-                {
-                    on_error(local_user_data,
-                             InteropError{.error_code = InteropErrorCode::platform_error,
-                                          .message = window.error().message.data()});
-                }
+        try_execute_async(
+            [manager,
+             desc =
+                 WindowDesc{
+                     .width = width,
+                     .height = height,
+                     .title = retro::convert_string<char>(
+                         std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                     .flags = flags,
+                 }] mutable { return manager->create_new_window_async(std::move(desc)); },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            [user_data, created_callback](std::uint64_t window_id) { created_callback(user_data, window_id); },
+            [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
+    }
 
-                on_created(local_user_data, *window);
-            }
-            catch (const std::exception &e)
-            {
-                auto &type_id = typeid(e);
-                on_error(local_user_data,
-                         InteropError{.error_code = get_error_code(e),
-                                      .native_exception_type = type_id.name(),
-                                      .message = e.what()});
-            }
-            catch (...)
-            {
-                on_error(local_user_data,
-                         InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"});
-            }
-        }(
-            WindowDesc{
-                .width = width,
-                .height = height,
-                .title = retro::convert_string<char>(
-                    std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
-                .flags = flags,
-            },
-            manager,
-            user_data,
-            created_callback,
-            error_callback);
+    RETRO_API std::uint64_t retro_render_create_window_from_handle(RenderManager *manager,
+                                                                   const NativeWindowHandle handle,
+                                                                   InteropError *error)
+    {
+        std::uint64_t id = 0;
+        const auto success = try_execute(
+            [&] { return manager->create_new_window(handle); },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            id,
+            *error);
+
+        if (!success)
+        {
+            return 0;
+        }
+        return id;
+    }
+
+    RETRO_API void retro_render_manager_remove_window(RenderManager *manager,
+                                                      const std::uint64_t window_id,
+                                                      InteropError *error)
+    {
+        try_execute([&] { manager->remove_window(window_id); }, *error);
+    }
+
+    RETRO_API Window *retro_render_manager_get_window_by_id(const RenderManager *manager, const std::uint64_t window_id)
+    {
+        const auto result = manager->get_window(window_id);
+        if (!result)
+            return nullptr;
+        return std::addressof(result.value());
+    }
+
+    RETRO_API void retro_render_manager_create_window_from_handle_async(RenderManager *manager,
+                                                                        NativeWindowHandle handle,
+                                                                        void *user_data,
+                                                                        const WindowCreatedCallback created_callback,
+                                                                        const OnErrorCallback error_callback)
+    {
+        try_execute_async(
+            [manager, handle] { return manager->create_new_window_async(handle); },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            [user_data, created_callback](std::uint64_t window_id) { created_callback(user_data, window_id); },
+            [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
     }
 
     RETRO_API void retro_render_manager_on_window_removed_add(RenderManager *engine,
