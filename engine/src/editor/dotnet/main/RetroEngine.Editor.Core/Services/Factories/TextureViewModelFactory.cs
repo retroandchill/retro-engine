@@ -32,6 +32,7 @@ public sealed class TextureViewModelFactory(
 
         var scene = sceneFactory.CreateViewModel();
         var viewport = new Viewport(viewportManager) { Scene = scene.Scene };
+        _ = new Sprite(scene.Scene) { Texture = texture };
         scene.Host.BindViewport(viewport);
         var nameAsString = assetPath.ToString();
         var lastDelimiter = nameAsString.LastIndexOf('/');
