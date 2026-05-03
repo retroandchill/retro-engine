@@ -72,6 +72,15 @@ public sealed partial class AssetManager(
         _packages.Clear();
     }
 
+    public Name GetAssetType(AssetPath path)
+    {
+        if (_packages.TryGetValue(path.PackageName, out var package))
+            return package.GetAssetType(path.AssetName);
+
+        logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
+        return default;
+    }
+
     [CreateSyncVersion]
     public async ValueTask<object?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
@@ -118,7 +127,7 @@ public sealed partial class AssetManager(
             }
 
             await using var stream = package.OpenAsset(path.AssetName);
-            using var builder = new AssetReadBuffer();
+            using var builder = AssetReadBufferPool.Rent();
             await builder.ReadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
 #if SYNC_ONLY
             var decoded = decoder.Decode(AssetStorageType.File, builder.Span);

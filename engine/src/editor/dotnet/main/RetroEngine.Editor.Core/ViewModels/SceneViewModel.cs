@@ -22,5 +22,6 @@ public sealed partial class SceneViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         Scene.Dispose();
+        Host.Dispose();
     }
 }

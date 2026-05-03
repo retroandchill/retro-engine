@@ -6,6 +6,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Interop;
+using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Rendering;
 
@@ -18,6 +19,8 @@ public enum TextureFormat : byte
 [NativeMarshalling(typeof(TextureMarshaller))]
 public sealed partial class Texture : IDisposable
 {
+    public static readonly Name AssetType = "Texture";
+
     internal IntPtr NativeHandle { get; private set; }
 
     public int Width { get; }

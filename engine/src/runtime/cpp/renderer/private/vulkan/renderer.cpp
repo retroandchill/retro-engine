@@ -27,7 +27,7 @@ namespace retro
         : backend_{backend.shared_from_this()}, window_{std::move(window)}, surface_{std::move(surface)},
           device_{device}, buffer_manager_{buffer_manager}, command_pool_{command_pool},
           pipeline_manager_{device_, buffer_manager_},
-          presenter_{*window, surface.get(), device_, command_pool, pipeline_manager_}
+          presenter_{*window_, surface_.get(), device_, command_pool, pipeline_manager_}
     {
     }
 

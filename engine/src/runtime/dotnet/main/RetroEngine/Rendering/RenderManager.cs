@@ -21,6 +21,8 @@ public sealed partial class RenderManager : IDisposable
     private readonly PlatformBackend _platformBackend;
     private readonly IHostApplicationLifetime _lifetime;
 
+    public bool Disposed => _nativeHandle == IntPtr.Zero;
+
     public RenderManager(
         PlatformBackend platformBackend,
         RenderBackend renderBackend,

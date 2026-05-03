@@ -11,14 +11,42 @@ using RetroEngine.World;
 
 namespace RetroEngine.Editor.Core.Hosts;
 
-public sealed class EngineControlHost(RenderManager renderManager) : NativeControlHost
+public sealed class EngineControlHost(RenderManager renderManager) : NativeControlHost, IDisposable
 {
-    public ulong WindowId { get; private set; }
+    public ulong WindowId
+    {
+        get;
+        private set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+            _boundViewports.RemoveWhere(x => x.Disposed);
+            foreach (var viewport in _boundViewports)
+            {
+                renderManager.BindViewportToWindow(viewport, field);
+            }
+        }
+    }
     private PlatformWindowHandle _window;
+
+    private readonly HashSet<Viewport> _boundViewports = [];
 
     public void BindViewport(Viewport viewport)
     {
-        renderManager.BindViewportToWindow(viewport, WindowId);
+        if (_boundViewports.Add(viewport))
+        {
+            renderManager.BindViewportToWindow(viewport, WindowId);
+        }
+    }
+
+    public void UnbindViewport(Viewport viewport)
+    {
+        if (_boundViewports.Remove(viewport))
+        {
+            renderManager.BindViewportToWindow(viewport, 0);
+        }
     }
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
@@ -60,5 +88,15 @@ public sealed class EngineControlHost(RenderManager renderManager) : NativeContr
             _ => NativeWindowType.Unknown,
         };
         return new NativeWindowHandle(type, handle.Handle);
+    }
+
+    public void Dispose()
+    {
+        if (WindowId == 0)
+            return;
+
+        renderManager.RemoveWindow(WindowId);
+        _window = default;
+        WindowId = 0;
     }
 }

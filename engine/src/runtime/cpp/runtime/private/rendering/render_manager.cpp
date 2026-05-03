@@ -73,10 +73,15 @@ namespace retro
 
     void RenderManager::add_window(Window &window)
     {
-        auto create_renderer = [this, &window]
+        auto renderer = render_backend_.create_renderer(window.shared_from_this());
+
+        for (auto [type, pipeline] : pipeline_manager_.pipelines())
+            renderer->add_new_render_pipeline(type, *pipeline);
+
+        auto create_renderer = [this, &window, &renderer]
         {
             std::unique_lock lock{renderers_mutex_};
-            return renderers_.emplace(window.id(), render_backend_.create_renderer(window.shared_from_this()));
+            return renderers_.emplace(window.id(), std::move(renderer));
         };
 
         auto [inserted, success] = create_renderer();
@@ -85,9 +90,6 @@ namespace retro
             get_logger().critical("Failed to add window {} to engine", window.id());
             return;
         }
-
-        for (auto [type, pipeline] : pipeline_manager_.pipelines())
-            inserted->second->add_new_render_pipeline(type, *pipeline);
 
         if (!primary_renderer_.has_value())
         {
@@ -130,6 +132,12 @@ namespace retro
 
     bool RenderManager::set_viewport_window(Viewport &viewport, const std::uint64_t window_id) const
     {
+        if (window_id == 0)
+        {
+            viewport.clear_window();
+            return true;
+        }
+
         auto renderer = get_renderer(window_id);
         if (!renderer.has_value())
             return false;

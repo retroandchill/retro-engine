@@ -181,7 +181,7 @@ namespace retro
 
     vk::UniqueShaderModule VulkanDevice::create_shader_module(std::span<const uint32_t> data) const
     {
-        const vk::ShaderModuleCreateInfo info{.codeSize = data.size(), .pCode = data.data()};
+        const vk::ShaderModuleCreateInfo info{.codeSize = data.size() * sizeof(uint32_t), .pCode = data.data()};
         return device_->createShaderModuleUnique(info);
     }
 

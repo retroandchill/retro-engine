@@ -3,7 +3,6 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.IO.Abstractions;
 using HanumanInstitute.MvvmDialogs;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
@@ -13,7 +12,6 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class ContentBrowserViewModelFactory(
-    IFileSystem fileSystem,
     AssetManager assetManager,
     IDialogService dialogService,
     INavigationService navigationService,
@@ -22,7 +20,7 @@ public sealed class ContentBrowserViewModelFactory(
 {
     public override ContentBrowserViewModel CreateViewModel()
     {
-        var model = new ContentBrowserViewModel { FileSystem = fileSystem };
+        var model = new ContentBrowserViewModel();
 
         foreach (
             var root in assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(

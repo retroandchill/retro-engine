@@ -6,6 +6,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using RetroEngine.Editor.Core.Attributes;
+using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Menus;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Core.Views;

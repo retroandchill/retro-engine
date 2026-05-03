@@ -15,8 +15,7 @@ namespace RetroEngine.Assets.Decoders;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder
 {
-    private static readonly Name TypeName = "Texture";
-    public Name AssetType => TypeName;
+    public Name AssetType => Texture.AssetType;
 
     private static readonly ImmutableArray<string> Extensions = ["png", "jpg", "jpeg", "bmp"];
     ImmutableArray<string> IAssetDecoder.Extensions => Extensions;

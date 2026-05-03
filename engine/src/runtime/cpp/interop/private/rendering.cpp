@@ -242,8 +242,15 @@ extern "C"
             [manager, handle] { return manager->create_new_window_async(handle); },
             [](const PlatformError &e)
             { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
-            [user_data, created_callback](std::uint64_t window_id) { created_callback(user_data, window_id); },
+            [user_data, created_callback](const std::uint64_t window_id) { created_callback(user_data, window_id); },
             [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
+    }
+
+    RETRO_API void retro_render_manager_set_viewport_window(const RenderManager *engine,
+                                                            Viewport *viewport,
+                                                            const std::uint64_t window_id)
+    {
+        engine->set_viewport_window(*viewport, window_id);
     }
 
     RETRO_API void retro_render_manager_on_window_removed_add(RenderManager *engine,
