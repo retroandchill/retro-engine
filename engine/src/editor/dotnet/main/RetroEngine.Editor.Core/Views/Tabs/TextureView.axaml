@@ -3,18 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
-             xmlns:behaviors="clr-namespace:RetroEngine.Editor.Core.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.TextureView">
     <Design.DataContext>
         <tabs:TextureViewModel />
     </Design.DataContext>
 
-    <Interaction.Behaviors>
-        <behaviors:DisposeBehavior/>
-    </Interaction.Behaviors>
-
     <StackPanel Spacing="20" Margin="30">
-        <ContentControl Content="{Binding Scene}"/>
+        <ScrollViewer>
+            <ContentControl Content="{Binding Scene}"/>
+        </ScrollViewer>
     </StackPanel>
 </UserControl>

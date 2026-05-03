@@ -16,11 +16,11 @@ import retro.runtime.world.scene;
 namespace retro
 {
 
-    RenderManager::RenderManager(PlatformBackend &platform_backend_,
+    RenderManager::RenderManager(PlatformBackend &platform_backend,
                                  RenderBackend &render_backend,
                                  ViewportManager &viewports,
                                  PipelineManager pipeline_manager)
-        : platform_backend_{platform_backend_}, render_backend_{render_backend}, viewports_{viewports},
+        : platform_backend_{platform_backend}, render_backend_{render_backend}, viewports_{viewports},
           pipeline_manager_{std::move(pipeline_manager)}
     {
         viewports_.on_viewport_created().add(

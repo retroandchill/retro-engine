@@ -32,6 +32,8 @@ public sealed class TextureViewModelFactory(
             throw new InvalidOperationException($"Failed to load texture asset at {assetPath}.");
 
         var scene = sceneFactory.CreateViewModel();
+        scene.Width = texture.Width;
+        scene.Height = texture.Height;
         var viewport = new Viewport(viewportManager) { Scene = scene.Scene };
         _ = new Sprite(scene.Scene) { Texture = texture };
         renderManager.BindViewportToWindow(viewport, 0);

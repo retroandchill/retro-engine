@@ -29,7 +29,7 @@ namespace retro
     export class RETRO_API RenderManager
     {
       public:
-        explicit RenderManager(PlatformBackend &platform_backend_,
+        explicit RenderManager(PlatformBackend &platform_backend,
                                RenderBackend &render_backend,
                                ViewportManager &viewports,
                                PipelineManager pipeline_manager);

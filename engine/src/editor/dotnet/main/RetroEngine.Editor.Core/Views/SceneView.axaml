@@ -12,11 +12,7 @@
         <viewModels:SceneViewModel/>
     </Design.DataContext>
 
-    <Interaction.Behaviors>
-        <behaviors:DisposeBehavior/>
-    </Interaction.Behaviors>
-
     <hosts:EngineControlHost Provider="{Binding Host}"
-                             Width="640"
-                             Height="480"/>
+                             Width="{Binding Width}"
+                             Height="{Binding Height}"/>
 </UserControl>

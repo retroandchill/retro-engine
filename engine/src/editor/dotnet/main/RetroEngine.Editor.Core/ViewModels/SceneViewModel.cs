@@ -17,6 +17,12 @@ public sealed partial class SceneViewModel : ObservableObject, IDisposable
 
     public required Scene Scene { get; init; }
 
+    [ObservableProperty]
+    public partial int Width { get; set; } = 800;
+
+    [ObservableProperty]
+    public partial int Height { get; set; } = 600;
+
     public void Dispose()
     {
         Scene.Dispose();
