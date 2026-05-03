@@ -11,13 +11,14 @@ import retro.runtime.rendering.renderer2d;
 import retro.platform.window;
 import retro.runtime.rendering.render_pipeline;
 import retro.core.memory.ref_counted_ptr;
+import retro.runtime.rendering.render_target;
 
 namespace retro
 {
     export class HeadlessRenderer2D final : public Renderer2D
     {
       public:
-        explicit inline HeadlessRenderer2D(std::shared_ptr<Window> window) : window_{std::move(window)}
+        explicit inline HeadlessRenderer2D(std::shared_ptr<RenderTarget> target) : target_{std::move(target)}
         {
         }
 
@@ -51,12 +52,12 @@ namespace retro
             // No-op for headless renderer
         }
 
-        [[nodiscard]] inline Window &window() const override
+        [[nodiscard]] inline RenderTarget &render_target() const override
         {
-            return *window_;
+            return *target_;
         }
 
       private:
-        std::shared_ptr<Window> window_;
+        std::shared_ptr<RenderTarget> target_;
     };
 } // namespace retro

@@ -21,6 +21,7 @@ import retro.runtime.rendering.pipeline_manager;
 import retro.core.functional.delegate;
 import retro.runtime.rendering.render_backend;
 import retro.core.memory.ref_counted_ptr;
+import retro.runtime.rendering.render_target;
 
 namespace retro
 {

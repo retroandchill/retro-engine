@@ -22,6 +22,7 @@ import retro.runtime.rendering.layout.anchors;
 import retro.core.math.rect;
 import retro.platform.window;
 import retro.core.memory.ref_counted_ptr;
+import retro.runtime.rendering.render_target;
 
 namespace retro
 {
@@ -70,8 +71,8 @@ namespace retro
     {
       public:
         using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
-        using WindowChanged =
-            MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
+        using RenderTargetChanged = MulticastDelegate<
+            void(Viewport &, const std::weak_ptr<RenderTarget> &, const std::weak_ptr<RenderTarget> &)>;
 
         Viewport(const ScreenLayout &layout, std::int32_t z_order);
 
@@ -122,9 +123,9 @@ namespace retro
             scene_ = scene;
         }
 
-        [[nodiscard]] inline Optional<std::shared_ptr<Window>> window() const noexcept
+        [[nodiscard]] inline Optional<std::shared_ptr<RenderTarget>> target() const noexcept
         {
-            if (auto win = window_.lock(); win != nullptr)
+            if (auto win = target_.lock(); win != nullptr)
             {
                 return std::move(win);
             }
@@ -132,13 +133,13 @@ namespace retro
             return std::nullopt;
         }
 
-        void set_window(Window &window) noexcept;
+        void set_target(std::shared_ptr<RenderTarget> target) noexcept;
 
-        void clear_window() noexcept;
+        void clear_target() noexcept;
 
-        inline WindowChanged::Event on_window_changed()
+        inline RenderTargetChanged::Event on_target_changed()
         {
-            return WindowChanged::Event{on_window_changed_};
+            return RenderTargetChanged::Event{on_target_changed_};
         }
 
       private:
@@ -150,8 +151,8 @@ namespace retro
         std::int32_t z_order_ = 0;
         ZOrderChanged on_z_order_changed_;
         Scene *scene_ = nullptr;
-        std::weak_ptr<Window> window_;
-        WindowChanged on_window_changed_;
+        std::weak_ptr<RenderTarget> target_;
+        RenderTargetChanged on_target_changed_;
     };
 
     export using OnViewportDelegate = MulticastDelegate<void(Viewport &)>;

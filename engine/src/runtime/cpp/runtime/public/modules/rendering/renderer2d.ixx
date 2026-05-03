@@ -22,6 +22,7 @@ import retro.runtime.world.viewport;
 import retro.runtime.rendering.draw_command;
 import retro.core.functional.function_ref;
 import retro.core.memory.ref_counted_ptr;
+import retro.runtime.rendering.render_target;
 
 namespace retro
 {
@@ -44,7 +45,7 @@ namespace retro
 
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
-        [[nodiscard]] virtual Window &window() const = 0;
+        [[nodiscard]] virtual RenderTarget &render_target() const = 0;
     };
 
 } // namespace retro

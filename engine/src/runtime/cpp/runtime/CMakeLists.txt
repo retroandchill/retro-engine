@@ -58,6 +58,7 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/viewport.cpp
         private/rendering/render_manager.cpp
         private/rendering/headless_render_backend.cpp
+        public/modules/rendering/render_target.ixx
 )
 
 set(RETRO_RUNTIME_HEADERS

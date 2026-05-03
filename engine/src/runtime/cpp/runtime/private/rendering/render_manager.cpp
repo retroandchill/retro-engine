@@ -28,7 +28,7 @@ namespace retro
             {
                 if (const auto pr = primary_renderer(); pr.has_value())
                 {
-                    viewport.set_window(pr->window());
+                    viewport.set_window(pr->render_target());
                 }
             });
     }
@@ -68,7 +68,7 @@ namespace retro
         if (it == renderers_.end())
             return std::nullopt;
 
-        return it->second->window();
+        return it->second->render_target();
     }
 
     void RenderManager::add_window(Window &window)
@@ -96,9 +96,9 @@ namespace retro
             primary_renderer_ = *inserted->second;
             for (auto &viewport : viewports_.viewports())
             {
-                if (!viewport->window().has_value())
+                if (!viewport->target().has_value())
                 {
-                    viewport->set_window(primary_renderer_->window());
+                    viewport->set_window(primary_renderer_->render_target());
                 }
             }
         }
@@ -113,7 +113,7 @@ namespace retro
             renderers_.erase(window_id);
         }
 
-        if (primary_renderer_.has_value() && primary_renderer_->window().id() == window_id)
+        if (primary_renderer_.has_value() && primary_renderer_->render_target().id() == window_id)
         {
             if (!renderers_.empty())
             {
@@ -125,7 +125,7 @@ namespace retro
             }
         }
 
-        on_window_removed_((*renderer)->window());
+        on_window_removed_((*renderer)->render_target());
         (*renderer)->request_stop();
     }
 
@@ -133,7 +133,7 @@ namespace retro
     {
         if (window_id == 0)
         {
-            viewport.clear_window();
+            viewport.clear_target();
             return true;
         }
 
@@ -141,7 +141,7 @@ namespace retro
         if (!renderer.has_value())
             return false;
 
-        viewport.set_window((*renderer)->window());
+        viewport.set_window((*renderer)->render_target());
         return true;
     }
 
@@ -180,10 +180,11 @@ namespace retro
                                [this, &resource, &renderer](auto &pair)
                                {
                                    auto [viewport, scene] = pair;
-                                   return pipeline_manager_.collect_draw_command_sources(scene.nodes(),
-                                                                                         renderer->window().size(),
-                                                                                         viewport,
-                                                                                         resource);
+                                   return pipeline_manager_.collect_draw_command_sources(
+                                       scene.nodes(),
+                                       renderer->render_target().size(),
+                                       viewport,
+                                       resource);
                                }) |
                            std::ranges::to<std::pmr::vector<DrawCommandSet>>(&resource);
                 });

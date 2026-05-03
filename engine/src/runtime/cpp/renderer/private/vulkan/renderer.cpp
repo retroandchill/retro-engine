@@ -64,7 +64,7 @@ namespace retro
         presenter_.submit_and_present(renderer_teardown_source_.get_token());
     }
 
-    Window &VulkanRenderer2D::window() const
+    Window &VulkanRenderer2D::render_target() const
     {
         return *window_;
     }
