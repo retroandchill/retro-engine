@@ -38,7 +38,12 @@
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
                                       GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
                                       Command="{Binding RenameCommand}"
-                                      IsEnabled="{Binding IsRenamable}"/>
+                                      IsEnabled="{Binding CanRenameOrDelete}"/>
+                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Delete, Delete}"
+                                      GroupName="{extensions:LocalizedText ContentBrowserView, FolderOptions, Folder Options}"
+                                      Command="{Binding DeleteCommand}"
+                                      IsEnabled="{Binding CanRenameOrDelete}"
+                                      HotKey="Delete"/>
                         </ContextMenu>
                     </StackPanel.ContextMenu>
 

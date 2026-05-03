@@ -419,7 +419,15 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         {
             OnEntriesRefreshed += OnRenameComplete;
             OnRefreshError += OnRefreshFailed;
-            _fileSystem.File.Move(oldPath, newPath);
+            if (_fileSystem.File.Exists(oldPath))
+            {
+                _fileSystem.File.Move(oldPath, newPath);
+            }
+            else
+            {
+                _fileSystem.Directory.Move(oldPath, newPath);
+            }
+
             using (_activeChangesLock.EnterScope())
             {
                 _pendingChanges.AddRename(oldName, newName, false);
@@ -452,7 +460,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         }
     }
 
-    public async Task DeleteAssetAsync(Name name, CancellationToken cancellationToken = default)
+    public async Task DeleteAssetAsync(Name name, bool recursive = false, CancellationToken cancellationToken = default)
     {
         var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
         var taskCompletionSource = new TaskCompletionSource();
@@ -464,7 +472,15 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         {
             OnEntriesRefreshed += OnDeleteComplete;
             OnRefreshError += OnRefreshFailed;
-            _fileSystem.File.Delete(path);
+            if (_fileSystem.File.Exists(path))
+            {
+                _fileSystem.File.Delete(path);
+            }
+            else
+            {
+                _fileSystem.Directory.Delete(path, recursive);
+            }
+
             using (_activeChangesLock.EnterScope())
             {
                 _pendingChanges.AddSingleFileChange(name, false);
@@ -690,9 +706,13 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
             }
             else
             {
-                var rootDirectory = _fileSystem.Path.Combine(SourcePath, root.ToString());
+                var rootString = root.ToString();
+                var rootDirectory = _fileSystem.Path.Combine(SourcePath, rootString);
+                var parentDirectorySplitter = rootString.LastIndexOf('/');
+                var parentName =
+                    parentDirectorySplitter >= 0 ? new Name(rootString.AsSpan(0, parentDirectorySplitter)) : Name.None;
                 var directoryInfo = _fileSystem.DirectoryInfo.New(rootDirectory);
-                entry = ProcessAssetDirectoryInfo(directoryInfo, Name.None);
+                entry = ProcessAssetDirectoryInfo(directoryInfo, parentName);
                 foreach (var child in entry.GetSelfAndChildrenBreadthFirst().Cast<FileSystemAssetEntry>())
                 {
                     assetFileEntriesBuilder[child.Name] = child;

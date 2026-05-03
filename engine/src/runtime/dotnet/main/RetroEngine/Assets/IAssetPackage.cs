@@ -72,7 +72,7 @@ public interface IEditableAssetPackage : IAssetPackage
 
     Task RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
 
-    Task DeleteAssetAsync(Name name, CancellationToken cancellationToken = default);
+    Task DeleteAssetAsync(Name name, bool recursive = false, CancellationToken cancellationToken = default);
 }
 
 public static class AssetPackageExtensions

@@ -76,5 +76,18 @@ public static class AssetPackageEntryExtensions
     extension(IAssetPackageEntry entry)
     {
         public AssetPackageEntryKey Key => new(entry.Name, entry.IsDirectory);
+
+        public bool IsOrContainsAsset
+        {
+            get
+            {
+                return entry switch
+                {
+                    IAssetPackageFolder folder => folder.Children.Any(x => x.IsOrContainsAsset),
+                    IAssetPackageFile => true,
+                    _ => throw new InvalidOperationException("Unknown asset package entry type"),
+                };
+            }
+        }
     }
 }

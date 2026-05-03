@@ -37,6 +37,12 @@ public sealed partial class ContentBrowserItem : ObservableObject
 
     private static readonly Text RenameAssetText = Text.AsLocalizable("ContentBrowserViewModel", "Rename", "Rename");
 
+    private static readonly Text DeleteAssetWarning = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "DeleteAssetWarning",
+        "You are about to delete one or more assets, proceed?"
+    );
+
     private static readonly TextFormat NameIsAlreadyTaken = Text.AsLocalizable(
         "ContentBrowserViewModel",
         "NameIsAlreadyTaken",
@@ -70,7 +76,7 @@ public sealed partial class ContentBrowserItem : ObservableObject
     public partial bool IsExpanded { get; set; }
 
     [ObservableProperty]
-    public partial bool IsRenamable { get; set; } = true;
+    public partial bool CanRenameOrDelete { get; set; } = true;
 
     [ObservableProperty]
     public partial bool CanEdit { get; set; } = true;
@@ -256,6 +262,47 @@ public sealed partial class ContentBrowserItem : ObservableObject
     }
 
     [RelayCommand]
+    private void Delete()
+    {
+        if (_package is IEditableAssetPackage editablePackage)
+        {
+            _ = DeleteAsync(editablePackage);
+        }
+    }
+
+    private async Task DeleteAsync(IEditableAssetPackage editablePackage)
+    {
+        try
+        {
+            if (editablePackage.GetEntry(Key.Name) is { IsOrContainsAsset: true })
+            {
+                var selection = await _dialogService.ShowMessageBoxAsync(
+                    _navigationService.MainWindow,
+                    new MessageBoxSettings
+                    {
+                        Button = MessageBoxButton.YesNo,
+                        Icon = MessageBoxImage.Warning,
+                        Content = DeleteAssetWarning,
+                    }
+                );
+                if (selection is not true)
+                    return;
+            }
+
+            await editablePackage.DeleteAssetAsync(Key.Name, true);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to create new folder.");
+
+            await _dialogService.ShowMessageBoxAsync(
+                _navigationService.MainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
+        }
+    }
+
+    [RelayCommand]
     private void Refresh()
     {
         _ = _package.RefreshAsync(Key.Name);
@@ -308,7 +355,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
         {
             Name = package.PackageName,
             Icon = PackIconCodiconsKind.Package,
-            IsRenamable = false,
+            CanRenameOrDelete = false,
             CanEdit = package is IEditableAssetPackage,
             IsDirectory = true,
         };
