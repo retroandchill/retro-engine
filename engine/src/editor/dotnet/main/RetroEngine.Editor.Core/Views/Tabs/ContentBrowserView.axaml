@@ -17,7 +17,8 @@
     </Interaction.Behaviors>
 
     <TreeView ItemsSource="{Binding Items}"
-              SelectedItem="{Binding SelectedFolder}">
+              SelectedItem="{Binding SelectedFolder}"
+              DoubleTapped="OnTreeViewDoubleTapped">
         <TreeView.Styles>
             <Style Selector="TreeViewItem">
                 <Setter x:DataType="tabs:ContentBrowserItem" Property="IsExpanded" Value="{Binding IsExpanded}" />
@@ -29,6 +30,9 @@
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <StackPanel.ContextMenu>
                         <ContextMenu>
+                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Open, Open}"
+                                      Command="{Binding OpenCommand}"
+                                      IsVisible="{Binding !IsDirectory}"/>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
                                       Command="{Binding NewFolderCommand}"
                                       IsEnabled="{Binding CanEdit}"
@@ -51,7 +55,8 @@
                                                 Width="16"
                                                 Height="16" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Name}"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center">
+                    </TextBlock>
                 </StackPanel>
             </TreeDataTemplate>
         </TreeView.ItemTemplate>

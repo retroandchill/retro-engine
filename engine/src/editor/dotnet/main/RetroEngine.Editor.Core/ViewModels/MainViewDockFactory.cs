@@ -3,32 +3,39 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Dock.Avalonia.Controls;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.RetroEngine;
 using Dock.Model.RetroEngine.Controls;
 using Dock.Settings;
-using RetroEngine.Editor.Core.Services;
-using RetroEngine.Editor.Core.ViewModels.Tabs;
-using RetroEngine.Portable.Localization;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : Factory
+public sealed class MainViewDockFactory : Factory
 {
-    private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.MainViewDockFactory";
+    private const string RootDockId = "Root";
+    private const string DocumentDockId = "TopLevel";
 
+    public IToolDock? LeftToolDock { get; private set; }
+    public IToolDock? RightToolDock { get; private set; }
+    public IToolDock? TopToolDock { get; private set; }
+    public IToolDock? BottomToolDock { get; private set; }
     private IRootDock? _rootDock;
-    private IDocumentDock? _documentDock;
+    public IDocumentDock? DocumentDock { get; private set; }
 
+    [MemberNotNull(
+        nameof(DocumentDock),
+        nameof(LeftToolDock),
+        nameof(_rootDock),
+        nameof(RightToolDock),
+        nameof(TopToolDock),
+        nameof(BottomToolDock)
+    )]
     public override IRootDock CreateLayout()
     {
-        var contentBrowser = viewModelProvider.CreateViewModel<ContentBrowserViewModel>();
-
-        const string levelEditorDockGroup = "LevelEditor";
-
         var documentDock = new DocumentDock
         {
             IsCollapsable = false,
@@ -38,26 +45,71 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
             CanCloseLastDockable = false,
             AllowedDockOperations = DockOperationMask.Fill | DockOperationMask.Window,
             AllowedDropOperations = DockOperationMask.Fill | DockOperationMask.Window,
-            DockGroup = "TopLevel",
+            DockGroup = DocumentDockId,
+        };
+
+        var leftDock = new ToolDock
+        {
+            Proportion = 0.25,
+            VisibleDockables = CreateList<IDockable>(),
+            Alignment = Alignment.Top,
+            GripMode = GripMode.Visible,
+        };
+
+        var rightDock = new ToolDock()
+        {
+            Proportion = 0.25,
+            VisibleDockables = CreateList<IDockable>(),
+            Alignment = Alignment.Top,
+            GripMode = GripMode.Visible,
+        };
+
+        var topDock = new ToolDock()
+        {
+            Proportion = 0.25,
+            VisibleDockables = CreateList<IDockable>(),
+            Alignment = Alignment.Top,
+            GripMode = GripMode.Visible,
+        };
+
+        var bottomDock = new ToolDock()
+        {
+            Proportion = 0.25,
+            VisibleDockables = CreateList<IDockable>(),
+            Alignment = Alignment.Top,
+            GripMode = GripMode.Visible,
+        };
+
+        var rightSplitter = new ProportionalDock
+        {
+            Orientation = Orientation.Horizontal,
+            VisibleDockables = CreateList<IDockable>(
+                documentDock,
+                new ProportionalDockSplitter { ResizePreview = true },
+                bottomDock
+            ),
+            DockGroup = RootDockId,
+        };
+
+        var topSplitter = new ProportionalDock()
+        {
+            Orientation = Orientation.Vertical,
+            VisibleDockables = CreateList<IDockable>(
+                topDock,
+                new ProportionalDockSplitter { ResizePreview = true },
+                rightSplitter
+            ),
         };
 
         var mainLayout = new ProportionalDock
         {
             Orientation = Orientation.Horizontal,
             VisibleDockables = CreateList<IDockable>(
-                new ToolDock
-                {
-                    Proportion = 0.25,
-                    ActiveDockable = contentBrowser,
-                    VisibleDockables = CreateList<IDockable>(contentBrowser),
-                    Alignment = Alignment.Top,
-                    GripMode = GripMode.Visible,
-                    DockGroup = levelEditorDockGroup,
-                },
+                leftDock,
                 new ProportionalDockSplitter { ResizePreview = true },
-                documentDock
+                topSplitter
             ),
-            DockGroup = levelEditorDockGroup,
+            DockGroup = RootDockId,
         };
 
         var rootDock = CreateRootDock();
@@ -79,7 +131,11 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
         rootDock.PinnedDock = null;
 
         _rootDock = rootDock;
-        _documentDock = documentDock;
+        DocumentDock = documentDock;
+        LeftToolDock = leftDock;
+        RightToolDock = rightDock;
+        TopToolDock = topDock;
+        BottomToolDock = bottomDock;
         return _rootDock;
     }
 
@@ -87,8 +143,8 @@ public sealed class MainViewDockFactory(ViewModelProvider viewModelProvider) : F
     {
         DockableLocator = new Dictionary<string, Func<IDockable?>>
         {
-            ["Root"] = () => _rootDock,
-            ["TopLevel"] = () => _documentDock,
+            [RootDockId] = () => _rootDock,
+            [DocumentDockId] = () => DocumentDock,
         };
 
         HostWindowLocator = new Dictionary<string, Func<IHostWindow?>>

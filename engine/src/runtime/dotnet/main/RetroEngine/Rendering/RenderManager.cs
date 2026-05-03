@@ -233,6 +233,14 @@ public sealed partial class RenderManager : IDisposable
             : throw new InvalidOperationException("Window not found");
     }
 
+    public void BindViewportToWindow(Viewport viewport, ulong windowId)
+    {
+        if (!NativeSetViewportWindow(_nativeHandle, viewport, windowId))
+        {
+            throw new InvalidOperationException("Failed to bind viewport to window");
+        }
+    }
+
     [UnmanagedCallersOnly]
     private static void OnWindowCreated(IntPtr userData, ulong windowId)
     {
@@ -339,6 +347,10 @@ public sealed partial class RenderManager : IDisposable
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_get_window_by_id")]
     private static unsafe partial IntPtr NativeGetWindowById(IntPtr engine, ulong id);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_set_viewport_window")]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static unsafe partial bool NativeSetViewportWindow(IntPtr engine, Viewport viewport, ulong windowId);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_sync_render_state")]
     private static unsafe partial void NativeSyncRenderState(IntPtr engine, out InteropError error);

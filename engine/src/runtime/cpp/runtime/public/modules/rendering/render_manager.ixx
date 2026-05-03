@@ -53,6 +53,8 @@ namespace retro
 
         void remove_window(std::uint64_t window_id);
 
+        bool set_viewport_window(Viewport &viewport, std::uint64_t window_id) const;
+
         void sync_renderer_state();
 
         void render() const;
@@ -66,6 +68,7 @@ namespace retro
 
       private:
         [[nodiscard]] std::vector<std::shared_ptr<Renderer2D>> get_current_renderers() const;
+        [[nodiscard]] Optional<std::shared_ptr<Renderer2D>> get_renderer(std::uint64_t window_id) const;
 
         PlatformBackend &platform_backend_;
         RenderBackend &render_backend_;

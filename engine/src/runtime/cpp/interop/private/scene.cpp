@@ -20,6 +20,9 @@ import retro.runtime.engine;
 import std;
 import retro.interop.interop_error;
 import retro.runtime.rendering.texture;
+import retro.platform.window;
+
+using namespace retro;
 
 namespace retro
 {
@@ -61,157 +64,155 @@ namespace retro
 
 extern "C"
 {
-    RETRO_API retro::SceneManager *retro_scene_manager_create()
+    RETRO_API SceneManager *retro_scene_manager_create()
     {
-        return new retro::SceneManager{};
+        return new SceneManager{};
     }
 
-    RETRO_API void retro_scene_manager_destroy(const retro::SceneManager *manager)
+    RETRO_API void retro_scene_manager_destroy(const SceneManager *manager)
     {
         delete manager;
     }
 
-    RETRO_API retro::Scene *retro_scene_create(retro::SceneManager *manager, retro::InteropError *error)
+    RETRO_API Scene *retro_scene_create(SceneManager *manager, InteropError *error)
     {
-        return retro::try_execute([manager] { return std::addressof(manager->create_scene()); }, *error);
+        return try_execute([manager] { return std::addressof(manager->create_scene()); }, *error);
     }
 
-    RETRO_API void retro_scene_destroy(retro::SceneManager *manager, retro::Scene *scene)
+    RETRO_API void retro_scene_destroy(SceneManager *manager, Scene *scene)
     {
         manager->destroy_scene(*scene);
     }
 
-    RETRO_API retro::ViewportManager *retro_viewport_manager_create()
+    RETRO_API ViewportManager *retro_viewport_manager_create()
     {
-        return new retro::ViewportManager{};
+        return new ViewportManager{};
     }
 
-    RETRO_API void retro_viewport_manager_destroy(const retro::ViewportManager *manager)
+    RETRO_API void retro_viewport_manager_destroy(const ViewportManager *manager)
     {
         delete manager;
     }
 
-    RETRO_API retro::Viewport *retro_viewport_create(retro::ViewportManager *viewport_manager,
-                                                     retro::InteropError *error)
+    RETRO_API Viewport *retro_viewport_create(ViewportManager *viewport_manager, InteropError *error)
     {
 
-        return retro::try_execute([viewport_manager] { return std::addressof(viewport_manager->create_viewport()); },
-                                  *error);
+        return try_execute([viewport_manager] { return std::addressof(viewport_manager->create_viewport()); }, *error);
     }
 
-    RETRO_API void retro_viewport_destroy(retro::ViewportManager *viewport_manager, retro::Viewport *viewport)
+    RETRO_API void retro_viewport_destroy(ViewportManager *viewport_manager, Viewport *viewport)
     {
         viewport_manager->destroy_viewport(*viewport);
     }
 
-    RETRO_API void retro_viewport_set_scene(retro::Viewport *viewport, retro::Scene *scene)
+    RETRO_API void retro_viewport_set_scene(Viewport *viewport, Scene *scene)
     {
         viewport->set_scene(scene);
     }
 
-    RETRO_API void retro_viewport_set_screen_layout(retro::Viewport *viewport, const retro::ScreenLayout *layout)
+    RETRO_API void retro_viewport_set_screen_layout(Viewport *viewport, const ScreenLayout *layout)
     {
         viewport->set_screen_layout(*layout);
     }
 
-    RETRO_API void retro_viewport_set_camera_layout(retro::Viewport *viewport, const retro::NativeCameraLayout *layout)
+    RETRO_API void retro_viewport_set_camera_layout(Viewport *viewport, const NativeCameraLayout *layout)
     {
-        viewport->set_camera_layout(retro::from_c(*layout));
+        viewport->set_camera_layout(from_c(*layout));
     }
 
-    RETRO_API void retro_viewport_set_z_order(retro::Viewport *viewport, const std::int32_t z_order)
+    RETRO_API void retro_viewport_set_z_order(Viewport *viewport, const std::int32_t z_order)
     {
         viewport->set_z_order(z_order);
     }
 
-    RETRO_API void retro_node_dispose(retro::Scene *scene, retro::SceneNode *node)
+    RETRO_API void retro_node_dispose(Scene *scene, SceneNode *node)
     {
         scene->destroy_node(*node);
     }
 
-    RETRO_API void retro_node_set_transform(retro::SceneNode *node, const retro::NativeTransform2f *transform)
+    RETRO_API void retro_node_set_transform(SceneNode *node, const NativeTransform2f *transform)
     {
-        node->set_transform(retro::from_c(*transform));
+        node->set_transform(from_c(*transform));
     }
 
-    RETRO_API std::int32_t retro_node_set_z_order(retro::SceneNode *node, const std::int32_t z_order)
+    RETRO_API std::int32_t retro_node_set_z_order(SceneNode *node, const std::int32_t z_order)
     {
         node->set_z_order(z_order);
         return node->z_order();
     }
 
-    RETRO_API void retro_node_attach_to_parent(retro::SceneNode *node, retro::SceneNode *parent)
+    RETRO_API void retro_node_attach_to_parent(SceneNode *node, SceneNode *parent)
     {
         node->attach_to_parent(parent);
     }
 
-    RETRO_API void retro_node_detach_from_parent(retro::SceneNode *node)
+    RETRO_API void retro_node_detach_from_parent(SceneNode *node)
     {
         node->detach_from_parent();
     }
 
-    RETRO_API retro::GeometryObject *retro_geometry_create(retro::Scene *scene)
+    RETRO_API GeometryObject *retro_geometry_create(Scene *scene)
     {
-        return std::addressof(scene->create_node<retro::GeometryObject>());
+        return std::addressof(scene->create_node<GeometryObject>());
     }
 
-    RETRO_API void retro_geometry_set_type(retro::GeometryObject *node, const retro::GeometryType type)
+    RETRO_API void retro_geometry_set_type(GeometryObject *node, const GeometryType type)
     {
         node->set_geometry(type);
     }
 
-    RETRO_API void retro_geometry_set_render_data(retro::GeometryObject *node,
-                                                  const retro::Vertex *vertices,
+    RETRO_API void retro_geometry_set_render_data(GeometryObject *node,
+                                                  const Vertex *vertices,
                                                   const std::int32_t vertex_count,
                                                   std::uint32_t *indices,
                                                   const std::int32_t index_count)
     {
-        node->set_geometry(std::make_shared<const retro::Geometry>(
+        node->set_geometry(std::make_shared<const Geometry>(
             std::span{vertices, static_cast<std::size_t>(vertex_count)} | std::ranges::to<std::vector>(),
             std::span{indices, static_cast<std::size_t>(index_count)} | std::ranges::to<std::vector>()));
     }
 
-    RETRO_API void retro_geometry_set_color(retro::GeometryObject *node, const retro::Color color)
+    RETRO_API void retro_geometry_set_color(GeometryObject *node, const Color color)
     {
         node->set_color(color);
     }
 
-    RETRO_API void retro_geometry_set_pivot(retro::GeometryObject *node, const retro::Vector2f pivot)
+    RETRO_API void retro_geometry_set_pivot(GeometryObject *node, const Vector2f pivot)
     {
         node->set_pivot(pivot);
     }
 
-    RETRO_API void retro_geometry_set_size(retro::GeometryObject *node, const retro::Vector2f size)
+    RETRO_API void retro_geometry_set_size(GeometryObject *node, const Vector2f size)
     {
         node->set_size(size);
     }
 
-    RETRO_API retro::Sprite *retro_sprite_create(retro::Scene *scene)
+    RETRO_API Sprite *retro_sprite_create(Scene *scene)
     {
-        return std::addressof(scene->create_node<retro::Sprite>());
+        return std::addressof(scene->create_node<Sprite>());
     }
 
-    RETRO_API void retro_sprite_set_texture(retro::Sprite *node, retro::Texture *texture)
+    RETRO_API void retro_sprite_set_texture(Sprite *node, Texture *texture)
     {
-        node->set_texture(retro::RefCountPtr<retro::Texture>::ref(texture));
+        node->set_texture(RefCountPtr<Texture>::ref(texture));
     }
 
-    RETRO_API void retro_sprite_set_tint(retro::Sprite *node, const retro::Color tint)
+    RETRO_API void retro_sprite_set_tint(Sprite *node, const Color tint)
     {
         node->set_tint(tint);
     }
 
-    RETRO_API void retro_sprite_set_pivot(retro::Sprite *node, const retro::Vector2f pivot)
+    RETRO_API void retro_sprite_set_pivot(Sprite *node, const Vector2f pivot)
     {
         node->set_pivot(pivot);
     }
 
-    RETRO_API void retro_sprite_set_size(retro::Sprite *node, const retro::Vector2f size)
+    RETRO_API void retro_sprite_set_size(Sprite *node, const Vector2f size)
     {
         node->set_size(size);
     }
 
-    RETRO_API void retro_sprite_set_uv_rect(retro::Sprite *node, const retro::UVs uv_rect)
+    RETRO_API void retro_sprite_set_uv_rect(Sprite *node, const UVs uv_rect)
     {
         node->set_uvs(uv_rect);
     }

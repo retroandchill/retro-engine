@@ -103,18 +103,8 @@ namespace retro
     }
     void RenderManager::remove_window(std::uint64_t window_id)
     {
-        auto get_renderer = [window_id, this] -> Optional<std::shared_ptr<Renderer2D>>
-        {
-            std::shared_lock lock{renderers_mutex_};
-            const auto it = renderers_.find(window_id);
-            if (it == renderers_.end())
-                return std::nullopt;
-
-            return std::move(it->second);
-        };
-
         // ReSharper disable once CppTooWideScopeInitStatement
-        const auto renderer = get_renderer();
+        const auto renderer = get_renderer(window_id);
         if (!renderer.has_value())
             return;
         {
@@ -136,6 +126,16 @@ namespace retro
 
         on_window_removed_((*renderer)->window());
         (*renderer)->request_stop();
+    }
+
+    bool RenderManager::set_viewport_window(Viewport &viewport, const std::uint64_t window_id) const
+    {
+        auto renderer = get_renderer(window_id);
+        if (!renderer.has_value())
+            return false;
+
+        viewport.set_window((*renderer)->window());
+        return true;
     }
 
     void RenderManager::sync_renderer_state()
@@ -221,5 +221,15 @@ namespace retro
     {
         std::shared_lock lock{renderers_mutex_};
         return renderers_ | std::views::values | std::ranges::to<std::vector>();
+    }
+
+    Optional<std::shared_ptr<Renderer2D>> RenderManager::get_renderer(std::uint64_t window_id) const
+    {
+        std::shared_lock lock{renderers_mutex_};
+        const auto it = renderers_.find(window_id);
+        if (it == renderers_.end())
+            return std::nullopt;
+
+        return std::move(it->second);
     }
 } // namespace retro

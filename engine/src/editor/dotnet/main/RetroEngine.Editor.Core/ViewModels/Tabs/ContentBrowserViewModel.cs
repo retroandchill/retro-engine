@@ -10,7 +10,6 @@ using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
 using DynamicData;
 using HanumanInstitute.MvvmDialogs;
-using HanumanInstitute.MvvmDialogs.Avalonia;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using IconPacks.Avalonia.Codicons;
 using Microsoft.Extensions.Logging;
@@ -83,6 +82,8 @@ public sealed partial class ContentBrowserItem : ObservableObject
 
     [ObservableProperty]
     public partial bool IsDirectory { get; set; }
+
+    public event Action<IAssetPackageFile>? OpenRequested;
 
     internal SourceList<ContentBrowserItem> ChildrenSource { get; } = new();
     private readonly ReadOnlyObservableCollection<ContentBrowserItem> _sortedChildren;
@@ -163,6 +164,20 @@ public sealed partial class ContentBrowserItem : ObservableObject
 
         error = Text.Format(ErrorFormat, str);
         return false;
+    }
+
+    public bool TryOpen()
+    {
+        if (_package.GetEntry(Key.Name) is not IAssetPackageFile file)
+            return false;
+        OpenRequested?.Invoke(file);
+        return true;
+    }
+
+    [RelayCommand]
+    private void Open()
+    {
+        TryOpen();
     }
 
     [RelayCommand]
@@ -329,11 +344,13 @@ public sealed partial class ContentBrowserItem : ObservableObject
 public sealed class ContentBrowserPackageRoot : IDisposable
 {
     private readonly IDialogService _dialogService;
-    private readonly IAssetPackage _package;
+    internal IAssetPackage Package { get; }
     private readonly INavigationService _navigationService;
     private readonly ILogger? _logger;
 
     private readonly Dictionary<Name, ContentBrowserItem> _items = new();
+
+    public event Action<IAssetPackageFile>? OpenRequested;
 
     public ContentBrowserItem Item { get; }
 
@@ -345,11 +362,11 @@ public sealed class ContentBrowserPackageRoot : IDisposable
     )
     {
         _dialogService = dialogService;
-        _package = package;
+        Package = package;
         _navigationService = navigationService;
         _logger = logger;
 
-        _package.OnEntriesRefreshed += OnPackageChanged;
+        Package.OnEntriesRefreshed += OnPackageChanged;
 
         Item = new ContentBrowserItem(dialogService, package, navigationService, logger)
         {
@@ -366,15 +383,16 @@ public sealed class ContentBrowserPackageRoot : IDisposable
     private ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
     {
         var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
-        var item = new ContentBrowserItem(_dialogService, _package, _navigationService, _logger)
+        var item = new ContentBrowserItem(_dialogService, Package, _navigationService, _logger)
         {
             Name = entry.DisplayName,
             Key = entry.Key,
             Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
-            CanEdit = _package is IEditableAssetPackage,
+            CanEdit = Package is IEditableAssetPackage,
             IsDirectory = entry.IsDirectory,
         };
         item.ChildrenSource.AddRange(children);
+        item.OpenRequested += key => OpenRequested?.Invoke(key);
 
         _items[entry.Name] = item;
         return item;
@@ -433,7 +451,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
 
     public void Dispose()
     {
-        _package.OnEntriesRefreshed -= OnPackageChanged;
+        Package.OnEntriesRefreshed -= OnPackageChanged;
     }
 }
 
@@ -453,6 +471,8 @@ public sealed partial class ContentBrowserViewModel : Tool, IDisposable
     public ReadOnlyObservableCollection<ContentBrowserItem> Items => _sortedItems;
 
     public ObservableCollection<ContentBrowserPackageRoot> Packages { get; } = [];
+
+    public event Action<IAssetPackage, Name>? AssetOpenRequested;
 
     public ContentBrowserViewModel()
     {
@@ -474,6 +494,7 @@ public sealed partial class ContentBrowserViewModel : Tool, IDisposable
             foreach (var item in c.NewItems.OfType<ContentBrowserPackageRoot>())
             {
                 _items.Add(item.Item);
+                item.Item.OpenRequested += key => AssetOpenRequested?.Invoke(item.Package, key.Name);
             }
         };
     }

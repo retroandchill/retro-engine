@@ -8,6 +8,7 @@ using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Interop;
+using RetroEngine.Platform;
 
 namespace RetroEngine.World;
 

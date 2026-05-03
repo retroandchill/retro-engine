@@ -17,11 +17,12 @@ public sealed class ViewModelProvider(IServiceProvider serviceProvider)
     {
         var factory = _factories.GetOrAdd(
             viewModelType,
-            t =>
+            static (t, p) =>
             {
                 var factoryType = typeof(IViewModelFactory<>).MakeGenericType(t);
-                return (IViewModelFactory)serviceProvider.GetRequiredService(factoryType);
-            }
+                return (IViewModelFactory)p.GetRequiredService(factoryType);
+            },
+            serviceProvider
         );
         return factory.CreateViewModel();
     }
@@ -33,7 +34,8 @@ public sealed class ViewModelProvider(IServiceProvider serviceProvider)
             (IViewModelFactory<TViewModel>)
                 _factories.GetOrAdd(
                     typeof(TViewModel),
-                    _ => serviceProvider.GetRequiredService<IViewModelFactory<TViewModel>>()
+                    static (_, p) => p.GetRequiredService<IViewModelFactory<TViewModel>>(),
+                    serviceProvider
                 );
         return factory.CreateViewModel();
     }
