@@ -11,7 +11,6 @@ using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Async;
 using RetroEngine.Utilities.Collections;
 using RetroEngine.Utilities.Concurrency;
-using CollectionExtensions = System.Collections.Generic.CollectionExtensions;
 
 namespace RetroEngine.Assets;
 
@@ -762,14 +761,12 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
                     return ProcessAssetFileInfo(info, entry.ParentName)
                         ?? throw new InvalidOperationException("Invalid asset file info");
 
-                if (file.LastModified < info.LastWriteTimeUtc || fileInfo.Length != file.Length)
-                {
-                    var result = file with { LastModified = info.LastWriteTimeUtc, Length = fileInfo.Length };
-                    assetFileEntriesBuilder[entry.Name] = result;
-                    return result;
-                }
+                if (file.LastModified >= info.LastWriteTimeUtc && fileInfo.Length == file.Length)
+                    return file;
 
-                return file;
+                var result = file with { LastModified = info.LastWriteTimeUtc, Length = fileInfo.Length };
+                assetFileEntriesBuilder[entry.Name] = result;
+                return result;
             }
             case FileSystemAssetFolder folder:
             {

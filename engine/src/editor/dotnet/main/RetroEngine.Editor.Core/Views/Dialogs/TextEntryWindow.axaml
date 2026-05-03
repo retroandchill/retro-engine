@@ -15,14 +15,17 @@
 
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
         <TextBlock Text="{Binding Prompt}"/>
-        <TextBox Text="{Binding TextEntry}"/>
+        <TextBox Text="{Binding TextEntry}"
+                 SelectionStart="{Binding SelectionStart}"
+                 SelectionEnd="{Binding SelectionEnd}"/>
         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="20">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
                 <iconPacks:PackIconCodicons Kind="Error"
                                             Width="20"
                                             Height="20" VerticalAlignment="Center"
                                             Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
-                <TextBlock Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Text="{Binding ErrorText}"/>
+                <TextBlock Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                           VerticalAlignment="Center" Text="{Binding ErrorText}"/>
             </StackPanel>
             <Button Grid.Column="1" Command="{Binding ConfirmCommand}" IsEnabled="{Binding CanCreate}">
                 <TextBlock Text="{Binding ConfirmText}"/>

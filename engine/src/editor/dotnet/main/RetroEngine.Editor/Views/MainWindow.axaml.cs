@@ -17,7 +17,15 @@ public partial class MainWindow : Window
 
     private void Tick(TimeSpan time)
     {
-        Engine?.PollPlatformEvents();
+        try
+        {
+            Engine?.PollPlatformEvents();
+        }
+        catch (ObjectDisposedException)
+        {
+            // This is an edge case where it tries to tick after the engine has been disposed, this should protect against that
+        }
+
         RequestAnimationFrame(Tick);
     }
 }

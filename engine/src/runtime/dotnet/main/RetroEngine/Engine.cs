@@ -55,6 +55,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
     [MemberNotNull(nameof(_gameThread))]
     public void Start()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _ = CultureManager.Instance;
 
         var renderManager = _host.Services.GetRequiredService<RenderManager>();
@@ -85,6 +86,7 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     public void Run()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         Start();
 
         while (!_lifetime.ApplicationStopped.IsCancellationRequested)
@@ -132,11 +134,13 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
 
     public void PollPlatformEvents()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         NativePollPlatformEvents(_nativeEngine);
     }
 
     public void RequestShutdown()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lifetime.StopApplication();
     }
 

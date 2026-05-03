@@ -5,7 +5,6 @@
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
-             xmlns:common="clr-namespace:RetroEngine.Editor.Core.Views.Common"
              xmlns:behaviors="clr-namespace:RetroEngine.Editor.Core.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView">
@@ -46,7 +45,8 @@
                     <iconPacks:PackIconCodicons Kind="{Binding Icon}"
                                                 Width="16"
                                                 Height="16" VerticalAlignment="Center" />
-                    <common:EditableTextBlock Text="{Binding Name}" IsEditing="{Binding IsRenaming}" />
+                    <TextBlock Text="{Binding Name}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
             </TreeDataTemplate>
         </TreeView.ItemTemplate>

@@ -38,6 +38,12 @@ public sealed partial class TextEntryWindowViewModel : ObservableObject, IModalD
     } = "";
 
     [ObservableProperty]
+    public partial int SelectionStart { get; set; }
+
+    [ObservableProperty]
+    public partial int SelectionEnd { get; set; }
+
+    [ObservableProperty]
     public partial Text ConfirmText { get; set; } = Text.AsLocalizable(TextNamespace, "Confirm", "Confirm");
 
     [ObservableProperty]
