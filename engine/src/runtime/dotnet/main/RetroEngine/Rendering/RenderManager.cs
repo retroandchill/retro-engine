@@ -6,6 +6,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.World;
@@ -20,6 +21,7 @@ public sealed partial class RenderManager : IDisposable
     private IntPtr _nativeHandle;
     private readonly PlatformBackend _platformBackend;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly ILogger<RenderManager> _logger;
 
     public bool Disposed => _nativeHandle == IntPtr.Zero;
 
@@ -28,7 +30,8 @@ public sealed partial class RenderManager : IDisposable
         RenderBackend renderBackend,
         ViewportManager viewportManager,
         IEnumerable<RenderPipeline> pipelines,
-        IHostApplicationLifetime lifetime
+        IHostApplicationLifetime lifetime,
+        ILogger<RenderManager> logger
     )
     {
         _platformBackend = platformBackend;
@@ -43,6 +46,7 @@ public sealed partial class RenderManager : IDisposable
         );
         error.ThrowIfError();
         _lifetime = lifetime;
+        _logger = logger;
     }
 
     public event Action<ulong>? OnWindowRemoved
@@ -273,7 +277,14 @@ public sealed partial class RenderManager : IDisposable
     {
         while (!_lifetime.ApplicationStopped.IsCancellationRequested)
         {
-            Render();
+            try
+            {
+                Render();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during render loop");
+            }
         }
     }
 

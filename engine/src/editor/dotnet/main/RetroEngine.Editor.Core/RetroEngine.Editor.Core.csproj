@@ -26,6 +26,7 @@
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
       <PackageReference Include="Microsoft.Extensions.Options" />
+      <PackageReference Include="PropertyGenerator.Avalonia" />
       <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
       <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                         OutputItemType="Analyzer"

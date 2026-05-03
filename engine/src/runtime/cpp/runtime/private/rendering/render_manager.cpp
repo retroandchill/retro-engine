@@ -105,7 +105,6 @@ namespace retro
     }
     void RenderManager::remove_window(std::uint64_t window_id)
     {
-        // ReSharper disable once CppTooWideScopeInitStatement
         const auto renderer = get_renderer(window_id);
         if (!renderer.has_value())
             return;

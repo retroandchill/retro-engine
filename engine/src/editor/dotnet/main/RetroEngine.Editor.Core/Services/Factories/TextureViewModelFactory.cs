@@ -16,7 +16,8 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 public sealed class TextureViewModelFactory(
     IViewModelFactory<SceneViewModel> sceneFactory,
     ViewportManager viewportManager,
-    AssetManager assetManager
+    AssetManager assetManager,
+    RenderManager renderManager
 ) : IAssetViewModelFactory
 {
     public Name AssetType => Texture.AssetType;
@@ -33,9 +34,23 @@ public sealed class TextureViewModelFactory(
         var scene = sceneFactory.CreateViewModel();
         var viewport = new Viewport(viewportManager) { Scene = scene.Scene };
         _ = new Sprite(scene.Scene) { Texture = texture };
-        scene.Host.BindViewport(viewport);
+        renderManager.BindViewportToWindow(viewport, 0);
         var nameAsString = assetPath.ToString();
         var lastDelimiter = nameAsString.LastIndexOf('/');
+        scene.Host.OnWindowCreated += windowId =>
+        {
+            if (viewport.Disposed)
+                return;
+
+            renderManager.BindViewportToWindow(viewport, windowId);
+        };
+        scene.Host.OnWindowDestroyed += _ =>
+        {
+            if (viewport.Disposed)
+                return;
+
+            renderManager.BindViewportToWindow(viewport, 0);
+        };
         return new TextureViewModel
         {
             Title = lastDelimiter >= 0 ? nameAsString[(lastDelimiter + 1)..] : nameAsString,

@@ -28,7 +28,7 @@ public sealed partial class Viewport : IDisposable
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetScene(this, field);
         }
@@ -39,7 +39,7 @@ public sealed partial class Viewport : IDisposable
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetScreenLayout(this, field);
         }
@@ -50,7 +50,7 @@ public sealed partial class Viewport : IDisposable
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetZOrder(this, field);
         }
@@ -61,7 +61,7 @@ public sealed partial class Viewport : IDisposable
         get;
         set
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            ThrowIfDisposed();
             field = value;
             NativeSetCameraLayout(this, field);
         }

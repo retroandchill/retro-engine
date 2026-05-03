@@ -5,98 +5,31 @@
 
 using Avalonia.Controls;
 using Avalonia.Platform;
-using RetroEngine.Platform;
-using RetroEngine.Rendering;
-using RetroEngine.World;
+using PropertyGenerator.Avalonia;
+using RetroEngine.Editor.Core.ViewModels;
 
 namespace RetroEngine.Editor.Core.Hosts;
 
-public sealed class EngineControlHost(RenderManager renderManager) : NativeControlHost, IDisposable
+public sealed partial class EngineControlHost : NativeControlHost
 {
-    public ulong WindowId
-    {
-        get;
-        private set
-        {
-            if (field == value)
-                return;
+    [GeneratedDirectProperty]
+    public partial IEngineRendererProvider? Provider { get; set; }
 
-            field = value;
-            _boundViewports.RemoveWhere(x => x.Disposed);
-            foreach (var viewport in _boundViewports)
-            {
-                renderManager.BindViewportToWindow(viewport, field);
-            }
-        }
-    }
-    private PlatformWindowHandle _window;
-
-    private readonly HashSet<Viewport> _boundViewports = [];
-
-    public void BindViewport(Viewport viewport)
-    {
-        if (_boundViewports.Add(viewport))
-        {
-            renderManager.BindViewportToWindow(viewport, WindowId);
-        }
-    }
-
-    public void UnbindViewport(Viewport viewport)
-    {
-        if (_boundViewports.Remove(viewport))
-        {
-            renderManager.BindViewportToWindow(viewport, 0);
-        }
-    }
+    private IEngineRendererProvider? _activeProvider;
 
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
-        WindowId = renderManager.CreateWindowFromNative(FromPlatformHandle(parent));
-        try
-        {
-            _window = renderManager.GetWindowById(WindowId);
-            var platformName = _window.Backend switch
-            {
-                WindowBackend.Headless => "Headless",
-                WindowBackend.SDL3 => "SDL3",
-                _ => throw new InvalidOperationException($"Invalid backend: {_window.Backend}"),
-            };
-            return new PlatformHandle(_window.Handle, platformName);
-        }
-        catch
-        {
-            renderManager.RemoveWindow(WindowId);
-            throw;
-        }
+        if (Provider is null)
+            return base.CreateNativeControlCore(parent);
+
+        _activeProvider = Provider;
+        return Provider.CreateNativeWindow(parent);
     }
 
     protected override void DestroyNativeControlCore(IPlatformHandle control)
     {
         base.DestroyNativeControlCore(control);
-        renderManager.RemoveWindow(WindowId);
-        _window = default;
-    }
-
-    private static NativeWindowHandle FromPlatformHandle(IPlatformHandle handle)
-    {
-        var type = handle.HandleDescriptor switch
-        {
-            "HWND" => NativeWindowType.Win32Hwnd,
-            "XID" => NativeWindowType.X11,
-            "NSWindow" => NativeWindowType.CocoaWindow,
-            "NSView" => NativeWindowType.CocoaView,
-            _ => NativeWindowType.Unknown,
-        };
-        return new NativeWindowHandle(type, handle.Handle);
-    }
-
-    public void Dispose()
-    {
-        if (WindowId == 0)
-            return;
-
-        renderManager.RemoveWindow(WindowId);
-        _window = default;
-        WindowId = 0;
+        _activeProvider?.DestroyWindow();
+        _activeProvider = null;
     }
 }

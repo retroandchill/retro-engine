@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:behaviors="clr-namespace:RetroEngine.Editor.Core.Behaviors"
              xmlns:viewModels="clr-namespace:RetroEngine.Editor.Core.ViewModels"
+             xmlns:hosts="clr-namespace:RetroEngine.Editor.Core.Hosts"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.SceneView">
 
@@ -15,5 +16,7 @@
         <behaviors:DisposeBehavior/>
     </Interaction.Behaviors>
 
-    <ContentControl Content="{Binding Host}"/>
+    <hosts:EngineControlHost Provider="{Binding Host}"
+                             Width="640"
+                             Height="480"/>
 </UserControl>

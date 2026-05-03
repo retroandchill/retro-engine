@@ -42,7 +42,7 @@ public sealed class MainViewDockFactory : Factory
             ActiveDockable = null,
             VisibleDockables = CreateList<IDockable>(),
             CanCreateDocument = false,
-            CanCloseLastDockable = false,
+            CanCloseLastDockable = true,
             AllowedDockOperations = DockOperationMask.Fill | DockOperationMask.Window,
             AllowedDropOperations = DockOperationMask.Fill | DockOperationMask.Window,
             DockGroup = DocumentDockId,

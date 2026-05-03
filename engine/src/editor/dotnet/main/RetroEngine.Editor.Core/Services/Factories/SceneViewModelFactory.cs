@@ -9,13 +9,15 @@ using RetroEngine.World;
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class SceneViewModelFactory(SceneManager sceneManager, EngineControlHostFactory engineControlHost)
-    : ViewModelFactory<SceneViewModel>
+public sealed class SceneViewModelFactory(
+    SceneManager sceneManager,
+    IViewModelFactory<EngineRendererProvider> engineControlHost
+) : ViewModelFactory<SceneViewModel>
 {
     public override SceneViewModel CreateViewModel()
     {
         var scene = new Scene(sceneManager);
-        var host = engineControlHost.Create();
+        var host = engineControlHost.CreateViewModel();
         return new SceneViewModel { Host = host, Scene = scene };
     }
 }
