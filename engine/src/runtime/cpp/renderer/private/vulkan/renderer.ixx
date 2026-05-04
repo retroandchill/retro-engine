@@ -64,7 +64,7 @@ namespace retro
 
         void render_next_available_frame() override;
 
-        [[nodiscard]] const std::shared_ptr<RenderTarget> &render_target() const override;
+        [[nodiscard]] std::shared_ptr<RenderTarget> render_target() const override;
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 

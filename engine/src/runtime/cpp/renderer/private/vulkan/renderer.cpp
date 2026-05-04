@@ -83,7 +83,7 @@ namespace retro
         presenter_.submit_and_present(renderer_teardown_source_.get_token());
     }
 
-    const std::shared_ptr<RenderTarget> &VulkanRenderer2D::render_target() const
+    std::shared_ptr<RenderTarget> VulkanRenderer2D::render_target() const
     {
         return render_target_;
     }

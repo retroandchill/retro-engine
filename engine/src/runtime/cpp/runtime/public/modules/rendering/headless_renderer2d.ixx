@@ -52,7 +52,7 @@ namespace retro
             // No-op for headless renderer
         }
 
-        [[nodiscard]] inline const std::shared_ptr<RenderTarget> &render_target() const override
+        [[nodiscard]] inline std::shared_ptr<RenderTarget> render_target() const override
         {
             return target_;
         }
