@@ -22,36 +22,20 @@ namespace retro
 
     export class RenderTarget
     {
-      protected:
-        explicit RenderTarget(const std::uint64_t id) noexcept : id_{id}
-        {
-        }
-
       public:
         virtual ~RenderTarget() = default;
 
-        [[nodiscard]] inline std::uint64_t id() const noexcept
-        {
-            return id_;
-        }
+        [[nodiscard]] virtual std::uint64_t id() const noexcept = 0;
 
         [[nodiscard]] virtual RenderTargetKind kind() const noexcept = 0;
 
         [[nodiscard]] virtual Vector2u size() const noexcept = 0;
 
         [[nodiscard]] virtual TextureFormat format() const noexcept = 0;
-
-      private:
-        std::uint64_t id_{};
     };
 
-    export class WindowRenderTarget : public RenderTarget
+    export class WindowRenderTarget : public virtual RenderTarget
     {
-      protected:
-        explicit WindowRenderTarget(const std::uint64_t id) noexcept : RenderTarget{id}
-        {
-        }
-
       public:
         [[nodiscard]] RenderTargetKind kind() const noexcept final
         {
@@ -61,13 +45,8 @@ namespace retro
         [[nodiscard]] virtual Window &window() const noexcept = 0;
     };
 
-    export class TextureRenderTarget : public RenderTarget
+    export class TextureRenderTarget : public virtual RenderTarget
     {
-      protected:
-        explicit TextureRenderTarget(const std::uint64_t id) noexcept : RenderTarget{id}
-        {
-        }
-
       public:
         [[nodiscard]] RenderTargetKind kind() const noexcept final
         {

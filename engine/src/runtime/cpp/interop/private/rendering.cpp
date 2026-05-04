@@ -22,21 +22,22 @@ import retro.core.strings.encoding;
 import retro.core.async.task;
 import retro.core.functional.interop_function;
 import retro.runtime.rendering.texture;
+import retro.runtime.rendering.render_target;
 
 using namespace retro;
 
 namespace
 {
-    struct WindowRemovedBinding
+    struct RenderTargetRemovedBinding
     {
         InteropFunction<void(std::uint64_t)> function;
 
-        void operator()(const Window &window) const
+        void operator()(const RenderTarget &window) const
         {
             function(window.id());
         }
 
-        bool operator==(const WindowRemovedBinding &other) const noexcept
+        bool operator==(const RenderTargetRemovedBinding &other) const noexcept
         {
             return function == other.function;
         }
@@ -214,7 +215,7 @@ extern "C"
         InteropFunction<void(std::uint64_t)> function{removed_callback,
                                                       std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
                                                       equals_callback};
-        engine->on_window_removed().add(WindowRemovedBinding{std::move(function)});
+        engine->on_window_removed().add(RenderTargetRemovedBinding{std::move(function)});
     }
 
     RETRO_API void retro_render_manager_on_window_removed_remove(RenderManager *engine,
@@ -226,7 +227,7 @@ extern "C"
         InteropFunction<void(std::uint64_t)> function{removed_callback,
                                                       std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
                                                       equals_callback};
-        engine->on_window_removed().remove(WindowRemovedBinding{std::move(function)});
+        engine->on_window_removed().remove(RenderTargetRemovedBinding{std::move(function)});
     }
 
     RETRO_API void retro_render_manager_sync_render_state(RenderManager *engine, InteropError *error)

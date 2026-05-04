@@ -133,7 +133,7 @@ namespace retro
             return std::nullopt;
         }
 
-        void set_target(std::shared_ptr<RenderTarget> target) noexcept;
+        void set_target(const std::shared_ptr<RenderTarget> &target) noexcept;
 
         void clear_target() noexcept;
 

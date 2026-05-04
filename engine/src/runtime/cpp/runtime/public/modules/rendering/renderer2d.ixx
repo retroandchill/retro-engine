@@ -4,10 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/exports.h"
-
 export module retro.runtime.rendering.renderer2d;
 
 import retro.core.containers.inline_list;
@@ -18,7 +14,6 @@ import std;
 import retro.platform.window;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.render_pipeline;
-import retro.runtime.world.viewport;
 import retro.runtime.rendering.draw_command;
 import retro.core.functional.function_ref;
 import retro.core.memory.ref_counted_ptr;
@@ -45,7 +40,7 @@ namespace retro
 
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
-        [[nodiscard]] virtual RenderTarget &render_target() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<RenderTarget> &render_target() const = 0;
     };
 
 } // namespace retro

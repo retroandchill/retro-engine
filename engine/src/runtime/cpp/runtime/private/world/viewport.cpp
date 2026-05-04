@@ -51,7 +51,7 @@ namespace retro
         on_z_order_changed_(*this, z_order);
     }
 
-    void Viewport::set_target(std::shared_ptr<RenderTarget> target) noexcept
+    void Viewport::set_target(const std::shared_ptr<RenderTarget> &target) noexcept
     {
         const auto old_window = target_;
         target_ = target;

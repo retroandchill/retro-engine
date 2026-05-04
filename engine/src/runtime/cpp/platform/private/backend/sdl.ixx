@@ -186,14 +186,36 @@ namespace retro
             return WindowBackend::sdl3;
         }
 
-        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
+        PlatformResult<std::unique_ptr<Window>> create_window(const WindowDesc &desc) override
         {
-            return create_window_internal(desc);
+            if (SDL_IsMainThread())
+            {
+                return std::make_unique<Sdl3Window>(desc);
+            }
+
+            Promise<std::unique_ptr<Window>> promise;
+            EXPECT(push_event(CallbackEvent{.callback = [&promise, desc]
+                                            {
+                                                promise.emplace(std::make_unique<Sdl3Window>(desc));
+                                            }}));
+
+            return promise.get_future().get();
         }
 
-        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) override
+        Task<PlatformResult<std::unique_ptr<Window>>> create_window_async(WindowDesc desc) override
         {
-            return create_window_internal_async(std::move(desc));
+            if (SDL_IsMainThread())
+            {
+                co_return std::make_unique<Sdl3Window>(desc);
+            }
+
+            auto promise = std::make_shared<Promise<std::unique_ptr<Window>>>();
+            CO_EXPECT(push_event(CallbackEvent{.callback = [promise, desc = std::move(desc)] mutable
+                                               {
+                                                   promise->emplace(std::make_unique<Sdl3Window>(desc));
+                                               }}));
+
+            co_return co_await std::move(promise->get_future());
         }
 
         Optional<Event> poll_event() override
@@ -241,44 +263,6 @@ namespace retro
         }
 
       private:
-        template <typename... Args>
-            requires std::constructible_from<Sdl3Window, Args...>
-        PlatformResult<std::shared_ptr<Window>> create_window_internal(Args &&...args)
-        {
-            if (SDL_IsMainThread())
-            {
-                return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
-            }
-
-            Promise<std::shared_ptr<Window>> promise;
-            EXPECT(push_event(CallbackEvent{.callback = [&promise, &args...]
-                                            {
-                                                promise.emplace(
-                                                    std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
-                                            }}));
-
-            return promise.get_future().get();
-        }
-
-        template <typename... Args>
-            requires std::constructible_from<Sdl3Window, Args...>
-        Task<PlatformResult<std::shared_ptr<Window>>> create_window_internal_async(Args &&...args)
-        {
-            if (SDL_IsMainThread())
-            {
-                co_return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
-            }
-
-            auto promise = std::make_shared<Promise<std::shared_ptr<Window>>>();
-            CO_EXPECT(push_event(CallbackEvent{.callback = [promise, ... args = std::forward<Args>(args)] mutable
-                                               {
-                                                   promise->emplace(
-                                                       std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
-                                               }}));
-
-            co_return co_await promise->get_future();
-        }
-
         SDL_Event from_event(Event &&event)
         {
             return std::visit(Overload{[](const QuitEvent &)

@@ -18,9 +18,14 @@ namespace retro
     export class HeadlessWindowRenderTarget final : public WindowRenderTarget
     {
       public:
-        explicit inline HeadlessWindowRenderTarget(std::uint64_t id, std::shared_ptr<Window> window)
-            : WindowRenderTarget{id}, window_{std::move(window)}
+        explicit inline HeadlessWindowRenderTarget(const std::uint64_t id, std::unique_ptr<Window> window)
+            : id_{id}, window_{std::move(window)}
         {
+        }
+
+        [[nodiscard]] inline std::uint64_t id() const noexcept override
+        {
+            return id_;
         }
 
         [[nodiscard]] inline Vector2u size() const noexcept override
@@ -39,14 +44,21 @@ namespace retro
         }
 
       private:
-        std::shared_ptr<Window> window_;
+        std::uint64_t id_;
+        std::unique_ptr<Window> window_;
     };
 
     export class HeadlessTextureRenderTarget final : public TextureRenderTarget
     {
       public:
-        explicit inline HeadlessTextureRenderTarget(std::uint64_t id) : TextureRenderTarget(id)
+        explicit inline HeadlessTextureRenderTarget(std::uint64_t id, RefCountPtr<Texture> texture)
+            : id_{id}, texture_{std::move(texture)}
         {
+        }
+
+        [[nodiscard]] inline std::uint64_t id() const noexcept override
+        {
+            return id_;
         }
 
         [[nodiscard]] inline Vector2u size() const noexcept override
@@ -66,6 +78,7 @@ namespace retro
         }
 
       private:
+        std::uint64_t id_;
         RefCountPtr<Texture> texture_;
     };
 } // namespace retro

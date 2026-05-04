@@ -19,7 +19,7 @@ namespace retro
       public:
         virtual ~RenderBackend() = default;
 
-        virtual std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) = 0;
+        virtual std::shared_ptr<Renderer2D> create_renderer(std::unique_ptr<Window> window) = 0;
 
         virtual RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
                                                     std::int32_t width,

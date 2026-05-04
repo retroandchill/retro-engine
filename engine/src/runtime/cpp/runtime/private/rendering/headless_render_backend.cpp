@@ -35,7 +35,7 @@ namespace retro
         std::vector<std::byte> data_;
     };
 
-    std::shared_ptr<Renderer2D> HeadlessRenderBackend::create_renderer(std::shared_ptr<Window> window)
+    std::shared_ptr<Renderer2D> HeadlessRenderBackend::create_renderer(std::unique_ptr<Window> window)
     {
         return std::make_shared<HeadlessRenderer2D>(
             std::make_shared<HeadlessWindowRenderTarget>(next_window_id.fetch_add(1), std::move(window)));

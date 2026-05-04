@@ -21,6 +21,8 @@ import retro.runtime.rendering.draw_command;
 import retro.core.memory.arena_allocator;
 import retro.core.memory.ref_counted_ptr;
 import retro.renderer.vulkan.vulkan_render_backend;
+import retro.runtime.rendering.render_target;
+import retro.renderer.vulkan.render_target;
 
 namespace retro
 {
@@ -42,7 +44,7 @@ namespace retro
         static constexpr std::uint32_t max_frames_in_flight = 2;
 
         explicit VulkanRenderer2D(VulkanRenderBackend &backend,
-                                  std::shared_ptr<Window> window,
+                                  std::unique_ptr<Window> window,
                                   vk::UniqueSurfaceKHR surface,
                                   VulkanDevice &device,
                                   VulkanBufferManager &buffer_manager,
@@ -64,7 +66,7 @@ namespace retro
 
         void render_next_available_frame() override;
 
-        [[nodiscard]] Window &render_target() const override;
+        [[nodiscard]] const std::shared_ptr<RenderTarget> &render_target() const override;
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 
@@ -72,13 +74,12 @@ namespace retro
 
       private:
         RefCountPtr<VulkanRenderBackend> backend_;
-        std::shared_ptr<Window> window_;
-
-        vk::UniqueSurfaceKHR surface_;
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
         vk::CommandPool command_pool_;
         VulkanPipelineManager pipeline_manager_;
+
+        std::shared_ptr<VulkanRenderTarget> render_target_;
         VulkanPresenter presenter_;
         std::stop_source renderer_teardown_source_;
     };

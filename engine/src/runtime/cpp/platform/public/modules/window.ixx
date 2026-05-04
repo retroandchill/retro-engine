@@ -63,7 +63,7 @@ namespace retro
         WindowFlags flags = WindowFlags::resizable;
     };
 
-    export class Window : public std::enable_shared_from_this<Window>
+    export class Window
     {
       public:
         virtual ~Window() = default;

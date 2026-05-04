@@ -18,7 +18,7 @@ namespace retro
     {
     }
 
-    std::shared_ptr<Renderer2D> VulkanRenderBackend::create_renderer(std::shared_ptr<Window> window)
+    std::shared_ptr<Renderer2D> VulkanRenderBackend::create_renderer(std::unique_ptr<Window> window)
     {
         auto surface = instance_.create_surface(*window);
         return std::make_shared<VulkanRenderer2D>(*this,

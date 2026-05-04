@@ -25,7 +25,7 @@ import retro.runtime.rendering.render_target;
 
 namespace retro
 {
-    export using OnWindowRemoved = MulticastDelegate<void(const Window &)>;
+    export using OnRenderTargetRemoved = MulticastDelegate<void(const RenderTarget &)>;
 
     export class RETRO_API RenderManager
     {
@@ -44,7 +44,7 @@ namespace retro
 
         Task<PlatformResult<std::uint64_t>> create_new_window_async(WindowDesc window_desc);
 
-        void add_window(Window &window);
+        void add_window(std::unique_ptr<Window> window);
 
         void remove_window(std::uint64_t window_id);
 
@@ -56,9 +56,9 @@ namespace retro
 
         void on_engine_shutdown();
 
-        inline OnWindowRemoved::Event on_window_removed()
+        inline OnRenderTargetRemoved::Event on_window_removed()
         {
-            return on_window_removed_;
+            return on_render_target_removed_;
         }
 
       private:
@@ -73,6 +73,6 @@ namespace retro
         std::map<std::uint64_t, std::shared_ptr<Renderer2D>> renderers_;
         Optional<Renderer2D &> primary_renderer_;
 
-        OnWindowRemoved on_window_removed_;
+        OnRenderTargetRemoved on_render_target_removed_;
     };
 } // namespace retro

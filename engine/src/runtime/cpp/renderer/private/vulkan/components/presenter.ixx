@@ -19,6 +19,7 @@ import retro.runtime.rendering.renderer2d;
 import retro.core.containers.optional;
 import retro.runtime.rendering.draw_command;
 import retro.core.containers.spsc_circular_queue;
+import retro.renderer.vulkan.render_target;
 
 namespace retro
 {
@@ -54,11 +55,10 @@ namespace retro
     export class VulkanPresenter
     {
 
-        static constexpr std::uint32_t max_frames_in_flight = 2;
+        static constexpr std::uint32_t max_frames_in_flight = 3;
 
       public:
-        explicit VulkanPresenter(Window &window,
-                                 vk::SurfaceKHR surface,
+        explicit VulkanPresenter(VulkanRenderTarget &render_target,
                                  VulkanDevice &device,
                                  vk::CommandPool command_pool,
                                  VulkanPipelineManager &manager);
@@ -75,27 +75,21 @@ namespace retro
 
         void remove_render_pipeline(std::type_index type) const;
 
-        void recreate_swapchain();
-
       private:
         void record_command_buffer(vk::CommandBuffer cmd, const std::stop_token &stop_token);
 
-        void create_swapchain(std::uint32_t width, std::uint32_t height);
-
-        Window &window_;
-        vk::SurfaceKHR surface_;
+        VulkanRenderTarget &vulkan_render_target_;
         VulkanDevice &device_;
         vk::CommandPool command_pool_;
         VulkanPipelineManager &pipeline_manager_;
 
-        vk::UniqueSwapchainKHR swapchain_;
         vk::UniqueRenderPass render_pass_;
         vk::Format format_{vk::Format::eUndefined};
         vk::Extent2D extent_{};
 
         std::vector<VulkanImageResources> image_resources_;
         std::array<VulkanFrameResources, max_frames_in_flight> frame_resources_;
-        SpscCircularQueue<PendingFrameSlot, 3> pending_frame_slots_;
+        SpscCircularQueue<PendingFrameSlot, max_frames_in_flight> pending_frame_slots_;
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;

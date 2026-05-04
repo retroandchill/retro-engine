@@ -28,42 +28,44 @@ namespace retro
             {
                 if (const auto pr = primary_renderer(); pr.has_value())
                 {
-                    viewport.set_window(pr->render_target());
+                    viewport.set_target(pr->render_target());
                 }
             });
     }
 
     PlatformResult<std::uint64_t> RenderManager::create_new_window(WindowDesc window_desc)
     {
-        EXPECT_ASSIGN(const auto window, platform_backend_.create_window(std::move(window_desc)));
-        add_window(*window);
+        EXPECT_ASSIGN(auto window, platform_backend_.create_window(std::move(window_desc)));
+        add_window(std::move(window));
         return window->id();
     }
 
     Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(WindowDesc window_desc)
     {
-        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
-        add_window(*window);
+        AWAIT_EXPECT_ASSIGN(auto window, platform_backend_.create_window_async(std::move(window_desc)));
+        add_window(std::move(window));
         co_return window->id();
     }
 
-    void RenderManager::add_window(Window &window)
+    void RenderManager::add_window(std::unique_ptr<Window> window)
     {
-        auto renderer = render_backend_.create_renderer(window.shared_from_this());
+        auto renderer = render_backend_.create_renderer(std::move(window));
 
         for (auto [type, pipeline] : pipeline_manager_.pipelines())
             renderer->add_new_render_pipeline(type, *pipeline);
 
-        auto create_renderer = [this, &window, &renderer]
+        auto target_id = renderer->render_target()->id();
+
+        auto create_renderer = [this, target_id, &renderer]
         {
             std::unique_lock lock{renderers_mutex_};
-            return renderers_.emplace(window.id(), std::move(renderer));
+            return renderers_.emplace(target_id, std::move(renderer));
         };
 
         auto [inserted, success] = create_renderer();
         if (!success)
         {
-            get_logger().critical("Failed to add window {} to engine", window.id());
+            get_logger().critical("Failed to add window {} to engine", target_id);
             return;
         }
 
@@ -74,7 +76,7 @@ namespace retro
             {
                 if (!viewport->target().has_value())
                 {
-                    viewport->set_window(primary_renderer_->render_target());
+                    viewport->set_target(primary_renderer_->render_target());
                 }
             }
         }
@@ -89,7 +91,7 @@ namespace retro
             renderers_.erase(window_id);
         }
 
-        if (primary_renderer_.has_value() && primary_renderer_->render_target().id() == window_id)
+        if (primary_renderer_.has_value() && primary_renderer_->render_target()->id() == window_id)
         {
             if (!renderers_.empty())
             {
@@ -101,7 +103,7 @@ namespace retro
             }
         }
 
-        on_window_removed_((*renderer)->render_target());
+        on_render_target_removed_(*(*renderer)->render_target());
         (*renderer)->request_stop();
     }
 
@@ -117,7 +119,7 @@ namespace retro
         if (!renderer.has_value())
             return false;
 
-        viewport.set_window((*renderer)->render_target());
+        viewport.set_target((*renderer)->render_target());
         return true;
     }
 
@@ -158,7 +160,7 @@ namespace retro
                                    auto [viewport, scene] = pair;
                                    return pipeline_manager_.collect_draw_command_sources(
                                        scene.nodes(),
-                                       renderer->render_target().size(),
+                                       renderer->render_target()->size(),
                                        viewport,
                                        resource);
                                }) |
