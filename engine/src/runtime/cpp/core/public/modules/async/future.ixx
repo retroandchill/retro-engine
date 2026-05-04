@@ -28,7 +28,7 @@ namespace retro
     template <typename T>
     struct FutureAwaiter
     {
-        Future<T> future;
+        SharedFuture<T> future;
 
         bool await_ready()
         {
@@ -42,13 +42,13 @@ namespace retro
 
         decltype(auto) await_resume()
         {
-            return std::move(future).get();
+            return future.get();
         }
     };
 
     export template <typename T>
     FutureAwaiter<T> operator co_await(Future<T> &&value)
     {
-        return FutureAwaiter<T>{std::move(value)};
+        return FutureAwaiter<T>{value.share()};
     }
 } // namespace retro

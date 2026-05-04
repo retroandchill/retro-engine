@@ -22,22 +22,21 @@ import retro.core.strings.encoding;
 import retro.core.async.task;
 import retro.core.functional.interop_function;
 import retro.runtime.rendering.texture;
-import retro.runtime.rendering.render_target;
 
 using namespace retro;
 
 namespace
 {
-    struct RenderTargetRemovedBinding
+    struct WindowRemovedBinding
     {
         InteropFunction<void(std::uint64_t)> function;
 
-        void operator()(const RenderTarget &window) const
+        void operator()(const Window &window) const
         {
             function(window.id());
         }
 
-        bool operator==(const RenderTargetRemovedBinding &other) const noexcept
+        bool operator==(const WindowRemovedBinding &other) const noexcept
         {
             return function == other.function;
         }
@@ -199,11 +198,59 @@ extern "C"
             [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
     }
 
+    RETRO_API std::uint64_t retro_render_create_window_from_handle(RenderManager *manager,
+                                                                   const NativeWindowHandle handle,
+                                                                   InteropError *error)
+    {
+        std::uint64_t id = 0;
+        const auto success = try_execute(
+            [&] { return manager->create_new_window(handle); },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            id,
+            *error);
+
+        if (!success)
+        {
+            return 0;
+        }
+        return id;
+    }
+
     RETRO_API void retro_render_manager_remove_window(RenderManager *manager,
                                                       const std::uint64_t window_id,
                                                       InteropError *error)
     {
         try_execute([&] { manager->remove_window(window_id); }, *error);
+    }
+
+    RETRO_API Window *retro_render_manager_get_window_by_id(const RenderManager *manager, const std::uint64_t window_id)
+    {
+        const auto result = manager->get_window(window_id);
+        if (!result)
+            return nullptr;
+        return std::addressof(result.value());
+    }
+
+    RETRO_API void retro_render_manager_create_window_from_handle_async(RenderManager *manager,
+                                                                        NativeWindowHandle handle,
+                                                                        void *user_data,
+                                                                        const WindowCreatedCallback created_callback,
+                                                                        const OnErrorCallback error_callback)
+    {
+        try_execute_async(
+            [manager, handle] { return manager->create_new_window_async(handle); },
+            [](const PlatformError &e)
+            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
+            [user_data, created_callback](const std::uint64_t window_id) { created_callback(user_data, window_id); },
+            [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
+    }
+
+    RETRO_API void retro_render_manager_set_viewport_window(const RenderManager *engine,
+                                                            Viewport *viewport,
+                                                            const std::uint64_t window_id)
+    {
+        engine->set_viewport_window(*viewport, window_id);
     }
 
     RETRO_API void retro_render_manager_on_window_removed_add(RenderManager *engine,
@@ -215,7 +262,7 @@ extern "C"
         InteropFunction<void(std::uint64_t)> function{removed_callback,
                                                       std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
                                                       equals_callback};
-        engine->on_window_removed().add(RenderTargetRemovedBinding{std::move(function)});
+        engine->on_window_removed().add(WindowRemovedBinding{std::move(function)});
     }
 
     RETRO_API void retro_render_manager_on_window_removed_remove(RenderManager *engine,
@@ -227,7 +274,7 @@ extern "C"
         InteropFunction<void(std::uint64_t)> function{removed_callback,
                                                       std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
                                                       equals_callback};
-        engine->on_window_removed().remove(RenderTargetRemovedBinding{std::move(function)});
+        engine->on_window_removed().remove(WindowRemovedBinding{std::move(function)});
     }
 
     RETRO_API void retro_render_manager_sync_render_state(RenderManager *engine, InteropError *error)

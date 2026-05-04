@@ -32,6 +32,10 @@ namespace retro
         {
         }
 
+        explicit HeadlessWindow(NativeWindowHandle handle)
+        {
+        }
+
         [[nodiscard]] std::uint64_t id() const noexcept override
         {
             return id_;
@@ -65,14 +69,25 @@ namespace retro
             return WindowBackend::headless;
         }
 
-        PlatformResult<std::unique_ptr<Window>> create_window(const WindowDesc &desc) override
+        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
         {
-            return std::make_unique<HeadlessWindow>(desc);
+            return std::make_shared<HeadlessWindow>(desc);
         }
 
-        Task<PlatformResult<std::unique_ptr<Window>>> create_window_async(const WindowDesc desc) override
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(const WindowDesc desc) override
         {
             return create_task_from_result(create_window(desc));
+        }
+
+        PlatformResult<std::shared_ptr<Window>> create_window_from_native(NativeWindowHandle handle) override
+        {
+            return std::make_shared<HeadlessWindow>(handle);
+        }
+
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_from_native_async(
+            NativeWindowHandle handle) override
+        {
+            return create_task_from_result(create_window_from_native(handle));
         }
 
         Optional<Event> poll_event() override

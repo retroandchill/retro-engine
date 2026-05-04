@@ -22,7 +22,7 @@ namespace retro
     export class RETRO_API HeadlessRenderBackend final : public RenderBackend
     {
       public:
-        std::shared_ptr<Renderer2D> create_renderer(std::unique_ptr<Window> window) override;
+        std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) override;
         RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
                                             std::int32_t width,
                                             std::int32_t height,

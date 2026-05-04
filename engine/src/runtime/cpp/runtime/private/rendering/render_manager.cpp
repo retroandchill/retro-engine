@@ -28,44 +28,66 @@ namespace retro
             {
                 if (const auto pr = primary_renderer(); pr.has_value())
                 {
-                    viewport.set_target(pr->render_target());
+                    viewport.set_window(pr->window());
                 }
             });
     }
 
     PlatformResult<std::uint64_t> RenderManager::create_new_window(WindowDesc window_desc)
     {
-        EXPECT_ASSIGN(auto window, platform_backend_.create_window(std::move(window_desc)));
-        add_window(std::move(window));
+        EXPECT_ASSIGN(const auto window, platform_backend_.create_window(std::move(window_desc)));
+        add_window(*window);
+        return window->id();
+    }
+
+    PlatformResult<std::uint64_t> RenderManager::create_new_window(NativeWindowHandle handle)
+    {
+        EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native(handle));
+        add_window(*window);
         return window->id();
     }
 
     Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(WindowDesc window_desc)
     {
-        AWAIT_EXPECT_ASSIGN(auto window, platform_backend_.create_window_async(std::move(window_desc)));
-        add_window(std::move(window));
+        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
+        add_window(*window);
         co_return window->id();
     }
 
-    void RenderManager::add_window(std::unique_ptr<Window> window)
+    Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(NativeWindowHandle handle)
     {
-        auto renderer = render_backend_.create_renderer(std::move(window));
+        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native_async(std::move(handle)));
+        add_window(*window);
+        co_return window->id();
+    }
+
+    Optional<Window &> RenderManager::get_window(const std::uint64_t window_id) const
+    {
+        std::shared_lock lock{renderers_mutex_};
+        const auto it = renderers_.find(window_id);
+        if (it == renderers_.end())
+            return std::nullopt;
+
+        return it->second->window();
+    }
+
+    void RenderManager::add_window(Window &window)
+    {
+        auto renderer = render_backend_.create_renderer(window.shared_from_this());
 
         for (auto [type, pipeline] : pipeline_manager_.pipelines())
             renderer->add_new_render_pipeline(type, *pipeline);
 
-        auto target_id = renderer->render_target()->id();
-
-        auto create_renderer = [this, target_id, &renderer]
+        auto create_renderer = [this, &window, &renderer]
         {
             std::unique_lock lock{renderers_mutex_};
-            return renderers_.emplace(target_id, std::move(renderer));
+            return renderers_.emplace(window.id(), std::move(renderer));
         };
 
         auto [inserted, success] = create_renderer();
         if (!success)
         {
-            get_logger().critical("Failed to add window {} to engine", target_id);
+            get_logger().critical("Failed to add window {} to engine", window.id());
             return;
         }
 
@@ -74,9 +96,9 @@ namespace retro
             primary_renderer_ = *inserted->second;
             for (auto &viewport : viewports_.viewports())
             {
-                if (!viewport->target().has_value())
+                if (!viewport->window().has_value())
                 {
-                    viewport->set_target(primary_renderer_->render_target());
+                    viewport->set_window(primary_renderer_->window());
                 }
             }
         }
@@ -91,7 +113,7 @@ namespace retro
             renderers_.erase(window_id);
         }
 
-        if (primary_renderer_.has_value() && primary_renderer_->render_target()->id() == window_id)
+        if (primary_renderer_.has_value() && primary_renderer_->window().id() == window_id)
         {
             if (!renderers_.empty())
             {
@@ -103,7 +125,7 @@ namespace retro
             }
         }
 
-        on_render_target_removed_(*(*renderer)->render_target());
+        on_window_removed_((*renderer)->window());
         (*renderer)->request_stop();
     }
 
@@ -111,7 +133,7 @@ namespace retro
     {
         if (window_id == 0)
         {
-            viewport.clear_target();
+            viewport.clear_window();
             return true;
         }
 
@@ -119,7 +141,7 @@ namespace retro
         if (!renderer.has_value())
             return false;
 
-        viewport.set_target((*renderer)->render_target());
+        viewport.set_window((*renderer)->window());
         return true;
     }
 
@@ -158,11 +180,10 @@ namespace retro
                                [this, &resource, &renderer](auto &pair)
                                {
                                    auto [viewport, scene] = pair;
-                                   return pipeline_manager_.collect_draw_command_sources(
-                                       scene.nodes(),
-                                       renderer->render_target()->size(),
-                                       viewport,
-                                       resource);
+                                   return pipeline_manager_.collect_draw_command_sources(scene.nodes(),
+                                                                                         renderer->window().size(),
+                                                                                         viewport,
+                                                                                         resource);
                                }) |
                            std::ranges::to<std::pmr::vector<DrawCommandSet>>(&resource);
                 });

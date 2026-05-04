@@ -18,34 +18,16 @@ import retro.core.util.deferred;
 
 namespace retro
 {
-    namespace
-    {
-        std::atomic<std::uint64_t> next_render_target_{1};
-
-        std::shared_ptr<RenderTarget> create_render_target(std::unique_ptr<Window> window,
-                                                           vk::UniqueSurfaceKHR surface,
-                                                           VulkanDevice &device,
-                                                           VulkanPipelineManager &pipeline_manager)
-        {
-            return std::make_shared<VulkanWindowRenderTarget>(next_render_target_.fetch_add(1),
-                                                              std::move(window),
-                                                              std::move(surface),
-                                                              device,
-                                                              pipeline_manager);
-        }
-    } // namespace
-
     VulkanRenderer2D::VulkanRenderer2D(VulkanRenderBackend &backend,
-                                       std::unique_ptr<Window> window,
+                                       std::shared_ptr<Window> window,
                                        vk::UniqueSurfaceKHR surface,
                                        VulkanDevice &device,
                                        VulkanBufferManager &buffer_manager,
                                        const vk::CommandPool command_pool)
-        : backend_{backend.shared_from_this()}, device_{device}, buffer_manager_{buffer_manager},
-          command_pool_{command_pool}, pipeline_manager_{device_, buffer_manager_},
-          render_target_{create_render_target(std::move(window), std::move(surface), device, pipeline_manager_)},
-          vulkan_render_target_{dynamic_cast<VulkanRenderTarget &>(*render_target_)},
-          presenter_{vulkan_render_target_, device_, command_pool, pipeline_manager_}
+        : backend_{backend.shared_from_this()}, window_{std::move(window)}, surface_{std::move(surface)},
+          device_{device}, buffer_manager_{buffer_manager}, command_pool_{command_pool},
+          pipeline_manager_{device_, buffer_manager_},
+          presenter_{*window_, surface_.get(), device_, command_pool, pipeline_manager_}
     {
     }
 
@@ -69,7 +51,6 @@ namespace retro
     {
         presenter_.queue_frame_for_render(factory, renderer_teardown_source_.get_token());
     }
-
     void VulkanRenderer2D::render_next_available_frame()
     {
 
@@ -83,9 +64,9 @@ namespace retro
         presenter_.submit_and_present(renderer_teardown_source_.get_token());
     }
 
-    const std::shared_ptr<RenderTarget> &VulkanRenderer2D::render_target() const
+    Window &VulkanRenderer2D::window() const
     {
-        return render_target_;
+        return *window_;
     }
 
     void VulkanRenderer2D::add_new_render_pipeline(const std::type_index type, RenderPipeline &pipeline)

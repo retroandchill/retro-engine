@@ -63,9 +63,6 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
 set(RETRO_RUNTIME_HEADERS
 )
 
-set(RETRO_RUNTIME_PRIVATE_MODULES
-        "${OUTPUT_SHADER_FILE}")
-
 set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/world/scene.ixx
         public/modules/rendering/renderer2d.ixx
@@ -86,16 +83,16 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/headless_render_backend.ixx
         public/modules/rendering/headless_renderer2d.ixx
         public/modules/rendering/texture.ixx
-        public/modules/rendering/render_target.ixx
-        public/modules/rendering/headless_render_target.ixx
 )
+
+set(RETRO_RUNTIME_PRIVATE_MODULES
+        "${OUTPUT_SHADER_FILE}")
 
 
 add_library(retro_runtime ${INTERMEDIATE_LIB_TYPE}
         ${RETRO_RUNTIME_SOURCES}
+        ${RETRO_RUNTIME_MODULES}
         ${RETRO_RUNTIME_HEADERS}
-        ${RETRO_RUNTIME_PRIVATE_MODULES}
-        ${RETRO_RUNTIME_PUBLIC_MODULES}
 )
 
 target_include_directories(retro_runtime PUBLIC public/include)

@@ -115,6 +115,10 @@ namespace retro
         {
         }
 
+        explicit Sdl3Window(NativeWindowHandle handle) : Sdl3Window{create_window_from_native(handle)}
+        {
+        }
+
       private:
         explicit Sdl3Window(SDL_Window *window) : window_{window}
         {
@@ -149,6 +153,56 @@ namespace retro
         }
 
       private:
+        static SDL_Window *create_window_from_native(NativeWindowHandle handle)
+        {
+            auto properties = SDL_CreateProperties();
+            Deferred on_exit = [properties]
+            {
+                SDL_DestroyProperties(properties);
+            };
+
+            bool success = true;
+            switch (handle.type)
+            {
+                case NativeWindowType::win32_hwnd:
+                    success =
+                        SDL_SetPointerProperty(properties, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, handle.handle);
+                    break;
+
+                case NativeWindowType::x11_window:
+                    success = SDL_SetNumberProperty(properties,
+                                                    SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER,
+                                                    std::bit_cast<std::intptr_t>(handle.handle));
+                    break;
+                case NativeWindowType::wayland_surface:
+                    success = SDL_SetPointerProperty(properties,
+                                                     SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER,
+                                                     handle.handle);
+                    break;
+
+                case NativeWindowType::cocoa_window:
+                    success =
+                        SDL_SetPointerProperty(properties, SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, handle.handle);
+                    break;
+                case NativeWindowType::cocoa_view:
+                    success =
+                        SDL_SetPointerProperty(properties, SDL_PROP_WINDOW_CREATE_COCOA_VIEW_POINTER, handle.handle);
+                    break;
+
+                case NativeWindowType::unknown:
+                default:
+                    throw PlatformException{"Unknown native window type"};
+                    break;
+            }
+
+            if (!success)
+            {
+                throw PlatformException{SDL_GetError()};
+            }
+
+            return SDL_CreateWindowWithProperties(properties);
+        }
+
         SdlWindowPtr window_;
     };
 
@@ -186,36 +240,25 @@ namespace retro
             return WindowBackend::sdl3;
         }
 
-        PlatformResult<std::unique_ptr<Window>> create_window(const WindowDesc &desc) override
+        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
         {
-            if (SDL_IsMainThread())
-            {
-                return std::make_unique<Sdl3Window>(desc);
-            }
-
-            Promise<std::unique_ptr<Window>> promise;
-            EXPECT(push_event(CallbackEvent{.callback = [&promise, desc]
-                                            {
-                                                promise.emplace(std::make_unique<Sdl3Window>(desc));
-                                            }}));
-
-            return promise.get_future().get();
+            return create_window_internal(desc);
         }
 
-        Task<PlatformResult<std::unique_ptr<Window>>> create_window_async(WindowDesc desc) override
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) override
         {
-            if (SDL_IsMainThread())
-            {
-                co_return std::make_unique<Sdl3Window>(desc);
-            }
+            return create_window_internal_async(std::move(desc));
+        }
 
-            auto promise = std::make_shared<Promise<std::unique_ptr<Window>>>();
-            CO_EXPECT(push_event(CallbackEvent{.callback = [promise, desc = std::move(desc)] mutable
-                                               {
-                                                   promise->emplace(std::make_unique<Sdl3Window>(desc));
-                                               }}));
+        PlatformResult<std::shared_ptr<Window>> create_window_from_native(NativeWindowHandle handle) override
+        {
+            return create_window_internal(handle);
+        }
 
-            co_return co_await std::move(promise->get_future());
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_from_native_async(
+            NativeWindowHandle handle) override
+        {
+            return create_window_internal_async(handle);
         }
 
         Optional<Event> poll_event() override
@@ -263,6 +306,44 @@ namespace retro
         }
 
       private:
+        template <typename... Args>
+            requires std::constructible_from<Sdl3Window, Args...>
+        PlatformResult<std::shared_ptr<Window>> create_window_internal(Args &&...args)
+        {
+            if (SDL_IsMainThread())
+            {
+                return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
+            }
+
+            Promise<std::shared_ptr<Window>> promise;
+            EXPECT(push_event(CallbackEvent{.callback = [&promise, &args...]
+                                            {
+                                                promise.emplace(
+                                                    std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
+                                            }}));
+
+            return promise.get_future().get();
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<Sdl3Window, Args...>
+        Task<PlatformResult<std::shared_ptr<Window>>> create_window_internal_async(Args &&...args)
+        {
+            if (SDL_IsMainThread())
+            {
+                co_return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
+            }
+
+            auto promise = std::make_shared<Promise<std::shared_ptr<Window>>>();
+            CO_EXPECT(push_event(CallbackEvent{.callback = [promise, ... args = std::forward<Args>(args)] mutable
+                                               {
+                                                   promise->emplace(
+                                                       std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
+                                               }}));
+
+            co_return co_await promise->get_future();
+        }
+
         SDL_Event from_event(Event &&event)
         {
             return std::visit(Overload{[](const QuitEvent &)
