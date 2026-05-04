@@ -6,9 +6,15 @@
  */
 module retro.runtime.rendering.headless_render_backend;
 import retro.runtime.rendering.headless_renderer2d;
+import retro.runtime.rendering.headless_render_target;
 
 namespace retro
 {
+    namespace
+    {
+        std::atomic<std::uint64_t> next_window_id{1};
+    }
+
     class HeadlessTexture final : public Texture
     {
       public:
@@ -22,7 +28,7 @@ namespace retro
 
         [[nodiscard]] std::span<const std::byte> data() const
         {
-            return std::span(data_);
+            return std::span{data_};
         }
 
       private:
@@ -31,8 +37,10 @@ namespace retro
 
     std::shared_ptr<Renderer2D> HeadlessRenderBackend::create_renderer(std::shared_ptr<Window> window)
     {
-        return std::make_shared<HeadlessRenderer2D>(std::move(window));
+        return std::make_shared<HeadlessRenderer2D>(
+            std::make_shared<HeadlessWindowRenderTarget>(next_window_id.fetch_add(1), std::move(window)));
     }
+
     RefCountPtr<Texture> HeadlessRenderBackend::upload_texture(std::span<const std::byte> bytes,
                                                                std::int32_t width,
                                                                std::int32_t height,

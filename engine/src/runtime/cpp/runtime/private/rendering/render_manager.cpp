@@ -40,35 +40,11 @@ namespace retro
         return window->id();
     }
 
-    PlatformResult<std::uint64_t> RenderManager::create_new_window(NativeWindowHandle handle)
-    {
-        EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native(handle));
-        add_window(*window);
-        return window->id();
-    }
-
     Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(WindowDesc window_desc)
     {
         AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
         add_window(*window);
         co_return window->id();
-    }
-
-    Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(NativeWindowHandle handle)
-    {
-        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native_async(std::move(handle)));
-        add_window(*window);
-        co_return window->id();
-    }
-
-    Optional<Window &> RenderManager::get_window(const std::uint64_t window_id) const
-    {
-        std::shared_lock lock{renderers_mutex_};
-        const auto it = renderers_.find(window_id);
-        if (it == renderers_.end())
-            return std::nullopt;
-
-        return it->second->render_target();
     }
 
     void RenderManager::add_window(Window &window)

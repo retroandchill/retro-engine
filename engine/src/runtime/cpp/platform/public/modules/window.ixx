@@ -29,32 +29,6 @@ namespace retro
         void *handle = nullptr;
     };
 
-    export enum class NativeWindowType : std::uint8_t
-    {
-        win32_hwnd,
-        x11_window,
-        wayland_surface,
-        cocoa_window,
-        cocoa_view,
-        unknown = std::numeric_limits<std::uint8_t>::max()
-    };
-
-#ifdef _WIN32
-    constexpr auto default_native_window_type = NativeWindowType::win32_hwnd;
-#elifdef __linux__
-    constexpr auto default_native_window_type = NativeWindowType::x11_window;
-#elifdef __APPLE__
-    constexpr auto default_native_window_type = NativeWindowType::cocoa_window;
-#else
-    constexpr auto default_native_window_type = NativeWindowType::unknown;
-#endif
-
-    export struct NativeWindowHandle
-    {
-        NativeWindowType type = default_native_window_type;
-        void *handle = nullptr;
-    };
-
     export enum class WindowFlags : std::uint64_t
     {
         none = 0,

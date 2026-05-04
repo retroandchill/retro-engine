@@ -42,13 +42,7 @@ namespace retro
 
         PlatformResult<std::uint64_t> create_new_window(WindowDesc window_desc);
 
-        PlatformResult<std::uint64_t> create_new_window(NativeWindowHandle handle);
-
         Task<PlatformResult<std::uint64_t>> create_new_window_async(WindowDesc window_desc);
-
-        Task<PlatformResult<std::uint64_t>> create_new_window_async(NativeWindowHandle handle);
-
-        Optional<Window &> get_window(std::uint64_t window_id) const;
 
         void add_window(Window &window);
 
