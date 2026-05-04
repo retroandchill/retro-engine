@@ -71,7 +71,7 @@ namespace retro
                                                        vk::UniqueSurfaceKHR surface,
                                                        VulkanDevice &device,
                                                        VulkanPipelineManager &pipeline_manager)
-        : id_{id}, window_{std::move(window)}, surface_{std::move(surface)}, device_{device},
+        : WindowRenderTarget{id}, window_{std::move(window)}, surface_{std::move(surface)}, device_{device},
           pipeline_manager_{pipeline_manager}
     {
         auto [width, height] = window_->size();

@@ -77,7 +77,8 @@ namespace retro
         vk::CommandPool command_pool_;
         VulkanPipelineManager pipeline_manager_;
 
-        std::shared_ptr<VulkanRenderTarget> render_target_;
+        std::shared_ptr<RenderTarget> render_target_;
+        VulkanRenderTarget &vulkan_render_target_;
         VulkanPresenter presenter_;
         std::stop_source renderer_teardown_source_;
     };

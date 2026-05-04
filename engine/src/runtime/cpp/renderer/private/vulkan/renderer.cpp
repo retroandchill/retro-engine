@@ -22,10 +22,10 @@ namespace retro
     {
         std::atomic<std::uint64_t> next_render_target_{1};
 
-        std::shared_ptr<VulkanRenderTarget> create_render_target(std::unique_ptr<Window> window,
-                                                                 vk::UniqueSurfaceKHR surface,
-                                                                 VulkanDevice &device,
-                                                                 VulkanPipelineManager &pipeline_manager)
+        std::shared_ptr<RenderTarget> create_render_target(std::unique_ptr<Window> window,
+                                                           vk::UniqueSurfaceKHR surface,
+                                                           VulkanDevice &device,
+                                                           VulkanPipelineManager &pipeline_manager)
         {
             return std::make_shared<VulkanWindowRenderTarget>(next_render_target_.fetch_add(1),
                                                               std::move(window),
@@ -41,11 +41,11 @@ namespace retro
                                        VulkanDevice &device,
                                        VulkanBufferManager &buffer_manager,
                                        const vk::CommandPool command_pool)
-        : backend_{backend.shared_from_this()},
+        : backend_{backend.shared_from_this()}, device_{device}, buffer_manager_{buffer_manager},
+          command_pool_{command_pool}, pipeline_manager_{device_, buffer_manager_},
           render_target_{create_render_target(std::move(window), std::move(surface), device, pipeline_manager_)},
-          device_{device}, buffer_manager_{buffer_manager}, command_pool_{command_pool},
-          pipeline_manager_{device_, buffer_manager_},
-          presenter_{*render_target_, device_, command_pool, pipeline_manager_}
+          vulkan_render_target_{dynamic_cast<VulkanRenderTarget &>(*render_target_)},
+          presenter_{vulkan_render_target_, device_, command_pool, pipeline_manager_}
     {
     }
 

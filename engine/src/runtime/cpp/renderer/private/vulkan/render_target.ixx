@@ -28,9 +28,11 @@ namespace retro
         vk::UniqueFramebuffer framebuffer;
     };
 
-    export class VulkanRenderTarget : public virtual RenderTarget
+    export class VulkanRenderTarget
     {
       public:
+        virtual ~VulkanRenderTarget() = default;
+
         virtual void acquire_next_image(vk::Semaphore semaphore, std::uint32_t image_index) = 0;
 
         virtual void present(std::uint32_t image_index, std::span<vk::Semaphore> signal_semaphores) = 0;
@@ -44,11 +46,6 @@ namespace retro
                                           vk::UniqueSurfaceKHR surface,
                                           VulkanDevice &device,
                                           VulkanPipelineManager &pipeline_manager);
-
-        [[nodiscard]] inline std::uint64_t id() const noexcept override
-        {
-            return id_;
-        }
 
         [[nodiscard]] inline Vector2u size() const noexcept override
         {
@@ -74,7 +71,6 @@ namespace retro
 
         void create_swapchain(std::uint32_t width, std::uint32_t height);
 
-        std::uint64_t id_;
         std::unique_ptr<Window> window_;
         vk::UniqueSurfaceKHR surface_;
         VulkanDevice &device_;
