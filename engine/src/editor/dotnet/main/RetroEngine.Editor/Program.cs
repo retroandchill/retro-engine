@@ -1,8 +1,11 @@
 ﻿using System.Text.Json;
 using Avalonia;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RetroEngine.Config;
 using RetroEngine.Logging;
 using Serilog;
+using Serilog.Events;
 
 namespace RetroEngine.Editor;
 
@@ -17,9 +20,18 @@ internal static class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     private static AppBuilder BuildAvaloniaApp()
     {
-        Log.Logger = new LoggerConfiguration().WithEngineLog().CreateLogger();
+        Log.Logger = new LoggerConfiguration()
+            .WithEngineLog()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
+            .CreateLogger();
 
         var engineBuilder = new EngineBuilder();
+
+        const string autoAssignSettingKey = $"Rendering:{nameof(RenderingSettings.AutoAssignViewports)}";
+        engineBuilder.Configuration.AddInMemoryCollection(
+            new Dictionary<string, string?> { [autoAssignSettingKey] = "false" }
+        );
+
         engineBuilder
             .Services.Configure<JsonSerializerOptions>(options =>
             {

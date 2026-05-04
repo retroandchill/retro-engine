@@ -5,19 +5,22 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using Microsoft.Extensions.Options;
+using RetroEngine.Config;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 
 namespace RetroEngine.Rendering;
 
 [NativeMarshalling(typeof(RenderBackendMarshaller))]
+[RegisterSingleton]
 public sealed partial class RenderBackend : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; }
 
-    internal RenderBackend(PlatformBackend platformBackend, RenderBackendType platformBackendType)
+    public RenderBackend(PlatformBackend platformBackend, IOptions<RenderingSettings> renderingSettings)
     {
-        NativeHandle = NativeCreate(platformBackend, platformBackendType, out var error);
+        NativeHandle = NativeCreate(platformBackend, renderingSettings.Value.RenderBackend, out var error);
         error.ThrowIfError();
     }
 
@@ -70,9 +73,6 @@ public sealed partial class RenderBackend : IDisposable
         TextureFormat format,
         out InteropError error
     );
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private readonly record struct TextureExportResult(byte Success, int BytesWritten);
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_export_texture")]
     [return: MarshalAs(UnmanagedType.U1)]

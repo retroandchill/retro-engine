@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
-using System.IO.Abstractions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
@@ -22,7 +21,6 @@ using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities;
-using RetroEngine.Utils;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -457,12 +455,9 @@ public sealed class ContentBrowserPackageRoot : IDisposable
 }
 
 [ViewModelFor<ContentBrowserView>]
-public sealed partial class ContentBrowserViewModel : Tool, IDisposable
+public sealed partial class ContentBrowserViewModel : Tool
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.Tabs.ContentBrowserViewModel";
-    private bool _disposed;
-
-    public IFileSystem FileSystem { get; init; } = IFileSystem.Default;
 
     [ObservableProperty]
     public partial ContentBrowserItem? SelectedFolder { get; internal set; }
@@ -500,15 +495,15 @@ public sealed partial class ContentBrowserViewModel : Tool, IDisposable
         };
     }
 
-    public void Dispose()
+    public override bool OnClose()
     {
-        if (_disposed)
-            return;
+        var result = base.OnClose();
 
-        _disposed = true;
         foreach (var item in Packages)
         {
             item.Dispose();
         }
+
+        return result;
     }
 }

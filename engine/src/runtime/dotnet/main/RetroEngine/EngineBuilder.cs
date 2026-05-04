@@ -4,13 +4,13 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
-using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RetroEngine.Config;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization.Cultures;
@@ -21,7 +21,7 @@ namespace RetroEngine;
 public sealed partial class EngineBuilder : IHostApplicationBuilder
 {
     public IDictionary<object, object> Properties { get; } = new Dictionary<object, object>();
-    public IConfigurationManager Configuration { get; } = new ConfigurationManager();
+    public IConfigurationManager Configuration { get; }
     public IHostEnvironment Environment { get; } = new HostEnvironment();
     public ILoggingBuilder Logging { get; }
     public IMetricsBuilder Metrics { get; }
@@ -34,6 +34,14 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
     {
         Logging = new LoggingBuilder(Services);
         Metrics = new MetricsBuilder(Services);
+
+        var configurationManager = new ConfigurationManager();
+        Services.AddSingleton<IConfiguration>(configurationManager);
+        Services.AddSingleton(configurationManager);
+        Services.AddSingleton<IConfigurationRoot>(configurationManager);
+        Configuration = configurationManager;
+
+        Services.Configure<RenderingSettings>(Configuration.GetSection("Rendering"));
 
         Services.AddLogging(builder => builder.AddSerilog()).AddRetroEngine();
     }

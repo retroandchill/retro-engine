@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RetroEngine.Config;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.World;
@@ -23,14 +25,13 @@ public sealed partial class RenderManager : IDisposable
     private readonly IHostApplicationLifetime _lifetime;
     private readonly ILogger<RenderManager> _logger;
 
-    public bool Disposed => _nativeHandle == IntPtr.Zero;
-
     public RenderManager(
         PlatformBackend platformBackend,
         RenderBackend renderBackend,
         ViewportManager viewportManager,
         IEnumerable<RenderPipeline> pipelines,
         IHostApplicationLifetime lifetime,
+        IOptions<RenderingSettings> renderingSettings,
         ILogger<RenderManager> logger
     )
     {
@@ -42,6 +43,7 @@ public sealed partial class RenderManager : IDisposable
             viewportManager,
             pipelineHandles,
             pipelineHandles.Length,
+            renderingSettings.Value.AutoAssignViewports,
             out var error
         );
         error.ThrowIfError();
@@ -241,6 +243,7 @@ public sealed partial class RenderManager : IDisposable
 
     public void BindViewportToWindow(Viewport viewport, ulong windowId)
     {
+        ObjectDisposedException.ThrowIf(viewport.Disposed, viewport);
         if (!NativeSetViewportWindow(_nativeHandle, viewport, windowId))
         {
             throw new InvalidOperationException("Failed to bind viewport to window");
@@ -309,6 +312,7 @@ public sealed partial class RenderManager : IDisposable
         ViewportManager viewportManager,
         ReadOnlySpan<IntPtr> pipelines,
         int pipelineCount,
+        [MarshalAs(UnmanagedType.U1)] bool autoAssignViewports,
         out InteropError error
     );
 

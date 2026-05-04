@@ -15,6 +15,7 @@ module;
 module retro.renderer.vulkan.components.presenter;
 
 import retro.runtime.exceptions;
+import retro.logging;
 
 namespace retro
 {
@@ -121,6 +122,9 @@ namespace retro
 
     void VulkanPresenter::wait_for_current_frame()
     {
+        if (!frame_in_flight_)
+            return;
+
         const auto fence = frame_resources_.at(current_frame_).in_flight.get();
         device_.wait_for_fences(fence);
     }
@@ -237,6 +241,7 @@ namespace retro
     {
         // Query new size from window_
         const auto [w, h] = window_.size();
+        get_logger().debug("Window size: {}x{}", w, h);
         if (w == 0 || h == 0)
             return;
 
@@ -318,6 +323,11 @@ namespace retro
                                    std::clamp<std::uint32_t>(desired_extent.height,
                                                              capabilities.minImageExtent.height,
                                                              capabilities.maxImageExtent.height)};
+        if (constexpr std::uint32_t reasonable_swapchain_extent = 16384;
+            actual_extent.width > reasonable_swapchain_extent || actual_extent.height > reasonable_swapchain_extent)
+        {
+            return;
+        }
 
         const auto formats = device_.get_surface_formats(surface_);
         if (formats.empty())

@@ -91,8 +91,8 @@ set(RETRO_RUNTIME_PRIVATE_MODULES
 
 add_library(retro_runtime ${INTERMEDIATE_LIB_TYPE}
         ${RETRO_RUNTIME_SOURCES}
-        ${RETRO_RUNTIME_MODULES}
         ${RETRO_RUNTIME_HEADERS}
+        ${RETRO_RUNTIME_PUBLIC_MODULES}
 )
 
 target_include_directories(retro_runtime PUBLIC public/include)

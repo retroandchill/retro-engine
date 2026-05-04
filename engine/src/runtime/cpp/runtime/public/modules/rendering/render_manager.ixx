@@ -32,7 +32,8 @@ namespace retro
         explicit RenderManager(PlatformBackend &platform_backend,
                                RenderBackend &render_backend,
                                ViewportManager &viewports,
-                               PipelineManager pipeline_manager);
+                               PipelineManager pipeline_manager,
+                               bool auto_assign_viewports);
 
         [[nodiscard]] inline Optional<Renderer2D &> primary_renderer() const noexcept
         {
@@ -67,9 +68,10 @@ namespace retro
         }
 
       private:
-        [[nodiscard]] std::vector<std::shared_ptr<Renderer2D>> get_current_renderers() const;
+        [[nodiscard]] std::vector<std::weak_ptr<Renderer2D>> get_current_renderers() const;
         [[nodiscard]] Optional<std::shared_ptr<Renderer2D>> get_renderer(std::uint64_t window_id) const;
 
+        bool auto_assign_viewports_;
         PlatformBackend &platform_backend_;
         RenderBackend &render_backend_;
         ViewportManager &viewports_;

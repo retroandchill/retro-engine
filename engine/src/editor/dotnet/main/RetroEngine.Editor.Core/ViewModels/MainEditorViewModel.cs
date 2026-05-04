@@ -5,10 +5,9 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
+using Dock.Model.Core;
 using RetroEngine.Editor.Core.Attributes;
-using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Menus;
-using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Core.Views;
 
 namespace RetroEngine.Editor.Core.ViewModels;
@@ -34,6 +33,8 @@ public sealed partial class MainEditorViewModel : ObservableObject
 
     public IRootDock Layout { get; }
 
+    public event Action<IDockable>? ItemClosed;
+
     [ObservableProperty]
     public partial DynamicMenuViewModel Menu { get; set; } = new() { Items = [] };
 
@@ -48,6 +49,11 @@ public sealed partial class MainEditorViewModel : ObservableObject
         _topToolDock = _factory.TopToolDock;
         _bottomToolDock = _factory.BottomToolDock;
         _documentDock = _factory.DocumentDock;
+        _factory.DockableClosed += (_, args) =>
+        {
+            if (args.Dockable is not null)
+                ItemClosed?.Invoke(args.Dockable);
+        };
     }
 
     public void AddTool(ITool tool, ToolPosition position = ToolPosition.Left)
@@ -74,5 +80,10 @@ public sealed partial class MainEditorViewModel : ObservableObject
     public void AddDocument(IDocument document)
     {
         _documentDock.AddDocument(document);
+    }
+
+    public void SetActiveDocument(IDocument document)
+    {
+        _documentDock.ActiveDockable = document;
     }
 }

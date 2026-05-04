@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Dock.Model.RetroEngine.Controls;
+using RetroEngine.Assets;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Rendering;
@@ -12,10 +13,11 @@ using RetroEngine.World;
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
 [ViewModelFor<TextureView>]
-public sealed partial class TextureViewModel : Document, IAssetViewModel, IDisposable
+public sealed partial class TextureViewModel : Document, IAssetViewModel
 {
     public bool IsReadOnly => true;
 
+    public required AssetPath Path { get; init; }
     object IAssetViewModel.Asset => Texture;
 
     public required Texture Texture { get; init; }
@@ -29,9 +31,12 @@ public sealed partial class TextureViewModel : Document, IAssetViewModel, IDispo
         CanClose = true;
     }
 
-    public void Dispose()
+    public override bool OnClose()
     {
+        var result = base.OnClose();
         Viewport.Dispose();
         Scene.Dispose();
+
+        return result;
     }
 }

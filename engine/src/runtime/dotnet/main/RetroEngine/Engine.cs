@@ -15,8 +15,6 @@ using RetroEngine.Portable.Localization.Cultures;
 using RetroEngine.Rendering;
 using RetroEngine.Tickables;
 using Serilog;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine;
@@ -44,11 +42,6 @@ public sealed partial class Engine : IDisposable, IAsyncDisposable
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton(_platformBackend);
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
-        serviceCollection.AddSingleton(serviceProvider =>
-        {
-            var b = serviceProvider.GetRequiredService<PlatformBackend>();
-            return new RenderBackend(b, RenderBackendType.Vulkan);
-        });
         _host = new EngineHost(serviceProviderFactory(serviceCollection), _lifetime);
     }
 

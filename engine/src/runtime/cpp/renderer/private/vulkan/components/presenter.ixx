@@ -99,5 +99,6 @@ namespace retro
 
         std::uint32_t current_frame_ = 0;
         std::uint32_t image_index_ = 0;
+        bool frame_in_flight_ = false;
     };
 } // namespace retro

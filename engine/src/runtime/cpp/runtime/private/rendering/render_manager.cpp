@@ -19,13 +19,17 @@ namespace retro
     RenderManager::RenderManager(PlatformBackend &platform_backend,
                                  RenderBackend &render_backend,
                                  ViewportManager &viewports,
-                                 PipelineManager pipeline_manager)
-        : platform_backend_{platform_backend}, render_backend_{render_backend}, viewports_{viewports},
-          pipeline_manager_{std::move(pipeline_manager)}
+                                 PipelineManager pipeline_manager,
+                                 const bool auto_assign_viewports)
+        : auto_assign_viewports_{auto_assign_viewports}, platform_backend_{platform_backend},
+          render_backend_{render_backend}, viewports_{viewports}, pipeline_manager_{std::move(pipeline_manager)}
     {
         viewports_.on_viewport_created().add(
             [this](Viewport &viewport)
             {
+                if (!auto_assign_viewports_)
+                    return;
+
                 if (const auto pr = primary_renderer(); pr.has_value())
                 {
                     viewport.set_window(pr->window());
@@ -94,6 +98,9 @@ namespace retro
         if (!primary_renderer_.has_value())
         {
             primary_renderer_ = *inserted->second;
+
+            if (!auto_assign_viewports_)
+                return;
             for (auto &viewport : viewports_.viewports())
             {
                 if (!viewport->window().has_value())
@@ -159,6 +166,12 @@ namespace retro
             return std::pair<Viewport &, Scene &>{*viewport, *scene};
         };
 
+        constexpr auto is_viewport_active = [](const std::unique_ptr<Viewport> &viewport, const Renderer2D &renderer)
+        {
+            auto window = viewport->window();
+            return window.has_value() && renderer.window().id() == (*window)->id();
+        };
+
         const auto current_renderers = get_current_renderers();
 
         if (current_renderers.empty())
@@ -170,12 +183,18 @@ namespace retro
             return;
         }
 
-        for (const auto &renderer : current_renderers)
+        for (const auto &weak_renderer : current_renderers)
         {
+            const auto renderer = weak_renderer.lock();
+            if (renderer == nullptr)
+                return;
+
             renderer->queue_frame_for_render(
-                [this, &renderer, get_scene_data](std::pmr::memory_resource &resource)
+                [this, &renderer, get_scene_data, is_viewport_active](std::pmr::memory_resource &resource)
                 {
-                    return viewports_.viewports() | std::views::transform(get_scene_data) | std::views::join |
+                    return viewports_.viewports() |
+                           std::views::filter(std::bind_back(is_viewport_active, std::ref(*renderer))) |
+                           std::views::transform(get_scene_data) | std::views::join |
                            std::views::transform(
                                [this, &resource, &renderer](auto &pair)
                                {
@@ -202,16 +221,24 @@ namespace retro
             return;
         }
 
-        for (const auto &renderer : current_renderers)
+        for (const auto &weak_renderer : current_renderers)
         {
+            const auto renderer = weak_renderer.lock();
+            if (renderer == nullptr)
+                return;
+
             renderer->render_next_available_frame();
         }
 
         // We want to wait for the fences on all the renderers after the loop is done
         // If we waited on each one before all frames gets submitted, it would end up
         // blocking the game thread for too long if there are many surfaces.
-        for (const auto &renderer : current_renderers)
+        for (const auto &weak_renderer : current_renderers)
         {
+            const auto renderer = weak_renderer.lock();
+            if (renderer == nullptr)
+                return;
+
             renderer->wait_for_current_frame();
         }
     }
@@ -224,10 +251,12 @@ namespace retro
         }
     }
 
-    std::vector<std::shared_ptr<Renderer2D>> RenderManager::get_current_renderers() const
+    std::vector<std::weak_ptr<Renderer2D>> RenderManager::get_current_renderers() const
     {
         std::shared_lock lock{renderers_mutex_};
-        return renderers_ | std::views::values | std::ranges::to<std::vector>();
+        return renderers_ | std::views::values |
+               std::views::transform([](const auto &ptr) { return std::weak_ptr{ptr}; }) |
+               std::ranges::to<std::vector>();
     }
 
     Optional<std::shared_ptr<Renderer2D>> RenderManager::get_renderer(std::uint64_t window_id) const

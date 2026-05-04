@@ -4,11 +4,14 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Dock.Model.Controls;
+using RetroEngine.Assets;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
 public interface IAssetViewModel : IDocument
 {
+    AssetPath Path { get; }
+
     object Asset { get; }
 
     bool IsReadOnly { get; }

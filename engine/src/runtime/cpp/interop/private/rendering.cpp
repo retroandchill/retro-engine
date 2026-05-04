@@ -120,7 +120,8 @@ extern "C"
                                                          RenderBackend *render_backend,
                                                          ViewportManager *viewports,
                                                          RenderPipeline **pipelines,
-                                                         std::int32_t pipeline_count,
+                                                         const std::int32_t pipeline_count,
+                                                         const bool auto_assign_viewports,
                                                          InteropError *error)
     {
         return try_execute(
@@ -130,7 +131,8 @@ extern "C"
                     *platform_backend,
                     *render_backend,
                     *viewports,
-                    PipelineManager{std::span{pipelines, static_cast<std::size_t>(pipeline_count)}});
+                    PipelineManager{std::span{pipelines, static_cast<std::size_t>(pipeline_count)}},
+                    auto_assign_viewports);
             },
             *error);
     }

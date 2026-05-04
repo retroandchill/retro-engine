@@ -9,9 +9,8 @@
         <tabs:TextureViewModel />
     </Design.DataContext>
 
-    <StackPanel Spacing="20" Margin="30">
-        <ScrollViewer>
-            <ContentControl Content="{Binding Scene}"/>
-        </ScrollViewer>
-    </StackPanel>
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Grid.Row="0" Orientation="Horizontal"></StackPanel>
+        <ContentControl Grid.Row="1" Content="{Binding Scene}"/>
+    </Grid>
 </UserControl>

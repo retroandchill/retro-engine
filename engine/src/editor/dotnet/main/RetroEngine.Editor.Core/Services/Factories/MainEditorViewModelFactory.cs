@@ -13,7 +13,7 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class MainEditorViewModelFactory(
     IViewModelFactory<ContentBrowserViewModel> factory,
-    AssetViewModelProvider assetViewModelProvider,
+    IAssetDocumentManager assetDocumentManager,
     ILogger<MainEditorViewModel> logger
 ) : ViewModelFactory<MainEditorViewModel>
 {
@@ -23,20 +23,34 @@ public sealed class MainEditorViewModelFactory(
         var contentBrowser = factory.CreateViewModel();
         viewModel.AddTool(contentBrowser);
 
+        foreach (var openAsset in assetDocumentManager.GetOpenDocuments())
+        {
+            viewModel.AddDocument(openAsset);
+        }
+
         contentBrowser.AssetOpenRequested += path =>
         {
             Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 try
                 {
-                    var document = await assetViewModelProvider.GetViewModelAsync(path);
-                    viewModel.AddDocument(document);
+                    var (document, isNew) = await assetDocumentManager.OpenDocumentAsync(path);
+                    if (isNew)
+                        viewModel.AddDocument(document);
+                    else
+                        viewModel.SetActiveDocument(document);
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to load asset: {Path}", path);
                 }
             });
+        };
+
+        viewModel.ItemClosed += dockable =>
+        {
+            if (dockable is IAssetViewModel assetViewModel)
+                assetDocumentManager.CloseDocument(assetViewModel);
         };
 
         return viewModel;
