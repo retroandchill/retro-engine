@@ -64,14 +64,14 @@ namespace retro
 
         void render_next_available_frame() override;
 
-        [[nodiscard]] std::shared_ptr<RenderTarget> render_target() const override;
+        [[nodiscard]] const std::shared_ptr<RenderTarget> &render_target() const override;
 
         void add_new_render_pipeline(std::type_index type, RenderPipeline &pipeline) override;
 
         void remove_render_pipeline(std::type_index type) override;
 
       private:
-        RefCountPtr<VulkanRenderBackend> backend_;
+        RefCountPtr<VulkanRenderBackend> backend_{};
         VulkanDevice &device_;
         VulkanBufferManager &buffer_manager_;
         vk::CommandPool command_pool_;

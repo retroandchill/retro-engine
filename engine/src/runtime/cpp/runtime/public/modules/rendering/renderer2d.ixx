@@ -40,7 +40,7 @@ namespace retro
 
         virtual void remove_render_pipeline(std::type_index type) = 0;
 
-        [[nodiscard]] virtual std::shared_ptr<RenderTarget> render_target() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<RenderTarget> &render_target() const = 0;
     };
 
 } // namespace retro
