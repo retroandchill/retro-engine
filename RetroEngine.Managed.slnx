@@ -40,6 +40,10 @@
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Interop/RetroEngine.Interop.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Logging/RetroEngine.Logging.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Scripting/RetroEngine.Scripting.csproj">
+      <BuildType Solution="DebugGame|*" Project="Debug" />
+      <BuildType Solution="Packaged|*" Project="Debug" />
+    </Project>
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Utilities.SourceGenerator/RetroEngine.Utilities.SourceGenerator.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Utilities/RetroEngine.Utilities.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine/RetroEngine.csproj" />
