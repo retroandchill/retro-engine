@@ -13,6 +13,14 @@ public readonly ref struct ReadLockScope(ReaderWriterLockSlim lockSlim) : IDispo
     }
 }
 
+public readonly ref struct UpgradableReadLockScope(ReaderWriterLockSlim lockSlim) : IDisposable
+{
+    public void Dispose()
+    {
+        lockSlim.ExitUpgradeableReadLock();
+    }
+}
+
 public readonly ref struct WriteLockScope(ReaderWriterLockSlim lockSlim) : IDisposable
 {
     public void Dispose()
@@ -29,6 +37,12 @@ public static class ReadWriteLockingExtensions
         {
             lockSlim.EnterReadLock();
             return new ReadLockScope(lockSlim);
+        }
+
+        public UpgradableReadLockScope EnterUpgradeableReadScope()
+        {
+            lockSlim.EnterUpgradeableReadLock();
+            return new UpgradableReadLockScope(lockSlim);
         }
 
         public WriteLockScope EnterWriteScope()
