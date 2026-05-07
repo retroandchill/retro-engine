@@ -7,7 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RetroEngine\RetroEngine.csproj" />
+        <ProjectReference Include="..\MagicArchive.SourceGenerator\MagicArchive.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\MagicArchive\MagicArchive.csproj" />
+        <ProjectReference Include="..\RetroEngine.Portable\RetroEngine.Portable.csproj" />
     </ItemGroup>
 
 </Project>

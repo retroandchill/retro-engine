@@ -1,11 +1,43 @@
-﻿// // @file TypeDefinition.cs
+﻿// // @file ScriptTypeDefinition.cs
 // //
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
+using RetroEngine.Scripting.Compiler;
+
 namespace RetroEngine.Scripting.Model;
 
-public record ScriptTypeDefinition
+public abstract partial class ScriptTypeDefinition
 {
-    public required ScriptTypeReference Id { get; init; }
+    [GeneratedRegex(@"^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*$")]
+    private static partial Regex ValidNamespaceRegex { get; }
+
+    [GeneratedRegex(@"^[a-zA-Z_]\w*$")]
+    private static partial Regex ValidTypeNameRegex { get; }
+
+    public string Namespace { get; }
+    public string Name { get; }
+
+    protected ScriptTypeDefinition(string @namespace, string name)
+    {
+        if (!ValidNamespaceRegex.IsMatch(@namespace))
+            throw new ArgumentException($"Invalid namespace: {@namespace}", nameof(@namespace));
+
+        if (!ValidTypeNameRegex.IsMatch(name))
+            throw new ArgumentException($"Invalid type name: {name}", nameof(name));
+
+        Namespace = @namespace;
+        Name = name;
+    }
+
+    public virtual void Emit(CodeWriter writer)
+    {
+        writer.AppendLine("#nullable enable");
+        writer.AppendLine();
+        writer.Append("namespace ");
+        writer.Append(Namespace);
+        writer.AppendLine(";");
+        writer.AppendLine();
+    }
 }

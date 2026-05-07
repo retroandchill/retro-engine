@@ -4,55 +4,63 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using MagicArchive;
 using RetroEngine.Scripting.Compiler;
 
 namespace RetroEngine.Scripting.Model;
 
-public enum ScriptClassVisibility
+[Archivable]
+public sealed partial class ScriptClassDefinition(string @namespace, string name)
+    : ScriptTypeDefinition(@namespace, name)
 {
-    Public,
-    Internal,
-}
+    public TypeSpecifier? BaseType { get; set; }
+    public List<TypeSpecifier> Interfaces { get; } = [];
 
-public sealed partial class ScriptClassDefinition
-{
-    public ScriptClassVisibility Visibility { get; set; } = ScriptClassVisibility.Public;
-    public string Name { get; }
-
-    // TODO: When we start adding members we can add to this.
-    public bool IsEmpty => true;
-
-    public ScriptClassDefinition(string name)
+    [ArchiveIgnore]
+    public IEnumerable<TypeSpecifier> AllBaseTypes
     {
-        Name = name;
-        if (!ValidClassRegex.IsMatch(name))
-            throw new ArgumentException("Class name is invalid.", nameof(name));
+        get
+        {
+            if (BaseType is not null)
+                yield return BaseType;
+
+            foreach (var @interface in Interfaces)
+            {
+                yield return @interface;
+            }
+        }
     }
 
-    public void Emit(CodeWriter writer)
+    // TODO: When we start adding members we can add to this.
+    [ArchiveIgnore]
+    public bool IsEmpty => true;
+
+    public override void Emit(CodeWriter writer)
     {
-        switch (Visibility)
-        {
-            case ScriptClassVisibility.Public:
-                writer.Append("public ");
-                break;
-            case ScriptClassVisibility.Internal:
-                writer.Append("internal ");
-                break;
-            default:
-                throw new InvalidOperationException("Unknown visibility: " + Visibility);
-        }
-        writer.Append("class ");
+        base.Emit(writer);
+        writer.Append("public class ");
         writer.Append(Name);
+
+        if (BaseType is not null || Interfaces.Count > 0)
+        {
+            writer.Append(" : ");
+
+            foreach (var (i, type) in AllBaseTypes.Index())
+            {
+                if (i > 0)
+                    writer.Append(", ");
+
+                writer.Append(type.FullCodeName);
+            }
+        }
+
         if (IsEmpty)
         {
             writer.AppendLine(';');
             return;
         }
 
+        writer.AppendLine();
         using var indent = writer.EnterBlockScope();
     }
-
-    [GeneratedRegex("^[a-zA-Z_]\\w*$")]
-    private static partial Regex ValidClassRegex { get; }
 }
