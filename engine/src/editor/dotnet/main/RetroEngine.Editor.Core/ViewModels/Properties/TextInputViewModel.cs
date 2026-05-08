@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObservableCollections;
 using RetroEngine.Portable.Localization;
+using RetroEngine.Portable.Localization.StringTables;
 using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.ViewModels.Properties;
@@ -34,6 +35,11 @@ internal sealed partial class TextInputViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string Key { get; set; } = "";
+
+    public TextInputViewModel()
+    {
+        StringTables.AddRange(StringTableRegistry.Instance.StringTables.Select(x => x.Key));
+    }
 
     public void ImportFromText(Text text)
     {
@@ -65,6 +71,22 @@ internal sealed partial class TextInputViewModel : ObservableObject
         }
 
         return Text.AsLocalizable(Namespace, Key, SourceString);
+    }
+
+    partial void OnSelectedStringTableChanged(Name value)
+    {
+        SelectedStringTableKey = TextKey.Empty;
+        StringTableKeys.Clear();
+        if (value.IsNone)
+            return;
+
+        var stringTable = StringTableRegistry.Instance.FindStringTable(value);
+        if (stringTable is null)
+            return;
+
+        var keys = new List<TextKey>();
+        stringTable.EnumerateSourceStrings((key, _) => keys.Add(key));
+        StringTableKeys.AddRange(keys);
     }
 
     [RelayCommand]
