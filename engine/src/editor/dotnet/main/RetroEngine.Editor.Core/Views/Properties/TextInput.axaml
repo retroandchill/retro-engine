@@ -4,18 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
-             xmlns:properties="clr-namespace:RetroEngine.Editor.Core.Views.Properties"
+             xmlns:properties="clr-namespace:RetroEngine.Editor.Core.ViewModels.Properties"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Properties.TextInput">
+    <Design.DataContext>
+        <properties:TextInputViewModel/>
+    </Design.DataContext>
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
-        <TextBox x:Name="TextBox" Grid.Column="0" TextChanged="InputTextChanged" />
+        <TextBox x:Name="TextBox" Grid.Column="0" Text="{Binding SourceString}"/>
         <DropDownButton Grid.Column="1"
                         BorderThickness="0"
                         Background="Transparent">
             <StackPanel>
-                <iconPacks:PackIconBootstrapIcons x:Name="LocalizedOnIcon" Kind="Flag"/>
+                <iconPacks:PackIconBootstrapIcons x:Name="LocalizedOnIcon" Kind="Flag" IsVisible="{Binding IsLocalized}"/>
                 <iconPacks:PackIconCodicons x:Name="LocalizedOffIcon" Kind="Warning"
-                                            IsVisible="False" />
+                                            IsVisible="{Binding !IsLocalized}" />
             </StackPanel>
 
 
@@ -28,12 +31,12 @@
                         </ControlTheme>
                     </Flyout.FlyoutPresenterTheme>
 
-                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,*,*,*,*,*" ColumnSpacing="10" RowSpacing="5" >
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,*,*,*,*,*" ColumnSpacing="10" RowSpacing="5">
                         <TextBlock Grid.Column="0" Grid.Row="0" VerticalAlignment="Center"
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, Localize, Localize}" />
                         <CheckBox Grid.Row="0" x:Name="LocalizedCheckbox" Grid.Column="1" IsThreeState="False"
-                                  IsCheckedChanged="LocalizedCheckedChanged" IsChecked="True"/>
+                                  IsChecked="{Binding IsLocalized}" />
                         <Border Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
                                 Background="{DynamicResource SystemAltLowColor}">
                             <TextBlock VerticalAlignment="Center"
@@ -44,6 +47,33 @@
                         <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center"
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, StringTable, String Table}" />
+                        <Grid Grid.Column="1" Grid.Row="2" ColumnDefinitions="*,*,Auto" ColumnSpacing="5"
+                              Margin="0,0,10,0" >
+                            <ComboBox Grid.Column="0"  PlaceholderText="{extensions:LocalizedText TextInput, None, None}"
+                                      IsTextSearchEnabled="True"  ItemsSource="{Binding StringTables}"
+                                      Text="{Binding SelectedStringTable}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <ComboBox Grid.Column="1" IsEnabled="{Binding !SelectedStringTable.IsNone}" PlaceholderText="{extensions:LocalizedText TextInput, NoKey, No Key}"
+                                      IsTextSearchEnabled="True" ItemsSource="{Binding StringTableKeys}" Text="{Binding SelectedStringTableKey}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="2"
+                                    BorderThickness="0"
+                                    Background="Transparent"
+                                    IsEnabled="{Binding !SelectedStringTable.IsNone}"
+                                    Command="{Binding ResetSelectedStringTableCommand}">
+                                <iconPacks:PackIconCodicons Kind="Trash" IsEnabled="False"/>
+                            </Button>
+                        </Grid>
                         <Border Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
                                 Background="{DynamicResource SystemAltLowColor}">
                             <TextBlock VerticalAlignment="Center"
@@ -54,11 +84,13 @@
                         <TextBlock Grid.Column="0" Grid.Row="4" VerticalAlignment="Center"
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, Namespace, Namespace}" />
-                        <TextBox Grid.Column="1" Grid.Row="4" Width="200" Margin="0,0,10,0" />
+                        <TextBox Grid.Column="1" Grid.Row="4" MinWidth="120" Margin="0,0,10,0"
+                                 Text="{Binding Namespace}"/>
                         <TextBlock Grid.Column="0" Grid.Row="5" VerticalAlignment="Center"
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, Key, Key}" />
-                        <TextBox Grid.Column="1" Grid.Row="5" Width="200" Margin="0,0,10,0" />
+                        <TextBox Grid.Column="1" Grid.Row="5" MinWidth="120" Margin="0,0,10,0"
+                                 Text="{Binding Key}"/>
                     </Grid>
                 </Flyout>
             </DropDownButton.Flyout>

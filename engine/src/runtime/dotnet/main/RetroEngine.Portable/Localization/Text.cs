@@ -244,6 +244,15 @@ public readonly partial struct Text : IEquatable<Text>, IComparable<Text>, IComp
         return new Text(name.ToString());
     }
 
+    public static Text FromStringTable(
+        Name tableId,
+        TextKey key,
+        StringTableLoadingPolicy loadingPolicy = StringTableLoadingPolicy.FindOrLoad
+    )
+    {
+        return new Text(tableId, key, loadingPolicy);
+    }
+
     public static Text AsCultureInvariant(string sourceString)
     {
         return new Text(new TextHistorySimple(TextId.Empty, sourceString), TextFlag.CultureInvariant);

@@ -4,9 +4,9 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PropertyGenerator.Avalonia;
+using RetroEngine.Editor.Core.ViewModels.Properties;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Utilities.Async;
 using Serilog;
@@ -17,59 +17,32 @@ public partial class TextInput : UserControl
 {
     [GeneratedStyledProperty]
     public partial Text Text { get; set; }
+    private readonly TextInputViewModel _viewModel = new();
+
+    private readonly Debouncer _debouncer = new();
 
     public event Action<Text>? TextChanged;
 
-    private readonly Debouncer _inputDebouncer = new();
-
-    [GeneratedDirectProperty]
-    public partial bool Localized { get; set; } = true;
-
     public TextInput()
     {
+        _viewModel.ImportFromText(Text);
+        _viewModel.PropertyChanged += (_, _) =>
+        {
+            _debouncer.Debounce(SetText, TimeSpan.FromMilliseconds(250));
+        };
+        DataContext = _viewModel;
+
         InitializeComponent();
+    }
+
+    private void SetText()
+    {
+        Dispatcher.UIThread.InvokeAsync(() => Text = _viewModel.ExportToText());
     }
 
     partial void OnTextPropertyChanged(Text newValue)
     {
-        TextBox.Text = newValue.ToString();
-        Localized = !newValue.IsCultureInvariant;
+        _viewModel.ImportFromText(newValue);
         TextChanged?.Invoke(newValue);
-    }
-
-    partial void OnLocalizedPropertyChanged(bool newValue)
-    {
-        LocalizedOnIcon.IsVisible = newValue;
-        LocalizedOffIcon.IsVisible = !newValue;
-    }
-
-    private void InputTextChanged(object? sender, TextChangedEventArgs e)
-    {
-        _inputDebouncer.Debounce(UpdateText, TimeSpan.FromMilliseconds(100));
-    }
-
-    private void UpdateText()
-    {
-        Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            var value = TextBox.Text ?? "";
-            if (Text.IsCultureInvariant)
-            {
-                Text = Text.AsCultureInvariant(value);
-            }
-            else
-            {
-                var (@namespace, key) = Text.TextData.History.TextId;
-                Text = new Text(value, @namespace, key, Text.Flags);
-            }
-        });
-    }
-
-    private void LocalizedCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not CheckBox checkBox)
-            return;
-
-        Localized = checkBox.IsChecked is true;
     }
 }
