@@ -5,6 +5,7 @@
 
 using RetroEngine.Scripting.Compiler;
 using RetroEngine.Scripting.Model;
+using RetroEngine.Scripting.Test.Mocks;
 
 namespace RetroEngine.Scripting.Test.Compiler;
 
@@ -44,9 +45,9 @@ public class CodeGenerationTest
 
             public class TestClass : Test.BaseClass, Test.Interface1, Test.Interface2;
             """;
-        var baseClass = new TypeSpecifier("Test.BaseClass");
-        var interface1 = new TypeSpecifier("Test.Interface1");
-        var interface2 = new TypeSpecifier("Test.Interface2");
+        var baseClass = new MockNamedType("Test", "BaseClass");
+        var interface1 = new MockNamedType("Test", "Interface1");
+        var interface2 = new MockNamedType("Test", "Interface2");
 
         var testClass = new ScriptClassDefinition("Test.Namespace", "TestClass") { BaseType = baseClass };
         testClass.Interfaces.Add(interface1);

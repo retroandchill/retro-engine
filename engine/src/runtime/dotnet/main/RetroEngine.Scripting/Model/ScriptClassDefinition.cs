@@ -3,21 +3,17 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Text.RegularExpressions;
 using MagicArchive;
 using RetroEngine.Scripting.Compiler;
 
 namespace RetroEngine.Scripting.Model;
 
-[Archivable]
-public sealed partial class ScriptClassDefinition(string @namespace, string name)
-    : ScriptTypeDefinition(@namespace, name)
+public sealed class ScriptClassDefinition(string @namespace, string name) : ScriptTypeDefinition(@namespace, name)
 {
-    public TypeSpecifier? BaseType { get; set; }
-    public List<TypeSpecifier> Interfaces { get; } = [];
+    public INamedScriptType? BaseType { get; set; }
+    public List<INamedScriptType> Interfaces { get; } = [];
 
-    [ArchiveIgnore]
-    public IEnumerable<TypeSpecifier> AllBaseTypes
+    public IEnumerable<INamedScriptType> AllBaseTypes
     {
         get
         {
@@ -32,7 +28,6 @@ public sealed partial class ScriptClassDefinition(string @namespace, string name
     }
 
     // TODO: When we start adding members we can add to this.
-    [ArchiveIgnore]
     public bool IsEmpty => true;
 
     public override void Emit(CodeWriter writer)

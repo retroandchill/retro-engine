@@ -8,7 +8,7 @@ using RetroEngine.Scripting.Compiler;
 
 namespace RetroEngine.Scripting.Model;
 
-public abstract partial class ScriptTypeDefinition
+public abstract partial class ScriptTypeDefinition : INamedScriptType
 {
     [GeneratedRegex(@"^[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*$")]
     private static partial Regex ValidNamespaceRegex { get; }
@@ -18,6 +18,9 @@ public abstract partial class ScriptTypeDefinition
 
     public string Namespace { get; }
     public string Name { get; }
+    public string FullName => $"{Namespace}.{Name}";
+    public virtual string FullCodeName => FullName;
+    public virtual string FullCodeNameUnbound => FullName;
 
     protected ScriptTypeDefinition(string @namespace, string name)
     {
