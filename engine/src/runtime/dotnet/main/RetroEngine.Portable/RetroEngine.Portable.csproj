@@ -36,5 +36,6 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="RetroEngine.Portable.Test"/>
+        <InternalsVisibleTo Include="RetroEngine.Editor.Core"/>
     </ItemGroup>
 </Project>

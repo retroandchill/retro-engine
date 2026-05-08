@@ -1,8 +1,10 @@
 ﻿using System.Text.Json;
 using Avalonia;
+using Avalonia.PropertyGrid.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Config;
+using RetroEngine.Editor.Core.Services.Factories;
 using RetroEngine.Logging;
 using Serilog;
 using Serilog.Events;
@@ -24,6 +26,9 @@ internal static class Program
             .WithEngineLog()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
             .CreateLogger();
+
+        CellEditFactoryService.Default.AddFactory(new NameCellEditFactory());
+        CellEditFactoryService.Default.AddFactory(new TextCellEditFactory());
 
         var engineBuilder = new EngineBuilder();
 

@@ -1,0 +1,67 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
+             xmlns:properties="clr-namespace:RetroEngine.Editor.Core.Views.Properties"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="RetroEngine.Editor.Core.Views.Properties.TextInput">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
+        <TextBox x:Name="TextBox" Grid.Column="0" TextChanged="InputTextChanged" />
+        <DropDownButton Grid.Column="1"
+                        BorderThickness="0"
+                        Background="Transparent">
+            <StackPanel>
+                <iconPacks:PackIconBootstrapIcons x:Name="LocalizedOnIcon" Kind="Flag"/>
+                <iconPacks:PackIconCodicons x:Name="LocalizedOffIcon" Kind="Warning"
+                                            IsVisible="False" />
+            </StackPanel>
+
+
+            <DropDownButton.Flyout>
+                <Flyout>
+                    <Flyout.FlyoutPresenterTheme>
+                        <ControlTheme TargetType="FlyoutPresenter"
+                                      BasedOn="{StaticResource {x:Type FlyoutPresenter}}">
+                            <Setter Property="Padding" Value="0, 3" />
+                        </ControlTheme>
+                    </Flyout.FlyoutPresenterTheme>
+
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,*,*,*,*,*" ColumnSpacing="10" RowSpacing="5" >
+                        <TextBlock Grid.Column="0" Grid.Row="0" VerticalAlignment="Center"
+                                   Margin="13,0,3,0"
+                                   Text="{extensions:LocalizedText TextInput, Localize, Localize}" />
+                        <CheckBox Grid.Row="0" x:Name="LocalizedCheckbox" Grid.Column="1" IsThreeState="False"
+                                  IsCheckedChanged="LocalizedCheckedChanged" IsChecked="True"/>
+                        <Border Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+                                Background="{DynamicResource SystemAltLowColor}">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontWeight="Bold"
+                                       Margin="8,5"
+                                       Text="{extensions:LocalizedText TextInput, ReferencedText, Referenced Text}" />
+                        </Border>
+                        <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center"
+                                   Margin="13,0,3,0"
+                                   Text="{extensions:LocalizedText TextInput, StringTable, String Table}" />
+                        <Border Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"
+                                Background="{DynamicResource SystemAltLowColor}">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontWeight="Bold"
+                                       Margin="8,5"
+                                       Text="{extensions:LocalizedText TextInput, InlineText, Inline Text}" />
+                        </Border>
+                        <TextBlock Grid.Column="0" Grid.Row="4" VerticalAlignment="Center"
+                                   Margin="13,0,3,0"
+                                   Text="{extensions:LocalizedText TextInput, Namespace, Namespace}" />
+                        <TextBox Grid.Column="1" Grid.Row="4" Width="200" Margin="0,0,10,0" />
+                        <TextBlock Grid.Column="0" Grid.Row="5" VerticalAlignment="Center"
+                                   Margin="13,0,3,0"
+                                   Text="{extensions:LocalizedText TextInput, Key, Key}" />
+                        <TextBox Grid.Column="1" Grid.Row="5" Width="200" Margin="0,0,10,0" />
+                    </Grid>
+                </Flyout>
+            </DropDownButton.Flyout>
+        </DropDownButton>
+    </Grid>
+</UserControl>

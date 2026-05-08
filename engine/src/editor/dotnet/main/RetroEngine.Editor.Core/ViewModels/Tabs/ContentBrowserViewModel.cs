@@ -12,6 +12,7 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using IconPacks.Avalonia.Codicons;
 using Microsoft.Extensions.Logging;
+using ObservableCollections;
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Services;
@@ -466,7 +467,7 @@ public sealed partial class ContentBrowserViewModel : Tool
     private readonly ReadOnlyObservableCollection<ContentBrowserItem> _sortedItems;
     public ReadOnlyObservableCollection<ContentBrowserItem> Items => _sortedItems;
 
-    public ObservableCollection<ContentBrowserPackageRoot> Packages { get; } = [];
+    public ObservableList<ContentBrowserPackageRoot> Packages { get; } = [];
 
     public event Action<AssetPath>? AssetOpenRequested;
 
@@ -474,20 +475,15 @@ public sealed partial class ContentBrowserViewModel : Tool
     {
         Title = Text.AsLocalizable(TextNamespace, "ContentBrowser", "Content Browser");
         _items.Connect().Sort(ContentBrowserItem.KeyComparer.Instance).Bind(out _sortedItems).Subscribe();
-        Packages.CollectionChanged += (_, c) =>
+        Packages.CollectionChanged += (in c) =>
         {
-            if (c.OldItems is not null)
+            foreach (var item in c.OldItems)
             {
-                foreach (var item in c.OldItems.OfType<ContentBrowserPackageRoot>())
-                {
-                    item.Dispose();
-                    _items.Remove(item.Item);
-                }
+                item.Dispose();
+                _items.Remove(item.Item);
             }
 
-            if (c.NewItems is null)
-                return;
-            foreach (var item in c.NewItems.OfType<ContentBrowserPackageRoot>())
+            foreach (var item in c.NewItems)
             {
                 _items.Add(item.Item);
                 item.OpenRequested += path => AssetOpenRequested?.Invoke(path);

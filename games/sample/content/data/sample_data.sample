@@ -1,0 +1,8 @@
+{
+  "BoolProperty": true,
+  "IntProperty": 12345,
+  "FloatProperty": 123.45,
+  "NameProperty": "MyName",
+  "StringProperty": "Hello, world!",
+  "TextProperty": "This text is unlocalized"
+}

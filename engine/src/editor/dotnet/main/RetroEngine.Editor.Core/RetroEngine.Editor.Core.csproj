@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="Avalonia" />
+      <PackageReference Include="bodong.Avalonia.PropertyGrid" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="Dock.Model.Avalonia" />
       <PackageReference Include="DynamicData" />
@@ -27,7 +28,10 @@
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
       <PackageReference Include="Microsoft.Extensions.Options" />
       <PackageReference Include="PropertyGenerator.Avalonia" />
+      <PackageReference Include="Riok.Mapperly" />
       <PackageReference Include="Testably.Abstractions.FileSystem.Interface" />
+      <PackageReference Include="TreeDataGrid.Avalonia" />
+      <PackageReference Include="Xaml.Behaviors.Avalonia" />
       <ProjectReference Include="$(RetroEnginePortableSourceGeneratorProj)"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false"/>

@@ -22,17 +22,14 @@ public sealed class ContentBrowserViewModelFactory(
     {
         var model = new ContentBrowserViewModel();
 
-        foreach (
-            var root in assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(
+        model.Packages.AddRange(
+            assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(
                 dialogService,
                 x,
                 navigationService,
                 logger
             ))
-        )
-        {
-            model.Packages.Add(root);
-        }
+        );
 
         return model;
     }

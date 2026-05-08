@@ -17,8 +17,8 @@ public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder
 {
     public Name AssetType => Texture.AssetType;
 
-    private static readonly ImmutableArray<string> Extensions = ["png", "jpg", "jpeg", "bmp"];
-    ImmutableArray<string> IAssetDecoder.Extensions => Extensions;
+    private static readonly ImmutableArray<string> ExtensionsArray = ["png", "jpg", "jpeg", "bmp"];
+    public ImmutableArray<string> Extensions => ExtensionsArray;
 
     static TextureDecoder()
     {
