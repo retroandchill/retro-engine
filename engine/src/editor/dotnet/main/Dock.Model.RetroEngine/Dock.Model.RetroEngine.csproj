@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="Dock.Avalonia.Diagnostics" />
       <PackageReference Include="Dock.Model" />
