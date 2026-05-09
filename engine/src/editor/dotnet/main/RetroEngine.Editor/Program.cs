@@ -43,6 +43,7 @@ internal static class Program
                 options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 options.WriteIndented = true;
             })
+            .AddRetroEngineAssetTools()
             .AddRetroEngineEditorCore()
             .AddRetroEngineEditor();
 

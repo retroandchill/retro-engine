@@ -33,6 +33,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\developer\dotnet\main\RetroEngine.AssetTools\RetroEngine.AssetTools.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
       <ProjectReference Include="..\RetroEngine.Editor.Core\RetroEngine.Editor.Core.csproj" />
