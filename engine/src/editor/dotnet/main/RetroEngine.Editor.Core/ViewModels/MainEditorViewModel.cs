@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 using RetroEngine.Editor.Core.Attributes;
-using RetroEngine.Editor.Core.ViewModels.Menus;
 using RetroEngine.Editor.Core.Views;
 
 namespace RetroEngine.Editor.Core.ViewModels;
@@ -34,9 +33,6 @@ public sealed partial class MainEditorViewModel : ObservableObject
     public IRootDock Layout { get; }
 
     public event Action<IDockable>? ItemClosed;
-
-    [ObservableProperty]
-    public partial DynamicMenuViewModel Menu { get; set; } = new() { Items = [] };
 
     public MainEditorViewModel()
     {

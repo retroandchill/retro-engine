@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Strings;
-using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.AssetTools;
 
