@@ -15,9 +15,9 @@
       <PackageReference Include="Dock.Model.Avalonia" />
       <PackageReference Include="DynamicData" />
       <PackageReference Include="EFCore.NamingConventions" />
+      <PackageReference Include="FluentIcons.Avalonia.Fluent" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia" />
       <PackageReference Include="HanumanInstitute.MvvmDialogs.Avalonia.MessageBox" />
-      <PackageReference Include="IconPacks.Avalonia" />
       <PackageReference Include="Injectio" />
       <PackageReference Include="JetBrains.Annotations" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" />
@@ -63,6 +63,12 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="RetroEngine.Editor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="FluentIcons.Avalonia">
+        <HintPath>C:\Users\fcors\.nuget\packages\fluenticons.avalonia\2.1.326\lib\net10.0\FluentIcons.Avalonia.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

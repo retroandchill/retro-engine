@@ -8,9 +8,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
 using DynamicData;
+using FluentIcons.Common;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
-using IconPacks.Avalonia.Codicons;
 using Microsoft.Extensions.Logging;
 using ObservableCollections;
 using RetroEngine.Assets;
@@ -68,7 +68,7 @@ public sealed partial class ContentBrowserItem : ObservableObject
     public partial string Name { get; set; } = "";
 
     [ObservableProperty]
-    public partial PackIconCodiconsKind Icon { get; set; } = PackIconCodiconsKind.Folder;
+    public partial Icon Icon { get; set; } = Icon.Folder;
 
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
@@ -371,7 +371,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
         Item = new ContentBrowserItem(dialogService, package, navigationService, logger)
         {
             Name = package.PackageName,
-            Icon = PackIconCodiconsKind.Package,
+            Icon = Icon.Box,
             CanRenameOrDelete = false,
             CanEdit = package is IEditableAssetPackage,
             IsDirectory = true,
@@ -387,7 +387,7 @@ public sealed class ContentBrowserPackageRoot : IDisposable
         {
             Name = entry.DisplayName,
             Key = entry.Key,
-            Icon = entry.IsDirectory ? PackIconCodiconsKind.Folder : PackIconCodiconsKind.File,
+            Icon = entry.IsDirectory ? Icon.Folder : Icon.Document,
             CanEdit = _package is IEditableAssetPackage,
             IsDirectory = entry.IsDirectory,
         };

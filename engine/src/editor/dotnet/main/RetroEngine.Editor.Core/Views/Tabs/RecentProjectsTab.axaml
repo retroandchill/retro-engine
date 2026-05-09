@@ -5,31 +5,26 @@
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
+             xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.RecentProjectsTab"
              x:DataType="tabs:RecentProjectsViewModel">
 
     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="15,0">
-            <iconPacks:PackIconCodicons Kind="Search"
-                                        Width="20"
-                                        Height="20" VerticalAlignment="Center"/>
+            <ic:FluentIcon Icon="Search" IconSize="Size24" VerticalAlignment="Center"/>
             <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Watermark="{extensions:LocalizedText ProjectsTab, SearchText, Search Projects}">
 
             </TextBox>
             <Button Grid.Column="2" Command="{Binding NewProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <iconPacks:PackIconCodicons Kind="NewFile"
-                                                Width="20"
-                                                Height="20" />
+                    <ic:FluentIcon Icon="DocumentAdd" IconSize="Size24"/>
                     <TextBlock VerticalAlignment="Center" Text="{extensions:LocalizedText ProjectsTab, NewProject, New Project}"/>
                 </StackPanel>
             </Button>
             <Button Grid.Column="3" Command="{Binding OpenProjectCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <iconPacks:PackIconCodicons Kind="FolderOpened"
-                                                Width="20"
-                                                Height="20" />
+                    <ic:FluentIcon Icon="Folder" IconSize="Size24"/>
                     <TextBlock VerticalAlignment="Center"  Text="{extensions:LocalizedText ProjectsTab, OpenProject, Open}"/>
                 </StackPanel>
             </Button>
@@ -66,10 +61,8 @@
                                     Background="Transparent" VerticalAlignment="Center"
                                     Command="{Binding ((tabs:RecentProjectsViewModel)DataContext).DeleteRecentProjectCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                     CommandParameter="{Binding}">
-                                <iconPacks:PackIconCodicons Kind="Close"
-                                                            Width="12"
-                                                            Height="12"
-                                                            Foreground="{DynamicResource SystemControlDisabledBaseMediumLowBrush}"/>
+                                <ic:FluentIcon Icon="Delete"
+                                                     Foreground="{DynamicResource SystemControlDisabledBaseMediumLowBrush}"/>
                             </Button>
 
                         </Grid>

@@ -7,6 +7,7 @@
              xmlns:properties="clr-namespace:RetroEngine.Editor.Core.ViewModels.Properties"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Properties.TextInput"
+             xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              x:DataType="properties:TextInputViewModel">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
         <TextBox x:Name="TextBox" Grid.Column="0" Text="{Binding SourceString, UpdateSourceTrigger=LostFocus}"
@@ -15,9 +16,9 @@
                         BorderThickness="0"
                         Background="Transparent">
             <StackPanel>
-                <iconPacks:PackIconBootstrapIcons x:Name="LocalizedOnIcon" Kind="Flag" IsVisible="{Binding IsLocalized}"/>
-                <iconPacks:PackIconCodicons x:Name="LocalizedOffIcon" Kind="Warning"
-                                            IsVisible="{Binding !IsLocalized}" />
+                <ic:FluentIcon x:Name="LocalizedOnIcon" Icon="Flag" IsVisible="{Binding IsLocalized}"/>
+                <ic:FluentIcon x:Name="LocalizedOffIcon" Icon="Warning"
+                              IsVisible="{Binding !IsLocalized}" />
             </StackPanel>
 
 
@@ -71,7 +72,7 @@
                                     Background="Transparent"
                                     IsEnabled="{Binding !SelectedStringTable.IsNone}"
                                     Command="{Binding ResetSelectedStringTableCommand}">
-                                <iconPacks:PackIconCodicons Kind="Trash" IsEnabled="False"/>
+                                <ic:FluentIcon Icon="Delete" IsEnabled="False"/>
                             </Button>
                         </Grid>
                         <Border Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"

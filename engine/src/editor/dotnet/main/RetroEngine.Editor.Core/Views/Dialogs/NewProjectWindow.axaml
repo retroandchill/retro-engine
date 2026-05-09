@@ -3,12 +3,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:dialogs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Dialogs"
-        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
         xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
         mc:Ignorable="d" d:DesignWidth="600"
         SizeToContent="Height"
         Width="600"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
+        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
         Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
         x:DataType="dialogs:NewProjectWindowViewModel">
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
@@ -16,9 +16,7 @@
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectFolderText, Project Folder}"/>
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ProjectFolder}"/>
             <Button Grid.Row="0" Grid.Column="2">
-                <iconPacks:PackIconCodicons Kind="Folder"
-                                            Width="16"
-                                            Height="16" VerticalAlignment="Center"/>
+                <ic:FluentIcon Icon="Folder" VerticalAlignment="Center"/>
             </Button>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectNameText, Project Name}"/>
@@ -26,10 +24,9 @@
         </Grid>
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}">
-                <iconPacks:PackIconCodicons Kind="Error"
-                                            Width="20"
-                                            Height="20" VerticalAlignment="Center"
-                                            Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
+                <ic:FluentIcon Icon="ErrorCircle"
+                               VerticalAlignment="Center"
+                               IconVariant="Color"/>
                 <TextBlock Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" VerticalAlignment="Center" Text="{Binding ErrorText}"/>
             </StackPanel>
             <Button Grid.Column="1" Command="{Binding CreateProjectCommand}" IsEnabled="{Binding CanCreate}">
