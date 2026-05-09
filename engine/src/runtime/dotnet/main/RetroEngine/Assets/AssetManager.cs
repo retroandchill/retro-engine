@@ -34,6 +34,11 @@ public sealed partial class AssetManager(
     public IEnumerable<IAssetPackage> LoadedPackages =>
         _packages.Values.OrderBy(x => x.PackageName, NameComparer.CaseInsensitive);
 
+    public IAssetPackage? GetPackage(Name packageName)
+    {
+        return _packages.GetValueOrDefault(packageName);
+    }
+
     public async ValueTask LoadPackageAsync(
         Name packageName,
         string path,

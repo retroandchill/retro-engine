@@ -12,11 +12,13 @@ using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract partial class MappedAssetDecoder<TAsset, TDto> : IAssetDecoder
+public abstract partial class MappedAssetDecoder<TAsset, TDto>(Name assetType, ImmutableArray<string> extensions)
+    : IAssetDecoder,
+        IAssetEncoder<TAsset>
     where TAsset : class
 {
-    public abstract Name AssetType { get; }
-    public abstract ImmutableArray<string> Extensions { get; }
+    public Name AssetType { get; } = assetType;
+    public ImmutableArray<string> Extensions { get; } = extensions;
 
     [CreateSyncVersion]
     public async ValueTask<object> DecodeAsync(
@@ -43,21 +45,35 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto> : IAssetDecoder
         };
     }
 
-    public void Transcode<TBufferWriter>(
+    public void Encode<TBufferWriter>(
         AssetStorageType sourceType,
-        AssetStorageType destType,
-        scoped ReadOnlySpan<byte> source,
+        object asset,
+        ReadOnlySpan<char> extension,
         in TBufferWriter writer
     )
         where TBufferWriter : IBufferWriter<byte>
     {
-        if (sourceType == destType)
-        {
-            IAssetDecoder.EncodeAsSource(source, writer);
-            return;
-        }
+        if (asset is not TAsset sourceAsset)
+            throw new ArgumentException("Asset must be of type TAsset", nameof(asset));
 
-        var sourceAsset = DecodeDto(sourceType, source);
+        Encode(sourceType, sourceAsset, extension, writer);
+    }
+
+    public void Encode<TBufferWriter>(
+        AssetStorageType sourceType,
+        TAsset asset,
+        ReadOnlySpan<char> extension,
+        in TBufferWriter writer
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        var dto = Convert(asset);
+        EncodeDto(sourceType, dto, writer);
+    }
+
+    private static void EncodeDto<TBufferWriter>(AssetStorageType sourceType, TDto sourceAsset, TBufferWriter writer)
+        where TBufferWriter : IBufferWriter<byte>
+    {
         switch (sourceType)
         {
             case AssetStorageType.File:
@@ -72,7 +88,28 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto> : IAssetDecoder
         }
     }
 
+    public void Transcode<TBufferWriter>(
+        AssetStorageType sourceType,
+        AssetStorageType destType,
+        scoped ReadOnlySpan<byte> source,
+        ReadOnlySpan<char> extension,
+        in TBufferWriter writer
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        if (sourceType == destType)
+        {
+            IAssetTranscoder.EncodeAsSource(source, writer);
+            return;
+        }
+
+        var sourceAsset = DecodeDto(sourceType, source);
+        EncodeDto(sourceType, sourceAsset, writer);
+    }
+
     protected abstract TAsset Convert(TDto dto);
+
+    protected abstract TDto Convert(TAsset asset);
 
     protected virtual ValueTask<TAsset> ConvertAsync(TDto dto, CancellationToken cancellationToken = default)
     {

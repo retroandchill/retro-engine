@@ -15,13 +15,9 @@ public enum AssetStorageType
     Packaged,
 }
 
-public interface IAssetDecoder
+public interface IAssetDecoder : IAssetInterpreter
 {
-    Name AssetType { get; }
-
     int Priority => 0;
-
-    ImmutableArray<string> Extensions { get; }
 
     object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source);
 
@@ -34,24 +30,5 @@ public interface IAssetDecoder
         return !cancellationToken.IsCancellationRequested
             ? new ValueTask<object>(Decode(type, source.Span))
             : ValueTask.FromCanceled<object>(cancellationToken);
-    }
-
-    void Transcode<TBufferWriter>(
-        AssetStorageType sourceType,
-        AssetStorageType destType,
-        scoped ReadOnlySpan<byte> source,
-        in TBufferWriter writer
-    )
-        where TBufferWriter : IBufferWriter<byte>
-    {
-        EncodeAsSource(source, writer);
-    }
-
-    protected static void EncodeAsSource<TBufferWriter>(scoped ReadOnlySpan<byte> source, in TBufferWriter writer)
-        where TBufferWriter : IBufferWriter<byte>
-    {
-        var destBuffer = writer.GetSpan(source.Length);
-        source.CopyTo(destBuffer);
-        writer.Advance(source.Length);
     }
 }

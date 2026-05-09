@@ -86,9 +86,7 @@ internal sealed partial class TextInputViewModel : ObservableObject
         if (stringTable is null)
             return;
 
-        var keys = new List<TextKey>();
-        stringTable.EnumerateSourceStrings((key, _) => keys.Add(key));
-        StringTableKeys.AddRange(keys);
+        StringTableKeys.AddRange(stringTable.EnumerateSourceStrings().Select(x => x.Key));
         if (StringTableKeys.Count > 0)
         {
             SelectedStringTableKey = StringTableKeys[0];

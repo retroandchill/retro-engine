@@ -11,11 +11,13 @@ using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract class DataAssetDecoder<T> : IAssetDecoder
+public abstract class DataAssetDecoder<T>(Name assetType, ImmutableArray<string> extensions)
+    : IAssetDecoder,
+        IAssetEncoder<T>
     where T : class
 {
-    public abstract Name AssetType { get; }
-    public abstract ImmutableArray<string> Extensions { get; }
+    public Name AssetType { get; } = assetType;
+    public ImmutableArray<string> Extensions { get; } = extensions;
 
     public object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source)
     {
@@ -34,21 +36,28 @@ public abstract class DataAssetDecoder<T> : IAssetDecoder
         };
     }
 
-    public void Transcode<TBufferWriter>(
+    public void Encode<TBufferWriter>(
         AssetStorageType sourceType,
-        AssetStorageType destType,
-        scoped ReadOnlySpan<byte> source,
+        object asset,
+        ReadOnlySpan<char> extension,
         in TBufferWriter writer
     )
         where TBufferWriter : IBufferWriter<byte>
     {
-        if (sourceType == destType)
-        {
-            IAssetDecoder.EncodeAsSource(source, writer);
-            return;
-        }
+        if (asset is not T sourceAsset)
+            throw new ArgumentException($"Asset must be of type {typeof(T)}", nameof(asset));
 
-        var sourceAsset = DecodeInternal(sourceType, source);
+        Encode(sourceType, sourceAsset, extension, writer);
+    }
+
+    public void Encode<TBufferWriter>(
+        AssetStorageType sourceType,
+        T sourceAsset,
+        ReadOnlySpan<char> extension,
+        in TBufferWriter writer
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
         switch (sourceType)
         {
             case AssetStorageType.File:
@@ -61,5 +70,24 @@ public abstract class DataAssetDecoder<T> : IAssetDecoder
             default:
                 throw new ArgumentOutOfRangeException(nameof(sourceType), sourceType, null);
         }
+    }
+
+    public void Transcode<TBufferWriter>(
+        AssetStorageType sourceType,
+        AssetStorageType destType,
+        scoped ReadOnlySpan<byte> source,
+        ReadOnlySpan<char> extension,
+        in TBufferWriter writer
+    )
+        where TBufferWriter : IBufferWriter<byte>
+    {
+        if (sourceType == destType)
+        {
+            IAssetTranscoder.EncodeAsSource(source, writer);
+            return;
+        }
+
+        var sourceAsset = DecodeInternal(sourceType, source);
+        Encode(destType, sourceAsset, extension, writer);
     }
 }

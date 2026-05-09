@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.IO.Abstractions;
 using System.Text;
 using Cysharp.Text;
+using MagicArchive.Utilities;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Async;
 using RetroEngine.Utilities.Collections;
@@ -63,6 +64,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
     private readonly IFileSystemWatcher _watcher;
     private readonly IFileSystem _fileSystem;
     private readonly ImmutableArray<IAssetDecoder> _decoders;
+    private readonly ImmutableDictionary<Name, IAssetEncoder> _encoders;
 
     private readonly Lock _activeChangesLock = new();
     private FileSystemAssetChangeSet _activeChanges = new();
@@ -74,11 +76,13 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         IFileSystem fileSystem,
         Name packageName,
         string path,
-        ImmutableArray<IAssetDecoder> decoders
+        ImmutableArray<IAssetDecoder> decoders,
+        ImmutableDictionary<Name, IAssetEncoder> encoders
     )
     {
         _fileSystem = fileSystem;
         _decoders = decoders;
+        _encoders = encoders;
         PackageName = packageName;
         SourcePath = path;
 
@@ -352,6 +356,77 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         void OnComplete(scoped in AssetPackageChangeManifest manifest)
         {
             taskCompletionSource.TrySetResult();
+        }
+
+        void OnRefreshFailed(Exception ex)
+        {
+            taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public async Task AddAssetAsync(
+        Name name,
+        Name assetType,
+        object asset,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
+        var taskCompletionSource = new TaskCompletionSource();
+        await using var cancellationTokenRegistration = cancellationToken.Register(() =>
+            taskCompletionSource.TrySetCanceled()
+        );
+
+        var encoder = _encoders.GetValueOrDefault(assetType);
+        if (encoder is null)
+            throw new InvalidOperationException($"Encoder for asset type '{assetType}' not found");
+
+        var writer = ReusableLinkedArrayBufferWriterPool.Rent();
+        try
+        {
+            var fileInfo = _fileSystem.FileInfo.New(path);
+            if (fileInfo.Exists)
+                throw new InvalidOperationException($"Asset '{name}' already exists in package '{PackageName}'");
+
+            encoder.Encode(AssetStorageType.File, asset, fileInfo.Extension, writer);
+            try
+            {
+                OnEntriesRefreshed += OnAddComplete;
+                OnRefreshError += OnRefreshFailed;
+                await using (var fileStream = fileInfo.Create())
+                {
+                    using (_activeChangesLock.EnterScope())
+                    {
+                        _pendingChanges.AddSingleFileChange(name, false);
+                    }
+
+                    await writer.WriteToAndResetAsync(fileStream, cancellationToken);
+                }
+
+                await taskCompletionSource.Task;
+            }
+            finally
+            {
+                OnEntriesRefreshed -= OnAddComplete;
+                OnRefreshError -= OnRefreshFailed;
+            }
+        }
+        finally
+        {
+            ReusableLinkedArrayBufferWriterPool.Return(writer);
+        }
+
+        return;
+
+        void OnAddComplete(scoped in AssetPackageChangeManifest manifest)
+        {
+            foreach (var entry in manifest.RemovedEntries)
+            {
+                if (entry.Name == name)
+                {
+                    taskCompletionSource.TrySetResult();
+                }
+            }
         }
 
         void OnRefreshFailed(Exception ex)
@@ -944,10 +1019,16 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 }
 
 [RegisterSingleton]
-public sealed class FilesystemAssetPackageFactory(IFileSystem fileSystem, IEnumerable<IAssetDecoder> decoders)
-    : IAssetPackageFactory
+public sealed class FilesystemAssetPackageFactory(
+    IFileSystem fileSystem,
+    IEnumerable<IAssetDecoder> decoders,
+    IEnumerable<IAssetEncoder> encoders
+) : IAssetPackageFactory
 {
     private readonly ImmutableArray<IAssetDecoder> _decoders = [.. decoders.OrderBy(x => x.Priority)];
+    private readonly ImmutableDictionary<Name, IAssetEncoder> _encoders = encoders.ToImmutableDictionary(x =>
+        x.AssetType
+    );
 
     public bool CanCreate(Name packageName, string path)
     {
@@ -956,6 +1037,6 @@ public sealed class FilesystemAssetPackageFactory(IFileSystem fileSystem, IEnume
 
     public IAssetPackage Create(Name packageName, string path)
     {
-        return new FileSystemAssetPackage(fileSystem, packageName, path, _decoders);
+        return new FileSystemAssetPackage(fileSystem, packageName, path, _decoders, _encoders);
     }
 }

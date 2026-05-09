@@ -9,10 +9,4 @@ using RetroEngine.Portable.Strings;
 namespace RetroEngine.Assets.Decoders;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class SampleDataAssetDecoder : DataAssetDecoder<SampleDataAsset>
-{
-    public override Name AssetType => SampleDataAsset.AssetType;
-
-    private static readonly ImmutableArray<string> ExtensionsArray = ["sample"];
-    public override ImmutableArray<string> Extensions => ExtensionsArray;
-}
+public sealed class SampleDataAssetDecoder() : DataAssetDecoder<SampleDataAsset>(SampleDataAsset.AssetType, ["sample"]);

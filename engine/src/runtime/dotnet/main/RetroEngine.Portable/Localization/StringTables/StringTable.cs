@@ -3,11 +3,14 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Data;
 using System.Globalization;
+using System.Text.Json;
 using CsvHelper;
 using LinkDotNet.StringBuilder;
+using MagicArchive;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities;
 using RetroEngine.Utilities.Collections;
@@ -15,6 +18,16 @@ using ZLinq;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Portable.Localization.StringTables;
+
+[Archivable]
+public sealed partial record StringTableDto
+{
+    public required TextKey Namespace { get; init; }
+
+    public required ImmutableDictionary<TextKey, string> Entries { get; init; }
+
+    public required ImmutableDictionary<TextKey, ImmutableDictionary<Name, string>> Metadata { get; init; }
+}
 
 public sealed partial class StringTable
 {
@@ -79,12 +92,12 @@ public sealed partial class StringTable
         ClearMetadata(key);
     }
 
-    public IEnumerable<(TextKey Key, string SourceString)> EnumerateSourceStrings(Action<TextKey, string> action)
+    public IEnumerable<(TextKey Key, string SourceString)> EnumerateSourceStrings()
     {
         return _entries.Lock(_entriesLock).Select(x => (x.Key, x.Value.SourceString));
     }
 
-    public void ClearSourceStrings()
+    public void ClearSourceStrings(int sizeHint = 0)
     {
         using var scope = _entriesLock.EnterScope();
         foreach (var (_, entry) in _entries)
@@ -93,6 +106,7 @@ public sealed partial class StringTable
         }
 
         _entries.Clear();
+        _entries.EnsureCapacity(sizeHint);
         ClearMetadata();
     }
 
@@ -176,6 +190,7 @@ public sealed partial class StringTable
             csv.WriteField(dc.ColumnName);
         }
         await csv.NextRecordAsync();
+        cancellationToken.ThrowIfCancellationRequested();
 
         foreach (DataRow dr in dataTable.Rows)
         {
@@ -184,6 +199,7 @@ public sealed partial class StringTable
                 csv.WriteField(dr[dc]);
             }
             await csv.NextRecordAsync();
+            cancellationToken.ThrowIfCancellationRequested();
         }
     }
 
@@ -380,5 +396,37 @@ public sealed partial class StringTable
     public static Text From(Name tableId, TextKey key)
     {
         return new Text(tableId, key, StringTableLoadingPolicy.FindOrLoad);
+    }
+
+    public static StringTable FromDto(StringTableDto dto)
+    {
+        var result = new StringTable { Namespace = dto.Namespace };
+
+        result._entries.EnsureCapacity(dto.Entries.Count);
+        foreach (var (key, sourceString) in dto.Entries)
+        {
+            var entry = new StringTableEntry(result, sourceString, new TextId(dto.Namespace, key));
+            result._entries.Add(key, entry);
+        }
+
+        result._metadata.EnsureCapacity(dto.Metadata.Count);
+        foreach (var (key, value) in dto.Metadata)
+        {
+            result._metadata.Add(key, value.ToDictionary());
+        }
+
+        return result;
+    }
+
+    public StringTableDto ToDto()
+    {
+        using var keyMappingLock = _entriesLock.EnterScope();
+        using var metadataLock = _metadataLock.EnterScope();
+        return new StringTableDto
+        {
+            Namespace = Namespace,
+            Entries = _entries.ToImmutableDictionary(x => x.Key, x => x.Value.SourceString),
+            Metadata = _metadata.ToImmutableDictionary(x => x.Key, x => x.Value.ToImmutableDictionary()),
+        };
     }
 }

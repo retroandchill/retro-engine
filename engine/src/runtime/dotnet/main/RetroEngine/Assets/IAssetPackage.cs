@@ -68,6 +68,8 @@ public interface IAssetPackageFactory
 
 public interface IEditableAssetPackage : IAssetPackage
 {
+    Task AddAssetAsync(Name name, Name assetType, object asset, CancellationToken cancellationToken = default);
+
     Task AddFolderAsync(Name name, CancellationToken cancellationToken = default);
 
     Task RenameAssetAsync(Name oldName, Name newName, CancellationToken cancellationToken = default);
