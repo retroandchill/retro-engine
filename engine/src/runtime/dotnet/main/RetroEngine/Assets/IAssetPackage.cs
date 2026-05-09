@@ -50,7 +50,7 @@ public interface IAssetPackage
 
     bool HasAsset(Name assetName);
 
-    Name GetAssetType(Name assetName);
+    Type GetAssetType(Name assetName);
 
     Stream OpenAsset(Name assetName);
 
@@ -68,7 +68,7 @@ public interface IAssetPackageFactory
 
 public interface IEditableAssetPackage : IAssetPackage
 {
-    Task AddAssetAsync(Name name, Name assetType, object asset, CancellationToken cancellationToken = default);
+    Task AddAssetAsync(Name name, object asset, CancellationToken cancellationToken = default);
 
     Task AddFolderAsync(Name name, CancellationToken cancellationToken = default);
 

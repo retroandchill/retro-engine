@@ -256,4 +256,16 @@ public static class CollectionExtensions
             return value!;
         }
     }
+
+    extension<T>(IList<T> list)
+    {
+        public bool AddUnique(T item)
+        {
+            if (list.Contains(item))
+                return false;
+
+            list.Add(item);
+            return true;
+        }
+    }
 }

@@ -7,14 +7,13 @@ using RetroEngine.Assets;
 using RetroEngine.Assets.Decoders;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
-using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public class SampleDataAssetEditorFactory(AssetManager assetManager) : IAssetViewModelFactory
 {
-    public Name AssetType => SampleDataAsset.AssetType;
+    public Type AssetType => typeof(SampleDataAsset);
 
     public async ValueTask<IAssetViewModel> CreateViewModelAsync(
         AssetPath assetPath,

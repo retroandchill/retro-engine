@@ -3,10 +3,6 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Buffers;
-using System.Collections.Immutable;
-using RetroEngine.Portable.Strings;
-
 namespace RetroEngine.Assets;
 
 public enum AssetStorageType
@@ -17,8 +13,6 @@ public enum AssetStorageType
 
 public interface IAssetDecoder : IAssetInterpreter
 {
-    int Priority => 0;
-
     object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source);
 
     ValueTask<object> DecodeAsync(

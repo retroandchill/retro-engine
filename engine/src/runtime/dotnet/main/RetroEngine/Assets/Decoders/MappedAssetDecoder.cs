@@ -7,17 +7,16 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.Json;
 using MagicArchive;
-using RetroEngine.Portable.Strings;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract partial class MappedAssetDecoder<TAsset, TDto>(Name assetType, ImmutableArray<string> extensions)
+public abstract partial class MappedAssetDecoder<TAsset, TDto>(ImmutableArray<string> extensions)
     : IAssetDecoder,
         IAssetEncoder<TAsset>
     where TAsset : class
 {
-    public Name AssetType { get; } = assetType;
+    public Type AssetType => typeof(TAsset);
     public ImmutableArray<string> Extensions { get; } = extensions;
 
     [CreateSyncVersion]

@@ -48,7 +48,7 @@ public interface IAssetPackageFolder : IAssetPackageEntry
 
 public interface IAssetPackageFile : IAssetPackageEntry
 {
-    Name AssetType { get; }
+    Type AssetType { get; }
 }
 
 internal sealed class AssetPackageEntryComparer : IComparer<IAssetPackageEntry>

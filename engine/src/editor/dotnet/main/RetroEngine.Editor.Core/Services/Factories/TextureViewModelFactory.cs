@@ -7,7 +7,6 @@ using RetroEngine.Assets;
 using RetroEngine.Core.Math;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
-using RetroEngine.Portable.Strings;
 using RetroEngine.Rendering;
 using RetroEngine.World;
 
@@ -21,7 +20,7 @@ public sealed class TextureViewModelFactory(
     RenderManager renderManager
 ) : IAssetViewModelFactory
 {
-    public Name AssetType => Texture.AssetType;
+    public Type AssetType => typeof(Texture);
 
     public async ValueTask<IAssetViewModel> CreateViewModelAsync(
         AssetPath assetPath,

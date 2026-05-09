@@ -5,7 +5,6 @@
 
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
-using RetroEngine.Portable.Strings;
 using RetroEngine.Rendering;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -15,7 +14,7 @@ namespace RetroEngine.Assets.Decoders;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder, IAssetTranscoder
 {
-    public Name AssetType => Texture.AssetType;
+    public Type AssetType => typeof(Texture);
 
     private static readonly ImmutableArray<string> ExtensionsArray = ["png", "jpg", "jpeg", "bmp"];
     public ImmutableArray<string> Extensions => ExtensionsArray;

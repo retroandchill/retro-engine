@@ -11,6 +11,7 @@ using MagicArchive.Utilities;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities.Async;
 using RetroEngine.Utilities.Collections;
+using RetroEngine.Utilities.Collections.Immutable;
 using RetroEngine.Utilities.Concurrency;
 
 namespace RetroEngine.Assets;
@@ -64,7 +65,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
     private readonly IFileSystemWatcher _watcher;
     private readonly IFileSystem _fileSystem;
     private readonly ImmutableArray<IAssetDecoder> _decoders;
-    private readonly ImmutableDictionary<Name, IAssetEncoder> _encoders;
+    private readonly ImmutableOrderedDictionary<Type, IAssetEncoder> _encoders;
 
     private readonly Lock _activeChangesLock = new();
     private FileSystemAssetChangeSet _activeChanges = new();
@@ -77,7 +78,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         Name packageName,
         string path,
         ImmutableArray<IAssetDecoder> decoders,
-        ImmutableDictionary<Name, IAssetEncoder> encoders
+        ImmutableOrderedDictionary<Type, IAssetEncoder> encoders
     )
     {
         _fileSystem = fileSystem;
@@ -293,7 +294,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         return _assetFileEntries.TryGetValue(assetName, out var entry) && entry is IAssetPackageFile;
     }
 
-    public Name GetAssetType(Name assetName)
+    public Type GetAssetType(Name assetName)
     {
         using var scope = _assetEntriesLock.EnterReadScope();
         var entry = _assetFileEntries.GetValueOrDefault(assetName);
@@ -364,12 +365,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         }
     }
 
-    public async Task AddAssetAsync(
-        Name name,
-        Name assetType,
-        object asset,
-        CancellationToken cancellationToken = default
-    )
+    public async Task AddAssetAsync(Name name, object asset, CancellationToken cancellationToken = default)
     {
         var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
         var taskCompletionSource = new TaskCompletionSource();
@@ -377,17 +373,28 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
             taskCompletionSource.TrySetCanceled()
         );
 
-        var encoder = _encoders.GetValueOrDefault(assetType);
+        var fileInfo = _fileSystem.FileInfo.New(path);
+        if (fileInfo.Exists)
+            throw new InvalidOperationException($"Asset '{name}' already exists in package '{PackageName}'");
+
+        var extension = fileInfo.Extension.AsSpan(1);
+        IAssetEncoder? encoder = null;
+        foreach (var (_, e) in _encoders)
+        {
+            foreach (var ext in e.Extensions)
+            {
+                if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                encoder = e;
+                break;
+            }
+        }
         if (encoder is null)
-            throw new InvalidOperationException($"Encoder for asset type '{assetType}' not found");
+            throw new InvalidOperationException($"Encoder for asset type '{name}' not found");
 
         var writer = ReusableLinkedArrayBufferWriterPool.Rent();
         try
         {
-            var fileInfo = _fileSystem.FileInfo.New(path);
-            if (fileInfo.Exists)
-                throw new InvalidOperationException($"Asset '{name}' already exists in package '{PackageName}'");
-
             encoder.Encode(AssetStorageType.File, asset, fileInfo.Extension, writer);
             try
             {
@@ -1026,8 +1033,8 @@ public sealed class FilesystemAssetPackageFactory(
 ) : IAssetPackageFactory
 {
     private readonly ImmutableArray<IAssetDecoder> _decoders = [.. decoders.OrderBy(x => x.Priority)];
-    private readonly ImmutableDictionary<Name, IAssetEncoder> _encoders = encoders.ToImmutableDictionary(x =>
-        x.AssetType
+    private readonly ImmutableOrderedDictionary<Type, IAssetEncoder> _encoders = encoders.ToImmutableOrderedDictionary(
+        x => x.AssetType
     );
 
     public bool CanCreate(Name packageName, string path)

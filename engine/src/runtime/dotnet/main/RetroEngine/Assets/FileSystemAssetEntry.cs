@@ -33,7 +33,7 @@ internal sealed record FileSystemAssetFile(
     string Path,
     DateTimeOffset LastModified,
     long Length,
-    Name AssetType
+    Type AssetType
 ) : FileSystemAssetEntry(Name, ParentName, DisplayName, Path), IAssetPackageFile
 {
     public override bool IsDirectory => false;

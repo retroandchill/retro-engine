@@ -4,13 +4,13 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
-using RetroEngine.Portable.Strings;
 
-namespace RetroEngine.Editor.Core.Services.Factories;
+namespace RetroEngine.AssetTools;
 
 public interface IAssetFactory
 {
-    Name AssetType { get; }
+    Type AssetType { get; }
+
     object CreateAsset(AssetPath path);
 }
 
@@ -20,10 +20,10 @@ public interface IAssetFactory<out T> : IAssetFactory
     new T CreateAsset(AssetPath path);
 }
 
-public abstract class AssetFactory<T>(Name assetType) : IAssetFactory<T>
+public abstract class AssetFactory<T> : IAssetFactory<T>
     where T : class
 {
-    public Name AssetType { get; } = assetType;
+    public Type AssetType => typeof(T);
 
     public abstract T CreateAsset(AssetPath path);
 

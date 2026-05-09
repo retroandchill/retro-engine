@@ -6,14 +6,13 @@
 using System.Collections.Immutable;
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.ViewModels;
-using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton]
 public sealed class AssetViewModelProvider(AssetManager assetManager, IEnumerable<IAssetViewModelFactory> factories)
 {
-    private readonly ImmutableDictionary<Name, IAssetViewModelFactory> _factories = factories.ToImmutableDictionary(f =>
+    private readonly ImmutableDictionary<Type, IAssetViewModelFactory> _factories = factories.ToImmutableDictionary(f =>
         f.AssetType
     );
 
@@ -23,7 +22,7 @@ public sealed class AssetViewModelProvider(AssetManager assetManager, IEnumerabl
     )
     {
         var assetType = assetManager.GetAssetType(assetPath);
-        if (assetType.IsNone)
+        if (assetType is null)
             throw new InvalidOperationException($"Failed to determine asset type for {assetPath}.");
 
         if (!_factories.TryGetValue(assetType, out var factory))

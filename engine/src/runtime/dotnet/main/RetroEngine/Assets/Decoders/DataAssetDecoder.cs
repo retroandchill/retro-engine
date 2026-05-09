@@ -7,16 +7,13 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.Json;
 using MagicArchive;
-using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract class DataAssetDecoder<T>(Name assetType, ImmutableArray<string> extensions)
-    : IAssetDecoder,
-        IAssetEncoder<T>
+public abstract class DataAssetDecoder<T>(ImmutableArray<string> extensions) : IAssetDecoder, IAssetEncoder<T>
     where T : class
 {
-    public Name AssetType { get; } = assetType;
+    public Type AssetType => typeof(T);
     public ImmutableArray<string> Extensions { get; } = extensions;
 
     public object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source)

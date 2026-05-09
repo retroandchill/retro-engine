@@ -5,13 +5,12 @@
 
 using RetroEngine.Assets;
 using RetroEngine.Editor.Core.ViewModels;
-using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.Editor.Core.Services;
 
 public interface IAssetViewModelFactory
 {
-    Name AssetType { get; }
+    Type AssetType { get; }
 
     ValueTask<IAssetViewModel> CreateViewModelAsync(AssetPath assetPath, CancellationToken cancellationToken = default);
 }

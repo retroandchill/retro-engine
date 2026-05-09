@@ -7,6 +7,14 @@
   </Configurations>
   <Folder Name="/engine/" />
   <Folder Name="/engine/src/" />
+  <Folder Name="/engine/src/developer/" />
+  <Folder Name="/engine/src/developer/dotnet/" />
+  <Folder Name="/engine/src/developer/dotnet/main/">
+    <Project Path="engine/src/developer/dotnet/main/RetroEngine.AssetTools/RetroEngine.AssetTools.csproj">
+      <BuildType Solution="DebugGame|*" Project="Debug" />
+      <BuildType Solution="Packaged|*" Project="Debug" />
+    </Project>
+  </Folder>
   <Folder Name="/engine/src/editor/" />
   <Folder Name="/engine/src/editor/dotnet/" />
   <Folder Name="/engine/src/editor/dotnet/main/" />

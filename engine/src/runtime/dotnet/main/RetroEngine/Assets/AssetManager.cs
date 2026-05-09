@@ -23,7 +23,7 @@ public sealed partial class AssetManager(
     private readonly ImmutableArray<IAssetPackageFactory> _packageFactories = [.. packageFactories];
     private readonly ConcurrentDictionary<Name, IAssetPackage> _packages = new();
 
-    private readonly ImmutableDictionary<Name, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
+    private readonly ImmutableDictionary<Type, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
         x.AssetType
     );
 
@@ -33,11 +33,6 @@ public sealed partial class AssetManager(
 
     public IEnumerable<IAssetPackage> LoadedPackages =>
         _packages.Values.OrderBy(x => x.PackageName, NameComparer.CaseInsensitive);
-
-    public IAssetPackage? GetPackage(Name packageName)
-    {
-        return _packages.GetValueOrDefault(packageName);
-    }
 
     public async ValueTask LoadPackageAsync(
         Name packageName,
@@ -77,13 +72,29 @@ public sealed partial class AssetManager(
         _packages.Clear();
     }
 
-    public Name GetAssetType(AssetPath path)
+    public Type? GetAssetType(AssetPath path)
     {
         if (_packages.TryGetValue(path.PackageName, out var package))
             return package.GetAssetType(path.AssetName);
 
         logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
-        return default;
+        return null;
+    }
+
+    public async Task CreateAssetAsync(AssetPath path, object asset, CancellationToken cancellationToken = default)
+    {
+        if (!_packages.TryGetValue(path.PackageName, out var package))
+        {
+            throw new AssetLoadException($"Package '{path.PackageName}' not found");
+        }
+
+        if (package is not IEditableAssetPackage editablePackage)
+        {
+            throw new AssetLoadException($"Package '{path.PackageName}' is not editable");
+        }
+
+        await editablePackage.AddAssetAsync(path.AssetName, asset, cancellationToken);
+        _assetCache[path] = new WeakReference<object>(asset);
     }
 
     [CreateSyncVersion]
