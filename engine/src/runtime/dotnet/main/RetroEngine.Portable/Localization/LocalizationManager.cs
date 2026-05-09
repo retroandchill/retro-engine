@@ -168,14 +168,6 @@ public sealed partial class LocalizationManager
             return null;
 
         var textId = new TextId(@namespace, key);
-
-        var fullNamespace = textId.Namespace.ToString();
-        var displayNamespace = TextNamespaceUtil.StripPackageNamespace(fullNamespace);
-        if (!displayNamespace.Equals(fullNamespace, StringComparison.OrdinalIgnoreCase))
-        {
-            textId = textId with { Namespace = displayNamespace };
-        }
-
         return FindDisplayStringInternal(textId, sourceString);
     }
 

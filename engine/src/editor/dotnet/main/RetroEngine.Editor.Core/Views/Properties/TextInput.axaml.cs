@@ -4,12 +4,9 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Avalonia.Controls;
-using Avalonia.Threading;
 using PropertyGenerator.Avalonia;
 using RetroEngine.Editor.Core.ViewModels.Properties;
 using RetroEngine.Portable.Localization;
-using RetroEngine.Utilities.Async;
-using Serilog;
 
 namespace RetroEngine.Editor.Core.Views.Properties;
 
@@ -19,8 +16,6 @@ public partial class TextInput : UserControl
     public partial Text Text { get; set; }
     private readonly TextInputViewModel _viewModel = new();
 
-    private readonly Debouncer _debouncer = new();
-
     public event Action<Text>? TextChanged;
 
     public TextInput()
@@ -28,16 +23,11 @@ public partial class TextInput : UserControl
         _viewModel.ImportFromText(Text);
         _viewModel.PropertyChanged += (_, _) =>
         {
-            _debouncer.Debounce(SetText, TimeSpan.FromMilliseconds(250));
+            Text = _viewModel.ExportToText();
         };
         DataContext = _viewModel;
 
         InitializeComponent();
-    }
-
-    private void SetText()
-    {
-        Dispatcher.UIThread.InvokeAsync(() => Text = _viewModel.ExportToText());
     }
 
     partial void OnTextPropertyChanged(Text newValue)

@@ -11,7 +11,8 @@
         <properties:TextInputViewModel/>
     </Design.DataContext>
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
-        <TextBox x:Name="TextBox" Grid.Column="0" Text="{Binding SourceString}"/>
+        <TextBox x:Name="TextBox" Grid.Column="0" Text="{Binding SourceString, UpdateSourceTrigger=LostFocus}"
+                 IsEnabled="{Binding CanEditSourceString}"/>
         <DropDownButton Grid.Column="1"
                         BorderThickness="0"
                         Background="Transparent">
@@ -25,6 +26,7 @@
             <DropDownButton.Flyout>
                 <Flyout>
                     <Flyout.FlyoutPresenterTheme>
+                        <!-- ReSharper disable once Xaml.StaticResourceNotResolved -->
                         <ControlTheme TargetType="FlyoutPresenter"
                                       BasedOn="{StaticResource {x:Type FlyoutPresenter}}">
                             <Setter Property="Padding" Value="0, 3" />
@@ -85,12 +87,12 @@
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, Namespace, Namespace}" />
                         <TextBox Grid.Column="1" Grid.Row="4" MinWidth="120" Margin="0,0,10,0"
-                                 Text="{Binding Namespace}"/>
+                                 Text="{Binding Namespace, UpdateSourceTrigger=LostFocus}"/>
                         <TextBlock Grid.Column="0" Grid.Row="5" VerticalAlignment="Center"
                                    Margin="13,0,3,0"
                                    Text="{extensions:LocalizedText TextInput, Key, Key}" />
                         <TextBox Grid.Column="1" Grid.Row="5" MinWidth="120" Margin="0,0,10,0"
-                                 Text="{Binding Key}"/>
+                                 Text="{Binding Key, UpdateSourceTrigger=LostFocus}"/>
                     </Grid>
                 </Flyout>
             </DropDownButton.Flyout>

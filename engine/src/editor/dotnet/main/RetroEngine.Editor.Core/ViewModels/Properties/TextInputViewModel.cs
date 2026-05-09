@@ -20,6 +20,8 @@ internal sealed partial class TextInputViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsLocalized { get; set; }
 
+    public bool CanEditSourceString => !IsLocalized || !SelectedStringTable.IsNone;
+
     public ObservableList<Name> StringTables { get; } = [];
 
     [ObservableProperty]
@@ -87,6 +89,10 @@ internal sealed partial class TextInputViewModel : ObservableObject
         var keys = new List<TextKey>();
         stringTable.EnumerateSourceStrings((key, _) => keys.Add(key));
         StringTableKeys.AddRange(keys);
+        if (StringTableKeys.Count > 0)
+        {
+            SelectedStringTableKey = StringTableKeys[0];
+        }
     }
 
     [RelayCommand]
