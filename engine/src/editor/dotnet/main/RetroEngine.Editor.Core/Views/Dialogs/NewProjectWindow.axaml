@@ -9,11 +9,8 @@
         SizeToContent="Height"
         Width="600"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
-        Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}">
-    <Design.DataContext>
-        <dialogs:NewProjectWindowViewModel/>
-    </Design.DataContext>
-
+        Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
+        x:DataType="dialogs:NewProjectWindowViewModel">
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="*,*" ColumnSpacing="10" RowSpacing="20">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:LocalizedText NewProjectWindow, ProjectFolderText, Project Folder}"/>

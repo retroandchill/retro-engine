@@ -5,11 +5,8 @@
              xmlns:viewModels="clr-namespace:RetroEngine.Editor.Core.ViewModels"
              xmlns:hosts="clr-namespace:RetroEngine.Editor.Core.Hosts"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.SceneView">
-
-    <Design.DataContext>
-        <viewModels:SceneViewModel/>
-    </Design.DataContext>
+             x:Class="RetroEngine.Editor.Core.Views.SceneView"
+             x:DataType="viewModels:SceneViewModel">
 
     <hosts:EngineControlHost Provider="{Binding Host}"/>
 </UserControl>

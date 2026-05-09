@@ -35,9 +35,6 @@ public class App(Engine engine) : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-            DisableAvaloniaDataAnnotationValidation();
             desktop.Exit += OnExit;
 
             desktop.MainWindow = new MainWindow { DataContext = _navigationService.MainWindow, Engine = engine };
@@ -61,20 +58,6 @@ public class App(Engine engine) : Application
         engine.RequestShutdown();
         engine.WaitForGameThread();
         engine.Dispose();
-    }
-
-    private static void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove = BindingPlugins
-            .DataValidators.OfType<DataAnnotationsValidationPlugin>()
-            .ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
-        }
     }
 
     [RegisterServices]

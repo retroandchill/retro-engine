@@ -7,11 +7,9 @@
         xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.TextEntryWindow"
+        x:DataType="dialogs:TextEntryWindowViewModel"
         Title="{Binding WindowTitle}"
         SizeToContent="Height">
-    <Design.DataContext>
-        <dialogs:TextEntryWindowViewModel/>
-    </Design.DataContext>
 
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
         <TextBlock Text="{Binding Prompt}"/>

@@ -6,10 +6,8 @@
              xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              xmlns:properties="clr-namespace:RetroEngine.Editor.Core.ViewModels.Properties"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="RetroEngine.Editor.Core.Views.Properties.TextInput">
-    <Design.DataContext>
-        <properties:TextInputViewModel/>
-    </Design.DataContext>
+             x:Class="RetroEngine.Editor.Core.Views.Properties.TextInput"
+             x:DataType="properties:TextInputViewModel">
     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
         <TextBox x:Name="TextBox" Grid.Column="0" Text="{Binding SourceString, UpdateSourceTrigger=LostFocus}"
                  IsEnabled="{Binding CanEditSourceString}"/>
