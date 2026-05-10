@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Avalonia" />
+      <PackageReference Include="PropertyGenerator.Avalonia" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Controls\LabeledSeparator.axaml.cs">
+        <DependentUpon>LabeledSeparator.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="ToolMenuTheme.axaml.cs">
+        <DependentUpon>ToolMenuTheme.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
+</Project>

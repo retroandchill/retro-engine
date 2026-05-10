@@ -1,0 +1,33 @@
+﻿<ResourceDictionary  xmlns="https://github.com/avaloniaui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:styling="clr-namespace:RetroEngine.ToolMenu.Styling">
+    <Design.PreviewWith>
+        <LabeledSeparator Header="Header" />
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type LabeledSeparator}" TargetType="LabeledSeparator">
+        <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+        <Setter Property="FontSize" Value="{DynamicResource {x:Static styling:ToolMenuResourceKeys.MenuSectionHeaderFontSize}}"/>
+        <Setter Property="FontWeight" Value="{DynamicResource {x:Static styling:ToolMenuResourceKeys.MenuSectionHeaderFontWeight}}"/>
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HeaderSpacing" Value="{DynamicResource {x:Static styling:ToolMenuResourceKeys.MenuSectionHeaderSpacing}}"/>
+        <Setter Property="SeparatorHeight" Value="{DynamicResource MenuFlyoutSeparatorThemeHeight}"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="{DynamicResource MenuFlyoutSeparatorThemePadding}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid x:Name="Layout" ColumnDefinitions="Auto,*" ColumnSpacing="{TemplateBinding ActualHeaderSpacing}">
+                    <TextBlock Grid.Column="0" Text="{TemplateBinding Header}" Foreground="{TemplateBinding Background}"/>
+                    <Border Grid.Column="1" Padding="{TemplateBinding Margin}"
+                            Height="{TemplateBinding SeparatorHeight}"
+                            HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Background="{TemplateBinding Background}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

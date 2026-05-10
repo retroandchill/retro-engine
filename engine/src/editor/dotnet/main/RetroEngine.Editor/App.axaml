@@ -16,5 +16,6 @@
     <Application.Styles>
         <FluentTheme/>
         <DockFluentTheme />
+        <ToolMenuTheme/>
     </Application.Styles>
 </Application>
