@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Avalonia" />
+      <PackageReference Include="CommunityToolkit.Mvvm" />
       <PackageReference Include="PropertyGenerator.Avalonia" />
     </ItemGroup>
 
@@ -20,6 +21,17 @@
         <DependentUpon>ToolMenuTheme.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Remove="Model\MultiBoxSectionDefinition.cs" />
+      <Compile Remove="Model\MultiBlockDefinition.cs" />
+      <Compile Remove="Model\MultiBoxDefinition.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Commands\" />
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,58 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:RetroEngine.ToolMenu.ViewModel"
+        x:Class="RetroEngine.ToolMenu.Styling.DynamicMenuStyles">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+        </Border>
+    </Design.PreviewWith>
+
+    <Style Selector="MenuItem" x:DataType="vm:IMenuItemViewModel">
+        <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+        <Setter Property="Header" Value="{Binding Header}" />
+        <Setter Property="ToolTip.Tip" Value="{Binding ToolTip}" />
+        <Setter Property="Tag" Value="{Binding StyleTag}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=Section]" x:DataType="vm:IMenuItemSectionViewModel">
+        <Setter Property="Template">
+            <Template>
+                <LabeledSeparator Header="{Binding SectionName}"/>
+            </Template>
+        </Setter>
+    </Style>
+
+    <Style Selector="MenuItem[Tag=Group]" x:DataType="vm:IMenuItemGroupViewModel">
+        <Setter Property="Icon" Value="{Binding Icon}" />
+        <Setter Property="ItemsSource" Value="{Binding Children}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=CheckBox]" x:DataType="vm:IMenuItemCheckBoxViewModel">
+        <Setter Property="ToggleType" Value="CheckBox" />
+        <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=RadioButton]" x:DataType="vm:IMenuItemRadioButtonViewModel">
+        <Setter Property="ToggleType" Value="Radio" />
+        <Setter Property="GroupName" Value="{Binding GroupName}" />
+        <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=Command]" x:DataType="vm:IMenuItemCommandViewModel">
+        <Setter Property="Icon" Value="{Binding Icon}" />
+        <Setter Property="Command" Value="{Binding Command}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=CommandWithSelf]" x:DataType="vm:IMenuItemSelfCommandViewModel">
+        <Setter Property="Icon" Value="{Binding Icon}" />
+        <Setter Property="Command" Value="{Binding Command}" />
+        <Setter Property="CommandParameter" Value="{Binding $self}" />
+    </Style>
+
+    <Style Selector="MenuItem[Tag=CommandWithParam]" x:DataType="vm:IMenuItemParamCommandViewModel">
+        <Setter Property="Icon" Value="{Binding Icon}" />
+        <Setter Property="Command" Value="{Binding Command}" />
+        <Setter Property="CommandParameter" Value="{Binding CommandParameter}" />
+    </Style>
+</Styles>

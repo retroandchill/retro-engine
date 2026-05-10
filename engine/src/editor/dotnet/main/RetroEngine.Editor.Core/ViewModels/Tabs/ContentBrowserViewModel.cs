@@ -21,6 +21,7 @@ using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
+using RetroEngine.ToolMenu.ViewModel;
 using RetroEngine.Utilities;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;

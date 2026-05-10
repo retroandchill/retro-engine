@@ -23,13 +23,12 @@
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <StackPanel.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Open, Open}"
-                                      Command="{Binding OpenCommand}"
-                                      IsVisible="{Binding !IsDirectory}"/>
+                            <LabeledSeparator Header="{extensions:LocalizedText ContentBrowserView, Create, Create}"/>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, NewFolder, New Folder}"
                                       Command="{Binding NewFolderCommand}"
                                       IsEnabled="{Binding CanEdit}"
                                       IsVisible="{Binding IsDirectory}"/>
+                            <LabeledSeparator Header="{extensions:LocalizedText ContentBrowserView, Common, Common}"/>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Refresh, Refresh}"
                                       Command="{Binding RefreshCommand}"/>
                             <MenuItem Header="{extensions:LocalizedText ContentBrowserView, Rename, Rename}"
