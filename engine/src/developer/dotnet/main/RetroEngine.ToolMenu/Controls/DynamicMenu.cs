@@ -24,4 +24,9 @@ public class DynamicMenu : Menu
     }
 
     protected override Type StyleKeyOverride => typeof(Menu);
+
+    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
+    {
+        return new DynamicMenuItem();
+    }
 }

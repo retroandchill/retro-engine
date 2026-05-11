@@ -5,6 +5,7 @@
 
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using PropertyGenerator.Avalonia;
 
 namespace RetroEngine.ToolMenu.Controls;

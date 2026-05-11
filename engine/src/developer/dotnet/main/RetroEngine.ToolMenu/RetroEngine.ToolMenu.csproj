@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" />
       <PackageReference Include="CommunityToolkit.Mvvm" />
+      <PackageReference Include="ObservableCollections" />
       <PackageReference Include="PropertyGenerator.Avalonia" />
     </ItemGroup>
 

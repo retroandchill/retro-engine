@@ -24,4 +24,9 @@ public class DynamicContextMenu : ContextMenu
     }
 
     protected override Type StyleKeyOverride => typeof(ContextMenu);
+
+    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
+    {
+        return new DynamicMenuItem();
+    }
 }

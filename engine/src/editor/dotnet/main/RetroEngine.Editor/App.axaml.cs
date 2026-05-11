@@ -9,8 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using RetroEngine.Editor.Core.Data;
 using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Views;
-using RetroEngine.ToolMenu;
-using RetroEngine.ToolMenu.Services;
 
 namespace RetroEngine.Editor;
 
@@ -25,9 +23,6 @@ public class App(Engine engine) : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        MenuBuilder.RegisterCommandsFactory(CommunityToolkitDynamicMenuServices.Instance);
-        MenuBuilder.RegisterCommandsFactory(AvaloniaDynamicMenuServices.Instance);
-
         var contextFactory = engine.Services.GetRequiredService<IDbContextFactory<CachedDbContext>>();
         using (var context = contextFactory.CreateDbContext())
         {

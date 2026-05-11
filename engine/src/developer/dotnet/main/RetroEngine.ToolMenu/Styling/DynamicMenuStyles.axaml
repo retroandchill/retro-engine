@@ -8,51 +8,73 @@
         </Border>
     </Design.PreviewWith>
 
-    <Style Selector="MenuItem" x:DataType="vm:IMenuItemViewModel">
-        <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
-        <Setter Property="Header" Value="{Binding Header}" />
-        <Setter Property="ToolTip.Tip" Value="{Binding ToolTip}" />
-        <Setter Property="Tag" Value="{Binding StyleTag}" />
+    <Style Selector="MenuItem" x:DataType="vm:IMenuItemEntry">
+        <Setter Property="IsVisible" Value="{Binding IsVisible}"/>
     </Style>
 
-    <Style Selector="MenuItem[Tag=Section]" x:DataType="vm:IMenuItemSectionViewModel">
+    <Style Selector="MenuItem.separator">
         <Setter Property="Template">
-            <Template>
-                <LabeledSeparator Header="{Binding SectionName}"/>
-            </Template>
+            <ControlTemplate>
+                <Separator/>
+            </ControlTemplate>
         </Setter>
     </Style>
 
-    <Style Selector="MenuItem[Tag=Group]" x:DataType="vm:IMenuItemGroupViewModel">
+    <Style Selector="MenuItem.section" x:DataType="vm:IMenuSectionHeader">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <LabeledSeparator Header="{Binding SectionName}"/>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="MenuItem.enableable" x:DataType="vm:IEnableableMenuItem">
+        <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+    </Style>
+
+    <Style Selector="MenuItem.headered" x:DataType="vm:IHeaderedMenuItem">
+        <Setter Property="Header" Value="{Binding Header}" />
+    </Style>
+
+    <Style Selector="MenuItem.icon" x:DataType="vm:IIconMenuItem">
         <Setter Property="Icon" Value="{Binding Icon}" />
+    </Style>
+
+    <Style Selector="MenuItem.tooltip" x:DataType="vm:IToolTipMenuItem">
+        <Setter Property="ToolTip.Tip" Value="{Binding ToolTip}" />
+    </Style>
+
+    <Style Selector="MenuItem.hotkey" x:DataType="vm:IHotKeyMenuItem">
+        <Setter Property="HotKey" Value="{Binding HotKey}" />
+    </Style>
+
+    <Style Selector="MenuItem.sub" x:DataType="vm:ISubMenuItem">
         <Setter Property="ItemsSource" Value="{Binding Children}" />
     </Style>
 
-    <Style Selector="MenuItem[Tag=CheckBox]" x:DataType="vm:IMenuItemCheckBoxViewModel">
+    <Style Selector="MenuItem.checkable" x:DataType="vm:ICheckableMenuItem">
         <Setter Property="ToggleType" Value="CheckBox" />
         <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
     </Style>
 
-    <Style Selector="MenuItem[Tag=RadioButton]" x:DataType="vm:IMenuItemRadioButtonViewModel">
-        <Setter Property="ToggleType" Value="Radio" />
+    <Style Selector="MenuItem.checkbox">
+        <Setter Property="ToggleType" Value="CheckBox" />
+    </Style>
+
+    <Style Selector="MenuItem.radio" x:DataType="vm:IRadioButtonMenuItem">
         <Setter Property="GroupName" Value="{Binding GroupName}" />
-        <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
+        <Setter Property="ToggleType" Value="Radio" />
     </Style>
 
-    <Style Selector="MenuItem[Tag=Command]" x:DataType="vm:IMenuItemCommandViewModel">
-        <Setter Property="Icon" Value="{Binding Icon}" />
+    <Style Selector="MenuItem.command" x:DataType="vm:ICommandMenuItem">
         <Setter Property="Command" Value="{Binding Command}" />
     </Style>
 
-    <Style Selector="MenuItem[Tag=CommandWithSelf]" x:DataType="vm:IMenuItemSelfCommandViewModel">
-        <Setter Property="Icon" Value="{Binding Icon}" />
-        <Setter Property="Command" Value="{Binding Command}" />
+    <Style Selector="MenuItem.self">
         <Setter Property="CommandParameter" Value="{Binding $self}" />
     </Style>
 
-    <Style Selector="MenuItem[Tag=CommandWithParam]" x:DataType="vm:IMenuItemParamCommandViewModel">
-        <Setter Property="Icon" Value="{Binding Icon}" />
-        <Setter Property="Command" Value="{Binding Command}" />
-        <Setter Property="CommandParameter" Value="{Binding CommandParameter}" />
+    <Style Selector="MenuItem.parameter" x:DataType="vm:ICommandParameterMenuItem">
+        <Setter Property="CommandParameter" Value="{Binding Parameter}" />
     </Style>
 </Styles>

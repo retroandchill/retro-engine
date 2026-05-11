@@ -5,6 +5,7 @@
 
 using Avalonia.Controls;
 using RetroEngine.ToolMenu.Styling;
+using RetroEngine.ToolMenu.ViewModel;
 
 namespace RetroEngine.ToolMenu.Controls;
 
@@ -21,6 +22,33 @@ public class DynamicMenuItem : MenuItem
         var style = new DynamicMenuStyles();
 
         Styles.Add(style);
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+
+        UpdateClasses();
+    }
+
+    private void UpdateClasses()
+    {
+        var item = DataContext;
+
+        Classes.Set("separator", item is IMenuSeparator);
+        Classes.Set("section", item is IMenuSectionHeader);
+        Classes.Set("enableable", item is IEnableableMenuItem);
+        Classes.Set("headered", item is IHeaderedMenuItem);
+        Classes.Set("tooltip", item is IToolTipMenuItem);
+        Classes.Set("icon", item is IIconMenuItem);
+        Classes.Set("hotkey", item is IHotKeyMenuItem);
+        Classes.Set("command", item is ICommandMenuItem);
+        Classes.Set("self", item is ISelfCommandMenuItem);
+        Classes.Set("parameter", item is ICommandParameterMenuItem);
+        Classes.Set("sub", item is ISubMenuItem);
+        Classes.Set("checkable", item is ICheckableMenuItem);
+        Classes.Set("radio", item is IRadioButtonMenuItem);
+        Classes.Set("checkbox", item is ICheckBoxMenuItem);
     }
 
     protected override Type StyleKeyOverride => typeof(MenuItem);
