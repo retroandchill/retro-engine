@@ -470,11 +470,7 @@ public sealed partial class ContentBrowserViewModel : Tool
     private static readonly Text CommonLabel = Text.AsLocalizable("ContentBrowserViewModel", "Common", "Common");
     private static readonly Text RefreshLabel = Text.AsLocalizable("ContentBrowserViewModel", "Refresh", "Refresh");
     private static readonly Text RenameLabel = Text.AsLocalizable("ContentBrowserViewModel", "Rename", "Rename");
-    private static readonly Text DeleteLabel = Text.AsLocalizable(
-        "ContentBrowserViewModel",
-        "DeleteLabel",
-        "DeleteLabel"
-    );
+    private static readonly Text DeleteLabel = Text.AsLocalizable("ContentBrowserViewModel", "DeleteLabel", "Delete");
 
     [ObservableProperty]
     public partial ContentBrowserItem? SelectedItem { get; internal set; }
@@ -486,7 +482,7 @@ public sealed partial class ContentBrowserViewModel : Tool
     public ObservableList<ContentBrowserPackageRoot> Packages { get; } = [];
 
     private readonly ObservableList<IMenuItemEntry> _contextActions = [];
-    public IReadOnlyObservableList<IMenuItemEntry> ContextActions => _contextActions;
+    public NotifyCollectionChangedSynchronizedViewList<IMenuItemEntry> ContextActions { get; }
 
     public event Action<AssetPath>? AssetOpenRequested;
 
@@ -508,6 +504,7 @@ public sealed partial class ContentBrowserViewModel : Tool
                 item.OpenRequested += path => AssetOpenRequested?.Invoke(path);
             }
         };
+        ContextActions = _contextActions.ToNotifyCollectionChanged();
     }
 
     public override bool OnClose()
@@ -535,7 +532,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         {
             newContextActions.AddRange(
                 new MenuSectionHeader("Create", CreateLabel),
-                new MenuCommand("NewFolder", NewFolderLabel, value.NewFolderCommand)
+                new MenuCommand("NewFolder", NewFolderLabel, value.NewFolderCommand) { IsEnabled = value.CanEdit }
             );
         }
 

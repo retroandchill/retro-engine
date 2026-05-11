@@ -18,14 +18,13 @@
             </Style>
         </TreeView.Styles>
 
+        <TreeView.ContextMenu>
+            <DynamicContextMenu ItemsSource="{Binding ContextActions}"/>
+        </TreeView.ContextMenu>
+
         <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Children}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <StackPanel.ContextMenu>
-                        <!-- ReSharper disable once Xaml.PossibleNullReferenceException -->
-                        <DynamicContextMenu ItemsSource="{Binding ((tabs:ContentBrowserViewModel)DataContext).ContextActions, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
-                    </StackPanel.ContextMenu>
-
                     <ic:FluentIcon Icon="{Binding Icon}"
                                    IconSize="Size16" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Name}"

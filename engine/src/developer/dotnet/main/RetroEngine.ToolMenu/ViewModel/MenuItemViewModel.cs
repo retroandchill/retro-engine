@@ -36,7 +36,7 @@ public abstract partial class MenuItemEntryBase(Name id, Text header)
         IIconMenuItem
 {
     [ObservableProperty]
-    public partial bool IsEnabled { get; set; }
+    public partial bool IsEnabled { get; set; } = true;
 
     [ObservableProperty]
     public partial Text Header { get; set; } = header;
