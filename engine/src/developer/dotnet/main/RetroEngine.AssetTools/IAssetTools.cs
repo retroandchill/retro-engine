@@ -18,6 +18,8 @@ public interface IAssetTools
 
     IEnumerable<AdvancedAssetCategory> AdvancedAssetCategories { get; }
 
+    void AssociateAssetType(Type assetType, AssetTypeCategory category);
+
     Task<object> CreateAssetAsync(
         string assetName,
         string parentPath,

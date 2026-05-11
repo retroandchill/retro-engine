@@ -9,20 +9,14 @@ namespace RetroEngine.AssetTools;
 public enum AssetTypeCategory
 {
     None = 0,
-    Basic = 1 << 0,
-    Animation = 1 << 1,
-    Materials = 1 << 2,
-    Sounds = 1 << 3,
-    Physics = 1 << 4,
+    Audio = 1 << 0,
+    Data = 1 << 1,
+    Graphics = 1 << 2,
+    Gameplay = 1 << 3,
+    Scripting = 1 << 4,
     UI = 1 << 5,
     Misc = 1 << 6,
-    Gameplay = 1 << 7,
-    Scripting = 1 << 8,
-    Media = 1 << 9,
-    Textures = 1 << 10,
-    World = 1 << 11,
-    FX = 1 << 12,
 
-    FirstUser = 1 << 13,
+    FirstUser = 1 << 7,
     LastUser = 1 << 31,
 }

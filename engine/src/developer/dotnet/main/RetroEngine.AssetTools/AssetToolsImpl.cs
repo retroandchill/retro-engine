@@ -17,6 +17,7 @@ internal partial class AssetToolsImpl : IAssetTools
 {
     private readonly ImmutableDictionary<Type, IAssetFactory> _factories;
     private readonly ImmutableDictionary<Type, IAssetEncoder> _encoders;
+    private readonly Dictionary<Type, AssetTypeCategory> _assetTypeAssociations = new();
 
     private readonly Dictionary<Name, AdvancedAssetCategory> _allocatedCategoryBits = new();
 
@@ -79,6 +80,11 @@ internal partial class AssetToolsImpl : IAssetTools
 
     public IEnumerable<AdvancedAssetCategory> AdvancedAssetCategories => _allocatedCategoryBits.Values;
 
+    public void AssociateAssetType(Type assetType, AssetTypeCategory category)
+    {
+        _assetTypeAssociations[assetType] = category;
+    }
+
     public async Task<object> CreateAssetAsync(
         ReadOnlyMemory<char> assetName,
         ReadOnlyMemory<char> parentPath,
@@ -121,7 +127,7 @@ internal partial class AssetToolsImpl : IAssetTools
         if (factory is null)
             throw new AssetLoadException($"No factory found for asset type '{assetType}'");
 
-        var asset = factory.CreateAsset(desiredPath);
+        var asset = await factory.CreateAssetAsync(desiredPath, cancellationToken);
         await _assetManager.CreateAssetAsync(desiredPath, asset, cancellationToken);
         return asset;
     }

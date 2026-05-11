@@ -12,12 +12,16 @@ public interface IAssetFactory
     Type AssetType { get; }
 
     object CreateAsset(AssetPath path);
+
+    ValueTask<object> CreateAssetAsync(AssetPath path, CancellationToken cancellationToken = default);
 }
 
-public interface IAssetFactory<out T> : IAssetFactory
+public interface IAssetFactory<T> : IAssetFactory
     where T : class
 {
     new T CreateAsset(AssetPath path);
+
+    new ValueTask<T> CreateAssetAsync(AssetPath path, CancellationToken cancellationToken = default);
 }
 
 public abstract class AssetFactory<T> : IAssetFactory<T>
@@ -27,5 +31,15 @@ public abstract class AssetFactory<T> : IAssetFactory<T>
 
     public abstract T CreateAsset(AssetPath path);
 
+    public virtual ValueTask<T> CreateAssetAsync(AssetPath path, CancellationToken cancellationToken)
+    {
+        return ValueTask.FromResult(CreateAsset(path));
+    }
+
     object IAssetFactory.CreateAsset(AssetPath path) => CreateAsset(path);
+
+    async ValueTask<object> IAssetFactory.CreateAssetAsync(AssetPath path, CancellationToken cancellationToken)
+    {
+        return await CreateAssetAsync(path, cancellationToken);
+    }
 }
