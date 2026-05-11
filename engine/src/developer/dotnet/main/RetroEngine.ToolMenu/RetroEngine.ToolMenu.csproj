@@ -29,10 +29,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Commands\" />
+      <ProjectReference Include="..\RetroEngine.Avalonia.Commands\RetroEngine.Avalonia.Commands.csproj" />
     </ItemGroup>
 
 </Project>
