@@ -3,14 +3,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
-             xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.ContentBrowserView"
              x:DataType="tabs:ContentBrowserViewModel">
 
     <TreeView ItemsSource="{Binding Items}"
-              SelectedItem="{Binding SelectedFolder}"
+              SelectedItem="{Binding SelectedItem}"
               DoubleTapped="OnTreeViewDoubleTapped">
         <TreeView.Styles>
             <Style Selector="TreeViewItem">
@@ -22,7 +21,8 @@
             <TreeDataTemplate ItemsSource="{Binding Children}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <StackPanel.ContextMenu>
-                        <DynamicContextMenu ItemsSource="{Binding ContextActions}"/>
+                        <!-- ReSharper disable once Xaml.PossibleNullReferenceException -->
+                        <DynamicContextMenu ItemsSource="{Binding ((tabs:ContentBrowserViewModel)DataContext).ContextActions, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
                     </StackPanel.ContextMenu>
 
                     <ic:FluentIcon Icon="{Binding Icon}"

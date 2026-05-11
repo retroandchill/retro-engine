@@ -59,21 +59,6 @@ public sealed partial class ContentBrowserItem : ObservableObject
         "The following rename will change the file extension of asset {0}. It may become unstable. Proceed anyways?"
     );
 
-    private static readonly Text CreateLabel = Text.AsLocalizable("ContentBrowserViewModel", "Create", "Create");
-    private static readonly Text NewFolderLabel = Text.AsLocalizable(
-        "ContentBrowserViewModel",
-        "NewFolder",
-        "New Folder"
-    );
-    private static readonly Text CommonLabel = Text.AsLocalizable("ContentBrowserViewModel", "Common", "Common");
-    private static readonly Text RefreshLabel = Text.AsLocalizable("ContentBrowserViewModel", "Refresh", "Refresh");
-    private static readonly Text RenameLabel = Text.AsLocalizable("ContentBrowserViewModel", "Rename", "Rename");
-    private static readonly Text DeleteLabel = Text.AsLocalizable(
-        "ContentBrowserViewModel",
-        "DeleteLabel",
-        "DeleteLabel"
-    );
-
     private readonly IDialogService _dialogService;
     private readonly IAssetPackage _package;
     private readonly INavigationService _navigationService;
@@ -109,8 +94,6 @@ public sealed partial class ContentBrowserItem : ObservableObject
         init => ChildrenSource.AddRange(value);
     }
 
-    public ObservableList<IMenuItemEntry> ContextActions { get; } = [];
-
     public ContentBrowserItem(
         IDialogService dialogService,
         IAssetPackage package,
@@ -123,37 +106,6 @@ public sealed partial class ContentBrowserItem : ObservableObject
         _navigationService = navigationService;
         _logger = logger;
         ChildrenSource.Connect().Sort(KeyComparer.Instance).Bind(out _sortedChildren).Subscribe();
-
-        var createLabel = new MenuSectionHeader("Create", CreateLabel) { IsVisible = IsDirectory };
-        var newCommand = new MenuCommand("NewFolder", NewFolderLabel, NewFolderCommand)
-        {
-            IsEnabled = CanEdit,
-            IsVisible = IsDirectory,
-        };
-        var commonLabel = new MenuSectionHeader("Common", CommonLabel);
-        var refreshLabel = new MenuCommand("Refresh", RefreshLabel, RefreshCommand);
-        var renameLabel = new MenuCommand("Rename", RenameLabel, RenameCommand) { IsEnabled = CanRenameOrDelete };
-        var deleteLabel = new MenuCommand("Delete", DeleteLabel, DeleteCommand) { IsEnabled = CanRenameOrDelete };
-
-        PropertyChanged += (_, args) =>
-        {
-            switch (args.PropertyName)
-            {
-                case nameof(IsDirectory):
-                    createLabel.IsVisible = IsDirectory;
-                    newCommand.IsVisible = IsDirectory;
-                    break;
-                case nameof(CanEdit):
-                    newCommand.IsEnabled = CanEdit;
-                    break;
-                case nameof(CanRenameOrDelete):
-                    renameLabel.IsEnabled = CanRenameOrDelete;
-                    deleteLabel.IsEnabled = CanRenameOrDelete;
-                    break;
-            }
-        };
-
-        ContextActions.AddRange([createLabel, newCommand, commonLabel, refreshLabel, renameLabel, deleteLabel]);
     }
 
     [RelayCommand]
@@ -509,14 +461,32 @@ public sealed partial class ContentBrowserViewModel : Tool
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.Tabs.ContentBrowserViewModel";
 
+    private static readonly Text CreateLabel = Text.AsLocalizable("ContentBrowserViewModel", "Create", "Create");
+    private static readonly Text NewFolderLabel = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "NewFolder",
+        "New Folder"
+    );
+    private static readonly Text CommonLabel = Text.AsLocalizable("ContentBrowserViewModel", "Common", "Common");
+    private static readonly Text RefreshLabel = Text.AsLocalizable("ContentBrowserViewModel", "Refresh", "Refresh");
+    private static readonly Text RenameLabel = Text.AsLocalizable("ContentBrowserViewModel", "Rename", "Rename");
+    private static readonly Text DeleteLabel = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "DeleteLabel",
+        "DeleteLabel"
+    );
+
     [ObservableProperty]
-    public partial ContentBrowserItem? SelectedFolder { get; internal set; }
+    public partial ContentBrowserItem? SelectedItem { get; internal set; }
 
     private readonly SourceList<ContentBrowserItem> _items = new();
     private readonly ReadOnlyObservableCollection<ContentBrowserItem> _sortedItems;
     public ReadOnlyObservableCollection<ContentBrowserItem> Items => _sortedItems;
 
     public ObservableList<ContentBrowserPackageRoot> Packages { get; } = [];
+
+    private readonly ObservableList<IMenuItemEntry> _contextActions = [];
+    public IReadOnlyObservableList<IMenuItemEntry> ContextActions => _contextActions;
 
     public event Action<AssetPath>? AssetOpenRequested;
 
@@ -550,5 +520,33 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
 
         return result;
+    }
+
+    partial void OnSelectedItemChanged(ContentBrowserItem? value)
+    {
+        if (value is null)
+        {
+            _contextActions.Clear();
+            return;
+        }
+
+        var newContextActions = new List<IMenuItemEntry>();
+        if (value.IsDirectory)
+        {
+            newContextActions.AddRange(
+                new MenuSectionHeader("Create", CreateLabel),
+                new MenuCommand("NewFolder", NewFolderLabel, value.NewFolderCommand)
+            );
+        }
+
+        newContextActions.AddRange(
+            new MenuSectionHeader("Common", CommonLabel),
+            new MenuCommand("Refresh", RefreshLabel, value.RefreshCommand),
+            new MenuCommand("Rename", RenameLabel, value.RenameCommand) { IsEnabled = value.CanRenameOrDelete },
+            new MenuCommand("Delete", DeleteLabel, value.DeleteCommand) { IsEnabled = value.CanRenameOrDelete }
+        );
+
+        _contextActions.Clear();
+        _contextActions.AddRange(newContextActions);
     }
 }
