@@ -20,7 +20,8 @@ internal sealed partial class TextInputViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsLocalized { get; set; }
 
-    public bool CanEditSourceString => !IsLocalized || !SelectedStringTable.IsNone;
+    [ObservableProperty]
+    public partial bool CanEditSourceString { get; private set; }
 
     public ObservableList<Name> StringTables { get; } = [];
 
@@ -75,21 +76,37 @@ internal sealed partial class TextInputViewModel : ObservableObject
         return Text.AsLocalizable(Namespace, Key, SourceString);
     }
 
+    partial void OnIsLocalizedChanged(bool value)
+    {
+        CanEditSourceString = !value || SelectedStringTable.IsNone;
+    }
+
     partial void OnSelectedStringTableChanged(Name value)
     {
         SelectedStringTableKey = TextKey.Empty;
         StringTableKeys.Clear();
         if (value.IsNone)
+        {
+            CanEditSourceString = true;
             return;
+        }
 
         var stringTable = StringTableRegistry.Instance.FindStringTable(value);
         if (stringTable is null)
+        {
+            CanEditSourceString = true;
             return;
+        }
 
         StringTableKeys.AddRange(stringTable.EnumerateSourceStrings().Select(x => x.Key));
         if (StringTableKeys.Count > 0)
         {
             SelectedStringTableKey = StringTableKeys[0];
+            CanEditSourceString = !IsLocalized;
+        }
+        else
+        {
+            CanEditSourceString = true;
         }
     }
 

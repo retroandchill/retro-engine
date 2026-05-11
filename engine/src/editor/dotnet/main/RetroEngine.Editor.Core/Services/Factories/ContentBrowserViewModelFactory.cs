@@ -20,16 +20,14 @@ public sealed class ContentBrowserViewModelFactory(
 {
     public override ContentBrowserViewModel CreateViewModel()
     {
-        var model = new ContentBrowserViewModel();
+        var model = new ContentBrowserViewModel
+        {
+            DialogService = dialogService,
+            NavigationService = navigationService,
+            Logger = logger,
+        };
 
-        model.Packages.AddRange(
-            assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(
-                dialogService,
-                x,
-                navigationService,
-                logger
-            ))
-        );
+        model.Packages.AddRange(assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(x)));
 
         return model;
     }

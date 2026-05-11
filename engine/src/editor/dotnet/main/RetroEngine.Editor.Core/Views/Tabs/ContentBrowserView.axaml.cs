@@ -20,7 +20,7 @@ public partial class ContentBrowserView : UserControl
 
     private void OnTreeViewDoubleTapped(object? sender, TappedEventArgs e)
     {
-        if (e.Source is not Visual visual)
+        if (e.Source is not Visual visual || DataContext is not ContentBrowserViewModel viewModel)
             return;
 
         var treeViewItem = visual.GetSelfAndVisualAncestors().OfType<TreeViewItem>().FirstOrDefault(x => x.IsSelected);
@@ -28,6 +28,6 @@ public partial class ContentBrowserView : UserControl
         if (treeViewItem?.DataContext is not ContentBrowserItem item)
             return;
 
-        e.Handled = item.TryOpen();
+        e.Handled = viewModel.TryOpen(item);
     }
 }
