@@ -8,7 +8,7 @@
         SizeToContent="Height"
         Width="600"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
-        xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
         Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
         x:DataType="dialogs:NewProjectWindowViewModel">
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">
