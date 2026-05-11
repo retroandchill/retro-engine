@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.TextEntryWindow"
         x:DataType="dialogs:TextEntryWindowViewModel"
-        xmlns:ic="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
         Title="{Binding WindowTitle}"
         SizeToContent="Height">
 
