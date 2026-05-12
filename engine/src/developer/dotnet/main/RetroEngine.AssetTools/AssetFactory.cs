@@ -49,6 +49,7 @@ public abstract class AssetFactory<T> : IAssetFactory<T>
 
     public virtual ValueTask<T> CreateAssetAsync(AssetPath path, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult(CreateAsset(path));
     }
 
