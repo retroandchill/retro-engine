@@ -4,7 +4,6 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
-using CaseConverter;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
@@ -189,6 +188,12 @@ public sealed partial class ContentBrowserViewModel : Tool
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.Tabs.ContentBrowserViewModel";
 
+    private static readonly TextFormat NewAssetFormat = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "NewFolderName",
+        "Create {0}"
+    );
+
     private static readonly Text NewFolderName = Text.AsLocalizable(
         "ContentBrowserViewModel",
         "NewFolderName",
@@ -250,8 +255,6 @@ public sealed partial class ContentBrowserViewModel : Tool
 
     public required IAssetTools AssetTools { get; init; }
 
-    public required AssetFactorySource AssetFactorySource { get; init; }
-
     public ILogger? Logger { get; init; }
 
     public ContentBrowserViewModel()
@@ -306,7 +309,7 @@ public sealed partial class ContentBrowserViewModel : Tool
                 .AdvancedAssetCategories.OrderBy(x => x.CategoryName)
                 .Select(x =>
                 {
-                    var factories = AssetFactorySource.Factories.Where(f => f.Categories.HasFlag(x.Category)).ToArray();
+                    var factories = AssetTools.Factories.Where(f => f.Categories.HasFlag(x.Category)).ToArray();
 
                     return (Category: x, Factories: factories);
                 })
@@ -316,10 +319,11 @@ public sealed partial class ContentBrowserViewModel : Tool
                     var subMenu = new SubMenu(x.Category.CategoryKey, x.Category.CategoryName);
 
                     subMenu.AddRange(
-                        x.Factories.Select(f => new MenuCommand(
+                        x.Factories.Select(f => new ParameterizedMenuCommand(
                             f.AssetType.Name,
                             f.DisplayName,
-                            new RelayCommand(() => { })
+                            NewAssetCommand,
+                            new NewAssetArgs(value, f.AssetType, f.DisplayName)
                         ))
                     );
                     return subMenu;
@@ -347,6 +351,45 @@ public sealed partial class ContentBrowserViewModel : Tool
 
         _contextActions.Clear();
         _contextActions.AddRange(newContextActions);
+    }
+
+    public sealed record NewAssetArgs(ContentBrowserItem Parent, Type AssetType, Text DisplayName);
+
+    [RelayCommand]
+    private void NewAsset(NewAssetArgs args)
+    {
+        _ = NewAssetAsync(args);
+    }
+
+    private async Task NewAssetAsync(NewAssetArgs args)
+    {
+        var viewModel = DialogService.CreateViewModel<TextEntryWindowViewModel>();
+        viewModel.WindowTitle = Text.Format(NewAssetFormat, args.DisplayName);
+        viewModel.ValidationFunc = (str, out error) =>
+        {
+            var nameWithExtension = AssetTools.GetAssetNameWithExtension(str, args.AssetType);
+            var newName = args.Parent.Key.Name.IsNone
+                ? nameWithExtension
+                : $"{args.Parent.Key.Name}/{nameWithExtension}";
+            var asName = new Name(newName);
+            if (args.Parent.Package.GetEntry(asName) is null)
+                return ValidateValidFileName(str, out error);
+
+            error = Text.Format(NameIsAlreadyTaken, nameWithExtension.ToString());
+            return false;
+        };
+        var result = await DialogService.ShowDialogAsync(NavigationService.MainWindow, viewModel);
+        if (result is not true)
+        {
+            return;
+        }
+
+        await AssetTools.CreateAssetAsync(
+            viewModel.TextEntry,
+            args.Parent.Key.Name.ToString(),
+            args.Parent.Package.PackageName,
+            args.AssetType
+        );
     }
 
     [RelayCommand]

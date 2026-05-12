@@ -15,7 +15,6 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 public sealed class ContentBrowserViewModelFactory(
     AssetManager assetManager,
     IAssetTools assetTools,
-    AssetFactorySource assetFactorySource,
     IDialogService dialogService,
     INavigationService navigationService,
     ILogger<ContentBrowserViewModel> logger
@@ -28,7 +27,6 @@ public sealed class ContentBrowserViewModelFactory(
             DialogService = dialogService,
             NavigationService = navigationService,
             AssetTools = assetTools,
-            AssetFactorySource = assetFactorySource,
             Logger = logger,
         };
 

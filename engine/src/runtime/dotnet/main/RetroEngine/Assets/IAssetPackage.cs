@@ -16,6 +16,7 @@ public enum AssetPackageLoadState
 
 public ref struct AssetPackageChangeManifest
 {
+    public required IAssetPackage Package { get; init; }
     public required ReadOnlySpan<IAssetPackageEntry> AddedEntries { get; init; }
     public required ReadOnlySpan<IAssetPackageEntry> RemovedEntries { get; init; }
     public required ReadOnlySpan<(IAssetPackageEntry Old, IAssetPackageEntry New)> RenamedEntries { get; init; }

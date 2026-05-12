@@ -23,6 +23,7 @@ internal struct BufferSegment
     public Span<byte> WrittenBuffer => _buffer.AsSpan(0, WrittenCount);
     public Memory<byte> WrittenMemory => _buffer.AsMemory(0, WrittenCount);
     public Span<byte> FreeBuffer => _buffer.AsSpan(WrittenCount);
+    public Memory<byte> FreeMemory => _buffer.AsMemory(WrittenCount);
 
     public BufferSegment(int size)
     {
@@ -113,7 +114,41 @@ public sealed class ReusableLinkedArrayBufferWriter
 
     public Memory<byte> GetMemory(int sizeHint = 0)
     {
-        throw new NotSupportedException("MagicArchive doesn't use GetMemory");
+        if (_current.IsNull)
+        {
+            var free = _firstBuffer.Length - _firstBufferWritten;
+            if (free != 0 && sizeHint <= free)
+            {
+                return _firstBuffer.AsMemory(_firstBufferWritten);
+            }
+        }
+        else
+        {
+            var buffer = _current.FreeMemory;
+            if (buffer.Length > sizeHint)
+            {
+                return buffer;
+            }
+        }
+
+        BufferSegment next;
+        if (sizeHint <= _nextBufferSize)
+        {
+            next = new BufferSegment(_nextBufferSize);
+            _nextBufferSize = MathEx.NewArrayCapacity(_nextBufferSize);
+        }
+        else
+        {
+            next = new BufferSegment(sizeHint);
+        }
+
+        if (_current.WrittenCount != 0)
+        {
+            _buffers.Add(_current);
+        }
+
+        _current = next;
+        return next.FreeMemory;
     }
 
     public Span<byte> GetSpan(int sizeHint = 0)

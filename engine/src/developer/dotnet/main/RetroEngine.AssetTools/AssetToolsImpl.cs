@@ -3,25 +3,24 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using CaseConverter;
+using System.ComponentModel;
 using Injectio.Attributes;
 using Microsoft.Extensions.Logging;
-using Namotion.Reflection;
 using RetroEngine.Assets;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Strings;
+using ZLinq;
 
 namespace RetroEngine.AssetTools;
 
 [RegisterSingleton<IAssetTools>]
 internal partial class AssetToolsImpl : IAssetTools
 {
+    private readonly ImmutableDictionary<Type, IAssetFactory> _factories;
     private readonly ImmutableDictionary<Type, IAssetEncoder> _encoders;
-    private readonly ConcurrentDictionary<Type, AssetTypeCategories> _assetTypeAssociations = new();
-    private readonly List<IAssetTypeActions> _assetTypeActions = [];
-    private readonly Dictionary<Type, int> _assetTypeActionsLookup = new();
+    private readonly ImmutableArray<IAssetTypeActions> _assetTypeActions;
+    private readonly ImmutableDictionary<Type, int> _assetTypeActionsLookup;
 
     private readonly Dictionary<Name, AdvancedAssetCategory> _allocatedCategoryBits = new();
     private readonly Dictionary<AssetTypeCategories, Text> _categoryDisplayNames = new();
@@ -32,14 +31,25 @@ internal partial class AssetToolsImpl : IAssetTools
 
     public AssetToolsImpl(
         AssetManager assetManager,
+        IEnumerable<IAssetFactory> factories,
         IEnumerable<IAssetEncoder> encoders,
         IEnumerable<AssetToolCustomizer> customizers,
+        IEnumerable<IAssetTypeActions> assetTypeActions,
         ILogger<AssetToolsImpl> logger
     )
     {
         _assetManager = assetManager;
         _logger = logger;
+        _factories = factories.ToImmutableDictionary(f => f.AssetType);
         _encoders = encoders.ToImmutableDictionary(e => e.AssetType);
+
+        _assetTypeActions = [.. assetTypeActions];
+        var builder = ImmutableDictionary.CreateBuilder<Type, int>();
+        foreach (var (i, action) in _assetTypeActions.AsValueEnumerable().Index())
+        {
+            builder.Add(action.SupportedType, i);
+        }
+        _assetTypeActionsLookup = builder.ToImmutable();
 
         TextKey assetCategoryNamespace = "AssetCategories";
         AddAdvancedAssetCategory(
@@ -90,36 +100,12 @@ internal partial class AssetToolsImpl : IAssetTools
         _categoryDisplayNames[category] = categoryDisplayName;
     }
 
-    public void RegisterAssetTypeActions(IAssetTypeActions actions)
+    public ImmutableArray<IAssetTypeActions> AssetTypeActions => _assetTypeActions;
+
+    public IAssetTypeActions? FindAssetTypeAction(Type type)
     {
-        RemoveAssetTypeActionsBySupportedType(actions.SupportedType);
-        var index = _assetTypeActions.Count;
-        _assetTypeActionsLookup[actions.SupportedType] = index;
-        _assetTypeActions.Add(actions);
+        return _assetTypeActionsLookup.TryGetValue(type, out var index) ? _assetTypeActions[index] : null;
     }
-
-    public void UnregisterAssetTypeActions(IAssetTypeActions actions)
-    {
-        RemoveAssetTypeActionsBySupportedType(actions.SupportedType);
-    }
-
-    private void RemoveAssetTypeActionsBySupportedType(Type supportedType)
-    {
-        if (!_assetTypeActionsLookup.Remove(supportedType, out var index))
-            return;
-
-        var lastIndex = _assetTypeActions.Count - 1;
-        if (lastIndex != index)
-        {
-            var last = _assetTypeActions[^1];
-            _assetTypeActionsLookup[last.SupportedType] = index;
-            _assetTypeActions[index] = last;
-        }
-
-        _assetTypeActions.RemoveAt(lastIndex);
-    }
-
-    public IReadOnlyList<IAssetTypeActions> AssetTypeActions => _assetTypeActions;
 
     public AssetTypeCategories RegisterAdvancedAssetCategory(Name categoryKey, Text categoryDisplayName)
     {
@@ -159,6 +145,13 @@ internal partial class AssetToolsImpl : IAssetTools
 
     public IEnumerable<AdvancedAssetCategory> AdvancedAssetCategories => _allocatedCategoryBits.Values;
 
+    public IEnumerable<IAssetFactory> Factories => _factories.Values;
+
+    public string? GetDefaultAssetExtension(Type assetType)
+    {
+        return _encoders.GetValueOrDefault(assetType)?.DefaultExtension;
+    }
+
     public Text GetAssetCategoryDisplayName(AssetTypeCategories category)
     {
         switch (category)
@@ -190,22 +183,36 @@ internal partial class AssetToolsImpl : IAssetTools
         ReadOnlyMemory<char> assetName,
         ReadOnlyMemory<char> parentPath,
         Name assetPackage,
-        IAssetFactory factory,
+        Type assetType,
         CancellationToken cancellationToken = default
     )
     {
-        var assetType = factory.AssetType;
+        var targetName = GetAssetNameWithExtension(assetName.Span, assetType);
+        var desiredPath = parentPath.IsEmpty
+            ? new AssetPath(assetPackage, new Name(targetName))
+            : new AssetPath(assetPackage, new Name($"{parentPath.Span}/{targetName}"));
+
+        var factory = _factories.GetValueOrDefault(assetType);
+        if (factory is null)
+            throw new AssetLoadException($"No factory found for asset type '{assetType}'");
+
+        var asset = await factory.CreateAssetAsync(desiredPath, cancellationToken);
+        await _assetManager.CreateAssetAsync(desiredPath, asset, cancellationToken);
+        return asset;
+    }
+
+    public ReadOnlySpan<char> GetAssetNameWithExtension(ReadOnlySpan<char> assetName, Type assetType)
+    {
         var encoder = _encoders.GetValueOrDefault(assetType);
         if (encoder is null)
             throw new AssetLoadException($"No encoder found for asset type '{assetType}'");
 
-        var extensionIndex = assetName.Span.LastIndexOf('.');
-        var targetName = assetName.Span;
+        var extensionIndex = assetName.LastIndexOf('.');
         ReadOnlySpan<char> targetExtension = encoder.DefaultExtension;
         var hasValidExtension = false;
         if (extensionIndex >= 0)
         {
-            var extension = assetName.Span[(extensionIndex + 1)..];
+            var extension = assetName[(extensionIndex + 1)..];
             foreach (var validExtension in encoder.Extensions)
             {
                 if (!validExtension.Equals(extension, StringComparison.OrdinalIgnoreCase))
@@ -218,19 +225,10 @@ internal partial class AssetToolsImpl : IAssetTools
 
         if (!hasValidExtension)
         {
-            targetName = $"{assetName}.{targetExtension}";
+            return $"{assetName}.{targetExtension}";
         }
 
-        var desiredPath = parentPath.IsEmpty
-            ? new AssetPath(assetPackage, new Name(targetName))
-            : new AssetPath(assetPackage, new Name($"{parentPath.Span}/{targetName}"));
-
-        if (factory is null)
-            throw new AssetLoadException($"No factory found for asset type '{assetType}'");
-
-        var asset = await factory.CreateAssetAsync(desiredPath, cancellationToken);
-        await _assetManager.CreateAssetAsync(desiredPath, asset, cancellationToken);
-        return asset;
+        return assetName;
     }
 
     [LoggerMessage(

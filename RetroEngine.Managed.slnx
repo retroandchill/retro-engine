@@ -50,6 +50,10 @@
     <Project Path="engine/src/runtime/dotnet/main/MagicArchive/MagicArchive.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Core/RetroEngine.Core.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Interop/RetroEngine.Interop.csproj" />
+    <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Localization.Reflection/RetroEngine.Localization.Reflection.csproj">
+      <BuildType Solution="DebugGame|*" Project="Debug" />
+      <BuildType Solution="Packaged|*" Project="Debug" />
+    </Project>
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Logging/RetroEngine.Logging.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Portable/RetroEngine.Portable.csproj" />
     <Project Path="engine/src/runtime/dotnet/main/RetroEngine.Scripting/RetroEngine.Scripting.csproj">

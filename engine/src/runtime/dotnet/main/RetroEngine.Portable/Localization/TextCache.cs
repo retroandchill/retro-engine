@@ -15,40 +15,16 @@ public sealed class TextCache
 
     public Text FindOrCache(ReadOnlySpan<char> textLiteral, TextId textId)
     {
-        var existingText = FindExisting(textLiteral, textId);
-        return existingText ?? CacheText(textLiteral.ToString(), textId);
+        return FindOrCache(textLiteral.ToString(), textId);
     }
 
     public Text FindOrCache(string textLiteral, TextId textId)
     {
-        var existingText = FindExisting(textLiteral, textId);
-        return existingText ?? CacheText(textLiteral, textId);
-    }
-
-    private Text? FindExisting(ReadOnlySpan<char> textLiteral, TextId textId)
-    {
-        Text? text = null;
-        _cachedText.GetAndApply(
-            textLiteral,
+        return _cachedText.GetOrAdd(
             textId,
-            (span, t) =>
-            {
-                var foundTextValue = t.TextData.SourceString;
-                if (string.IsNullOrEmpty(foundTextValue) || !span.Equals(foundTextValue, StringComparison.Ordinal))
-                    return;
-
-                text = t;
-            }
+            textLiteral,
+            (id, literal) => new Text(literal, id.Namespace, id.Key, TextFlag.Immutable)
         );
-
-        return text;
-    }
-
-    private Text CacheText(string textLiteral, TextId textId)
-    {
-        var newText = new Text(textLiteral, textId.Namespace, textId.Key, TextFlag.Immutable);
-        _cachedText.Add(textId, newText);
-        return newText;
     }
 
     public void RemoveCache(TextId textId)

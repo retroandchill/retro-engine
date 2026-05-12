@@ -741,6 +741,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 
         var delta = new AssetPackageChangeManifest
         {
+            Package = this,
             AddedEntries = addedEntries.AsSpan(),
             RemovedEntries = removedEntries.AsSpan(),
             ModifiedEntries = modifiedEntries.AsSpan(),

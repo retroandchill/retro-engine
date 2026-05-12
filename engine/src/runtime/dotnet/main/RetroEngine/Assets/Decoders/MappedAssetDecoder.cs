@@ -7,15 +7,18 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.Json;
 using MagicArchive;
+using Microsoft.Extensions.Options;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract partial class MappedAssetDecoder<TAsset, TDto>(ImmutableArray<string> extensions)
-    : IAssetDecoder,
-        IAssetEncoder<TAsset>
+public abstract partial class MappedAssetDecoder<TAsset, TDto>(
+    ImmutableArray<string> extensions,
+    IOptions<JsonSerializerOptions> options
+) : IAssetDecoder, IAssetEncoder<TAsset>
     where TAsset : class
 {
+    private readonly JsonSerializerOptions _options = options.Value;
     public Type AssetType => typeof(TAsset);
     public ImmutableArray<string> Extensions { get; } = extensions;
 
@@ -32,11 +35,11 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto>(ImmutableArray<st
         return await ConvertAsync(dto, cancellationToken).ConfigureAwait(false);
     }
 
-    private static TDto DecodeDto(AssetStorageType type, scoped ReadOnlySpan<byte> source)
+    private TDto DecodeDto(AssetStorageType type, scoped ReadOnlySpan<byte> source)
     {
         return type switch
         {
-            AssetStorageType.File => JsonSerializer.Deserialize<TDto>(source)
+            AssetStorageType.File => JsonSerializer.Deserialize<TDto>(source, _options)
                 ?? throw new InvalidOperationException("JSON deserialization failed"),
             AssetStorageType.Packaged => ArchiveSerializer.Deserialize<TDto>(source)
                 ?? throw new InvalidOperationException("Archive deserialization failed"),
@@ -70,14 +73,24 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto>(ImmutableArray<st
         EncodeDto(sourceType, dto, writer);
     }
 
-    private static void EncodeDto<TBufferWriter>(AssetStorageType sourceType, TDto sourceAsset, TBufferWriter writer)
+    private void EncodeDto<TBufferWriter>(AssetStorageType sourceType, TDto sourceAsset, TBufferWriter writer)
         where TBufferWriter : IBufferWriter<byte>
     {
         switch (sourceType)
         {
             case AssetStorageType.File:
-                var utf8JsonWriter = new Utf8JsonWriter(writer);
-                JsonSerializer.Serialize(utf8JsonWriter, sourceAsset);
+                var utf8JsonWriter = new Utf8JsonWriter(
+                    writer,
+                    new JsonWriterOptions
+                    {
+                        Indented = _options.WriteIndented,
+                        Encoder = _options.Encoder,
+                        IndentCharacter = _options.IndentCharacter,
+                        IndentSize = _options.IndentSize,
+                        NewLine = _options.NewLine,
+                    }
+                );
+                JsonSerializer.Serialize(utf8JsonWriter, sourceAsset, _options);
                 break;
             case AssetStorageType.Packaged:
                 ArchiveSerializer.Serialize(writer, sourceAsset);

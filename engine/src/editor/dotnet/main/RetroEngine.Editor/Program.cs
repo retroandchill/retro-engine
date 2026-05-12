@@ -41,6 +41,7 @@ internal static class Program
             .Services.Configure<JsonSerializerOptions>(options =>
             {
                 options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.PropertyNameCaseInsensitive = true;
                 options.WriteIndented = true;
             })
             .AddRetroEngineAssetTools()

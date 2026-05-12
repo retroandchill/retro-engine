@@ -5,10 +5,8 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Portable.Strings;
-using RetroEngine.Utilities.Memory;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets;
@@ -16,6 +14,7 @@ namespace RetroEngine.Assets;
 [RegisterSingleton]
 public sealed partial class AssetManager(
     ILogger<AssetManager> logger,
+    IAssetCache assetCache,
     IEnumerable<IAssetPackageFactory> packageFactories,
     IEnumerable<IAssetDecoder> decoders
 ) : IDisposable
@@ -26,10 +25,6 @@ public sealed partial class AssetManager(
     private readonly ImmutableDictionary<Type, IAssetDecoder> _decoders = decoders.ToImmutableDictionary(x =>
         x.AssetType
     );
-
-    private readonly ConcurrentDictionary<AssetPath, SemaphoreSlim> _loadingSemaphores = new();
-    private readonly ConcurrentDictionary<AssetPath, WeakReference<object>> _assetCache = new();
-    private readonly ConditionalWeakTable<object, ReadOnlyBox<AssetPath>> _assetPaths = new();
 
     public IEnumerable<IAssetPackage> LoadedPackages =>
         _packages.Values.OrderBy(x => x.PackageName, NameComparer.CaseInsensitive);
@@ -49,6 +44,24 @@ public sealed partial class AssetManager(
             throw new AssetLoadException($"Package '{packageName}' already exists");
 
         await package.LoadAsync(cancellationToken);
+
+        package.OnEntriesRefreshed += OnAssetEntriesChanged;
+    }
+
+    private void OnAssetEntriesChanged(in AssetPackageChangeManifest manifest)
+    {
+        foreach (var (oldEntry, newEntry) in manifest.RenamedEntries)
+        {
+            assetCache.Rename(
+                new AssetPath(manifest.Package.PackageName, oldEntry.Name),
+                new AssetPath(manifest.Package.PackageName, newEntry.Name)
+            );
+        }
+
+        foreach (var entry in manifest.RemovedEntries)
+        {
+            assetCache.Remove(new AssetPath(manifest.Package.PackageName, entry.Name));
+        }
     }
 
     public void UnloadPackage(Name packageName)
@@ -56,6 +69,7 @@ public sealed partial class AssetManager(
         if (_packages.Remove(packageName, out var package))
         {
             package.Unload();
+            package.OnEntriesRefreshed -= OnAssetEntriesChanged;
         }
         else
         {
@@ -68,6 +82,7 @@ public sealed partial class AssetManager(
         foreach (var package in _packages.Values)
         {
             package.Unload();
+            package.OnEntriesRefreshed -= OnAssetEntriesChanged;
         }
         _packages.Clear();
     }
@@ -94,113 +109,65 @@ public sealed partial class AssetManager(
         }
 
         await editablePackage.AddAssetAsync(path.AssetName, asset, cancellationToken);
-        _assetCache[path] = new WeakReference<object>(asset);
+        assetCache.Set(path, asset);
     }
 
     [CreateSyncVersion]
-    public async ValueTask<object?> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
+    public ValueTask<object> LoadAssetAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
-        if (_assetCache.TryGetValue(path, out var asset) && asset.TryGetTarget(out var cachedAsset))
-        {
-            return cachedAsset;
-        }
-
-        var semaphore = _loadingSemaphores.GetOrAdd(path, _ => new SemaphoreSlim(1));
-#if SYNC_ONLY
-        semaphore.Wait();
-#else
-        await semaphore.WaitAsync(cancellationToken);
-#endif
-
-        try
-        {
-            if (_assetCache.TryGetValue(path, out asset) && asset.TryGetTarget(out cachedAsset))
-            {
-                return cachedAsset;
-            }
-
-            if (!_packages.TryGetValue(path.PackageName, out var package))
-            {
-                logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
-                return null;
-            }
-
-            if (!package.HasAsset(path.AssetName))
-            {
-                logger.LogWarning(
-                    "Asset '{AssetName}' not found in package '{PackageName}'",
-                    path.AssetName,
-                    path.PackageName
-                );
-                return null;
-            }
-
-            var assetType = package.GetAssetType(path.AssetName);
-            if (!_decoders.TryGetValue(assetType, out var decoder))
-            {
-                logger.LogError("No decoder found for asset type '{AssetType}'", assetType);
-                return null;
-            }
-
-            await using var stream = package.OpenAsset(path.AssetName);
-            using var builder = AssetReadBufferPool.Rent();
-            await builder.ReadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
-#if SYNC_ONLY
-            var decoded = decoder.Decode(AssetStorageType.File, builder.Span);
-#else
-            var decoded = await decoder
-                .DecodeAsync(AssetStorageType.File, builder.Memory, cancellationToken)
-                .ConfigureAwait(false);
-#endif
-            _assetCache[path] = new WeakReference<object>(decoded);
-            _assetPaths.Add(decoded, Box.CreateReadOnly(path));
-            return decoded;
-        }
-        finally
-        {
-            semaphore.Release();
-        }
+        return assetCache.GetOrAddAsync(path, this, (p, t, c) => t.LoadAssetInternalAsync(p, c), cancellationToken);
     }
 
     [CreateSyncVersion]
-    public async ValueTask<T?> LoadAssetAsync<T>(AssetPath path, CancellationToken cancellationToken = default)
+    private async ValueTask<object> LoadAssetInternalAsync(AssetPath path, CancellationToken cancellationToken)
+    {
+        if (!_packages.TryGetValue(path.PackageName, out var package))
+        {
+            throw new AssetLoadException($"Package '{path.PackageName}' not found");
+        }
+
+        if (!package.HasAsset(path.AssetName))
+        {
+            throw new AssetLoadException($"Asset '{path.AssetName}' not found in package '{path.PackageName}'");
+        }
+
+        var assetType = package.GetAssetType(path.AssetName);
+        if (!_decoders.TryGetValue(assetType, out var decoder))
+        {
+            throw new AssetLoadException($"No decoder found for asset type '{assetType}'");
+        }
+
+        await using var stream = package.OpenAsset(path.AssetName);
+        using var builder = AssetReadBufferPool.Rent();
+        await builder.ReadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
+#if SYNC_ONLY
+        return decoder.Decode(AssetStorageType.File, builder.Span);
+#else
+        return await decoder
+            .DecodeAsync(AssetStorageType.File, builder.Memory, cancellationToken)
+            .ConfigureAwait(false);
+#endif
+    }
+
+    [CreateSyncVersion]
+    public async ValueTask<T> LoadAssetAsync<T>(AssetPath path, CancellationToken cancellationToken = default)
         where T : class
     {
-        return await LoadAssetAsync(path, cancellationToken) as T;
+        return (T)await LoadAssetAsync(path, cancellationToken);
     }
 
     public AssetPath GetAssetPath(object asset)
     {
-        return TryGetAssetPath(asset, out var path)
-            ? path
-            : throw new InvalidOperationException("Object is not a loaded asset");
+        return assetCache.GetPath(asset);
     }
 
     public bool TryGetAssetPath(object asset, out AssetPath path)
     {
-        if (_assetPaths.TryGetValue(asset, out var wrapper))
-        {
-            path = wrapper.Value;
-            return true;
-        }
-
-        path = default;
-        return false;
+        return assetCache.TryGetPath(asset, out path);
     }
 
     public void Dispose()
     {
-        foreach (var semaphore in _loadingSemaphores.Values)
-        {
-            semaphore.Dispose();
-        }
-
-        foreach (var asset in _assetCache.Values)
-        {
-            if (asset.TryGetTarget(out var target) && target is IDisposable disposable)
-                disposable.Dispose();
-        }
-
         foreach (var package in _packages.Values.OfType<IDisposable>())
         {
             package.Dispose();

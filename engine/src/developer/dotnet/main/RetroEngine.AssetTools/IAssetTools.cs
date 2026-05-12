@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Strings;
 
@@ -12,17 +13,19 @@ public sealed record AdvancedAssetCategory(AssetTypeCategories Category, Name Ca
 
 public interface IAssetTools
 {
-    void RegisterAssetTypeActions(IAssetTypeActions actions);
+    ImmutableArray<IAssetTypeActions> AssetTypeActions { get; }
 
-    void UnregisterAssetTypeActions(IAssetTypeActions actions);
-
-    IReadOnlyList<IAssetTypeActions> AssetTypeActions { get; }
+    IAssetTypeActions? FindAssetTypeAction(Type type);
 
     AssetTypeCategories RegisterAdvancedAssetCategory(Name categoryKey, Text categoryDisplayName);
 
     AssetTypeCategories FindAdvancedAssetCategory(Name categoryKey);
 
     IEnumerable<AdvancedAssetCategory> AdvancedAssetCategories { get; }
+
+    IEnumerable<IAssetFactory> Factories { get; }
+
+    string? GetDefaultAssetExtension(Type assetType);
 
     Task<object> CreateAssetAsync(
         string assetName,
@@ -36,7 +39,7 @@ public interface IAssetTools
             assetName.AsMemory(),
             parentPath.AsMemory(),
             assetPackage,
-            (IAssetFactory)assetType,
+            assetType,
             cancellationToken
         );
     }
@@ -45,7 +48,9 @@ public interface IAssetTools
         ReadOnlyMemory<char> assetName,
         ReadOnlyMemory<char> parentPath,
         Name assetPackage,
-        IAssetFactory factory,
+        Type assetType,
         CancellationToken cancellationToken = default
     );
+
+    ReadOnlySpan<char> GetAssetNameWithExtension(ReadOnlySpan<char> assetName, Type assetType);
 }

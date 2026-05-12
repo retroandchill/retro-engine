@@ -3,9 +3,11 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.ComponentModel;
 using CaseConverter;
 using Namotion.Reflection;
 using RetroEngine.Assets;
+using RetroEngine.Localization.Reflection;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Utilities;
 
@@ -39,9 +41,9 @@ public abstract class AssetFactory<T> : IAssetFactory<T>
 {
     public Type AssetType => typeof(T);
 
-    public virtual Text DisplayName { get; } = typeof(T).Name.SplitByWords();
+    public virtual Text DisplayName => LocalizedType.Get<T>().DisplayName;
 
-    public virtual Text ToolTip { get; } = typeof(T).ToContextualType().GetXmlDocsSummary();
+    public virtual Text ToolTip => LocalizedType.Get<T>().Description;
 
     public virtual AssetTypeCategories Categories => AssetTypeCategories.Misc;
 

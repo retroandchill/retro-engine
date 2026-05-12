@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Localization.Reflection\RetroEngine.Localization.Reflection.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
     </ItemGroup>

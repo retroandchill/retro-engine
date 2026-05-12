@@ -8,6 +8,4 @@ namespace RetroEngine.AssetTools;
 public interface IAssetTypeActions
 {
     Type SupportedType { get; }
-
-    AssetTypeCategories Categories { get; }
 }

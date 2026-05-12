@@ -7,12 +7,17 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.Json;
 using MagicArchive;
+using Microsoft.Extensions.Options;
 
 namespace RetroEngine.Assets.Decoders;
 
-public abstract class DataAssetDecoder<T>(ImmutableArray<string> extensions) : IAssetDecoder, IAssetEncoder<T>
+public abstract class DataAssetDecoder<T>(ImmutableArray<string> extensions, IOptions<JsonSerializerOptions> options)
+    : IAssetDecoder,
+        IAssetEncoder<T>
     where T : class
 {
+    private readonly JsonSerializerOptions _options = options.Value;
+
     public Type AssetType => typeof(T);
     public ImmutableArray<string> Extensions { get; } = extensions;
 
@@ -21,11 +26,11 @@ public abstract class DataAssetDecoder<T>(ImmutableArray<string> extensions) : I
         return DecodeInternal(type, source);
     }
 
-    private static T DecodeInternal(AssetStorageType type, scoped ReadOnlySpan<byte> source)
+    private T DecodeInternal(AssetStorageType type, scoped ReadOnlySpan<byte> source)
     {
         return type switch
         {
-            AssetStorageType.File => JsonSerializer.Deserialize<T>(source)
+            AssetStorageType.File => JsonSerializer.Deserialize<T>(source, _options)
                 ?? throw new InvalidOperationException("JSON deserialization failed"),
             AssetStorageType.Packaged => ArchiveSerializer.Deserialize<T>(source)
                 ?? throw new InvalidOperationException("Archive deserialization failed"),
@@ -58,8 +63,18 @@ public abstract class DataAssetDecoder<T>(ImmutableArray<string> extensions) : I
         switch (sourceType)
         {
             case AssetStorageType.File:
-                var utf8JsonWriter = new Utf8JsonWriter(writer);
-                JsonSerializer.Serialize(utf8JsonWriter, sourceAsset);
+                var utf8JsonWriter = new Utf8JsonWriter(
+                    writer,
+                    new JsonWriterOptions
+                    {
+                        Indented = _options.WriteIndented,
+                        Encoder = _options.Encoder,
+                        IndentCharacter = _options.IndentCharacter,
+                        IndentSize = _options.IndentSize,
+                        NewLine = _options.NewLine,
+                    }
+                );
+                JsonSerializer.Serialize(utf8JsonWriter, sourceAsset, _options);
                 break;
             case AssetStorageType.Packaged:
                 ArchiveSerializer.Serialize(writer, sourceAsset);
