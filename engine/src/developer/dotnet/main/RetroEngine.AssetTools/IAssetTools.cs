@@ -8,17 +8,21 @@ using RetroEngine.Portable.Strings;
 
 namespace RetroEngine.AssetTools;
 
-public readonly record struct AdvancedAssetCategory(AssetTypeCategory Category, Text CategoryName);
+public sealed record AdvancedAssetCategory(AssetTypeCategories Category, Name CategoryKey, Text CategoryName);
 
 public interface IAssetTools
 {
-    AssetTypeCategory RegisterAdvancedAssetCategory(Name categoryKey, Text categoryDisplayName);
+    void RegisterAssetTypeActions(IAssetTypeActions actions);
 
-    AssetTypeCategory FindAdvancedAssetCategory(Name categoryKey);
+    void UnregisterAssetTypeActions(IAssetTypeActions actions);
+
+    IReadOnlyList<IAssetTypeActions> AssetTypeActions { get; }
+
+    AssetTypeCategories RegisterAdvancedAssetCategory(Name categoryKey, Text categoryDisplayName);
+
+    AssetTypeCategories FindAdvancedAssetCategory(Name categoryKey);
 
     IEnumerable<AdvancedAssetCategory> AdvancedAssetCategories { get; }
-
-    void AssociateAssetType(Type assetType, AssetTypeCategory category);
 
     Task<object> CreateAssetAsync(
         string assetName,
@@ -32,7 +36,7 @@ public interface IAssetTools
             assetName.AsMemory(),
             parentPath.AsMemory(),
             assetPackage,
-            assetType,
+            (IAssetFactory)assetType,
             cancellationToken
         );
     }
@@ -41,7 +45,7 @@ public interface IAssetTools
         ReadOnlyMemory<char> assetName,
         ReadOnlyMemory<char> parentPath,
         Name assetPackage,
-        Type assetType,
+        IAssetFactory factory,
         CancellationToken cancellationToken = default
     );
 }

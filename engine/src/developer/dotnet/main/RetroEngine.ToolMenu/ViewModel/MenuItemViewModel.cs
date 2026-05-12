@@ -15,9 +15,6 @@ namespace RetroEngine.ToolMenu.ViewModel;
 public abstract partial class MenuItemBase(Name id) : ObservableObject, IMenuItemEntry
 {
     public Name Id { get; } = id;
-
-    [ObservableProperty]
-    public partial bool IsVisible { get; set; } = true;
 }
 
 public sealed class MenuItemSeparator() : MenuItemBase(Name.None), IMenuSeparator;

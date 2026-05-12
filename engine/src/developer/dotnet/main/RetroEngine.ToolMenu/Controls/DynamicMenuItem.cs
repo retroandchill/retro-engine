@@ -24,6 +24,11 @@ public class DynamicMenuItem : MenuItem
         Styles.Add(style);
     }
 
+    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
+    {
+        return new DynamicMenuItem();
+    }
+
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
@@ -39,7 +44,7 @@ public class DynamicMenuItem : MenuItem
         Classes.Set("section", item is IMenuSectionHeader);
         Classes.Set("enableable", item is IEnableableMenuItem);
         Classes.Set("headered", item is IHeaderedMenuItem);
-        Classes.Set("tooltip", item is IToolTipMenuItem);
+        Classes.Set("tooltip", item is IToolTipMenuItem { ToolTip.IsEmptyOrWhiteSpace: false });
         Classes.Set("icon", item is IIconMenuItem);
         Classes.Set("hotkey", item is IHotKeyMenuItem);
         Classes.Set("command", item is ICommandMenuItem);

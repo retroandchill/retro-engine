@@ -6,6 +6,7 @@
 using HanumanInstitute.MvvmDialogs;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
+using RetroEngine.AssetTools;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
 namespace RetroEngine.Editor.Core.Services.Factories;
@@ -13,6 +14,8 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class ContentBrowserViewModelFactory(
     AssetManager assetManager,
+    IAssetTools assetTools,
+    AssetFactorySource assetFactorySource,
     IDialogService dialogService,
     INavigationService navigationService,
     ILogger<ContentBrowserViewModel> logger
@@ -24,6 +27,8 @@ public sealed class ContentBrowserViewModelFactory(
         {
             DialogService = dialogService,
             NavigationService = navigationService,
+            AssetTools = assetTools,
+            AssetFactorySource = assetFactorySource,
             Logger = logger,
         };
 

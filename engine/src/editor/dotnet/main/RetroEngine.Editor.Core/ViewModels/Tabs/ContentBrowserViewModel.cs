@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
+using CaseConverter;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
@@ -14,6 +15,7 @@ using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using Microsoft.Extensions.Logging;
 using ObservableCollections;
 using RetroEngine.Assets;
+using RetroEngine.AssetTools;
 using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Dialogs;
@@ -246,6 +248,10 @@ public sealed partial class ContentBrowserViewModel : Tool
     public required IDialogService DialogService { get; init; }
     public required INavigationService NavigationService { get; init; }
 
+    public required IAssetTools AssetTools { get; init; }
+
+    public required AssetFactorySource AssetFactorySource { get; init; }
+
     public ILogger? Logger { get; init; }
 
     public ContentBrowserViewModel()
@@ -295,6 +301,35 @@ public sealed partial class ContentBrowserViewModel : Tool
                 new MenuSectionHeader("Create", CreateLabel),
                 new MenuCommand("NewFolder", NewFolderLabel, NewFolderCommand) { IsEnabled = value.CanEdit }
             );
+
+            var sectionsToAdd = AssetTools
+                .AdvancedAssetCategories.OrderBy(x => x.CategoryName)
+                .Select(x =>
+                {
+                    var factories = AssetFactorySource.Factories.Where(f => f.Categories.HasFlag(x.Category)).ToArray();
+
+                    return (Category: x, Factories: factories);
+                })
+                .Where(x => x.Factories.Length > 0)
+                .Select(x =>
+                {
+                    var subMenu = new SubMenu(x.Category.CategoryKey, x.Category.CategoryName);
+
+                    subMenu.AddRange(
+                        x.Factories.Select(f => new MenuCommand(
+                            f.AssetType.Name,
+                            f.DisplayName,
+                            new RelayCommand(() => { })
+                        ))
+                    );
+                    return subMenu;
+                })
+                .ToArray();
+            if (sectionsToAdd.Length > 0)
+            {
+                newContextActions.Add(IMenuSeparator.Instance);
+                newContextActions.AddRange(sectionsToAdd);
+            }
         }
 
         newContextActions.AddRange(

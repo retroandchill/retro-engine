@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using Cysharp.Text;
 using LinkDotNet.StringBuilder;
 
 namespace RetroEngine.Utilities;
@@ -99,6 +100,29 @@ public static class StringUtils
             }
 
             return escapeFound ? builder.ToString() : str;
+        }
+
+        public string SplitByWords()
+        {
+            using var builder = ZString.CreateStringBuilder();
+            for (var i = 0; i < str.Length; i++)
+            {
+                var currentChar = str[i];
+                if (currentChar == '_' && i > 0)
+                {
+                    builder.Append(' ');
+                    continue;
+                }
+
+                if (char.IsUpper(currentChar) && i > 0 && (char.IsLower(str[i - 1]) || char.IsDigit(str[i - 1])))
+                {
+                    builder.Append(' ');
+                }
+
+                builder.Append(currentChar);
+            }
+
+            return builder.ToString();
         }
     }
 }

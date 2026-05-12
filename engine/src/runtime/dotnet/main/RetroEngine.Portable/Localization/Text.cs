@@ -115,8 +115,11 @@ public readonly partial struct Text : IEquatable<Text>, IComparable<Text>, IComp
         Flags = TextFlag.None;
     }
 
-    public Text(string sourceString)
-        : this(new TextHistorySimple(TextId.Empty, sourceString), TextFlag.InitializedFromString) { }
+    public Text(string? sourceString)
+        : this(
+            !string.IsNullOrEmpty(sourceString) ? new TextHistorySimple(TextId.Empty, sourceString) : EmptyTextData,
+            TextFlag.InitializedFromString
+        ) { }
 
     public static implicit operator Text(string? sourceString) => new(sourceString ?? string.Empty);
 

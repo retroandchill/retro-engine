@@ -8,10 +8,6 @@
         </Border>
     </Design.PreviewWith>
 
-    <Style Selector="MenuItem" x:DataType="vm:IMenuItemEntry">
-        <Setter Property="IsVisible" Value="{Binding IsVisible}"/>
-    </Style>
-
     <Style Selector="MenuItem.separator">
         <Setter Property="Template">
             <ControlTemplate>

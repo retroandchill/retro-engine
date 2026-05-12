@@ -14,11 +14,12 @@ namespace RetroEngine.ToolMenu.ViewModel;
 public interface IMenuItemEntry
 {
     Name Id { get; }
-
-    bool IsVisible { get; set; }
 }
 
-public interface IMenuSeparator : IMenuItemEntry;
+public interface IMenuSeparator : IMenuItemEntry
+{
+    public static readonly IMenuSeparator Instance = new MenuItemSeparator();
+}
 
 public interface IMenuSectionHeader : IMenuItemEntry
 {
