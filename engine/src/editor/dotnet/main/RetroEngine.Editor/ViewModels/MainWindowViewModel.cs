@@ -1,6 +1,6 @@
-﻿using Avalonia.Controls;
+﻿using AutoViewModel;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
-using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Views;
 

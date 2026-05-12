@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 using Avalonia.Controls;
 #endif
 
-namespace RetroEngine.Editor.Core.Attributes;
+namespace AutoViewModel;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public class ViewModelForAttribute<[UsedImplicitly] TView> : Attribute

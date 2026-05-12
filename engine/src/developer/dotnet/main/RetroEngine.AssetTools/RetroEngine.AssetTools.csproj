@@ -7,19 +7,34 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\editor\dotnet\main\AutoViewModel\AutoViewModel.csproj" />
+      <ProjectReference Include="..\..\..\..\editor\dotnet\main\Dock.Model.RetroEngine\Dock.Model.RetroEngine.csproj" />
+      <ProjectReference Include="..\..\..\..\editor\dotnet\main\AutoViewModel.SourceGenerator\AutoViewModel.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Localization.Reflection\RetroEngine.Localization.Reflection.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Avalonia" />
       <PackageReference Include="CaseConverter" />
+      <PackageReference Include="Dock.Model" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
       <PackageReference Include="Namotion.Reflection" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Actions\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Avalonia.PropertyGrid">
+        <HintPath>C:\Users\fcors\.nuget\packages\bodong.avalonia.propertygrid\12.0.0\lib\net10.0\Avalonia.PropertyGrid.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

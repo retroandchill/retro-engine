@@ -27,6 +27,7 @@ public sealed class ContentBrowserViewModelFactory(
             DialogService = dialogService,
             NavigationService = navigationService,
             AssetTools = assetTools,
+            AssetManager = assetManager,
             Logger = logger,
         };
 

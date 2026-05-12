@@ -42,9 +42,8 @@
         <ProjectReference Include="..\..\..\..\developer\dotnet\main\RetroEngine.ToolMenu\RetroEngine.ToolMenu.csproj" />
         <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
         <ProjectReference Include="..\Dock.Model.RetroEngine\Dock.Model.RetroEngine.csproj" />
-        <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
-                          OutputItemType="Analyzer"
-                          ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\AutoViewModel\AutoViewModel.csproj" />
+        <ProjectReference Include="..\AutoViewModel.SourceGenerator\AutoViewModel.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(RetroEngineBackend)' == 'Native'">
@@ -67,6 +66,10 @@
       <Reference Include="FluentIcons.Avalonia">
         <HintPath>C:\Users\fcors\.nuget\packages\fluenticons.avalonia\2.1.326\lib\net10.0\FluentIcons.Avalonia.dll</HintPath>
       </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Attributes\" />
     </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@
 using Dock.Model.Controls;
 using RetroEngine.Assets;
 
-namespace RetroEngine.Editor.Core.ViewModels;
+namespace RetroEngine.AssetTools.ViewModels;
 
 public interface IAssetViewModel : IDocument
 {

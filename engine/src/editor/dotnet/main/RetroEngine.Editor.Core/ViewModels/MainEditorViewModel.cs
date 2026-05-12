@@ -3,10 +3,10 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
-using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Views;
 
 namespace RetroEngine.Editor.Core.ViewModels;
@@ -20,7 +20,6 @@ public enum ToolPosition
 }
 
 [ViewModelFor<MainEditorView>]
-[RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed partial class MainEditorViewModel : ObservableObject
 {
     private readonly MainViewDockFactory _factory = new();

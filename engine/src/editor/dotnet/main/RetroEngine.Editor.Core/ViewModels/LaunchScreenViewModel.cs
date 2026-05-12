@@ -4,10 +4,9 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
+using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
-using RetroEngine.Editor.Core.Attributes;
-using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Editor.Core.Views;
 using RetroEngine.Portable.Localization;
 

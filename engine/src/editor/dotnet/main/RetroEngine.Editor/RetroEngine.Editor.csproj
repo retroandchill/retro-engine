@@ -37,8 +37,6 @@
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
       <ProjectReference Include="..\RetroEngine.Editor.Core\RetroEngine.Editor.Core.csproj" />
-      <ProjectReference Include="..\RetroEngine.Editor.SourceGenerator\RetroEngine.Editor.SourceGenerator.csproj"
-                        OutputItemType="Analyzer"
-                        ReferenceOutputAssembly="false"/>
+      <ProjectReference Include="..\AutoViewModel.SourceGenerator\AutoViewModel.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 </Project>

@@ -5,9 +5,8 @@
 
 using Microsoft.CodeAnalysis;
 using Retro.SourceGeneratorUtilities.Utilities.Attributes;
-using RetroEngine.Editor.Core.Attributes;
 
-namespace RetroEngine.Editor.SourceGenerator.Model;
+namespace AutoViewModel.SourceGenerator.Model;
 
 [AttributeInfoType(typeof(ViewModelForAttribute<>))]
 public readonly record struct ViewModelForInfo(ITypeSymbol ViewType);

@@ -3,9 +3,10 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using AutoViewModel;
 using Dock.Model.RetroEngine.Controls;
 using RetroEngine.Assets;
-using RetroEngine.Editor.Core.Attributes;
+using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Rendering;
 using RetroEngine.World;

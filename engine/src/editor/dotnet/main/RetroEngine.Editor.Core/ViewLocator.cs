@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using AutoViewModel;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Dock.Model.Core;

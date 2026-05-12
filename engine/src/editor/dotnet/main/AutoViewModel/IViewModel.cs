@@ -5,7 +5,7 @@
 
 using Avalonia.Controls;
 
-namespace RetroEngine.Editor.Core.ViewModels;
+namespace AutoViewModel;
 
 public interface IViewModel
 {

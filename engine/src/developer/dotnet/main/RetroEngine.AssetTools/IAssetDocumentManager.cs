@@ -4,18 +4,15 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
-using RetroEngine.Editor.Core.ViewModels;
+using RetroEngine.AssetTools.ViewModels;
 
-namespace RetroEngine.Editor.Core.Services;
+namespace RetroEngine.AssetTools;
 
 public interface IAssetDocumentManager
 {
     IEnumerable<IAssetViewModel> GetOpenDocuments();
 
-    ValueTask<(IAssetViewModel Document, bool IsNew)> OpenDocumentAsync(
-        AssetPath assetPath,
-        CancellationToken cancellationToken = default
-    );
+    (IAssetViewModel Document, bool IsNew) OpenDocument(AssetPath assetPath, object asset);
 
     void CloseDocument(IAssetViewModel document);
 }

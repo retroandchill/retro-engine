@@ -5,6 +5,8 @@
 
 using System.Collections.Immutable;
 using RetroEngine.Assets;
+using RetroEngine.AssetTools;
+using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Editor.Core.ViewModels;
 
 namespace RetroEngine.Editor.Core.Services;

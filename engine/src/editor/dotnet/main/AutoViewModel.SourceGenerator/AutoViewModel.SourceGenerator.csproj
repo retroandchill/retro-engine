@@ -10,9 +10,7 @@
 
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
-
-        <RootNamespace>RetroEngine.Editor.SourceGenerator</RootNamespace>
-        <PackageId>RetroEngine.Editor.SourceGenerator</PackageId>
+        <PackageId>AutoViewModel.SourceGenerator</PackageId>
         <DefineConstants>$(DefineConstants);RETRO_ENGINE_EDITOR_SOURCE_GENERATOR</DefineConstants>
     </PropertyGroup>
 
@@ -60,7 +58,7 @@
         <EmbeddedResource Include="Templates\**\*.mustache" />
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="..\RetroEngine.Editor.Core\Attributes\ViewModelForAttribute.cs">
+      <Compile Include="..\AutoViewModel\ViewModelForAttribute.cs">
         <Link>Attributes\ViewModelForAttribute.cs</Link>
       </Compile>
     </ItemGroup>

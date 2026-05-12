@@ -3,13 +3,13 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-namespace RetroEngine.Editor.SourceGenerator.Utils;
+namespace AutoViewModel.SourceGenerator.Utils;
 
 using System.Reflection;
 
 public static class TemplateLoader
 {
-    private const string TemplateNamespace = "RetroEngine.Editor.SourceGenerator.Templates";
+    private const string TemplateNamespace = "AutoViewModel.SourceGenerator.Templates";
     private static readonly Dictionary<string, string> Templates = new();
 
     public static string LoadTemplate(string name)

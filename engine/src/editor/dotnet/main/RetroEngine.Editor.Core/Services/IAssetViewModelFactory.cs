@@ -4,6 +4,8 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.AssetTools;
+using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Editor.Core.ViewModels;
 
 namespace RetroEngine.Editor.Core.Services;

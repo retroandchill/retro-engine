@@ -5,6 +5,8 @@
 
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
+using RetroEngine.AssetTools;
+using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -28,23 +30,13 @@ public sealed class MainEditorViewModelFactory(
             viewModel.AddDocument(openAsset);
         }
 
-        contentBrowser.AssetOpenRequested += path =>
+        contentBrowser.AssetOpenRequested += (path, asset) =>
         {
-            Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                try
-                {
-                    var (document, isNew) = await assetDocumentManager.OpenDocumentAsync(path);
-                    if (isNew)
-                        viewModel.AddDocument(document);
-                    else
-                        viewModel.SetActiveDocument(document);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to load asset: {Path}", path);
-                }
-            });
+            var (document, isNew) = assetDocumentManager.OpenDocument(path, asset);
+            if (isNew)
+                viewModel.AddDocument(document);
+            else
+                viewModel.SetActiveDocument(document);
         };
 
         viewModel.ItemClosed += dockable =>

@@ -3,14 +3,13 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using AutoViewModel.SourceGenerator.Model;
+using AutoViewModel.SourceGenerator.Utils;
 using HandlebarsDotNet;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using RetroEngine.Editor.Core.Attributes;
-using RetroEngine.Editor.SourceGenerator.Model;
-using RetroEngine.Editor.SourceGenerator.Utils;
 
-namespace RetroEngine.Editor.SourceGenerator.Generators;
+namespace AutoViewModel.SourceGenerator.Generators;
 
 [Generator]
 public class ViewModelForSourceGenerator : IIncrementalGenerator

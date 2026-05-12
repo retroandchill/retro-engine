@@ -4,32 +4,29 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Assets;
+using RetroEngine.AssetTools;
+using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Core.Math;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 using RetroEngine.Rendering;
 using RetroEngine.World;
 
-namespace RetroEngine.Editor.Core.Services.Factories;
+namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class TextureViewModelFactory(
+public sealed class TextureAssetActions(
     IViewModelFactory<SceneViewModel> sceneFactory,
     ViewportManager viewportManager,
-    AssetManager assetManager,
     RenderManager renderManager
-) : IAssetViewModelFactory
+) : IAssetTypeActions
 {
-    public Type AssetType => typeof(Texture);
+    public Type SupportedType => typeof(Texture);
 
-    public async ValueTask<IAssetViewModel> CreateViewModelAsync(
-        AssetPath assetPath,
-        CancellationToken cancellationToken = default
-    )
+    public IAssetViewModel CreateViewModel(AssetPath assetPath, object asset)
     {
-        var texture = await assetManager.LoadAssetAsync<Texture>(assetPath, cancellationToken);
-        if (texture is null)
-            throw new InvalidOperationException($"Failed to load texture asset at {assetPath}.");
+        if (asset is not Texture texture)
+            throw new InvalidOperationException($"Asset at {assetPath} is not a Texture.");
 
         var scene = sceneFactory.CreateViewModel();
         scene.Width = texture.Width;
@@ -37,8 +34,6 @@ public sealed class TextureViewModelFactory(
         var viewport = new Viewport(viewportManager) { Scene = scene.Scene, CameraPivot = new Vector2F(0.5f, 0.5f) };
         _ = new Sprite(scene.Scene) { Texture = texture, Pivot = new Vector2F(0.5f, 0.5f) };
         renderManager.BindViewportToWindow(viewport, 0);
-        var nameAsString = assetPath.ToString();
-        var lastDelimiter = nameAsString.LastIndexOf('/');
         scene.Host.OnWindowCreated += windowId =>
         {
             if (viewport.Disposed)
@@ -56,7 +51,6 @@ public sealed class TextureViewModelFactory(
         return new TextureViewModel
         {
             Path = assetPath,
-            Title = lastDelimiter >= 0 ? nameAsString[(lastDelimiter + 1)..] : nameAsString,
             Texture = texture,
             Scene = scene,
             Viewport = viewport,

@@ -23,15 +23,19 @@
   <Folder Name="/engine/src/editor/dotnet/" />
   <Folder Name="/engine/src/editor/dotnet/main/" />
   <Folder Name="/engine/src/editor/dotnet/main/dotnet/">
+    <Project Path="engine/src/editor/dotnet/main/AutoViewModel.SourceGenerator/AutoViewModel.SourceGenerator.csproj">
+      <Build Solution="DebugGame|*" Project="false" />
+      <Build Solution="Packaged|*" Project="false" />
+    </Project>
+    <Project Path="engine/src/editor/dotnet/main/AutoViewModel/AutoViewModel.csproj">
+      <BuildType Solution="DebugGame|*" Project="Debug" />
+      <BuildType Solution="Packaged|*" Project="Debug" />
+    </Project>
     <Project Path="engine/src/editor/dotnet/main/Dock.Model.RetroEngine/Dock.Model.RetroEngine.csproj">
       <Build Solution="DebugGame|*" Project="false" />
       <Build Solution="Packaged|*" Project="false" />
     </Project>
     <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.Core/RetroEngine.Editor.Core.csproj">
-      <Build Solution="DebugGame|*" Project="false" />
-      <Build Solution="Packaged|*" Project="false" />
-    </Project>
-    <Project Path="engine/src/editor/dotnet/main/RetroEngine.Editor.SourceGenerator/RetroEngine.Editor.SourceGenerator.csproj">
       <Build Solution="DebugGame|*" Project="false" />
       <Build Solution="Packaged|*" Project="false" />
     </Project>

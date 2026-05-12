@@ -152,33 +152,6 @@ internal partial class AssetToolsImpl : IAssetTools
         return _encoders.GetValueOrDefault(assetType)?.DefaultExtension;
     }
 
-    public Text GetAssetCategoryDisplayName(AssetTypeCategories category)
-    {
-        switch (category)
-        {
-            case AssetTypeCategories.None:
-                return Text.Empty;
-            case AssetTypeCategories.Audio:
-                return KnownAssetTypes.Audio;
-            case AssetTypeCategories.Data:
-                return KnownAssetTypes.Data;
-            case AssetTypeCategories.Graphics:
-                return KnownAssetTypes.Graphics;
-            case AssetTypeCategories.Gameplay:
-                return KnownAssetTypes.Gameplay;
-            case AssetTypeCategories.Scripting:
-                return KnownAssetTypes.Scripting;
-            case AssetTypeCategories.UI:
-                return KnownAssetTypes.UI;
-            case AssetTypeCategories.Misc:
-                return KnownAssetTypes.Misc;
-            case AssetTypeCategories.FirstUser:
-            case AssetTypeCategories.LastUser:
-            default:
-                return _categoryDisplayNames.GetValueOrDefault(category, KnownAssetTypes.Misc);
-        }
-    }
-
     public async Task<object> CreateAssetAsync(
         ReadOnlyMemory<char> assetName,
         ReadOnlyMemory<char> parentPath,

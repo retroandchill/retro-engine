@@ -5,12 +5,12 @@
 
 using System.Collections.ObjectModel;
 using System.IO.Abstractions;
+using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using Microsoft.Extensions.Logging;
-using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
 using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Dialogs;

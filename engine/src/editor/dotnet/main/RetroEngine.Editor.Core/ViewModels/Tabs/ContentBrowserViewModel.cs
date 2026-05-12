@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
+using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
@@ -15,7 +16,6 @@ using Microsoft.Extensions.Logging;
 using ObservableCollections;
 using RetroEngine.Assets;
 using RetroEngine.AssetTools;
-using RetroEngine.Editor.Core.Attributes;
 using RetroEngine.Editor.Core.Services;
 using RetroEngine.Editor.Core.ViewModels.Dialogs;
 using RetroEngine.Editor.Core.Views.Tabs;
@@ -248,11 +248,12 @@ public sealed partial class ContentBrowserViewModel : Tool
     private readonly ObservableList<IMenuItemEntry> _contextActions = [];
     public NotifyCollectionChangedSynchronizedViewList<IMenuItemEntry> ContextActions { get; }
 
-    public event Action<AssetPath>? AssetOpenRequested;
+    public event Action<AssetPath, object>? AssetOpenRequested;
 
     public required IDialogService DialogService { get; init; }
     public required INavigationService NavigationService { get; init; }
 
+    public required AssetManager AssetManager { get; init; }
     public required IAssetTools AssetTools { get; init; }
 
     public ILogger? Logger { get; init; }
@@ -384,12 +385,27 @@ public sealed partial class ContentBrowserViewModel : Tool
             return;
         }
 
-        await AssetTools.CreateAssetAsync(
+        var asset = await AssetTools.CreateAssetAsync(
             viewModel.TextEntry,
             args.Parent.Key.Name.ToString(),
             args.Parent.Package.PackageName,
             args.AssetType
         );
+        var path = AssetManager.GetAssetPath(asset);
+
+        try
+        {
+            AssetOpenRequested?.Invoke(path, asset);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to open asset");
+
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
+        }
     }
 
     [RelayCommand]
@@ -455,8 +471,26 @@ public sealed partial class ContentBrowserViewModel : Tool
         if (item.IsDirectory)
             return false;
 
-        AssetOpenRequested?.Invoke(new AssetPath(item.Package.PackageName, item.Key.Name));
+        _ = OpenAsync(new AssetPath(item.Package.PackageName, item.Key.Name));
         return true;
+    }
+
+    private async Task OpenAsync(AssetPath path)
+    {
+        try
+        {
+            var asset = await AssetManager.LoadAssetAsync(path);
+            AssetOpenRequested?.Invoke(path, asset);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to open asset");
+
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
+        }
     }
 
     [RelayCommand]
