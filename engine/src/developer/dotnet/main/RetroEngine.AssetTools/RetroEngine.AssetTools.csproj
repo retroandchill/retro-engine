@@ -19,6 +19,7 @@
     <ItemGroup>
       <PackageReference Include="Avalonia" />
       <PackageReference Include="Avalonia.Controls.DataGrid" />
+      <PackageReference Include="bodong.Avalonia.PropertyGrid" />
       <PackageReference Include="CaseConverter" />
       <PackageReference Include="Dock.Model" />
       <PackageReference Include="DynamicData" />
