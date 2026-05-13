@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:tabs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Tabs"
-             xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
              xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+             xmlns:extensions="clr-namespace:RetroEngine.Avalonia.Extensions;assembly=RetroEngine.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RetroEngine.Editor.Core.Views.Tabs.RecentProjectsTab"
              x:DataType="tabs:RecentProjectsViewModel">
@@ -13,7 +13,7 @@
     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,15,0,0">
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="15,0">
             <ic:FluentIcon Icon="Search" IconSize="Size24" VerticalAlignment="Center"/>
-            <TextBox Grid.Column="1" HorizontalAlignment="Stretch" Watermark="{extensions:LocalizedText ProjectsTab, SearchText, Search Projects}">
+            <TextBox Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="{extensions:LocalizedText ProjectsTab, SearchText, Search Projects}">
 
             </TextBox>
             <Button Grid.Column="2" Command="{Binding NewProjectCommand}">

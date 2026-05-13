@@ -3,12 +3,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:dialogs="clr-namespace:RetroEngine.Editor.Core.ViewModels.Dialogs"
-        xmlns:extensions="clr-namespace:RetroEngine.Editor.Core.Extensions"
         mc:Ignorable="d" d:DesignWidth="600"
         SizeToContent="Height"
         Width="600"
         x:Class="RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindow"
         xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+        xmlns:extensions="clr-namespace:RetroEngine.Avalonia.Extensions;assembly=RetroEngine.Avalonia"
         Title="{extensions:LocalizedText NewProjectWindow, NewProject, New Project}"
         x:DataType="dialogs:NewProjectWindowViewModel">
     <StackPanel Spacing="10" Orientation="Vertical" Margin="30">

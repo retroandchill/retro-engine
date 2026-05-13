@@ -6,7 +6,7 @@
 using Avalonia.Markup.Xaml;
 using RetroEngine.Portable.Localization;
 
-namespace RetroEngine.Editor.Core.Extensions;
+namespace RetroEngine.Avalonia.Extensions;
 
 public sealed class LocalizedText(string ns, string key, string sourceString) : MarkupExtension
 {

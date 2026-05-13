@@ -7,7 +7,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using RetroEngine.Portable.Localization;
 
-namespace RetroEngine.Editor.Core.Converters;
+namespace RetroEngine.Avalonia.Converters;
 
 public class TextToStringConverter : IValueConverter
 {

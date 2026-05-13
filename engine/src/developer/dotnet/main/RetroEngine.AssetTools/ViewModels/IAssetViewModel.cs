@@ -16,3 +16,11 @@ public interface IAssetViewModel : IDocument
 
     bool IsReadOnly { get; }
 }
+
+public interface IAssetViewModel<out T> : IAssetViewModel
+    where T : class
+{
+    new T Asset { get; }
+
+    object IAssetViewModel.Asset => Asset;
+}

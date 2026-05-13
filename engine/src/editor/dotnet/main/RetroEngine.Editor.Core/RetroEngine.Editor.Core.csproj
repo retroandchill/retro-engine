@@ -39,6 +39,7 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"/>
         <ProjectReference Include="..\..\..\..\developer\dotnet\main\RetroEngine.AssetTools\RetroEngine.AssetTools.csproj" />
+        <ProjectReference Include="..\..\..\..\developer\dotnet\main\RetroEngine.Avalonia\RetroEngine.Avalonia.csproj" />
         <ProjectReference Include="..\..\..\..\developer\dotnet\main\RetroEngine.ToolMenu\RetroEngine.ToolMenu.csproj" />
         <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
         <ProjectReference Include="..\Dock.Model.RetroEngine\Dock.Model.RetroEngine.csproj" />

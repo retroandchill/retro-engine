@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="RetroEngine.Editor.App"
              xmlns:core="clr-namespace:RetroEngine.Editor.Core;assembly=RetroEngine.Editor.Core"
-             xmlns:converters="clr-namespace:RetroEngine.Editor.Core.Converters;assembly=RetroEngine.Editor.Core"
+             xmlns:converters="clr-namespace:RetroEngine.Avalonia.Converters;assembly=RetroEngine.Avalonia"
              RequestedThemeVariant="Dark">
 
     <Application.Resources>
@@ -15,6 +15,7 @@
 
     <Application.Styles>
         <FluentTheme/>
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         <DockFluentTheme />
         <ToolMenuTheme/>
     </Application.Styles>

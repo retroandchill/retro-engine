@@ -13,22 +13,22 @@
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Localization.Reflection\RetroEngine.Localization.Reflection.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine.Portable\RetroEngine.Portable.csproj" />
       <ProjectReference Include="..\..\..\..\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
+      <ProjectReference Include="..\RetroEngine.Avalonia\RetroEngine.Avalonia.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Avalonia" />
+      <PackageReference Include="Avalonia.Controls.DataGrid" />
       <PackageReference Include="CaseConverter" />
       <PackageReference Include="Dock.Model" />
+      <PackageReference Include="DynamicData" />
+      <PackageReference Include="FluentIcons.Avalonia" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
       <PackageReference Include="Namotion.Reflection" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Actions\" />
     </ItemGroup>
 
     <ItemGroup>

@@ -5,9 +5,9 @@
 
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
-using RetroEngine.Editor.Core.Converters;
+using RetroEngine.Avalonia.Converters;
 
-namespace RetroEngine.Editor.Core.Extensions;
+namespace RetroEngine.Avalonia.Extensions;
 
 public class TextBinding(string path) : MarkupExtension
 {
