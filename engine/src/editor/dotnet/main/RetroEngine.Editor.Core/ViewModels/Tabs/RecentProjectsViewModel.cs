@@ -3,164 +3,77 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using System.Collections.ObjectModel;
-using System.IO.Abstractions;
 using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HanumanInstitute.MvvmDialogs;
-using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
-using Microsoft.Extensions.Logging;
+using ObservableCollections;
 using RetroEngine.Editor.Core.Model.ProjectStructure;
-using RetroEngine.Editor.Core.Services;
-using RetroEngine.Editor.Core.ViewModels.Dialogs;
+using RetroEngine.Editor.Core.Services.Actions;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
-using RetroEngine.Utils;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
 [ViewModelFor<RecentProjectsTab>]
-public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchScreenTabViewModel
+public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchScreenTabViewModel, IDisposable
 {
     private const string TextNamespace = "RetroEngine.Editor.Core.Views.Tabs.RecentProjectsViewModel";
     private static readonly Text HeaderText = Text.AsLocalizable(TextNamespace, "Projects", "Projects");
 
-    public ObservableCollection<RecentProjectInfo> RecentProjects { get; } = [];
+    private readonly IRecentProjectsActions _recentProjectsActions;
 
-    public required IProjectManagementService ProjectManagementService { get; init; }
+    private readonly ObservableList<RecentProjectInfo> _recentProjects = [];
 
-    public required IDialogService DialogService { get; init; }
-
-    public IFileSystem FileSystem { get; init; } = IFileSystem.Default;
-
-    public required INavigationService NavigationService { get; init; }
-
-    public ILogger? Logger { get; init; }
+    public IReadOnlyList<RecentProjectInfo> RecentProjects { get; }
 
     public Text Header => HeaderText;
 
+    /// <inheritdoc/>
+    public RecentProjectsViewModel(IRecentProjectsActions recentProjectsActions)
+    {
+        _recentProjectsActions = recentProjectsActions;
+        RecentProjects = _recentProjects.ToNotifyCollectionChanged();
+        _recentProjectsActions.OnProjectDeleted += OnProjectDeleted;
+    }
+
     public async Task OnDisplayedAsync(CancellationToken cancellationToken)
     {
-        var projects = await ProjectManagementService.GetRecentProjectsAsync(cancellationToken: cancellationToken);
-        RecentProjects.Clear();
-        foreach (var project in projects)
-        {
-            RecentProjects.Add(project);
-        }
+        var projects = await _recentProjectsActions.GetRecentProjectsAsync(cancellationToken: cancellationToken);
+        _recentProjects.Clear();
+        _recentProjects.AddRange(projects);
     }
 
     [RelayCommand]
-    private async Task NewProject()
+    private void NewProject()
     {
-        try
-        {
-            var viewModel = DialogService.CreateViewModel<NewProjectWindowViewModel>();
-            var result = await DialogService.ShowDialogAsync(NavigationService.MainWindow, viewModel);
-            if (result is not true)
-            {
-                return;
-            }
-
-            var targetFolder = FileSystem.Path.Combine(viewModel.ProjectFolder, viewModel.ProjectName);
-            if (!FileSystem.Directory.Exists(targetFolder))
-            {
-                FileSystem.Directory.CreateDirectory(targetFolder);
-            }
-
-            var projectFileName = $"{viewModel.ProjectName}.reproj";
-            var projectPath = FileSystem.Path.Combine(targetFolder, projectFileName);
-            await ProjectManagementService.CreateNewProjectAsync(projectPath);
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to create new project.");
-
-            await DialogService.ShowMessageBoxAsync(
-                NavigationService.MainWindow,
-                new MessageBoxSettings() { Icon = MessageBoxImage.Error, Content = "Failed to create new project." }
-            );
-
-            return;
-        }
-
-        NavigationService.ShowMainEditor();
+        _ = _recentProjectsActions.CreateNewProjectAsync();
     }
 
     [RelayCommand]
-    private async Task OpenProject()
+    private void OpenProject()
     {
-        var file = await DialogService.ShowOpenFileDialogAsync(
-            NavigationService.MainWindow,
-            new OpenFileDialogSettings { Filters = [new FileFilter("RetroEngine Project", "reproj")] }
-        );
-
-        if (file is null)
-        {
-            return;
-        }
-
-        await OpenProject(file.LocalPath);
-    }
-
-    private async Task OpenProject(string path)
-    {
-        try
-        {
-            await ProjectManagementService.OpenProjectAsync(path);
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to open project.");
-
-            await DialogService.ShowMessageBoxAsync(
-                NavigationService.MainWindow,
-                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = "Failed to open project." }
-            );
-
-            return;
-        }
-
-        NavigationService.ShowMainEditor();
+        _ = _recentProjectsActions.OpenProjectAsync();
     }
 
     [RelayCommand]
-    private async Task OpenRecentProject(RecentProjectInfo project)
+    private void OpenRecentProject(RecentProjectInfo project)
     {
-        if (project.Exists)
-        {
-            await OpenProject(project.Path);
-        }
-        else
-        {
-            var selection = await DialogService.ShowMessageBoxAsync(
-                NavigationService.MainWindow,
-                new MessageBoxSettings
-                {
-                    Icon = MessageBoxImage.Error,
-                    Content = "Project file not found, would you like to delete it from the recent projects list?",
-                    Button = MessageBoxButton.YesNo,
-                }
-            );
-
-            if (selection is not true)
-                return;
-
-            await DeleteRecentProject(project);
-        }
+        _ = _recentProjectsActions.OpenRecentProjectAsync(project);
     }
 
     [RelayCommand]
-    private async Task DeleteRecentProject(RecentProjectInfo project)
+    private void DeleteRecentProject(RecentProjectInfo project)
     {
-        try
-        {
-            RecentProjects.Remove(project);
-            await ProjectManagementService.RemoveRecentProjectAsync(project.Path);
-        }
-        catch (Exception ex)
-        {
-            Logger?.LogError(ex, "Failed to delete recent project.");
-        }
+        _ = _recentProjectsActions.DeleteRecentProjectAsync(project);
+    }
+
+    private void OnProjectDeleted(RecentProjectInfo project)
+    {
+        _recentProjects.Remove(project);
+    }
+
+    public void Dispose()
+    {
+        _recentProjectsActions.OnProjectDeleted -= OnProjectDeleted;
     }
 }
