@@ -7,29 +7,21 @@ using HanumanInstitute.MvvmDialogs;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
 using RetroEngine.AssetTools;
+using RetroEngine.Editor.Core.Services.Actions;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class ContentBrowserViewModelFactory(
-    AssetManager assetManager,
-    IAssetTools assetTools,
-    IDialogService dialogService,
-    INavigationService navigationService,
-    ILogger<ContentBrowserViewModel> logger
+    IContentBrowserContextMenuBuilder contextMenuBuilder,
+    IContentBrowserActions actions,
+    AssetManager assetManager
 ) : ViewModelFactory<ContentBrowserViewModel>
 {
     public override ContentBrowserViewModel CreateViewModel()
     {
-        var model = new ContentBrowserViewModel
-        {
-            DialogService = dialogService,
-            NavigationService = navigationService,
-            AssetTools = assetTools,
-            AssetManager = assetManager,
-            Logger = logger,
-        };
+        var model = new ContentBrowserViewModel(contextMenuBuilder, actions);
 
         model.Packages.AddRange(assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(x)));
 
