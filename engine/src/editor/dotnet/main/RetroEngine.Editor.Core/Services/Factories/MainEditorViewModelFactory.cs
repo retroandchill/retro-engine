@@ -42,7 +42,7 @@ public sealed class MainEditorViewModelFactory(
         viewModel.ItemClosed += dockable =>
         {
             if (dockable is IAssetViewModel assetViewModel)
-                assetDocumentManager.CloseDocument(assetViewModel);
+                _ = assetDocumentManager.CloseDocumentAsync(assetViewModel);
         };
 
         return viewModel;

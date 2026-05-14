@@ -14,5 +14,5 @@ public interface IAssetDocumentManager
 
     (IAssetViewModel Document, bool IsNew) OpenDocument(AssetPath assetPath, object asset);
 
-    void CloseDocument(IAssetViewModel document);
+    Task CloseDocumentAsync(IAssetViewModel document);
 }

@@ -1,5 +1,7 @@
 {
   "namespace": "sample_string_table",
-  "entries": {},
+  "entries": {
+    "Example": "Hello world!"
+  },
   "metadata": {}
 }

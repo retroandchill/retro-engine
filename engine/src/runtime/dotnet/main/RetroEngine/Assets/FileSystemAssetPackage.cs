@@ -427,7 +427,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 
         void OnAddComplete(scoped in AssetPackageChangeManifest manifest)
         {
-            foreach (var entry in manifest.RemovedEntries)
+            foreach (var entry in manifest.AddedEntries)
             {
                 if (entry.Name == name)
                 {
@@ -439,6 +439,57 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
         void OnRefreshFailed(Exception ex)
         {
             taskCompletionSource.TrySetException(ex);
+        }
+    }
+
+    public async Task SaveExistingAssetAsync(Name name, object asset, CancellationToken cancellationToken = default)
+    {
+        var path = _fileSystem.Path.Combine(SourcePath, name.ToString());
+        var fileInfo = _fileSystem.FileInfo.New(path);
+        if (!fileInfo.Exists)
+            throw new InvalidOperationException($"Asset '{name}' already does not exist in package '{PackageName}'");
+
+        var extension = fileInfo.Extension.AsSpan(1);
+        IAssetEncoder? encoder = null;
+        foreach (var (_, e) in _encoders)
+        {
+            foreach (var ext in e.Extensions)
+            {
+                if (!ext.Equals(extension, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                encoder = e;
+                break;
+            }
+        }
+        if (encoder is null)
+            throw new InvalidOperationException($"Encoder for asset type '{name}' not found");
+
+        var writer = ReusableLinkedArrayBufferWriterPool.Rent();
+        var tempPath = _fileSystem.Path.Combine(_fileSystem.Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            encoder.Encode(AssetStorageType.File, asset, fileInfo.Extension, writer);
+            await using (
+                var fileStream = _fileSystem.File.Open(tempPath, FileMode.Create, FileAccess.Write, FileShare.None)
+            )
+            {
+                await writer.WriteToAndResetAsync(fileStream, cancellationToken);
+            }
+
+            _fileSystem.File.Move(tempPath, path, true);
+            using (_activeChangesLock.EnterScope())
+            {
+                _pendingChanges.AddSingleFileChange(name, false);
+            }
+        }
+        finally
+        {
+            if (_fileSystem.File.Exists(tempPath))
+            {
+                _fileSystem.File.Delete(tempPath);
+            }
+
+            ReusableLinkedArrayBufferWriterPool.Return(writer);
         }
     }
 
@@ -472,7 +523,7 @@ public sealed class FileSystemAssetPackage : IEditableAssetPackage, IDisposable
 
         void OnAddComplete(scoped in AssetPackageChangeManifest manifest)
         {
-            foreach (var entry in manifest.RemovedEntries)
+            foreach (var entry in manifest.AddedEntries)
             {
                 if (entry.Name == name)
                 {

@@ -55,7 +55,7 @@ public class App(Engine engine) : Application
     {
         engine.RequestShutdown();
         engine.WaitForGameThread();
-        engine.Dispose();
+        engine.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(10));
     }
 
     [RegisterServices]

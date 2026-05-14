@@ -5,12 +5,17 @@
 
 using Injectio.Attributes;
 using RetroEngine.Assets;
+using RetroEngine.AssetTools.Editing;
 using RetroEngine.AssetTools.ViewModels;
 
 namespace RetroEngine.AssetTools;
 
 [RegisterSingleton]
-public sealed class AssetDocumentManager(IAssetTools assetTools) : IAssetDocumentManager
+public sealed class AssetDocumentManager(
+    IAssetTools assetTools,
+    AssetManager assetManager,
+    EditableAssetSessionManager sessionManager
+) : IAssetDocumentManager
 {
     private readonly Dictionary<AssetPath, IAssetViewModel> _openDocuments = new();
 
@@ -42,12 +47,40 @@ public sealed class AssetDocumentManager(IAssetTools assetTools) : IAssetDocumen
         document.Title = lastDelimiter >= 0 ? nameAsString[(lastDelimiter + 1)..] : nameAsString;
 
         _openDocuments.Add(assetPath, document);
+
+        if (
+            document is IAssetEditorViewModel editor
+            && assetManager.FindPackage(assetPath.PackageName) is IEditableAssetPackage editablePackage
+        )
+        {
+            sessionManager.Add(
+                new EditableAssetSession(
+                    editor,
+                    async (saveTarget, cancellationToken) =>
+                    {
+                        await editablePackage.SaveExistingAssetAsync(
+                            assetPath.AssetName,
+                            saveTarget,
+                            cancellationToken
+                        );
+                    },
+                    TimeSpan.FromMilliseconds(100),
+                    TimeSpan.FromSeconds(1)
+                )
+            );
+        }
+
         return (document, true);
     }
 
-    public void CloseDocument(IAssetViewModel document)
+    public async Task CloseDocumentAsync(IAssetViewModel document)
     {
         _openDocuments.Remove(document.Path);
+
+        if (sessionManager.Remove(document.Path, out var session))
+        {
+            await session.DisposeAsync();
+        }
     }
 
     private static IEnumerable<Type> GetAllParentTypes(Type type)

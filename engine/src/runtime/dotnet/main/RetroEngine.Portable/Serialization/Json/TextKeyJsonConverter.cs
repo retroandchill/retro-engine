@@ -26,7 +26,9 @@ public sealed class TextKeyJsonConverter : JsonConverter<TextKey>
         JsonSerializerOptions options
     )
     {
-        return Read(ref reader, typeToConvert, options);
+        return reader.TokenType != JsonTokenType.PropertyName
+            ? throw new JsonException($"Expected string token, got {reader.TokenType}")
+            : new TextKey(reader.GetString()!);
     }
 
     public override void Write(Utf8JsonWriter writer, TextKey value, JsonSerializerOptions options)
@@ -36,6 +38,6 @@ public sealed class TextKeyJsonConverter : JsonConverter<TextKey>
 
     public override void WriteAsPropertyName(Utf8JsonWriter writer, TextKey value, JsonSerializerOptions options)
     {
-        Write(writer, value, options);
+        writer.WritePropertyName(value.ToString());
     }
 }

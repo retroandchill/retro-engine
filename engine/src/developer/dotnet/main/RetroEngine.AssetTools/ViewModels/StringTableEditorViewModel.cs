@@ -26,7 +26,7 @@ public sealed partial class StringTableEntryViewModel : ObservableObject
 }
 
 [ViewModelFor<StringTableEditor>]
-public sealed partial class StringTableEditorViewModel : Document, IAssetViewModel<StringTable>
+public sealed partial class StringTableEditorViewModel : Document, IAssetEditorViewModel<StringTable>
 {
     public required AssetPath Path { get; init; }
     public required StringTable Asset
@@ -46,10 +46,14 @@ public sealed partial class StringTableEditorViewModel : Document, IAssetViewMod
                         SourceString = x.SourceString,
                     })
             );
+            _suppressAssetChanged = false;
         }
     }
 
     public bool IsReadOnly => false;
+
+    public event Action? AssetChanged;
+    private readonly bool _suppressAssetChanged = true;
 
     [ObservableProperty]
     public partial string Namespace { get; set; } = "";
@@ -85,13 +89,19 @@ public sealed partial class StringTableEditorViewModel : Document, IAssetViewMod
             {
                 _existingKeys.Add(entry.Key);
                 Asset!.SetSourceString(entry.Key, entry.SourceString);
+                RaiseAssetChanged();
             })
             .AutoRefresh(entry => entry.SourceString)
-            .OnItemRefreshed(entry => Asset!.SetSourceString(entry.Key, entry.SourceString))
+            .OnItemRefreshed(entry =>
+            {
+                Asset!.SetSourceString(entry.Key, entry.SourceString);
+                RaiseAssetChanged();
+            })
             .OnItemRemoved(entry =>
             {
                 _existingKeys.Remove(entry.Key);
                 Asset!.RemoveSourceString(entry.Key);
+                RaiseAssetChanged();
             })
             .Filter(entry =>
                 string.IsNullOrEmpty(SearchTerm)
@@ -105,6 +115,7 @@ public sealed partial class StringTableEditorViewModel : Document, IAssetViewMod
     partial void OnNamespaceChanged(string value)
     {
         Asset.Namespace = value;
+        RaiseAssetChanged();
     }
 
     [RelayCommand]
@@ -168,5 +179,13 @@ public sealed partial class StringTableEditorViewModel : Document, IAssetViewMod
         {
             ShowKeyValidationError = false;
         }
+    }
+
+    private void RaiseAssetChanged()
+    {
+        if (_suppressAssetChanged)
+            return;
+
+        AssetChanged?.Invoke();
     }
 }

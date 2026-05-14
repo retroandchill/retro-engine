@@ -73,7 +73,7 @@ public abstract partial class MappedAssetDecoder<TAsset, TDto>(
         EncodeDto(sourceType, dto, writer);
     }
 
-    private void EncodeDto<TBufferWriter>(AssetStorageType sourceType, TDto sourceAsset, TBufferWriter writer)
+    private void EncodeDto<TBufferWriter>(AssetStorageType sourceType, TDto sourceAsset, in TBufferWriter writer)
         where TBufferWriter : IBufferWriter<byte>
     {
         switch (sourceType)
