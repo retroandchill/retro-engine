@@ -4,6 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using Avalonia.Threading;
+using Microsoft.Extensions.Logging;
 using RetroEngine.AssetTools;
 using RetroEngine.AssetTools.ViewModels;
 using RetroEngine.Editor.Core.ViewModels;
@@ -14,7 +15,8 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class MainEditorViewModelFactory(
     IViewModelFactory<ContentBrowserViewModel> factory,
-    IAssetDocumentManager assetDocumentManager
+    IAssetDocumentManager assetDocumentManager,
+    ILogger<MainEditorViewModel> logger
 ) : ViewModelFactory<MainEditorViewModel>
 {
     public override MainEditorViewModel CreateViewModel()

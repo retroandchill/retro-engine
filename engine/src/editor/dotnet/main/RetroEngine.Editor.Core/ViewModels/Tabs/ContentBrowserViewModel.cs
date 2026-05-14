@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dock.Model.RetroEngine.Controls;
 using DynamicData;
+using FluentIcons.Common;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,6 @@ using ObservableCollections;
 using RetroEngine.Assets;
 using RetroEngine.AssetTools;
 using RetroEngine.Editor.Core.Services;
-using RetroEngine.Editor.Core.Services.Actions;
 using RetroEngine.Editor.Core.ViewModels.Dialogs;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
@@ -27,14 +27,165 @@ using RetroEngine.Utilities;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
-public sealed record NewAssetArgs(ContentBrowserItem Parent, Type AssetType, Text DisplayName);
+public sealed partial class ContentBrowserItem : ObservableObject
+{
+    public IAssetPackage Package { get; }
+    internal AssetPackageEntryKey Key { get; set; }
+
+    [ObservableProperty]
+    public partial string Name { get; set; } = "";
+
+    [ObservableProperty]
+    public partial Icon Icon { get; set; } = Icon.Folder;
+
+    [ObservableProperty]
+    public partial bool IsExpanded { get; set; }
+
+    [ObservableProperty]
+    public partial bool CanRenameOrDelete { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool CanEdit { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool IsDirectory { get; set; }
+
+    internal SourceList<ContentBrowserItem> ChildrenSource { get; } = new();
+    private readonly ReadOnlyObservableCollection<ContentBrowserItem> _sortedChildren;
+
+    public ReadOnlyObservableCollection<ContentBrowserItem> Children
+    {
+        get => _sortedChildren;
+        init => ChildrenSource.AddRange(value);
+    }
+
+    public ContentBrowserItem(IAssetPackage package)
+    {
+        Package = package;
+        ChildrenSource.Connect().Sort(KeyComparer.Instance).Bind(out _sortedChildren).Subscribe();
+    }
+
+    internal sealed class KeyComparer : IComparer<ContentBrowserItem>
+    {
+        public static KeyComparer Instance { get; } = new();
+
+        public int Compare(ContentBrowserItem? x, ContentBrowserItem? y)
+        {
+            if (ReferenceEquals(x, y))
+                return 0;
+            if (x is null)
+                return 1;
+            if (y is null)
+                return -1;
+
+            return x.Key.CompareTo(y.Key);
+        }
+    }
+}
+
+public sealed class ContentBrowserPackageRoot : IDisposable
+{
+    private readonly IAssetPackage _package;
+
+    private readonly Dictionary<Name, ContentBrowserItem> _items = new();
+
+    public ContentBrowserItem Item { get; }
+
+    public ContentBrowserPackageRoot(IAssetPackage package)
+    {
+        _package = package;
+
+        _package.OnEntriesRefreshed += OnPackageChanged;
+
+        Item = new ContentBrowserItem(package)
+        {
+            Name = package.PackageName,
+            Icon = Icon.Box,
+            CanRenameOrDelete = false,
+            CanEdit = package is IEditableAssetPackage,
+            IsDirectory = true,
+        };
+        Item.ChildrenSource.AddRange(package.TopLevelEntries.Select(CreateContentFolder));
+        _items[Name.None] = Item;
+    }
+
+    private ContentBrowserItem CreateContentFolder(IAssetPackageEntry entry)
+    {
+        var children = entry is IAssetPackageFolder folder ? folder.Children.Select(CreateContentFolder) : [];
+        var item = new ContentBrowserItem(_package)
+        {
+            Name = entry.DisplayName,
+            Key = entry.Key,
+            Icon = entry.IsDirectory ? Icon.Folder : Icon.Document,
+            CanEdit = _package is IEditableAssetPackage,
+            IsDirectory = entry.IsDirectory,
+        };
+        item.ChildrenSource.AddRange(children);
+
+        _items[entry.Name] = item;
+        return item;
+    }
+
+    private void OnPackageChanged(scoped in AssetPackageChangeManifest manifest)
+    {
+        foreach (var entry in manifest.AddedEntries)
+        {
+            OnEntryAdded(entry);
+        }
+
+        foreach (var entry in manifest.RemovedEntries)
+        {
+            OnEntryRemoved(entry);
+        }
+
+        foreach (var (oldEntry, newEntry) in manifest.RenamedEntries)
+        {
+            OnEntryRenamed(oldEntry, newEntry);
+        }
+    }
+
+    private void OnEntryAdded(IAssetPackageEntry entry)
+    {
+        var parent = _items[entry.ParentName];
+        parent.ChildrenSource.Add(CreateContentFolder(entry));
+    }
+
+    private void OnEntryRemoved(IAssetPackageEntry entry)
+    {
+        var parent = _items[entry.ParentName];
+        parent.ChildrenSource.Remove(_items[entry.Name]);
+    }
+
+    private void OnEntryRenamed(IAssetPackageEntry oldEntry, IAssetPackageEntry newEntry)
+    {
+        var oldParent = _items[oldEntry.ParentName];
+        var newParent = _items[newEntry.ParentName];
+
+        if (!_items.Remove(oldEntry.Name, out var oldItem))
+            return;
+        oldItem.Key = newEntry.Key;
+        oldItem.Name = newEntry.DisplayName;
+        _items[newEntry.Name] = oldItem;
+
+        oldItem.Key = newEntry.Key;
+        oldItem.Name = newEntry.DisplayName;
+
+        if (ReferenceEquals(oldParent, newParent))
+            return;
+
+        oldParent.ChildrenSource.Remove(_items[oldEntry.Name]);
+        newParent.ChildrenSource.Add(_items[oldEntry.Name]);
+    }
+
+    public void Dispose()
+    {
+        _package.OnEntriesRefreshed -= OnPackageChanged;
+    }
+}
 
 [ViewModelFor<ContentBrowserView>]
 public sealed partial class ContentBrowserViewModel : Tool
 {
-    private readonly IContentBrowserContextMenuBuilder _contextMenuBuilder;
-    private readonly IContentBrowserActions _contentBrowserActions;
-
     private const string TextNamespace = "RetroEngine.Editor.Core.ViewModels.Tabs.ContentBrowserViewModel";
 
     private static readonly TextFormat NewAssetFormat = Text.AsLocalizable(
@@ -74,6 +225,17 @@ public sealed partial class ContentBrowserViewModel : Tool
         "The following rename will change the file extension of asset {0}. It may become unstable. Proceed anyways?"
     );
 
+    private static readonly Text CreateLabel = Text.AsLocalizable("ContentBrowserViewModel", "Create", "Create");
+    private static readonly Text NewFolderLabel = Text.AsLocalizable(
+        "ContentBrowserViewModel",
+        "NewFolder",
+        "New Folder"
+    );
+    private static readonly Text CommonLabel = Text.AsLocalizable("ContentBrowserViewModel", "Common", "Common");
+    private static readonly Text RefreshLabel = Text.AsLocalizable("ContentBrowserViewModel", "Refresh", "Refresh");
+    private static readonly Text RenameLabel = Text.AsLocalizable("ContentBrowserViewModel", "Rename", "Rename");
+    private static readonly Text DeleteLabel = Text.AsLocalizable("ContentBrowserViewModel", "DeleteLabel", "Delete");
+
     [ObservableProperty]
     public partial ContentBrowserItem? SelectedItem { get; internal set; }
 
@@ -88,21 +250,16 @@ public sealed partial class ContentBrowserViewModel : Tool
 
     public event Action<AssetPath, object>? AssetOpenRequested;
 
-    public IDialogService DialogService { get; init; }
-    public INavigationService NavigationService { get; init; }
+    public required IDialogService DialogService { get; init; }
+    public required INavigationService NavigationService { get; init; }
 
-    public AssetManager AssetManager { get; init; }
-    public IAssetTools AssetTools { get; init; }
+    public required AssetManager AssetManager { get; init; }
+    public required IAssetTools AssetTools { get; init; }
 
     public ILogger? Logger { get; init; }
 
-    public ContentBrowserViewModel(
-        IContentBrowserContextMenuBuilder contextMenuBuilder,
-        IContentBrowserActions contentBrowserActions
-    )
+    public ContentBrowserViewModel()
     {
-        _contextMenuBuilder = contextMenuBuilder;
-        _contentBrowserActions = contentBrowserActions;
         Title = Text.AsLocalizable(TextNamespace, "ContentBrowser", "Content Browser");
         _items.Connect().Sort(ContentBrowserItem.KeyComparer.Instance).Bind(out _sortedItems).Subscribe();
         Packages.CollectionChanged += (in c) =>
@@ -135,25 +292,120 @@ public sealed partial class ContentBrowserViewModel : Tool
 
     partial void OnSelectedItemChanged(ContentBrowserItem? value)
     {
-        _contextActions.Clear();
-        _contextActions.AddRange(
-            _contextMenuBuilder.Build(
-                value,
-                new ContentBrowserCommands(
-                    NewFolderCommand,
-                    NewAssetCommand,
-                    RefreshCommand,
-                    RenameCommand,
-                    DeleteCommand
-                )
-            )
+        if (value is null)
+        {
+            _contextActions.Clear();
+            return;
+        }
+
+        var newContextActions = new List<IMenuItemEntry>();
+        if (value.IsDirectory)
+        {
+            newContextActions.AddRange(
+                new MenuSectionHeader("Create", CreateLabel),
+                new MenuCommand("NewFolder", NewFolderLabel, NewFolderCommand) { IsEnabled = value.CanEdit }
+            );
+
+            var sectionsToAdd = AssetTools
+                .AdvancedAssetCategories.OrderBy(x => x.CategoryName)
+                .Select(x =>
+                {
+                    var factories = AssetTools.Factories.Where(f => f.Categories.HasFlag(x.Category)).ToArray();
+
+                    return (Category: x, Factories: factories);
+                })
+                .Where(x => x.Factories.Length > 0)
+                .Select(x =>
+                {
+                    var subMenu = new SubMenu(x.Category.CategoryKey, x.Category.CategoryName);
+
+                    subMenu.AddRange(
+                        x.Factories.Select(f => new ParameterizedMenuCommand(
+                            f.AssetType.Name,
+                            f.DisplayName,
+                            NewAssetCommand,
+                            new NewAssetArgs(value, f.AssetType, f.DisplayName)
+                        ))
+                    );
+                    return subMenu;
+                })
+                .ToArray();
+            if (sectionsToAdd.Length > 0)
+            {
+                newContextActions.Add(IMenuSeparator.Instance);
+                newContextActions.AddRange(sectionsToAdd);
+            }
+        }
+
+        newContextActions.AddRange(
+            new MenuSectionHeader("Common", CommonLabel),
+            new ParameterizedMenuCommand("Refresh", RefreshLabel, RefreshCommand, value),
+            new ParameterizedMenuCommand("Rename", RenameLabel, RenameCommand, value)
+            {
+                IsEnabled = value.CanRenameOrDelete,
+            },
+            new ParameterizedMenuCommand("Delete", DeleteLabel, DeleteCommand, value)
+            {
+                IsEnabled = value.CanRenameOrDelete,
+            }
         );
+
+        _contextActions.Clear();
+        _contextActions.AddRange(newContextActions);
     }
+
+    public sealed record NewAssetArgs(ContentBrowserItem Parent, Type AssetType, Text DisplayName);
 
     [RelayCommand]
     private void NewAsset(NewAssetArgs args)
     {
-        _ = _contentBrowserActions.NewAssetAsync(args.Parent, args.AssetType, args.DisplayName, AssetOpenRequested);
+        _ = NewAssetAsync(args);
+    }
+
+    private async Task NewAssetAsync(NewAssetArgs args)
+    {
+        var viewModel = DialogService.CreateViewModel<TextEntryWindowViewModel>();
+        viewModel.WindowTitle = Text.Format(NewAssetFormat, args.DisplayName);
+        viewModel.ValidationFunc = (str, out error) =>
+        {
+            var nameWithExtension = AssetTools.GetAssetNameWithExtension(str, args.AssetType);
+            var newName = args.Parent.Key.Name.IsNone
+                ? nameWithExtension
+                : $"{args.Parent.Key.Name}/{nameWithExtension}";
+            var asName = new Name(newName);
+            if (args.Parent.Package.GetEntry(asName) is null)
+                return ValidateValidFileName(str, out error);
+
+            error = Text.Format(NameIsAlreadyTaken, nameWithExtension.ToString());
+            return false;
+        };
+        var result = await DialogService.ShowDialogAsync(NavigationService.MainWindow, viewModel);
+        if (result is not true)
+        {
+            return;
+        }
+
+        var asset = await AssetTools.CreateAssetAsync(
+            viewModel.TextEntry,
+            args.Parent.Key.Name.ToString(),
+            args.Parent.Package.PackageName,
+            args.AssetType
+        );
+        var path = AssetManager.GetAssetPath(asset);
+
+        try
+        {
+            AssetOpenRequested?.Invoke(path, asset);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to open asset");
+
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
+        }
     }
 
     [RelayCommand]
@@ -161,7 +413,44 @@ public sealed partial class ContentBrowserViewModel : Tool
     {
         if (value.Package is IEditableAssetPackage editablePackage)
         {
-            _ = _contentBrowserActions.NewFolderAsync(value, editablePackage);
+            _ = NewFolderAsync(value, editablePackage);
+        }
+    }
+
+    private async Task NewFolderAsync(ContentBrowserItem item, IEditableAssetPackage editablePackage)
+    {
+        try
+        {
+            var viewModel = DialogService.CreateViewModel<TextEntryWindowViewModel>();
+            viewModel.WindowTitle = NewFolderName;
+            viewModel.ValidationFunc = (str, out error) =>
+            {
+                var newName = item.Key.Name.IsNone ? str : $"{item.Key.Name}/{str}";
+                var asName = new Name(newName);
+                if (editablePackage.GetEntry(asName) is null)
+                    return ValidateValidFileName(str, out error);
+
+                error = Text.Format(NameIsAlreadyTaken, str);
+                return false;
+            };
+            var result = await DialogService.ShowDialogAsync(NavigationService.MainWindow, viewModel);
+            if (result is not true)
+            {
+                return;
+            }
+
+            var newName = item.Key.Name.IsNone ? viewModel.TextEntry : $"{item.Key.Name}/{viewModel.TextEntry}";
+            var nameKey = new Name(newName);
+            await editablePackage.AddFolderAsync(nameKey);
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Failed to create new folder.");
+
+            await DialogService.ShowMessageBoxAsync(
+                NavigationService.MainWindow,
+                new MessageBoxSettings { Icon = MessageBoxImage.Error, Content = ex.Message }
+            );
         }
     }
 
