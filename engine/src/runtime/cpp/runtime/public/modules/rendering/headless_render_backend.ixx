@@ -27,6 +27,5 @@ namespace retro
                                             std::int32_t width,
                                             std::int32_t height,
                                             TextureFormat format) override;
-        std::pair<bool, std::size_t> export_texture(const Texture &texture, std::span<std::byte> buffer) override;
     };
 } // namespace retro

@@ -53,15 +53,21 @@ namespace retro
     }
     void VulkanRenderer2D::render_next_available_frame()
     {
+        try
+        {
+            presenter_.begin_frame();
 
-        presenter_.begin_frame();
+            Deferred reset_frame_data{[this]
+                                      {
+                                          buffer_manager_.reset();
+                                      }};
 
-        Deferred reset_frame_data{[this]
-                                  {
-                                      buffer_manager_.reset();
-                                  }};
-
-        presenter_.submit_and_present(renderer_teardown_source_.get_token());
+            presenter_.submit_and_present(renderer_teardown_source_.get_token());
+        }
+        catch (const vk::SurfaceLostKHRError &)
+        {
+            get_logger().trace("Surface lost, skipping render");
+        }
     }
 
     Window &VulkanRenderer2D::window() const

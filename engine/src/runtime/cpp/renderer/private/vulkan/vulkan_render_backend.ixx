@@ -33,8 +33,6 @@ namespace retro
                                             std::int32_t height,
                                             TextureFormat format) override;
 
-        std::pair<bool, std::size_t> export_texture(const Texture &texture, std::span<std::byte> buffer) override;
-
       private:
         vk::CommandPool get_thread_command_pool() const;
 

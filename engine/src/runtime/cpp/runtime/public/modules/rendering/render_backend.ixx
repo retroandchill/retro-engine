@@ -11,6 +11,7 @@ import retro.core.memory.ref_counted_ptr;
 import retro.runtime.rendering.renderer2d;
 import retro.platform.window;
 import retro.runtime.rendering.texture;
+import retro.runtime.rendering.image_data;
 
 namespace retro
 {
@@ -26,6 +27,9 @@ namespace retro
                                                     std::int32_t height,
                                                     TextureFormat format) = 0;
 
-        virtual std::pair<bool, std::size_t> export_texture(const Texture &texture, std::span<std::byte> buffer) = 0;
+        inline RefCountPtr<Texture> upload_texture(const ImageData &image)
+        {
+            return upload_texture(image.bytes(), image.width(), image.height(), image.format());
+        }
     };
 } // namespace retro

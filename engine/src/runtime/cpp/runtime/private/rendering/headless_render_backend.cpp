@@ -40,16 +40,4 @@ namespace retro
     {
         return make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(), width, height, format);
     }
-    std::pair<bool, std::size_t> HeadlessRenderBackend::export_texture(const Texture &texture,
-                                                                       std::span<std::byte> buffer)
-    {
-        const auto &data = dynamic_cast<const HeadlessTexture &>(texture).data();
-        if (buffer.size() < data.size())
-        {
-            return {false, 0};
-        }
-
-        std::ranges::copy(data, buffer.begin());
-        return {true, data.size()};
-    }
 } // namespace retro

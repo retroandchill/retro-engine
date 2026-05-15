@@ -22,6 +22,7 @@ import retro.core.strings.encoding;
 import retro.core.async.task;
 import retro.core.functional.interop_function;
 import retro.runtime.rendering.texture;
+import retro.runtime.rendering.image_data;
 
 using namespace retro;
 
@@ -67,38 +68,24 @@ extern "C"
     RETRO_API Texture *retro_render_backend_upload_texture(RenderBackend *backend,
                                                            const std::byte *bytes,
                                                            const std::int32_t length,
-                                                           const std::int32_t width,
-                                                           const std::int32_t height,
-                                                           const TextureFormat format,
+                                                           std::int32_t *width,
+                                                           std::int32_t *height,
+                                                           TextureFormat *format,
                                                            InteropError *error)
     {
+        *width = 0;
+        *height = 0;
+        *format = TextureFormat::rgba8;
         return try_execute(
             [&]
             {
-                return backend
-                    ->upload_texture(std::span{bytes, static_cast<std::size_t>(length)}, width, height, format)
-                    .release();
+                const auto image = ImageData::create_from_memory(std::span{bytes, static_cast<std::size_t>(length)});
+                *width = image.width();
+                *height = image.height();
+                *format = image.format();
+                return backend->upload_texture(image).release();
             },
             *error);
-    }
-
-    RETRO_API bool retro_render_backend_export_texture(RenderBackend *backend,
-                                                       const Texture *texture,
-                                                       std::byte *buffer,
-                                                       const std::int32_t length,
-                                                       std::int32_t *bytes_written,
-                                                       InteropError *error)
-    {
-        bool success = false;
-        try_execute(
-            [&]
-            {
-                auto [s, w] = backend->export_texture(*texture, std::span{buffer, static_cast<std::size_t>(length)});
-                success = s;
-                *bytes_written = static_cast<std::int32_t>(w);
-            },
-            *error);
-        return success;
     }
 
     RETRO_API void retro_render_pipeline_destroy(const RenderPipeline *pipeline)

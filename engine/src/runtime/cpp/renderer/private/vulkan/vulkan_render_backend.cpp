@@ -121,56 +121,6 @@ namespace retro
                                                format);
     }
 
-    std::pair<bool, std::size_t> VulkanRenderBackend::export_texture(const Texture &texture,
-                                                                     std::span<std::byte> buffer)
-    {
-        auto &vulkan_texture = dynamic_cast<const VulkanTexture &>(texture);
-        std::size_t expected_size = 0;
-        switch (vulkan_texture.format())
-        {
-            case TextureFormat::rgba8:
-                expected_size = vulkan_texture.width() * vulkan_texture.height() * 4;
-                break;
-            case TextureFormat::rgba16f:
-                expected_size = vulkan_texture.width() * vulkan_texture.height() * 8;
-                break;
-        }
-
-        if (buffer.size() < expected_size)
-        {
-            return {false, 0};
-        }
-
-        const auto command_pool = get_thread_command_pool();
-        auto cmd = begin_one_shot_commands(command_pool);
-        transition_image_layout(cmd.get(),
-                                vulkan_texture.image(),
-                                vk::ImageLayout::eShaderReadOnlyOptimal,
-                                vk::ImageLayout::eTransferSrcOptimal);
-        constexpr vk::BufferImageCopy region{.bufferOffset = 0,
-                                             .bufferRowLength = 0,
-                                             .bufferImageHeight = 0,
-                                             .imageSubresource = vk::ImageSubresourceLayers{
-                                                 .aspectMask = vk::ImageAspectFlagBits::eColor,
-                                                 .mipLevel = 0,
-                                                 .baseArrayLayer = 0,
-                                                 .layerCount = 1,
-                                             }};
-
-        const auto staging_buffer = device_.create_staging_buffer(buffer.size());
-        cmd->copyImageToBuffer(vulkan_texture.image(),
-                               vk::ImageLayout::eTransferSrcOptimal,
-                               staging_buffer.get(),
-                               region);
-        const auto result = staging_buffer.write_to_buffer(buffer);
-        transition_image_layout(cmd.get(),
-                                vulkan_texture.image(),
-                                vk::ImageLayout::eTransferSrcOptimal,
-                                vk::ImageLayout::eShaderReadOnlyOptimal);
-        end_one_shot_commands(std::move(cmd));
-        return result;
-    }
-
     vk::CommandPool VulkanRenderBackend::get_thread_command_pool() const
     {
         const auto thread_id = std::this_thread::get_id();

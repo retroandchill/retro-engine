@@ -4,10 +4,7 @@
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Runtime.InteropServices;
 using RetroEngine.Rendering;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace RetroEngine.Assets.Decoders;
 
@@ -19,26 +16,8 @@ public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder, IAsset
     private static readonly ImmutableArray<string> ExtensionsArray = ["png", "jpg", "jpeg", "bmp"];
     public ImmutableArray<string> Extensions => ExtensionsArray;
 
-    static TextureDecoder()
-    {
-        Configuration.Default.PreferContiguousImageBuffers = true;
-    }
-
     public object Decode(AssetStorageType type, scoped ReadOnlySpan<byte> source)
     {
-        using var image = Image.Load<Rgba32>(source);
-
-        image.DangerousTryGetSinglePixelMemory(out var pixelMemory);
-
-        var buffer = MemoryMarshal.AsBytes(pixelMemory.Span);
-        if (buffer.Length != image.Width * image.Height * 4)
-            throw new AssetLoadException($"Texture has invalid dimensions");
-
-        return CreateTextureFromBuffer(buffer, image.Width, image.Height, TextureFormat.Rgba8);
-    }
-
-    private Texture CreateTextureFromBuffer(ReadOnlySpan<byte> buffer, int width, int height, TextureFormat format)
-    {
-        return renderBackend.UploadTexture(buffer, width, height, format);
+        return renderBackend.UploadTexture(source);
     }
 }

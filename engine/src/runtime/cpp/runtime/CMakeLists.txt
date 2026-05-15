@@ -58,6 +58,7 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/viewport.cpp
         private/rendering/render_manager.cpp
         private/rendering/headless_render_backend.cpp
+        private/rendering/image_data.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -83,6 +84,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/headless_render_backend.ixx
         public/modules/rendering/headless_renderer2d.ixx
         public/modules/rendering/texture.ixx
+        public/modules/rendering/image_data.ixx
 )
 
 set(RETRO_RUNTIME_PRIVATE_MODULES
@@ -114,6 +116,8 @@ target_sources(retro_runtime PRIVATE
 
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform)
 
+find_package(Stb REQUIRED)
+target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})
 add_dependencies(retro_runtime renderer_shaders)
 
 set_target_properties(retro_runtime PROPERTIES

@@ -29,18 +29,19 @@ public sealed partial class RenderBackend : IDisposable
         Dispose();
     }
 
-    internal Texture UploadTexture(ReadOnlySpan<byte> data, int width, int height, TextureFormat format)
+    internal Texture UploadTexture(ReadOnlySpan<byte> data)
     {
-        var nativeHandle = NativeUploadTexture(this, data, data.Length, width, height, format, out var error);
+        var nativeHandle = NativeUploadTexture(
+            this,
+            data,
+            data.Length,
+            out var width,
+            out var height,
+            out var format,
+            out var error
+        );
         error.ThrowIfError();
         return new Texture(nativeHandle, width, height, format);
-    }
-
-    internal int ExportTexture(Texture texture, Span<byte> buffer)
-    {
-        var success = NativeExportTexture(this, texture, buffer, buffer.Length, out var bytesWritten, out var error);
-        error.ThrowIfError();
-        return success ? bytesWritten : throw new InvalidOperationException("Failed to export texture");
     }
 
     public void Dispose()
@@ -68,20 +69,9 @@ public sealed partial class RenderBackend : IDisposable
         RenderBackend backend,
         ReadOnlySpan<byte> bytes,
         int length,
-        int width,
-        int height,
-        TextureFormat format,
-        out InteropError error
-    );
-
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_export_texture")]
-    [return: MarshalAs(UnmanagedType.U1)]
-    private static partial bool NativeExportTexture(
-        RenderBackend backend,
-        Texture texture,
-        Span<byte> buffer,
-        int bufferSize,
-        out int bytesWritten,
+        out int width,
+        out int height,
+        out TextureFormat format,
         out InteropError error
     );
 }
