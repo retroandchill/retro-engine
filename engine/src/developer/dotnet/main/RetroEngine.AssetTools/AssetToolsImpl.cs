@@ -26,11 +26,11 @@ internal partial class AssetToolsImpl : IAssetTools
     private readonly Dictionary<AssetTypeCategories, Text> _categoryDisplayNames = new();
 
     private uint _nextUserCategoryBit;
-    private readonly AssetManager _assetManager;
+    private readonly IAssetManager _assetManager;
     private readonly ILogger<AssetToolsImpl> _logger;
 
     public AssetToolsImpl(
-        AssetManager assetManager,
+        IAssetManager assetManager,
         IEnumerable<IAssetFactory> factories,
         IEnumerable<IAssetEncoder> encoders,
         IEnumerable<AssetToolCustomizer> customizers,

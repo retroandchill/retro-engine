@@ -13,7 +13,7 @@ namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
 public sealed class ContentBrowserViewModelFactory(
-    AssetManager assetManager,
+    IAssetManager assetManager,
     IAssetTools assetTools,
     IDialogService dialogService,
     INavigationService navigationService,

@@ -17,7 +17,7 @@ using Serilog;
 namespace RetroEngine.Game.Sample;
 
 public sealed class GameRunner(
-    AssetManager assetManager,
+    IAssetManager assetManager,
     IHostApplicationLifetime lifetime,
     TickManager tickManager,
     RenderManager renderManager,

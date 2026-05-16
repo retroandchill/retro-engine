@@ -17,7 +17,7 @@ public sealed partial class AssetManager(
     IAssetCache assetCache,
     IEnumerable<IAssetPackageFactory> packageFactories,
     IEnumerable<IAssetDecoder> decoders
-) : IDisposable
+) : IAssetManager
 {
     private readonly ImmutableArray<IAssetPackageFactory> _packageFactories = [.. packageFactories];
     private readonly ConcurrentDictionary<Name, IAssetPackage> _packages = new();

@@ -12,7 +12,7 @@ using RetroEngine.Editor.Core.ViewModels;
 namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton]
-public sealed class AssetViewModelProvider(AssetManager assetManager, IEnumerable<IAssetViewModelFactory> factories)
+public sealed class AssetViewModelProvider(IAssetManager assetManager, IEnumerable<IAssetViewModelFactory> factories)
 {
     private readonly ImmutableDictionary<Type, IAssetViewModelFactory> _factories = factories.ToImmutableDictionary(f =>
         f.AssetType

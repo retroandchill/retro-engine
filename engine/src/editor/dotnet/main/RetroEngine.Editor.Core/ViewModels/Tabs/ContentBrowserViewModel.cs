@@ -253,7 +253,7 @@ public sealed partial class ContentBrowserViewModel : Tool
     public required IDialogService DialogService { get; init; }
     public required INavigationService NavigationService { get; init; }
 
-    public required AssetManager AssetManager { get; init; }
+    public required IAssetManager AssetManager { get; init; }
     public required IAssetTools AssetTools { get; init; }
 
     public ILogger? Logger { get; init; }

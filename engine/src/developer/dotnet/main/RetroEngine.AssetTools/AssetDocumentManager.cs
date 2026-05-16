@@ -13,7 +13,7 @@ namespace RetroEngine.AssetTools;
 [RegisterSingleton]
 public sealed class AssetDocumentManager(
     IAssetTools assetTools,
-    AssetManager assetManager,
+    IAssetManager assetManager,
     EditableAssetSessionManager sessionManager
 ) : IAssetDocumentManager
 {

@@ -19,7 +19,7 @@ public sealed class ProjectManagementService(
     IFileSystem fileSystem,
     IProjectDescriptorSerializer serializer,
     IDbContextFactory<CachedDbContext> dbContextFactory,
-    AssetManager assetManager
+    IAssetManager assetManager
 ) : IProjectManagementService
 {
     private static readonly Name GamePackage = "game";

@@ -12,7 +12,7 @@ using RetroEngine.Editor.Core.ViewModels.Tabs;
 namespace RetroEngine.Editor.Core.Services;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public class SampleDataAssetActions(AssetManager assetManager) : IAssetTypeActions
+public class SampleDataAssetActions(IAssetManager assetManager) : IAssetTypeActions
 {
     public Type SupportedType => typeof(SampleDataAsset);
 
