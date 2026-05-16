@@ -3,6 +3,7 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.IO.Abstractions;
 using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
 using RetroEngine.Async;
@@ -22,12 +23,19 @@ public sealed class GameRunner(
     TickManager tickManager,
     RenderManager renderManager,
     SceneManager sceneManager,
-    ViewportManager viewportManager
+    ViewportManager viewportManager,
+    IFileSystem fileSystem
 ) : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
     {
         Log.Information("Starting game runner.");
+
+        await assetManager.LoadPackageAsync(
+            "game",
+            fileSystem.Path.Join(fileSystem.Directory.GetCurrentDirectory(), "content"),
+            cancellationToken
+        );
 
         await renderManager.CreateMainWindowAsync(
             "Retro Engine",
@@ -50,15 +58,15 @@ public sealed class GameRunner(
         viewport2.ZOrder = -1;
 
         var eeveeTexture = await assetManager.LoadAssetAsync<Texture>(
-            new AssetPath("graphics", "133.png"),
+            new AssetPath("game", "graphics/133.png"),
             cancellationToken
         );
-        if (eeveeTexture is null)
-        {
-            return 1;
-        }
         var backgroundTexture = await assetManager.LoadAssetAsync<Texture>(
-            new AssetPath("graphics", "background.png"),
+            new AssetPath("game", "graphics/background.png"),
+            cancellationToken
+        );
+        var choiceTexture = await assetManager.LoadAssetAsync<Texture>(
+            new AssetPath("game", "graphics/windows/choice_1.png"),
             cancellationToken
         );
 
@@ -70,6 +78,16 @@ public sealed class GameRunner(
         sprite.Texture = backgroundTexture;
         sprite.Pivot = new Vector2F(0.5f, 0.5f);
         sprite.ZOrder = -100000;
+
+        using var window = new Sprite(scene1);
+        window.Texture = choiceTexture;
+        window.Scale = new Vector2F(2, 2);
+        window.Size = new Vector2F(300, 124);
+        window.Pivot = new Vector2F(0.5f, 1f);
+        window.ZOrder = 100000;
+        window.Position = new Vector2F(0, 360);
+        window.DrawMode = SpriteDrawMode.Box;
+        window.Margin = new Margin(14);
 
         await Task.Delay(Timeout.Infinite, cancellationToken);
         return 0;

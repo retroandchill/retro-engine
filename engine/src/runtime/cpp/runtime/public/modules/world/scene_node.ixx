@@ -58,10 +58,18 @@ namespace retro
             return z_order_;
         }
 
-        void set_z_order(const std::int32_t z_order);
+        void set_z_order(std::int32_t z_order);
 
         void attach_to_parent(SceneNode *parent);
         void detach_from_parent();
+
+      protected:
+        virtual inline void on_world_transform_updated()
+        {
+        }
+        virtual inline void on_z_order_updated()
+        {
+        }
 
       private:
         void update_world_transform();

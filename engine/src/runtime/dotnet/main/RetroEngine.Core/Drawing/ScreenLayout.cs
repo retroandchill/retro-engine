@@ -9,7 +9,11 @@ using RetroEngine.Core.Math;
 namespace RetroEngine.Core.Drawing;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly record struct Margin(float Left, float Top, float Right, float Bottom);
+public readonly record struct Margin(float Left, float Top, float Right, float Bottom)
+{
+    public Margin(float all)
+        : this(all, all, all, all) { }
+}
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct Anchors(Vector2F Minimum, Vector2F Maximum);

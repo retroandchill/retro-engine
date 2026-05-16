@@ -21,6 +21,7 @@ import std;
 import retro.interop.interop_error;
 import retro.runtime.rendering.texture;
 import retro.platform.window;
+import retro.runtime.rendering.layout.margin;
 
 using namespace retro;
 
@@ -215,5 +216,15 @@ extern "C"
     RETRO_API void retro_sprite_set_uv_rect(Sprite *node, const UVs uv_rect)
     {
         node->set_uvs(uv_rect);
+    }
+
+    RETRO_API void retro_sprite_set_draw_mode(Sprite *node, const SpriteDrawMode mode)
+    {
+        node->set_draw_mode(mode);
+    }
+
+    RETRO_API void retro_sprite_set_margin(Sprite *node, const Margin margin)
+    {
+        node->set_margin(margin);
     }
 }

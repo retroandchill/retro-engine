@@ -366,6 +366,12 @@ namespace retro
     }
 
     export template <Numeric T, std::size_t N>
+    [[nodiscard]] constexpr Vector<T, N> operator-(const Vector<T, N> &vector)
+    {
+        return vector * -1;
+    }
+
+    export template <Numeric T, std::size_t N>
     [[nodiscard]] constexpr Vector<T, N> operator*(const Vector<T, N> &lhs, const Vector<T, N> &rhs)
     {
         return element_wise_make(lhs, rhs, [](const T &a, const T &b) { return a * b; });

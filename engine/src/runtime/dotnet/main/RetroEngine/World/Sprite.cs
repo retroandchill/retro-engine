@@ -13,6 +13,12 @@ using Rendering_Texture = RetroEngine.Rendering.Texture;
 
 namespace RetroEngine.World;
 
+public enum SpriteDrawMode : byte
+{
+    Quad,
+    Box,
+}
+
 public readonly record struct UVs(Vector2F Min, Vector2F Max);
 
 [NativeMarshalling(typeof(SpriteMarshaller))]
@@ -79,6 +85,28 @@ public partial class Sprite : SceneObject
         }
     }
 
+    public SpriteDrawMode DrawMode
+    {
+        get;
+        set
+        {
+            ThrowIfDisposed();
+            field = value;
+            NativeSetDrawMode(this, value);
+        }
+    }
+
+    public Margin Margin
+    {
+        get;
+        set
+        {
+            ThrowIfDisposed();
+            field = value;
+            NativeSetMargin(this, value);
+        }
+    }
+
     private Sprite(Scene scene, SceneObject? parent)
         : base(scene, parent, NativeCreate)
     {
@@ -110,6 +138,12 @@ public partial class Sprite : SceneObject
 
     [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_uv_rect")]
     private static partial void NativeSetUVs(Sprite id, UVs size);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_draw_mode")]
+    private static partial void NativeSetDrawMode(Sprite id, SpriteDrawMode size);
+
+    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_margin")]
+    private static partial void NativeSetMargin(Sprite id, Margin margin);
 }
 
 [CustomMarshaller(typeof(Sprite), MarshalMode.ManagedToUnmanagedIn, typeof(SpriteMarshaller))]

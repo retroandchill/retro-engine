@@ -10,10 +10,10 @@ namespace retro
 {
     export struct Margin
     {
-        float left;
-        float top;
-        float right;
-        float bottom;
+        float left = 0;
+        float top = 0;
+        float right = 0;
+        float bottom = 0;
 
         constexpr friend bool operator==(const Margin &lhs, const Margin &rhs) noexcept = default;
     };

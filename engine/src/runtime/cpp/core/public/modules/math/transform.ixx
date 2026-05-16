@@ -19,7 +19,7 @@ namespace retro
     class Transform<T, 2>
     {
       public:
-        constexpr explicit Transform(const Vector2<T> &position = {}) : position_(position)
+        constexpr explicit Transform(const Vector2<T> &position = {}) : matrix_{Quaternion2<T>{}}, position_(position)
         {
         }
 

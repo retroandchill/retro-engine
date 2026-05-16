@@ -25,6 +25,7 @@ namespace retro
         static constexpr std::int32_t max_z_order = 500000;
         static constexpr std::int32_t min_z_order = -max_z_order;
         z_order_ = clamp(z_order, min_z_order, max_z_order);
+        on_z_order_updated();
     }
 
     void SceneNode::attach_to_parent(SceneNode *parent)
@@ -78,6 +79,8 @@ namespace retro
         {
             child->world_transform_ = world_transform_.concatenate(child->transform_);
         }
+
+        on_world_transform_updated();
     }
 
     std::span<SceneNode *const> SceneNodeList::nodes_of_type(const std::type_index type) const noexcept

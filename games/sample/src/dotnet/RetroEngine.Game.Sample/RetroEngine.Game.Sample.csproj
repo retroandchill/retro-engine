@@ -12,7 +12,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ContentFiles Include="../../../content/**/*" />
+        <ContentFiles Include="../../../content/**/*" >
+            <Link>content\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <TargetPath>content\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+        </ContentFiles>
     </ItemGroup>
 
     <ItemGroup>
@@ -21,7 +24,7 @@
     </ItemGroup>
 
     <Target Name="CopyContentFiles" AfterTargets="Build">
-        <Copy SourceFiles="@(ContentFiles)" DestinationFolder="$(OutputPath)/%(RecursiveDir)" />
+        <Copy SourceFiles="@(ContentFiles)" DestinationFolder="$(OutputPath)/content/%(RecursiveDir)" SkipUnchangedFiles="true" />
     </Target>
 
 </Project>
