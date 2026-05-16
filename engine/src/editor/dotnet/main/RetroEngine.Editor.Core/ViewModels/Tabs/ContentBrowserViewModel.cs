@@ -303,7 +303,10 @@ public sealed partial class ContentBrowserViewModel : Tool
         {
             newContextActions.AddRange(
                 new MenuSectionHeader("Create", CreateLabel),
-                new MenuCommand("NewFolder", NewFolderLabel, NewFolderCommand) { IsEnabled = value.CanEdit }
+                new ParameterizedMenuCommand("NewFolder", NewFolderLabel, NewFolderCommand, value)
+                {
+                    IsEnabled = value.CanEdit,
+                }
             );
 
             var sectionsToAdd = AssetTools
