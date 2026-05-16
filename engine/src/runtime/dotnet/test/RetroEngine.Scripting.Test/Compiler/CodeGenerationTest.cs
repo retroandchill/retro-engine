@@ -1,7 +1,7 @@
-﻿// // @file CodeGenerationTest.cs
-// //
-// // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
-// // Licensed under the MIT License. See LICENSE file in the project root for full license information.
+﻿// @file CodeGenerationTest.cs
+//
+// @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using RetroEngine.Scripting.Compiler;
 using RetroEngine.Scripting.Model;
