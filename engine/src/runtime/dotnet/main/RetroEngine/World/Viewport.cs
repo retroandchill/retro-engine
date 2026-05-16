@@ -116,22 +116,22 @@ public sealed partial class Viewport : IDisposable
         _manager.RemoveViewport(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_create")]
     private static partial IntPtr NativeCreate(ViewportManager manager, out InteropError errorMessage);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_destroy")]
     private static partial void NativeDestroy(ViewportManager manager, Viewport ptr);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_scene")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_scene")]
     private static partial void NativeSetScene(Viewport viewport, Scene? scene);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_screen_layout")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_screen_layout")]
     private static partial void NativeSetScreenLayout(Viewport viewport, in ScreenLayout layout);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_z_order")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_z_order")]
     private static partial void NativeSetZOrder(Viewport viewport, int zOrder);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_set_camera_layout")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_camera_layout")]
     private static partial void NativeSetCameraLayout(Viewport viewport, in CameraLayout layout);
 }
 

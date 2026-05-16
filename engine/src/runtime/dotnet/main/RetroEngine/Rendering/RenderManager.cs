@@ -305,7 +305,7 @@ public sealed partial class RenderManager : IDisposable
         _nativeHandle = IntPtr.Zero;
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_create")]
     private static partial IntPtr NativeCreate(
         PlatformBackend platformBackend,
         RenderBackend renderBackend,
@@ -316,10 +316,10 @@ public sealed partial class RenderManager : IDisposable
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_create_window")]
     private static unsafe partial ulong NativeCreateWindow(
         IntPtr engine,
         ReadOnlySpan<char> title,
@@ -330,14 +330,14 @@ public sealed partial class RenderManager : IDisposable
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_create_window_from_handle")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_create_window_from_handle")]
     private static unsafe partial ulong NativeCreateWindow(
         IntPtr engine,
         NativeWindowHandle handle,
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window_async")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_create_window_async")]
     private static unsafe partial void NativeCreateWindowAsync(
         IntPtr engine,
         ReadOnlySpan<char> title,
@@ -350,7 +350,7 @@ public sealed partial class RenderManager : IDisposable
         delegate* unmanaged<IntPtr, byte*, void> onError
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_create_window_from_handle_async")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_create_window_from_handle_async")]
     private static unsafe partial void NativeCreateWindowAsync(
         IntPtr engine,
         NativeWindowHandle handle,
@@ -359,23 +359,23 @@ public sealed partial class RenderManager : IDisposable
         delegate* unmanaged<IntPtr, byte*, void> onError
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_remove_window")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_remove_window")]
     private static unsafe partial void NativeRemoveWindow(IntPtr engine, ulong windowId, out InteropError error);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_get_window_by_id")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_get_window_by_id")]
     private static unsafe partial IntPtr NativeGetWindowById(IntPtr engine, ulong id);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_set_viewport_window")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_set_viewport_window")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static unsafe partial bool NativeSetViewportWindow(IntPtr engine, Viewport viewport, ulong windowId);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_sync_render_state")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_sync_render_state")]
     private static unsafe partial void NativeSyncRenderState(IntPtr engine, out InteropError error);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_render")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_render")]
     private static unsafe partial void NativeRender(IntPtr engine, out InteropError error);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_window_removed_add")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_on_window_removed_add")]
     private static unsafe partial void NativeOnWindowRemovedAdd(
         IntPtr engine,
         IntPtr callback,
@@ -384,7 +384,7 @@ public sealed partial class RenderManager : IDisposable
         delegate* unmanaged<IntPtr, IntPtr, byte> equals
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_window_removed_remove")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_on_window_removed_remove")]
     private static unsafe partial void NativeOnWindowRemovedRemove(
         IntPtr engine,
         IntPtr callback,
@@ -393,6 +393,6 @@ public sealed partial class RenderManager : IDisposable
         delegate* unmanaged<IntPtr, IntPtr, byte> equals
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_manager_on_engine_shutdown")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_on_engine_shutdown")]
     private static unsafe partial void NativeOnEngineShutdown(IntPtr engine);
 }

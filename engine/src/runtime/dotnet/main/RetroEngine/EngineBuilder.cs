@@ -109,6 +109,6 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         public IServiceCollection Services { get; } = services;
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_engine")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_create_engine")]
     private static unsafe partial IntPtr CreateNativeEngine(PlatformBackend platformBackend);
 }

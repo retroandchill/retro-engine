@@ -66,10 +66,10 @@ public sealed partial class Scene : IDisposable
         ObjectDisposedException.ThrowIf(Disposed, this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_scene_create")]
     private static partial IntPtr NativeCreate(SceneManager ptr, out InteropError errorMessage);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_scene_destroy")]
     private static partial void NativeDestroy(SceneManager manager, Scene scene);
 }
 

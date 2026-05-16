@@ -19,6 +19,7 @@ import retro.platform.backend;
 import retro.core.type_traits.basic;
 import retro.core.io.stream;
 import retro.runtime.exceptions;
+import retro.core.util.exceptions;
 
 namespace retro
 {

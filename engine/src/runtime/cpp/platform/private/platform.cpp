@@ -7,7 +7,7 @@
 #include "retro/core/exports.h"
 
 import retro.platform.backend;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 import retro.platform.window;
 
 using namespace retro;

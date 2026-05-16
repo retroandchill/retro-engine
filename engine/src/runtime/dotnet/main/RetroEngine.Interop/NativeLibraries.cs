@@ -7,5 +7,9 @@ namespace RetroEngine.Interop;
 
 public static class NativeLibraries
 {
-    public const string RetroEngine = "retro_interop";
+    public const string RetroCore = "retro_core";
+    public const string RetroLogging = "retro_logging";
+    public const string RetroPlatform = "retro_platform";
+    public const string RetroRuntime = "retro_runtime";
+    public const string RetroRenderer = "retro_renderer";
 }

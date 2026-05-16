@@ -43,6 +43,6 @@ public sealed partial class RenderPipeline : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 }

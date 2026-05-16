@@ -38,17 +38,17 @@ public sealed partial class PlatformBackend : IDisposable
         NativeHandle = IntPtr.Zero;
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_platform_backend_create")]
+    [LibraryImport(NativeLibraries.RetroPlatform, EntryPoint = "retro_platform_backend_create")]
     private static partial IntPtr NativeCreate(
         PlatformBackendKind kind,
         PlatformInitFlags flags,
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_platform_backend_destroy")]
+    [LibraryImport(NativeLibraries.RetroPlatform, EntryPoint = "retro_platform_backend_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_platform_backend_get_window_backend")]
+    [LibraryImport(NativeLibraries.RetroPlatform, EntryPoint = "retro_platform_backend_get_window_backend")]
     private static partial WindowBackend NativeGetWindowBackend(IntPtr ptr);
 }
 

@@ -46,16 +46,16 @@ internal sealed partial class Calendar : IDisposable
         NativeSet(_nativeCalendar, year, month, dayOfMonth, hourOfDay, minute, second);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_create_calendar")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_create_calendar")]
     private static partial IntPtr NativeOpen();
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_calendar")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_destroy_calendar")]
     private static partial void NativeClose(IntPtr nativeCalendar);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_calendar_set_time_zone")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_set_time_zone")]
     private static partial void NativeSetTimeZone(IntPtr nativeCalendar, IntPtr nativeTimeZone);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_calendar_set")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_set")]
     private static partial void NativeSet(
         IntPtr nativeCalendar,
         int year,
@@ -66,7 +66,7 @@ internal sealed partial class Calendar : IDisposable
         int second
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_calendar_get_time")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_calendar_get_time")]
     private static partial double NativeGetTime(IntPtr nativeCalendar, out IcuErrorCode errorCode);
 
     private void ReleaseUnmanagedResources()

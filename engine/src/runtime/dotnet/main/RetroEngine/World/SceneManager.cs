@@ -57,10 +57,10 @@ public sealed partial class SceneManager : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_manager_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_scene_manager_create")]
     private static partial IntPtr NativeCreate();
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_scene_manager_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_scene_manager_destroy")]
     private static partial void NativeDestroy(SceneManager ptr);
 }
 

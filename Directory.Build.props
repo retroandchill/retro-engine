@@ -1,10 +1,4 @@
 ﻿<Project>
-    <ItemDefinitionGroup>
-        <ProjectReference>
-            <Private>false</Private>
-        </ProjectReference>
-    </ItemDefinitionGroup>
-
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <DefineConstants>$(DefineConstants);CHECKED;</DefineConstants>
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>

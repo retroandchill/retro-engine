@@ -11,6 +11,7 @@ set(RETRO_RENDERER_SOURCES private/vulkan/renderer.cpp
         private/vulkan/components/surface.cpp
         private/vulkan/components/presenter.cpp
         private/vulkan/vulkan_render_backend.cpp
+        private/interop.cpp
 )
 
 set(RETRO_RENDERER_HEADERS )
@@ -30,7 +31,7 @@ set(RETRO_RENDERER_PRIVATE_MODULES
         private/vulkan/vulkan_render_backend.ixx
 )
 
-add_library(retro_renderer ${INTERMEDIATE_LIB_TYPE}
+add_library(retro_renderer
         ${RETRO_RENDERER_SOURCES}
         ${RETRO_RENDERER_HEADERS}
         ${RETRO_RENDERER_PUBLIC_MODULES}

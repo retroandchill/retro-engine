@@ -8,8 +8,7 @@
 
 import std;
 import retro.runtime.rendering.render_backend;
-import retro.renderer.services;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 import retro.platform.backend;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
@@ -53,18 +52,6 @@ namespace
 
 extern "C"
 {
-    RETRO_API RenderBackend *retro_render_backend_create(PlatformBackend *platform_backend,
-                                                         RenderBackendType type,
-                                                         InteropError *error)
-    {
-        return try_execute([&] { return create_render_backend(*platform_backend, type).release(); }, *error);
-    }
-
-    RETRO_API void retro_render_backend_destroy(const RenderBackend *backend)
-    {
-        backend->sub_ref();
-    }
-
     RETRO_API Texture *retro_render_backend_upload_texture(RenderBackend *backend,
                                                            const std::byte *bytes,
                                                            const std::int32_t length,

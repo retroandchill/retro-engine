@@ -9,6 +9,16 @@ set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/io/buffered_stream.cpp
         private/async/task_scheduler.cpp
         private/async/manual_task_scheduler.cpp
+        private/interop/interop_error.cpp
+        private/interop/calendar.cpp
+        private/interop/collator.cpp
+        private/interop/date_format.cpp
+        private/interop/decimal_format.cpp
+        private/interop/locale.cpp
+        private/interop/plural_rules.cpp
+        private/interop/time_zone.cpp
+        private/interop/async.cpp
+        private/interop/name.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -17,6 +27,8 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 )
 
 set(RETRO_CORE_PRIVATE_MODULES
+        private/localization/buffers.ixx
+        private/localization/icu.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -62,9 +74,10 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/functional/interop_function.ixx
         public/modules/async/future.ixx
         public/modules/containers/spsc_circular_queue.ixx
+        public/modules/interop/interop_error.ixx
 )
 
-add_library(retro_core ${INTERMEDIATE_LIB_TYPE}
+add_library(retro_core
         ${RETRO_CORE_SOURCES}
         ${RETRO_CORE_PUBLIC_MODULES}
         ${RETRO_CORE_PRIVATE_MODULES}
@@ -84,17 +97,21 @@ target_sources(retro_core PRIVATE
         TYPE CXX_MODULES FILES
         ${RETRO_CORE_PRIVATE_MODULES})
 
+find_package(ICU COMPONENTS uc i18n REQUIRED)
 find_package(Boost REQUIRED COMPONENTS algorithm asio thread crc pool unordered uuid)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
-target_link_libraries(retro_core PRIVATE Boost::asio Boost::algorithm Boost::unordered Boost::pool
+target_link_libraries(retro_core PUBLIC Boost::asio Boost::algorithm Boost::unordered Boost::pool
                                         Boost::thread
                                         Boost::crc
                                         Boost::uuid
                                         uni-algo::uni-algo
                                         fmt::fmt
-                                        gcem)
+                                        gcem
+                                PRIVATE
+                                        ICU::uc
+                                        ICU::i18n)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

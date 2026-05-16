@@ -11,9 +11,5 @@ import retro.core.util.exceptions;
 
 namespace retro
 {
-    export class GraphicsException : public std::runtime_error
-    {
-      public:
-        using std::runtime_error::runtime_error;
-    };
+
 } // namespace retro

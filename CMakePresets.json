@@ -19,7 +19,8 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON"
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON",
+        "RETRO_BUILD_SHARED": "ON"
       }
     },
     {
@@ -28,7 +29,8 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON"
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "ON",
+        "RETRO_BUILD_SHARED": "ON"
       }
     },
     {
@@ -37,7 +39,8 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF"
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF",
+        "RETRO_BUILD_SHARED": "OFF"
       }
     },
     {
@@ -46,7 +49,8 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF"
+        "RETRO_WITH_CASE_PRESERVING_NAMES": "OFF",
+        "RETRO_BUILD_SHARED": "OFF"
       }
     }
   ],

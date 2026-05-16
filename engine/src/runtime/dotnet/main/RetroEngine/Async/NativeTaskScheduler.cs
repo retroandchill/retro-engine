@@ -49,18 +49,18 @@ internal sealed partial class NativeTaskScheduler : IDisposable
         }
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_create")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_manual_task_scheduler_create")]
     private static partial IntPtr NativeCreate();
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_destroy")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_manual_task_scheduler_destroy")]
     private static partial void NativeDestroy(IntPtr scheduler);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_create_scope")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_manual_task_scheduler_create_scope")]
     private static partial void NativeCreateScope(IntPtr previous, out Scope scope);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_destroy_scope")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_manual_task_scheduler_destroy_scope")]
     private static partial void NativeDestroyScope(scoped ref Scope scheduler);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_manual_task_scheduler_pump_tasks")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_manual_task_scheduler_pump_tasks")]
     private static partial void NativePumpTasks(IntPtr scheduler, int maxTasks, out InteropError error);
 }

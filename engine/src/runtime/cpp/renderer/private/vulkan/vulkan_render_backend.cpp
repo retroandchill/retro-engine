@@ -7,6 +7,7 @@
 module retro.renderer.vulkan.vulkan_render_backend;
 import retro.renderer.vulkan.renderer;
 import retro.runtime.exceptions;
+import retro.core.util.exceptions;
 
 namespace retro
 {

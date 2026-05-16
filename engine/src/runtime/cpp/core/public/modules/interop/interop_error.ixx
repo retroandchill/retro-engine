@@ -4,12 +4,14 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.interop.interop_error;
+module;
+
+#include "retro/core/exports.h"
+
+export module retro.core.interop.interop_error;
 
 import std;
-import retro.platform.exceptions;
 import retro.core.util.exceptions;
-import retro.runtime.exceptions;
 import retro.core.async.task;
 
 namespace retro
@@ -52,7 +54,7 @@ namespace retro
         } -> std::convertible_to<typename T::error_type>;
     };
 
-    const char *cache_error_message(const char *message);
+    RETRO_API const char *cache_error_message(const char *message);
 
     template <typename T>
     concept ValidInteropResult = std::is_void_v<T> || std::is_lvalue_reference_v<T> || std::is_pointer_v<T>;

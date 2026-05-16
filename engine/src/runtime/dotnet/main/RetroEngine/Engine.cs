@@ -185,16 +185,16 @@ public sealed partial class Engine : IAsyncDisposable
         NativeDestroy(_nativeEngine);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_destroy_engine")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_destroy_engine")]
     internal static partial void NativeDestroy(IntPtr engine);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_wait_platform_events")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_engine_wait_platform_events")]
     private static partial void NativeWaitEvents(IntPtr engine, long timeout = 10);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_poll_platform_events")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_engine_poll_platform_events")]
     private static partial void NativePollPlatformEvents(IntPtr engine);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_engine_on_shutdown_requested_add")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_engine_on_shutdown_requested_add")]
     private static unsafe partial void NativeOnShutdownRequestedAdd(
         IntPtr engine,
         IntPtr callback,

@@ -17,7 +17,7 @@ import retro.runtime.rendering.pipeline_manager;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 import retro.runtime.rendering.pipeline_manager.render_manager;
 
 namespace

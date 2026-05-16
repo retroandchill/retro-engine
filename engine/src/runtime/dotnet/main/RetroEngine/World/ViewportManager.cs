@@ -50,10 +50,10 @@ public sealed partial class ViewportManager : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_manager_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_manager_create")]
     private static partial IntPtr NativeCreate();
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_viewport_manager_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_manager_destroy")]
     private static partial void NativeDestroy(ViewportManager ptr);
 }
 

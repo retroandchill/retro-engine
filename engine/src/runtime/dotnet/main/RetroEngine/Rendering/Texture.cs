@@ -52,7 +52,7 @@ public sealed partial class Texture : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_texture_destroy")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_texture_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 }
 

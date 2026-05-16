@@ -614,7 +614,7 @@ namespace retro
       protected:
         WeakRefCounted() noexcept = default;
 
-        ~WeakRefCounted() noexcept
+        inline ~WeakRefCounted() noexcept
         {
             control_block_->sub_weak_ref();
         }
@@ -642,7 +642,7 @@ namespace retro
             return control_block_->strong_ref_count();
         }
 
-        [[nodiscard]] RefCountedControlBlock &control_block() const noexcept
+        [[nodiscard]] inline RefCountedControlBlock &control_block() const noexcept
         {
             return *control_block_;
         }

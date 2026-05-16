@@ -85,7 +85,7 @@ public readonly partial struct NameEntryId(uint value)
         return (int)Value;
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare_lexical")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_compare_lexical")]
     private static partial int NativeCompareLexical(NameEntryId lhs, NameEntryId rhs, NameCase nameCase);
 }
 
@@ -408,7 +408,7 @@ public readonly partial struct Name
         return HashCode.Combine(ComparisonIndex, _number);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf8")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_lookup_utf8")]
     private static partial void NativeLookup(
         ReadOnlySpan<byte> name,
         int nameLength,
@@ -417,7 +417,7 @@ public readonly partial struct Name
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_lookup_utf16")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_lookup_utf16")]
     private static partial void NativeLookup(
         ReadOnlySpan<char> name,
         int nameLength,
@@ -426,17 +426,17 @@ public readonly partial struct Name
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_is_valid")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_is_valid")]
     [return: MarshalAs(UnmanagedType.U1)]
     private static partial bool NativeIsValid(Name name);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_compare_utf16")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_compare_utf16")]
     private static partial int NativeCompare(Name lhs, scoped ReadOnlySpan<char> name, int nameLength);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf8")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_to_string_utf8")]
     private static partial int NativeToString(Name name, scoped ReadOnlySpan<byte> buffer, int bufferLength);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_name_to_string_utf16")]
+    [LibraryImport(NativeLibraries.RetroCore, EntryPoint = "retro_name_to_string_utf16")]
     private static partial int NativeToString(Name name, scoped ReadOnlySpan<char> buffer, int bufferLength);
 
     static partial void StaticInit()

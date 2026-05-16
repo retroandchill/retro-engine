@@ -2,14 +2,14 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(RETRO_LOGGING_SOURCES private/logging.cpp)
+set(RETRO_LOGGING_SOURCES private/logging.cpp private/logger.cpp)
 
 set(RETRO_LOGGING_MODULES public/modules/logging.ixx
 )
 
 set(RETRO_LOGGING_HEADERS )
 
-add_library(retro_logging  ${INTERMEDIATE_LIB_TYPE}
+add_library(retro_logging
         ${RETRO_LOGGING_SOURCES}
         ${RETRO_LOGGING_MODULES}
         ${RETRO_LOGGING_HEADERS})

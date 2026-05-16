@@ -42,4 +42,16 @@ namespace retro
             return "This function is not yet implemented, please fix that before release";
         }
     };
+
+    export class PlatformException final : public std::runtime_error
+    {
+      public:
+        using std::runtime_error::runtime_error;
+    };
+
+    export class GraphicsException : public std::runtime_error
+    {
+      public:
+        using std::runtime_error::runtime_error;
+    };
 } // namespace retro

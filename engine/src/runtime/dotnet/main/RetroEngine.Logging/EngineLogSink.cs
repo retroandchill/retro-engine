@@ -42,10 +42,10 @@ public sealed partial class EngineLogSink : ILogEventSink
         }
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_log")]
+    [LibraryImport(NativeLibraries.RetroLogging, EntryPoint = "retro_log")]
     private static unsafe partial void NativeLog(LogLevel level, ReadOnlySpan<char> message, int length);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_log_with_source_info")]
+    [LibraryImport(NativeLibraries.RetroLogging, EntryPoint = "retro_log_with_source_info")]
     private static unsafe partial void NativeLog(
         LogLevel level,
         ReadOnlySpan<char> message,

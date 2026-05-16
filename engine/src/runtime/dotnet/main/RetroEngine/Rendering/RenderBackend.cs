@@ -54,17 +54,17 @@ public sealed partial class RenderBackend : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_create")]
+    [LibraryImport(NativeLibraries.RetroRenderer, EntryPoint = "retro_render_backend_create")]
     private static partial IntPtr NativeCreate(
         PlatformBackend platformBackend,
         RenderBackendType renderBackendType,
         out InteropError error
     );
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_destroy")]
+    [LibraryImport(NativeLibraries.RetroRenderer, EntryPoint = "retro_render_backend_destroy")]
     private static partial void NativeDestroy(IntPtr ptr);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_backend_upload_texture")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_backend_upload_texture")]
     private static partial IntPtr NativeUploadTexture(
         RenderBackend backend,
         ReadOnlySpan<byte> bytes,

@@ -59,6 +59,10 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/rendering/render_manager.cpp
         private/rendering/headless_render_backend.cpp
         private/rendering/image_data.cpp
+        private/interop/engine.cpp
+        private/interop/scene.cpp
+        private/interop/assets.cpp
+        private/interop/rendering.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -91,7 +95,7 @@ set(RETRO_RUNTIME_PRIVATE_MODULES
         "${OUTPUT_SHADER_FILE}")
 
 
-add_library(retro_runtime ${INTERMEDIATE_LIB_TYPE}
+add_library(retro_runtime
         ${RETRO_RUNTIME_SOURCES}
         ${RETRO_RUNTIME_HEADERS}
         ${RETRO_RUNTIME_PUBLIC_MODULES}

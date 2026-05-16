@@ -31,4 +31,12 @@
         <Copy SourceFiles="@(ContentFiles)" DestinationFolder="$(OutputPath)/content/%(RecursiveDir)" SkipUnchangedFiles="true" />
     </Target>
 
+    <Target Name="RemoveProjectReferenceCopyLocalItems"
+            AfterTargets="ResolveReferences">
+        <ItemGroup>
+            <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
+                                     Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'" />
+        </ItemGroup>
+    </Target>
+
 </Project>

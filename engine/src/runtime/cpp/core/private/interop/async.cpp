@@ -9,7 +9,7 @@
 import std;
 import retro.core.async.manual_task_scheduler;
 import retro.core.async.task_scheduler;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 
 using namespace retro;
 

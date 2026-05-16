@@ -23,9 +23,9 @@ internal static partial class ServiceRegistrations
             .AddSingleton(_ => RenderPipeline.Create(CreateSpritePipeline));
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_pipeline_create_geometry")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_create_geometry")]
     private static partial IntPtr CreateGeometryPipeline(out InteropError error);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_render_pipeline_create_sprite")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_create_sprite")]
     private static partial IntPtr CreateSpritePipeline(out InteropError error);
 }

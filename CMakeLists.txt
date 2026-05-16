@@ -12,11 +12,14 @@ option(BUILD_TESTS "Should the test cases be built as well" ON)
 option(RETRO_WITH_EDITOR_DATA "Is this a build that expects to include the editor" ON)
 option(RETRO_WITH_CASE_PRESERVING_NAME "Should the Name type have an extra field for the case" ON)
 
-set(INTERMEDIATE_LIB_TYPE OBJECT)
-set(BUILD_SHARED_LIBS OFF)
+if (RETRO_BUILD_SHARED)
+    set(BUILD_SHARED_LIBS ON)
+else()
+    set(BUILD_SHARED_LIBS OFF)
 
-set(VCPKG_CRT_LINKAGE static)
-set(VCPKG_LIBRARY_LINKAGE static)
+    set(VCPKG_CRT_LINKAGE static)
+    set(VCPKG_LIBRARY_LINKAGE static)
+endif()
 
 set(VCPKG_DEPS_DIR ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 set(VCPKG_BIN_DIR ${VCPKG_DEPS_DIR}/bin)

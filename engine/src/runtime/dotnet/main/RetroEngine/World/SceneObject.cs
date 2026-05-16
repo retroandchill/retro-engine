@@ -125,19 +125,19 @@ public abstract partial class SceneObject : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_transform")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_set_transform")]
     private static partial void NativeSetTransform(SceneObject obj, in Transform transform);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_set_z_order")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_set_z_order")]
     private static partial int NativeSetZOrder(SceneObject obj, int zOrder);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_attach_to_parent")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_attach_to_parent")]
     private static partial void NativeAttachToParent(SceneObject obj, SceneObject? parent);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_detach_from_parent")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_detach_from_parent")]
     private static partial void NativeDetachFromParent(SceneObject obj);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_node_dispose")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_dispose")]
     private static partial void NativeDispose(Scene scene, SceneObject obj);
 }
 

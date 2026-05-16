@@ -121,28 +121,28 @@ public partial class Sprite : SceneObject
     public Sprite(SceneObject parent)
         : this(parent.Scene, parent) { }
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_create")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(Scene scene, SceneObject? id);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_texture")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_texture")]
     private static partial void NativeSetTexture(Sprite id, Rendering_Texture? texture);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_tint")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_tint")]
     private static partial void NativeSetTint(Sprite id, Color color);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_pivot")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_pivot")]
     private static partial void NativeSetPivot(Sprite id, Vector2F pivot);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_size")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_size")]
     private static partial void NativeSetSize(Sprite id, Vector2F size);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_uv_rect")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_uv_rect")]
     private static partial void NativeSetUVs(Sprite id, UVs size);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_draw_mode")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_draw_mode")]
     private static partial void NativeSetDrawMode(Sprite id, SpriteDrawMode size);
 
-    [LibraryImport(NativeLibraries.RetroEngine, EntryPoint = "retro_sprite_set_margin")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_margin")]
     private static partial void NativeSetMargin(Sprite id, Margin margin);
 }
 

@@ -18,7 +18,7 @@ import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.runtime.engine;
 import std;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 import retro.runtime.rendering.texture;
 import retro.platform.window;
 import retro.runtime.rendering.layout.margin;

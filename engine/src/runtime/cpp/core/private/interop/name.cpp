@@ -10,7 +10,7 @@
 
 import std;
 import retro.core.strings.name;
-import retro.interop.interop_error;
+import retro.core.interop.interop_error;
 
 namespace
 {

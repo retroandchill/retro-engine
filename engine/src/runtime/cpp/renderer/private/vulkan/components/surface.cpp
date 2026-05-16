@@ -11,6 +11,7 @@ module;
 module retro.renderer.vulkan.components.surface;
 
 import retro.runtime.exceptions;
+import retro.core.util.exceptions;
 
 namespace retro
 {
