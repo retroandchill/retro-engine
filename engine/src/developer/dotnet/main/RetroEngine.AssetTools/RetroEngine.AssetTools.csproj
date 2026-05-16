@@ -24,6 +24,7 @@
       <PackageReference Include="Dock.Model" />
       <PackageReference Include="DynamicData" />
       <PackageReference Include="FluentIcons.Avalonia" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
       <PackageReference Include="Namotion.Reflection" />
       <PackageReference Include="Zomp.SyncMethodGenerator">
