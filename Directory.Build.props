@@ -1,13 +1,21 @@
 ﻿<Project>
+    <ItemDefinitionGroup>
+        <ProjectReference>
+            <Private>false</Private>
+        </ProjectReference>
+    </ItemDefinitionGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <DefineConstants>$(DefineConstants);CHECKED;</DefineConstants>
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <RetroEngineWithEditor>true</RetroEngineWithEditor>
         <BuildConfigName>debug</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <RetroEngineCasePreservingNames>true</RetroEngineCasePreservingNames>
+        <RetroEngineWithEditor>true</RetroEngineWithEditor>
         <BuildConfigName>release</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -15,12 +23,14 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'DebugGame' ">
         <DefineConstants>$(DefineConstants);CHECKED;DEBUG</DefineConstants>
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <RetroEngineWithEditor>false</RetroEngineWithEditor>
         <BuildConfigName>debug-game</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Packaged' ">
         <RetroEngineCasePreservingNames>false</RetroEngineCasePreservingNames>
+        <RetroEngineWithEditor>false</RetroEngineWithEditor>
         <BuildConfigName>packaged</BuildConfigName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -30,6 +40,12 @@
             Condition="'$(RetroEngineCasePreservingNames)' == 'true'"
     >
         <DefineConstants>$(DefineConstants);RETRO_WITH_CASE_PRESERVING_NAME</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup
+            Condition="'$(RetroEngineWithEditor)' == 'true'"
+    >
+        <DefineConstants>$(DefineConstants);RETRO_WITH_EDITOR</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">

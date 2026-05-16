@@ -19,8 +19,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj" />
-      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine\RetroEngine.csproj" />
+      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine.Logging\RetroEngine.Logging.csproj"
+                        ExcludeAssets="runtime"
+                        PrivateAssets="all"/>
+      <ProjectReference Include="..\..\..\..\..\engine\src\runtime\dotnet\main\RetroEngine\RetroEngine.csproj"
+                        ExcludeAssets="runtime"
+                        PrivateAssets="all"/>
     </ItemGroup>
 
     <Target Name="CopyContentFiles" AfterTargets="Build">
