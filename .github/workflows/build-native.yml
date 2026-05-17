@@ -64,23 +64,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-build-${{ matrix.os }}
-          path: engine/build/release/runtimes/
+          path: engine/bin/
           retention-days: 5
 
   build-managed:
     name: Build Managed
     runs-on: windows-latest
-    needs: build-native
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: native-build-windows-latest
-          path: engine/build/release/runtimes/
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
