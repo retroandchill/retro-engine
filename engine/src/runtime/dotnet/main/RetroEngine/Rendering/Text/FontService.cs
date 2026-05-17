@@ -26,6 +26,19 @@ public sealed partial class FontService : IDisposable
         Dispose();
     }
 
+    public FontFace LoadFont(scoped ReadOnlySpan<byte> bytes)
+    {
+        ThrowIfDisposed();
+        var nativeHandle = NativeLoadFont(this, bytes, bytes.Length, out var error);
+        error.ThrowIfError();
+        return new FontFace(nativeHandle);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(NativeHandle == IntPtr.Zero, this);
+    }
+
     public void Dispose()
     {
         if (NativeHandle == IntPtr.Zero)
@@ -41,6 +54,14 @@ public sealed partial class FontService : IDisposable
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_service_destroy")]
     private static partial void NativeDestroy(FontService service);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_service_load_font")]
+    private static partial IntPtr NativeLoadFont(
+        FontService service,
+        ReadOnlySpan<byte> bytes,
+        int length,
+        out InteropError error
+    );
 }
 
 [CustomMarshaller(typeof(FontService), MarshalMode.ManagedToUnmanagedIn, typeof(FontServiceMarshaller))]

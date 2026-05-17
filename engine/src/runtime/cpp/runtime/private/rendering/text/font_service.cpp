@@ -35,6 +35,18 @@ namespace retro
             }
         }
 
+        std::atomic next_font_id{1};
+
+        [[nodiscard]] std::uint32_t generate_font_id() noexcept
+        {
+            auto next = next_font_id.fetch_add(1, std::memory_order_relaxed);
+            if (next == 0)
+            {
+                next = next_font_id.fetch_add(1, std::memory_order_relaxed);
+            }
+            return next;
+        }
+
         [[nodiscard]] bool sample_coverage(const RasterizedGlyph &glyph,
                                            const std::int32_t x,
                                            const std::int32_t y) noexcept
@@ -93,11 +105,11 @@ namespace retro
             return inside ? distance : -distance;
         }
 
-        [[nodiscard]] std::uint8_t encode_sdf_value(const float signed_distance, const float spread) noexcept
+        [[nodiscard]] std::byte encode_sdf_value(const float signed_distance, const float spread) noexcept
         {
             const auto normalized = 0.5f + signed_distance / spread;
             const auto clamped = std::clamp(normalized, 0.0f, 1.0f);
-            return static_cast<std::uint8_t>(std::round(clamped * 255.0f));
+            return static_cast<std::byte>(std::round(clamped * 255.0f));
         }
 
         [[nodiscard]] SdfGlyphBitmap generate_sdf_glyph_bitmap(const RasterizedGlyph &glyph,
@@ -138,8 +150,8 @@ namespace retro
         FT_Done_Face(face);
     }
 
-    FontFace::FontFace(std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept
-        : bytes_{std::move(bytes)}, face_{std::move(face)}, family_name_{face_->family_name},
+    FontFace::FontFace(ConstructTag, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept
+        : id_{generate_font_id()}, bytes_{std::move(bytes)}, face_{std::move(face)}, family_name_{face_->family_name},
           style_name_{face_->style_name}
     {
     }
@@ -218,33 +230,7 @@ namespace retro
         };
     }
 
-    void FreeTypeLibraryDeleter::operator()(FT_Library library) const noexcept
-    {
-        FT_Done_FreeType(library);
-    }
-    // ReSharper restore CppParameterMayBeConst
-
-    FontService::FontService() : library_{init_free_type()}
-    {
-    }
-
-    FontFace FontService::load_font(std::vector<std::byte> bytes) const
-    {
-        FT_Face face;
-        if (const auto error = FT_New_Memory_Face(library_.get(),
-                                                  reinterpret_cast<const FT_Byte *>(bytes.data()),
-                                                  bytes.size(),
-                                                  0,
-                                                  &face);
-            error != FT_Err_Ok)
-        {
-            throw IoException(FT_Error_String(error));
-        }
-
-        return FontFace{std::move(bytes), FreeTypeFacePtr{face}};
-    }
-
-    FontAtlas FontService::create_sdf_atlas(const FontFace &font, const FontSdfConfig &config) const
+    FontAtlas FontFace::create_sdf_atlas(const FontSdfConfig &config) const
     {
         if (config.atlas_width == 0 || config.atlas_height == 0)
         {
@@ -264,10 +250,10 @@ namespace retro
         FontAtlas atlas{
             .width = config.atlas_width,
             .height = config.atlas_height,
-            .metrics = font.metrics(config.pixel_size),
+            .metrics = metrics(config.pixel_size),
         };
 
-        atlas.pixels.assign(atlas.width * atlas.height, 0);
+        atlas.pixels.assign(atlas.width * atlas.height, std::byte{0});
 
         AtlasPacker packer{
             .width = config.atlas_width,
@@ -276,7 +262,7 @@ namespace retro
 
         for (auto codepoint = config.first_codepoint; codepoint <= config.last_codepoint; ++codepoint)
         {
-            auto rasterized = font.rasterize_glyph(codepoint, config.pixel_size);
+            auto rasterized = rasterize_glyph(codepoint, config.pixel_size);
 
             if (rasterized.glyph_index == FontFace::null_glyph_index)
                 continue;
@@ -310,7 +296,9 @@ namespace retro
                 const auto src_offset = static_cast<std::size_t>(y) * sdf.width;
                 const auto dst_offset = static_cast<std::size_t>(atlas_y + y) * atlas.width + atlas_x;
 
-                std::copy_n(sdf.pixels.data() + src_offset, sdf.width, atlas.pixels.data() + dst_offset);
+                std::copy_n(std::next(sdf.pixels.data(), src_offset),
+                            sdf.width,
+                            std::next(atlas.pixels.data(), dst_offset));
             }
 
             atlas.glyphs.emplace(
@@ -331,5 +319,31 @@ namespace retro
         }
 
         return atlas;
+    }
+
+    void FreeTypeLibraryDeleter::operator()(FT_Library library) const noexcept
+    {
+        FT_Done_FreeType(library);
+    }
+    // ReSharper restore CppParameterMayBeConst
+
+    FontService::FontService() : library_{init_free_type()}
+    {
+    }
+
+    RefCountPtr<FontFace> FontService::load_font(std::vector<std::byte> bytes) const
+    {
+        FT_Face face;
+        if (const auto error = FT_New_Memory_Face(library_.get(),
+                                                  reinterpret_cast<const FT_Byte *>(bytes.data()),
+                                                  bytes.size(),
+                                                  0,
+                                                  &face);
+            error != FT_Err_Ok)
+        {
+            throw IoException(FT_Error_String(error));
+        }
+
+        return make_ref_counted<FontFace>(FontFace::ConstructTag{}, std::move(bytes), FreeTypeFacePtr{face});
     }
 } // namespace retro

@@ -44,6 +44,9 @@ namespace retro
             case TextureFormat::rgba8:
                 image_format = vk::Format::eR8G8B8A8Srgb;
                 break;
+            case TextureFormat::r8:
+                image_format = vk::Format::eR8Unorm;
+                break;
             case TextureFormat::rgba16f:
                 image_format = vk::Format::eR16G16B16A16Sfloat;
                 break;

@@ -13,6 +13,7 @@ export module retro.runtime.rendering.text.font_service;
 import std;
 import retro.core.util.noncopyable;
 import retro.runtime.rendering.text.font;
+import retro.core.memory.ref_counted_ptr;
 
 // ReSharper disable CppInconsistentNaming
 extern "C"
@@ -35,15 +36,24 @@ namespace retro
 
     using FreeTypeFacePtr = std::unique_ptr<FreeTypeFace, FreeTypeFaceDeleter>;
 
-    export class FontFace
+    export class FontFace final : public IntrusiveRefCounted
     {
       public:
         RETRO_API static constexpr std::uint32_t null_glyph_index = 0;
 
       private:
-        RETRO_API FontFace(std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
+        struct ConstructTag
+        {
+        };
 
       public:
+        RETRO_API FontFace(ConstructTag, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
+
+        [[nodiscard]] inline std::uint64_t id() const noexcept
+        {
+            return id_;
+        }
+
         [[nodiscard]] inline std::string_view family_name() const noexcept
         {
             return family_name_;
@@ -65,9 +75,12 @@ namespace retro
 
         RETRO_API [[nodiscard]] FontMetrics metrics(std::uint32_t pixel_size) const;
 
+        RETRO_API FontAtlas create_sdf_atlas(const FontSdfConfig &config) const;
+
       private:
         friend class FontService;
 
+        std::uint64_t id_;
         std::vector<std::byte> bytes_;
         FreeTypeFacePtr face_;
         std::string_view family_name_;
@@ -88,9 +101,7 @@ namespace retro
       public:
         FontService();
 
-        FontFace load_font(std::vector<std::byte> bytes) const;
-
-        FontAtlas create_sdf_atlas(const FontFace &font, const FontSdfConfig &config) const;
+        [[nodiscard]] RefCountPtr<FontFace> load_font(std::vector<std::byte> bytes) const;
 
       private:
         FreeTypeLibraryPtr library_;

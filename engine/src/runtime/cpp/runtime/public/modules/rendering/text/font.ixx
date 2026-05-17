@@ -64,7 +64,7 @@ namespace retro
 
         FontMetrics metrics{};
 
-        std::vector<std::uint8_t> pixels{};
+        std::vector<std::byte> pixels{};
         std::unordered_map<char32_t, GlyphMetrics> glyphs{};
     };
 
@@ -97,7 +97,7 @@ namespace retro
 
         std::uint32_t padding{};
 
-        std::vector<std::uint8_t> pixels;
+        std::vector<std::byte> pixels;
     };
 
     export struct AtlasPacker
@@ -111,55 +111,5 @@ namespace retro
 
         [[nodiscard]] std::optional<std::pair<std::uint32_t, std::uint32_t>> allocate(std::uint32_t glyph_width,
                                                                                       std::uint32_t glyph_height);
-    };
-
-    export struct TextVertex
-    {
-        Vector2f position{};
-        Vector2f texcoord{};
-        Color color{};
-    };
-
-    export struct TextLayoutGlyph
-    {
-        char32_t codepoint{};
-        std::uint32_t glyph_index{};
-
-        float x{};
-        float y{};
-
-        GlyphMetrics metrics{};
-    };
-
-    export struct TextLayout
-    {
-        std::vector<TextLayoutGlyph> glyphs;
-
-        float width{};
-        float height{};
-    };
-
-    export enum class TextHorizontalAlign
-    {
-        left,
-        center,
-        right,
-    };
-
-    export enum class TextVerticalAlign
-    {
-        top,
-        middle,
-        bottom,
-        baseline,
-    };
-
-    export struct TextLayoutConfig
-    {
-        float max_width{std::numeric_limits<float>::infinity()};
-        float line_spacing{1.0f};
-
-        TextHorizontalAlign horizontal_align{TextHorizontalAlign::left};
-        TextVerticalAlign vertical_align{TextVerticalAlign::top};
     };
 } // namespace retro

@@ -18,6 +18,7 @@ namespace retro
     export enum class TextureFormat : std::uint8_t
     {
         rgba8,
+        r8,
         rgba16f
     };
 

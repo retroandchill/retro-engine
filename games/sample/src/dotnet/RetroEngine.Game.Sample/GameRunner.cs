@@ -84,6 +84,7 @@ public sealed class GameRunner(
         window.Scale = new Vector2F(2, 2);
         window.Size = new Vector2F(300, 124);
         window.Pivot = new Vector2F(0.5f, 1f);
+        window.Rotation = 0.5f;
         window.ZOrder = 100000;
         window.Position = new Vector2F(0, 360);
         window.DrawMode = SpriteDrawMode.Box;

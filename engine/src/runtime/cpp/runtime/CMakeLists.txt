@@ -10,6 +10,8 @@ set(RENDERER_SHADERS
         "${RENDERER_SHADER_DIR}/geometry.frag"
         "${RENDERER_SHADER_DIR}/sprite.vert"
         "${RENDERER_SHADER_DIR}/sprite.frag"
+        "${RENDERER_SHADER_DIR}/text.vert"
+        "${RENDERER_SHADER_DIR}/text.frag"
 )
 
 set(COMPILED_SHADERS "")
@@ -66,6 +68,8 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/rendering/text/font_service.cpp
         private/interop/fonts.cpp
         private/rendering/text/font.cpp
+        private/rendering/text/gpu_font_atlas.cpp
+        private/rendering/objects/text_block.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -96,6 +100,9 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/image_data.ixx
         public/modules/rendering/text/font_service.ixx
         public/modules/rendering/text/font.ixx
+        public/modules/rendering/text/gpu_font_atlas.ixx
+        public/modules/rendering/objects/text_block.ixx
+        public/modules/rendering/layout/uvs.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

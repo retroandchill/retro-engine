@@ -25,15 +25,10 @@ import retro.core.memory.small_unique_ptr;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.layout.margin;
 import retro.core.math.transform;
+import retro.runtime.rendering.layout.uvs;
 
 namespace retro
 {
-    export struct UVs
-    {
-        Vector2f min{0, 0};
-        Vector2f max{1, 1};
-    };
-
     export enum class SpriteDrawMode : std::uint8_t
     {
         quad,
@@ -60,7 +55,7 @@ namespace retro
     {
         using ComponentType = Sprite;
 
-        const Texture *texture = nullptr;
+        RefCountPtr<const Texture> texture;
         std::pmr::vector<SpriteInstanceData> instances;
         ViewportDrawInfo viewport_draw_info{};
 
@@ -78,8 +73,6 @@ namespace retro
     class RETRO_API Sprite final : public SceneNode
     {
       public:
-        using PipelineType = SpriteRenderPipeline;
-
         [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
         {
             return texture_;

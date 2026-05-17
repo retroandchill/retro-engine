@@ -19,7 +19,7 @@ namespace retro
         constexpr std::size_t indices_per_sprite = 6;
         return DrawCommand{
             .instance_buffers = {as_bytes(std::span{instances})},
-            .descriptor_sets = {texture},
+            .descriptor_sets = {texture.get()},
             .push_constants = as_bytes(std::span{&viewport_draw_info, 1}),
             .index_count = indices_per_sprite,
             .instance_count = instances.size(),
@@ -86,6 +86,7 @@ namespace retro
                 break;
             case SpriteDrawMode::box:
                 {
+                    cached_quads_.reserve(9);
                     auto left = std::min(margin_.left, size_.x);
                     auto right = std::min(margin_.right, size_.x);
                     auto top = std::min(margin_.top, size_.y);
@@ -247,7 +248,7 @@ namespace retro
         std::pmr::unordered_map<const Texture *, SpriteBatch> batches{&memory_resource};
         for (auto *node : nodes.nodes_of_type<Sprite>())
         {
-            auto *texture = node->texture().get();
+            auto &texture = node->texture();
             if (texture == nullptr)
                 continue;
 
@@ -268,10 +269,10 @@ namespace retro
                                                               };
                                                           });
 
-            if (auto it = batches.find(texture); it == batches.end())
+            if (auto it = batches.find(texture.get()); it == batches.end())
             {
                 auto [pair, inserted] =
-                    batches.emplace(texture,
+                    batches.emplace(texture.get(),
                                     SpriteBatch{
                                         .texture = texture,
                                         .instances = std::pmr::vector<SpriteInstanceData>{&memory_resource},
@@ -282,7 +283,7 @@ namespace retro
             }
             else
             {
-                auto &[draw_texture, instances, viewport_draw_info] = batches[texture];
+                auto &[draw_texture, instances, viewport_draw_info] = batches[texture.get()];
                 draw_texture = texture;
                 viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
                 instances.append_range(pending_data);

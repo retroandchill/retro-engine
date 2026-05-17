@@ -24,8 +24,6 @@ import retro.core.memory.small_unique_ptr;
 
 namespace retro
 {
-    export class GeometryRenderPipeline;
-
     export enum class GeometryType : std::uint8_t
     {
         none,
@@ -74,8 +72,6 @@ namespace retro
     class RETRO_API GeometryObject final : public SceneNode
     {
       public:
-        using PipelineType = GeometryRenderPipeline;
-
         [[nodiscard]] inline const std::shared_ptr<const Geometry> &geometry() const noexcept
         {
             return geometry_;
@@ -125,7 +121,7 @@ namespace retro
         Vector2f size_{100, 100};
     };
 
-    class RETRO_API GeometryRenderPipeline final : public RenderPipeline
+    export class RETRO_API GeometryRenderPipeline final : public RenderPipeline
     {
       public:
         [[nodiscard]] std::type_index component_type() const override;
