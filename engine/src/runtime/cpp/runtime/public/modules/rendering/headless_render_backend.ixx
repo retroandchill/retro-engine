@@ -26,6 +26,7 @@ namespace retro
         RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
                                             std::int32_t width,
                                             std::int32_t height,
-                                            TextureFormat format) override;
+                                            TextureFormat format,
+                                            TextureFilter filtering) override;
     };
 } // namespace retro

@@ -13,6 +13,7 @@ import retro.platform.backend;
 import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
+import retro.runtime.rendering.objects.text_block;
 import retro.runtime.rendering.pipeline_manager.render_manager;
 import retro.runtime.world.viewport;
 import retro.runtime.rendering.pipeline_manager;
@@ -88,6 +89,12 @@ extern "C"
     RETRO_API RenderPipeline *retro_render_pipeline_create_sprite(InteropError *error)
     {
         return try_execute([] { return new SpriteRenderPipeline(); }, *error);
+    }
+
+    RETRO_API RenderPipeline *retro_render_pipeline_create_text_block(RenderBackend *render_backend,
+                                                                      InteropError *error)
+    {
+        return try_execute([render_backend] { return new TextBlockRenderPipeline(*render_backend); }, *error);
     }
 
     RETRO_API RenderManager *retro_render_manager_create(PlatformBackend *platform_backend,

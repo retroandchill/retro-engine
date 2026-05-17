@@ -24,7 +24,7 @@ namespace retro
             {
                 throw PlatformException(FT_Error_String(error));
             }
-            return FreeTypeLibraryPtr{library};
+            return FreeTypeLibraryPtr{library, FT_Done_FreeType};
         }
 
         void throw_freetype_error(const FT_Error error, std::string_view message)
@@ -73,10 +73,7 @@ namespace retro
                                                      const std::int32_t y,
                                                      const std::uint32_t padding) noexcept
         {
-            const auto source_x = x - static_cast<std::int32_t>(glyph.bearing_x);
-            const auto source_y = y - static_cast<std::int32_t>(glyph.bearing_y);
-
-            const bool inside = sample_coverage(glyph, source_x, source_y);
+            const bool inside = sample_coverage(glyph, x, y);
             auto closest_distance_sq = std::numeric_limits<float>::max();
 
             const auto min_y = -static_cast<std::int32_t>(padding);
@@ -93,8 +90,8 @@ namespace retro
                         continue;
                     }
 
-                    const auto dx = static_cast<float>(ox - source_x);
-                    const auto dy = static_cast<float>(oy - source_y);
+                    const auto dx = static_cast<float>(ox - x);
+                    const auto dy = static_cast<float>(oy - y);
                     const auto distance_sq = dx * dx + dy * dy;
 
                     closest_distance_sq = std::min(closest_distance_sq, distance_sq);
@@ -150,9 +147,12 @@ namespace retro
         FT_Done_Face(face);
     }
 
-    FontFace::FontFace(ConstructTag, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept
-        : id_{generate_font_id()}, bytes_{std::move(bytes)}, face_{std::move(face)}, family_name_{face_->family_name},
-          style_name_{face_->style_name}
+    FontFace::FontFace(ConstructTag,
+                       FreeTypeLibraryPtr library,
+                       std::vector<std::byte> bytes,
+                       FreeTypeFacePtr face) noexcept
+        : id_{generate_font_id()}, bytes_{std::move(bytes)}, library_{std::move(library)}, face_{std::move(face)},
+          family_name_{face_->family_name}, style_name_{face_->style_name}
     {
     }
 
@@ -181,7 +181,7 @@ namespace retro
             };
         }
 
-        throw_freetype_error(FT_Load_Glyph(face, index, FT_LOAD_DEFAULT), "Failed to load glyph");
+        throw_freetype_error(FT_Load_Glyph(face, index, FT_LOAD_NO_BITMAP), "Failed to load glyph");
 
         throw_freetype_error(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL), "Failed to render glyph");
 
@@ -320,11 +320,6 @@ namespace retro
 
         return atlas;
     }
-
-    void FreeTypeLibraryDeleter::operator()(FT_Library library) const noexcept
-    {
-        FT_Done_FreeType(library);
-    }
     // ReSharper restore CppParameterMayBeConst
 
     FontService::FontService() : library_{init_free_type()}
@@ -344,6 +339,6 @@ namespace retro
             throw IoException(FT_Error_String(error));
         }
 
-        return make_ref_counted<FontFace>(FontFace::ConstructTag{}, std::move(bytes), FreeTypeFacePtr{face});
+        return make_ref_counted<FontFace>(FontFace::ConstructTag{}, library_, std::move(bytes), FreeTypeFacePtr{face});
     }
 } // namespace retro

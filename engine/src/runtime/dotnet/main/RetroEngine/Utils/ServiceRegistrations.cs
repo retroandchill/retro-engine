@@ -20,7 +20,12 @@ internal static partial class ServiceRegistrations
         services
             .AddSingleton<IFileSystem, RealFileSystem>()
             .AddSingleton(_ => RenderPipeline.Create(CreateGeometryPipeline))
-            .AddSingleton(_ => RenderPipeline.Create(CreateSpritePipeline));
+            .AddSingleton(_ => RenderPipeline.Create(CreateSpritePipeline))
+            .AddSingleton(provider =>
+            {
+                var renderBackend = provider.GetRequiredService<RenderBackend>();
+                return RenderPipeline.Create(renderBackend, CreateTextBlockPipeline);
+            });
     }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_create_geometry")]
@@ -28,4 +33,7 @@ internal static partial class ServiceRegistrations
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_create_sprite")]
     private static partial IntPtr CreateSpritePipeline(out InteropError error);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_pipeline_create_text_block")]
+    private static partial IntPtr CreateTextBlockPipeline(RenderBackend renderBackend, out InteropError error);
 }

@@ -25,7 +25,8 @@ namespace retro
         virtual RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
                                                     std::int32_t width,
                                                     std::int32_t height,
-                                                    TextureFormat format) = 0;
+                                                    TextureFormat format,
+                                                    TextureFilter filtering = TextureFilter::nearest) = 0;
 
         inline RefCountPtr<Texture> upload_texture(const ImageData &image)
         {

@@ -142,7 +142,7 @@ public partial class Sprite : SceneObject
         : this(parent.Scene, parent) { }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_create")]
-    private static partial IntPtr NativeCreate(Scene scene, SceneObject? id);
+    private static partial IntPtr NativeCreate(Scene scene);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_texture")]
     private static partial void NativeSetTexture(Sprite id, Texture? texture);

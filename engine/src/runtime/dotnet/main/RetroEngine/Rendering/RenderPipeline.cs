@@ -10,6 +10,8 @@ namespace RetroEngine.Rendering;
 
 public delegate IntPtr RenderPipelineFactory(out InteropError error);
 
+public delegate IntPtr RenderPipelineFactory<in TContext>(TContext context, out InteropError error);
+
 public sealed partial class RenderPipeline : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; }
@@ -22,6 +24,15 @@ public sealed partial class RenderPipeline : IDisposable
     public static RenderPipeline Create(RenderPipelineFactory factory)
     {
         var nativeHandle = factory(out var error);
+        error.ThrowIfError();
+        return nativeHandle != IntPtr.Zero
+            ? new RenderPipeline(nativeHandle)
+            : throw new InvalidOperationException("Failed to create render pipeline");
+    }
+
+    public static RenderPipeline Create<TContext>(TContext context, RenderPipelineFactory<TContext> factory)
+    {
+        var nativeHandle = factory(context, out var error);
         error.ThrowIfError();
         return nativeHandle != IntPtr.Zero
             ? new RenderPipeline(nativeHandle)

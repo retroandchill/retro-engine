@@ -35,6 +35,12 @@ public abstract partial class SceneObject : IDisposable
             if (ReferenceEquals(field, value))
                 return;
 
+            if (value is not null)
+            {
+                if (!ReferenceEquals(value.Scene, Scene))
+                    throw new ArgumentException("Parent must be in the same scene");
+            }
+
             field?.RemoveChild(this);
             field = value;
             if (value is not null)
@@ -94,12 +100,12 @@ public abstract partial class SceneObject : IDisposable
         }
     }
 
-    protected SceneObject(Scene scene, SceneObject? parent, Func<Scene, SceneObject?, IntPtr> nativePtrFactory)
+    protected SceneObject(Scene scene, SceneObject? parent, Func<Scene, IntPtr> nativePtrFactory)
     {
         parent?.ThrowIfDisposed();
         scene.ThrowIfDisposed();
         Scene = scene;
-        NativeObject = nativePtrFactory(scene, parent);
+        NativeObject = nativePtrFactory(scene);
         Scene.AddObject(this);
         Parent = parent;
         Scale = Vector2F.One;
@@ -137,6 +143,8 @@ public abstract partial class SceneObject : IDisposable
         Disposed = true;
         GC.SuppressFinalize(this);
     }
+
+    protected internal virtual void DisposeManagedResources() { }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_node_set_transform")]
     private static partial void NativeSetTransform(SceneObject obj, in Transform transform);

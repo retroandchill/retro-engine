@@ -51,12 +51,21 @@ public sealed partial class Scene : IDisposable
 
     public void Dispose()
     {
-        if (Disposed)
+        if (NativeHandle == IntPtr.Zero)
             return;
 
+        DisposeManagedResources();
         NativeDestroy(_manager, this);
         _manager.RemoveScene(this);
         NativeHandle = IntPtr.Zero;
+    }
+
+    internal void DisposeManagedResources()
+    {
+        foreach (var obj in _objects)
+        {
+            obj.DisposeManagedResources();
+        }
     }
 
     internal void ThrowIfDisposed()

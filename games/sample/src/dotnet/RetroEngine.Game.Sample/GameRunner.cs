@@ -11,6 +11,7 @@ using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Platform;
 using RetroEngine.Rendering;
+using RetroEngine.Rendering.Text;
 using RetroEngine.Tickables;
 using RetroEngine.World;
 using Serilog;
@@ -69,26 +70,45 @@ public sealed class GameRunner(
             new AssetPath("game", "graphics/windows/choice_1.png"),
             cancellationToken
         );
+        var textFont = await assetManager.LoadAssetAsync<FontFace>(
+            new AssetPath("game", "fonts/roboto_regular.ttf"),
+            cancellationToken
+        );
 
-        using var flipbook = new SimpleFlipbook(scene1, eeveeTexture, tickManager, 10.0f);
-        flipbook.Scale = new Vector2F(3, 3);
-        flipbook.Tint = new Color(1, 1, 1);
+        _ = new SimpleFlipbook(scene1, eeveeTexture, tickManager, 10.0f)
+        {
+            Scale = new Vector2F(3, 3),
+            Tint = new Color(1, 1, 1),
+        };
 
-        using var sprite = new Sprite(scene2);
-        sprite.Texture = backgroundTexture;
-        sprite.Pivot = new Vector2F(0.5f, 0.5f);
-        sprite.ZOrder = -100000;
+        _ = new Sprite(scene2)
+        {
+            Texture = backgroundTexture,
+            Pivot = new Vector2F(0.5f, 0.5f),
+            ZOrder = -100000,
+        };
 
-        using var window = new Sprite(scene1);
-        window.Texture = choiceTexture;
-        window.Scale = new Vector2F(2, 2);
-        window.Size = new Vector2F(300, 124);
-        window.Pivot = new Vector2F(0.5f, 1f);
-        window.Rotation = 0.5f;
-        window.ZOrder = 100000;
-        window.Position = new Vector2F(0, 360);
-        window.DrawMode = SpriteDrawMode.Box;
-        window.Margin = new Margin(14);
+        var window = new Sprite(scene1)
+        {
+            Texture = choiceTexture,
+            Scale = new Vector2F(2, 2),
+            Size = new Vector2F(300, 124),
+            Pivot = new Vector2F(0.5f, 1f),
+            ZOrder = 100000,
+            Position = new Vector2F(0, 360),
+            DrawMode = SpriteDrawMode.Box,
+            Margin = new Margin(14),
+        };
+
+        _ = new TextBlock(window)
+        {
+            Text = "Hello, world!",
+            Position = new Vector2F(0, -62),
+            Font = textFont,
+            Pivot = new Vector2F(0.5f, 0.5f),
+            Tint = new Color(0, 0, 0),
+            ZOrder = 100001,
+        };
 
         await Task.Delay(Timeout.Infinite, cancellationToken);
         return 0;

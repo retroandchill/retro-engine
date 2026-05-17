@@ -4,10 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/exports.h"
-
 export module retro.runtime.rendering.texture;
 
 import std;
@@ -15,6 +11,12 @@ import retro.core.memory.ref_counted_ptr;
 
 namespace retro
 {
+    export enum class TextureFilter : std::uint8_t
+    {
+        nearest = 0,
+        linear = 1
+    };
+
     export enum class TextureFormat : std::uint8_t
     {
         rgba8,
@@ -25,8 +27,11 @@ namespace retro
     export class Texture : public IntrusiveRefCounted
     {
       protected:
-        inline Texture(const std::int32_t width, const std::int32_t height, const TextureFormat format) noexcept
-            : width_{width}, height_{height}, format_{format}
+        inline Texture(const std::int32_t width,
+                       const std::int32_t height,
+                       const TextureFormat format,
+                       const TextureFilter filter) noexcept
+            : width_{width}, height_{height}, format_{format}, filter_{filter}
         {
         }
 
@@ -47,9 +52,15 @@ namespace retro
             return format_;
         }
 
+        [[nodiscard]] inline TextureFilter filter() const noexcept
+        {
+            return filter_;
+        }
+
       private:
         std::int32_t width_{};
         std::int32_t height_{};
         TextureFormat format_{};
+        TextureFilter filter_{TextureFilter::nearest};
     };
 } // namespace retro

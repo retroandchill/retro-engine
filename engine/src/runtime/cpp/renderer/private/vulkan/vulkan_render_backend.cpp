@@ -15,7 +15,8 @@ namespace retro
     VulkanRenderBackend::VulkanRenderBackend(PlatformBackend &platform_backend)
         : instance_{platform_backend.window_backend()}, device_{instance_, platform_backend},
           buffer_manager_{device_.create_buffer_manager()}, command_pool_{device_.create_command_pool()},
-          linear_sampler_{device_.create_linear_sampler()}
+          nearest_sampler_{device_.create_sampler(TextureFilter::nearest)},
+          linear_sampler_{device_.create_sampler(TextureFilter::linear)}
     {
     }
 
@@ -33,7 +34,8 @@ namespace retro
     RefCountPtr<Texture> VulkanRenderBackend::upload_texture(const std::span<const std::byte> bytes,
                                                              const std::int32_t width,
                                                              const std::int32_t height,
-                                                             const TextureFormat format)
+                                                             const TextureFormat format,
+                                                             TextureFilter filtering)
     {
         auto command_pool = get_thread_command_pool();
 
@@ -115,14 +117,28 @@ namespace retro
 
         vk::UniqueImageView image_view = device_.create_image_view(view_info);
 
+        const auto sampler = [this, filtering]
+        {
+            switch (filtering)
+            {
+                case TextureFilter::nearest:
+                    return nearest_sampler_.get();
+                case TextureFilter::linear:
+                    return linear_sampler_.get();
+                default:
+                    throw std::invalid_argument{"VulkanRenderer2D: unsupported texture filter"};
+            }
+        }();
+
         return make_ref_counted<VulkanTexture>(shared_from_this(),
                                                std::move(image),
                                                std::move(img_memory),
                                                std::move(image_view),
-                                               linear_sampler_.get(),
+                                               sampler,
                                                width,
                                                height,
-                                               format);
+                                               format,
+                                               filtering);
     }
 
     vk::CommandPool VulkanRenderBackend::get_thread_command_pool() const

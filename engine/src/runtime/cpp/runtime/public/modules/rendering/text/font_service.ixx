@@ -36,6 +36,10 @@ namespace retro
 
     using FreeTypeFacePtr = std::unique_ptr<FreeTypeFace, FreeTypeFaceDeleter>;
 
+    using FreeTypeLibrary = std::remove_pointer_t<FT_Library>;
+
+    using FreeTypeLibraryPtr = std::shared_ptr<FreeTypeLibrary>;
+
     export class FontFace final : public IntrusiveRefCounted
     {
       public:
@@ -47,7 +51,10 @@ namespace retro
         };
 
       public:
-        RETRO_API FontFace(ConstructTag, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
+        RETRO_API FontFace(ConstructTag,
+                           FreeTypeLibraryPtr library,
+                           std::vector<std::byte> bytes,
+                           FreeTypeFacePtr face) noexcept;
 
         [[nodiscard]] inline std::uint64_t id() const noexcept
         {
@@ -82,19 +89,11 @@ namespace retro
 
         std::uint64_t id_;
         std::vector<std::byte> bytes_;
+        FreeTypeLibraryPtr library_;
         FreeTypeFacePtr face_;
         std::string_view family_name_;
         std::string_view style_name_;
     };
-
-    using FreeTypeLibrary = std::remove_pointer_t<FT_Library>;
-
-    struct FreeTypeLibraryDeleter
-    {
-        RETRO_API void operator()(FT_Library library) const noexcept;
-    };
-
-    using FreeTypeLibraryPtr = std::unique_ptr<FreeTypeLibrary, FreeTypeLibraryDeleter>;
 
     class RETRO_API FontService : NonCopyable
     {

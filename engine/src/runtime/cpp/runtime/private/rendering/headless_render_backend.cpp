@@ -15,8 +15,9 @@ namespace retro
         HeadlessTexture(std::vector<std::byte> data,
                         const std::int32_t width,
                         const std::int32_t height,
-                        const TextureFormat format)
-            : Texture{width, height, format}, data_(std::move(data))
+                        const TextureFormat format,
+                        const TextureFilter filter)
+            : Texture{width, height, format, filter}, data_(std::move(data))
         {
         }
 
@@ -36,8 +37,13 @@ namespace retro
     RefCountPtr<Texture> HeadlessRenderBackend::upload_texture(std::span<const std::byte> bytes,
                                                                std::int32_t width,
                                                                std::int32_t height,
-                                                               TextureFormat format)
+                                                               TextureFormat format,
+                                                               TextureFilter filtering)
     {
-        return make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(), width, height, format);
+        return make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(),
+                                                 width,
+                                                 height,
+                                                 format,
+                                                 filtering);
     }
 } // namespace retro

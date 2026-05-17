@@ -48,15 +48,15 @@ TEST(FontService, LoadFontFace)
 
     const auto font = service.load_font(std::move(bytes));
 
-    EXPECT_FALSE(font.family_name().empty());
-    EXPECT_FALSE(font.style_name().empty());
+    EXPECT_FALSE(font->family_name().empty());
+    EXPECT_FALSE(font->style_name().empty());
 
-    EXPECT_TRUE(font.has_glyph(U'A'));
-    EXPECT_TRUE(font.has_glyph(U'B'));
-    EXPECT_TRUE(font.has_glyph(U'0'));
-    EXPECT_TRUE(font.has_glyph(U' '));
+    EXPECT_TRUE(font->has_glyph(U'A'));
+    EXPECT_TRUE(font->has_glyph(U'B'));
+    EXPECT_TRUE(font->has_glyph(U'0'));
+    EXPECT_TRUE(font->has_glyph(U' '));
 
-    EXPECT_NE(font.glyph_index(U'A'), retro::FontFace::null_glyph_index);
+    EXPECT_NE(font->glyph_index(U'A'), retro::FontFace::null_glyph_index);
 }
 
 TEST(FontService, RasterizeGlyphFromLoadedFont)
@@ -64,7 +64,7 @@ TEST(FontService, RasterizeGlyphFromLoadedFont)
     const FontService service;
 
     const auto font = service.load_font(read_test_font());
-    auto glyph = font.rasterize_glyph(U'A', 48);
+    auto glyph = font->rasterize_glyph(U'A', 48);
 
     EXPECT_EQ(glyph.codepoint, U'A');
     EXPECT_NE(glyph.glyph_index, retro::FontFace::null_glyph_index);
@@ -86,7 +86,7 @@ TEST(FontService, RasterizeSpaceGlyphHasAdvanceButMayHaveNoPixels)
     const FontService service;
 
     const auto font = service.load_font(read_test_font());
-    const auto glyph = font.rasterize_glyph(U' ', 48);
+    const auto glyph = font->rasterize_glyph(U' ', 48);
 
     EXPECT_EQ(glyph.codepoint, U' ');
     EXPECT_NE(glyph.glyph_index, retro::FontFace::null_glyph_index);
@@ -104,16 +104,15 @@ TEST(FontService, CreateSdfAtlasForAsciiRange)
 
     auto font = service.load_font(read_test_font());
 
-    const auto atlas = service.create_sdf_atlas(font,
-                                                FontSdfConfig{
-                                                    .pixel_size = 48,
-                                                    .atlas_width = 512,
-                                                    .atlas_height = 512,
-                                                    .padding = 8,
-                                                    .spread = 8.0f,
-                                                    .first_codepoint = 32,
-                                                    .last_codepoint = 126,
-                                                });
+    const auto atlas = font->create_sdf_atlas(FontSdfConfig{
+        .pixel_size = 48,
+        .atlas_width = 512,
+        .atlas_height = 512,
+        .padding = 8,
+        .spread = 8.0f,
+        .first_codepoint = 32,
+        .last_codepoint = 126,
+    });
 
     EXPECT_EQ(atlas.width, 512u);
     EXPECT_EQ(atlas.height, 512u);
@@ -139,7 +138,7 @@ TEST(FontService, CreateSdfAtlasForAsciiRange)
     EXPECT_LT(a.uv_min_y, a.uv_max_y);
 
     const auto has_non_empty_pixel =
-        std::ranges::any_of(atlas.pixels, [](const std::uint8_t value) { return value != 0; });
+        std::ranges::any_of(atlas.pixels, [](const std::byte value) { return value != std::byte{0}; });
 
     EXPECT_TRUE(has_non_empty_pixel);
 }

@@ -22,6 +22,10 @@ import retro.core.interop.interop_error;
 import retro.runtime.rendering.texture;
 import retro.platform.window;
 import retro.runtime.rendering.layout.margin;
+import retro.runtime.rendering.layout.uvs;
+import retro.runtime.rendering.objects.text_block;
+import retro.core.strings.encoding;
+import retro.runtime.rendering.text.font_service;
 
 using namespace retro;
 
@@ -226,5 +230,43 @@ extern "C"
     RETRO_API void retro_sprite_set_margin(Sprite *node, const Margin margin)
     {
         node->set_margin(margin);
+    }
+
+    RETRO_API TextBlock *retro_text_block_create(Scene *scene)
+    {
+        return std::addressof(scene->create_node<TextBlock>());
+    }
+
+    RETRO_API void retro_text_block_set_text_utf8(TextBlock *text_block, const char *text, const std::int32_t length)
+    {
+        text_block->set_text(std::string{text, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API void retro_text_block_set_text_utf16(TextBlock *text_block,
+                                                   const char16_t *text,
+                                                   const std::int32_t length)
+    {
+        std::u16string_view utf16_view{text, static_cast<std::size_t>(length)};
+        text_block->set_text(convert_string<char>(utf16_view));
+    }
+
+    RETRO_API void retro_text_block_set_font(TextBlock *text_block, FontFace *font)
+    {
+        text_block->set_font(RefCountPtr<FontFace>::ref(font));
+    }
+
+    RETRO_API void retro_text_block_set_font_size(TextBlock *text_block, const std::uint32_t size)
+    {
+        text_block->set_pixel_size(size);
+    }
+
+    RETRO_API void retro_text_block_set_tint(TextBlock *text_block, const Color color)
+    {
+        text_block->set_tint(color);
+    }
+
+    RETRO_API void retro_text_block_set_pivot(TextBlock *text_block, const Vector2f pivot)
+    {
+        text_block->set_pivot(pivot);
     }
 }

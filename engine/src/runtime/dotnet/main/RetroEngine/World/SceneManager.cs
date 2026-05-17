@@ -52,6 +52,10 @@ public sealed partial class SceneManager : IDisposable
         if (Disposed)
             return;
 
+        foreach (var scene in _scenes)
+        {
+            scene.DisposeManagedResources();
+        }
         NativeDestroy(this);
         NativeHandle = IntPtr.Zero;
         GC.SuppressFinalize(this);

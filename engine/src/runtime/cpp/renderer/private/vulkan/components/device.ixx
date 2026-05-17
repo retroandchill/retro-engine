@@ -20,6 +20,7 @@ import retro.core.type_traits.basic;
 import retro.core.io.stream;
 import retro.runtime.exceptions;
 import retro.core.util.exceptions;
+import retro.runtime.rendering.texture;
 
 namespace retro
 {
@@ -164,7 +165,7 @@ namespace retro
             return device_->acquireNextImageKHR(swapchain, timeout, semaphore, fence, &image_index);
         }
 
-        vk::UniqueSampler create_linear_sampler() const;
+        vk::UniqueSampler create_sampler(TextureFilter filter) const;
 
         inline vk::UniqueDescriptorPool create_descriptor_pool(const vk::DescriptorPoolCreateInfo &create_info) const
         {

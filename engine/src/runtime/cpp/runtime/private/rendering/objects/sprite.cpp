@@ -146,15 +146,14 @@ namespace retro
                                 destination_y[y + 1],
                             };
 
-                            if (const auto quad_size = max_position - min_position; quad_size == Vector2f::zero())
+                            const auto quad_size = max_position - min_position;
+
+                            if (quad_size == Vector2f::zero())
                                 continue;
 
                             const auto local_min_position = min_position - pivot_offset;
                             const auto world_min_position =
                                 world_transform().matrix() * local_min_position + world_transform().translation();
-                            const auto local_max_position = max_position - pivot_offset;
-                            const auto world_max_position =
-                                world_transform().matrix() * local_max_position + world_transform().translation();
 
                             const auto min_uv = Vector2f{
                                 uv_x[x],
@@ -167,10 +166,10 @@ namespace retro
                             };
 
                             cached_quads_.push_back({
-                                Transform2f{world_min_position},
+                                Transform2f{world_transform().matrix(), world_min_position},
                                 UVs{min_uv, max_uv},
                                 {0, 0},
-                                world_max_position - world_min_position,
+                                quad_size,
                             });
                         }
                     }

@@ -31,7 +31,8 @@ namespace retro
         RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
                                             std::int32_t width,
                                             std::int32_t height,
-                                            TextureFormat format) override;
+                                            TextureFormat format,
+                                            TextureFilter filtering) override;
 
       private:
         vk::CommandPool get_thread_command_pool() const;
@@ -49,6 +50,7 @@ namespace retro
         VulkanDevice device_;
         VulkanBufferManager buffer_manager_;
         vk::UniqueCommandPool command_pool_;
+        vk::UniqueSampler nearest_sampler_;
         vk::UniqueSampler linear_sampler_;
 
         mutable std::shared_mutex thread_pools_mutex_;
@@ -65,8 +67,9 @@ namespace retro
                              const vk::Sampler sampler,
                              const std::int32_t width,
                              const std::int32_t height,
-                             const TextureFormat format) noexcept
-            : Texture{width, height, format}, render_backend_{std::move(backend)}, image_{std::move(image)},
+                             const TextureFormat format,
+                             const TextureFilter filter) noexcept
+            : Texture{width, height, format, filter}, render_backend_{std::move(backend)}, image_{std::move(image)},
               memory_{std::move(memory)}, view_{std::move(view)}, sampler_{sampler}
         {
         }

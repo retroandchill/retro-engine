@@ -26,11 +26,11 @@ namespace retro
         }
 
         auto [width, height, metrics, pixels, glyphs] = font.create_sdf_atlas(config);
-        auto atlas =
-            make_ref_counted<GpuFontAtlas>(GpuFontAtlas::ConstructTag{},
-                                           metrics,
-                                           std::move(glyphs),
-                                           render_backend_.upload_texture(pixels, width, height, TextureFormat::r8));
+        auto atlas = make_ref_counted<GpuFontAtlas>(
+            GpuFontAtlas::ConstructTag{},
+            metrics,
+            std::move(glyphs),
+            render_backend_.upload_texture(pixels, width, height, TextureFormat::r8, TextureFilter::linear));
         atlases_.emplace(key, atlas);
         return atlas;
     }

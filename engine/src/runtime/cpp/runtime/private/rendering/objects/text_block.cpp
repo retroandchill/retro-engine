@@ -137,6 +137,9 @@ namespace retro
         std::pmr::unordered_map<const GpuFontAtlas *, TextBlockBatch> batches{&memory_resource};
         for (auto *node : nodes.nodes_of_type<TextBlock>())
         {
+            if (auto &font = node->font(); font == nullptr)
+                continue;
+
             FontSdfConfig config{.pixel_size = node->pixel_size()};
             auto font_atlas = font_atlas_cache_.get_or_create(*node->font(), config);
 
@@ -279,7 +282,7 @@ namespace retro
             const auto local_position = quad.position - pivot_offset;
             const auto transformed_position = world_matrix * local_position + world_translation;
 
-            text_block.cached_quads_.push_back({.transform = Transform2f{transformed_position},
+            text_block.cached_quads_.push_back({.transform = Transform2f{world_matrix, transformed_position},
                                                 .uvs = quad.uvs,
                                                 .pivot = Vector2f::zero(),
                                                 .size = quad.size});
