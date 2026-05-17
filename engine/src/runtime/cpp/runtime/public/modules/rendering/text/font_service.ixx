@@ -12,6 +12,7 @@ export module retro.runtime.rendering.text.font_service;
 
 import std;
 import retro.core.util.noncopyable;
+import retro.runtime.rendering.text.font;
 
 // ReSharper disable CppInconsistentNaming
 extern "C"
@@ -34,13 +35,13 @@ namespace retro
 
     using FreeTypeFacePtr = std::unique_ptr<FreeTypeFace, FreeTypeFaceDeleter>;
 
-    export class RETRO_API FontFace
+    export class FontFace
     {
       public:
-        static constexpr std::uint32_t null_glyph_index = 0;
+        RETRO_API static constexpr std::uint32_t null_glyph_index = 0;
 
       private:
-        FontFace(std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
+        RETRO_API FontFace(std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
 
       public:
         [[nodiscard]] inline std::string_view family_name() const noexcept
@@ -58,7 +59,11 @@ namespace retro
             return glyph_index(codepoint) != null_glyph_index;
         }
 
-        [[nodiscard]] std::uint32_t glyph_index(char32_t codepoint) const noexcept;
+        RETRO_API [[nodiscard]] std::uint32_t glyph_index(char32_t codepoint) const noexcept;
+
+        RETRO_API RasterizedGlyph rasterize_glyph(char32_t codepoint, std::uint32_t pixel_size) const;
+
+        RETRO_API [[nodiscard]] FontMetrics metrics(std::uint32_t pixel_size) const;
 
       private:
         friend class FontService;
@@ -84,6 +89,8 @@ namespace retro
         FontService();
 
         FontFace load_font(std::vector<std::byte> bytes) const;
+
+        FontAtlas create_sdf_atlas(const FontFace &font, const FontSdfConfig &config) const;
 
       private:
         FreeTypeLibraryPtr library_;

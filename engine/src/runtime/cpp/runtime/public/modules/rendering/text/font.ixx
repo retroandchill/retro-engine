@@ -4,6 +4,10 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
+module;
+
+#include "retro/core/exports.h"
+
 export module retro.runtime.rendering.text.font;
 
 import std;
@@ -60,11 +64,11 @@ namespace retro
 
         FontMetrics metrics{};
 
-        std::vector<std::byte> pixels{};
+        std::vector<std::uint8_t> pixels{};
         std::unordered_map<char32_t, GlyphMetrics> glyphs{};
     };
 
-    export struct RasterizedGlyph
+    export RETRO_API struct RasterizedGlyph
     {
         char32_t codepoint{};
         std::uint32_t glyph_index{};
@@ -73,13 +77,13 @@ namespace retro
         float bearing_x{};
         float bearing_y{};
 
-        float width{};
-        float height{};
+        std::uint32_t width{};
+        std::uint32_t height{};
 
-        std::vector<std::byte> coverage{};
+        std::vector<std::uint8_t> coverage{};
     };
 
-    struct SdfGlyphBitmap
+    export struct SdfGlyphBitmap
     {
         char32_t codepoint{};
         std::uint32_t glyph_index{};
@@ -93,10 +97,10 @@ namespace retro
 
         std::uint32_t padding{};
 
-        std::vector<std::byte> pixels;
+        std::vector<std::uint8_t> pixels;
     };
 
-    struct AtlasPacker
+    export struct AtlasPacker
     {
         std::uint32_t width{};
         std::uint32_t height{};
