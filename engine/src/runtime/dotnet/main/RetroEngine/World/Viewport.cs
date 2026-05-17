@@ -29,6 +29,9 @@ public sealed partial class Viewport : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (ReferenceEquals(field, value))
+                return;
+
             field = value;
             NativeSetScene(this, field);
         }
@@ -40,6 +43,9 @@ public sealed partial class Viewport : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetScreenLayout(this, field);
         }
@@ -51,6 +57,9 @@ public sealed partial class Viewport : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetZOrder(this, field);
         }
@@ -62,6 +71,9 @@ public sealed partial class Viewport : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetCameraLayout(this, field);
         }

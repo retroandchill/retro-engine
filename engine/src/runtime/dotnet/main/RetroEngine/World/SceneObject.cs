@@ -14,17 +14,7 @@ namespace RetroEngine.World;
 public abstract partial class SceneObject : IDisposable
 {
     private readonly List<SceneObject> _children = [];
-
-    protected SceneObject(Scene scene, SceneObject? parent, Func<Scene, SceneObject?, IntPtr> nativePtrFactory)
-    {
-        parent?.ThrowIfDisposed();
-        scene.ThrowIfDisposed();
-        Scene = scene;
-        NativeObject = nativePtrFactory(scene, parent);
-        Scene.AddObject(this);
-        Parent = parent;
-        Scale = Vector2F.One;
-    }
+    public IReadOnlyList<SceneObject> Children => _children;
 
     public Scene Scene { get; }
 
@@ -42,10 +32,15 @@ public abstract partial class SceneObject : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (ReferenceEquals(field, value))
+                return;
+
+            field?.RemoveChild(this);
             field = value;
             if (value is not null)
             {
-                NativeAttachToParent(this, field);
+                NativeAttachToParent(this, value);
+                value.AddChild(this);
             }
             else
             {
@@ -60,6 +55,9 @@ public abstract partial class SceneObject : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetTransform(this, value);
         }
@@ -89,8 +87,22 @@ public abstract partial class SceneObject : IDisposable
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = NativeSetZOrder(this, value);
         }
+    }
+
+    protected SceneObject(Scene scene, SceneObject? parent, Func<Scene, SceneObject?, IntPtr> nativePtrFactory)
+    {
+        parent?.ThrowIfDisposed();
+        scene.ThrowIfDisposed();
+        Scene = scene;
+        NativeObject = nativePtrFactory(scene, parent);
+        Scene.AddObject(this);
+        Parent = parent;
+        Scale = Vector2F.One;
     }
 
     private void AddChild(SceneObject child)
@@ -120,6 +132,7 @@ public abstract partial class SceneObject : IDisposable
         if (Disposed)
             return;
 
+        Parent?.RemoveChild(this);
         NativeDispose(Scene, this);
         Disposed = true;
         GC.SuppressFinalize(this);

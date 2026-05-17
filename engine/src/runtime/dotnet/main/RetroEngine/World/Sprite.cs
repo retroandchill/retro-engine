@@ -9,7 +9,6 @@ using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.Interop;
 using RetroEngine.Rendering;
-using Rendering_Texture = RetroEngine.Rendering.Texture;
 
 namespace RetroEngine.World;
 
@@ -30,6 +29,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (ReferenceEquals(field, value))
+                return;
+
             field = value;
             NativeSetTexture(this, value);
             if (value is null)
@@ -47,6 +49,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetSize(this, value);
         }
@@ -58,6 +63,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetTint(this, value);
         }
@@ -69,6 +77,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetPivot(this, value);
         }
@@ -80,6 +91,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetUVs(this, value);
         }
@@ -91,6 +105,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetDrawMode(this, value);
         }
@@ -102,6 +119,9 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
+            if (field == value)
+                return;
+
             field = value;
             NativeSetMargin(this, value);
         }
@@ -125,7 +145,7 @@ public partial class Sprite : SceneObject
     private static partial IntPtr NativeCreate(Scene scene, SceneObject? id);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_texture")]
-    private static partial void NativeSetTexture(Sprite id, Rendering_Texture? texture);
+    private static partial void NativeSetTexture(Sprite id, Texture? texture);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_set_tint")]
     private static partial void NativeSetTint(Sprite id, Color color);

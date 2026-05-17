@@ -5,7 +5,6 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
-using JetBrains.Annotations;
 using RetroEngine.Interop;
 
 namespace RetroEngine.World;
