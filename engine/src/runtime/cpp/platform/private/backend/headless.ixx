@@ -13,7 +13,6 @@ import retro.core.functional.overload;
 import retro.core.math.vector;
 import retro.core.strings.cstring_view;
 import retro.platform.backend;
-import retro.platform.exceptions;
 import retro.platform.window;
 import retro.platform.event;
 

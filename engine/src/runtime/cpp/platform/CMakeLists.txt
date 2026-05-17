@@ -16,7 +16,6 @@ set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx
 set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/dll.ixx
         public/modules/window.ixx
-        public/modules/exceptions.ixx
         public/modules/event.ixx
         public/modules/backend.ixx
 )

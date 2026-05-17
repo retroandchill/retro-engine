@@ -63,10 +63,15 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/interop/scene.cpp
         private/interop/assets.cpp
         private/interop/rendering.cpp
+        private/rendering/text/font_service.cpp
+        private/interop/fonts.cpp
+        private/rendering/text/font.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
 )
+
+set(RETRO_RUNTIME_PRIVATE_MODULES)
 
 set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/world/scene.ixx
@@ -89,15 +94,18 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/headless_renderer2d.ixx
         public/modules/rendering/texture.ixx
         public/modules/rendering/image_data.ixx
+        public/modules/rendering/text/font_service.ixx
+        public/modules/rendering/text/font.ixx
 )
 
-set(RETRO_RUNTIME_PRIVATE_MODULES
+set(RETRO_RUNTIME_GENERATED_MODULES
         "${OUTPUT_SHADER_FILE}")
 
 
 add_library(retro_runtime
         ${RETRO_RUNTIME_SOURCES}
         ${RETRO_RUNTIME_HEADERS}
+        ${RETRO_RUNTIME_PRIVATE_MODULES}
         ${RETRO_RUNTIME_PUBLIC_MODULES}
 )
 
@@ -115,10 +123,13 @@ target_sources(retro_runtime PRIVATE
         FILE_SET retro_runtime_private
         TYPE CXX_MODULES FILES
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-        FILES ${RETRO_RUNTIME_PRIVATE_MODULES}
+        FILES ${RETRO_RUNTIME_PRIVATE_MODULES} ${RETRO_RUNTIME_GENERATED_MODULES}
 )
 
-target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform)
+find_package(Freetype CONFIG REQUIRED)
+target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform
+                                    PRIVATE
+                                        Freetype::Freetype)
 
 find_package(Stb REQUIRED)
 target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})

@@ -6,7 +6,6 @@
  */
 module retro.platform.backend;
 
-import retro.platform.exceptions;
 import :sdl;
 import :headless;
 

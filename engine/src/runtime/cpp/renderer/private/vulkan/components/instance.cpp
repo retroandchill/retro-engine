@@ -16,7 +16,7 @@ module;
 module retro.renderer.vulkan.components.instance;
 
 import retro.logging;
-import retro.platform.exceptions;
+import retro.core.util.exceptions;
 
 namespace retro
 {
