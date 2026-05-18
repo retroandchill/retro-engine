@@ -62,6 +62,7 @@ namespace retro
             msdfgen::getFontMetrics(metrics, handle, msdfgen::FontCoordinateScaling::FONT_SCALING_EM_NORMALIZED);
 
             FontAtlas output{.size_class = config.size_class,
+                             .distance_range = config.distance_range,
                              .metrics = {
                                  .ascender = static_cast<float>(metrics.ascenderY),
                                  .descender = static_cast<float>(metrics.descenderY),
@@ -76,6 +77,8 @@ namespace retro
             std::uint32_t pen_x = 0;
             std::uint32_t pen_y = 0;
             std::uint32_t max_height = 0;
+
+            constexpr std::int32_t atlas_padding = 4;
 
             for (auto char_code = config.first_codepoint; char_code <= config.last_codepoint; char_code++)
             {
@@ -94,21 +97,26 @@ namespace retro
 
                 if (shape.validate() && !shape.contours.empty())
                 {
-                    constexpr float boarder_width = 4;
                     shape.normalize();
                     shape.setYAxisOrientation(msdfgen::YAxisOrientation::Y_DOWNWARD);
 
-                    bounds = shape.getBounds(boarder_width);
+                    msdfgen::resolveShapeGeometry(shape);
 
-                    glyph_width = static_cast<std::int32_t>(std::ceil(bounds.r - bounds.l));
-                    glyph_height = static_cast<std::int32_t>(std::ceil(bounds.t - bounds.b));
+                    bounds = shape.getBounds(config.distance_range);
+
+                    glyph_width = static_cast<std::int32_t>(std::ceil(bounds.r - bounds.l)) + atlas_padding * 2;
+                    glyph_height = static_cast<std::int32_t>(std::ceil(bounds.t - bounds.b)) + atlas_padding * 2;
 
                     if (glyph_height > max_height)
                         max_height = glyph_height;
 
-                    msdfgen::edgeColoringSimple(shape, 3.0);
+                    msdfgen::edgeColoringByDistance(shape, 1.0);
                     msdfgen::Bitmap<float, 4> msdf{glyph_width, glyph_height};
-                    msdfgen::generateMTSDF(msdf, shape, boarder_width, 1.0, msdfgen::Vector2(-bounds.l, -bounds.b));
+                    msdfgen::generateMTSDF(msdf,
+                                           shape,
+                                           config.distance_range,
+                                           1.0,
+                                           msdfgen::Vector2(-bounds.l, -bounds.b));
 
                     if (pen_x + msdf.width() >= config.atlas_width)
                     {
@@ -121,8 +129,8 @@ namespace retro
                     {
                         for (std::int32_t col = 0; col < msdf.width(); ++col)
                         {
-                            const auto x = pen_x + col;
-                            const auto y = pen_y + row;
+                            const auto x = pen_x + col + atlas_padding;
+                            const auto y = pen_y + row + atlas_padding;
 
                             const auto index = (y * config.atlas_width + x) * 4;
                             auto pixel = pixels.subspan(index, 4);
@@ -148,10 +156,13 @@ namespace retro
                         .width = static_cast<float>(glyph_width),
                         .height = static_cast<float>(glyph_height),
                         .uvs = {
-                            .min = {static_cast<float>(pen_x) / static_cast<float>(config.atlas_width),
-                                    static_cast<float>(pen_y) / static_cast<float>(config.atlas_height)},
-                            .max = {static_cast<float>(pen_x + glyph_width) / static_cast<float>(config.atlas_width),
-                                    static_cast<float>(pen_y + glyph_height) / static_cast<float>(config.atlas_height)},
+                            .min = {static_cast<float>(pen_x + atlas_padding) / static_cast<float>(config.atlas_width),
+                                    static_cast<float>(pen_y + atlas_padding) /
+                                        static_cast<float>(config.atlas_height)},
+                            .max = {static_cast<float>(pen_x + glyph_width + atlas_padding) /
+                                        static_cast<float>(config.atlas_width),
+                                    static_cast<float>(pen_y + glyph_height + atlas_padding) /
+                                        static_cast<float>(config.atlas_height)},
                         }});
 
                 pen_x += glyph_width;
