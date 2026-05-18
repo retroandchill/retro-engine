@@ -43,7 +43,7 @@ namespace
     retro::Task<> yield_once_then_set(int &step)
     {
         step = 1;
-        co_await YieldToScheduler{retro::TaskScheduler::current()};
+        co_await YieldToScheduler{&retro::TaskScheduler::current()};
         step = 2;
         co_return;
     }
@@ -106,7 +106,7 @@ TEST(Task, ChildCompletionResumesParentContinuation)
     auto child = [&]() -> retro::Task<>
     {
         step = 1;
-        co_await YieldToScheduler{retro::TaskScheduler::current()};
+        co_await YieldToScheduler{&retro::TaskScheduler::current()};
         step = 2;
         co_return;
     };
