@@ -103,7 +103,7 @@ namespace retro
             if (codepoint == U'\n')
             {
                 pen.x = 0.0f;
-                pen.y += font_metrics.line_height;
+                pen.y += font_metrics.line_height * size_ratio;
                 continue;
             }
 
@@ -149,7 +149,7 @@ namespace retro
                 }
             }
 
-            pen.x += glyph_metrics.advance_x;
+            pen.x += glyph_metrics.advance_x * size_ratio;
         }
 
         if (!has_bounds)
