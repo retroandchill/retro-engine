@@ -111,12 +111,12 @@ namespace retro
                         max_height = glyph_height;
 
                     msdfgen::edgeColoringByDistance(shape, 1.0);
-                    msdfgen::Bitmap<float, 4> msdf{glyph_width, glyph_height};
-                    msdfgen::generateMTSDF(msdf,
-                                           shape,
-                                           config.distance_range,
-                                           1.0,
-                                           msdfgen::Vector2(-bounds.l, -bounds.b));
+                    msdfgen::Bitmap<float, 3> msdf{glyph_width, glyph_height};
+                    msdfgen::generateMSDF(msdf,
+                                          shape,
+                                          config.distance_range,
+                                          1.0,
+                                          msdfgen::Vector2(-bounds.l, -bounds.b));
 
                     if (pen_x + msdf.width() >= config.atlas_width)
                     {
@@ -140,7 +140,7 @@ namespace retro
                             pixel[0] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[0]));
                             pixel[1] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[1]));
                             pixel[2] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[2]));
-                            pixel[3] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[3]));
+                            pixel[3] = static_cast<std::byte>(255);
                         }
                     }
                 }
