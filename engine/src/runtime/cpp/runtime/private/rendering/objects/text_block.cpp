@@ -11,7 +11,6 @@ module;
 module retro.runtime.rendering.objects.text_block;
 
 import retro.runtime.rendering.shaders;
-import retro.runtime.rendering.text.font;
 import retro.core.strings.encoding;
 
 namespace retro
@@ -31,7 +30,7 @@ namespace retro
         constexpr std::size_t indices_per_sprite = 6;
         return DrawCommand{
             .instance_buffers = {as_bytes(std::span{instances})},
-            .descriptor_sets = {&font_atlas->texture()},
+            .descriptor_sets = {font_texture.get()},
             .push_constants = as_bytes(std::span{&viewport_draw_info, 1}),
             .index_count = indices_per_sprite,
             .instance_count = instances.size(),
@@ -44,7 +43,7 @@ namespace retro
         dirty_ = true;
     }
 
-    void TextBlock::set_font(RefCountPtr<FontFace> font) noexcept
+    void TextBlock::set_font(RefCountPtr<Font> font) noexcept
     {
         font_ = std::move(font);
         dirty_ = true;
@@ -67,138 +66,27 @@ namespace retro
         dirty_ = true;
     }
 
-    TextBlockRenderPipeline::TextBlockRenderPipeline(RenderBackend &render_backend) : font_atlas_cache_{render_backend}
+    Optional<const FontAtlas &> TextBlock::refresh_cached_quads()
     {
-    }
+        if (font_ == nullptr)
+            return std::nullopt;
 
-    std::type_index TextBlockRenderPipeline::component_type() const
-    {
-        return typeid(TextBlock);
-    }
+        auto &font_atlas = font_->atlas_for_pixel_size(pixel_size_);
 
-    const ShaderLayout &TextBlockRenderPipeline::shaders() const
-    {
-        static const ShaderLayout layout{
-            .vertex_shader = shaders::text_vert,
-            .fragment_shader = shaders::text_frag,
-            .vertex_bindings = {VertexInputBinding{
-                .type = VertexInputType::instance,
-                .stride = sizeof(TextBlockInstanceData),
-                .attributes =
-                    {
-                        // Vulkan doesn't have matrix attributes, so the most compatible option is to
-                        // just treat a matrix as an array of vectors
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, transform)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, transform) + sizeof(Vector2f)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, translation)},
-                        VertexAttribute{.type = ShaderDataType::int32,
-                                        .size = sizeof(std::int32_t),
-                                        .offset = offsetof(TextBlockInstanceData, z_order)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, pivot)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, size)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, min_uv)},
-                        VertexAttribute{.type = ShaderDataType::vec2,
-                                        .size = sizeof(Vector2f),
-                                        .offset = offsetof(TextBlockInstanceData, max_uv)},
-                        VertexAttribute{.type = ShaderDataType::vec4,
-                                        .size = sizeof(Color),
-                                        .offset = offsetof(TextBlockInstanceData, tint)},
-                    },
-            }},
-            .descriptor_bindings =
-                {
-                    DescriptorBinding{.type = DescriptorType::combined_image_sampler,
-                                      .stages = ShaderStage::fragment,
-                                      .count = 1},
-                },
-            .push_constant_bindings =
-                PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(ViewportDrawInfo), .offset = 0}};
-        return layout;
-    }
+        if (!dirty_)
+            return font_atlas;
 
-    SmallUniquePtr<DrawCommandSource> TextBlockRenderPipeline::collect_draw_calls_source(
-        const SceneNodeList &nodes,
-        const Vector2u viewport_size,
-        const Viewport &viewport,
-        std::pmr::memory_resource &memory_resource)
-    {
-        std::pmr::unordered_map<const GpuFontAtlas *, TextBlockBatch> batches{&memory_resource};
-        for (auto *node : nodes.nodes_of_type<TextBlock>())
-        {
-            if (auto &font = node->font(); font == nullptr)
-                continue;
+        cached_quads_.clear();
 
-            FontSdfConfig config{.pixel_size = node->pixel_size()};
-            auto font_atlas = font_atlas_cache_.get_or_create(*node->font(), config);
-
-            update_cached_quads(*node, *font_atlas);
-
-            auto pending_data = node->cached_quads_ | std::views::transform(
-                                                          [node](const TextQuad &quad)
-                                                          {
-                                                              return TextBlockInstanceData{
-                                                                  .transform = quad.transform.matrix(),
-                                                                  .translation = quad.transform.translation(),
-                                                                  .z_order = node->z_order(),
-                                                                  .pivot = quad.pivot,
-                                                                  .size = quad.size,
-                                                                  .min_uv = quad.uvs.min,
-                                                                  .max_uv = quad.uvs.max,
-                                                                  .tint = node->tint_,
-                                                              };
-                                                          });
-
-            if (auto it = batches.find(font_atlas.get()); it == batches.end())
-            {
-                auto [pair, inserted] =
-                    batches.emplace(font_atlas.get(),
-                                    TextBlockBatch{
-                                        .font_atlas = font_atlas,
-                                        .instances = std::pmr::vector<TextBlockInstanceData>{&memory_resource},
-                                        .viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size),
-                                    });
-
-                pair->second.instances.append_range(pending_data);
-            }
-            else
-            {
-                auto &[draw_texture, instances, viewport_draw_info] = batches[font_atlas.get()];
-                draw_texture = font_atlas;
-                viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
-                instances.append_range(pending_data);
-            }
-        }
-
-        return DrawCommandSource::from(std::move(batches) | std::views::values |
-                                       std::ranges::to<std::pmr::vector<TextBlockBatch>>(&memory_resource));
-    }
-
-    void TextBlockRenderPipeline::update_cached_quads(TextBlock &text_block, const GpuFontAtlas &font_atlas)
-    {
-        if (!text_block.dirty_)
-            return;
-
-        text_block.cached_quads_.clear();
-
-        const auto codepoints = convert_string<char32_t>(text_block.text());
-        text_block.cached_quads_.reserve(codepoints.size());
+        const auto codepoints = convert_string<char32_t>(text_);
+        cached_quads_.reserve(codepoints.size());
 
         std::vector<PendingGlyphQuad> pending_quads;
         pending_quads.reserve(codepoints.size());
 
-        const auto &font_metrics = font_atlas.metrics();
+        const auto &font_metrics = font_atlas.metrics;
+
+        auto size_ratio = static_cast<float>(pixel_size_) / static_cast<float>(font_atlas.source_pixel_size);
 
         Vector2f pen{};
         Vector2f min_bounds{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
@@ -219,30 +107,29 @@ namespace retro
                 continue;
             }
 
-            const auto glyph = font_atlas.find_glyph(codepoint);
-            if (!glyph.has_value())
+            const auto glyph = font_atlas.glyphs.find(codepoint);
+            if (glyph == font_atlas.glyphs.end())
                 continue;
 
-            const auto &glyph_metrics = *glyph;
+            const auto &glyph_metrics = glyph->second;
 
             const auto glyph_position = Vector2f{
-                pen.x + glyph_metrics.bearing_x,
-                pen.y + font_metrics.ascender - glyph_metrics.bearing_y,
+                pen.x + glyph_metrics.bearing_x * size_ratio,
+                pen.y + (font_metrics.ascender - glyph_metrics.bearing_y) * size_ratio,
             };
 
             const auto glyph_size = Vector2f{
-                glyph_metrics.width,
-                glyph_metrics.height,
+                glyph_metrics.width * size_ratio,
+                glyph_metrics.height * size_ratio,
             };
 
             if (glyph_size.x > 0.0f && glyph_size.y > 0.0f)
             {
-                pending_quads.push_back({.position = glyph_position,
-                                         .size = glyph_size,
-                                         .uvs = UVs{
-                                             .min = {glyph_metrics.uv_min_x, glyph_metrics.uv_min_y},
-                                             .max = {glyph_metrics.uv_max_x, glyph_metrics.uv_max_y},
-                                         }});
+                pending_quads.push_back({
+                    .position = glyph_position,
+                    .size = glyph_size,
+                    .uvs = glyph_metrics.uvs,
+                });
 
                 const auto glyph_min = glyph_position;
                 const auto glyph_max = glyph_position + glyph_size;
@@ -267,27 +154,147 @@ namespace retro
 
         if (!has_bounds)
         {
-            text_block.dirty_ = false;
-            return;
+            dirty_ = false;
+            return font_atlas;
         }
 
         const auto bounds_size = max_bounds - min_bounds;
-        const auto pivot_offset = min_bounds + bounds_size * text_block.pivot_;
+        const auto pivot_offset = min_bounds + bounds_size * pivot_;
 
-        const auto world_matrix = text_block.world_transform().matrix();
-        const auto world_translation = text_block.world_transform().translation();
+        const auto world_matrix = world_transform().matrix();
+        const auto world_translation = world_transform().translation();
 
         for (const auto &quad : pending_quads)
         {
             const auto local_position = quad.position - pivot_offset;
             const auto transformed_position = world_matrix * local_position + world_translation;
 
-            text_block.cached_quads_.push_back({.transform = Transform2f{world_matrix, transformed_position},
-                                                .uvs = quad.uvs,
-                                                .pivot = Vector2f::zero(),
-                                                .size = quad.size});
+            cached_quads_.push_back({.transform = Transform2f{world_matrix, transformed_position},
+                                     .uvs = quad.uvs,
+                                     .pivot = Vector2f::zero(),
+                                     .size = quad.size});
         }
 
-        text_block.dirty_ = false;
+        dirty_ = false;
+        return font_atlas;
+    }
+
+    std::type_index TextBlockRenderPipeline::component_type() const
+    {
+        return typeid(TextBlock);
+    }
+
+    const ShaderLayout &TextBlockRenderPipeline::shaders() const
+    {
+        static const ShaderLayout
+            layout{
+                .vertex_shader = shaders::text_vert,
+                .fragment_shader = shaders::text_frag,
+                .vertex_bindings =
+                    {
+                        VertexInputBinding{
+                            .type = VertexInputType::instance,
+                            .stride = sizeof(TextBlockInstanceData),
+                            .attributes =
+                                {
+                                    // Vulkan doesn't have matrix attributes, so the most compatible option is to
+                                    // just treat a matrix as an array of vectors
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, transform)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset =
+                                                        offsetof(TextBlockInstanceData, transform) + sizeof(Vector2f)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, translation)},
+                                    VertexAttribute{.type = ShaderDataType::int32,
+                                                    .size = sizeof(std::int32_t),
+                                                    .offset = offsetof(TextBlockInstanceData, z_order)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, pivot)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, size)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, min_uv)},
+                                    VertexAttribute{.type = ShaderDataType::vec2,
+                                                    .size = sizeof(Vector2f),
+                                                    .offset = offsetof(TextBlockInstanceData, max_uv)},
+                                    VertexAttribute{.type = ShaderDataType::vec4,
+                                                    .size = sizeof(Color),
+                                                    .offset = offsetof(TextBlockInstanceData, tint)},
+                                    VertexAttribute{.type = ShaderDataType::float32,
+                                                    .size = sizeof(float),
+                                                    .offset = offsetof(TextBlockInstanceData, pixel_range)},
+                                },
+                        }},
+                .descriptor_bindings =
+                    {
+                        DescriptorBinding{.type = DescriptorType::combined_image_sampler,
+                                          .stages = ShaderStage::fragment,
+                                          .count = 1},
+                    },
+                .push_constant_bindings =
+                    PushConstantBinding{.stages = ShaderStage::vertex, .size = sizeof(ViewportDrawInfo), .offset = 0}};
+        return layout;
+    }
+
+    SmallUniquePtr<DrawCommandSource> TextBlockRenderPipeline::collect_draw_calls_source(
+        const SceneNodeList &nodes,
+        const Vector2u viewport_size,
+        const Viewport &viewport,
+        std::pmr::memory_resource &memory_resource)
+    {
+        std::pmr::unordered_map<const Texture *, TextBlockBatch> batches{&memory_resource};
+        for (auto *node : nodes.nodes_of_type<TextBlock>())
+        {
+            auto atlas_result = node->refresh_cached_quads();
+            if (!atlas_result.has_value())
+                continue;
+
+            auto &font_atlas = *atlas_result;
+
+            auto pending_data =
+                node->cached_quads_ | std::views::transform(
+                                          [node, &font_atlas](const TextQuad &quad)
+                                          {
+                                              return TextBlockInstanceData{.transform = quad.transform.matrix(),
+                                                                           .translation = quad.transform.translation(),
+                                                                           .z_order = node->z_order(),
+                                                                           .pivot = quad.pivot,
+                                                                           .size = quad.size,
+                                                                           .min_uv = quad.uvs.min,
+                                                                           .max_uv = quad.uvs.max,
+                                                                           .tint = node->tint_,
+                                                                           .pixel_range = font_atlas.distance_range};
+                                          });
+
+            if (auto it = batches.find(font_atlas.texture.get()); it == batches.end())
+            {
+                auto [pair, inserted] =
+                    batches.emplace(font_atlas.texture.get(),
+                                    TextBlockBatch{
+                                        .font_texture = font_atlas.texture,
+                                        .instances = std::pmr::vector<TextBlockInstanceData>{&memory_resource},
+                                        .viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size),
+                                    });
+
+                pair->second.instances.append_range(pending_data);
+            }
+            else
+            {
+                auto &[draw_texture, instances, viewport_draw_info] = batches[font_atlas.texture.get()];
+                draw_texture = font_atlas.texture;
+                viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
+                instances.append_range(pending_data);
+            }
+        }
+
+        return DrawCommandSource::from(std::move(batches) | std::views::values |
+                                       std::ranges::to<std::pmr::vector<TextBlockBatch>>(&memory_resource));
     }
 } // namespace retro

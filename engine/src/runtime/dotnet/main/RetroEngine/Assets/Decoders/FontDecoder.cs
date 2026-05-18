@@ -1,4 +1,4 @@
-// @file FontFaceDecoder.cs
+// @file FontDecoder.cs
 //
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -9,9 +9,9 @@ using RetroEngine.Rendering.Text;
 namespace RetroEngine.Assets.Decoders;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public sealed class FontFaceDecoder(FontService fontService) : IAssetDecoder, IAssetTranscoder
+public sealed class FontDecoder(FontService fontService) : IAssetDecoder, IAssetTranscoder
 {
-    public Type AssetType => typeof(FontFace);
+    public Type AssetType => typeof(Font);
 
     private static readonly ImmutableArray<string> ExtensionsArray = ["ttf"];
     public ImmutableArray<string> Extensions => ExtensionsArray;

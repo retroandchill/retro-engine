@@ -10,9 +10,11 @@ layout(location = 5) in vec2 inSize;
 layout(location = 6) in vec2 inMinUV;
 layout(location = 7) in vec2 inMaxUV;
 layout(location = 8) in vec4 inTint;
+layout(location = 9) in float inPixelRange;
 
 layout(location = 0) out vec2 vUV;
 layout(location = 1) out vec4 vTint;
+layout(location = 2) out float vPixelRange;
 
 layout(push_constant) uniform SceneDataBlock {
     CameraData uData;
@@ -41,4 +43,5 @@ void main() {
 
     vUV = inMinUV + ((inMaxUV - inMinUV) * position);
     vTint = inTint;
+    vPixelRange = inPixelRange;
 }

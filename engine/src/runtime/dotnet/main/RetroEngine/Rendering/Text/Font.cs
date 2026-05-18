@@ -10,7 +10,7 @@ using RetroEngine.Interop;
 namespace RetroEngine.Rendering.Text;
 
 [NativeMarshalling(typeof(FontFaceMarshaller))]
-public sealed partial class FontFace : IDisposable
+public sealed partial class Font : IDisposable
 {
     public const uint NullGlyph = 0;
 
@@ -36,12 +36,12 @@ public sealed partial class FontFace : IDisposable
         }
     }
 
-    internal FontFace(IntPtr nativeHandle)
+    internal Font(IntPtr nativeHandle)
     {
         NativeHandle = nativeHandle;
     }
 
-    ~FontFace()
+    ~Font()
     {
         Dispose();
     }
@@ -61,18 +61,18 @@ public sealed partial class FontFace : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_face_destroy")]
-    private static partial void NativeDestroy(FontFace service);
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_destroy")]
+    private static partial void NativeDestroy(Font service);
 
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_face_get_family_name")]
-    private static partial IntPtr NativeGetFamilyName(FontFace service, out int length);
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_get_family_name")]
+    private static partial IntPtr NativeGetFamilyName(Font service, out int length);
 
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_face_get_style_name")]
-    private static partial IntPtr NativeGetStyleName(FontFace service, out int length);
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_get_style_name")]
+    private static partial IntPtr NativeGetStyleName(Font service, out int length);
 }
 
-[CustomMarshaller(typeof(FontFace), MarshalMode.ManagedToUnmanagedIn, typeof(FontFaceMarshaller))]
+[CustomMarshaller(typeof(Font), MarshalMode.ManagedToUnmanagedIn, typeof(FontFaceMarshaller))]
 public static class FontFaceMarshaller
 {
-    public static IntPtr ConvertToUnmanaged(FontFace? service) => service?.NativeHandle ?? IntPtr.Zero;
+    public static IntPtr ConvertToUnmanaged(Font? service) => service?.NativeHandle ?? IntPtr.Zero;
 }

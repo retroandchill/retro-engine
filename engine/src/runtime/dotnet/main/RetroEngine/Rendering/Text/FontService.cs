@@ -15,9 +15,9 @@ public sealed partial class FontService : IDisposable
 {
     internal IntPtr NativeHandle { get; private set; }
 
-    public FontService()
+    public FontService(RenderBackend renderBackend)
     {
-        NativeHandle = NativeCreate(out var error);
+        NativeHandle = NativeCreate(renderBackend, out var error);
         error.ThrowIfError();
     }
 
@@ -26,12 +26,12 @@ public sealed partial class FontService : IDisposable
         Dispose();
     }
 
-    public FontFace LoadFont(scoped ReadOnlySpan<byte> bytes)
+    public Font LoadFont(scoped ReadOnlySpan<byte> bytes)
     {
         ThrowIfDisposed();
         var nativeHandle = NativeLoadFont(this, bytes, bytes.Length, out var error);
         error.ThrowIfError();
-        return new FontFace(nativeHandle);
+        return new Font(nativeHandle);
     }
 
     private void ThrowIfDisposed()
@@ -50,7 +50,7 @@ public sealed partial class FontService : IDisposable
     }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_service_create")]
-    private static partial IntPtr NativeCreate(out InteropError error);
+    private static partial IntPtr NativeCreate(RenderBackend renderBackend, out InteropError error);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_service_destroy")]
     private static partial void NativeDestroy(FontService service);

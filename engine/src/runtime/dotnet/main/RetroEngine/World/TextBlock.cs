@@ -31,7 +31,7 @@ public sealed partial class TextBlock : SceneObject
         }
     }
 
-    public FontFace? Font
+    public Font? Font
     {
         get;
         set
@@ -107,7 +107,7 @@ public sealed partial class TextBlock : SceneObject
     private static partial void NativeSetText(TextBlock id, ReadOnlySpan<char> text, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_text_block_set_font")]
-    private static partial void NativeSetFont(TextBlock id, FontFace? font);
+    private static partial void NativeSetFont(TextBlock id, Font? font);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_text_block_set_font_size")]
     private static partial void NativeSetFontSize(TextBlock id, uint fontSize);

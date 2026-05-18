@@ -9,14 +9,15 @@
 import std;
 import retro.runtime.rendering.text.font_service;
 import retro.core.interop.interop_error;
+import retro.runtime.rendering.render_backend;
 
 using namespace retro;
 
 extern "C"
 {
-    RETRO_API FontService *retro_font_service_create(InteropError *error)
+    RETRO_API FontService *retro_font_service_create(RenderBackend *render_backend, InteropError *error)
     {
-        return try_execute([] { return new FontService(); }, *error);
+        return try_execute([render_backend] { return new FontService(*render_backend); }, *error);
     }
 
     RETRO_API void retro_font_service_destroy(const FontService *service)
@@ -24,10 +25,10 @@ extern "C"
         delete service;
     }
 
-    RETRO_API FontFace *retro_font_service_load_font(const FontService *service,
-                                                     const std::byte *bytes,
-                                                     const std::int32_t size,
-                                                     InteropError *error)
+    RETRO_API Font *retro_font_service_load_font(const FontService *service,
+                                                 const std::byte *bytes,
+                                                 const std::int32_t size,
+                                                 InteropError *error)
     {
         return try_execute(
             [=]
@@ -39,21 +40,21 @@ extern "C"
             *error);
     }
 
-    RETRO_API void retro_font_face_destroy(const FontFace *face)
+    RETRO_API void retro_font_destroy(const Font *font)
     {
-        face->sub_ref();
+        font->sub_ref();
     }
 
-    RETRO_API const char *retro_font_face_get_family_name(const FontFace *face, std::int32_t *length)
+    RETRO_API const char *retro_font_get_family_name(const Font *font, std::int32_t *length)
     {
-        const auto name = face->family_name();
+        const auto name = font->face().family_name();
         *length = static_cast<std::int32_t>(name.size());
         return name.data();
     }
 
-    RETRO_API const char *retro_font_face_get_style_name(const FontFace *face, std::int32_t *length)
+    RETRO_API const char *retro_font_get_style_name(const Font *font, std::int32_t *length)
     {
-        const auto name = face->style_name();
+        const auto name = font->face().style_name();
         *length = static_cast<std::int32_t>(name.size());
         return name.data();
     }

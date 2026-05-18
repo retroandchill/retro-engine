@@ -255,14 +255,14 @@ namespace retro
 
     vk::UniqueSampler VulkanDevice::create_sampler(TextureFilter filter) const
     {
-        const auto vk_filter = [filter]
+        const auto [vk_filter, vk_mimap] = [filter]
         {
             switch (filter)
             {
                 case TextureFilter::nearest:
-                    return vk::Filter::eNearest;
+                    return std::make_pair(vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest);
                 case TextureFilter::linear:
-                    return vk::Filter::eLinear;
+                    return std::make_pair(vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear);
                 default:
                     throw std::invalid_argument{"VulkanDevice: invalid texture filter"};
             }
@@ -271,7 +271,7 @@ namespace retro
         const vk::SamplerCreateInfo sampler_info{
             .magFilter = vk_filter,
             .minFilter = vk_filter,
-            .mipmapMode = vk::SamplerMipmapMode::eNearest,
+            .mipmapMode = vk_mimap,
             .addressModeU = vk::SamplerAddressMode::eClampToEdge,
             .addressModeV = vk::SamplerAddressMode::eClampToEdge,
             .addressModeW = vk::SamplerAddressMode::eClampToEdge,

@@ -1,5 +1,5 @@
 /**
- * @file font.cpp
+ * @file font_service.cpp
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -9,6 +9,10 @@ module;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <boost/asio/config.hpp>
+#include <msdfgen-ext.h>
+#include <msdfgen.h>
+
 module retro.runtime.rendering.text.font_service;
 
 import retro.core.util.exceptions;
@@ -17,14 +21,20 @@ namespace retro
 {
     namespace
     {
-        FreeTypeLibraryPtr init_free_type()
+
+        struct FontHandleDeleter
         {
-            FT_Library library;
-            if (const auto error = FT_Init_FreeType(&library); error != FT_Err_Ok)
+            void operator()(msdfgen::FontHandle *handle) const noexcept
             {
-                throw PlatformException(FT_Error_String(error));
+                msdfgen::destroyFont(handle);
             }
-            return FreeTypeLibraryPtr{library, FT_Done_FreeType};
+        };
+
+        using FontHandlePtr = std::unique_ptr<msdfgen::FontHandle, FontHandleDeleter>;
+
+        FontHandlePtr create_font_handle(FreeTypeFace *face)
+        {
+            return FontHandlePtr{msdfgen::adoptFreetypeFont(face)};
         }
 
         void throw_freetype_error(const FT_Error error, std::string_view message)
@@ -35,182 +45,146 @@ namespace retro
             }
         }
 
-        std::atomic next_font_id{1};
-
-        [[nodiscard]] std::uint32_t generate_font_id() noexcept
+        FreeTypeLibraryPtr init_free_type()
         {
-            auto next = next_font_id.fetch_add(1, std::memory_order_relaxed);
-            if (next == 0)
-            {
-                next = next_font_id.fetch_add(1, std::memory_order_relaxed);
-            }
-            return next;
+            FT_Library library;
+            throw_freetype_error(FT_Init_FreeType(&library), "Failed to initialize FreeType library");
+            return FreeTypeLibraryPtr{library, FT_Done_FreeType};
         }
 
-        [[nodiscard]] bool sample_coverage(const RasterizedGlyph &glyph,
-                                           const std::int32_t x,
-                                           const std::int32_t y) noexcept
+        FontAtlas generate_atlas(const FontMsdfAtlasConfig &config,
+                                 msdfgen::FontHandle *handle,
+                                 const FontFace &face,
+                                 RenderBackend &render_backend)
         {
-            if (x < 0 || y < 0)
+
+            msdfgen::FontMetrics metrics{};
+            msdfgen::getFontMetrics(metrics, handle, msdfgen::FontCoordinateScaling::FONT_SCALING_EM_NORMALIZED);
+
+            FontAtlas output{.size_class = config.size_class,
+                             .metrics = {
+                                 .ascender = static_cast<float>(metrics.ascenderY),
+                                 .descender = static_cast<float>(metrics.descenderY),
+                                 .line_height = static_cast<float>(metrics.lineHeight),
+                                 .underline_position = static_cast<float>(metrics.underlineY),
+                                 .underline_thickness = static_cast<float>(metrics.underlineThickness),
+                             }};
+
+            std::vector<std::byte> source_pixels;
+            source_pixels.resize(config.atlas_width * config.atlas_height * 4, std::byte{0});
+            std::span pixels = source_pixels;
+            std::uint32_t pen_x = 0;
+            std::uint32_t pen_y = 0;
+            std::uint32_t max_height = 0;
+
+            for (auto char_code = config.first_codepoint; char_code <= config.last_codepoint; char_code++)
             {
-                return false;
-            }
+                const auto gindex = face.glyph_index(char_code);
+                if (gindex == FontFace::null_glyph_index)
+                    continue;
 
-            const auto ux = static_cast<std::uint32_t>(x);
-            const auto uy = static_cast<std::uint32_t>(y);
+                std::int32_t glyph_width = 0;
+                std::int32_t glyph_height = 0;
+                double advance = 0;
 
-            if (ux >= glyph.width || uy >= glyph.height)
-            {
-                return false;
-            }
+                msdfgen::Shape shape{};
+                msdfgen::Shape::Bounds bounds{};
 
-            const auto index = static_cast<std::size_t>(uy) * glyph.width + ux;
-            return glyph.coverage[index] > 127;
-        }
+                msdfgen::loadGlyph(shape, handle, char_code, &advance);
 
-        [[nodiscard]] float signed_distance_to_glyph(const RasterizedGlyph &glyph,
-                                                     const std::int32_t x,
-                                                     const std::int32_t y,
-                                                     const std::uint32_t padding) noexcept
-        {
-            const bool inside = sample_coverage(glyph, x, y);
-            auto closest_distance_sq = std::numeric_limits<float>::max();
-
-            const auto min_y = -static_cast<std::int32_t>(padding);
-            const auto max_y = static_cast<std::int32_t>(glyph.height + padding);
-            const auto min_x = -static_cast<std::int32_t>(padding);
-            const auto max_x = static_cast<std::int32_t>(glyph.width + padding);
-
-            for (auto oy = min_y; oy < max_y; ++oy)
-            {
-                for (auto ox = min_x; ox < max_x; ++ox)
+                if (shape.validate() && !shape.contours.empty())
                 {
-                    if (sample_coverage(glyph, ox, oy) == inside)
+                    constexpr float boarder_width = 4;
+                    shape.normalize();
+                    shape.setYAxisOrientation(msdfgen::YAxisOrientation::Y_DOWNWARD);
+
+                    bounds = shape.getBounds(boarder_width);
+
+                    glyph_width = static_cast<std::int32_t>(std::ceil(bounds.r - bounds.l));
+                    glyph_height = static_cast<std::int32_t>(std::ceil(bounds.t - bounds.b));
+
+                    if (glyph_height > max_height)
+                        max_height = glyph_height;
+
+                    msdfgen::edgeColoringSimple(shape, 3.0);
+                    msdfgen::Bitmap<float, 4> msdf{glyph_width, glyph_height};
+                    msdfgen::generateMTSDF(msdf, shape, boarder_width, 1.0, msdfgen::Vector2(-bounds.l, -bounds.b));
+
+                    if (pen_x + msdf.width() >= config.atlas_width)
                     {
-                        continue;
+                        pen_x = 0;
+                        pen_y += max_height;
+                        max_height = 0;
                     }
 
-                    const auto dx = static_cast<float>(ox - x);
-                    const auto dy = static_cast<float>(oy - y);
-                    const auto distance_sq = dx * dx + dy * dy;
+                    for (std::int32_t row = 0; row < msdf.height(); ++row)
+                    {
+                        for (std::int32_t col = 0; col < msdf.width(); ++col)
+                        {
+                            const auto x = pen_x + col;
+                            const auto y = pen_y + row;
 
-                    closest_distance_sq = std::min(closest_distance_sq, distance_sq);
+                            const auto index = (y * config.atlas_width + x) * 4;
+                            auto pixel = pixels.subspan(index, 4);
+
+                            auto msdf_pixel = std::span{msdf(col, row), 4};
+
+                            pixel[0] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[0]));
+                            pixel[1] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[1]));
+                            pixel[2] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[2]));
+                            pixel[3] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[3]));
+                        }
+                    }
                 }
+
+                output.glyphs.emplace(
+                    static_cast<char32_t>(char_code),
+                    GlyphMetrics{
+                        .codepoint = char_code,
+                        .glyph_index = gindex,
+                        .advance_x = static_cast<float>(advance),
+                        .bearing_x = static_cast<float>(bounds.l),
+                        .bearing_y = static_cast<float>(bounds.t),
+                        .width = static_cast<float>(glyph_width),
+                        .height = static_cast<float>(glyph_height),
+                        .uvs = {
+                            .min = {static_cast<float>(pen_x) / static_cast<float>(config.atlas_width),
+                                    static_cast<float>(pen_y) / static_cast<float>(config.atlas_height)},
+                            .max = {static_cast<float>(pen_x + glyph_width) / static_cast<float>(config.atlas_width),
+                                    static_cast<float>(pen_y + glyph_height) / static_cast<float>(config.atlas_height)},
+                        }});
+
+                pen_x += glyph_width;
             }
 
-            const auto distance = std::sqrt(closest_distance_sq);
-            return inside ? distance : -distance;
-        }
+            output.texture = render_backend.upload_texture(pixels,
+                                                           static_cast<std::int32_t>(config.atlas_width),
+                                                           static_cast<std::int32_t>(config.atlas_height),
+                                                           TextureFormat::unorm,
+                                                           TextureFilter::linear);
 
-        [[nodiscard]] std::byte encode_sdf_value(const float signed_distance, const float spread) noexcept
-        {
-            const auto normalized = 0.5f + signed_distance / spread;
-            const auto clamped = std::clamp(normalized, 0.0f, 1.0f);
-            return static_cast<std::byte>(std::round(clamped * 255.0f));
-        }
-
-        [[nodiscard]] SdfGlyphBitmap generate_sdf_glyph_bitmap(const RasterizedGlyph &glyph,
-                                                               const std::uint32_t padding,
-                                                               const float spread)
-        {
-            SdfGlyphBitmap sdf{.codepoint = glyph.codepoint,
-                               .glyph_index = glyph.glyph_index,
-                               .advance_x = glyph.advance_x,
-                               .bearing_x = glyph.bearing_x,
-                               .bearing_y = glyph.bearing_y,
-                               .width = glyph.width,
-                               .height = glyph.height,
-                               .padding = padding};
-
-            sdf.pixels.resize(sdf.width * sdf.height);
-
-            for (std::uint32_t y = 0; y < sdf.height; ++y)
-            {
-                for (std::uint32_t x = 0; x < sdf.width; ++x)
-                {
-                    const auto distance = signed_distance_to_glyph(glyph,
-                                                                   static_cast<std::int32_t>(x),
-                                                                   static_cast<std::int32_t>(y),
-                                                                   padding);
-
-                    sdf.pixels[static_cast<std::size_t>(y) * sdf.width + x] = encode_sdf_value(distance, spread);
-                }
-            }
-
-            return sdf;
+            return output;
         }
     } // namespace
 
-    // ReSharper disable CppParameterMayBeConst
+    // ReSharper disable once CppParameterMayBeConst
     void FreeTypeFaceDeleter::operator()(FT_Face face) const noexcept
     {
         FT_Done_Face(face);
     }
 
-    FontFace::FontFace(ConstructTag,
-                       FreeTypeLibraryPtr library,
-                       std::vector<std::byte> bytes,
-                       FreeTypeFacePtr face) noexcept
-        : id_{generate_font_id()}, bytes_{std::move(bytes)}, library_{std::move(library)}, face_{std::move(face)},
+    FontFace::FontFace(FreeTypeLibraryPtr library, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept
+        : bytes_{std::move(bytes)}, library_{std::move(library)}, face_{std::move(face)},
           family_name_{face_->family_name}, style_name_{face_->style_name}
     {
     }
 
-    std::uint32_t FontFace::glyph_index(char32_t codepoint) const noexcept
+    std::uint32_t FontFace::glyph_index(const char32_t codepoint) const noexcept
     {
         return FT_Get_Char_Index(face_.get(), codepoint);
     }
 
-    RasterizedGlyph FontFace::rasterize_glyph(char32_t codepoint, std::uint32_t pixel_size) const
-    {
-        auto *face = face_.get();
-
-        if (face == nullptr)
-        {
-            throw InvalidStateException("Cannot rasterize glyph from a null font face");
-        }
-
-        throw_freetype_error(FT_Set_Pixel_Sizes(face, 0, pixel_size), "Failed to set font pixel size");
-
-        const auto index = glyph_index(codepoint);
-        if (index == null_glyph_index)
-        {
-            return RasterizedGlyph{
-                .codepoint = codepoint,
-                .glyph_index = null_glyph_index,
-            };
-        }
-
-        throw_freetype_error(FT_Load_Glyph(face, index, FT_LOAD_NO_BITMAP), "Failed to load glyph");
-
-        throw_freetype_error(FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL), "Failed to render glyph");
-
-        const auto *slot = face->glyph;
-        const auto &bitmap = slot->bitmap;
-
-        RasterizedGlyph glyph{
-            .codepoint = codepoint,
-            .glyph_index = index,
-            .advance_x = static_cast<float>(slot->advance.x) / 64.0f,
-            .bearing_x = static_cast<float>(slot->bitmap_left),
-            .bearing_y = static_cast<float>(slot->bitmap_top),
-            .width = bitmap.width,
-            .height = bitmap.rows,
-        };
-
-        glyph.coverage.resize(glyph.width * glyph.height);
-        for (std::uint32_t y = 0; y < glyph.height; ++y)
-        {
-            const auto *src_row = std::next(bitmap.buffer, y * bitmap.pitch);
-            auto *dst_row = std::next(glyph.coverage.data(), y * glyph.width);
-
-            std::copy_n(src_row, glyph.width, dst_row);
-        }
-
-        return glyph;
-    }
-
-    FontMetrics FontFace::metrics(std::uint32_t pixel_size) const
+    FontMetrics FontFace::metrics(const std::uint32_t pixel_size) const
     {
         auto *face = face_.get();
 
@@ -229,109 +203,32 @@ namespace retro
             .underline_thickness = static_cast<float>(face->underline_thickness) / 64.0f,
         };
     }
-
-    FontAtlas FontFace::create_sdf_atlas(const FontSdfConfig &config) const
+    Font::Font(FreeTypeLibraryPtr library,
+               std::vector<std::byte> bytes,
+               FreeTypeFacePtr face,
+               RenderBackend &render_backend) noexcept
+        : face_{std::move(library), std::move(bytes), std::move(face)}
     {
-        if (config.atlas_width == 0 || config.atlas_height == 0)
+        const auto font_handle = create_font_handle(face_.face_.get());
+        constexpr FontConfig config{};
+
+        for (auto [i, atlas_config] : config.atlases | std::views::enumerate)
         {
-            throw std::invalid_argument("Atlas dimensions cannot be zero");
+            atlases_[i] = generate_atlas(atlas_config, font_handle.get(), face_, render_backend);
         }
-
-        if (config.pixel_size == 0)
-        {
-            throw std::invalid_argument("Pixel size cannot be zero");
-        }
-
-        if (config.spread <= 0.0f)
-        {
-            throw std::invalid_argument("Spread must be greater than zero");
-        }
-
-        FontAtlas atlas{
-            .width = config.atlas_width,
-            .height = config.atlas_height,
-            .metrics = metrics(config.pixel_size),
-        };
-
-        atlas.pixels.assign(atlas.width * atlas.height, std::byte{0});
-
-        AtlasPacker packer{
-            .width = config.atlas_width,
-            .height = config.atlas_height,
-        };
-
-        for (auto codepoint = config.first_codepoint; codepoint <= config.last_codepoint; ++codepoint)
-        {
-            auto rasterized = rasterize_glyph(codepoint, config.pixel_size);
-
-            if (rasterized.glyph_index == FontFace::null_glyph_index)
-                continue;
-
-            if (rasterized.width == 0 || rasterized.height == 0)
-            {
-                atlas.glyphs.emplace(codepoint,
-                                     GlyphMetrics{
-                                         .codepoint = codepoint,
-                                         .glyph_index = rasterized.glyph_index,
-                                         .advance_x = rasterized.advance_x,
-                                         .bearing_x = rasterized.bearing_x,
-                                         .bearing_y = rasterized.bearing_y,
-                                         .width = 0.0f,
-                                         .height = 0.0f,
-                                     });
-                continue;
-            }
-
-            const auto sdf = generate_sdf_glyph_bitmap(rasterized, config.padding, config.spread);
-            const auto position = packer.allocate(sdf.width, sdf.height);
-
-            if (!position.has_value())
-            {
-                throw PlatformException("Font atlas is too small for the requested glyph range");
-            }
-
-            const auto [atlas_x, atlas_y] = *position;
-            for (std::uint32_t y = 0; y < sdf.height; ++y)
-            {
-                const auto src_offset = static_cast<std::size_t>(y) * sdf.width;
-                const auto dst_offset = static_cast<std::size_t>(atlas_y + y) * atlas.width + atlas_x;
-
-                std::copy_n(std::next(sdf.pixels.data(), src_offset),
-                            sdf.width,
-                            std::next(atlas.pixels.data(), dst_offset));
-            }
-
-            atlas.glyphs.emplace(
-                codepoint,
-                GlyphMetrics{
-                    .codepoint = codepoint,
-                    .glyph_index = sdf.glyph_index,
-                    .advance_x = sdf.advance_x,
-                    .bearing_x = sdf.bearing_x - static_cast<float>(sdf.padding),
-                    .bearing_y = sdf.bearing_y + static_cast<float>(sdf.padding),
-                    .width = static_cast<float>(sdf.width),
-                    .height = static_cast<float>(sdf.height),
-                    .uv_min_x = static_cast<float>(atlas_x) / static_cast<float>(atlas.width),
-                    .uv_min_y = static_cast<float>(atlas_y) / static_cast<float>(atlas.height),
-                    .uv_max_x = static_cast<float>(atlas_x + sdf.width) / static_cast<float>(atlas.width),
-                    .uv_max_y = static_cast<float>(atlas_y + sdf.height) / static_cast<float>(atlas.height),
-                });
-        }
-
-        return atlas;
     }
-    // ReSharper restore CppParameterMayBeConst
 
-    FontService::FontService() : library_{init_free_type()}
+    FontService::FontService(RenderBackend &render_backend)
+        : render_backend_{render_backend}, library_{init_free_type()}
     {
     }
 
-    RefCountPtr<FontFace> FontService::load_font(std::vector<std::byte> bytes) const
+    RefCountPtr<Font> FontService::load_font(std::vector<std::byte> bytes) const
     {
         FT_Face face;
         if (const auto error = FT_New_Memory_Face(library_.get(),
                                                   reinterpret_cast<const FT_Byte *>(bytes.data()),
-                                                  bytes.size(),
+                                                  static_cast<std::int32_t>(bytes.size()),
                                                   0,
                                                   &face);
             error != FT_Err_Ok)
@@ -339,6 +236,6 @@ namespace retro
             throw IoException(FT_Error_String(error));
         }
 
-        return make_ref_counted<FontFace>(FontFace::ConstructTag{}, library_, std::move(bytes), FreeTypeFacePtr{face});
+        return RefCountPtr<Font>::ref(new Font{library_, std::move(bytes), FreeTypeFacePtr{face}, render_backend_});
     }
 } // namespace retro

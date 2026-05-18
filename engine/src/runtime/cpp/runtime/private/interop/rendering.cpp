@@ -91,10 +91,9 @@ extern "C"
         return try_execute([] { return new SpriteRenderPipeline(); }, *error);
     }
 
-    RETRO_API RenderPipeline *retro_render_pipeline_create_text_block(RenderBackend *render_backend,
-                                                                      InteropError *error)
+    RETRO_API RenderPipeline *retro_render_pipeline_create_text_block(InteropError *error)
     {
-        return try_execute([render_backend] { return new TextBlockRenderPipeline(*render_backend); }, *error);
+        return try_execute([] { return new TextBlockRenderPipeline(); }, *error);
     }
 
     RETRO_API RenderManager *retro_render_manager_create(PlatformBackend *platform_backend,

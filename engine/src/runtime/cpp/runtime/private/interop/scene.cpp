@@ -250,9 +250,9 @@ extern "C"
         text_block->set_text(convert_string<char>(utf16_view));
     }
 
-    RETRO_API void retro_text_block_set_font(TextBlock *text_block, FontFace *font)
+    RETRO_API void retro_text_block_set_font(TextBlock *text_block, Font *font)
     {
-        text_block->set_font(RefCountPtr<FontFace>::ref(font));
+        text_block->set_font(RefCountPtr<Font>::ref(font));
     }
 
     RETRO_API void retro_text_block_set_font_size(TextBlock *text_block, const std::uint32_t size)

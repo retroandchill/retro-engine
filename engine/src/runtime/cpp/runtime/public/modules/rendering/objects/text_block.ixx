@@ -26,8 +26,8 @@ import retro.runtime.world.viewport;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.layout.uvs;
 import retro.core.math.transform;
-import retro.runtime.rendering.text.gpu_font_atlas;
 import retro.runtime.rendering.render_backend;
+import retro.core.containers.optional;
 
 namespace retro
 {
@@ -43,6 +43,7 @@ namespace retro
         alignas(8) Vector2f min_uv{0, 0};
         alignas(8) Vector2f max_uv{1, 1};
         alignas(16) Color tint{1, 1, 1, 1};
+        float pixel_range{};
     };
 
     export class TextBlock;
@@ -51,7 +52,7 @@ namespace retro
     {
         using ComponentType = TextBlock;
 
-        RefCountPtr<GpuFontAtlas> font_atlas = nullptr;
+        RefCountPtr<Texture> font_texture = nullptr;
         std::pmr::vector<TextBlockInstanceData> instances;
         ViewportDrawInfo viewport_draw_info{};
 
@@ -76,12 +77,12 @@ namespace retro
 
         void set_text(std::string text) noexcept;
 
-        [[nodiscard]] inline const RefCountPtr<FontFace> &font() const noexcept
+        [[nodiscard]] inline const RefCountPtr<Font> &font() const noexcept
         {
             return font_;
         }
 
-        void set_font(RefCountPtr<FontFace> font) noexcept;
+        void set_font(RefCountPtr<Font> font) noexcept;
 
         [[nodiscard]] inline std::uint32_t pixel_size() const noexcept
         {
@@ -113,8 +114,10 @@ namespace retro
       private:
         friend class TextBlockRenderPipeline;
 
+        Optional<const FontAtlas &> refresh_cached_quads();
+
         std::string text_;
-        RefCountPtr<FontFace> font_;
+        RefCountPtr<Font> font_;
         std::uint32_t pixel_size_{48};
         Color tint_{Color::white()};
         Vector2f pivot_{};
@@ -125,8 +128,6 @@ namespace retro
     class RETRO_API TextBlockRenderPipeline final : public RenderPipeline
     {
       public:
-        explicit TextBlockRenderPipeline(RenderBackend &render_backend);
-
         [[nodiscard]] std::type_index component_type() const override;
         [[nodiscard]] const ShaderLayout &shaders() const override;
         SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
@@ -134,10 +135,5 @@ namespace retro
             Vector2u viewport_size,
             const Viewport &viewport,
             std::pmr::memory_resource &memory_resource) override;
-
-      private:
-        static void update_cached_quads(TextBlock &text_block, const GpuFontAtlas &font_atlas);
-
-        FontAtlasCache font_atlas_cache_;
     };
 } // namespace retro

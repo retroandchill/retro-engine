@@ -70,7 +70,7 @@ public sealed class GameRunner(
             new AssetPath("game", "graphics/windows/choice_1.png"),
             cancellationToken
         );
-        var textFont = await assetManager.LoadAssetAsync<FontFace>(
+        var textFont = await assetManager.LoadAssetAsync<Font>(
             new AssetPath("game", "fonts/roboto_regular.ttf"),
             cancellationToken
         );
