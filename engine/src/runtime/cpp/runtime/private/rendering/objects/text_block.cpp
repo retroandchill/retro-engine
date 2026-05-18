@@ -71,7 +71,7 @@ namespace retro
         if (font_ == nullptr)
             return std::nullopt;
 
-        auto &font_atlas = font_->atlas_for_pixel_size(pixel_size_);
+        auto &font_atlas = font_->atlas();
 
         if (!dirty_)
             return font_atlas;

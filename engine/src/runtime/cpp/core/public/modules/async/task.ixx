@@ -95,16 +95,11 @@ namespace retro
             if (!continuation)
                 return std::noop_coroutine();
 
-            if (promise.scheduler != nullptr)
-            {
-                if (promise.scheduler->can_resume_inline())
-                    return continuation;
+            if (promise.scheduler->can_resume_inline())
+                return continuation;
 
-                promise.scheduler->enqueue(continuation);
-                return std::noop_coroutine();
-            }
-
-            return continuation;
+            promise.scheduler->enqueue(continuation);
+            return std::noop_coroutine();
         }
 
         [[noreturn]] static void await_resume() noexcept
@@ -119,7 +114,7 @@ namespace retro
         static constexpr std::size_t success_state = 1;
         static constexpr std::size_t exception_state = 2;
 
-        TaskScheduler *scheduler = TaskScheduler::current();
+        TaskScheduler *scheduler = std::addressof(TaskScheduler::current());
 
         std::coroutine_handle<> continuation{};
         std::variant<std::monostate, T, std::exception_ptr> result{};

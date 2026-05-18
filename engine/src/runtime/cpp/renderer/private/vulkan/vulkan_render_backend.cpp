@@ -192,10 +192,10 @@ namespace retro
             .pCommandBuffers = &raw_cmd,
         };
 
-        device_.submit_to_graphics_queue(
-            [&submit_info, &fence](vk::Queue graphics_queue)
+        device_.submit_to_transfer_queue(
+            [&submit_info, &fence](const vk::Queue transfer_queue)
             {
-                if (graphics_queue.submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
+                if (transfer_queue.submit(1, &submit_info, fence.get()) != vk::Result::eSuccess)
                 {
                     throw GraphicsException{"VulkanRenderer2D: failed to submit one-shot command buffer"};
                 }

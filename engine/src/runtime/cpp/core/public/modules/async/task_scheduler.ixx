@@ -25,11 +25,11 @@ namespace retro
 
         [[nodiscard]] virtual bool can_resume_inline() const noexcept
         {
-            return current() == this;
+            return std::addressof(current()) == this;
         }
 
         static void set_current(TaskScheduler *scheduler) noexcept;
-        static TaskScheduler *current() noexcept;
+        static TaskScheduler &current() noexcept;
 
         class RETRO_API Scope
         {

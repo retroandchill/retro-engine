@@ -3,6 +3,7 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.IO.Abstractions;
 using Microsoft.Extensions.Hosting;
 using RetroEngine.Assets;
@@ -70,10 +71,14 @@ public sealed class GameRunner(
             new AssetPath("game", "graphics/windows/choice_1.png"),
             cancellationToken
         );
+
+        var stopwatch = Stopwatch.StartNew();
         var textFont = await assetManager.LoadAssetAsync<Font>(
             new AssetPath("game", "fonts/roboto_regular.ttf"),
             cancellationToken
         );
+        stopwatch.Stop();
+        Log.Information("Loaded font in {Time}ms.", stopwatch.ElapsedMilliseconds);
 
         _ = new SimpleFlipbook(scene1, eeveeTexture, tickManager, 10.0f)
         {

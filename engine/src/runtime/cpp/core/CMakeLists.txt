@@ -19,6 +19,8 @@ set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/interop/time_zone.cpp
         private/interop/async.cpp
         private/interop/name.cpp
+        private/async/thread_pool.cpp
+        private/async/thread_pool_task_scheduler.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -75,6 +77,9 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/future.ixx
         public/modules/containers/spsc_circular_queue.ixx
         public/modules/interop/interop_error.ixx
+        public/modules/async/thread_pool.ixx
+        public/modules/async/thread_pool_task_scheduler.ixx
+        public/modules/async/task_actions.ixx
 )
 
 add_library(retro_core

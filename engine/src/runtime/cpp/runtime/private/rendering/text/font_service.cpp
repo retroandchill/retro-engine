@@ -9,7 +9,6 @@ module;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <boost/asio/config.hpp>
 #include <msdfgen-ext.h>
 #include <msdfgen.h>
 
@@ -51,131 +50,6 @@ namespace retro
             throw_freetype_error(FT_Init_FreeType(&library), "Failed to initialize FreeType library");
             return FreeTypeLibraryPtr{library, FT_Done_FreeType};
         }
-
-        FontAtlas generate_atlas(const FontMsdfAtlasConfig &config,
-                                 msdfgen::FontHandle *handle,
-                                 const FontFace &face,
-                                 RenderBackend &render_backend)
-        {
-
-            msdfgen::FontMetrics metrics{};
-            msdfgen::getFontMetrics(metrics, handle, msdfgen::FontCoordinateScaling::FONT_SCALING_EM_NORMALIZED);
-
-            FontAtlas output{.size_class = config.size_class,
-                             .distance_range = config.distance_range,
-                             .metrics = {
-                                 .ascender = static_cast<float>(metrics.ascenderY),
-                                 .descender = static_cast<float>(metrics.descenderY),
-                                 .line_height = static_cast<float>(metrics.lineHeight),
-                                 .underline_position = static_cast<float>(metrics.underlineY),
-                                 .underline_thickness = static_cast<float>(metrics.underlineThickness),
-                             }};
-
-            std::vector<std::byte> source_pixels;
-            source_pixels.resize(config.atlas_width * config.atlas_height * 4, std::byte{0});
-            std::span pixels = source_pixels;
-            std::uint32_t pen_x = 0;
-            std::uint32_t pen_y = 0;
-            std::uint32_t max_height = 0;
-
-            constexpr std::int32_t atlas_padding = 4;
-
-            for (auto char_code = config.first_codepoint; char_code <= config.last_codepoint; char_code++)
-            {
-                const auto gindex = face.glyph_index(char_code);
-                if (gindex == FontFace::null_glyph_index)
-                    continue;
-
-                std::int32_t glyph_width = 0;
-                std::int32_t glyph_height = 0;
-                double advance = 0;
-
-                msdfgen::Shape shape{};
-                msdfgen::Shape::Bounds bounds{};
-
-                msdfgen::loadGlyph(shape, handle, char_code, &advance);
-
-                if (shape.validate() && !shape.contours.empty())
-                {
-                    shape.normalize();
-                    shape.setYAxisOrientation(msdfgen::YAxisOrientation::Y_DOWNWARD);
-
-                    msdfgen::resolveShapeGeometry(shape);
-
-                    bounds = shape.getBounds(config.distance_range);
-
-                    glyph_width = static_cast<std::int32_t>(std::ceil(bounds.r - bounds.l)) + atlas_padding * 2;
-                    glyph_height = static_cast<std::int32_t>(std::ceil(bounds.t - bounds.b)) + atlas_padding * 2;
-
-                    if (glyph_height > max_height)
-                        max_height = glyph_height;
-
-                    msdfgen::edgeColoringByDistance(shape, 1.0);
-                    msdfgen::Bitmap<float, 3> msdf{glyph_width, glyph_height};
-                    msdfgen::generateMSDF(msdf,
-                                          shape,
-                                          config.distance_range,
-                                          1.0,
-                                          msdfgen::Vector2(-bounds.l, -bounds.b));
-
-                    if (pen_x + msdf.width() >= config.atlas_width)
-                    {
-                        pen_x = 0;
-                        pen_y += max_height;
-                        max_height = 0;
-                    }
-
-                    for (std::int32_t row = 0; row < msdf.height(); ++row)
-                    {
-                        for (std::int32_t col = 0; col < msdf.width(); ++col)
-                        {
-                            const auto x = pen_x + col + atlas_padding;
-                            const auto y = pen_y + row + atlas_padding;
-
-                            const auto index = (y * config.atlas_width + x) * 4;
-                            auto pixel = pixels.subspan(index, 4);
-
-                            auto msdf_pixel = std::span{msdf(col, row), 4};
-
-                            pixel[0] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[0]));
-                            pixel[1] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[1]));
-                            pixel[2] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[2]));
-                            pixel[3] = static_cast<std::byte>(255);
-                        }
-                    }
-                }
-
-                output.glyphs.emplace(
-                    static_cast<char32_t>(char_code),
-                    GlyphMetrics{
-                        .codepoint = char_code,
-                        .glyph_index = gindex,
-                        .advance_x = static_cast<float>(advance),
-                        .bearing_x = static_cast<float>(bounds.l),
-                        .bearing_y = static_cast<float>(bounds.t),
-                        .width = static_cast<float>(glyph_width),
-                        .height = static_cast<float>(glyph_height),
-                        .uvs = {
-                            .min = {static_cast<float>(pen_x + atlas_padding) / static_cast<float>(config.atlas_width),
-                                    static_cast<float>(pen_y + atlas_padding) /
-                                        static_cast<float>(config.atlas_height)},
-                            .max = {static_cast<float>(pen_x + glyph_width + atlas_padding) /
-                                        static_cast<float>(config.atlas_width),
-                                    static_cast<float>(pen_y + glyph_height + atlas_padding) /
-                                        static_cast<float>(config.atlas_height)},
-                        }});
-
-                pen_x += glyph_width;
-            }
-
-            output.texture = render_backend.upload_texture(pixels,
-                                                           static_cast<std::int32_t>(config.atlas_width),
-                                                           static_cast<std::int32_t>(config.atlas_height),
-                                                           TextureFormat::unorm,
-                                                           TextureFilter::linear);
-
-            return output;
-        }
     } // namespace
 
     // ReSharper disable once CppParameterMayBeConst
@@ -214,19 +88,10 @@ namespace retro
             .underline_thickness = static_cast<float>(face->underline_thickness) / 64.0f,
         };
     }
-    Font::Font(FreeTypeLibraryPtr library,
-               std::vector<std::byte> bytes,
-               FreeTypeFacePtr face,
-               RenderBackend &render_backend) noexcept
-        : face_{std::move(library), std::move(bytes), std::move(face)}
-    {
-        const auto font_handle = create_font_handle(face_.face_.get());
-        constexpr FontConfig config{};
 
-        for (auto [i, atlas_config] : config.atlases | std::views::enumerate)
-        {
-            atlases_[i] = generate_atlas(atlas_config, font_handle.get(), face_, render_backend);
-        }
+    Font::Font(FontFace font_face, FontAtlas font_atlas) noexcept
+        : face_{std::move(font_face)}, primary_atlas_{std::move(font_atlas)}
+    {
     }
 
     FontService::FontService(RenderBackend &render_backend)
@@ -247,6 +112,142 @@ namespace retro
             throw IoException(FT_Error_String(error));
         }
 
-        return RefCountPtr<Font>::ref(new Font{library_, std::move(bytes), FreeTypeFacePtr{face}, render_backend_});
+        FontFace font_face{library_, std::move(bytes), FreeTypeFacePtr{face}};
+
+        FontMsdfAtlasConfig atlas_config{.pixel_size = 64,
+                                         .atlas_width = 1024,
+                                         .atlas_height = 1024,
+                                         .distance_range = 2.0f};
+
+        auto atlas = generate_font_atlas(font_face, atlas_config);
+
+        return RefCountPtr<Font>::ref(new Font{std::move(font_face), std::move(atlas)});
+    }
+    FontAtlas FontService::generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const
+    {
+        FT_Set_Char_Size(face.face_.get(),
+                         static_cast<std::int32_t>(atlas_config.pixel_size),
+                         static_cast<std::int32_t>(atlas_config.pixel_size),
+                         96,
+                         96);
+        const auto handle = create_font_handle(face.face_.get());
+        msdfgen::FontMetrics metrics{};
+        msdfgen::getFontMetrics(metrics, handle.get(), msdfgen::FontCoordinateScaling::FONT_SCALING_EM_NORMALIZED);
+
+        FontAtlas output{.source_pixel_size = static_cast<std::uint32_t>(atlas_config.pixel_size),
+                         .distance_range = atlas_config.distance_range,
+                         .metrics = {
+                             .ascender = static_cast<float>(metrics.ascenderY),
+                             .descender = static_cast<float>(metrics.descenderY),
+                             .line_height = static_cast<float>(metrics.lineHeight),
+                             .underline_position = static_cast<float>(metrics.underlineY),
+                             .underline_thickness = static_cast<float>(metrics.underlineThickness),
+                         }};
+
+        std::vector<std::byte> source_pixels;
+        source_pixels.resize(atlas_config.atlas_width * atlas_config.atlas_height * 4, std::byte{0});
+        const std::span pixels = source_pixels;
+        std::int32_t pen_x = 0;
+        std::int32_t pen_y = 0;
+        std::int32_t max_height = 0;
+
+        msdfgen::Bitmap<float, 3> msdf{static_cast<std::int32_t>(atlas_config.atlas_width),
+                                       static_cast<std::int32_t>(atlas_config.atlas_height)};
+
+        for (auto char_code = atlas_config.first_codepoint; char_code <= atlas_config.last_codepoint; char_code++)
+        {
+            constexpr std::int32_t atlas_padding = 4;
+            const auto gindex = face.glyph_index(char_code);
+            if (gindex == FontFace::null_glyph_index)
+                continue;
+
+            std::int32_t glyph_width = 0;
+            std::int32_t glyph_height = 0;
+            double advance = 0;
+
+            msdfgen::Shape shape{};
+            msdfgen::Shape::Bounds bounds{};
+
+            msdfgen::loadGlyph(shape, handle.get(), char_code, &advance);
+
+            if (shape.validate() && !shape.contours.empty())
+            {
+                shape.setYAxisOrientation(msdfgen::YAxisOrientation::Y_DOWNWARD);
+
+                msdfgen::resolveShapeGeometry(shape);
+
+                bounds = shape.getBounds(atlas_config.distance_range);
+
+                glyph_width = static_cast<std::int32_t>(std::ceil(bounds.r - bounds.l)) + atlas_padding * 2;
+                glyph_height = static_cast<std::int32_t>(std::ceil(bounds.t - bounds.b)) + atlas_padding * 2;
+
+                if (glyph_height > max_height)
+                    max_height = glyph_height;
+
+                if (pen_x + glyph_width >= atlas_config.atlas_width)
+                {
+                    pen_x = 0;
+                    pen_y += max_height;
+                    max_height = 0;
+                }
+
+                auto section = msdf.getSection(pen_x + atlas_padding,
+                                               pen_y + atlas_padding,
+                                               pen_x + glyph_width,
+                                               pen_y + glyph_height);
+                msdfgen::generateMSDF(section,
+                                      shape,
+                                      atlas_config.distance_range,
+                                      1.0,
+                                      msdfgen::Vector2(-bounds.l, -bounds.b));
+            }
+
+            output.glyphs.emplace(static_cast<char32_t>(char_code),
+                                  GlyphMetrics{.codepoint = char_code,
+                                               .glyph_index = gindex,
+                                               .advance_x = static_cast<float>(advance),
+                                               .bearing_x = static_cast<float>(bounds.l),
+                                               .bearing_y = static_cast<float>(bounds.t),
+                                               .width = static_cast<float>(glyph_width),
+                                               .height = static_cast<float>(glyph_height),
+                                               .uvs = {
+                                                   .min = {static_cast<float>(pen_x + atlas_padding) /
+                                                               static_cast<float>(atlas_config.atlas_width),
+                                                           static_cast<float>(pen_y + atlas_padding) /
+                                                               static_cast<float>(atlas_config.atlas_height)},
+                                                   .max = {static_cast<float>(pen_x + glyph_width + atlas_padding) /
+                                                               static_cast<float>(atlas_config.atlas_width),
+                                                           static_cast<float>(pen_y + glyph_height + atlas_padding) /
+                                                               static_cast<float>(atlas_config.atlas_height)},
+                                               }});
+
+            pen_x += glyph_width;
+        }
+
+        auto max_used_height = pen_y + max_height;
+
+        for (std::int32_t x = 0; x < msdf.width(); ++x)
+        {
+            for (std::int32_t y = 0; y < max_used_height; ++y)
+            {
+                const auto index = (y * atlas_config.atlas_width + x) * 4;
+                auto pixel = pixels.subspan(index, 4);
+
+                auto msdf_pixel = std::span{msdf(x, y), 3};
+
+                pixel[0] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[0]));
+                pixel[1] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[1]));
+                pixel[2] = static_cast<std::byte>(msdfgen::pixelFloatToByte(msdf_pixel[2]));
+                pixel[3] = static_cast<std::byte>(255);
+            }
+        }
+
+        output.texture = render_backend_.upload_texture(pixels,
+                                                        static_cast<std::int32_t>(atlas_config.atlas_width),
+                                                        static_cast<std::int32_t>(atlas_config.atlas_height),
+                                                        TextureFormat::unorm,
+                                                        TextureFilter::linear);
+
+        return output;
     }
 } // namespace retro

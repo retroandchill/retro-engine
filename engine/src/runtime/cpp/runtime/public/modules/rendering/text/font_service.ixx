@@ -1,5 +1,5 @@
 /**
- * @file font.ixx
+ * @file font_service.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -43,59 +43,14 @@ namespace retro
 
     using FreeTypeLibraryPtr = std::shared_ptr<FreeTypeLibrary>;
 
-    export enum class FontSizeClass : std::uint8_t
-    {
-        small = 0,
-        medium = 1,
-        large = 2
-    };
-
     export struct FontMsdfAtlasConfig
     {
-        FontSizeClass size_class{FontSizeClass::medium};
         std::uint32_t pixel_size{64};
         std::uint32_t atlas_width{1024};
         std::uint32_t atlas_height{1024};
-        std::uint32_t padding{8};
-        float distance_range{8.0f};
+        float distance_range{2.0f};
         char32_t first_codepoint{32};
         char32_t last_codepoint{126};
-    };
-
-    struct FontConfig
-    {
-        std::array<FontMsdfAtlasConfig, 3> atlases{
-            FontMsdfAtlasConfig{
-                .size_class = FontSizeClass::small,
-                .pixel_size = 32,
-                .atlas_width = 1024,
-                .atlas_height = 1024,
-                .padding = 6,
-                .distance_range = 6.0f,
-                .first_codepoint = 32,
-                .last_codepoint = 126,
-            },
-            FontMsdfAtlasConfig{
-                .size_class = FontSizeClass::medium,
-                .pixel_size = 64,
-                .atlas_width = 1024,
-                .atlas_height = 1024,
-                .padding = 8,
-                .distance_range = 8.0f,
-                .first_codepoint = 32,
-                .last_codepoint = 126,
-            },
-            FontMsdfAtlasConfig{
-                .size_class = FontSizeClass::large,
-                .pixel_size = 96,
-                .atlas_width = 2048,
-                .atlas_height = 2048,
-                .padding = 12,
-                .distance_range = 12.0f,
-                .first_codepoint = 32,
-                .last_codepoint = 126,
-            },
-        };
     };
 
     export struct FontMetrics
@@ -124,8 +79,6 @@ namespace retro
 
     export struct FontAtlas
     {
-        FontSizeClass size_class{FontSizeClass::medium};
-
         std::uint32_t source_pixel_size{64};
         float distance_range{8.0f};
 
@@ -136,7 +89,7 @@ namespace retro
 
     export class Font;
 
-    export class FontFace : NonCopyable
+    export class FontFace
     {
       public:
         RETRO_API static constexpr std::uint32_t null_glyph_index = 0;
@@ -177,10 +130,7 @@ namespace retro
 
     class Font final : public IntrusiveRefCounted
     {
-        explicit Font(FreeTypeLibraryPtr library,
-                      std::vector<std::byte> bytes,
-                      FreeTypeFacePtr face,
-                      RenderBackend &render_backend) noexcept;
+        explicit Font(FontFace font_face, FontAtlas font_atlas) noexcept;
 
       public:
         [[nodiscard]] inline const FontFace &face() const noexcept
@@ -188,37 +138,18 @@ namespace retro
             return face_;
         }
 
-        [[nodiscard]] inline const FontAtlas &atlas(const FontSizeClass size_class) const noexcept
+        [[nodiscard]] inline const FontAtlas &atlas() const noexcept
         {
-            return atlases_[static_cast<std::size_t>(size_class)];
-        }
-
-        [[nodiscard]] inline const std::array<FontAtlas, 3> &atlases() const noexcept
-        {
-            return atlases_;
-        }
-
-        [[nodiscard]] static constexpr FontSizeClass classify_pixel_size(const std::uint32_t pixel_size) noexcept
-        {
-            if (pixel_size <= 24)
-                return FontSizeClass::small;
-
-            if (pixel_size <= 64)
-                return FontSizeClass::medium;
-
-            return FontSizeClass::large;
-        }
-
-        [[nodiscard]] inline const FontAtlas &atlas_for_pixel_size(const std::uint32_t pixel_size) const noexcept
-        {
-            return atlas(classify_pixel_size(pixel_size));
+            return primary_atlas_;
         }
 
       private:
         friend class FontService;
 
+        FontAtlas generate_font_atlas(RenderBackend &render_backend, const FontMsdfAtlasConfig &atlas_config) const;
+
         FontFace face_;
-        std::array<FontAtlas, 3> atlases_;
+        FontAtlas primary_atlas_;
     };
 
     class RETRO_API FontService : NonCopyable
@@ -229,7 +160,9 @@ namespace retro
         [[nodiscard]] RefCountPtr<Font> load_font(std::vector<std::byte> bytes) const;
 
       private:
+        FontAtlas generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
+
         RenderBackend &render_backend_;
-        FreeTypeLibraryPtr library_;
+        FreeTypeLibraryPtr library_{};
     };
 } // namespace retro

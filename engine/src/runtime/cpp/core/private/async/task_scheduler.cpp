@@ -6,11 +6,13 @@
  */
 module retro.core.async.task_scheduler;
 
+import retro.core.async.thread_pool_task_scheduler;
+
 namespace retro
 {
     namespace
     {
-        thread_local TaskScheduler *current_scheduler = nullptr;
+        thread_local TaskScheduler *current_scheduler = std::addressof(ThreadPoolTaskScheduler::global_instance());
     }
 
     void TaskScheduler::set_current(TaskScheduler *scheduler) noexcept
@@ -18,9 +20,9 @@ namespace retro
         current_scheduler = scheduler;
     }
 
-    TaskScheduler *TaskScheduler::current() noexcept
+    TaskScheduler &TaskScheduler::current() noexcept
     {
-        return current_scheduler;
+        return *current_scheduler;
     }
 
     TaskScheduler::Scope::Scope(TaskScheduler *scheduler) noexcept : prev_{current_scheduler}
