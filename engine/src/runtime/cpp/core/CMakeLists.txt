@@ -80,6 +80,8 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/thread_pool.ixx
         public/modules/async/thread_pool_task_scheduler.ixx
         public/modules/async/task_actions.ixx
+        public/modules/io/buffer_writer.ixx
+        public/modules/io/array_buffer_writer.ixx
 )
 
 add_library(retro_core
