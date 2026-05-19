@@ -17,6 +17,9 @@ export module retro.core.async.future;
 namespace retro
 {
     export template <typename T>
+    using PackagedTask = boost::packaged_task<T>;
+
+    export template <typename T>
     using Promise = boost::promise<T>;
 
     export template <typename T>
