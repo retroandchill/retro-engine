@@ -1,5 +1,5 @@
 /**
- * @file font_service.ixx
+ * @file font.ixx
  *
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -8,7 +8,7 @@ module;
 
 #include "retro/core/exports.h"
 
-export module retro.runtime.rendering.text.font_service;
+export module retro.runtime.rendering.text.font;
 
 import std;
 import retro.core.util.noncopyable;
@@ -45,12 +45,8 @@ namespace retro
 
     export struct FontMsdfAtlasConfig
     {
-        std::uint32_t pixel_size{64};
-        std::uint32_t atlas_width{1024};
-        std::uint32_t atlas_height{1024};
+        float pixel_size{64};
         float distance_range{2.0f};
-        char32_t first_codepoint{32};
-        char32_t last_codepoint{126};
     };
 
     export struct FontMetrics
@@ -79,7 +75,7 @@ namespace retro
 
     export struct FontAtlas
     {
-        std::uint32_t source_pixel_size{64};
+        float source_pixel_size{64};
         float distance_range{8.0f};
 
         FontMetrics metrics{};

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/master/docs/vcpkg.schema.json",
+  "name": "msdf-atlas-gen",
+  "version": "1.4",
+  "description": "Multi-channel signed distance field atlas generator",
+  "homepage": "https://github.com/Chlumsky/msdf-atlas-gen",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    "freetype",
+    "libpng",
+    "msdfgen"
+  ],
+  "default-features": [
+    "geometry-preprocessing"
+  ],
+  "features": {
+    "geometry-preprocessing": {
+      "description": "Preprocessing of non-compliant vector geometry via the Skia library",
+      "dependencies": [ {
+        "name": "skia",
+        "default-features": false
+      } ]
+    }
+  }
+}

@@ -12,20 +12,26 @@ namespace retro
 {
     namespace
     {
-        thread_local TaskScheduler *current_scheduler = std::addressof(ThreadPoolTaskScheduler::global_instance());
-    }
+        thread_local Optional<TaskScheduler &> current_scheduler = std::nullopt;
+        ;
+    } // namespace
 
-    void TaskScheduler::set_current(TaskScheduler *scheduler) noexcept
+    void TaskScheduler::set_current(const Optional<TaskScheduler &> scheduler) noexcept
     {
         current_scheduler = scheduler;
     }
 
-    TaskScheduler &TaskScheduler::current() noexcept
+    Optional<TaskScheduler &> TaskScheduler::current() noexcept
     {
-        return *current_scheduler;
+        return current_scheduler;
+    }
+    TaskScheduler &TaskScheduler::default_scheduler()
+    {
+        static ThreadPoolTaskScheduler singleton;
+        return singleton;
     }
 
-    TaskScheduler::Scope::Scope(TaskScheduler *scheduler) noexcept : prev_{current_scheduler}
+    TaskScheduler::Scope::Scope(Optional<TaskScheduler &> scheduler) noexcept : prev_{current_scheduler}
     {
         current_scheduler = scheduler;
     }

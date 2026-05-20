@@ -1,0 +1,4 @@
+The package msdf-atlas-gen provides CMake targets:
+
+    find_package(msdf-atlas-gen CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE msdf-atlas-gen::msdf-atlas-gen)

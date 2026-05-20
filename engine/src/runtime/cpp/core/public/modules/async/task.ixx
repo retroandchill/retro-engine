@@ -14,6 +14,7 @@ import std;
 import retro.core.functional.delegate;
 import retro.core.async.task_scheduler;
 import retro.core.util.deferred;
+import retro.core.containers.optional;
 
 namespace retro
 {
@@ -74,7 +75,7 @@ namespace retro
     concept PromiseLike = requires(T &promise) {
         {
             promise.scheduler
-        } -> std::convertible_to<TaskScheduler *>;
+        } -> std::convertible_to<Optional<TaskScheduler &>>;
         {
             promise.continuation
         } -> std::convertible_to<std::coroutine_handle<>>;
@@ -95,10 +96,8 @@ namespace retro
             if (!continuation)
                 return std::noop_coroutine();
 
-            if (promise.scheduler->can_resume_inline())
-                return continuation;
-
-            promise.scheduler->enqueue(continuation);
+            auto &scheduler = promise.scheduler.has_value() ? *promise.scheduler : TaskScheduler::default_scheduler();
+            scheduler.enqueue(continuation);
             return std::noop_coroutine();
         }
 
@@ -114,7 +113,8 @@ namespace retro
         static constexpr std::size_t success_state = 1;
         static constexpr std::size_t exception_state = 2;
 
-        TaskScheduler *scheduler = std::addressof(TaskScheduler::current());
+        Optional<TaskScheduler &> captured_context = TaskScheduler::current();
+        Optional<TaskScheduler &> scheduler = captured_context;
 
         std::coroutine_handle<> continuation{};
         std::variant<std::monostate, T, std::exception_ptr> result{};
@@ -294,6 +294,23 @@ namespace retro
         Awaiter operator co_await() &&
         {
             return Awaiter{std::exchange(state_, {})};
+        }
+
+        template <typename Self>
+        [[nodiscard]] decltype(auto) configure_await(this Self &&self, const bool continue_on_captured_context)
+        {
+            if (holds_alternative<Handle>(self.state_))
+            {
+                Handle &handle = get<Handle>(self.state_);
+                promise_type &promise = handle.promise();
+
+                if (continue_on_captured_context)
+                    promise.scheduler = promise.captured_context;
+                else
+                    promise.scheduler.reset();
+            }
+
+            return std::forward<Self>(self);
         }
 
       private:

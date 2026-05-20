@@ -14,7 +14,7 @@ import retro.runtime.world.scene_node;
 
 import std;
 import retro.core.memory.ref_counted_ptr;
-import retro.runtime.rendering.text.font_service;
+import retro.runtime.rendering.text.font;
 import retro.core.util.color;
 import retro.core.math.vector;
 import retro.core.math.matrix;

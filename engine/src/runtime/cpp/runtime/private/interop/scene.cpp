@@ -25,7 +25,7 @@ import retro.runtime.rendering.layout.margin;
 import retro.runtime.rendering.layout.uvs;
 import retro.runtime.rendering.objects.text_block;
 import retro.core.strings.encoding;
-import retro.runtime.rendering.text.font_service;
+import retro.runtime.rendering.text.font;
 
 using namespace retro;
 

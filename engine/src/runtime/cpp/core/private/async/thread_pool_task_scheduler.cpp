@@ -9,12 +9,6 @@ module retro.core.async.thread_pool_task_scheduler;
 namespace retro
 {
 
-    ThreadPoolTaskScheduler &ThreadPoolTaskScheduler::global_instance()
-    {
-        static ThreadPoolTaskScheduler singleton;
-        return singleton;
-    }
-
     void ThreadPoolTaskScheduler::enqueue(std::coroutine_handle<> coroutine)
     {
         thread_pool_.post(

@@ -27,8 +27,6 @@ namespace retro
         {
         }
 
-        static ThreadPoolTaskScheduler &global_instance();
-
         void enqueue(std::coroutine_handle<> coroutine) override;
         void enqueue(SimpleDelegate delegate) override;
 

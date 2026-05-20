@@ -5,11 +5,13 @@
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
 #include <gtest/gtest.h>
+#include <vulkan/vulkan.hpp>
 
 import retro.core.async.task_scheduler;
 import retro.core.async.manual_task_scheduler;
 import retro.core.async.task;
 import std;
+import retro.core.containers.optional;
 
 namespace
 {
@@ -17,7 +19,7 @@ namespace
     // This simulates "resume me later on the game thread".
     struct YieldToScheduler
     {
-        retro::TaskScheduler *scheduler = nullptr;
+        retro::Optional<retro::TaskScheduler &> scheduler = std::nullopt;
 
         bool await_ready() const noexcept
         {
@@ -26,7 +28,7 @@ namespace
 
         void await_suspend(std::coroutine_handle<> h) const
         {
-            ASSERT_NE(scheduler, nullptr);
+            ASSERT_TRUE(scheduler.has_value());
             scheduler->enqueue(h);
         }
 
@@ -43,7 +45,7 @@ namespace
     retro::Task<> yield_once_then_set(int &step)
     {
         step = 1;
-        co_await YieldToScheduler{&retro::TaskScheduler::current()};
+        co_await YieldToScheduler{retro::TaskScheduler::current()};
         step = 2;
         co_return;
     }
@@ -106,7 +108,7 @@ TEST(Task, ChildCompletionResumesParentContinuation)
     auto child = [&]() -> retro::Task<>
     {
         step = 1;
-        co_await YieldToScheduler{&retro::TaskScheduler::current()};
+        co_await YieldToScheduler{retro::TaskScheduler::current()};
         step = 2;
         co_return;
     };

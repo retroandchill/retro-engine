@@ -62,7 +62,7 @@ namespace retro
                 case TextureFormat::rgba8:
                     return 4;
                 case TextureFormat::unorm:
-                    return 1;
+                    return 3;
                 case TextureFormat::rgba16f:
                     return 8;
                 default:

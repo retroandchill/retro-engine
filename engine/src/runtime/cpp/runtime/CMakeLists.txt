@@ -65,7 +65,7 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/interop/scene.cpp
         private/interop/assets.cpp
         private/interop/rendering.cpp
-        private/rendering/text/font_service.cpp
+        private/rendering/text/font.cpp
         private/interop/fonts.cpp
         private/rendering/objects/text_block.cpp
 )
@@ -96,7 +96,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/headless_renderer2d.ixx
         public/modules/rendering/texture.ixx
         public/modules/rendering/image_data.ixx
-        public/modules/rendering/text/font_service.ixx
+        public/modules/rendering/text/font.ixx
         public/modules/rendering/objects/text_block.ixx
         public/modules/rendering/layout/uvs.ixx
 )
@@ -131,11 +131,13 @@ target_sources(retro_runtime PRIVATE
 
 find_package(Freetype CONFIG REQUIRED)
 find_package(msdfgen CONFIG REQUIRED)
+find_package(msdf-atlas-gen CONFIG REQUIRED)
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform
                                     PRIVATE
                                         Freetype::Freetype
                                         msdfgen::msdfgen
-                                        msdfgen::msdfgen-ext)
+                                        msdfgen::msdfgen-ext
+                                        msdf-atlas-gen::msdf-atlas-gen)
 
 find_package(Stb REQUIRED)
 target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})

@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-import retro.runtime.rendering.text.font_service;
+import retro.runtime.rendering.text.font;
 import std;
 import retro.core.io.file_stream;
 import retro.runtime.rendering.headless_render_backend;

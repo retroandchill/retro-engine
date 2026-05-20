@@ -7,7 +7,7 @@
 #include "retro/core/exports.h"
 
 import std;
-import retro.runtime.rendering.text.font_service;
+import retro.runtime.rendering.text.font;
 import retro.core.interop.interop_error;
 import retro.runtime.rendering.render_backend;
 
