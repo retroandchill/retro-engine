@@ -29,7 +29,6 @@ namespace retro
         vk::PhysicalDevice physical_device = nullptr;
         std::uint32_t graphics_family = vk::QueueFamilyIgnored;
         std::uint32_t present_family = vk::QueueFamilyIgnored;
-        std::uint32_t transfer_family = vk::QueueFamilyIgnored;
     };
 
     export class VulkanDevice;
@@ -63,6 +62,13 @@ namespace retro
         vk::DeviceSize size_;
     };
 
+    export enum class QueueType : std::uint32_t
+    {
+        graphics = 0,
+        present,
+        transfer
+    };
+
     class VulkanDevice
     {
         constexpr static std::size_t default_pool_size = 1024 * 1024 * 10;
@@ -90,7 +96,7 @@ namespace retro
         template <std::invocable<vk::Queue> Functor>
         decltype(auto) submit_to_graphics_queue(Functor &&functor) const
         {
-            std::scoped_lock graphics_queue_lock(graphics_queue_mutex_);
+            std::scoped_lock graphics_queue_lock(queue_mutexes_[graphics_family_index_]);
             return std::invoke(std::forward<Functor>(functor), graphics_queue_);
         }
 
@@ -102,25 +108,13 @@ namespace retro
         template <std::invocable<vk::Queue> Functor>
         decltype(auto) submit_to_present_queue(Functor &&functor) const
         {
-            std::scoped_lock present_queue_lock(present_queue_mutex_);
+            std::scoped_lock present_queue_lock(queue_mutexes_[present_family_index_]);
             return std::invoke(std::forward<Functor>(functor), present_queue_);
         }
 
         [[nodiscard]] std::uint32_t present_family() const noexcept
         {
             return present_family_index_;
-        }
-
-        template <std::invocable<vk::Queue> Functor>
-        decltype(auto) submit_to_transfer_queue(Functor &&functor) const
-        {
-            std::scoped_lock transfer_queue_lock(transfer_queue_mutex_);
-            return std::invoke(std::forward<Functor>(functor), transfer_queue_);
-        }
-
-        [[nodiscard]] std::uint32_t transfer_family() const noexcept
-        {
-            return transfer_family_index_;
         }
 
         inline vk::SurfaceCapabilitiesKHR get_surface_capabilities(const vk::SurfaceKHR surface) const
@@ -284,13 +278,9 @@ namespace retro
         vk::UniqueDevice device_{};
         std::uint32_t graphics_family_index_{std::numeric_limits<std::uint32_t>::max()};
         std::uint32_t present_family_index_{std::numeric_limits<std::uint32_t>::max()};
-        std::uint32_t transfer_family_index_{std::numeric_limits<std::uint32_t>::max()};
         vk::Queue graphics_queue_{};
         vk::Queue present_queue_{};
-        vk::Queue transfer_queue_{};
 
-        mutable std::mutex graphics_queue_mutex_;
-        mutable std::mutex present_queue_mutex_;
-        mutable std::mutex transfer_queue_mutex_;
+        mutable std::unordered_map<std::uint32_t, std::mutex> queue_mutexes_;
     };
 } // namespace retro

@@ -17,6 +17,7 @@ import retro.runtime.rendering.texture;
 import retro.runtime.rendering.render_backend;
 import retro.core.containers.optional;
 import retro.runtime.rendering.layout.uvs;
+import retro.core.async.task;
 
 // ReSharper disable CppInconsistentNaming
 extern "C"
@@ -142,8 +143,6 @@ namespace retro
       private:
         friend class FontService;
 
-        FontAtlas generate_font_atlas(RenderBackend &render_backend, const FontMsdfAtlasConfig &atlas_config) const;
-
         FontFace face_;
         FontAtlas primary_atlas_;
     };
@@ -153,10 +152,10 @@ namespace retro
       public:
         explicit FontService(RenderBackend &render_backend);
 
-        [[nodiscard]] RefCountPtr<Font> load_font(std::vector<std::byte> bytes) const;
+        [[nodiscard]] Task<RefCountPtr<Font>> load_font(std::vector<std::byte> bytes) const;
 
       private:
-        FontAtlas generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
+        Task<FontAtlas> generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
 
         RenderBackend &render_backend_;
         FreeTypeLibraryPtr library_{};

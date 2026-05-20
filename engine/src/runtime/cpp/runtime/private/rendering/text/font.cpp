@@ -100,7 +100,7 @@ namespace retro
     {
     }
 
-    RefCountPtr<Font> FontService::load_font(std::vector<std::byte> bytes) const
+    Task<RefCountPtr<Font>> FontService::load_font(std::vector<std::byte> bytes) const
     {
         FT_Face face;
         if (const auto error = FT_New_Memory_Face(library_.get(),
@@ -117,11 +117,12 @@ namespace retro
 
         constexpr FontMsdfAtlasConfig atlas_config{.pixel_size = 24, .distance_range = 2.0f};
 
-        auto atlas = generate_font_atlas(font_face, atlas_config);
+        auto atlas = co_await generate_font_atlas(font_face, atlas_config);
 
-        return RefCountPtr<Font>::ref(new Font{std::move(font_face), std::move(atlas)});
+        co_return RefCountPtr<Font>::ref(new Font{std::move(font_face), std::move(atlas)});
     }
-    FontAtlas FontService::generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const
+
+    Task<FontAtlas> FontService::generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const
     {
         const auto handle = create_font_handle(face.face_.get());
 
@@ -192,12 +193,12 @@ namespace retro
                          static_cast<std::size_t>(section.width * section.height * 4)};
 
         output.source_pixel_size = static_cast<float>(packer.getScale());
-        output.texture = render_backend_.upload_texture(pixels,
-                                                        section.width,
-                                                        section.height,
-                                                        TextureFormat::unorm,
-                                                        TextureFilter::linear);
+        output.texture = co_await render_backend_.upload_texture(pixels,
+                                                                 section.width,
+                                                                 section.height,
+                                                                 TextureFormat::unorm,
+                                                                 TextureFilter::linear);
 
-        return output;
+        co_return output;
     }
 } // namespace retro

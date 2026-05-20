@@ -20,4 +20,13 @@ public class TextureDecoder(RenderBackend renderBackend) : IAssetDecoder, IAsset
     {
         return renderBackend.UploadTexture(source);
     }
+
+    public async ValueTask<object> DecodeAsync(
+        AssetStorageType type,
+        ReadOnlyMemory<byte> source,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await renderBackend.UploadTextureAsync(source.Span, cancellationToken);
+    }
 }

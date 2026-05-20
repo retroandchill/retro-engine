@@ -20,4 +20,13 @@ public sealed class FontDecoder(FontService fontService) : IAssetDecoder, IAsset
     {
         return fontService.LoadFont(source);
     }
+
+    public async ValueTask<object> DecodeAsync(
+        AssetStorageType type,
+        ReadOnlyMemory<byte> source,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await fontService.LoadFontAsync(source.Span, cancellationToken);
+    }
 }

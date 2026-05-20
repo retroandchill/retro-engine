@@ -28,10 +28,39 @@ public sealed partial class FontService : IDisposable
 
     public Font LoadFont(scoped ReadOnlySpan<byte> bytes)
     {
+        return LoadFontAsync(bytes).GetAwaiter().GetResult();
+    }
+
+    public Task<Font> LoadFontAsync(scoped ReadOnlySpan<byte> bytes, CancellationToken cancellationToken = default)
+    {
         ThrowIfDisposed();
-        var nativeHandle = NativeLoadFont(this, bytes, bytes.Length, out var error);
-        error.ThrowIfError();
-        return new Font(nativeHandle);
+        var tcs = new TaskCompletionSource<Font>();
+        cancellationToken.Register(() => tcs.TrySetCanceled());
+
+        var gcHandle = GCHandle.Alloc(tcs);
+        tcs.Task.ContinueWith(_ => gcHandle.Free(), TaskContinuationOptions.ExecuteSynchronously);
+        unsafe
+        {
+            NativeLoadFont(this, bytes, bytes.Length, &OnLoaded, &OnError, GCHandle.ToIntPtr(gcHandle));
+        }
+        return tcs.Task;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnLoaded(IntPtr userData, IntPtr nativeHandle)
+    {
+        var tcs = (TaskCompletionSource<Font>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetResult(new Font(nativeHandle));
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnError(IntPtr userData, NativeInteropError error)
+    {
+        var tcs = (TaskCompletionSource<Font>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetException(
+            InteropErrorMarshaller.ConvertToManaged(error).ToException()
+                ?? new InvalidOperationException("Unknown error")
+        );
     }
 
     private void ThrowIfDisposed()
@@ -56,11 +85,13 @@ public sealed partial class FontService : IDisposable
     private static partial void NativeDestroy(FontService service);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_font_service_load_font")]
-    private static partial IntPtr NativeLoadFont(
+    private static unsafe partial IntPtr NativeLoadFont(
         FontService service,
         ReadOnlySpan<byte> bytes,
         int length,
-        out InteropError error
+        delegate* unmanaged<IntPtr, IntPtr, void> onLoaded,
+        delegate* unmanaged<IntPtr, NativeInteropError, void> onError,
+        IntPtr userData
     );
 }
 

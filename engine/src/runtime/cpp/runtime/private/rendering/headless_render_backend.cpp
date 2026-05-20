@@ -6,6 +6,7 @@
  */
 module retro.runtime.rendering.headless_render_backend;
 import retro.runtime.rendering.headless_renderer2d;
+import retro.core.async.task;
 
 namespace retro
 {
@@ -23,7 +24,7 @@ namespace retro
 
         [[nodiscard]] std::span<const std::byte> data() const
         {
-            return std::span(data_);
+            return data_;
         }
 
       private:
@@ -34,16 +35,18 @@ namespace retro
     {
         return std::make_shared<HeadlessRenderer2D>(std::move(window));
     }
-    RefCountPtr<Texture> HeadlessRenderBackend::upload_texture(std::span<const std::byte> bytes,
-                                                               std::int32_t width,
-                                                               std::int32_t height,
-                                                               TextureFormat format,
-                                                               TextureFilter filtering)
+
+    Task<RefCountPtr<Texture>> HeadlessRenderBackend::upload_texture(std::span<const std::byte> bytes,
+                                                                     std::int32_t width,
+                                                                     std::int32_t height,
+                                                                     TextureFormat format,
+                                                                     TextureFilter filtering)
     {
-        return make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(),
-                                                 width,
-                                                 height,
-                                                 format,
-                                                 filtering);
+        return Task<RefCountPtr<Texture>>::from_result(
+            make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(),
+                                              width,
+                                              height,
+                                              format,
+                                              filtering));
     }
 } // namespace retro

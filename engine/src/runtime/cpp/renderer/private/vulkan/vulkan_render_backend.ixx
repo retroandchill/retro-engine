@@ -16,6 +16,8 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.platform.backend;
 import retro.runtime.rendering.texture;
+import retro.core.async.future;
+import retro.core.async.task;
 
 namespace retro
 {
@@ -26,16 +28,39 @@ namespace retro
       public:
         explicit VulkanRenderBackend(PlatformBackend &platform_backend);
 
+        VulkanRenderBackend(const VulkanRenderBackend &) = delete;
+        VulkanRenderBackend(VulkanRenderBackend &&) = delete;
+
+        ~VulkanRenderBackend() override;
+
+        VulkanRenderBackend &operator=(const VulkanRenderBackend &) = delete;
+        VulkanRenderBackend &operator=(VulkanRenderBackend &&) = delete;
+
         std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) override;
 
-        RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
-                                            std::int32_t width,
-                                            std::int32_t height,
-                                            TextureFormat format,
-                                            TextureFilter filtering) override;
+        Task<RefCountPtr<Texture>> upload_texture(std::span<const std::byte> bytes,
+                                                  std::int32_t width,
+                                                  std::int32_t height,
+                                                  TextureFormat format,
+                                                  TextureFilter filtering) override;
 
       private:
-        vk::CommandPool get_thread_command_pool() const;
+        struct TextureUploadPayload
+        {
+            VulkanStagingBuffer staging_buffer;
+            vk::UniqueImage image;
+            vk::UniqueDeviceMemory image_memory;
+            std::int32_t width{};
+            std::int32_t height{};
+            TextureFormat format{};
+            TextureFilter filtering{};
+            vk::Format image_format{};
+            Promise<RefCountPtr<Texture>> promise;
+        };
+
+        void run_transfer_thread();
+
+        RefCountPtr<Texture> upload_texture_impl(TextureUploadPayload &payload);
 
         [[nodiscard]] vk::UniqueCommandBuffer begin_one_shot_commands(vk::CommandPool command_pool) const;
         void end_one_shot_commands(vk::UniqueCommandBuffer &&cmd) const;
@@ -45,7 +70,6 @@ namespace retro
                                             vk::ImageLayout old_layout,
                                             vk::ImageLayout new_layout);
 
-      private:
         VulkanInstance instance_;
         VulkanDevice device_;
         VulkanBufferManager buffer_manager_;
@@ -53,8 +77,12 @@ namespace retro
         vk::UniqueSampler nearest_sampler_;
         vk::UniqueSampler linear_sampler_;
 
-        mutable std::shared_mutex thread_pools_mutex_;
-        mutable std::unordered_map<std::thread::id, vk::UniqueCommandPool> thread_pools_;
+        std::mutex transfer_thread_mutex_;
+        std::deque<std::shared_ptr<TextureUploadPayload>> pending_texture_uploads_;
+        vk::UniqueCommandPool transfer_thread_command_pool_;
+        std::atomic<bool> transfer_thread_running_{true};
+        std::condition_variable transfer_thread_cv_;
+        std::jthread transfer_thread_;
     };
 
     class VulkanTexture final : public Texture

@@ -10,8 +10,15 @@ import std;
 import retro.runtime.rendering.text.font;
 import retro.core.interop.interop_error;
 import retro.runtime.rendering.render_backend;
+import retro.core.memory.ref_counted_ptr;
 
 using namespace retro;
+
+namespace
+{
+    using OnFontLoaded = void (*)(void *, Font *);
+    using OnFontLoadFailed = void (*)(void *, InteropError);
+} // namespace
 
 extern "C"
 {
@@ -25,19 +32,22 @@ extern "C"
         delete service;
     }
 
-    RETRO_API Font *retro_font_service_load_font(const FontService *service,
-                                                 const std::byte *bytes,
-                                                 const std::int32_t size,
-                                                 InteropError *error)
+    RETRO_API void retro_font_service_load_font(const FontService *service,
+                                                const std::byte *bytes,
+                                                const std::int32_t size,
+                                                OnFontLoaded on_loaded,
+                                                OnFontLoadFailed on_failed,
+                                                void *user_data)
     {
-        return try_execute(
+        try_execute_async(
             [=]
             {
                 auto input_span = std::span{bytes, static_cast<std::size_t>(size)};
                 std::vector buffer(input_span.begin(), input_span.end());
-                return service->load_font(std::move(buffer)).release();
+                return service->load_font(std::move(buffer)).configure_await(false);
             },
-            *error);
+            [on_loaded, user_data](RefCountPtr<Font> font) { on_loaded(user_data, font.release()); },
+            [on_failed, user_data](const InteropError &error) { on_failed(user_data, error); });
     }
 
     RETRO_API void retro_font_destroy(const Font *font)

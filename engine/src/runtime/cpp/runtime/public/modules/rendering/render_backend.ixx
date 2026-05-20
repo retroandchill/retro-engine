@@ -12,6 +12,7 @@ import retro.runtime.rendering.renderer2d;
 import retro.platform.window;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.image_data;
+import retro.core.async.task;
 
 namespace retro
 {
@@ -22,13 +23,21 @@ namespace retro
 
         virtual std::shared_ptr<Renderer2D> create_renderer(std::shared_ptr<Window> window) = 0;
 
-        virtual RefCountPtr<Texture> upload_texture(std::span<const std::byte> bytes,
-                                                    std::int32_t width,
-                                                    std::int32_t height,
-                                                    TextureFormat format,
-                                                    TextureFilter filtering = TextureFilter::nearest) = 0;
+        virtual Task<RefCountPtr<Texture>> upload_texture(std::span<const std::byte> bytes,
+                                                          std::int32_t width,
+                                                          std::int32_t height,
+                                                          TextureFormat format,
+                                                          TextureFilter filtering) = 0;
 
-        inline RefCountPtr<Texture> upload_texture(const ImageData &image)
+        inline Task<RefCountPtr<Texture>> upload_texture(const std::span<const std::byte> bytes,
+                                                         const std::int32_t width,
+                                                         const std::int32_t height,
+                                                         const TextureFormat format)
+        {
+            return upload_texture(bytes, width, height, format, TextureFilter::nearest);
+        }
+
+        inline Task<RefCountPtr<Texture>> upload_texture(const ImageData &image)
         {
             return upload_texture(image.bytes(), image.width(), image.height(), image.format());
         }

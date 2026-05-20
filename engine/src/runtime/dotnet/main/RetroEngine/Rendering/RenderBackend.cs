@@ -31,17 +31,51 @@ public sealed partial class RenderBackend : IDisposable
 
     internal Texture UploadTexture(ReadOnlySpan<byte> data)
     {
-        var nativeHandle = NativeUploadTexture(
-            this,
-            data,
-            data.Length,
-            out var width,
-            out var height,
-            out var format,
-            out var error
+        return UploadTextureAsync(data).GetAwaiter().GetResult();
+    }
+
+    internal Task<Texture> UploadTextureAsync(ReadOnlySpan<byte> data, CancellationToken cancellationToken = default)
+    {
+        var tsc = new TaskCompletionSource<Texture>();
+        cancellationToken.Register(() => tsc.TrySetCanceled());
+
+        var gcHandle = GCHandle.Alloc(tsc);
+        tsc.Task.ContinueWith(_ => gcHandle.Free(), TaskContinuationOptions.ExecuteSynchronously);
+        unsafe
+        {
+            NativeUploadTexture(
+                this,
+                data,
+                data.Length,
+                &OnTextureCreated,
+                &OnTextureUploadFailed,
+                GCHandle.ToIntPtr(gcHandle)
+            );
+        }
+        return tsc.Task;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnTextureCreated(
+        IntPtr userData,
+        IntPtr nativeHandle,
+        int width,
+        int height,
+        TextureFormat format
+    )
+    {
+        var tsc = (TaskCompletionSource<Texture>)GCHandle.FromIntPtr(userData).Target!;
+        tsc.TrySetResult(new Texture(nativeHandle, width, height, format));
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnTextureUploadFailed(IntPtr userData, NativeInteropError nativeError)
+    {
+        var tsc = (TaskCompletionSource<Texture>)GCHandle.FromIntPtr(userData).Target!;
+        tsc.TrySetException(
+            InteropErrorMarshaller.ConvertToManaged(nativeError).ToException()
+                ?? new InvalidOperationException("Unknown error")
         );
-        error.ThrowIfError();
-        return new Texture(nativeHandle, width, height, format);
     }
 
     public void Dispose()
@@ -65,14 +99,13 @@ public sealed partial class RenderBackend : IDisposable
     private static partial void NativeDestroy(IntPtr ptr);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_backend_upload_texture")]
-    private static partial IntPtr NativeUploadTexture(
+    private static unsafe partial void NativeUploadTexture(
         RenderBackend backend,
         ReadOnlySpan<byte> bytes,
         int length,
-        out int width,
-        out int height,
-        out TextureFormat format,
-        out InteropError error
+        delegate* unmanaged<IntPtr, IntPtr, int, int, TextureFormat, void> onCreated,
+        delegate* unmanaged<IntPtr, NativeInteropError, void> onError,
+        IntPtr userData
     );
 }
 

@@ -258,10 +258,13 @@ public sealed partial class RenderManager : IDisposable
     }
 
     [UnmanagedCallersOnly]
-    private static unsafe void OnWindowError(IntPtr userData, byte* errorMessage)
+    private static void OnWindowError(IntPtr userData, NativeInteropError errorMessage)
     {
         var tcs = (TaskCompletionSource<ulong>)GCHandle.FromIntPtr(userData).Target!;
-        tcs.TrySetException(new PlatformNotSupportedException(Utf8StringMarshaller.ConvertToManaged(errorMessage)));
+        tcs.TrySetException(
+            InteropErrorMarshaller.ConvertToManaged(errorMessage).ToException()
+                ?? new InvalidOperationException("Unknown error")
+        );
     }
 
     internal void SyncRenderState()
@@ -347,7 +350,7 @@ public sealed partial class RenderManager : IDisposable
         WindowFlags flags,
         IntPtr userData,
         delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
-        delegate* unmanaged<IntPtr, byte*, void> onError
+        delegate* unmanaged<IntPtr, NativeInteropError, void> onError
     );
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_create_window_from_handle_async")]
@@ -356,7 +359,7 @@ public sealed partial class RenderManager : IDisposable
         NativeWindowHandle handle,
         IntPtr userData,
         delegate* unmanaged<IntPtr, ulong, void> onWindowCreated,
-        delegate* unmanaged<IntPtr, byte*, void> onError
+        delegate* unmanaged<IntPtr, NativeInteropError, void> onError
     );
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_render_manager_remove_window")]

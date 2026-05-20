@@ -84,6 +84,9 @@ namespace retro
     using ExpectedErrorType = std::invoke_result_t<T>::error_type;
 
     template <typename T>
+    concept AwaitableFunctor = std::invocable<T> && Awaitable<std::invoke_result_t<T>>;
+
+    template <typename T>
     concept AwaitableExpected = Awaitable<T> && ExpectedLike<AwaitResult<T>>;
 
     template <typename T>
@@ -243,6 +246,43 @@ namespace retro
             error.message = "Unknown error";
             return false;
         }
+    }
+
+    export template <AwaitableFunctor Functor, typename OnSuccess, std::invocable<InteropError> OnError>
+        requires(std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>> && std::invocable<OnSuccess>) ||
+                (!std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>> &&
+                 std::invocable<OnSuccess, AwaitResult<std::invoke_result_t<Functor>>>)
+    void try_execute_async(Functor &&functor, OnSuccess &&on_success, OnError &&on_error)
+    {
+        std::ignore = [](auto local_functor, auto local_on_success, auto local_on_error) -> Task<>
+        {
+            try
+            {
+                if constexpr (std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>>)
+                {
+                    co_await std::invoke(std::forward<Functor>(local_functor));
+                    std::invoke(std::forward<OnSuccess>(local_on_success));
+                }
+                else
+                {
+                    std::invoke(std::forward<OnSuccess>(local_on_success),
+                                co_await std::invoke(std::forward<Functor>(local_functor)));
+                }
+            }
+            catch (std::exception &e)
+            {
+                auto &type_id = typeid(e);
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = get_error_code(e),
+                                         .native_exception_type = type_id.name(),
+                                         .message = e.what()});
+            }
+            catch (...)
+            {
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"});
+            }
+        }(std::forward<Functor>(functor), std::forward<OnSuccess>(on_success), std::forward<OnError>(on_error));
     }
 
     export template <AwaitableExpectedFunctor Functor,

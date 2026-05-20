@@ -25,12 +25,10 @@ namespace retro
         {
             std::uint32_t graphics_family = vk::QueueFamilyIgnored;
             std::uint32_t present_family = vk::QueueFamilyIgnored;
-            std::uint32_t transfer_family = vk::QueueFamilyIgnored;
 
             [[nodiscard]] bool is_valid() const noexcept
             {
-                return graphics_family != vk::QueueFamilyIgnored && present_family != vk::QueueFamilyIgnored &&
-                       transfer_family != vk::QueueFamilyIgnored;
+                return graphics_family != vk::QueueFamilyIgnored && present_family != vk::QueueFamilyIgnored;
             }
         };
 
@@ -52,11 +50,6 @@ namespace retro
                 if (res == vk::Result::eSuccess && present_support == vk::True)
                 {
                     output.present_family = i;
-                }
-
-                if (families[i].queueFlags & vk::QueueFlagBits::eTransfer)
-                {
-                    output.transfer_family = i;
                 }
 
                 if (output.is_valid())
@@ -98,8 +91,8 @@ namespace retro
                     continue;
                 }
 
-                auto [graphics_family, present_family, transfer_family] = *result;
-                return VulkanDeviceConfig{dev, graphics_family, present_family, transfer_family};
+                auto [graphics_family, present_family] = *result;
+                return VulkanDeviceConfig{dev, graphics_family, present_family};
             }
 
             throw GraphicsException{"VulkanDevice: failed to find a suitable GPU"};
@@ -110,7 +103,7 @@ namespace retro
             // Required device extensions
             constexpr std::array device_extensions = {vk::KHRSwapchainExtensionName};
 
-            const std::set unique_families{config.graphics_family, config.present_family, config.transfer_family};
+            const std::set unique_families{config.graphics_family, config.present_family};
 
             constexpr float queue_priority = 1.0f;
             std::vector<vk::DeviceQueueCreateInfo> queue_infos;
@@ -171,10 +164,14 @@ namespace retro
         device_ = create_device(config);
         graphics_family_index_ = config.graphics_family;
         present_family_index_ = config.present_family;
-        transfer_family_index_ = config.transfer_family;
         graphics_queue_ = device_->getQueue(graphics_family_index_, 0);
         present_queue_ = device_->getQueue(present_family_index_, 0);
-        transfer_queue_ = device_->getQueue(transfer_family_index_, 0);
+
+        std::ignore = queue_mutexes_[graphics_family_index_];
+        if (graphics_family_index_ != present_family_index_)
+        {
+            std::ignore = queue_mutexes_[present_family_index_];
+        }
     }
 
     std::unique_ptr<VulkanDevice> VulkanDevice::create(const VulkanInstance &instance,

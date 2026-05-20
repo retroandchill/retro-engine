@@ -23,6 +23,7 @@ import retro.core.async.task;
 import retro.core.functional.interop_function;
 import retro.runtime.rendering.texture;
 import retro.runtime.rendering.image_data;
+import retro.core.memory.ref_counted_ptr;
 
 using namespace retro;
 
@@ -49,31 +50,33 @@ namespace
 
     using WindowCreatedCallback = void (*)(void *, std::uint64_t);
     using OnErrorCallback = void (*)(void *, InteropError);
+
+    using TextureCreatedCallback = void (*)(void *, Texture *, std::int32_t, std::int32_t, TextureFormat);
 } // namespace
 
 extern "C"
 {
-    RETRO_API Texture *retro_render_backend_upload_texture(RenderBackend *backend,
-                                                           const std::byte *bytes,
-                                                           const std::int32_t length,
-                                                           std::int32_t *width,
-                                                           std::int32_t *height,
-                                                           TextureFormat *format,
-                                                           InteropError *error)
+    RETRO_API void retro_render_backend_upload_texture(RenderBackend *backend,
+                                                       const std::byte *bytes,
+                                                       const std::int32_t length,
+                                                       TextureCreatedCallback on_created,
+                                                       OnErrorCallback on_error,
+                                                       void *user_data)
     {
-        *width = 0;
-        *height = 0;
-        *format = TextureFormat::rgba8;
-        return try_execute(
-            [&]
+        try_execute_async(
+            [backend, bytes, length]
             {
                 const auto image = ImageData::create_from_memory(std::span{bytes, static_cast<std::size_t>(length)});
-                *width = image.width();
-                *height = image.height();
-                *format = image.format();
-                return backend->upload_texture(image).release();
+                return backend->upload_texture(image).configure_await(false);
             },
-            *error);
+            [on_created, user_data](RefCountPtr<Texture> texture)
+            {
+                const auto width = texture->width();
+                const auto height = texture->height();
+                const auto format = texture->format();
+                on_created(user_data, texture.release(), width, height, format);
+            },
+            [on_error, user_data](const InteropError &error) { on_error(user_data, error); });
     }
 
     RETRO_API void retro_render_pipeline_destroy(const RenderPipeline *pipeline)

@@ -41,7 +41,7 @@ public readonly record struct InteropError(InteropErrorCode ErrorCode, string? N
             throw exception;
     }
 
-    private Exception? ToException()
+    public Exception? ToException()
     {
         return ErrorCode switch
         {
@@ -70,12 +70,12 @@ public unsafe struct NativeInteropError
     public byte* ErrorMessage;
 }
 
-[CustomMarshaller(typeof(InteropError), MarshalMode.ManagedToUnmanagedOut, typeof(NativeToManaged))]
+[CustomMarshaller(typeof(InteropError), MarshalMode.ManagedToUnmanagedOut, typeof(InteropErrorMarshaller))]
 public static class InteropErrorMarshaller
 {
-    public static unsafe class NativeToManaged
+    public static InteropError ConvertToManaged(NativeInteropError bytes)
     {
-        public static InteropError ConvertToManaged(NativeInteropError bytes)
+        unsafe
         {
             return new InteropError(
                 bytes.ErrorCode,
