@@ -13,6 +13,7 @@ module;
 #include <unicode/locid.h>
 #include <unicode/plurfmt.h>
 #include <unicode/putil.h>
+#include <unicode/uclean.h>
 #include <unicode/udata.h>
 
 export module retro.core.localization.icu;
@@ -21,6 +22,7 @@ export using ::UErrorCode;
 export using ::UPluralType;
 export using ::u_setDataDirectory;
 export using ::uloc_setDefault;
+export using ::u_init;
 
 export using ::UDataFileAccess;
 

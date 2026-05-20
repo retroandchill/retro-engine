@@ -14,6 +14,12 @@ import retro.core.localization.buffers;
 
 extern "C"
 {
+    RETRO_API void retro_init_icu()
+    {
+        UErrorCode status;
+        u_init(&status);
+    }
+
     RETRO_API const icu::Locale *retro_get_default_locale()
     {
         return &icu::Locale::getDefault();
