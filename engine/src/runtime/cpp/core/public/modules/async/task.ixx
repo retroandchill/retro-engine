@@ -15,6 +15,8 @@ import retro.core.functional.delegate;
 import retro.core.async.task_scheduler;
 import retro.core.util.deferred;
 import retro.core.containers.optional;
+import retro.core.functional.overload;
+import retro.core.util.exceptions;
 
 namespace retro
 {
@@ -118,6 +120,21 @@ namespace retro
 
         std::coroutine_handle<> continuation{};
         std::variant<std::monostate, T, std::exception_ptr> result{};
+        SimpleMulticastDelegate on_complete;
+
+        template <typename Self>
+        decltype(auto) get_result(this Self &&self)
+            requires !std::is_void_v<T>
+        {
+            if (self.result.index() == exception_state)
+            {
+                std::rethrow_exception(std::get<std::exception_ptr>(self.result));
+            }
+
+            assert(self.result.index() == success_state);
+
+            return std::get<success_state>(std::forward<Self>(self).result);
+        }
 
         template <typename Self>
         Task<Result> get_return_object(this Self &) noexcept;
@@ -136,6 +153,7 @@ namespace retro
         void unhandled_exception() noexcept
         {
             result.template emplace<exception_state>(std::current_exception());
+            on_complete.broadcast();
         }
     };
 
@@ -146,6 +164,7 @@ namespace retro
         void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
             this->result.template emplace<TaskPromiseBase<T>::success_state>(std::forward<U>(value));
+            this->on_complete.broadcast();
         }
     };
 
@@ -159,6 +178,7 @@ namespace retro
         inline void return_void() noexcept
         {
             result.emplace<success_state>();
+            on_complete.broadcast();
         }
     };
 
@@ -291,6 +311,40 @@ namespace retro
             return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::exception_state>, std::move(ex)}};
         }
 
+        template <typename Self>
+        [[nodiscard]] decltype(auto) get(this Self &&self)
+            requires !std::is_void_v<T>
+        {
+            if (holds_alternative<std::monostate>(self.state_))
+                throw InvalidStateException{"Task is empty"};
+
+            if (holds_alternative<ImmediateState<T>>(self.state_))
+            {
+                auto result = std::get<ImmediateState<T>>(self.state_).result;
+                if (holds_alternative<std::exception_ptr>(result))
+                {
+                    std::rethrow_exception(std::get<std::exception_ptr>(result));
+                }
+
+                return std::forward_like<Self>(std::get<T>(result));
+            }
+
+            auto handle = std::get<Handle>(self.state_);
+            if (!handle)
+                throw InvalidStateException{"Task is empty"};
+
+            auto promise = handle.promise();
+            if (handle.done())
+            {
+                return std::forward_like<Self>(promise).get_result();
+            }
+
+            std::atomic task_complete = false;
+            promise.on_complete.add([&task_complete] { task_complete = true; });
+            task_complete.wait(true);
+            return std::forward_like<Self>(promise).get_result();
+        }
+
         Awaiter operator co_await() &&
         {
             return Awaiter{std::exchange(state_, {})};
@@ -299,9 +353,9 @@ namespace retro
         template <typename Self>
         [[nodiscard]] decltype(auto) configure_await(this Self &&self, const bool continue_on_captured_context)
         {
-            if (holds_alternative<Handle>(self.state_))
+            if (std::holds_alternative<Handle>(self.state_))
             {
-                Handle &handle = get<Handle>(self.state_);
+                Handle &handle = std::get<Handle>(self.state_);
                 promise_type &promise = handle.promise();
 
                 if (continue_on_captured_context)
