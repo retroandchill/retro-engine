@@ -35,7 +35,7 @@ extern "C"
                                                                const char16_t *pattern,
                                                                const std::int32_t pattern_length)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return icu::DateFormat::createInstanceForSkeleton(icu::UnicodeString{pattern, pattern_length}, *locale, status);
     }
 

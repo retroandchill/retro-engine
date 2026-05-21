@@ -15,6 +15,7 @@ module;
 #include <unicode/putil.h>
 #include <unicode/uclean.h>
 #include <unicode/udata.h>
+#include <unicode/utypes.h>
 
 export module retro.core.localization.icu;
 
@@ -23,6 +24,7 @@ export using ::UPluralType;
 export using ::u_setDataDirectory;
 export using ::uloc_setDefault;
 export using ::u_init;
+export using ::u_errorName;
 
 export using ::UDataFileAccess;
 
@@ -43,3 +45,11 @@ export namespace U_ICU_NAMESPACE
 } // namespace U_ICU_NAMESPACE
 
 export namespace icu = U_ICU_NAMESPACE;
+
+namespace retro
+{
+    export bool is_failure(const UErrorCode status)
+    {
+        return U_FAILURE(status);
+    }
+} // namespace retro

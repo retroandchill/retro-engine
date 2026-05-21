@@ -14,7 +14,7 @@ extern "C"
 {
     RETRO_API icu::PluralRules *retro_create_plural_rules(const icu::Locale *locale, const UPluralType type)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return icu::PluralRules::forLocale(*locale, type, status);
     }
 

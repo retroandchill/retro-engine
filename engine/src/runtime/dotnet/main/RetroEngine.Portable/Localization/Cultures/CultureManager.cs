@@ -7,12 +7,13 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using RetroEngine.Interop;
 using RetroEngine.Portable.Strings;
 using RetroEngine.Utilities;
 
 namespace RetroEngine.Portable.Localization.Cultures;
 
-public sealed class CultureManager : IDisposable
+public sealed partial class CultureManager : IDisposable
 {
     internal readonly record struct IcuCultureData(
         string Name,
@@ -674,4 +675,12 @@ public sealed class CultureManager : IDisposable
         foreach (var (_, culture) in _cachedCultures)
             culture.Dispose();
     }
+
+    [LibraryImport(
+        NativeLibraries.RetroCore,
+        EntryPoint = "retro_init_icu",
+        StringMarshalling = StringMarshalling.Utf8
+    )]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeInitICU(out string? error);
 }

@@ -14,10 +14,18 @@ import retro.core.localization.buffers;
 
 extern "C"
 {
-    RETRO_API void retro_init_icu()
+    RETRO_API bool retro_init_icu(const char **error_message)
     {
-        UErrorCode status;
+        UErrorCode status{};
         u_init(&status);
+        if (retro::is_failure(status))
+        {
+            *error_message = u_errorName(status);
+            return false;
+        }
+
+        *error_message = nullptr;
+        return true;
     }
 
     RETRO_API const icu::Locale *retro_get_default_locale()
@@ -152,7 +160,7 @@ extern "C"
 
     RETRO_API void retro_locale_set_default(const char *locale_name)
     {
-        UErrorCode status;
+        UErrorCode status{};
         uloc_setDefault(locale_name, &status);
     }
 }

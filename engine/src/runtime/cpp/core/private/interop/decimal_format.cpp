@@ -63,19 +63,19 @@ extern "C"
 {
     RETRO_API icu::DecimalFormat *retro_create_decimal_format(const icu::Locale *format)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return dynamic_cast<icu::DecimalFormat *>(icu::DecimalFormat::createInstance(*format, status));
     }
 
     RETRO_API icu::DecimalFormat *retro_create_percent_decimal_format(const icu::Locale *format)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return dynamic_cast<icu::DecimalFormat *>(icu::DecimalFormat::createPercentInstance(*format, status));
     }
 
     RETRO_API icu::DecimalFormat *retro_create_currency_decimal_format(const icu::Locale *format)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return dynamic_cast<icu::DecimalFormat *>(icu::DecimalFormat::createCurrencyInstance(*format, status));
     }
 

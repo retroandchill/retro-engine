@@ -37,7 +37,7 @@ extern "C"
                                                             char16_t *buffer,
                                                             const std::int32_t length)
     {
-        UErrorCode status;
+        UErrorCode status{};
         const icu::UnicodeString input_time_zone_id{id, id_length};
         icu::UnicodeString output_time_zone_id;
         icu::TimeZone::getCanonicalID(input_time_zone_id, output_time_zone_id, status);

@@ -13,7 +13,7 @@ extern "C"
 {
     RETRO_API icu::Collator *retro_create_collator(const icu::Locale *locale)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return icu::Collator::createInstance(*locale, status);
     }
 

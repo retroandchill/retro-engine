@@ -13,7 +13,7 @@ extern "C"
 {
     RETRO_API icu::GregorianCalendar *retro_create_calendar()
     {
-        UErrorCode status;
+        UErrorCode status{};
         return new icu::GregorianCalendar(status);
     }
 
@@ -40,7 +40,7 @@ extern "C"
 
     RETRO_API double retro_calendar_get_time(const icu::GregorianCalendar *calendar)
     {
-        UErrorCode status;
+        UErrorCode status{};
         return calendar->getTime(status);
     }
 }
