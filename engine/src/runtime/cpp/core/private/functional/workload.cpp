@@ -66,7 +66,7 @@ namespace retro
         for (std::size_t i = 0; i < thread_count; ++i)
             tasks.push_back(run_async(thread_worker, i));
         for (auto &task : tasks)
-            co_await task;
+            co_await task.configure_await(false);
 
         co_return result;
     }
