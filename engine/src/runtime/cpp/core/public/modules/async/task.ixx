@@ -221,7 +221,68 @@ namespace retro
         using Handle = std::coroutine_handle<TaskPromise<T>>;
         using State = std::variant<std::monostate, Handle, ImmediateState<T>>;
 
-        struct Awaiter
+        struct RefAwaiter
+        {
+            static constexpr auto success_state = TaskPromise<T>::success_state;
+            static constexpr auto exception_state = TaskPromise<T>::exception_state;
+
+            std::reference_wrapper<State> state{};
+
+            bool await_ready() noexcept
+            {
+                if (std::holds_alternative<ImmediateState<T>>(state.get()))
+                    return true;
+
+                if (auto *h = std::get_if<Handle>(&state.get()))
+                    return !*h || h->done();
+
+                return true;
+            }
+
+            void await_suspend(std::coroutine_handle<> handle) noexcept
+            {
+                auto *h = std::get_if<Handle>(&state.get());
+                if (!h || !*h)
+                    return;
+
+                h->promise().continuation = handle;
+            }
+
+            T await_resume()
+            {
+                if (auto *imm = std::get_if<ImmediateState<T>>(&state.get()))
+                {
+                    if (imm->result.index() == ImmediateState<T>::exception_state)
+                        std::rethrow_exception(std::get<ImmediateState<T>::exception_state>(imm->result));
+
+                    assert(imm->result.index() == ImmediateState<T>::success_state);
+
+                    if constexpr (!std::is_void_v<T>)
+                        return std::get<ImmediateState<T>::success_state>(imm->result);
+                    else
+                        return;
+                }
+
+                auto &coro = std::get<Handle>(state.get());
+                auto &promise = coro.promise();
+
+                if (promise.result.index() == exception_state)
+                    std::rethrow_exception(std::get<exception_state>(promise.result));
+
+                assert(promise.result.index() == success_state);
+
+                if constexpr (!std::is_void_v<T>)
+                {
+                    return std::get<success_state>(promise.result);
+                }
+                else
+                {
+                    return;
+                }
+            }
+        };
+
+        struct MoveAwaiter
         {
             static constexpr auto success_state = TaskPromise<T>::success_state;
             static constexpr auto exception_state = TaskPromise<T>::exception_state;
@@ -264,15 +325,16 @@ namespace retro
                 }
 
                 auto &coro = std::get<Handle>(state);
+                auto &promise = coro.promise();
 
-                if (coro.promise().result.index() == exception_state)
+                if (promise.result.index() == exception_state)
                     std::rethrow_exception(std::get<exception_state>(coro.promise().result));
 
-                assert(coro.promise().result.index() == success_state);
+                assert(promise.result.index() == success_state);
 
                 if constexpr (!std::is_void_v<T>)
                 {
-                    return std::get<success_state>(std::move(coro.promise().result));
+                    return std::get<success_state>(std::move(promise.result));
                 }
                 else
                 {
@@ -345,9 +407,35 @@ namespace retro
             return std::forward_like<Self>(promise).get_result();
         }
 
-        Awaiter operator co_await() &&
+        void wait() const noexcept
         {
-            return Awaiter{std::exchange(state_, {})};
+            if (holds_alternative<std::monostate>(state_))
+                throw InvalidStateException{"Task is empty"};
+
+            if (holds_alternative<ImmediateState<T>>(state_))
+                return;
+
+            auto handle = std::get<Handle>(state_);
+            if (!handle)
+                throw InvalidStateException{"Task is empty"};
+
+            auto promise = handle.promise();
+            if (handle.done())
+                return;
+
+            std::atomic task_complete = false;
+            promise.on_complete.add([&task_complete] { task_complete = true; });
+            task_complete.wait(true);
+        }
+
+        RefAwaiter operator co_await() &
+        {
+            return RefAwaiter{std::ref(state_)};
+        }
+
+        MoveAwaiter operator co_await() &&
+        {
+            return MoveAwaiter{std::move(state_)};
         }
 
         template <typename Self>

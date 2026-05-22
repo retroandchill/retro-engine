@@ -16,6 +16,7 @@ module;
 module retro.runtime.rendering.text.font;
 
 import retro.core.util.exceptions;
+import :atlas_generator;
 
 namespace retro
 {
@@ -150,16 +151,13 @@ namespace retro
         std::int32_t width;
         std::int32_t height;
         packer.getDimensions(width, height);
-        msdf_atlas::ImmediateAtlasGenerator<float,
-                                            4,
-                                            msdf_atlas::mtsdfGenerator,
-                                            msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 4>>
+        AtlasGenerator<float, 4, msdf_atlas::mtsdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 4>>
             generator{width, height};
 
         msdf_atlas::GeneratorAttributes attributes;
-        generator.setAttributes(attributes);
-        generator.setThreadCount(4);
-        generator.generate(glyphs.data(), static_cast<std::int32_t>(glyphs.size()));
+        generator.set_attributes(attributes);
+        generator.set_thread_count(4);
+        co_await generator.generate_async(glyphs);
 
         output.glyphs.reserve(glyphs.size());
         for (const auto &glyph : glyphs)
@@ -187,7 +185,7 @@ namespace retro
                                              static_cast<float>(bounds.b) / static_cast<float>(height)}}});
         }
 
-        msdfgen::BitmapConstSection<msdf_atlas::byte, 4> section = generator.atlasStorage();
+        msdfgen::BitmapConstSection<msdf_atlas::byte, 4> section = generator.atlas_storage();
 
         std::span pixels{reinterpret_cast<const std::byte *>(section.pixels),
                          static_cast<std::size_t>(section.width * section.height * 4)};
