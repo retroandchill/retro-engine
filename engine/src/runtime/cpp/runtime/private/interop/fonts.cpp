@@ -57,14 +57,14 @@ extern "C"
 
     RETRO_API const char *retro_font_get_family_name(const Font *font, std::int32_t *length)
     {
-        const auto name = font->face().family_name();
+        const auto name = font->family_name();
         *length = static_cast<std::int32_t>(name.size());
         return name.data();
     }
 
     RETRO_API const char *retro_font_get_style_name(const Font *font, std::int32_t *length)
     {
-        const auto name = font->face().style_name();
+        const auto name = font->style_name();
         *length = static_cast<std::int32_t>(name.size());
         return name.data();
     }

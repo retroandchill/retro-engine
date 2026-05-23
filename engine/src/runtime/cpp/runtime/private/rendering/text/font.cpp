@@ -7,7 +7,7 @@
 module retro.runtime.rendering.text.font;
 
 import retro.core.util.exceptions;
-import :atlas_generator;
+import :async_atlas_generator;
 
 namespace retro
 {
@@ -59,20 +59,21 @@ namespace retro
     {
         const auto handle = create_font_handle(face.face_.get());
 
+        FontAtlas output{};
         std::vector<msdf_atlas::GlyphGeometry> glyphs;
         msdf_atlas::FontGeometry font_geometry{&glyphs};
-        font_geometry.loadCharset(handle.get(), 1.0, msdf_atlas::Charset::ASCII);
+        font_geometry.loadCharset(handle.get(), 1.0, output.charset_);
 
         auto metrics = font_geometry.getMetrics();
 
-        FontAtlas output{.distance_range = atlas_config.distance_range,
-                         .metrics = {
-                             .ascender = static_cast<float>(metrics.ascenderY),
-                             .descender = static_cast<float>(metrics.descenderY),
-                             .line_height = static_cast<float>(metrics.lineHeight),
-                             .underline_position = static_cast<float>(metrics.underlineY),
-                             .underline_thickness = static_cast<float>(metrics.underlineThickness),
-                         }};
+        output.distance_range_ = atlas_config.distance_range;
+        output.metrics_ = {
+            .ascender = static_cast<float>(metrics.ascenderY),
+            .descender = static_cast<float>(metrics.descenderY),
+            .line_height = static_cast<float>(metrics.lineHeight),
+            .underline_position = static_cast<float>(metrics.underlineY),
+            .underline_thickness = static_cast<float>(metrics.underlineThickness),
+        };
 
         msdf_atlas::TightAtlasPacker packer;
         packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
@@ -80,21 +81,20 @@ namespace retro
         packer.setPixelRange(atlas_config.distance_range);
         packer.setMiterLimit(1.0);
         packer.pack(glyphs.data(), static_cast<std::int32_t>(glyphs.size()));
-        std::int32_t width;
-        std::int32_t height;
-        packer.getDimensions(width, height);
-        AtlasGenerator<float, 4, msdf_atlas::mtsdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 4>>
-            generator{width, height};
+        auto &generator = output.atlas_.atlas_generator();
 
         msdf_atlas::GeneratorAttributes attributes;
         generator.set_attributes(attributes);
         generator.set_thread_count(4);
-        co_await generator.generate_async(glyphs);
+        co_await output.atlas_.add_async(glyphs);
 
-        output.glyphs.reserve(glyphs.size());
+        msdfgen::BitmapConstRef<msdfgen::byte, 4> storage = output.atlas_.atlas_generator().atlas_storage();
+        auto width = storage.width;
+        auto height = storage.height;
+
+        output.glyphs_.reserve(glyphs.size());
         for (const auto &glyph : glyphs)
         {
-
             auto code_point = static_cast<char32_t>(glyph.getCodepoint());
             msdfgen::Shape::Bounds bounds{};
             glyph.getQuadAtlasBounds(bounds.l, bounds.b, bounds.r, bounds.t);
@@ -102,7 +102,7 @@ namespace retro
             auto total_height = bounds.t - bounds.b;
             msdfgen::Shape::Bounds bearing_bounds{};
             glyph.getQuadPlaneBounds(bearing_bounds.l, bearing_bounds.b, bearing_bounds.r, bearing_bounds.t);
-            output.glyphs.emplace(
+            output.glyphs_.emplace(
                 glyph.getCodepoint(),
                 GlyphMetrics{.codepoint = code_point,
                              .glyph_index = glyph.getGlyphIndex().getIndex(),
@@ -122,12 +122,12 @@ namespace retro
         std::span pixels{reinterpret_cast<const std::byte *>(section.pixels),
                          static_cast<std::size_t>(section.width * section.height * 4)};
 
-        output.source_pixel_size = static_cast<float>(packer.getScale());
-        output.texture = co_await render_backend_.upload_texture(pixels,
-                                                                 section.width,
-                                                                 section.height,
-                                                                 TextureFormat::unorm,
-                                                                 TextureFilter::linear);
+        output.source_pixel_size_ = static_cast<float>(packer.getScale());
+        output.texture_ = co_await render_backend_.upload_texture(pixels,
+                                                                  section.width,
+                                                                  section.height,
+                                                                  TextureFormat::unorm,
+                                                                  TextureFilter::linear);
 
         co_return output;
     }

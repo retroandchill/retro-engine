@@ -23,4 +23,5 @@ namespace retro
 
     export using RectI = Rect<std::int32_t, std::uint32_t>;
     export using RectF = Rect<float>;
+    export using RectD = Rect<double>;
 } // namespace retro

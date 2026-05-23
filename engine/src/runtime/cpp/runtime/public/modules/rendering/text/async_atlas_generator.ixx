@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.runtime.rendering.text.font:atlas_generator;
+export module retro.runtime.rendering.text.font:async_atlas_generator;
 
 import std;
 import :dependencies;
@@ -33,20 +33,26 @@ namespace retro
               std::int32_t N,
               msdf_atlas::GeneratorFunction<T, N> Generator,
               ValidAtlasStorage<T, N> AtlasStorage>
-    class AtlasGenerator
+    class AsyncAtlasGenerator
     {
       public:
-        AtlasGenerator() = default;
+        AsyncAtlasGenerator() = default;
 
         template <typename... Args>
-            requires std::constructible_from<AtlasStorage, Args...>
-        explicit AtlasGenerator(Args &&...args) : storage_{std::forward<Args>(args)...}
+            requires std::constructible_from<AtlasStorage, std::int32_t, std::int32_t, Args...>
+        explicit AsyncAtlasGenerator(std::int32_t width, std::int32_t height, Args &&...args)
+            : storage_{width, height, std::forward<Args>(args)...}
         {
         }
 
         void generate(const msdf_atlas::GlyphGeometry *glyphs, const std::int32_t glyph_count)
         {
-            generate_async(glyphs, glyph_count).wait();
+            generate(std::span{glyphs, static_cast<std::size_t>(glyph_count)});
+        }
+
+        void generate(const std::span<const msdf_atlas::GlyphGeometry> glyphs)
+        {
+            generate_async(glyphs).wait();
         }
 
         Task<> generate_async(const msdf_atlas::GlyphGeometry *glyphs, const std::int32_t glyph_count)
@@ -109,8 +115,8 @@ namespace retro
         {
             for (auto &mapping : remapping)
             {
-                layout[mapping.index].rect.x = mapping.target.x;
-                layout[mapping.index].rect.y = mapping.target.y;
+                layout_[mapping.index].rect.x = mapping.target.x;
+                layout_[mapping.index].rect.y = mapping.target.y;
             }
             AtlasStorage new_storage{std::move(storage_),
                                      width,
@@ -143,12 +149,12 @@ namespace retro
 
         [[nodiscard]] const std::vector<msdf_atlas::GlyphBox> &layout() const
         {
-            return layout;
+            return layout_;
         }
 
       private:
         AtlasStorage storage_;
-        std::vector<msdf_atlas::GlyphGeometry> glyphs_;
+        std::vector<msdf_atlas::GlyphBox> layout_;
         std::vector<T> glyph_buffer_;
         std::vector<msdfgen::byte> error_correction_buffer_;
         msdf_atlas::GeneratorAttributes attributes_;

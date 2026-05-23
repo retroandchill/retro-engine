@@ -19,9 +19,12 @@ import retro.core.containers.optional;
 import retro.runtime.rendering.layout.uvs;
 import retro.core.async.task;
 import :freetype;
+import :async_atlas_generator;
+import :async_dynamic_atlas;
 
 namespace retro
 {
+    export class Font;
     export class FontService;
 
     export struct FontMsdfAtlasConfig
@@ -54,40 +57,61 @@ namespace retro
         UVs uvs{};
     };
 
-    export struct FontAtlas
-    {
-        float source_pixel_size{64};
-        float distance_range{8.0f};
+    using FontAtlasData = AsyncDynamicAtlas<
+        AsyncAtlasGenerator<float, 4, msdf_atlas::mtsdfGenerator, msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 4>>>;
 
-        FontMetrics metrics{};
-        std::unordered_map<char32_t, GlyphMetrics> glyphs{};
-        RefCountPtr<Texture> texture{};
+    export class RETRO_API FontAtlas
+    {
+        FontAtlas() = default;
+
+      public:
+        [[nodiscard]] inline float source_pixel_size() const noexcept
+        {
+            return source_pixel_size_;
+        }
+
+        [[nodiscard]] inline float distance_range() const noexcept
+        {
+            return distance_range_;
+        }
+
+        [[nodiscard]] inline const FontMetrics &metrics() const noexcept
+        {
+            return metrics_;
+        }
+
+        [[nodiscard]] inline const std::unordered_map<char32_t, GlyphMetrics> &glyphs() const noexcept
+        {
+            return glyphs_;
+        }
+
+        [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
+        {
+            return texture_;
+        }
+
+      private:
+        friend FontService;
+        friend Font;
+
+        float source_pixel_size_{64};
+        float distance_range_{8.0f};
+
+        FontMetrics metrics_{};
+        std::unordered_map<char32_t, GlyphMetrics> glyphs_{};
+        RefCountPtr<Texture> texture_{};
+        msdf_atlas::Charset charset_{msdf_atlas::Charset::ASCII};
+        FontAtlasData atlas_{};
     };
 
-    export class Font;
-
-    export class FontFace
+    class FontFace
     {
       public:
-        RETRO_API static constexpr std::uint32_t null_glyph_index = 0;
-
-      private:
         FontFace(FreeTypeLibrary library, std::vector<std::byte> bytes, FreeTypeFace face) noexcept;
 
-      public:
-        [[nodiscard]] inline std::string_view family_name() const noexcept
-        {
-            return family_name_;
-        }
-
-        [[nodiscard]] inline std::string_view style_name() const noexcept
-        {
-            return style_name_;
-        }
-
       private:
-        friend class FontService;
-        friend class Font;
+        friend FontService;
+        friend Font;
 
         std::vector<std::byte> bytes_;
         FreeTypeLibrary library_;
@@ -101,9 +125,14 @@ namespace retro
         explicit Font(FontFace font_face, FontAtlas font_atlas) noexcept;
 
       public:
-        [[nodiscard]] inline const FontFace &face() const noexcept
+        [[nodiscard]] inline std::string_view family_name() const noexcept
         {
-            return face_;
+            return face_.family_name_;
+        }
+
+        [[nodiscard]] inline std::string_view style_name() const noexcept
+        {
+            return face_.style_name_;
         }
 
         [[nodiscard]] inline const FontAtlas &atlas() const noexcept
@@ -112,7 +141,7 @@ namespace retro
         }
 
       private:
-        friend class FontService;
+        friend FontService;
 
         FontFace face_;
         FontAtlas primary_atlas_;

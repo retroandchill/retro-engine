@@ -33,12 +33,15 @@ export namespace msdf_atlas
 {
     using msdf_atlas::BitmapAtlasStorage;
     using msdf_atlas::byte;
+    using msdf_atlas::ceilToPOT;
+    using msdf_atlas::Charset;
     using msdf_atlas::FontGeometry;
     using msdf_atlas::GeneratorAttributes;
     using msdf_atlas::GeneratorFunction;
     using msdf_atlas::GlyphBox;
     using msdf_atlas::GlyphGeometry;
     using msdf_atlas::mtsdfGenerator;
+    using msdf_atlas::RectanglePacker;
     using msdf_atlas::Remap;
     using msdf_atlas::TightAtlasPacker;
 } // namespace msdf_atlas

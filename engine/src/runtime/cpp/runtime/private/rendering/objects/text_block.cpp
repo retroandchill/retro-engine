@@ -84,9 +84,9 @@ namespace retro
         std::vector<PendingGlyphQuad> pending_quads;
         pending_quads.reserve(codepoints.size());
 
-        const auto &font_metrics = font_atlas.metrics;
+        const auto &font_metrics = font_atlas.metrics();
 
-        auto size_ratio = static_cast<float>(pixel_size_) / static_cast<float>(font_atlas.source_pixel_size);
+        auto size_ratio = static_cast<float>(pixel_size_) / font_atlas.source_pixel_size();
 
         Vector2f pen{};
         Vector2f min_bounds{std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
@@ -107,8 +107,8 @@ namespace retro
                 continue;
             }
 
-            const auto glyph = font_atlas.glyphs.find(codepoint);
-            if (glyph == font_atlas.glyphs.end())
+            const auto glyph = font_atlas.glyphs().find(codepoint);
+            if (glyph == font_atlas.glyphs().end())
                 continue;
 
             const auto &glyph_metrics = glyph->second;
@@ -270,15 +270,15 @@ namespace retro
                                                                            .min_uv = quad.uvs.min,
                                                                            .max_uv = quad.uvs.max,
                                                                            .tint = node->tint_,
-                                                                           .pixel_range = font_atlas.distance_range};
+                                                                           .pixel_range = font_atlas.distance_range()};
                                           });
 
-            if (auto it = batches.find(font_atlas.texture.get()); it == batches.end())
+            if (auto it = batches.find(font_atlas.texture().get()); it == batches.end())
             {
                 auto [pair, inserted] =
-                    batches.emplace(font_atlas.texture.get(),
+                    batches.emplace(font_atlas.texture().get(),
                                     TextBlockBatch{
-                                        .font_texture = font_atlas.texture,
+                                        .font_texture = font_atlas.texture(),
                                         .instances = std::pmr::vector<TextBlockInstanceData>{&memory_resource},
                                         .viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size),
                                     });
@@ -287,8 +287,8 @@ namespace retro
             }
             else
             {
-                auto &[draw_texture, instances, viewport_draw_info] = batches[font_atlas.texture.get()];
-                draw_texture = font_atlas.texture;
+                auto &[draw_texture, instances, viewport_draw_info] = batches[font_atlas.texture().get()];
+                draw_texture = font_atlas.texture();
                 viewport_draw_info = viewport.camera_layout().get_draw_info(viewport_size);
                 instances.append_range(pending_data);
             }
