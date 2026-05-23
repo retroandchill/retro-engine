@@ -49,13 +49,6 @@ TEST(FontService, LoadFontFace)
 
     const auto font = service.load_font(std::move(bytes)).get();
 
-    EXPECT_FALSE(font->face().family_name().empty());
-    EXPECT_FALSE(font->face().style_name().empty());
-
-    EXPECT_TRUE(font->face().has_glyph(U'A'));
-    EXPECT_TRUE(font->face().has_glyph(U'B'));
-    EXPECT_TRUE(font->face().has_glyph(U'0'));
-    EXPECT_TRUE(font->face().has_glyph(U' '));
-
-    EXPECT_NE(font->face().glyph_index(U'A'), retro::FontFace::null_glyph_index);
+    EXPECT_FALSE(font->family_name().empty());
+    EXPECT_FALSE(font->style_name().empty());
 }

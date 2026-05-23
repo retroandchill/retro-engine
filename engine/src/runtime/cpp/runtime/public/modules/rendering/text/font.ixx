@@ -29,7 +29,7 @@ namespace retro
 
     struct FontHandleDeleter
     {
-        void operator()(msdfgen::FontHandle *handle) const noexcept
+        inline void operator()(msdfgen::FontHandle *handle) const noexcept
         {
             msdfgen::destroyFont(handle);
         }
