@@ -4,15 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#include <msdf-atlas-gen/msdf-atlas-gen.h>
-#include <msdfgen-ext.h>
-#include <msdfgen.h>
-
 module retro.runtime.rendering.text.font;
 
 import retro.core.util.exceptions;
@@ -22,7 +13,6 @@ namespace retro
 {
     namespace
     {
-
         struct FontHandleDeleter
         {
             void operator()(msdfgen::FontHandle *handle) const noexcept
@@ -33,62 +23,16 @@ namespace retro
 
         using FontHandlePtr = std::unique_ptr<msdfgen::FontHandle, FontHandleDeleter>;
 
-        FontHandlePtr create_font_handle(FreeTypeFace *face)
+        FontHandlePtr create_font_handle(FT_Face face)
         {
             return FontHandlePtr{msdfgen::adoptFreetypeFont(face)};
         }
-
-        void throw_freetype_error(const FT_Error error, std::string_view message)
-        {
-            if (error != FT_Err_Ok)
-            {
-                throw PlatformException{std::format("{}: {}", message, FT_Error_String(error))};
-            }
-        }
-
-        FreeTypeLibraryPtr init_free_type()
-        {
-            FT_Library library;
-            throw_freetype_error(FT_Init_FreeType(&library), "Failed to initialize FreeType library");
-            return FreeTypeLibraryPtr{library, FT_Done_FreeType};
-        }
     } // namespace
 
-    // ReSharper disable once CppParameterMayBeConst
-    void FreeTypeFaceDeleter::operator()(FT_Face face) const noexcept
-    {
-        FT_Done_Face(face);
-    }
-
-    FontFace::FontFace(FreeTypeLibraryPtr library, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept
+    FontFace::FontFace(FreeTypeLibrary library, std::vector<std::byte> bytes, FreeTypeFace face) noexcept
         : bytes_{std::move(bytes)}, library_{std::move(library)}, face_{std::move(face)},
           family_name_{face_->family_name}, style_name_{face_->style_name}
     {
-    }
-
-    std::uint32_t FontFace::glyph_index(const char32_t codepoint) const noexcept
-    {
-        return FT_Get_Char_Index(face_.get(), codepoint);
-    }
-
-    FontMetrics FontFace::metrics(const std::uint32_t pixel_size) const
-    {
-        auto *face = face_.get();
-
-        if (face == nullptr)
-        {
-            throw InvalidStateException("Cannot rasterize glyph from a null font face");
-        }
-
-        throw_freetype_error(FT_Set_Pixel_Sizes(face, 0, pixel_size), "Failed to set font pixel size");
-
-        return FontMetrics{
-            .ascender = static_cast<float>(face->size->metrics.ascender) / 64.0f,
-            .descender = static_cast<float>(face->size->metrics.descender) / 64.0f,
-            .line_height = static_cast<float>(face->size->metrics.height) / 64.0f,
-            .underline_position = static_cast<float>(face->underline_position) / 64.0f,
-            .underline_thickness = static_cast<float>(face->underline_thickness) / 64.0f,
-        };
     }
 
     Font::Font(FontFace font_face, FontAtlas font_atlas) noexcept
@@ -96,25 +40,13 @@ namespace retro
     {
     }
 
-    FontService::FontService(RenderBackend &render_backend)
-        : render_backend_{render_backend}, library_{init_free_type()}
+    FontService::FontService(RenderBackend &render_backend) : render_backend_{render_backend}
     {
     }
 
     Task<RefCountPtr<Font>> FontService::load_font(std::vector<std::byte> bytes) const
     {
-        FT_Face face;
-        if (const auto error = FT_New_Memory_Face(library_.get(),
-                                                  reinterpret_cast<const FT_Byte *>(bytes.data()),
-                                                  static_cast<std::int32_t>(bytes.size()),
-                                                  0,
-                                                  &face);
-            error != FT_Err_Ok)
-        {
-            throw IoException(FT_Error_String(error));
-        }
-
-        FontFace font_face{library_, std::move(bytes), FreeTypeFacePtr{face}};
+        FontFace font_face{library_, std::move(bytes), library_.load_face(bytes)};
 
         constexpr FontMsdfAtlasConfig atlas_config{.pixel_size = 24, .distance_range = 2.0f};
 

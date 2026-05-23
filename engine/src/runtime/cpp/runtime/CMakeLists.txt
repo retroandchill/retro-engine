@@ -101,6 +101,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/layout/uvs.ixx
         public/modules/rendering/text/font_atlas_generator.ixx
         public/modules/rendering/text/font_dependencies.ixx
+        public/modules/rendering/text/freetype.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

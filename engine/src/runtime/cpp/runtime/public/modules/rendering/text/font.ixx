@@ -18,31 +18,11 @@ import retro.runtime.rendering.render_backend;
 import retro.core.containers.optional;
 import retro.runtime.rendering.layout.uvs;
 import retro.core.async.task;
-
-// ReSharper disable CppInconsistentNaming
-extern "C"
-{
-    typedef struct FT_LibraryRec_ *FT_Library;
-    typedef struct FT_FaceRec_ *FT_Face;
-}
-// ReSharper restore CppInconsistentNaming
+import :freetype;
 
 namespace retro
 {
     export class FontService;
-
-    using FreeTypeFace = std::remove_pointer_t<FT_Face>;
-
-    struct FreeTypeFaceDeleter
-    {
-        RETRO_API void operator()(FT_Face face) const noexcept;
-    };
-
-    using FreeTypeFacePtr = std::unique_ptr<FreeTypeFace, FreeTypeFaceDeleter>;
-
-    using FreeTypeLibrary = std::remove_pointer_t<FT_Library>;
-
-    using FreeTypeLibraryPtr = std::shared_ptr<FreeTypeLibrary>;
 
     export struct FontMsdfAtlasConfig
     {
@@ -92,7 +72,7 @@ namespace retro
         RETRO_API static constexpr std::uint32_t null_glyph_index = 0;
 
       private:
-        FontFace(FreeTypeLibraryPtr library, std::vector<std::byte> bytes, FreeTypeFacePtr face) noexcept;
+        FontFace(FreeTypeLibrary library, std::vector<std::byte> bytes, FreeTypeFace face) noexcept;
 
       public:
         [[nodiscard]] inline std::string_view family_name() const noexcept
@@ -105,22 +85,13 @@ namespace retro
             return style_name_;
         }
 
-        [[nodiscard]] inline bool has_glyph(const char32_t codepoint) const noexcept
-        {
-            return glyph_index(codepoint) != null_glyph_index;
-        }
-
-        RETRO_API [[nodiscard]] std::uint32_t glyph_index(char32_t codepoint) const noexcept;
-
-        RETRO_API [[nodiscard]] FontMetrics metrics(std::uint32_t pixel_size) const;
-
       private:
         friend class FontService;
         friend class Font;
 
         std::vector<std::byte> bytes_;
-        FreeTypeLibraryPtr library_;
-        FreeTypeFacePtr face_;
+        FreeTypeLibrary library_;
+        FreeTypeFace face_;
         std::string_view family_name_;
         std::string_view style_name_;
     };
@@ -158,6 +129,6 @@ namespace retro
         Task<FontAtlas> generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
 
         RenderBackend &render_backend_;
-        FreeTypeLibraryPtr library_{};
+        FreeTypeLibrary library_{};
     };
 } // namespace retro
