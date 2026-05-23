@@ -6,6 +6,7 @@
  */
 module;
 
+#include <boost/thread/condition_variable.hpp>
 #include <cassert>
 
 export module retro.core.async.task;
@@ -121,11 +122,13 @@ namespace retro
         std::coroutine_handle<> continuation{};
         std::variant<std::monostate, T, std::exception_ptr> result{};
         SimpleMulticastDelegate on_complete;
+        mutable std::mutex result_mutex;
 
         template <typename Self>
         decltype(auto) get_result(this Self &&self)
             requires !std::is_void_v<T>
         {
+            std::scoped_lock lock{self.result_mutex};
             if (self.result.index() == exception_state)
             {
                 std::rethrow_exception(std::get<std::exception_ptr>(self.result));
@@ -152,7 +155,10 @@ namespace retro
 
         void unhandled_exception() noexcept
         {
-            result.template emplace<exception_state>(std::current_exception());
+            std::scoped_lock lock{result_mutex};
+            {
+                result.template emplace<exception_state>(std::current_exception());
+            }
             on_complete.broadcast();
         }
     };
@@ -163,7 +169,10 @@ namespace retro
         template <std::convertible_to<T> U>
         void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
-            this->result.template emplace<TaskPromiseBase<T>::success_state>(std::forward<U>(value));
+            std::scoped_lock lock{this->result_mutex};
+            {
+                this->result.template emplace<TaskPromiseBase<T>::success_state>(std::forward<U>(value));
+            }
             this->on_complete.broadcast();
         }
     };
@@ -177,7 +186,10 @@ namespace retro
     {
         inline void return_void() noexcept
         {
-            result.emplace<success_state>();
+            std::scoped_lock lock{result_mutex};
+            {
+                result.emplace<success_state>();
+            }
             on_complete.broadcast();
         }
     };
@@ -265,6 +277,7 @@ namespace retro
 
                 auto &coro = std::get<Handle>(state.get());
                 auto &promise = coro.promise();
+                std::scoped_lock lock{promise.result_mutex};
 
                 if (promise.result.index() == exception_state)
                     std::rethrow_exception(std::get<exception_state>(promise.result));
@@ -326,6 +339,7 @@ namespace retro
 
                 auto &coro = std::get<Handle>(state);
                 auto &promise = coro.promise();
+                std::scoped_lock lock{promise.result_mutex};
 
                 if (promise.result.index() == exception_state)
                     std::rethrow_exception(std::get<exception_state>(coro.promise().result));
@@ -395,19 +409,22 @@ namespace retro
             if (!handle)
                 throw InvalidStateException{"Task is empty"};
 
-            auto promise = handle.promise();
+            auto &promise = handle.promise();
             if (handle.done())
             {
                 return std::forward_like<Self>(promise).get_result();
             }
 
-            std::atomic task_complete = false;
-            promise.on_complete.add([&task_complete] { task_complete = true; });
-            task_complete.wait(true);
+            {
+                std::unique_lock lock{promise.result_mutex};
+                std::condition_variable task_complete;
+                promise.on_complete.add([&task_complete] { task_complete.notify_one(); });
+                task_complete.wait(lock, [&promise, handle] { return handle.done() || promise.result.index() != 0; });
+            }
             return std::forward_like<Self>(promise).get_result();
         }
 
-        void wait() const noexcept
+        void wait() const
         {
             if (holds_alternative<std::monostate>(state_))
                 throw InvalidStateException{"Task is empty"};
@@ -419,13 +436,14 @@ namespace retro
             if (!handle)
                 throw InvalidStateException{"Task is empty"};
 
-            auto promise = handle.promise();
+            auto &promise = handle.promise();
             if (handle.done())
                 return;
 
-            std::atomic task_complete = false;
-            promise.on_complete.add([&task_complete] { task_complete = true; });
-            task_complete.wait(true);
+            std::unique_lock lock{promise.result_mutex};
+            std::condition_variable task_complete;
+            promise.on_complete.add([&task_complete] { task_complete.notify_one(); });
+            task_complete.wait(lock, [&promise, handle] { return handle.done() || promise.result.index() != 0; });
         }
 
         RefAwaiter operator co_await() &

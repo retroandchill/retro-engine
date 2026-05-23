@@ -27,6 +27,21 @@ namespace retro
     export class Font;
     export class FontService;
 
+    struct FontHandleDeleter
+    {
+        void operator()(msdfgen::FontHandle *handle) const noexcept
+        {
+            msdfgen::destroyFont(handle);
+        }
+    };
+
+    using FontHandlePtr = std::unique_ptr<msdfgen::FontHandle, FontHandleDeleter>;
+
+    FontHandlePtr create_font_handle(FT_Face face)
+    {
+        return FontHandlePtr{msdfgen::adoptFreetypeFont(face)};
+    }
+
     export struct FontMsdfAtlasConfig
     {
         float pixel_size{64};
@@ -65,6 +80,16 @@ namespace retro
         FontAtlas() = default;
 
       public:
+        FontAtlas(const FontAtlas &) = delete;
+
+        FontAtlas(FontAtlas &&other) noexcept;
+
+        ~FontAtlas() = default;
+
+        FontAtlas &operator=(const FontAtlas &) = delete;
+
+        FontAtlas &operator=(FontAtlas &&other) noexcept;
+
         [[nodiscard]] inline float source_pixel_size() const noexcept
         {
             return source_pixel_size_;
@@ -82,11 +107,13 @@ namespace retro
 
         [[nodiscard]] inline const std::unordered_map<char32_t, GlyphMetrics> &glyphs() const noexcept
         {
+            std::shared_lock lock{atlas_mutex_};
             return glyphs_;
         }
 
         [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
         {
+            std::shared_lock lock{atlas_mutex_};
             return texture_;
         }
 
@@ -94,14 +121,22 @@ namespace retro
         friend FontService;
         friend Font;
 
+        void add_glyphs(RenderBackend &render_backend, msdfgen::FontHandle &handle, std::u32string_view codepoints);
+
+        Task<> add_glyphs_async(RefCountPtr<RenderBackend> render_backend,
+                                msdfgen::FontHandle &handle,
+                                std::u32string_view codepoints);
+
+        [[nodiscard]] msdf_atlas::Charset get_new_chars(std::u32string_view codepoints) const;
+
         float source_pixel_size_{64};
         float distance_range_{8.0f};
 
         FontMetrics metrics_{};
         std::unordered_map<char32_t, GlyphMetrics> glyphs_{};
         RefCountPtr<Texture> texture_{};
-        msdf_atlas::Charset charset_{msdf_atlas::Charset::ASCII};
         FontAtlasData atlas_{};
+        mutable std::shared_mutex atlas_mutex_;
     };
 
     class FontFace
@@ -116,13 +151,14 @@ namespace retro
         std::vector<std::byte> bytes_;
         FreeTypeLibrary library_;
         FreeTypeFace face_;
+        FontHandlePtr handle_{};
         std::string_view family_name_;
         std::string_view style_name_;
     };
 
     class Font final : public IntrusiveRefCounted
     {
-        explicit Font(FontFace font_face, FontAtlas font_atlas) noexcept;
+        explicit Font(RefCountPtr<RenderBackend> render_backend, FontFace font_face, FontAtlas font_atlas) noexcept;
 
       public:
         [[nodiscard]] inline std::string_view family_name() const noexcept
@@ -140,9 +176,14 @@ namespace retro
             return primary_atlas_;
         }
 
+        void add_glyphs_if_missing(std::u32string_view codepoints);
+
+        Task<> add_glyphs_if_missing_async(std::u32string_view codepoints);
+
       private:
         friend FontService;
 
+        RefCountPtr<RenderBackend> render_backend_;
         FontFace face_;
         FontAtlas primary_atlas_;
     };

@@ -89,7 +89,7 @@ namespace retro
         AtlasChangeFlag adjust_atlas_if_needed(std::span<msdf_atlas::GlyphGeometry> glyphs, bool allow_rearrange)
         {
             auto change_flag = AtlasChangeFlag::no_change;
-            auto start = rectangles_.size();
+            const auto start = rectangles_.size();
             for (const auto [i, glyph] : glyphs | std::views::enumerate)
             {
                 if (glyph.isWhitespace())

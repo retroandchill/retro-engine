@@ -79,6 +79,7 @@ namespace retro
         cached_quads_.clear();
 
         const auto codepoints = convert_string<char32_t>(text_);
+        font_->add_glyphs_if_missing(codepoints);
         cached_quads_.reserve(codepoints.size());
 
         std::vector<PendingGlyphQuad> pending_quads;

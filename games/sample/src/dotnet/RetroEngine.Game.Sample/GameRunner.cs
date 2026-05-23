@@ -107,7 +107,7 @@ public sealed class GameRunner(
 
         _ = new TextBlock(window)
         {
-            Text = "Hello, world!",
+            Text = "Pokémon",
             Position = new Vector2F(0, -62),
             Font = textFont,
             Pivot = new Vector2F(0.5f, 0.5f),
