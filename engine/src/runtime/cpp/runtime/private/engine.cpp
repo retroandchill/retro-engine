@@ -25,7 +25,8 @@ import retro.runtime.rendering.draw_command;
 namespace retro
 {
 
-    Engine::Engine(PlatformBackend &platform_backend) : platform_backend_{platform_backend}
+    Engine::Engine(PlatformBackend &platform_backend, EventManager &event_manager)
+        : platform_backend_{platform_backend}, event_manager_{event_manager}
     {
     }
 
@@ -49,7 +50,7 @@ namespace retro
         }
     }
 
-    bool Engine::handle_platform_event(const Event &event)
+    bool Engine::handle_platform_event(const PlatformEvent &event)
     {
         return std::visit(
             [&]<typename T>(const T &evt)
@@ -58,6 +59,10 @@ namespace retro
                 {
                     on_shutdown_requested_();
                     return false;
+                }
+                else if constexpr (std::is_same_v<T, WindowResizedEvent>)
+                {
+                    event_manager_.push_event(evt);
                 }
                 else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
                 {

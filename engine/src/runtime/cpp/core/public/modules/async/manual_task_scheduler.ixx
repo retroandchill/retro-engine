@@ -27,5 +27,6 @@ namespace retro
       private:
         std::mutex mutex_;
         std::deque<SimpleDelegate> queue_;
+        std::deque<SimpleDelegate> pumping_;
     };
 } // namespace retro

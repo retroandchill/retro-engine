@@ -68,6 +68,8 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/rendering/text/font.cpp
         private/interop/fonts.cpp
         private/rendering/objects/text_block.cpp
+        private/event_manager.cpp
+        private/interop/event_manager.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -102,7 +104,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/text/font_dependencies.ixx
         public/modules/rendering/text/freetype.ixx
         public/modules/rendering/text/async_dynamic_atlas.ixx
-        public/modules/event_bridge.ixx
+        public/modules/event_manager.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

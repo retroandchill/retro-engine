@@ -69,11 +69,11 @@ namespace retro
         std::function<void()> callback;
     };
 
-    export using Event = std::variant<QuitEvent,
-                                      WindowCloseRequestedEvent,
-                                      WindowResizedEvent,
-                                      MouseMovedEvent,
-                                      MouseButtonEvent,
-                                      KeyEvent,
-                                      CallbackEvent>;
+    export using PlatformEvent = std::variant<QuitEvent,
+                                              WindowCloseRequestedEvent,
+                                              WindowResizedEvent,
+                                              MouseMovedEvent,
+                                              MouseButtonEvent,
+                                              KeyEvent,
+                                              CallbackEvent>;
 } // namespace retro

@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RetroEngine.Events;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization;
@@ -21,6 +22,7 @@ namespace RetroEngine;
 public sealed partial class Engine : IAsyncDisposable
 {
     private readonly PlatformBackend _platformBackend;
+    private readonly EventManager _eventManager;
     private readonly IntPtr _nativeEngine;
     private bool _disposed;
     private Thread? _gameThread;
@@ -32,12 +34,14 @@ public sealed partial class Engine : IAsyncDisposable
 
     internal Engine(
         PlatformBackend platformBackend,
+        EventManager eventManager,
         IntPtr nativeEngine,
         IServiceCollection serviceCollection,
         Func<IServiceCollection, IServiceProvider> serviceProviderFactory
     )
     {
         _platformBackend = platformBackend;
+        _eventManager = eventManager;
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton(_platformBackend);
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
@@ -179,6 +183,7 @@ public sealed partial class Engine : IAsyncDisposable
 
         _disposed = true;
         _platformBackend.Dispose();
+        _eventManager.Dispose();
         await _host.DisposeAsync();
 
         CultureManager.Instance.Dispose();

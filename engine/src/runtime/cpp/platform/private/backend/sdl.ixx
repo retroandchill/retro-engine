@@ -261,7 +261,7 @@ namespace retro
             return create_window_internal_async(handle);
         }
 
-        Optional<Event> poll_event() override
+        Optional<PlatformEvent> poll_event() override
         {
             SDL_Event e{};
             if (!SDL_PollEvent(&e))
@@ -272,7 +272,7 @@ namespace retro
             return to_event(e);
         }
 
-        Optional<Event> wait_for_event() override
+        Optional<PlatformEvent> wait_for_event() override
         {
             SDL_Event e{};
             if (!SDL_WaitEvent(&e))
@@ -283,7 +283,7 @@ namespace retro
             return to_event(e);
         }
 
-        Optional<Event> wait_for_event(const std::chrono::milliseconds timeout) override
+        Optional<PlatformEvent> wait_for_event(const std::chrono::milliseconds timeout) override
         {
             SDL_Event e{};
             if (!SDL_WaitEventTimeout(&e, static_cast<std::int16_t>(timeout.count())))
@@ -294,7 +294,7 @@ namespace retro
             return to_event(e);
         }
 
-        PlatformResult<void> push_event(Event event) override
+        PlatformResult<void> push_event(PlatformEvent event) override
         {
             auto e = from_event(std::move(event));
             if (!SDL_PushEvent(&e))
@@ -344,7 +344,7 @@ namespace retro
             co_return co_await promise->get_future();
         }
 
-        SDL_Event from_event(Event &&event)
+        SDL_Event from_event(PlatformEvent &&event)
         {
             return std::visit(Overload{[](const QuitEvent &)
                                        {
@@ -420,27 +420,27 @@ namespace retro
                               std::move(event));
         }
 
-        Optional<Event> to_event(const SDL_Event &e) noexcept
+        Optional<PlatformEvent> to_event(const SDL_Event &e) noexcept
         {
             switch (e.type)
             {
                 case SDL_EVENT_QUIT:
-                    return Event{QuitEvent{}};
+                    return PlatformEvent{QuitEvent{}};
 
                 case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                    return Event{WindowCloseRequestedEvent{
+                    return PlatformEvent{WindowCloseRequestedEvent{
                         .window_id = e.window.windowID,
                     }};
 
                 case SDL_EVENT_WINDOW_RESIZED:
-                    return Event{WindowResizedEvent{
+                    return PlatformEvent{WindowResizedEvent{
                         .window_id = e.window.windowID,
                         .width = e.window.data1,
                         .height = e.window.data2,
                     }};
 
                 case SDL_EVENT_MOUSE_MOTION:
-                    return Event{MouseMovedEvent{
+                    return PlatformEvent{MouseMovedEvent{
                         .window_id = e.motion.windowID,
                         .x = e.motion.x,
                         .y = e.motion.y,
@@ -450,7 +450,7 @@ namespace retro
 
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 case SDL_EVENT_MOUSE_BUTTON_UP:
-                    return Event{MouseButtonEvent{
+                    return PlatformEvent{MouseButtonEvent{
                         .window_id = e.button.windowID,
                         .button = to_mouse_button(e.button.button),
                         .down = (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN),
@@ -460,7 +460,7 @@ namespace retro
 
                 case SDL_EVENT_KEY_DOWN:
                 case SDL_EVENT_KEY_UP:
-                    return Event{KeyEvent{
+                    return PlatformEvent{KeyEvent{
                         .window_id = e.key.windowID,
                         .keycode = static_cast<std::int32_t>(e.key.key),
                         .scancode = static_cast<std::int32_t>(e.key.scancode),

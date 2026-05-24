@@ -11,6 +11,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Config;
+using RetroEngine.Events;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.Portable.Localization.Cultures;
@@ -65,13 +66,14 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         _ = CultureManager.Instance;
 
         var platformBackend = new PlatformBackend(PlatformBackendKind.SDL3, PlatformInitFlags.Video);
+        var eventManager = new EventManager();
         try
         {
-            var nativeEngine = CreateNativeEngine(platformBackend);
+            var nativeEngine = CreateNativeEngine(platformBackend, eventManager);
 
             try
             {
-                return new Engine(platformBackend, nativeEngine, Services, _serviceProviderFactory);
+                return new Engine(platformBackend, eventManager, nativeEngine, Services, _serviceProviderFactory);
             }
             catch
             {
@@ -82,6 +84,7 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
         catch
         {
             platformBackend.Dispose();
+            eventManager.Dispose();
             throw;
         }
     }
@@ -110,5 +113,5 @@ public sealed partial class EngineBuilder : IHostApplicationBuilder
     }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_create_engine")]
-    private static unsafe partial IntPtr CreateNativeEngine(PlatformBackend platformBackend);
+    private static unsafe partial IntPtr CreateNativeEngine(PlatformBackend platformBackend, EventManager eventManager);
 }

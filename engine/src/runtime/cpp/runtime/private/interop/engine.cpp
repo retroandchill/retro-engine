@@ -19,6 +19,9 @@ import retro.runtime.rendering.objects.geometry;
 import retro.runtime.rendering.objects.sprite;
 import retro.core.interop.interop_error;
 import retro.runtime.rendering.pipeline_manager.render_manager;
+import retro.runtime.event_manager;
+
+using namespace retro;
 
 namespace
 {
@@ -29,39 +32,39 @@ namespace
 
 extern "C"
 {
-    RETRO_API retro::Engine *retro_create_engine(retro::PlatformBackend *backend)
+    RETRO_API Engine *retro_create_engine(PlatformBackend *backend, EventManager *event_manager)
     {
-        return new retro::Engine(*backend);
+        return new Engine(*backend, *event_manager);
     }
 
-    RETRO_API void retro_destroy_engine(const retro::Engine *engine)
+    RETRO_API void retro_destroy_engine(const Engine *engine)
     {
         delete engine;
     }
 
-    RETRO_API void retro_engine_wait_platform_events(retro::Engine *engine, std::int64_t timeout)
+    RETRO_API void retro_engine_wait_platform_events(Engine *engine, std::int64_t timeout)
     {
         engine->wait_platform_event(std::chrono::milliseconds{timeout});
     }
 
-    RETRO_API void retro_engine_poll_platform_events(retro::Engine *engine)
+    RETRO_API void retro_engine_poll_platform_events(Engine *engine)
     {
         engine->poll_events_once();
     }
 
-    RETRO_API void retro_engine_on_shutdown_requested_add(retro::Engine *engine,
+    RETRO_API void retro_engine_on_shutdown_requested_add(Engine *engine,
                                                           void *user_data,
                                                           const ShutdownRequestedCallback removed_callback,
                                                           const DeleteCallback delete_callback,
                                                           const EqualsCallback equals_callback)
     {
-        retro::InteropFunction<void()> function{removed_callback,
-                                                std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
-                                                equals_callback};
+        InteropFunction<void()> function{removed_callback,
+                                         std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                                         equals_callback};
         engine->on_shutdown_requested().add(std::move(function));
     }
 
-    RETRO_API void retro_bind_window_close_events(retro::Engine *engine, retro::RenderManager *render_manager)
+    RETRO_API void retro_bind_window_close_events(Engine *engine, RenderManager *render_manager)
     {
         engine->on_window_close_requested().add([render_manager](const std::uint64_t id)
                                                 { render_manager->remove_window(id); });

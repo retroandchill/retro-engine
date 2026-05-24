@@ -17,7 +17,6 @@ import retro.core.containers.inline_list;
 import retro.core.functional.overload;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
-import retro.runtime.exceptions;
 import retro.renderer.vulkan.vulkan_render_backend;
 import retro.runtime.rendering.texture;
 

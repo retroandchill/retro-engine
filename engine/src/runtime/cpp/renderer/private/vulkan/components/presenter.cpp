@@ -14,8 +14,8 @@ module;
 
 module retro.renderer.vulkan.components.presenter;
 
-import retro.runtime.exceptions;
 import retro.logging;
+import retro.core.util.exceptions;
 
 namespace retro
 {

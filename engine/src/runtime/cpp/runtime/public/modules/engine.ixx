@@ -25,27 +25,22 @@ import retro.platform.backend;
 import retro.platform.event;
 import retro.core.functional.function_ref;
 import retro.core.type_traits.range;
+import retro.runtime.event_manager;
+import retro.core.util.noncopyable;
 
 namespace retro
 {
     export using OnWindowCloseRequested = MulticastDelegate<void(std::uint64_t)>;
     export using OnShutdownRequested = MulticastDelegate<void()>;
 
-    export class Engine
+    export class RETRO_API Engine : NonCopyable
     {
       public:
-        RETRO_API explicit Engine(PlatformBackend &platform_backend);
+        explicit Engine(PlatformBackend &platform_backend, EventManager &event_manager);
 
-        ~Engine() = default;
+        void wait_platform_event(std::chrono::milliseconds timeout);
 
-        Engine(const Engine &) = delete;
-        Engine(Engine &&) noexcept = delete;
-        Engine &operator=(const Engine &) = delete;
-        Engine &operator=(Engine &&) noexcept = delete;
-
-        RETRO_API void wait_platform_event(std::chrono::milliseconds timeout);
-
-        RETRO_API void poll_events_once();
+        void poll_events_once();
 
         inline OnWindowCloseRequested::Event on_window_close_requested()
         {
@@ -58,9 +53,10 @@ namespace retro
         }
 
       private:
-        bool handle_platform_event(const Event &event);
+        bool handle_platform_event(const PlatformEvent &event);
 
         PlatformBackend &platform_backend_;
+        EventManager &event_manager_;
         OnWindowCloseRequested on_window_close_requested_;
         OnShutdownRequested on_shutdown_requested_;
     };

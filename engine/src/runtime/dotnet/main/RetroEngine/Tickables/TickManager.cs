@@ -6,6 +6,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Async;
+using RetroEngine.Events;
 using RetroEngine.Utilities.Async;
 using ZLinq;
 
@@ -14,6 +15,7 @@ namespace RetroEngine.Tickables;
 [RegisterSingleton]
 public sealed class TickManager : IDisposable
 {
+    private readonly EventManager _eventManager;
     private readonly HashSet<ITickable> _tickables = new(ReferenceEqualityComparer.Default);
     private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly NativeTaskScheduler _nativeTaskScheduler = new();
@@ -22,8 +24,9 @@ public sealed class TickManager : IDisposable
     public IThreadSync ThreadSync => _synchronizationContext;
     public ulong FrameCount { get; private set; }
 
-    public TickManager(ILogger<TickManager> logger)
+    public TickManager(EventManager eventManager, ILogger<TickManager> logger)
     {
+        _eventManager = eventManager;
         _logger = logger;
         _synchronizationContext.UnhandledException += OnUnhandledException;
     }
@@ -51,6 +54,7 @@ public sealed class TickManager : IDisposable
 
     internal void Tick(float deltaTime)
     {
+        _eventManager.PollEvents();
         _nativeTaskScheduler.PumpTasks();
         foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
         {

@@ -89,22 +89,22 @@ namespace retro
             return create_task_from_result(create_window_from_native(handle));
         }
 
-        Optional<Event> poll_event() override
+        Optional<PlatformEvent> poll_event() override
         {
             return std::nullopt;
         }
 
-        Optional<Event> wait_for_event() override
+        Optional<PlatformEvent> wait_for_event() override
         {
             return std::nullopt;
         }
 
-        Optional<Event> wait_for_event(std::chrono::milliseconds timeout) override
+        Optional<PlatformEvent> wait_for_event(std::chrono::milliseconds timeout) override
         {
             return std::nullopt;
         }
 
-        PlatformResult<void> push_event(Event event) override
+        PlatformResult<void> push_event(PlatformEvent event) override
         {
             return {};
         }

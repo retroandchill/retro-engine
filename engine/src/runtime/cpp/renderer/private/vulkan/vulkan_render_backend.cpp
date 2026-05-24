@@ -5,8 +5,8 @@
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
 module retro.renderer.vulkan.vulkan_render_backend;
+
 import retro.renderer.vulkan.renderer;
-import retro.runtime.exceptions;
 import retro.core.util.exceptions;
 import retro.core.functional.binding;
 

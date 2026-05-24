@@ -27,29 +27,28 @@ namespace retro
 
     std::size_t ManualTaskScheduler::pump(const std::size_t max)
     {
-        std::deque<SimpleDelegate> local;
         {
             std::scoped_lock lock{mutex_};
-            local.swap(queue_);
+            pumping_.swap(queue_);
         }
 
         std::size_t ran = 0;
-        while (!local.empty() && ran < max)
+        while (!pumping_.empty() && ran < max)
         {
-            auto delegate = std::move(local.front());
-            local.pop_front();
+            auto delegate = std::move(pumping_.front());
+            pumping_.pop_front();
             (void)delegate.execute_if_bound();
             ran++;
         }
 
-        if (!local.empty())
+        if (!pumping_.empty())
         {
             std::scoped_lock lock{mutex_};
 
-            while (!local.empty())
+            while (!pumping_.empty())
             {
-                queue_.push_front(std::move(local.back()));
-                local.pop_back();
+                queue_.push_front(std::move(pumping_.back()));
+                pumping_.pop_back();
             }
         }
 
