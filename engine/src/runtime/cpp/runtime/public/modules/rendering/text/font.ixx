@@ -108,13 +108,13 @@ namespace retro
 
         [[nodiscard]] inline const std::unordered_map<char32_t, GlyphMetrics> &glyphs() const noexcept
         {
-            SemaphoreGuard guard{atlas_semaphore_};
+            std::shared_lock guard{mutex_};
             return glyphs_;
         }
 
         [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
         {
-            SemaphoreGuard guard{atlas_semaphore_};
+            std::shared_lock guard{mutex_};
             return texture_;
         }
 
@@ -137,6 +137,7 @@ namespace retro
         std::unordered_map<char32_t, GlyphMetrics> glyphs_{};
         RefCountPtr<Texture> texture_{};
         FontAtlasData atlas_{};
+        mutable std::shared_mutex mutex_;
         mutable Semaphore atlas_semaphore_{1, 1};
     };
 

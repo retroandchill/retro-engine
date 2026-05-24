@@ -138,7 +138,7 @@ namespace retro
     export using Vector3f = Vector3<float>;
     export using Vector3d = Vector3<double>;
 
-    export template <Numeric T>
+    template <Numeric T>
     struct Vector<T, 4>
     {
         using ValueType = T;

@@ -75,6 +75,7 @@ namespace retro
             }
         }
 
+        std::unique_lock guard{mutex_};
         for (const auto &glyph : glyphs)
         {
             auto code_point = static_cast<char32_t>(glyph.getCodepoint());
@@ -151,6 +152,17 @@ namespace retro
             }
         }
 
+        // In the async context we need to upload the texture first so that the mutex lock does not cross a thread
+        // boundary due to a coroutine suspension point
+        std::span pixels{reinterpret_cast<const std::byte *>(storage.pixels),
+                         static_cast<std::size_t>(storage.width * storage.height * 4)};
+
+        auto new_texture =
+            co_await render_backend
+                ->upload_texture(pixels, storage.width, storage.height, TextureFormat::unorm, TextureFilter::linear)
+                .configure_await(false);
+
+        std::unique_lock guard{mutex_};
         for (const auto &glyph : glyphs)
         {
             auto code_point = static_cast<char32_t>(glyph.getCodepoint());
@@ -174,17 +186,12 @@ namespace retro
                                                          static_cast<float>(bounds.b) / static_cast<float>(height)}}});
         }
 
-        std::span pixels{reinterpret_cast<const std::byte *>(storage.pixels),
-                         static_cast<std::size_t>(storage.width * storage.height * 4)};
-
-        texture_ =
-            co_await render_backend
-                ->upload_texture(pixels, storage.width, storage.height, TextureFormat::unorm, TextureFilter::linear)
-                .configure_await(false);
+        texture_ = new_texture;
     }
 
     msdf_atlas::Charset FontAtlas::get_new_chars(std::u32string_view codepoints) const
     {
+        std::shared_lock guard{mutex_};
         msdf_atlas::Charset result;
         for (const auto codepoint :
              codepoints | std::views::filter([this](const char32_t c) { return !glyphs_.contains(c); }))
