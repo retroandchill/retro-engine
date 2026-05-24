@@ -8,7 +8,6 @@
 
 import retro.runtime.rendering.text.font;
 import std;
-import retro.core.io.file_stream;
 import retro.runtime.rendering.headless_render_backend;
 
 using namespace retro;
@@ -22,15 +21,18 @@ namespace
 
     [[nodiscard]] std::vector<std::byte> read_binary_file(const std::filesystem::path &path)
     {
-        auto bytes = FileStream::open(path, FileOpenMode::read_only)
-                         .and_then([](const std::unique_ptr<FileStream> &stream) { return stream->read_all(); });
-
-        if (!bytes.has_value())
+        if (std::ifstream file(path, std::ios::binary); file.is_open())
         {
-            throw std::runtime_error{std::format("Failed to read test file: {}", path.string())};
+            file.seekg(0, std::ios::end);
+            std::streamsize size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            std::vector<std::byte> bytes(size);
+            file.read(reinterpret_cast<char *>(bytes.data()), size);
+            return bytes;
         }
 
-        return *std::move(bytes);
+        return {};
     }
 
     [[nodiscard]] std::vector<std::byte> read_test_font()
