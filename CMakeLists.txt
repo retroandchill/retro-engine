@@ -34,6 +34,9 @@ if(EXISTS "${RETRO_VENV_PYTHON}")
     set(Python3_EXECUTABLE "${RETRO_VENV_PYTHON}" CACHE FILEPATH "Python interpreter from project virtual environment")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(EmbedFiles)
+
 project(retro_engine LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)

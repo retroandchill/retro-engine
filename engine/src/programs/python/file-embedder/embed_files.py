@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TypedDict, Collection
+from typing import TypedDict, Collection, Literal
 
 import numpy
 from pybars import Compiler
@@ -13,11 +13,13 @@ class ProgramArgs(BaseModel):
         description='The output directory for the embedded files')
     template_file: str = Field(
         description='The template file to use for embedding')
+    dtype: str = Field(
+        default='uint8', description='The data type to use for the embedded files')
 
 
-class ShaderInfo(TypedDict):
+class FileInfo(TypedDict):
     variable_name: str
-    words: list[int]
+    elements: list[int]
 
 
 def joining(source, options, delimiter: str, elements: Collection[object]) -> list[str]:
@@ -32,11 +34,11 @@ def joining(source, options, delimiter: str, elements: Collection[object]) -> li
     return result
 
 
-def get_shader_info(shader_file: str) -> ShaderInfo:
-    path = Path(shader_file)
+def get_file_info(source_file: str, dtype=numpy.uint32) -> FileInfo:
+    path = Path(source_file)
     return {
         'variable_name': path.stem.replace('.', '_'),
-        'words': numpy.fromfile(shader_file, dtype=numpy.uint32).tolist(),
+        'elements': numpy.fromfile(source_file, dtype=dtype).tolist(),
     }
 
 
@@ -50,7 +52,7 @@ def main(args: ProgramArgs):
         'joining': joining,
     }
     template_args = {
-        'shaders': [get_shader_info(shader_file) for shader_file in args.input_files]
+        'files': [get_file_info(source_file, dtype=getattr(numpy, args.dtype)) for source_file in args.input_files]
     }
     output_content = template(template_args, helpers=helpers)
     with open(args.output_file, 'w') as f:

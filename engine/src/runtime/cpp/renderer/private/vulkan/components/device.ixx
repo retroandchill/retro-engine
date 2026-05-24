@@ -17,7 +17,6 @@ import retro.renderer.vulkan.components.instance;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.platform.backend;
 import retro.core.type_traits.basic;
-import retro.core.io.stream;
 import retro.runtime.exceptions;
 import retro.core.util.exceptions;
 import retro.runtime.rendering.texture;

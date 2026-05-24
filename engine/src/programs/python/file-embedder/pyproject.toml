@@ -1,7 +1,7 @@
 [project]
-name = "shader-embedder"
+name = "file-embedder"
 version = "0.1.0"
-description = "Add your description here"
+description = "Embed files into your project as constexpr arrays"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

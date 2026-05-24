@@ -15,7 +15,6 @@ module retro.renderer.vulkan.components.device;
 import retro.core.containers.optional;
 import retro.platform.window;
 import retro.renderer.vulkan.components.surface;
-import retro.core.io.file_stream;
 
 namespace retro
 {

@@ -39,9 +39,6 @@
     "name" : "boost-pool",
     "version>=" : "1.90.0"
   }, {
-    "name" : "boost-asio",
-    "version>=" : "1.90.0#1"
-  }, {
     "name" : "gcem",
     "version>=" : "1.18.0"
   }, {
