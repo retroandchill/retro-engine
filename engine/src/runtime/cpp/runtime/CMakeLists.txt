@@ -89,7 +89,6 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/world/viewport.ixx
         public/modules/rendering/layout/margin.ixx
         public/modules/rendering/layout/anchors.ixx
-        public/modules/exceptions.ixx
         public/modules/rendering/render_manager.ixx
         public/modules/rendering/render_backend.ixx
         public/modules/rendering/headless_render_backend.ixx
@@ -103,6 +102,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/text/font_dependencies.ixx
         public/modules/rendering/text/freetype.ixx
         public/modules/rendering/text/async_dynamic_atlas.ixx
+        public/modules/event_bridge.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

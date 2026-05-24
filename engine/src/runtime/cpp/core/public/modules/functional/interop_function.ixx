@@ -63,4 +63,8 @@ namespace retro
       private:
         std::shared_ptr<Storage> storage_;
     };
+
+    export template <typename R, typename... Args>
+    InteropFunction(R (*)(void *, Args...), std::unique_ptr<void, void (*)(void *)>, bool (*)(void *, void *))
+        -> InteropFunction<R(Args...)>;
 } // namespace retro
