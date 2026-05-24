@@ -25,6 +25,15 @@ namespace retro
         utf32
     };
 
+    constexpr std::strong_ordering to_strong_ordering(const std::int32_t result)
+    {
+        if (result < 0)
+            return std::strong_ordering::less;
+        if (result > 0)
+            return std::strong_ordering::greater;
+        return std::strong_ordering::equal;
+    }
+
     template <Char C>
     struct EncodingOf;
 
@@ -325,12 +334,12 @@ namespace retro
         {
             if constexpr (ENCODING_OF<CharType> == Encoding::utf8)
             {
-                return std::strong_ordering{static_cast<std::int8_t>(una::casesens::compare_utf8(lhs, rhs))};
+                return to_strong_ordering(una::casesens::compare_utf8(lhs, rhs));
             }
             else
             {
                 static_assert(ENCODING_OF<CharType> == Encoding::utf16);
-                return std::strong_ordering{static_cast<std::int8_t>(una::casesens::compare_utf16(lhs, rhs))};
+                return to_strong_ordering(una::casesens::compare_utf16(lhs, rhs));
             }
         }
         else
@@ -339,12 +348,12 @@ namespace retro
 
             if constexpr (ENCODING_OF<CharType> == Encoding::utf8)
             {
-                return std::strong_ordering{static_cast<std::int8_t>(una::caseless::compare_utf8(lhs, rhs))};
+                return to_strong_ordering(una::caseless::compare_utf8(lhs, rhs));
             }
             else
             {
                 static_assert(ENCODING_OF<CharType> == Encoding::utf16);
-                return std::strong_ordering{static_cast<std::int8_t>(una::caseless::compare_utf16(lhs, rhs))};
+                return to_strong_ordering(una::caseless::compare_utf16(lhs, rhs));
             }
         }
     }

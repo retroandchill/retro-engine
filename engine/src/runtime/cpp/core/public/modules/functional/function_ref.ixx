@@ -349,7 +349,7 @@ namespace retro
     constexpr bool is_ref_convertible<FunctionRef<T>, FunctionRef<U>> =
         std::is_convertible_v<typename NotQualifyingThis<T>::Type &, typename NotQualifyingThis<U>::Type &>;
 
-    export template <typename Sig, typename R, typename... Args>
+    template <typename Sig, typename R, typename... Args>
     class FunctionRef<Sig, R(Args...)> : public FunctionRefBase
     {
         using Signature = QualFnSig<Sig>;

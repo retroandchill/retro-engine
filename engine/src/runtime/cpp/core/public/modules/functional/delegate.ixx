@@ -193,7 +193,7 @@ namespace retro
     export template <typename, typename ThreadPolicy = NoLockPolicy>
     class Delegate;
 
-    export template <typename Ret, typename... Args, typename Policy>
+    template <typename Ret, typename... Args, typename Policy>
     class Delegate<Ret(Args...), Policy> : private ThreadPolicyMixin<Policy>
     {
       public:
@@ -863,7 +863,7 @@ namespace retro
     export template <MulticastDelegateLike>
     class MulticastDelegateRegistration;
 
-    export template <typename... Args, typename Policy>
+    template <typename... Args, typename Policy>
     class MulticastDelegate<void(Args...), Policy> : private ThreadPolicyMixin<Policy>
     {
       public:

@@ -70,7 +70,7 @@ namespace retro
     export template <Numeric T, std::size_t N>
     class Shear;
 
-    export template <Numeric T>
+    template <Numeric T>
     class Shear<T, 2>
     {
       public:
@@ -128,7 +128,7 @@ namespace retro
     export template <Numeric T, std::size_t N>
     class Quaternion;
 
-    export template <Numeric T>
+    template <Numeric T>
     class Quaternion<T, 2>
     {
       public:

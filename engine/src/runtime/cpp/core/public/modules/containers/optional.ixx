@@ -635,7 +635,7 @@ namespace retro
     export template <typename T>
     Optional(T) -> Optional<T>;
 
-    export template <typename T>
+    template <typename T>
     class Optional<T &>
     {
       public:
@@ -1053,16 +1053,16 @@ namespace retro
     }
 } // namespace retro
 
-export template <typename T>
+template <typename T>
 constexpr bool std::ranges::enable_view<retro::Optional<T>> = true;
 
-export template <typename T>
+template <typename T>
 constexpr bool std::ranges::enable_borrowed_range<retro::Optional<T &>> = true;
 
-export template <typename T>
+template <typename T>
 constexpr auto std::format_kind<retro::Optional<T>> = std::range_format::disabled;
 
-export template <retro::Hashable T>
+template <retro::Hashable T>
     requires(!std::is_reference_v<T>)
 struct std::hash<retro::Optional<T>>
 {

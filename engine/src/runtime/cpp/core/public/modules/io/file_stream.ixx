@@ -15,6 +15,12 @@ export module retro.core.io.file_stream;
 import std;
 import retro.core.io.stream;
 
+// This is a hack to fix a strange compiler error
+namespace boost::asio
+{
+    using asio::io_context;
+}
+
 namespace retro
 {
     export enum class FileOpenMode

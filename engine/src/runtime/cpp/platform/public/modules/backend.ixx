@@ -41,7 +41,7 @@ namespace retro
         camera = 1u << 7,
     };
 
-    export template <>
+    template <>
     constexpr bool is_flag_enum<PlatformInitFlags> = true;
 
     export constexpr PlatformInitFlags operator|(PlatformInitFlags a, PlatformInitFlags b) noexcept

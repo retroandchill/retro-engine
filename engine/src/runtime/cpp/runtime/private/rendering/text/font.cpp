@@ -75,7 +75,7 @@ namespace retro
             }
         }
 
-        std::unique_lock guard{mutex_};
+        std::unique_lock write_lock{mutex_};
         for (const auto &glyph : glyphs)
         {
             auto code_point = static_cast<char32_t>(glyph.getCodepoint());
@@ -162,7 +162,7 @@ namespace retro
                 ->upload_texture(pixels, storage.width, storage.height, TextureFormat::unorm, TextureFilter::linear)
                 .configure_await(false);
 
-        std::unique_lock guard{mutex_};
+        std::unique_lock write_lock{mutex_};
         for (const auto &glyph : glyphs)
         {
             auto code_point = static_cast<char32_t>(glyph.getCodepoint());

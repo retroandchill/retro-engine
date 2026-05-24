@@ -465,12 +465,12 @@ namespace retro
     }
 } // namespace retro
 
-export template <retro::Numeric T, std::size_t N>
+template <retro::Numeric T, std::size_t N>
 struct std::tuple_size<retro::Vector<T, N>> : std::integral_constant<std::size_t, N>
 {
 };
 
-export template <std::size_t I, retro::Numeric T, std::size_t N>
+template <std::size_t I, retro::Numeric T, std::size_t N>
 struct std::tuple_element<I, retro::Vector<T, N>>
 {
     using type = T;

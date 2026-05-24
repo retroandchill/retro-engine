@@ -24,7 +24,7 @@ namespace retro
     export template <typename>
     class InteropFunction;
 
-    export template <typename R, typename... Args>
+    template <typename R, typename... Args>
     class InteropFunction<R(Args...)>
     {
         using Storage = InteropStorage<R, Args...>;

@@ -22,7 +22,7 @@ namespace retro
         rearranged = 1 << 1
     };
 
-    export template <>
+    template <>
     constexpr bool is_flag_enum<AtlasChangeFlag> = true;
 
     template <typename AtlasGenerator>

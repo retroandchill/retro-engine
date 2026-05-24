@@ -15,7 +15,7 @@ namespace retro
     export template <std::floating_point T, std::size_t N>
     class Transform;
 
-    export template <std::floating_point T>
+    template <std::floating_point T>
     class Transform<T, 2>
     {
       public:
