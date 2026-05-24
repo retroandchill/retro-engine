@@ -8,13 +8,13 @@ import std;
 
 namespace retro::shaders
 {
-    {{#files}}
+    {{#shaders}}
     export constexpr std::array {{variable_name}} =
     {
-        {{#joining "," elements}}
+        {{#joining "," words}}
         {{element}}u{{separator}}
         {{/joining}}
     };
 
-    {{/files}}
+    {{/shaders}}
 }

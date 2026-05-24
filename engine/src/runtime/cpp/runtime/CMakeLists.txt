@@ -33,11 +33,23 @@ foreach(SHADER ${RENDERER_SHADERS})
 endforeach()
 
 set(EMBED_SHADERS_TEMPLATE ${CMAKE_SOURCE_DIR}/templates/embedded_shader.ixx.mustache)
+set(EMBED_SHADERS_SCRIPT ${CMAKE_SOURCE_DIR}/engine/src/programs/python/shader-embedder/embed_shaders.py)
 set(OUTPUT_SHADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders.ixx")
-retro_embed_files(renderer_shaders "${OUTPUT_SHADER_FILE}" "${EMBED_SHADERS_TEMPLATE}"
-        SOURCE_FILES ${COMPILED_SHADERS}
-        DTYPE uint32
-        COMMENT "Embedding shader files")
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_custom_command(
+        OUTPUT "${OUTPUT_SHADER_FILE}"
+        COMMAND "${Python3_EXECUTABLE}" "${EMBED_SHADERS_SCRIPT}" --input-files ${COMPILED_SHADERS} --output-file "${OUTPUT_SHADER_FILE}" --template-file "${EMBED_SHADERS_TEMPLATE}"
+        DEPENDS
+                ${COMPILED_SHADERS}
+                "${EMBED_SHADERS_SCRIPT}"
+                "${EMBED_SHADERS_TEMPLATE}"
+        COMMENT "Compiling GLSL shader ${SHADER_NAME} -> ${SPV}"
+        VERBATIM
+)
+
+add_custom_target(renderer_shaders ALL
+        DEPENDS "${OUTPUT_SHADER_FILE}"
+)
 
 set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/scene.cpp

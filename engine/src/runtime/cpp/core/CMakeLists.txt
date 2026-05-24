@@ -3,7 +3,10 @@
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 set(RETRO_CORE_SOURCES private/strings/name.cpp
+        private/io/file_stream.cpp
         private/functional/delegate.cpp
+        private/io/stream.cpp
+        private/io/buffered_stream.cpp
         private/async/task_scheduler.cpp
         private/async/manual_task_scheduler.cpp
         private/interop/interop_error.cpp
@@ -39,6 +42,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/memory/ref_counted_ptr.ixx
         public/modules/algorithm/hashing.ixx
         public/modules/util/color.ixx
+        public/modules/io/file_stream.ixx
         public/modules/functional/delegate.ixx
         public/modules/memory/arena_allocator.ixx
         public/modules/async/task.ixx
@@ -59,6 +63,8 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/math/transform.ixx
         public/modules/functional/overload.ixx
         public/modules/functional/binding.ixx
+        public/modules/io/stream.ixx
+        public/modules/io/buffered_stream.ixx
         public/modules/async/task_scheduler.ixx
         public/modules/async/manual_task_scheduler.ixx
         public/modules/strings/cstring_view.ixx
@@ -76,6 +82,8 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/thread_pool.ixx
         public/modules/async/thread_pool_task_scheduler.ixx
         public/modules/async/task_actions.ixx
+        public/modules/io/buffer_writer.ixx
+        public/modules/io/array_buffer_writer.ixx
         public/modules/async/workload.ixx
         public/modules/async/semaphore.ixx
 )
@@ -101,11 +109,11 @@ target_sources(retro_core PRIVATE
         ${RETRO_CORE_PRIVATE_MODULES})
 
 find_package(ICU COMPONENTS uc i18n REQUIRED)
-find_package(Boost REQUIRED COMPONENTS algorithm thread crc pool unordered uuid)
+find_package(Boost REQUIRED COMPONENTS algorithm asio thread crc pool unordered uuid)
 find_package(fmt CONFIG REQUIRED)
 find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
-target_link_libraries(retro_core PUBLIC Boost::algorithm Boost::unordered Boost::pool
+target_link_libraries(retro_core PUBLIC Boost::asio Boost::algorithm Boost::unordered Boost::pool
                                         Boost::thread
                                         Boost::crc
                                         Boost::uuid
