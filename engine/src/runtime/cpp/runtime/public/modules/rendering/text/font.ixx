@@ -21,6 +21,7 @@ import retro.core.async.task;
 import :freetype;
 import :async_atlas_generator;
 import :async_dynamic_atlas;
+import retro.core.async.semaphore;
 
 namespace retro
 {
@@ -107,13 +108,13 @@ namespace retro
 
         [[nodiscard]] inline const std::unordered_map<char32_t, GlyphMetrics> &glyphs() const noexcept
         {
-            std::shared_lock lock{atlas_mutex_};
+            SemaphoreGuard guard{atlas_semaphore_};
             return glyphs_;
         }
 
         [[nodiscard]] inline const RefCountPtr<Texture> &texture() const noexcept
         {
-            std::shared_lock lock{atlas_mutex_};
+            SemaphoreGuard guard{atlas_semaphore_};
             return texture_;
         }
 
@@ -136,7 +137,7 @@ namespace retro
         std::unordered_map<char32_t, GlyphMetrics> glyphs_{};
         RefCountPtr<Texture> texture_{};
         FontAtlasData atlas_{};
-        mutable std::shared_mutex atlas_mutex_;
+        mutable Semaphore atlas_semaphore_{1, 1};
     };
 
     class FontFace

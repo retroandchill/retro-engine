@@ -36,7 +36,7 @@ namespace retro
                                msdfgen::FontHandle &handle,
                                std::u32string_view codepoints)
     {
-        std::unique_lock lock{atlas_mutex_};
+        SemaphoreGuard guard{atlas_semaphore_};
         auto new_chars = get_new_chars(codepoints);
         if (new_chars.empty())
             return;
@@ -112,7 +112,7 @@ namespace retro
                                        msdfgen::FontHandle &handle,
                                        std::u32string_view codepoints)
     {
-        std::unique_lock lock{atlas_mutex_};
+        auto guard = co_await atlas_semaphore_.enter_scope_async();
         auto new_chars = get_new_chars(codepoints);
         if (new_chars.empty())
             co_return;

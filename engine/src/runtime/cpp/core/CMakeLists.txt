@@ -22,6 +22,7 @@ set(RETRO_CORE_SOURCES private/strings/name.cpp
         private/async/thread_pool.cpp
         private/async/thread_pool_task_scheduler.cpp
         private/functional/workload.cpp
+        private/async/semaphore.cpp
 )
 
 set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
@@ -84,6 +85,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/io/buffer_writer.ixx
         public/modules/io/array_buffer_writer.ixx
         public/modules/async/workload.ixx
+        public/modules/async/semaphore.ixx
 )
 
 add_library(retro_core
