@@ -46,12 +46,45 @@ namespace retro
         }
 
         template <std::movable T>
-        void remove(Entity entity)
+        bool remove(Entity entity)
         {
             if (auto existing_pool = try_get_pool<T>(); existing_pool.has_value())
             {
-                existing_pool->erase(entity);
+                return existing_pool->erase(entity);
             }
+
+            return false;
+        }
+
+        template <std::movable T>
+        T &get(const Entity entity)
+        {
+            if (auto existing = try_get<T>(entity); existing.has_value())
+                return *existing;
+
+            throw std::out_of_range{"Component not found"};
+        }
+
+        template <std::movable T, typename... Args>
+            requires std::constructible_from<T, Args...>
+        T &get_or_add(Entity entity, Args &&...args)
+        {
+            auto existing = try_get<T>(entity);
+            if (existing.has_value())
+                return *existing;
+
+            return add<T>(entity, std::forward<Args>(args)...);
+        }
+
+        template <std::movable T, std::invocable Factory>
+            requires std::convertible_to<std::invoke_result_t<Factory>, T>
+        T &get_or_add(Entity entity, Factory &&factory)
+        {
+            auto existing = try_get<T>(entity);
+            if (existing.has_value())
+                return *existing;
+
+            return add<T>(entity, std::forward<Factory>(factory));
         }
 
         template <std::movable T>
@@ -76,7 +109,13 @@ namespace retro
         template <std::movable... Components>
         auto view()
         {
-            return ComponentView<EntityManager, Components...>{*this};
+            return ComponentView<EntityManager, false, Components...>{*this};
+        }
+
+        template <std::movable... Components>
+        auto view() const
+        {
+            return ComponentView<EntityManager, true, Components...>{*this};
         }
 
         template <std::movable Component>

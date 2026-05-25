@@ -23,24 +23,27 @@ namespace retro
         } -> std::convertible_to<std::span<const Entity>>;
     };
 
-    export template <typename Manager, std::movable... Components>
+    export template <typename Manager, bool Const, std::movable... Components>
         requires(sizeof...(Components) > 0 && (ComponentViewManager<Manager, Components> && ...))
     class ComponentView;
 
-    template <typename Manager, std::movable First, std::movable... Rest>
-    class ComponentView<Manager, First, Rest...>
+    template <typename Manager, bool Const, std::movable First, std::movable... Rest>
+    class ComponentView<Manager, Const, First, Rest...>
     {
-      public:
-        class Iterator
+        using ConstQualifiedManager = std::conditional_t<Const, const Manager, Manager>
+
+            public : class Iterator
         {
           public:
             using difference_type = std::ptrdiff_t;
-            using value_type = std::tuple<Entity, First &, Rest &...>;
+            using value_type = std::conditional_t<Const,
+                                                  std::tuple<Entity, const First &, const Rest &...>,
+                                                  std::tuple<Entity, First &, Rest &...>>;
             using iterator_category = std::input_iterator_tag;
 
             Iterator() noexcept = default;
 
-            Iterator(ComponentView &view, std::size_t index) noexcept : view_{std::addressof(view)}, index_{index}
+            Iterator(const ComponentView &view, std::size_t index) noexcept : view_{std::addressof(view)}, index_{index}
             {
                 skip_invalid();
             }
@@ -62,13 +65,13 @@ namespace retro
                 return view_ == nullptr || index_ >= view_->entities_.size();
             }
 
-            [[nodiscard]] auto operator*() const
+            [[nodiscard]] value_type operator*() const
             {
                 const Entity entity = view_->entities_[index_];
 
-                return std::tuple<Entity, First &, Rest &...>{entity,
-                                                              *view_->manager_->template try_get<First>(entity),
-                                                              *view_->manager_->template try_get<Rest>(entity)...};
+                return {entity,
+                        *view_->manager_->template try_get<First>(entity),
+                        *view_->manager_->template try_get<Rest>(entity)...};
             }
 
           private:
@@ -94,16 +97,16 @@ namespace retro
                 }
             }
 
-            ComponentView *view_ = nullptr;
+            const ComponentView *view_ = nullptr;
             std::size_t index_ = 0;
         };
 
-        explicit ComponentView(Manager &manager) noexcept
+        explicit ComponentView(ConstQualifiedManager &manager) noexcept
             : manager_{std::addressof(manager)}, entities_{manager.template entities_with_component<First>()}
         {
         }
 
-        [[nodiscard]] Iterator begin() noexcept
+        [[nodiscard]] Iterator begin() const noexcept
         {
             return Iterator{*this, 0};
         }
@@ -114,7 +117,7 @@ namespace retro
         }
 
       private:
-        Manager *manager_;
+        ConstQualifiedManager *manager_;
         std::span<const Entity> entities_;
     };
 } // namespace retro

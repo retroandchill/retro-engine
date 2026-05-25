@@ -7,6 +7,7 @@
 export module retro.runtime.ecs.entity;
 
 import std;
+import retro.core.algorithm.hashing;
 
 namespace retro
 {
@@ -27,3 +28,12 @@ namespace retro
     };
 
 } // namespace retro
+
+template <>
+struct std::hash<retro::Entity>
+{
+    std::size_t operator()(const retro::Entity &entity) const noexcept
+    {
+        return retro::hash_combine(entity.index, entity.generation);
+    }
+};
