@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "MemoryPack.Generator": {
+    "MagicArchive.SourceGenerator": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\RetroEngine.Portable\\RetroEngine.Portable.csproj"
+      "targetProject": "..\\RetroEngine.Utilities\\RetroEngine.Utilities.csproj"
     }
   }
 }

@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Reflection;
 using HandlebarsDotNet;
 using MagicArchive.SourceGenerator.Model;
 using MagicArchive.SourceGenerator.Utils;
@@ -16,10 +17,11 @@ namespace MagicArchive.SourceGenerator.Generators;
 [Generator]
 public class ArchivableSourceGenerator : IIncrementalGenerator
 {
-    private readonly TemplateSource _templates = new();
+    private TemplateSource _templates = null!;
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        _templates = new TemplateSource();
         var archivableTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
             typeof(ArchivableAttribute).FullName!,
             (syntaxNode, _) =>
@@ -146,6 +148,9 @@ public class ArchivableSourceGenerator : IIncrementalGenerator
         }
         catch (Exception e)
         {
+            if (e is TargetInvocationException { InnerException: not null } tie)
+                e = tie.InnerException;
+
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     DiagnosticDescriptors.UnknownError,
