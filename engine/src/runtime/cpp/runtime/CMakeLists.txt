@@ -109,6 +109,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/ecs/entity.ixx
         public/modules/ecs/entity_manager.ixx
         public/modules/ecs/component_pool.ixx
+        public/modules/ecs/component_view.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

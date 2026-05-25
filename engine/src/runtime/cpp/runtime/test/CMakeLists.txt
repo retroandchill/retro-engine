@@ -8,6 +8,7 @@ SET(RETRO_RUNTIME_TEST_MODULES )
 
 SET(RETRO_RUNTIME_TEST_SOURCES
         rendering/text/font_service_test.cpp
+        ecs/entity_manager_test.cpp
 )
 
 add_executable(retro_runtime_tests ${RETRO_RUNTIME_TEST_SOURCES} ${RETRO_RUNTIME_TEST_HEADERS} ${RETRO_RUNTIME_TEST_MODULES})

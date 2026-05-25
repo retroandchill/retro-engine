@@ -14,12 +14,22 @@ import std;
 import retro.core.containers.optional;
 import retro.runtime.ecs.entity;
 import retro.runtime.ecs.component_pool;
+import retro.runtime.ecs.component_view;
 
 namespace retro
 {
     export class RETRO_API EntityManager
     {
       public:
+        EntityManager() = default;
+        EntityManager(const EntityManager &) = delete;
+        EntityManager(EntityManager &&) noexcept = default;
+
+        ~EntityManager() = default;
+
+        EntityManager &operator=(const EntityManager &) = delete;
+        EntityManager &operator=(EntityManager &&) noexcept = default;
+
         Entity create_entity();
         bool destroy_entity(Entity entity);
 
@@ -64,7 +74,18 @@ namespace retro
         }
 
         template <std::movable... Components>
-        auto view();
+        auto view()
+        {
+            return ComponentView<EntityManager, Components...>{*this};
+        }
+
+        template <std::movable Component>
+        [[nodiscard]] std::span<const Entity> entities_with_component() const noexcept
+        {
+            return try_get_pool<Component>()
+                .transform([](const ComponentPoolImpl<Component> &pool) { return pool.entities(); })
+                .value_or(std::span<const Entity>{});
+        }
 
       private:
         template <typename T>
@@ -92,7 +113,7 @@ namespace retro
         }
 
         template <typename T>
-        [[nodiscard]] Optional<const ComponentPoolImpl<T> &> try_get_pool()
+        [[nodiscard]] Optional<const ComponentPoolImpl<T> &> try_get_pool() const
         {
             const auto it = component_pools_.find(typeid(T));
             if (it == component_pools_.end())
@@ -105,4 +126,6 @@ namespace retro
         std::queue<std::uint32_t> free_entities_;
         std::unordered_map<std::type_index, std::unique_ptr<ComponentPool>> component_pools_;
     };
+
+    static_assert(ComponentViewManager<EntityManager, std::int32_t>);
 } // namespace retro
