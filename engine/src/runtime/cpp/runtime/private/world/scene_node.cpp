@@ -77,7 +77,7 @@ namespace retro
 
         for (auto *child : children_)
         {
-            child->world_transform_ = world_transform_.concatenate(child->transform_);
+            child->update_world_transform();
         }
 
         on_world_transform_updated();
