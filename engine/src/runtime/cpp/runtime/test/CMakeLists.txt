@@ -31,7 +31,9 @@ target_link_libraries(retro_runtime_tests PRIVATE
         GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
 )
 
-gtest_add_tests(TARGET retro_runtime_tests WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+gtest_discover_tests(retro_runtime_tests
+        DISCOVERY_MODE PRE_TEST
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(retro_runtime_tests PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
