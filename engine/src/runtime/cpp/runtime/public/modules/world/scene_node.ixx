@@ -15,9 +15,22 @@ export module retro.runtime.world.scene_node;
 import std;
 import retro.core.util.noncopyable;
 import retro.core.math.transform;
+import retro.runtime.ecs.entity;
 
 namespace retro
 {
+    export struct TransformComponent
+    {
+        Transform2f transform{};
+        std::int32_t z_order{};
+    };
+
+    export struct HierarchyComponent
+    {
+        Entity parent = null_entity;
+        std::vector<Entity> children;
+    };
+
     struct NodeHook
     {
         std::size_t master_index = std::dynamic_extent;

@@ -8,15 +8,84 @@ module retro.runtime.world.scene;
 
 namespace retro
 {
-    void Scene::destroy_node(SceneNode &node)
+    Entity Scene::create_entity()
     {
-        node.detach_from_parent();
-        nodes_.remove(node);
+        const auto entity = entities_.create_entity();
+        auto new_index = root_entities_.size();
+        root_entities_.push_back(entity);
+        root_entity_indices_.emplace(entity, new_index);
+        return entity;
     }
 
-    std::span<SceneNode *const> Scene::nodes_of_type(const std::type_index type) const noexcept
+    bool Scene::destroy_entity(const Entity entity)
     {
-        return nodes_.nodes_of_type(type);
+        if (!entities_.destroy_entity(entity))
+            return false;
+
+        auto it = root_entity_indices_.find(entity);
+        if (it == root_entity_indices_.end())
+            return true;
+
+        if (it->second != root_entities_.size() - 1)
+        {
+            root_entities_[it->second] = root_entities_.back();
+            root_entity_indices_[root_entities_.back()] = it->second;
+        }
+
+        root_entity_indices_.erase(it);
+        root_entities_.pop_back();
+        return true;
+    }
+
+    void Scene::attach_entity(Entity child, Entity parent)
+    {
+        auto &[current_parent, children] = entities_.get_or_add<HierarchyComponent>(child);
+        if (current_parent != null_entity)
+        {
+            auto &[old_parent, old_children] = entities_.get<HierarchyComponent>(current_parent);
+            std::ranges::remove(old_children, child);
+        }
+        else
+        {
+            const auto root_index = root_entity_indices_[child];
+            root_entities_[root_index] = root_entities_.back();
+            root_entity_indices_[root_entities_.back()] = root_index;
+            root_entity_indices_.erase(child);
+            root_entities_.pop_back();
+        }
+
+        current_parent = parent;
+        if (current_parent != null_entity)
+        {
+            auto &[new_parent, new_children] = entities_.get<HierarchyComponent>(current_parent);
+            new_children.push_back(child);
+        }
+        else
+        {
+            auto root_index = root_entities_.size();
+            root_entities_.push_back(child);
+            root_entity_indices_.emplace(child, root_index);
+        }
+    }
+
+    bool Scene::detach_entity(Entity child)
+    {
+        auto hierarchy = entities_.try_get<HierarchyComponent>(child);
+        if (!hierarchy.has_value())
+            return false;
+
+        if (hierarchy->parent != null_entity)
+        {
+            auto &[old_parent, old_children] = entities_.get<HierarchyComponent>(hierarchy->parent);
+            std::ranges::remove(old_children, child);
+
+            hierarchy->parent = null_entity;
+            auto root_index = root_entities_.size();
+            root_entities_.push_back(child);
+            root_entity_indices_.emplace(child, root_index);
+        }
+
+        return true;
     }
 
     Scene &SceneManager::create_scene()
