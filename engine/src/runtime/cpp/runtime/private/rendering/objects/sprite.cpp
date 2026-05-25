@@ -239,13 +239,13 @@ namespace retro
     }
 
     SmallUniquePtr<DrawCommandSource> SpriteRenderPipeline::collect_draw_calls_source(
-        const Scene &scene,
+        const SceneNodeList &nodes,
         const Vector2u viewport_size,
         const Viewport &viewport,
         std::pmr::memory_resource &memory_resource)
     {
         std::pmr::unordered_map<const Texture *, SpriteBatch> batches{&memory_resource};
-        for (auto *node : scene.nodes_of_type<Sprite>())
+        for (auto *node : nodes.nodes_of_type<Sprite>())
         {
             auto &texture = node->texture();
             if (texture == nullptr)

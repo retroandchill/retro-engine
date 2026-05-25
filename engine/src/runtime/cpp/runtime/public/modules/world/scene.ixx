@@ -11,13 +11,10 @@ module;
 export module retro.runtime.world.scene;
 
 import std;
-import retro.core.containers.optional;
 import retro.core.functional.delegate;
 import retro.core.util.noncopyable;
 import retro.core.math.transform;
 import retro.core.math.vector;
-import retro.runtime.ecs.entity;
-import retro.runtime.ecs.entity_manager;
 import retro.runtime.world.scene_node;
 
 namespace retro
@@ -25,53 +22,36 @@ namespace retro
     export class RETRO_API Scene final : NonCopyable
     {
       public:
-        Entity create_entity();
-        bool destroy_entity(Entity entity);
-
-        void attach_entity(Entity child, Entity parent);
-        bool detach_entity(Entity child);
-
-        template <std::movable T, typename... Args>
+        template <std::derived_from<SceneNode> T, typename... Args>
             requires std::constructible_from<T, Args...>
-        T &add_component(Entity entity, Args &&...args)
+        T &create_node(Args &&...args)
         {
-            return entities_.add<T>(entity, std::forward<Args>(args)...);
+            auto node = std::make_unique<T>(std::forward<Args>(args)...);
+
+            T &ref = *node;
+
+            nodes_.add(std::move(node));
+            return ref;
         }
 
-        template <typename T>
-        bool remove_component(const Entity entity)
+        void destroy_node(SceneNode &node);
+
+        [[nodiscard]] inline const SceneNodeList &nodes() const noexcept
         {
-            return entities_.remove<T>(entity);
+            return nodes_;
         }
 
-        template <typename T>
-        Optional<T &> try_get_component(const Entity entity)
-        {
-            return entities_.try_get<T>(entity);
-        }
+        [[nodiscard]] std::span<SceneNode *const> nodes_of_type(std::type_index type) const noexcept;
 
-        template <typename T>
-        Optional<const T &> try_get_component(const Entity entity) const
+        template <std::derived_from<SceneNode> T>
+            requires(!std::is_abstract_v<T>)
+        [[nodiscard]] std::span<T *const> nodes_of_type() const noexcept
         {
-            return entities_.try_get<T>(entity);
-        }
-
-        template <std::movable... Components>
-        auto view()
-        {
-            return entities_.view<Components...>();
-        }
-
-        template <std::movable... Components>
-        auto view() const
-        {
-            return entities_.view<Components...>();
+            return nodes_.nodes_of_type<T>();
         }
 
       private:
-        EntityManager entities_;
-        std::vector<Entity> root_entities_;
-        std::unordered_map<Entity, std::size_t> root_entity_indices_;
+        SceneNodeList nodes_;
     };
 
     export using OnSceneDelegate = MulticastDelegate<void(Scene &)>;

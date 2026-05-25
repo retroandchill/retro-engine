@@ -245,13 +245,13 @@ namespace retro
     }
 
     SmallUniquePtr<DrawCommandSource> TextBlockRenderPipeline::collect_draw_calls_source(
-        const Scene &scene,
+        const SceneNodeList &nodes,
         const Vector2u viewport_size,
         const Viewport &viewport,
         std::pmr::memory_resource &memory_resource)
     {
         std::pmr::unordered_map<const Texture *, TextBlockBatch> batches{&memory_resource};
-        for (auto *node : scene.nodes_of_type<TextBlock>())
+        for (auto *node : nodes.nodes_of_type<TextBlock>())
         {
             auto atlas_result = node->refresh_cached_quads();
             if (!atlas_result.has_value())

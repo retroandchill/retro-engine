@@ -17,7 +17,7 @@ namespace retro
         }
     }
 
-    DrawCommandSet PipelineManager::collect_draw_command_sources(const Scene &scene,
+    DrawCommandSet PipelineManager::collect_draw_command_sources(const SceneNodeList &nodes,
                                                                  Vector2u viewport_size,
                                                                  const Viewport &viewport,
                                                                  std::pmr::memory_resource &memory_resource)
@@ -30,8 +30,8 @@ namespace retro
                 std::views::filter([](const PipelineUsage &usage) { return usage.usage_count > 0; }) |
                 std::views::transform(&PipelineUsage::pipeline) |
                 std::views::transform(
-                    [&scene, &viewport_size, &viewport, &memory_resource](RenderPipeline *pipeline)
-                    { return pipeline->collect_draw_calls_source(scene, viewport_size, viewport, memory_resource); }) |
+                    [&nodes, &viewport_size, &viewport, &memory_resource](RenderPipeline *pipeline)
+                    { return pipeline->collect_draw_calls_source(nodes, viewport_size, viewport, memory_resource); }) |
                 std::ranges::to<std::pmr::vector<SmallUniquePtr<DrawCommandSource>>>(&memory_resource)};
     }
 } // namespace retro

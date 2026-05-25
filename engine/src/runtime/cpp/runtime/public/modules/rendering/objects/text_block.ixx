@@ -131,7 +131,7 @@ namespace retro
         [[nodiscard]] std::type_index component_type() const override;
         [[nodiscard]] const ShaderLayout &shaders() const override;
         SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
-            const Scene &scene,
+            const SceneNodeList &nodes,
             Vector2u viewport_size,
             const Viewport &viewport,
             std::pmr::memory_resource &memory_resource) override;

@@ -199,7 +199,7 @@ namespace retro
                                [this, &resource, &renderer](auto &pair)
                                {
                                    auto [viewport, scene] = pair;
-                                   return pipeline_manager_.collect_draw_command_sources(scene,
+                                   return pipeline_manager_.collect_draw_command_sources(scene.nodes(),
                                                                                          renderer->window().size(),
                                                                                          viewport,
                                                                                          resource);

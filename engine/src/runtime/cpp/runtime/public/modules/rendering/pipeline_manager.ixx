@@ -15,7 +15,6 @@ import retro.runtime.rendering.render_pipeline;
 import retro.runtime.rendering.renderer2d;
 import retro.core.math.vector;
 import retro.runtime.world.scene_node;
-import retro.runtime.world.scene;
 import retro.runtime.world.viewport;
 import retro.core.memory.small_unique_ptr;
 import retro.runtime.rendering.draw_command;
@@ -41,7 +40,7 @@ namespace retro
                                                       { return std::make_pair(entry.first, entry.second.pipeline); });
         }
 
-        DrawCommandSet collect_draw_command_sources(const Scene &scene,
+        DrawCommandSet collect_draw_command_sources(const SceneNodeList &nodes,
                                                     Vector2u viewport_size,
                                                     const Viewport &viewport,
                                                     std::pmr::memory_resource &memory_resource);

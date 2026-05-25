@@ -122,13 +122,13 @@ namespace retro
     }
 
     SmallUniquePtr<DrawCommandSource> GeometryRenderPipeline::collect_draw_calls_source(
-        const Scene &scene,
+        const SceneNodeList &nodes,
         Vector2u viewport_size,
         const Viewport &viewport,
         std::pmr::memory_resource &memory_resource)
     {
         std::pmr::unordered_map<const Geometry *, GeometryBatch> geometry_batches{&memory_resource};
-        for (const auto *node : scene.nodes_of_type<GeometryObject>())
+        for (const auto *node : nodes.nodes_of_type<GeometryObject>())
         {
             auto *geometry = node->geometry().get();
             if (geometry == nullptr)

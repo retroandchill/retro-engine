@@ -9,7 +9,7 @@ export module retro.runtime.rendering.render_pipeline;
 import std;
 import retro.runtime.rendering.shader_layout;
 import retro.runtime.rendering.draw_command;
-import retro.runtime.world.scene;
+import retro.runtime.world.scene_node;
 import retro.runtime.world.viewport;
 import retro.core.math.vector;
 import retro.core.memory.small_unique_ptr;
@@ -26,7 +26,7 @@ namespace retro
         [[nodiscard]] virtual const ShaderLayout &shaders() const = 0;
 
         virtual SmallUniquePtr<DrawCommandSource> collect_draw_calls_source(
-            const Scene &scene,
+            const SceneNodeList &nodes,
             Vector2u viewport_size,
             const Viewport &viewport,
             std::pmr::memory_resource &memory_resource) = 0;
