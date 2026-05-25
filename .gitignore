@@ -36,3 +36,5 @@ artifacts/
 [Tt]humbs.db
 [Dd]esktop.ini
 *.DS_Store
+
+cmake_test_discovery_*.json
