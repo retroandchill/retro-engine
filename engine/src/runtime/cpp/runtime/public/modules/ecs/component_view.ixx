@@ -30,9 +30,10 @@ namespace retro
     template <typename Manager, bool Const, std::movable First, std::movable... Rest>
     class ComponentView<Manager, Const, First, Rest...>
     {
-        using ConstQualifiedManager = std::conditional_t<Const, const Manager, Manager>
+        using ConstQualifiedManager = std::conditional_t<Const, const Manager, Manager>;
 
-            public : class Iterator
+      public:
+        class Iterator
         {
           public:
             using difference_type = std::ptrdiff_t;
