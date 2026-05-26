@@ -51,7 +51,10 @@ public sealed partial class Engine : IAsyncDisposable
         _host = new EngineHost(serviceProviderFactory(serviceCollection), _lifetime);
         _engineLifetimeDisposables =
         [
-            .. Services.GetServices<IEngineContextLifetime>().Select(x => x.CreateLifetimeScope()),
+            .. Services
+                .GetServices<IEngineContextLifetime>()
+                .OrderBy(x => x.Priority)
+                .Select(x => x.CreateLifetimeScope()),
         ];
     }
 

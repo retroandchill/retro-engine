@@ -12,85 +12,83 @@ namespace RetroEngine.UI.Display;
 
 public sealed class SpriteWidget : Widget
 {
-    private readonly Sprite _sprite;
+    private Sprite? _sprite;
 
     public Texture? Texture
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _sprite.Texture;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            if (ReferenceEquals(value, _sprite.Texture))
+            if (ReferenceEquals(value, field))
                 return;
 
-            _sprite.Texture = value;
+            field = value;
+
             if (value is not null)
-                PreferredSize = _sprite.PreferredSize;
+                PreferredSize = ComputePreferredSize();
+
+            _sprite?.Texture = value;
         }
     }
 
     public Color Color
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _sprite.Tint;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            _sprite.Tint = value;
+            if (field == value)
+                return;
+            field = value;
+            _sprite?.Tint = value;
         }
-    }
+    } = new(1, 1, 1);
 
     public UVs UVs
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _sprite.UVs;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            if (_sprite.UVs == value)
+            if (field == value)
                 return;
-
+            field = value;
+            if (_sprite is null)
+                return;
             _sprite.UVs = value;
-            if (_sprite.Texture is not null)
-                PreferredSize = _sprite.PreferredSize;
+
+            if (Texture is null)
+                return;
+            PreferredSize = ComputePreferredSize();
         }
-    }
+    } = new(Vector2F.Zero, Vector2F.One);
 
     public SpriteDrawMode DrawMode
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _sprite.DrawMode;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            _sprite.DrawMode = value;
+            if (field == value)
+                return;
+
+            field = value;
+            _sprite?.DrawMode = value;
         }
     }
 
     public Margin Margin
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _sprite.Margin;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            _sprite.Margin = value;
+            if (field == value)
+                return;
+
+            field = value;
+            _sprite?.Margin = value;
         }
     }
 
@@ -107,10 +105,25 @@ public sealed class SpriteWidget : Widget
         }
     }
 
-    public SpriteWidget(IUiRoot root)
-        : base(root, new Sprite(GetSceneFrom(root), false))
+    protected override void OnAttached(UiRoot root)
     {
-        _sprite = (Sprite)SceneObject!;
+        base.OnAttached(root);
+        _sprite = new Sprite(root.Scene)
+        {
+            Texture = Texture,
+            Tint = Color,
+            UVs = UVs,
+            DrawMode = DrawMode,
+            Margin = Margin,
+        };
+        SceneObject = _sprite;
+    }
+
+    protected override void OnDetached()
+    {
+        base.OnDetached();
+        _sprite!.Dispose();
+        _sprite = null;
     }
 
     protected override Vector2F ComputeDesiredSize(Vector2F availableSize)
@@ -121,6 +134,16 @@ public sealed class SpriteWidget : Widget
     protected override void ApplyLayoutToScene(RectF finalRect)
     {
         base.ApplyLayoutToScene(finalRect);
-        _sprite.Size = new Vector2F(finalRect.Width, finalRect.Height);
+        _sprite!.Size = new Vector2F(finalRect.Width, finalRect.Height);
+    }
+
+    private Vector2F ComputePreferredSize()
+    {
+        if (Texture is null)
+            return Vector2F.Zero;
+
+        var uvXRange = UVs.Max.X - UVs.Min.X;
+        var uvYRange = UVs.Max.Y - UVs.Min.Y;
+        return new Vector2F(Texture.Width * uvXRange, Texture.Height * uvYRange);
     }
 }

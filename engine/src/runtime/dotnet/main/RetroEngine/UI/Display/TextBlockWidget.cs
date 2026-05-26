@@ -13,80 +13,85 @@ namespace RetroEngine.UI.Display;
 
 public sealed class TextBlockWidget : Widget
 {
-    private readonly TextBlock _textBlock;
+    private TextBlock? _textBlock;
 
     public Text Text
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _textBlock.Text;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            if (_textBlock.Text == value)
+            if (field == value)
                 return;
 
-            _textBlock.Text = value;
+            field = value;
+            _textBlock?.Text = value;
             InvalidateMeasure();
         }
     }
 
     public Font? Font
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _textBlock.Font;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            if (ReferenceEquals(value, _textBlock.Font))
+            if (ReferenceEquals(value, field))
                 return;
 
-            _textBlock.Font = value;
+            field = value;
+            _textBlock?.Font = value;
             InvalidateMeasure();
         }
     }
 
     public uint FontSize
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _textBlock.FontSize;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            if (_textBlock.FontSize == value)
+            if (field == value)
                 return;
 
-            _textBlock.FontSize = value;
+            field = value;
+            _textBlock?.FontSize = value;
             InvalidateMeasure();
         }
     }
 
     public Color Color
     {
-        get
-        {
-            ThrowIfDisposed();
-            return _textBlock.Tint;
-        }
+        get;
         set
         {
             ThrowIfDisposed();
-            _textBlock.Tint = value;
+            if (field == value)
+                return;
+
+            field = value;
+            _textBlock?.Tint = value;
         }
     }
 
-    public TextBlockWidget(IUiRoot root)
-        : base(root, new TextBlock(GetSceneFrom(root)))
+    protected override void OnAttached(UiRoot root)
     {
-        _textBlock = (TextBlock)SceneObject!;
+        base.OnAttached(root);
+        _textBlock = new TextBlock(root.Scene)
+        {
+            Text = Text,
+            Font = Font,
+            FontSize = FontSize,
+            Tint = Color,
+        };
+        SceneObject = _textBlock;
+    }
+
+    protected override void OnDetached()
+    {
+        base.OnDetached();
+        _textBlock!.Dispose();
+        _textBlock = null;
     }
 
     protected override Vector2F ComputeDesiredSize(Vector2F availableSize)

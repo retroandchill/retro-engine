@@ -17,11 +17,26 @@ public enum LayoutDirtyFlags : byte
     Visual = 1 << 2,
 }
 
-public abstract class Widget(IUiRoot root, SceneObject? sceneObject) : IDisposable
+public abstract class Widget : IDisposable
 {
     private bool _disposed;
 
-    public IUiRoot Root { get; } = root;
+    public UiRoot? Root
+    {
+        get;
+        internal set
+        {
+            ThrowIfDisposed();
+            if (ReferenceEquals(field, value))
+                return;
+
+            if (field is not null)
+                OnDetached();
+            field = value;
+            if (field is not null)
+                OnAttached(field);
+        }
+    }
 
     public LayoutSlot? LayoutSlot { get; internal set; }
 
@@ -38,7 +53,11 @@ public abstract class Widget(IUiRoot root, SceneObject? sceneObject) : IDisposab
     public LayoutDirtyFlags DirtyFlags { get; private set; } =
         LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange | LayoutDirtyFlags.Visual;
 
-    protected internal SceneObject? SceneObject { get; } = sceneObject;
+    protected internal SceneObject? SceneObject { get; set; }
+
+    protected virtual void OnAttached(UiRoot root) { }
+
+    protected virtual void OnDetached() { }
 
     public Vector2F Measure(Vector2F availableSize)
     {
@@ -83,7 +102,7 @@ public abstract class Widget(IUiRoot root, SceneObject? sceneObject) : IDisposab
         var wasMeasureDirty = DirtyFlags.HasFlag(LayoutDirtyFlags.Measure);
 
         DirtyFlags |= LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange;
-        Root.InvalidateLayout();
+        Root?.InvalidateLayout();
 
         if (!wasMeasureDirty)
             LayoutSlot?.Parent.InvalidateMeasure();
@@ -94,15 +113,10 @@ public abstract class Widget(IUiRoot root, SceneObject? sceneObject) : IDisposab
         var wasArrangeDirty = DirtyFlags.HasFlag(LayoutDirtyFlags.Arrange);
 
         DirtyFlags |= LayoutDirtyFlags.Arrange;
-        Root.InvalidateLayout();
+        Root?.InvalidateLayout();
 
         if (!wasArrangeDirty)
             LayoutSlot?.Parent.InvalidateArrange();
-    }
-
-    protected static Scene GetSceneFrom(IUiRoot root)
-    {
-        return root.Scene;
     }
 
     protected void ThrowIfDisposed()

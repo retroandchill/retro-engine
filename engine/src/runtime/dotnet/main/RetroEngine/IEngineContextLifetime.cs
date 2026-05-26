@@ -9,6 +9,7 @@ namespace RetroEngine;
 
 public interface IEngineContextLifetime
 {
+    int Priority => 0;
     bool Initialized { get; }
 
     void Initialize();
@@ -24,6 +25,6 @@ public static class EngineContextLifetimeExtensions
             throw new InvalidOperationException("Context lifetime has already been initialized.");
 
         contextLifetime.Initialize();
-        return Disposable.Create(contextLifetime.Shutdown);
+        return Disposable.Create(contextLifetime, l => l.Shutdown());
     }
 }

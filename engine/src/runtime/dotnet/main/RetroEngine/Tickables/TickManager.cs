@@ -15,6 +15,8 @@ namespace RetroEngine.Tickables;
 [RegisterSingleton]
 public sealed class TickManager : IDisposable
 {
+    internal static TickManager? Instance { get; set; }
+
     private readonly EventManager _eventManager;
 
     private readonly Dictionary<TickGroup, HashSet<ITickable>> _tickables = new()
@@ -82,38 +84,6 @@ public sealed class TickManager : IDisposable
         foreach (var tickable in _tickables[group].AsValueEnumerable().Where(t => t.TickEnabled))
         {
             tickable.Tick(deltaTime);
-        }
-    }
-
-    public Task WaitFrame(ulong frameCount = 1, CancellationToken cancellationToken = default)
-    {
-        if (frameCount == 0)
-        {
-            return Task.CompletedTask;
-        }
-
-        var awaiter = new TickAwait(this, frameCount, cancellationToken);
-        return awaiter.Task;
-    }
-
-    public async Task Timeline(float duration, Action<float> onTick, CancellationToken cancellationToken = default)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThan(0, duration);
-
-        if (duration == 0)
-        {
-            return;
-        }
-
-        var timeline = new Timeline(duration, onTick, cancellationToken);
-        RegisterTickable(timeline);
-        try
-        {
-            await timeline.Task;
-        }
-        finally
-        {
-            UnregisterTickable(timeline);
         }
     }
 

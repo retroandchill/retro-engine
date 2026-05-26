@@ -8,14 +8,15 @@ namespace RetroEngine.Tickables;
 public sealed class TickHandle : IDisposable
 {
     private readonly ITickable _tickable;
-    private readonly TickManager _tickManager;
     private bool _disposed;
 
-    public TickHandle(ITickable tickable, TickManager tickManager)
+    public TickHandle(ITickable tickable)
     {
+        if (TickManager.Instance is null)
+            throw new InvalidOperationException("Tick manager is not initialized.");
+
         _tickable = tickable;
-        _tickManager = tickManager;
-        _tickManager.RegisterTickable(tickable);
+        TickManager.Instance.RegisterTickable(tickable);
     }
 
     public void Dispose()
@@ -23,7 +24,7 @@ public sealed class TickHandle : IDisposable
         if (_disposed)
             return;
 
-        _tickManager.UnregisterTickable(_tickable);
+        TickManager.Instance?.UnregisterTickable(_tickable);
         _disposed = true;
     }
 }

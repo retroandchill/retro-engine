@@ -10,28 +10,10 @@ using RetroEngine.World;
 
 namespace RetroEngine.UI;
 
-public interface IUiRoot : IDisposable
-{
-    bool Disposed { get; }
-
-    internal Scene Scene { get; }
-
-    AnchorData ScreenLayout { get; set; }
-
-    int ZOrder { get; set; }
-
-    Widget? Content { get; set; }
-
-    void InvalidateLayout();
-
-    void UpdateLayout();
-}
-
-public sealed class UiRoot : IUiRoot, ITickable
+public sealed class UiRoot : ITickable, IDisposable
 {
     public bool Disposed { get; private set; }
 
-    private readonly IUiManager _uiManager;
     private readonly TickHandle _tickHandle;
     public Scene Scene { get; }
     private readonly Viewport _viewport;
@@ -77,18 +59,19 @@ public sealed class UiRoot : IUiRoot, ITickable
             if (ReferenceEquals(field, value))
                 return;
 
+            field?.Root = null;
             field = value;
+            field?.Root = this;
             InvalidateLayout();
         }
     }
 
-    internal UiRoot(IUiManager uiManager, TickManager tickManager)
+    public UiRoot()
     {
-        _uiManager = uiManager;
         Scene = new Scene();
         _viewport = new Viewport { Scene = Scene };
         _viewport.ScreenRectChanged += _ => InvalidateLayout();
-        _tickHandle = new TickHandle(this, tickManager);
+        _tickHandle = new TickHandle(this);
     }
 
     public void InvalidateLayout()
@@ -132,6 +115,5 @@ public sealed class UiRoot : IUiRoot, ITickable
         Scene.Dispose();
         _viewport.Dispose();
         _tickHandle.Dispose();
-        _uiManager.DestroyRoot(this);
     }
 }

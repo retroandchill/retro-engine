@@ -7,7 +7,7 @@ using ZLinq;
 
 namespace RetroEngine.UI;
 
-public abstract class ContainerWidget(IUiRoot root) : Widget(root, null)
+public abstract class ContainerWidget : Widget
 {
     public abstract IReadOnlyList<LayoutSlot> Slots { get; }
 
@@ -34,7 +34,7 @@ public abstract class ContainerWidget(IUiRoot root) : Widget(root, null)
     public abstract void RemoveChild(Widget child);
 }
 
-public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(root)
+public abstract class ContainerWidget<TSlot> : ContainerWidget
     where TSlot : LayoutSlot
 {
     private readonly List<TSlot> _slots = [];
@@ -100,6 +100,7 @@ public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(roo
         var slot = CreateLayoutSlot(content);
         _slots.Add(slot);
         content.LayoutSlot = slot;
+        content.Root = Root;
         OnSlotAdded(slot);
         InvalidateMeasure();
         return slot;
@@ -119,6 +120,7 @@ public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(roo
         var slot = CreateLayoutSlot(content);
         _slots.Insert(index, slot);
         content.LayoutSlot = slot;
+        content.Root = Root;
         OnSlotAdded(slot);
         InvalidateMeasure();
         return slot;
@@ -134,6 +136,7 @@ public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(roo
         _slots.RemoveAt(index);
 
         slot.Content.LayoutSlot = null;
+        slot.Content.Root = null;
         OnSlotRemoved(slot);
         slot.Content.Dispose();
 
@@ -148,6 +151,20 @@ public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(roo
             return;
 
         RemoveChildAt(index);
+    }
+
+    protected override void OnAttached(UiRoot root)
+    {
+        base.OnAttached(root);
+        foreach (var slot in _slots)
+            slot.Content.Root = root;
+    }
+
+    protected override void OnDetached()
+    {
+        base.OnDetached();
+        foreach (var slot in _slots)
+            slot.Content.Root = null;
     }
 
     protected virtual void OnSlotAdded(TSlot slot) { }

@@ -41,9 +41,9 @@ public sealed class SimpleFlipbook : ITickable, IDisposable
         set => _sprite.Scale = value;
     }
 
-    public SimpleFlipbook(Scene scene, Texture texture, TickManager tickManager, float frameRate)
+    public SimpleFlipbook(Scene scene, Texture texture, float frameRate)
     {
-        _tickHandle = new TickHandle(this, tickManager);
+        _tickHandle = new TickHandle(this);
         _frameRate = frameRate;
         _frameTime = 1f / frameRate;
         _frameCount = texture.Width / texture.Height;

@@ -13,7 +13,6 @@ using RetroEngine.Core.Math;
 using RetroEngine.Platform;
 using RetroEngine.Rendering;
 using RetroEngine.Rendering.Text;
-using RetroEngine.Tickables;
 using RetroEngine.UI;
 using RetroEngine.UI.Containers;
 using RetroEngine.UI.Display;
@@ -25,10 +24,8 @@ namespace RetroEngine.Game.Sample;
 public sealed class GameRunner(
     IAssetManager assetManager,
     IHostApplicationLifetime lifetime,
-    TickManager tickManager,
     RenderManager renderManager,
-    IFileSystem fileSystem,
-    IUiManager uiManager
+    IFileSystem fileSystem
 ) : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -82,11 +79,7 @@ public sealed class GameRunner(
         stopwatch.Stop();
         Log.Information("Loaded font in {Time}ms.", stopwatch.ElapsedMilliseconds);
 
-        _ = new SimpleFlipbook(scene1, eeveeTexture, tickManager, 10.0f)
-        {
-            Scale = new Vector2F(3, 3),
-            Tint = new Color(1, 1, 1),
-        };
+        _ = new SimpleFlipbook(scene1, eeveeTexture, 10.0f) { Scale = new Vector2F(3, 3), Tint = new Color(1, 1, 1) };
 
         _ = new Sprite(scene2)
         {
@@ -95,13 +88,13 @@ public sealed class GameRunner(
             ZOrder = -100000,
         };
 
-        using var uiRoot = uiManager.CreateNewRoot();
+        using var uiRoot = new UiRoot();
         uiRoot.ZOrder = 100000;
 
-        var canvasPanel = new CanvasWidget(uiRoot);
+        var canvasPanel = new CanvasWidget();
         uiRoot.Content = canvasPanel;
 
-        var window = new SpriteWidget(uiRoot)
+        var window = new SpriteWidget()
         {
             Texture = choiceTexture,
             PreferredSize = new Vector2F(300, 124),
@@ -115,7 +108,7 @@ public sealed class GameRunner(
             Anchors = new Anchors { Minimum = new Vector2F(0, 0.75f), Maximum = new Vector2F(1, 1) },
         };
 
-        var textBlock = new TextBlockWidget(uiRoot);
+        var textBlock = new TextBlockWidget();
         textBlock.Text = "Pokémon";
         textBlock.Font = textFont;
         textBlock.FontSize = 32;

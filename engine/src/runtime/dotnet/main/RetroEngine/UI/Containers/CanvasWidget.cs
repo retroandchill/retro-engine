@@ -41,8 +41,7 @@ public sealed class CanvasSlot(CanvasWidget parent, Widget content) : LayoutSlot
 
 public sealed class CanvasWidget : ContainerWidget<CanvasSlot>
 {
-    public CanvasWidget(IUiRoot root)
-        : base(root)
+    public CanvasWidget()
     {
         CanHaveMultipleChildren = true;
     }
