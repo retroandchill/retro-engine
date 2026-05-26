@@ -24,6 +24,7 @@ using RetroEngine.Portable.Localization.Formatting;
 using RetroEngine.Portable.Strings;
 using RetroEngine.ToolMenu.ViewModel;
 using RetroEngine.Utilities;
+using Serilog;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -256,8 +257,6 @@ public sealed partial class ContentBrowserViewModel : Tool
     public required IAssetManager AssetManager { get; init; }
     public required IAssetTools AssetTools { get; init; }
 
-    public ILogger? Logger { get; init; }
-
     public ContentBrowserViewModel()
     {
         Title = Text.AsLocalizable(TextNamespace, "ContentBrowser", "Content Browser");
@@ -402,7 +401,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to open asset");
+            Log.Error(ex, "Failed to open asset");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -448,7 +447,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to create new folder.");
+            Log.Error(ex, "Failed to create new folder.");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -487,7 +486,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to open asset");
+            Log.Error(ex, "Failed to open asset");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -589,7 +588,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to create new folder.");
+            Log.Error(ex, "Failed to create new folder.");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -630,7 +629,7 @@ public sealed partial class ContentBrowserViewModel : Tool
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to create new folder.");
+            Log.Error(ex, "Failed to create new folder.");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,

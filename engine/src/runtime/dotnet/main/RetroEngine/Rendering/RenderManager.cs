@@ -11,6 +11,7 @@ using RetroEngine.Config;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
 using RetroEngine.World;
+using Serilog;
 using ZLinq;
 using Zomp.SyncMethodGenerator;
 
@@ -22,7 +23,6 @@ public sealed partial class RenderManager : IDisposable
     private IntPtr _nativeHandle;
     private readonly PlatformBackend _platformBackend;
     private readonly IHostApplicationLifetime _lifetime;
-    private readonly ILogger<RenderManager> _logger;
 
     public RenderManager(
         PlatformBackend platformBackend,
@@ -30,8 +30,7 @@ public sealed partial class RenderManager : IDisposable
         ViewportManager viewportManager,
         IEnumerable<RenderPipeline> pipelines,
         IHostApplicationLifetime lifetime,
-        IOptions<RenderingSettings> renderingSettings,
-        ILogger<RenderManager> logger
+        IOptions<RenderingSettings> renderingSettings
     )
     {
         _platformBackend = platformBackend;
@@ -47,7 +46,6 @@ public sealed partial class RenderManager : IDisposable
         );
         error.ThrowIfError();
         _lifetime = lifetime;
-        _logger = logger;
     }
 
     public event Action<ulong>? OnWindowRemoved
@@ -288,7 +286,7 @@ public sealed partial class RenderManager : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during render loop");
+                Log.Error(ex, "Error during render loop");
             }
         }
     }

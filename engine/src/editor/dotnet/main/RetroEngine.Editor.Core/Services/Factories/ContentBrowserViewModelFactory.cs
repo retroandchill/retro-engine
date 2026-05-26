@@ -16,8 +16,7 @@ public sealed class ContentBrowserViewModelFactory(
     IAssetManager assetManager,
     IAssetTools assetTools,
     IDialogService dialogService,
-    INavigationService navigationService,
-    ILogger<ContentBrowserViewModel> logger
+    INavigationService navigationService
 ) : ViewModelFactory<ContentBrowserViewModel>
 {
     public override ContentBrowserViewModel CreateViewModel()
@@ -28,7 +27,6 @@ public sealed class ContentBrowserViewModelFactory(
             NavigationService = navigationService,
             AssetTools = assetTools,
             AssetManager = assetManager,
-            Logger = logger,
         };
 
         model.Packages.AddRange(assetManager.LoadedPackages.Select(x => new ContentBrowserPackageRoot(x)));

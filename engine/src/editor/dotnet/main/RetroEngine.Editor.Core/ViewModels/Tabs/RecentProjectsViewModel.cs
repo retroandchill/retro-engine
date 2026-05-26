@@ -17,6 +17,7 @@ using RetroEngine.Editor.Core.ViewModels.Dialogs;
 using RetroEngine.Editor.Core.Views.Tabs;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Utils;
+using Serilog;
 
 namespace RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -35,8 +36,6 @@ public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchS
     public IFileSystem FileSystem { get; init; } = IFileSystem.Default;
 
     public required INavigationService NavigationService { get; init; }
-
-    public ILogger? Logger { get; init; }
 
     public Text Header => HeaderText;
 
@@ -74,7 +73,7 @@ public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchS
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to create new project.");
+            Log.Error(ex, "Failed to create new project.");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -111,7 +110,7 @@ public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchS
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to open project.");
+            Log.Error(ex, "Failed to open project.");
 
             await DialogService.ShowMessageBoxAsync(
                 NavigationService.MainWindow,
@@ -160,7 +159,7 @@ public sealed partial class RecentProjectsViewModel : ObservableObject, ILaunchS
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to delete recent project.");
+            Log.Error(ex, "Failed to delete recent project.");
         }
     }
 }

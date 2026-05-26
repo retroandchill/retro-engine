@@ -11,19 +11,11 @@ using RetroEngine.Editor.Core.ViewModels.Dialogs;
 namespace RetroEngine.Editor.Core.Services.Factories;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-public class NewProjectWindowViewModelFactory(
-    IFileSystem fileSystem,
-    IDialogService dialogService,
-    ILogger<NewProjectWindowViewModel> logger
-) : ViewModelFactory<NewProjectWindowViewModel>
+public class NewProjectWindowViewModelFactory(IFileSystem fileSystem, IDialogService dialogService)
+    : ViewModelFactory<NewProjectWindowViewModel>
 {
     public override NewProjectWindowViewModel CreateViewModel()
     {
-        return new NewProjectWindowViewModel()
-        {
-            FileSystem = fileSystem,
-            DialogService = dialogService,
-            Logger = logger,
-        };
+        return new NewProjectWindowViewModel() { FileSystem = fileSystem, DialogService = dialogService };
     }
 }

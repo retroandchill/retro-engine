@@ -5,7 +5,6 @@
 
 using System.IO.Abstractions;
 using HanumanInstitute.MvvmDialogs;
-using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.ViewModels;
 using RetroEngine.Editor.Core.ViewModels.Tabs;
 
@@ -16,8 +15,7 @@ public sealed class RecentProjectsViewModelFactory(
     IProjectManagementService projectManagementService,
     IDialogService dialogService,
     IFileSystem fileSystem,
-    INavigationService navigationService,
-    ILogger<RecentProjectsViewModel> logger
+    INavigationService navigationService
 ) : ViewModelFactory<RecentProjectsViewModel>, IViewModelFactory<ILaunchScreenTabViewModel>
 {
     public override RecentProjectsViewModel CreateViewModel()
@@ -28,7 +26,6 @@ public sealed class RecentProjectsViewModelFactory(
             DialogService = dialogService,
             FileSystem = fileSystem,
             NavigationService = navigationService,
-            Logger = logger,
         };
     }
 

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using RetroEngine.Assets;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Portable.Strings;
+using Serilog;
 using ZLinq;
 
 namespace RetroEngine.AssetTools;
@@ -27,19 +28,16 @@ internal partial class AssetToolsImpl : IAssetTools
 
     private uint _nextUserCategoryBit;
     private readonly IAssetManager _assetManager;
-    private readonly ILogger<AssetToolsImpl> _logger;
 
     public AssetToolsImpl(
         IAssetManager assetManager,
         IEnumerable<IAssetFactory> factories,
         IEnumerable<IAssetEncoder> encoders,
         IEnumerable<AssetToolCustomizer> customizers,
-        IEnumerable<IAssetTypeActions> assetTypeActions,
-        ILogger<AssetToolsImpl> logger
+        IEnumerable<IAssetTypeActions> assetTypeActions
     )
     {
         _assetManager = assetManager;
-        _logger = logger;
         _factories = factories.ToImmutableDictionary(f => f.AssetType);
         _encoders = encoders.ToImmutableDictionary(e => e.AssetType);
 
@@ -115,7 +113,12 @@ internal partial class AssetToolsImpl : IAssetTools
 
         if (_nextUserCategoryBit == 0)
         {
-            LogAssetBitsExhausted(categoryKey, categoryDisplayName);
+            Log.Warning(
+                $"{nameof(RegisterAdvancedAssetCategory)}(\"{{Category}}\", \"{{displayName}}\") failed as all user "
+                    + "bits have been exhausted (placing into the Misc category instead)",
+                categoryKey,
+                categoryDisplayName
+            );
             return result;
         }
 
@@ -123,7 +126,14 @@ internal partial class AssetToolsImpl : IAssetTools
         _allocatedCategoryBits.Add(categoryKey, new AdvancedAssetCategory(result, categoryKey, categoryDisplayName));
         _categoryDisplayNames[result] = categoryDisplayName;
 
-        LogBitTaken(categoryKey, categoryDisplayName, _nextUserCategoryBit, (int)Math.Floor(Math.Log2((int)result)));
+        Log.Information(
+            $"{nameof(RegisterAdvancedAssetCategory)}(\"{{Category}}\", \"{{displayName}}\") used up bit "
+                + "0x{Bit:X16}, Offset: {Offset}",
+            categoryKey,
+            categoryDisplayName,
+            _nextUserCategoryBit,
+            (int)Math.Floor(Math.Log2((int)result))
+        );
         if (_nextUserCategoryBit == (uint)AssetTypeCategories.LastUser)
         {
             _nextUserCategoryBit = 0;
@@ -203,18 +213,4 @@ internal partial class AssetToolsImpl : IAssetTools
 
         return assetName;
     }
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        $"{nameof(RegisterAdvancedAssetCategory)}(\"{{Category}}\", \"{{displayName}}\") failed as all user "
-            + "bits have been exhausted (placing into the Misc category instead)"
-    )]
-    private partial void LogAssetBitsExhausted(Name category, Text displayName);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        $"{nameof(RegisterAdvancedAssetCategory)}(\"{{Category}}\", \"{{displayName}}\") used up bit "
-            + "0x{Bit:X16}, Offset: {Offset}"
-    )]
-    private partial void LogBitTaken(Name category, Text displayName, uint bit, int offset);
 }

@@ -4,10 +4,10 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
 using RetroEngine.Async;
 using RetroEngine.Events;
 using RetroEngine.Utilities.Async;
+using Serilog;
 using ZLinq;
 
 namespace RetroEngine.Tickables;
@@ -31,15 +31,13 @@ public sealed class TickManager : IDisposable
     };
     private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly NativeTaskScheduler _nativeTaskScheduler = new();
-    private readonly ILogger<TickManager> _logger;
 
     public IThreadSync ThreadSync => _synchronizationContext;
     public ulong FrameCount { get; private set; }
 
-    public TickManager(EventManager eventManager, ILogger<TickManager> logger)
+    public TickManager(EventManager eventManager)
     {
         _eventManager = eventManager;
-        _logger = logger;
         _synchronizationContext.UnhandledException += OnUnhandledException;
     }
 
@@ -59,9 +57,9 @@ public sealed class TickManager : IDisposable
         return new SyncContextScope(_synchronizationContext, _nativeTaskScheduler);
     }
 
-    private void OnUnhandledException(Exception ex)
+    private static void OnUnhandledException(Exception ex)
     {
-        _logger.LogError(ex, "Unhandled exception in game thread.");
+        Log.Error(ex, "Unhandled exception in game thread.");
     }
 
     internal void Tick(float deltaTime)

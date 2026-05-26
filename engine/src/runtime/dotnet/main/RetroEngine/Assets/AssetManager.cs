@@ -7,13 +7,13 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using Microsoft.Extensions.Logging;
 using RetroEngine.Portable.Strings;
+using Serilog;
 using Zomp.SyncMethodGenerator;
 
 namespace RetroEngine.Assets;
 
 [RegisterSingleton]
 public sealed partial class AssetManager(
-    ILogger<AssetManager> logger,
     IAssetCache assetCache,
     IEnumerable<IAssetPackageFactory> packageFactories,
     IEnumerable<IAssetDecoder> decoders
@@ -94,7 +94,7 @@ public sealed partial class AssetManager(
         if (_packages.TryGetValue(path.PackageName, out var package))
             return package.GetAssetType(path.AssetName);
 
-        logger.LogWarning("Package '{PathPackageName}' not found.", path.PackageName);
+        Log.Warning("Package '{PathPackageName}' not found.", path.PackageName);
         return null;
     }
 

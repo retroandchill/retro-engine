@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Views.Dialogs;
 using RetroEngine.Portable.Localization;
 using RetroEngine.Utils;
+using Serilog;
 
 namespace RetroEngine.Editor.Core.ViewModels.Dialogs;
 
@@ -28,8 +29,6 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
         }
     } = IFileSystem.Default;
     public required IDialogService DialogService { get; init; }
-    public ILogger? Logger { get; init; }
-
     private const string TextNamespace = "RetroEngine.Editor.Core.Views.Dialogs.NewProjectWindowViewModel";
 
     [ObservableProperty]
@@ -99,7 +98,7 @@ public sealed partial class NewProjectWindowViewModel : ObservableObject, IModal
             {
                 if (t.IsFaulted)
                 {
-                    Logger?.LogError(t.Exception, "Failed to select project folder.");
+                    Log.Error(t.Exception, "Failed to select project folder.");
                 }
             });
     }

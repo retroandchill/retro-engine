@@ -6,9 +6,9 @@
 using System.Collections.ObjectModel;
 using AutoViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Extensions.Logging;
 using RetroEngine.Editor.Core.Views;
 using RetroEngine.Portable.Localization;
+using Serilog;
 
 namespace RetroEngine.Editor.Core.ViewModels;
 
@@ -24,8 +24,6 @@ public sealed partial class LaunchScreenViewModel : ObservableObject
 {
     public ObservableCollection<ILaunchScreenTabViewModel> Tabs { get; } = [];
 
-    public ILogger? Logger { get; init; }
-
     public async Task OnDisplayedAsync(CancellationToken cancellationToken = default)
     {
         await foreach (
@@ -35,7 +33,7 @@ public sealed partial class LaunchScreenViewModel : ObservableObject
         {
             if (task.IsFaulted)
             {
-                Logger?.LogError(task.Exception, "Failed to display tab.");
+                Log.Error(task.Exception, "Failed to display tab.");
             }
         }
     }
