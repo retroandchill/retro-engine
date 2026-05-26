@@ -86,7 +86,7 @@ namespace retro
 
     export struct DrawCommandSet
     {
-        ScreenLayout layout;
+        AnchorData layout;
         std::int32_t z_order;
         std::pmr::vector<SmallUniquePtr<DrawCommandSource>> sources;
     };

@@ -6,24 +6,55 @@
  */
 module retro.runtime.world.viewport;
 
+import retro.core.math.operations;
+
 namespace retro
 {
-    RectI ScreenLayout::to_screen_rect(const Vector2u screen_size) const
+    namespace
     {
-        const Vector2f clamped_alignment{std::clamp(alignment.x, 0.0f, 1.0f), std::clamp(alignment.y, 0.0f, 1.0f)};
+        constexpr std::pair<float, float> calculate_axis(float parent_size,
+                                                         float anchor_min,
+                                                         float anchor_max,
+                                                         float offset_min,
+                                                         float offset_max,
+                                                         float alignment)
+        {
+            alignment = std::clamp(alignment, 0.0f, 1.0f);
 
-        const float relative_x1 = screen_size.x * anchors.minimum.x + offsets.left;
-        const float relative_y1 = screen_size.y * anchors.minimum.y + offsets.top;
-        const float relative_x2 = screen_size.x * (1 - anchors.maximum.x) - offsets.right;
-        const float relative_y2 = screen_size.y * (1 - anchors.maximum.y) - offsets.bottom;
-        const float relative_width = relative_x2 - relative_x1;
-        const float relative_height = relative_y2 - relative_y1;
-        const float x = relative_x1 - relative_width * clamped_alignment.x;
-        const float y = relative_y1 - relative_height * clamped_alignment.y;
+            if (nearly_equal(anchor_min, anchor_max))
+            {
+                const auto size = offset_max;
+                const auto anchor_position = parent_size * anchor_min;
+                auto position = anchor_position + offset_min - size * alignment;
+                return {position, position + size};
+            }
+
+            const auto min = parent_size * anchor_min + offset_min;
+            const auto max = parent_size * anchor_max - offset_max;
+            auto size = max - min;
+            auto position = min - size * alignment;
+            return {position, size};
+        }
+    } // namespace
+
+    RectI AnchorData::to_screen_rect(const Vector2u screen_size) const
+    {
+        auto [x, width] = calculate_axis(screen_size.x,
+                                         anchors.minimum.x,
+                                         anchors.maximum.x,
+                                         offsets.left,
+                                         offsets.right,
+                                         alignment.x);
+        auto [y, height] = calculate_axis(screen_size.y,
+                                          anchors.minimum.y,
+                                          anchors.maximum.y,
+                                          offsets.top,
+                                          offsets.bottom,
+                                          alignment.y);
         return RectI{.x = static_cast<std::int32_t>(x),
                      .y = static_cast<std::int32_t>(y),
-                     .width = static_cast<std::uint32_t>(relative_width),
-                     .height = static_cast<std::uint32_t>(relative_height)};
+                     .width = static_cast<std::uint32_t>(width),
+                     .height = static_cast<std::uint32_t>(height)};
     }
 
     namespace
@@ -40,12 +71,12 @@ namespace retro
         }
     } // namespace
 
-    Viewport::Viewport(const ScreenLayout &layout, const std::int32_t z_order)
+    Viewport::Viewport(const AnchorData &layout, const std::int32_t z_order)
         : id_{generate_viewport_id()}, screen_layout_{layout}, z_order_{z_order}
     {
     }
 
-    void Viewport::set_screen_layout(const ScreenLayout &layout) noexcept
+    void Viewport::set_screen_layout(const AnchorData &layout) noexcept
     {
         screen_layout_ = layout;
         auto window = window_.lock();
@@ -103,7 +134,7 @@ namespace retro
     {
     }
 
-    Viewport &ViewportManager::create_viewport(const ScreenLayout &layout, std::int32_t z_order)
+    Viewport &ViewportManager::create_viewport(const AnchorData &layout, std::int32_t z_order)
     {
         const auto &new_viewport = viewports_.emplace_back(std::make_unique<Viewport>(layout, z_order));
         on_viewport_created_(*new_viewport);

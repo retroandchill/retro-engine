@@ -28,7 +28,7 @@ namespace retro
 {
     export class ViewportManager;
 
-    export struct ScreenLayout
+    export struct AnchorData
     {
         Margin offsets{};
         Anchors anchors{};
@@ -36,7 +36,7 @@ namespace retro
 
         [[nodiscard]] RETRO_API RectI to_screen_rect(Vector2u screen_size) const;
 
-        constexpr friend bool operator==(const ScreenLayout &lhs, const ScreenLayout &rhs) noexcept = default;
+        constexpr friend bool operator==(const AnchorData &lhs, const AnchorData &rhs) noexcept = default;
     };
 
     export struct ViewportDrawInfo
@@ -75,19 +75,19 @@ namespace retro
             MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
         using ScreenRectChanged = MulticastDelegate<void(RectI rect)>;
 
-        Viewport(const ScreenLayout &layout, std::int32_t z_order);
+        Viewport(const AnchorData &layout, std::int32_t z_order);
 
         [[nodiscard]] inline std::uint64_t id() const noexcept
         {
             return id_;
         }
 
-        [[nodiscard]] inline const ScreenLayout &screen_layout() const noexcept
+        [[nodiscard]] inline const AnchorData &screen_layout() const noexcept
         {
             return screen_layout_;
         }
 
-        void set_screen_layout(const ScreenLayout &layout) noexcept;
+        void set_screen_layout(const AnchorData &layout) noexcept;
 
         [[nodiscard]] RectI screen_rect() const noexcept;
 
@@ -153,7 +153,7 @@ namespace retro
         void on_window_resized(Vector2u window_size);
 
         std::uint64_t id_;
-        ScreenLayout screen_layout_;
+        AnchorData screen_layout_;
         RectI screen_rect_;
         CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
@@ -171,7 +171,7 @@ namespace retro
       public:
         explicit ViewportManager(EventManager &event_manager);
 
-        Viewport &create_viewport(const ScreenLayout &layout = {}, std::int32_t z_order = 0);
+        Viewport &create_viewport(const AnchorData &layout = {}, std::int32_t z_order = 0);
 
         void destroy_viewport(Viewport &viewport);
 

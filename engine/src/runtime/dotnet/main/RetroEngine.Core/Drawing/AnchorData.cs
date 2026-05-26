@@ -5,6 +5,7 @@
 
 using System.Runtime.InteropServices;
 using RetroEngine.Core.Math;
+using RetroEngine.Utilities;
 
 namespace RetroEngine.Core.Drawing;
 
@@ -23,20 +24,52 @@ public readonly record struct AnchorData(Margin Offsets, Anchors Anchors, Vector
 {
     public RectF GetBounds(Vector2F size)
     {
-        var clampedAlignment = new Vector2F(
-            System.Math.Clamp(Alignment.X, 0f, 1f),
-            System.Math.Clamp(Alignment.Y, 0f, 1f)
+        var (x, width) = CalculateAxis(
+            size.X,
+            Anchors.Minimum.X,
+            Anchors.Maximum.X,
+            Offsets.Left,
+            Offsets.Right,
+            Alignment.X
         );
+        var (y, height) = CalculateAxis(
+            size.Y,
+            Anchors.Minimum.Y,
+            Anchors.Maximum.Y,
+            Offsets.Top,
+            Offsets.Bottom,
+            Alignment.Y
+        );
+        return new RectF(x, y, width, height);
+    }
 
-        var relativeX1 = size.X * Anchors.Minimum.X + Offsets.Left;
-        var relativeY1 = size.Y * Anchors.Minimum.Y + Offsets.Top;
-        var relativeX2 = size.X * Anchors.Maximum.X - Offsets.Right;
-        var relativeY2 = size.Y * Anchors.Maximum.Y - Offsets.Bottom;
+    private static (float Position, float Size) CalculateAxis(
+        float parentSize,
+        float anchorMin,
+        float anchorMax,
+        float offsetMin,
+        float offsetMax,
+        float alignment
+    )
+    {
+        alignment = System.Math.Clamp(alignment, 0f, 1f);
 
-        var relativeWidth = relativeX2 - relativeX1;
-        var relativeHeight = relativeY2 - relativeY1;
-        var x = relativeX1 - relativeWidth * clampedAlignment.X;
-        var y = relativeY1 - relativeHeight * clampedAlignment.Y;
-        return new RectF(x, y, relativeWidth, relativeHeight);
+        if (System.Math.IsNearlyEqual(anchorMin, anchorMax))
+        {
+            var size = offsetMax;
+            var anchorPosition = parentSize * anchorMin;
+            var position = anchorPosition + offsetMin - size * alignment;
+
+            return (position, size);
+        }
+        else
+        {
+            var min = parentSize * anchorMin + offsetMin;
+            var max = parentSize * anchorMax - offsetMax;
+            var size = max - min;
+            var position = min - size * alignment;
+
+            return (position, size);
+        }
     }
 }

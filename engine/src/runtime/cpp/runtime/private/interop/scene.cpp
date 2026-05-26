@@ -122,7 +122,7 @@ extern "C"
         viewport->set_scene(scene);
     }
 
-    RETRO_API void retro_viewport_set_screen_layout(Viewport *viewport, const ScreenLayout *layout)
+    RETRO_API void retro_viewport_set_screen_layout(Viewport *viewport, const AnchorData *layout)
     {
         viewport->set_screen_layout(*layout);
     }
