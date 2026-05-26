@@ -5,8 +5,21 @@
 
 namespace RetroEngine.Tickables;
 
+public enum TickGroup : byte
+{
+    Input,
+    PreSimulation,
+    Simulation,
+    PostSimulation,
+    UiLayout,
+    PreRender,
+    Render,
+}
+
 public interface ITickable
 {
+    public TickGroup TickGroup { get; }
+
     bool TickEnabled { get; }
 
     void Tick(float deltaTime);

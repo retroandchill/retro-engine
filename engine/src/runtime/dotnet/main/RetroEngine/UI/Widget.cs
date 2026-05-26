@@ -3,7 +3,6 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
 using RetroEngine.World;
 
@@ -18,9 +17,11 @@ public enum LayoutDirtyFlags : byte
     Visual = 1 << 2,
 }
 
-public abstract class Widget(SceneObject? sceneObject) : IDisposable
+public abstract class Widget(IUiRoot root, SceneObject? sceneObject) : IDisposable
 {
     private bool _disposed;
+
+    public IUiRoot Root { get; } = root;
 
     public LayoutSlot? LayoutSlot { get; internal set; }
 
@@ -37,11 +38,13 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
     public LayoutDirtyFlags DirtyFlags { get; private set; } =
         LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange | LayoutDirtyFlags.Visual;
 
-    protected SceneObject? SceneObject { get; } = sceneObject;
+    protected internal SceneObject? SceneObject { get; } = sceneObject;
 
     public Vector2F Measure(Vector2F availableSize)
     {
         ThrowIfDisposed();
+        if (!DirtyFlags.HasFlag(LayoutDirtyFlags.Measure))
+            return DesiredSize;
 
         DesiredSize = ComputeDesiredSize(availableSize);
         DirtyFlags &= ~LayoutDirtyFlags.Measure;
@@ -52,6 +55,8 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
     public void Arrange(RectF finalRect)
     {
         ThrowIfDisposed();
+        if (!DirtyFlags.HasFlag(LayoutDirtyFlags.Arrange))
+            return;
 
         ActualPosition = new Vector2F(finalRect.X, finalRect.Y);
         ActualSize = new Vector2F(finalRect.Width, finalRect.Height);
@@ -75,14 +80,29 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
 
     public void InvalidateMeasure()
     {
+        var wasMeasureDirty = DirtyFlags.HasFlag(LayoutDirtyFlags.Measure);
+
         DirtyFlags |= LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange;
-        LayoutSlot?.Parent.InvalidateMeasure();
+        Root.InvalidateLayout();
+
+        if (!wasMeasureDirty)
+            LayoutSlot?.Parent.InvalidateMeasure();
     }
 
     public void InvalidateArrange()
     {
+        var wasArrangeDirty = DirtyFlags.HasFlag(LayoutDirtyFlags.Arrange);
+
         DirtyFlags |= LayoutDirtyFlags.Arrange;
-        LayoutSlot?.Parent.InvalidateArrange();
+        Root.InvalidateLayout();
+
+        if (!wasArrangeDirty)
+            LayoutSlot?.Parent.InvalidateArrange();
+    }
+
+    protected static Scene GetSceneFrom(IUiRoot root)
+    {
+        return root.Scene;
     }
 
     protected void ThrowIfDisposed()

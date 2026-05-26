@@ -30,12 +30,13 @@ public readonly record struct AnchorData(Margin Offsets, Anchors Anchors, Vector
 
         var relativeX1 = size.X * Anchors.Minimum.X + Offsets.Left;
         var relativeY1 = size.Y * Anchors.Minimum.Y + Offsets.Top;
-        var relativeX2 = size.X * Anchors.Maximum.X + Offsets.Right;
-        var relativeY2 = size.Y * Anchors.Maximum.Y + Offsets.Bottom;
+        var relativeX2 = size.X * Anchors.Maximum.X - Offsets.Right;
+        var relativeY2 = size.Y * Anchors.Maximum.Y - Offsets.Bottom;
+
         var relativeWidth = relativeX2 - relativeX1;
         var relativeHeight = relativeY2 - relativeY1;
-        var x = relativeX1 + relativeWidth * clampedAlignment.X;
-        var y = relativeY1 + relativeHeight * clampedAlignment.Y;
+        var x = relativeX1 - relativeWidth * clampedAlignment.X;
+        var y = relativeY1 - relativeHeight * clampedAlignment.Y;
         return new RectF(x, y, relativeWidth, relativeHeight);
     }
 }

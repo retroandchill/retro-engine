@@ -7,11 +7,11 @@ using ZLinq;
 
 namespace RetroEngine.UI;
 
-public abstract class ContainerWidget() : Widget(null)
+public abstract class ContainerWidget(IUiRoot root) : Widget(root, null)
 {
     public abstract IReadOnlyList<LayoutSlot> Slots { get; }
 
-    public bool CanHaveMultipleChildren { get; init; }
+    public bool CanHaveMultipleChildren { get; protected init; }
 
     public bool CanAddMoreChildren => CanHaveMultipleChildren || ChildrenCount == 0;
 
@@ -34,7 +34,7 @@ public abstract class ContainerWidget() : Widget(null)
     public abstract void RemoveChild(Widget child);
 }
 
-public abstract class ContainerWidget<TSlot> : ContainerWidget
+public abstract class ContainerWidget<TSlot>(IUiRoot root) : ContainerWidget(root)
     where TSlot : LayoutSlot
 {
     private readonly List<TSlot> _slots = [];

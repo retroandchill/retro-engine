@@ -16,7 +16,17 @@ namespace RetroEngine.Tickables;
 public sealed class TickManager : IDisposable
 {
     private readonly EventManager _eventManager;
-    private readonly HashSet<ITickable> _tickables = new(ReferenceEqualityComparer.Default);
+
+    private readonly Dictionary<TickGroup, HashSet<ITickable>> _tickables = new()
+    {
+        [TickGroup.Input] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.PreSimulation] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.Simulation] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.PostSimulation] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.UiLayout] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.PreRender] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+        [TickGroup.Render] = new HashSet<ITickable>(ReferenceEqualityComparer.Default),
+    };
     private readonly GameThreadSynchronizationContext _synchronizationContext = new();
     private readonly NativeTaskScheduler _nativeTaskScheduler = new();
     private readonly ILogger<TickManager> _logger;
@@ -33,12 +43,12 @@ public sealed class TickManager : IDisposable
 
     public void RegisterTickable(ITickable tickable)
     {
-        _tickables.Add(tickable);
+        _tickables[tickable.TickGroup].Add(tickable);
     }
 
     public void UnregisterTickable(ITickable tickable)
     {
-        _tickables.Remove(tickable);
+        _tickables[tickable.TickGroup].Remove(tickable);
     }
 
     internal SyncContextScope BindSynchronizationContext()
@@ -55,13 +65,24 @@ public sealed class TickManager : IDisposable
     internal void Tick(float deltaTime)
     {
         _eventManager.PollEvents();
+        Tick(TickGroup.Input, deltaTime);
+        Tick(TickGroup.PreSimulation, deltaTime);
         _nativeTaskScheduler.PumpTasks();
-        foreach (var tickable in _tickables.AsValueEnumerable().Where(t => t.TickEnabled))
+        Tick(TickGroup.Simulation, deltaTime);
+        _synchronizationContext.Pump();
+        Tick(TickGroup.PostSimulation, deltaTime);
+        FrameCount++;
+        Tick(TickGroup.UiLayout, deltaTime);
+        Tick(TickGroup.PreRender, deltaTime);
+        Tick(TickGroup.Render, deltaTime);
+    }
+
+    private void Tick(TickGroup group, float deltaTime)
+    {
+        foreach (var tickable in _tickables[group].AsValueEnumerable().Where(t => t.TickEnabled))
         {
             tickable.Tick(deltaTime);
         }
-        _synchronizationContext.Pump();
-        FrameCount++;
     }
 
     public Task WaitFrame(ulong frameCount = 1, CancellationToken cancellationToken = default)

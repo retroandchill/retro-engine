@@ -8,7 +8,7 @@ using RetroEngine.Core.Math;
 using RetroEngine.Rendering;
 using RetroEngine.World;
 
-namespace RetroEngine.UI;
+namespace RetroEngine.UI.Display;
 
 public sealed class SpriteWidget : Widget
 {
@@ -94,10 +94,21 @@ public sealed class SpriteWidget : Widget
         }
     }
 
-    public Vector2F PreferredSize { get; set; }
+    public Vector2F PreferredSize
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
 
-    public SpriteWidget(Scene scene)
-        : base(new Sprite(scene, false))
+            field = value;
+            InvalidateMeasure();
+        }
+    }
+
+    public SpriteWidget(IUiRoot root)
+        : base(root, new Sprite(GetSceneFrom(root), false))
     {
         _sprite = (Sprite)SceneObject!;
     }

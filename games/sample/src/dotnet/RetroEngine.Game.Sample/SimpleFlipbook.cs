@@ -14,6 +14,8 @@ namespace RetroEngine.Game.Sample;
 
 public sealed class SimpleFlipbook : ITickable, IDisposable
 {
+    public TickGroup TickGroup => TickGroup.Simulation;
+
     public bool TickEnabled => !_disposed;
 
     private bool _disposed;

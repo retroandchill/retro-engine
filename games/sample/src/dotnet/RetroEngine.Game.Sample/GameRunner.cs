@@ -14,6 +14,9 @@ using RetroEngine.Platform;
 using RetroEngine.Rendering;
 using RetroEngine.Rendering.Text;
 using RetroEngine.Tickables;
+using RetroEngine.UI;
+using RetroEngine.UI.Containers;
+using RetroEngine.UI.Display;
 using RetroEngine.World;
 using Serilog;
 
@@ -26,7 +29,8 @@ public sealed class GameRunner(
     RenderManager renderManager,
     SceneManager sceneManager,
     ViewportManager viewportManager,
-    IFileSystem fileSystem
+    IFileSystem fileSystem,
+    IUiManager uiManager
 ) : AsyncGameSession(lifetime)
 {
     protected override async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -93,26 +97,43 @@ public sealed class GameRunner(
             ZOrder = -100000,
         };
 
-        var window = new Sprite(scene1)
+        using var uiRoot = uiManager.CreateNewRoot();
+        uiRoot.ZOrder = 100000;
+
+        var canvasPanel = new CanvasWidget(uiRoot);
+        uiRoot.Content = canvasPanel;
+
+        var window = new SpriteWidget(uiRoot)
         {
             Texture = choiceTexture,
-            Scale = new Vector2F(2, 2),
-            Size = new Vector2F(300, 124),
-            Pivot = new Vector2F(0.5f, 1f),
-            ZOrder = 100000,
-            Position = new Vector2F(0, 360),
+            PreferredSize = new Vector2F(300, 124),
             DrawMode = SpriteDrawMode.Box,
             Margin = new Margin(14),
         };
-
-        _ = new TextBlock(window)
+        var windowSlot = canvasPanel.AddChild(window);
+        windowSlot.AutoSize = true;
+        windowSlot.LayoutData = windowSlot.LayoutData with
         {
-            Text = "Pokémon",
-            Position = new Vector2F(0, -62),
-            Font = textFont,
-            Pivot = new Vector2F(0.5f, 0.5f),
-            Tint = new Color(0, 0, 0),
-            ZOrder = 100001,
+            Anchors = new Anchors { Minimum = new Vector2F(0, 0.75f), Maximum = new Vector2F(1, 1) },
+        };
+
+        var textBlock = new TextBlockWidget(uiRoot);
+        textBlock.Text = "Pokémon";
+        textBlock.Font = textFont;
+        textBlock.FontSize = 32;
+        textBlock.Color = new Color(0, 0, 0, 1);
+        var textBlockSlot = canvasPanel.AddChild(textBlock);
+        textBlockSlot.ZOrder = 1;
+        textBlockSlot.LayoutData = windowSlot.LayoutData with
+        {
+            Anchors = new Anchors { Minimum = new Vector2F(0, 0.75f), Maximum = new Vector2F(1, 1) },
+            Offsets = new Margin
+            {
+                Top = 14,
+                Bottom = 14,
+                Left = 14,
+                Right = 14,
+            },
         };
 
         await Task.Delay(Timeout.Infinite, cancellationToken);

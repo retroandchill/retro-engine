@@ -44,6 +44,7 @@ public sealed partial class Engine : IAsyncDisposable
         _eventManager = eventManager;
         _nativeEngine = nativeEngine;
         serviceCollection.AddSingleton(_platformBackend);
+        serviceCollection.AddSingleton(_eventManager);
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
         _host = new EngineHost(serviceProviderFactory(serviceCollection), _lifetime);
     }

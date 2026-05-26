@@ -10,6 +10,8 @@ internal sealed class Timeline(float duration, Action<float> onTick, Cancellatio
     private readonly TaskCompletionSource _tcs = new();
     private float _elapsedTime;
 
+    public TickGroup TickGroup => TickGroup.Simulation;
+
     public bool TickEnabled => !cancellationToken.IsCancellationRequested || _tcs.Task.IsCompleted;
     public Task Task => _tcs.Task;
 

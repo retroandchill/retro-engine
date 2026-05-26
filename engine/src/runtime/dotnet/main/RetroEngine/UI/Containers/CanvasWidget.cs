@@ -41,6 +41,12 @@ public sealed class CanvasSlot(CanvasWidget parent, Widget content) : LayoutSlot
 
 public sealed class CanvasWidget : ContainerWidget<CanvasSlot>
 {
+    public CanvasWidget(IUiRoot root)
+        : base(root)
+    {
+        CanHaveMultipleChildren = true;
+    }
+
     protected override CanvasSlot CreateLayoutSlot(Widget content)
     {
         return new CanvasSlot(this, content);
@@ -63,6 +69,7 @@ public sealed class CanvasWidget : ContainerWidget<CanvasSlot>
         {
             var contentRect = slot.GetContentRect(finalRect);
             slot.Content.Arrange(contentRect);
+            slot.Content.SceneObject?.ZOrder = slot.ZOrder;
         }
     }
 }

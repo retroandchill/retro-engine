@@ -5,17 +5,40 @@
 
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
+using RetroEngine.Tickables;
 using RetroEngine.World;
 
 namespace RetroEngine.UI;
 
-public sealed class UiRoot : IDisposable
+public interface IUiRoot : IDisposable
 {
-    private bool _disposed;
+    bool Disposed { get; }
 
-    private readonly Scene _scene;
+    internal Scene Scene { get; }
+
+    AnchorData ScreenLayout { get; set; }
+
+    int ZOrder { get; set; }
+
+    Widget? Content { get; set; }
+
+    void InvalidateLayout();
+
+    void UpdateLayout();
+}
+
+public sealed class UiRoot : IUiRoot, ITickable
+{
+    public bool Disposed { get; private set; }
+
+    private readonly IUiManager _uiManager;
+    private readonly TickHandle _tickHandle;
+    public Scene Scene { get; }
     private readonly Viewport _viewport;
     private bool _layoutDirty = true;
+
+    public TickGroup TickGroup => TickGroup.UiLayout;
+    public bool TickEnabled => true;
 
     public AnchorData ScreenLayout
     {
@@ -59,11 +82,18 @@ public sealed class UiRoot : IDisposable
         }
     }
 
-    public UiRoot(SceneManager sceneManager, ViewportManager viewportManager)
+    internal UiRoot(
+        IUiManager uiManager,
+        TickManager tickManager,
+        SceneManager sceneManager,
+        ViewportManager viewportManager
+    )
     {
-        _scene = new Scene(sceneManager);
-        _viewport = new Viewport(viewportManager) { Scene = _scene };
+        _uiManager = uiManager;
+        Scene = new Scene(sceneManager);
+        _viewport = new Viewport(viewportManager) { Scene = Scene };
         _viewport.ScreenRectChanged += _ => InvalidateLayout();
+        _tickHandle = new TickHandle(this, tickManager);
     }
 
     public void InvalidateLayout()
@@ -88,18 +118,25 @@ public sealed class UiRoot : IDisposable
         _layoutDirty = false;
     }
 
+    public void Tick(float deltaTime)
+    {
+        UpdateLayout();
+    }
+
     private void ThrowIfDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ObjectDisposedException.ThrowIf(Disposed, this);
     }
 
     public void Dispose()
     {
-        if (_disposed)
+        if (Disposed)
             return;
 
-        _disposed = true;
-        _scene.Dispose();
+        Disposed = true;
+        Scene.Dispose();
         _viewport.Dispose();
+        _tickHandle.Dispose();
+        _uiManager.DestroyRoot(this);
     }
 }

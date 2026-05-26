@@ -11,6 +11,8 @@ internal sealed class TickAwait(TickManager tickManager, ulong duration, Cancell
     private readonly TaskCompletionSource _tcs = new();
     private readonly ulong _startedOn = tickManager.FrameCount;
 
+    public TickGroup TickGroup => TickGroup.Simulation;
+
     public bool TickEnabled => !cancellationToken.IsCancellationRequested || _tcs.Task.IsCompleted;
 
     public Task Task => _tcs.Task;
