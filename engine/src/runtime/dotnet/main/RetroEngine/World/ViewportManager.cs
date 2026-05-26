@@ -5,15 +5,16 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using RetroEngine.Events;
 using RetroEngine.Interop;
 
 namespace RetroEngine.World;
 
 [RegisterSingleton]
 [NativeMarshalling(typeof(ViewportManagerMarshaller))]
-public sealed partial class ViewportManager : IDisposable
+public sealed partial class ViewportManager(EventManager eventManager) : IDisposable
 {
-    internal IntPtr NativeHandle { get; private set; } = NativeCreate();
+    internal IntPtr NativeHandle { get; private set; } = NativeCreate(eventManager);
     private readonly List<Viewport> _viewports = [];
 
     public IReadOnlyList<Viewport> Viewports => _viewports;
@@ -51,7 +52,7 @@ public sealed partial class ViewportManager : IDisposable
     }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_manager_create")]
-    private static partial IntPtr NativeCreate();
+    private static partial IntPtr NativeCreate(EventManager eventManager);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_manager_destroy")]
     private static partial void NativeDestroy(ViewportManager ptr);

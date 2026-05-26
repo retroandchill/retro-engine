@@ -16,37 +16,100 @@ public sealed class SpriteWidget : Widget
 
     public Texture? Texture
     {
-        get => _sprite.Texture;
-        set => _sprite.Texture = value;
+        get
+        {
+            ThrowIfDisposed();
+            return _sprite.Texture;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            if (ReferenceEquals(value, _sprite.Texture))
+                return;
+
+            _sprite.Texture = value;
+            if (value is not null)
+                PreferredSize = _sprite.PreferredSize;
+        }
     }
 
     public Color Color
     {
-        get => _sprite.Tint;
-        set => _sprite.Tint = value;
+        get
+        {
+            ThrowIfDisposed();
+            return _sprite.Tint;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            _sprite.Tint = value;
+        }
     }
 
     public UVs UVs
     {
-        get => _sprite.UVs;
-        set => _sprite.UVs = value;
+        get
+        {
+            ThrowIfDisposed();
+            return _sprite.UVs;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            if (_sprite.UVs == value)
+                return;
+
+            _sprite.UVs = value;
+            if (_sprite.Texture is not null)
+                PreferredSize = _sprite.PreferredSize;
+        }
     }
 
     public SpriteDrawMode DrawMode
     {
-        get => _sprite.DrawMode;
-        set => _sprite.DrawMode = value;
+        get
+        {
+            ThrowIfDisposed();
+            return _sprite.DrawMode;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            _sprite.DrawMode = value;
+        }
     }
 
     public Margin Margin
     {
-        get => _sprite.Margin;
-        set => _sprite.Margin = value;
+        get
+        {
+            ThrowIfDisposed();
+            return _sprite.Margin;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            _sprite.Margin = value;
+        }
     }
 
+    public Vector2F PreferredSize { get; set; }
+
     public SpriteWidget(Scene scene)
-        : base(new Sprite(scene))
+        : base(new Sprite(scene, false))
     {
         _sprite = (Sprite)SceneObject!;
+    }
+
+    protected override Vector2F ComputeDesiredSize(Vector2F availableSize)
+    {
+        return PreferredSize;
+    }
+
+    protected override void ApplyLayoutToScene(RectF finalRect)
+    {
+        base.ApplyLayoutToScene(finalRect);
+        _sprite.Size = new Vector2F(finalRect.Width, finalRect.Height);
     }
 }

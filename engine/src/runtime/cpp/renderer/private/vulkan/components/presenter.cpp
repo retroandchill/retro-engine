@@ -249,6 +249,7 @@ namespace retro
         create_swapchain(w, h);
         pipeline_manager_.recreate_pipelines(extent_, render_pass_.get());
     }
+
     void VulkanPresenter::record_command_buffer(vk::CommandBuffer cmd, const std::stop_token &stop_token)
     {
         constexpr vk::CommandBufferBeginInfo begin_info{};

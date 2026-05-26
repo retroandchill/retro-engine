@@ -10,6 +10,7 @@ import retro.core.util.color;
 import retro.core.math.vector;
 import retro.core.math.matrix;
 import retro.core.math.transform;
+import retro.core.math.rect;
 import retro.core.memory.ref_counted_ptr;
 import retro.runtime.world.scene;
 import retro.runtime.world.viewport;
@@ -26,6 +27,8 @@ import retro.runtime.rendering.layout.uvs;
 import retro.runtime.rendering.objects.text_block;
 import retro.core.strings.encoding;
 import retro.runtime.rendering.text.font;
+import retro.runtime.event_manager;
+import retro.core.functional.interop_function;
 
 using namespace retro;
 
@@ -64,6 +67,10 @@ namespace retro
                                 .rotation = Quaternion2f{layout.rotation},
                                 .zoom = layout.zoom};
         }
+
+        using DeleteCallback = void (*)(void *);
+        using EqualsCallback = bool (*)(void *, void *);
+        using ScreenRectChangedCallback = void (*)(void *, RectI);
     } // namespace
 } // namespace retro
 
@@ -89,9 +96,9 @@ extern "C"
         manager->destroy_scene(*scene);
     }
 
-    RETRO_API ViewportManager *retro_viewport_manager_create()
+    RETRO_API ViewportManager *retro_viewport_manager_create(EventManager *event_manager)
     {
-        return new ViewportManager{};
+        return new ViewportManager{*event_manager};
     }
 
     RETRO_API void retro_viewport_manager_destroy(const ViewportManager *manager)
@@ -128,6 +135,35 @@ extern "C"
     RETRO_API void retro_viewport_set_z_order(Viewport *viewport, const std::int32_t z_order)
     {
         viewport->set_z_order(z_order);
+    }
+
+    RETRO_API RectI retro_viewport_get_screen_rect(const Viewport *viewport)
+    {
+        return viewport->screen_rect();
+    }
+
+    RETRO_API void retro_viewport_screen_rect_changed_add(Viewport *viewport,
+                                                          void *user_data,
+                                                          const ScreenRectChangedCallback callback,
+                                                          const DeleteCallback delete_callback,
+                                                          const EqualsCallback equals_callback)
+    {
+        viewport->screen_rect_changed().add(
+            InteropFunction{callback,
+                            std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                            equals_callback});
+    }
+
+    RETRO_API void retro_viewport_screen_rect_changed_remove(Viewport *viewport,
+                                                             void *user_data,
+                                                             const ScreenRectChangedCallback callback,
+                                                             const DeleteCallback delete_callback,
+                                                             const EqualsCallback equals_callback)
+    {
+        viewport->screen_rect_changed().remove(
+            InteropFunction{callback,
+                            std::unique_ptr<void, DeleteCallback>{user_data, delete_callback},
+                            equals_callback});
     }
 
     RETRO_API void retro_node_dispose(Scene *scene, SceneNode *node)

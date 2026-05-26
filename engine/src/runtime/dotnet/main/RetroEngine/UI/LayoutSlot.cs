@@ -5,8 +5,8 @@
 
 namespace RetroEngine.UI;
 
-public abstract class LayoutSlot(ContainerWidget parent, Widget child)
+public abstract class LayoutSlot(ContainerWidget parent, Widget content)
 {
     public ContainerWidget Parent { get; private set; } = parent;
-    public Widget Child { get; private set; } = child;
+    public Widget Content { get; internal set; } = content;
 }

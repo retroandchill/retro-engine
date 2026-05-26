@@ -19,6 +19,8 @@ namespace retro
         T y = 0;
         U width = 0;
         U height = 0;
+
+        constexpr friend bool operator==(const Rect &lhs, const Rect &rhs) noexcept = default;
     };
 
     export using RectI = Rect<std::int32_t, std::uint32_t>;

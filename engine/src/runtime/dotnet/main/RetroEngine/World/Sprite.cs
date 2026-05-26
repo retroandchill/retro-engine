@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Core.Drawing;
@@ -34,7 +35,7 @@ public partial class Sprite : SceneObject
 
             field = value;
             NativeSetTexture(this, value);
-            if (value is null)
+            if (value is null || !AutoResize)
                 return;
 
             var uvXRange = UVs.Max.X - UVs.Min.X;
@@ -54,6 +55,19 @@ public partial class Sprite : SceneObject
 
             field = value;
             NativeSetSize(this, value);
+        }
+    }
+
+    public Vector2F PreferredSize
+    {
+        get
+        {
+            if (Texture is null)
+                return Vector2F.Zero;
+
+            var uvXRange = UVs.Max.X - UVs.Min.X;
+            var uvYRange = UVs.Max.Y - UVs.Min.Y;
+            return new Vector2F(Texture.Width * uvXRange, Texture.Height * uvYRange);
         }
     }
 
@@ -91,7 +105,7 @@ public partial class Sprite : SceneObject
         set
         {
             ThrowIfDisposed();
-            if (field == value)
+            if (field == value || !AutoResize)
                 return;
 
             field = value;
@@ -127,19 +141,22 @@ public partial class Sprite : SceneObject
         }
     }
 
-    private Sprite(Scene scene, SceneObject? parent)
+    public bool AutoResize { get; set; }
+
+    private Sprite(Scene scene, SceneObject? parent, bool autoResize)
         : base(scene, parent, NativeCreate)
     {
+        AutoResize = autoResize;
         Size = new Vector2F(100, 100);
         Tint = new Color(1, 1, 1);
         UVs = new UVs(Vector2F.Zero, Vector2F.One);
     }
 
-    public Sprite(Scene scene)
-        : this(scene, null) { }
+    public Sprite(Scene scene, bool autoResize = true)
+        : this(scene, null, autoResize) { }
 
-    public Sprite(SceneObject parent)
-        : this(parent.Scene, parent) { }
+    public Sprite(SceneObject parent, bool autoResize = true)
+        : this(parent.Scene, parent, autoResize) { }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_sprite_create")]
     private static partial IntPtr NativeCreate(Scene scene);

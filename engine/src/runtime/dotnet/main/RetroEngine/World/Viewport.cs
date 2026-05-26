@@ -36,7 +36,7 @@ public sealed partial class Viewport : IDisposable
         }
     }
 
-    public ScreenLayout ScreenLayout
+    public AnchorData ScreenLayout
     {
         get;
         set
@@ -47,6 +47,15 @@ public sealed partial class Viewport : IDisposable
 
             field = value;
             NativeSetScreenLayout(this, field);
+        }
+    }
+
+    public RectI ScreenRect
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return NativeGetScreenRect(this);
         }
     }
 
@@ -102,6 +111,46 @@ public sealed partial class Viewport : IDisposable
         set => CameraLayout = CameraLayout with { Zoom = value };
     }
 
+    public event Action<RectI>? ScreenRectChanged
+    {
+        add
+        {
+            ThrowIfDisposed();
+            if (value is null)
+                return;
+
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeScreenRectChangedAdd(
+                    this,
+                    GCHandle.ToIntPtr(handle),
+                    &ScreenRectChangedCallback,
+                    &DisposeDelegate,
+                    &EqualsDelegates
+                );
+            }
+        }
+        remove
+        {
+            ThrowIfDisposed();
+            if (value is null)
+                return;
+
+            unsafe
+            {
+                var handle = GCHandle.Alloc(value);
+                NativeScreenRectChangedRemove(
+                    this,
+                    GCHandle.ToIntPtr(handle),
+                    &ScreenRectChangedCallback,
+                    &DisposeDelegate,
+                    &EqualsDelegates
+                );
+            }
+        }
+    }
+
     public Viewport(ViewportManager manager)
     {
         _manager = manager;
@@ -109,6 +158,28 @@ public sealed partial class Viewport : IDisposable
         error.ThrowIfError();
         _manager.AddViewport(this);
         CameraZoom = 1.0f;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void ScreenRectChangedCallback(IntPtr viewportPtr, RectI rect)
+    {
+        var action = (Action<RectI>?)GCHandle.FromIntPtr(viewportPtr).Target;
+        action?.Invoke(rect);
+    }
+
+    [UnmanagedCallersOnly]
+    private static void DisposeDelegate(IntPtr userData)
+    {
+        var handle = GCHandle.FromIntPtr(userData);
+        handle.Free();
+    }
+
+    [UnmanagedCallersOnly]
+    private static byte EqualsDelegates(IntPtr lhs, IntPtr rhs)
+    {
+        var lhsHandle = GCHandle.FromIntPtr(lhs);
+        var rhsHandle = GCHandle.FromIntPtr(rhs);
+        return Equals(lhsHandle.Target, rhsHandle.Target) ? (byte)1 : (byte)0;
     }
 
     internal void ThrowIfDisposed()
@@ -137,13 +208,34 @@ public sealed partial class Viewport : IDisposable
     private static partial void NativeSetScene(Viewport viewport, Scene? scene);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_screen_layout")]
-    private static partial void NativeSetScreenLayout(Viewport viewport, in ScreenLayout layout);
+    private static partial void NativeSetScreenLayout(Viewport viewport, in AnchorData layout);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_z_order")]
     private static partial void NativeSetZOrder(Viewport viewport, int zOrder);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_set_camera_layout")]
     private static partial void NativeSetCameraLayout(Viewport viewport, in CameraLayout layout);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_get_screen_rect")]
+    private static partial RectI NativeGetScreenRect(Viewport viewport);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_screen_rect_changed_add")]
+    private static unsafe partial void NativeScreenRectChangedAdd(
+        Viewport viewport,
+        IntPtr userData,
+        delegate* unmanaged<IntPtr, RectI, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_screen_rect_changed_remove")]
+    private static unsafe partial void NativeScreenRectChangedRemove(
+        Viewport viewport,
+        IntPtr userData,
+        delegate* unmanaged<IntPtr, RectI, void> invoke,
+        delegate* unmanaged<IntPtr, void> dispose,
+        delegate* unmanaged<IntPtr, IntPtr, byte> equals
+    );
 }
 
 [CustomMarshaller(typeof(Viewport), MarshalMode.ManagedToUnmanagedIn, typeof(ViewportMarshaller))]

@@ -45,6 +45,25 @@ namespace retro
     {
     }
 
+    void Viewport::set_screen_layout(const ScreenLayout &layout) noexcept
+    {
+        screen_layout_ = layout;
+        auto window = window_.lock();
+        if (window == nullptr)
+            return;
+
+        on_window_resized(window->size());
+    }
+
+    RectI Viewport::screen_rect() const noexcept
+    {
+        const auto window = window_.lock();
+        if (window == nullptr)
+            return RectI{};
+
+        return screen_layout_.to_screen_rect(window->size());
+    }
+
     void Viewport::set_z_order(const std::int32_t z_order) noexcept
     {
         z_order_ = z_order;
@@ -55,14 +74,33 @@ namespace retro
     {
         const auto old_window = window_;
         window_ = window.weak_from_this();
-        on_window_changed_(*this, old_window, window_);
+        if (!old_window.owner_before(window_) && !window_.owner_before(old_window))
+            return;
+        window_changed_(*this, old_window, window_);
+        on_window_resized(window.size());
     }
 
     void Viewport::clear_window() noexcept
     {
         const auto old_window = window_;
         window_.reset();
-        on_window_changed_(*this, old_window, window_);
+        window_changed_(*this, old_window, window_);
+    }
+
+    void Viewport::on_window_resized(const Vector2u window_size)
+    {
+        const auto new_screen_rect = screen_layout_.to_screen_rect(window_size);
+        if (new_screen_rect == screen_rect_)
+            return;
+
+        screen_rect_ = new_screen_rect;
+        screen_rect_changed_.broadcast(screen_rect_);
+    }
+
+    ViewportManager::ViewportManager(EventManager &event_manager)
+        : event_manager_{event_manager},
+          resized_subscription_{event_manager_.window_resized(), *this, &ViewportManager::process_window_resized}
+    {
     }
 
     Viewport &ViewportManager::create_viewport(const ScreenLayout &layout, std::int32_t z_order)
@@ -84,6 +122,20 @@ namespace retro
         {
             on_viewport_destroyed_(**it);
             viewports_.erase(it);
+        }
+    }
+
+    void ViewportManager::process_window_resized(const std::uint64_t window_id,
+                                                 std::uint32_t width,
+                                                 std::uint32_t height) const
+    {
+        for (auto &viewport : viewports_)
+        {
+            auto window = viewport->window_.lock();
+            if (window == nullptr || window->id() != window_id)
+                continue;
+
+            viewport->on_window_resized({width, height});
         }
     }
 } // namespace retro

@@ -22,6 +22,7 @@ import retro.runtime.rendering.layout.anchors;
 import retro.core.math.rect;
 import retro.platform.window;
 import retro.core.memory.ref_counted_ptr;
+import retro.runtime.event_manager;
 
 namespace retro
 {
@@ -72,6 +73,7 @@ namespace retro
         using ZOrderChanged = MulticastDelegate<void(Viewport &, std::int32_t)>;
         using WindowChanged =
             MulticastDelegate<void(Viewport &, const std::weak_ptr<Window> &, const std::weak_ptr<Window> &)>;
+        using ScreenRectChanged = MulticastDelegate<void(RectI rect)>;
 
         Viewport(const ScreenLayout &layout, std::int32_t z_order);
 
@@ -85,10 +87,9 @@ namespace retro
             return screen_layout_;
         }
 
-        inline void set_screen_layout(const ScreenLayout &layout) noexcept
-        {
-            screen_layout_ = layout;
-        }
+        void set_screen_layout(const ScreenLayout &layout) noexcept;
+
+        [[nodiscard]] RectI screen_rect() const noexcept;
 
         [[nodiscard]] inline const CameraLayout &camera_layout() const noexcept
         {
@@ -136,22 +137,31 @@ namespace retro
 
         void clear_window() noexcept;
 
-        inline WindowChanged::Event on_window_changed()
+        inline WindowChanged::Event window_changed()
         {
-            return WindowChanged::Event{on_window_changed_};
+            return WindowChanged::Event{window_changed_};
+        }
+
+        inline ScreenRectChanged::Event screen_rect_changed()
+        {
+            return ScreenRectChanged::Event{screen_rect_changed_};
         }
 
       private:
         friend class ViewportManager;
 
+        void on_window_resized(Vector2u window_size);
+
         std::uint64_t id_;
         ScreenLayout screen_layout_;
+        RectI screen_rect_;
         CameraLayout camera_layout_;
         std::int32_t z_order_ = 0;
         ZOrderChanged on_z_order_changed_;
         Scene *scene_ = nullptr;
         std::weak_ptr<Window> window_;
-        WindowChanged on_window_changed_;
+        WindowChanged window_changed_;
+        ScreenRectChanged screen_rect_changed_;
     };
 
     export using OnViewportDelegate = MulticastDelegate<void(Viewport &)>;
@@ -159,6 +169,8 @@ namespace retro
     class RETRO_API ViewportManager final : NonCopyable
     {
       public:
+        explicit ViewportManager(EventManager &event_manager);
+
         Viewport &create_viewport(const ScreenLayout &layout = {}, std::int32_t z_order = 0);
 
         void destroy_viewport(Viewport &viewport);
@@ -179,6 +191,10 @@ namespace retro
         }
 
       private:
+        void process_window_resized(std::uint64_t window_id, std::uint32_t width, std::uint32_t height) const;
+
+        EventManager &event_manager_;
+        ScopedDelegateSubscription<WindowResizedDelegate> resized_subscription_;
         std::vector<std::unique_ptr<Viewport>> viewports_;
         OnViewportDelegate on_viewport_created_;
         OnViewportDelegate on_viewport_destroyed_;

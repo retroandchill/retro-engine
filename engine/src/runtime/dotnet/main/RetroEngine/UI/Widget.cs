@@ -24,6 +24,8 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
 
     public LayoutSlot? LayoutSlot { get; internal set; }
 
+    public Widget? Parent => LayoutSlot?.Parent;
+
     public Vector2F DesiredSize { get; protected set; }
 
     public Vector2F ActualSize { get; protected set; }
@@ -32,9 +34,58 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
 
     public RectF ActualBounds { get; private set; }
 
+    public LayoutDirtyFlags DirtyFlags { get; private set; } =
+        LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange | LayoutDirtyFlags.Visual;
+
     protected SceneObject? SceneObject { get; } = sceneObject;
 
-    private void ThrowIfDisposed()
+    public Vector2F Measure(Vector2F availableSize)
+    {
+        ThrowIfDisposed();
+
+        DesiredSize = ComputeDesiredSize(availableSize);
+        DirtyFlags &= ~LayoutDirtyFlags.Measure;
+
+        return DesiredSize;
+    }
+
+    public void Arrange(RectF finalRect)
+    {
+        ThrowIfDisposed();
+
+        ActualPosition = new Vector2F(finalRect.X, finalRect.Y);
+        ActualSize = new Vector2F(finalRect.Width, finalRect.Height);
+        ActualBounds = finalRect;
+
+        OnArrange(finalRect);
+
+        ApplyLayoutToScene(finalRect);
+
+        DirtyFlags &= ~LayoutDirtyFlags.Arrange;
+    }
+
+    protected abstract Vector2F ComputeDesiredSize(Vector2F availableSize);
+
+    protected virtual void OnArrange(RectF finalRect) { }
+
+    protected virtual void ApplyLayoutToScene(RectF finalRect)
+    {
+        SceneObject?.Position = new Vector2F(finalRect.X, finalRect.Y);
+    }
+
+    public void InvalidateMeasure()
+    {
+        DirtyFlags |= LayoutDirtyFlags.Measure | LayoutDirtyFlags.Arrange;
+        LayoutSlot?.Parent.InvalidateMeasure();
+    }
+
+    public void InvalidateArrange()
+    {
+        DirtyFlags |= LayoutDirtyFlags.Arrange;
+        LayoutSlot?.Parent.InvalidateArrange();
+    }
+
+    protected void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
@@ -46,7 +97,6 @@ public abstract class Widget(SceneObject? sceneObject) : IDisposable
 
         _disposed = true;
 
-        LayoutSlot?.Parent.Remove(this);
         SceneObject?.Dispose();
         GC.SuppressFinalize(this);
     }
