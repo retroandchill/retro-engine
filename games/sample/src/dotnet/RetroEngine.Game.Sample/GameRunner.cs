@@ -27,8 +27,6 @@ public sealed class GameRunner(
     IHostApplicationLifetime lifetime,
     TickManager tickManager,
     RenderManager renderManager,
-    SceneManager sceneManager,
-    ViewportManager viewportManager,
     IFileSystem fileSystem,
     IUiManager uiManager
 ) : AsyncGameSession(lifetime)
@@ -51,14 +49,14 @@ public sealed class GameRunner(
             cancellationToken
         );
 
-        using var scene1 = new Scene(sceneManager);
-        using var scene2 = new Scene(sceneManager);
+        using var scene1 = new Scene();
+        using var scene2 = new Scene();
 
-        using var viewport1 = new Viewport(viewportManager);
+        using var viewport1 = new Viewport();
         viewport1.Scene = scene1;
         viewport1.CameraPivot = new Vector2F(0.5f, 0.5f);
 
-        using var viewport2 = new Viewport(viewportManager);
+        using var viewport2 = new Viewport();
         viewport2.Scene = scene2;
         viewport2.CameraPivot = new Vector2F(0.5f, 0.5f);
         viewport2.ZOrder = -1;
@@ -121,7 +119,7 @@ public sealed class GameRunner(
         textBlock.Text = "Pokémon";
         textBlock.Font = textFont;
         textBlock.FontSize = 32;
-        textBlock.Color = new Color(0, 0, 0, 1);
+        textBlock.Color = new Color(0, 0, 0);
         var textBlockSlot = canvasPanel.AddChild(textBlock);
         textBlockSlot.ZOrder = 1;
         textBlockSlot.LayoutData = windowSlot.LayoutData with

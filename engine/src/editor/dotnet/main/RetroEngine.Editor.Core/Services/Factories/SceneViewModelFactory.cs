@@ -16,7 +16,7 @@ public sealed class SceneViewModelFactory(
 {
     public override SceneViewModel CreateViewModel()
     {
-        var scene = new Scene(sceneManager);
+        var scene = new Scene();
         var host = engineControlHost.CreateViewModel();
         return new SceneViewModel { Host = host, Scene = scene };
     }

@@ -17,10 +17,10 @@ public readonly record struct CameraLayout(Vector2F Position, Vector2F Pivot, fl
 [NativeMarshalling(typeof(ViewportMarshaller))]
 public sealed partial class Viewport : IDisposable
 {
-    private readonly ViewportManager _manager;
+    internal static ViewportManager? Manager { get; set; }
     public IntPtr NativeHandle { get; private set; }
 
-    public bool Disposed => NativeHandle == IntPtr.Zero || _manager.Disposed;
+    public bool Disposed => NativeHandle == IntPtr.Zero || Manager is null;
 
     public Scene? Scene
     {
@@ -151,13 +151,19 @@ public sealed partial class Viewport : IDisposable
         }
     }
 
-    public Viewport(ViewportManager manager)
+    public Viewport()
     {
-        _manager = manager;
-        NativeHandle = NativeCreate(manager, out var error);
+        if (Manager is null)
+            throw new InvalidOperationException("Viewport manager is not initialized.");
+
+        NativeHandle = NativeCreate(Manager, out var error);
         error.ThrowIfError();
-        _manager.AddViewport(this);
+        Manager.AddViewport(this);
         CameraZoom = 1.0f;
+        ScreenLayout = new AnchorData
+        {
+            Anchors = new Anchors { Minimum = new Vector2F(0, 0), Maximum = new Vector2F(1, 1) },
+        };
     }
 
     [UnmanagedCallersOnly]
@@ -184,7 +190,6 @@ public sealed partial class Viewport : IDisposable
 
     internal void ThrowIfDisposed()
     {
-        _manager.ThrowIfDisposed();
         ObjectDisposedException.ThrowIf(Disposed, this);
     }
 
@@ -193,9 +198,12 @@ public sealed partial class Viewport : IDisposable
         if (Disposed)
             return;
 
-        NativeDestroy(_manager, this);
+        if (Manager is not null)
+        {
+            NativeDestroy(Manager, this);
+            Manager.RemoveViewport(this);
+        }
         NativeHandle = IntPtr.Zero;
-        _manager.RemoveViewport(this);
     }
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_viewport_create")]

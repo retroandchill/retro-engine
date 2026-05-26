@@ -17,7 +17,7 @@ public class ViewportTest
         Viewport viewport;
         using (var viewportManager = new ViewportManager(eventManager))
         {
-            viewport = new Viewport(viewportManager);
+            viewport = new Viewport();
         }
 
         Assert.That(viewport.Disposed);

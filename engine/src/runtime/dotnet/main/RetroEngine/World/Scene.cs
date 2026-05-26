@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using RetroEngine.Interop;
@@ -12,21 +13,22 @@ namespace RetroEngine.World;
 [NativeMarshalling(typeof(SceneMarshaller))]
 public sealed partial class Scene : IDisposable
 {
-    private readonly SceneManager _manager;
+    internal static SceneManager? Manager { get; set; }
     internal IntPtr NativeHandle { get; private set; }
     private readonly List<SceneObject> _objects = [];
 
-    public bool Disposed => NativeHandle == IntPtr.Zero || _manager.Disposed;
+    public bool Disposed => NativeHandle == IntPtr.Zero || Manager is null;
 
     public IReadOnlyList<SceneObject> Objects => _objects;
 
-    public Scene(SceneManager manager)
+    public Scene()
     {
-        manager.ThrowIfDisposed();
-        _manager = manager;
-        NativeHandle = NativeCreate(manager, out var error);
+        if (Manager is null)
+            throw new InvalidOperationException("SceneManager is not initialized.");
+
+        NativeHandle = NativeCreate(Manager, out var error);
         error.ThrowIfError();
-        _manager.AddScene(this);
+        Manager.AddScene(this);
     }
 
     public IEnumerable<SceneObject> GetDirectChildren()
@@ -55,8 +57,12 @@ public sealed partial class Scene : IDisposable
             return;
 
         DisposeManagedResources();
-        NativeDestroy(_manager, this);
-        _manager.RemoveScene(this);
+        if (Manager is not null)
+        {
+            NativeDestroy(Manager, this);
+            Manager.RemoveScene(this);
+        }
+
         NativeHandle = IntPtr.Zero;
     }
 
@@ -70,7 +76,6 @@ public sealed partial class Scene : IDisposable
 
     internal void ThrowIfDisposed()
     {
-        _manager.ThrowIfDisposed();
         ObjectDisposedException.ThrowIf(Disposed, this);
     }
 

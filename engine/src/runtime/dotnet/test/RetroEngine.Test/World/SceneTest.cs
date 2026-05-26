@@ -15,7 +15,7 @@ public class SceneTest
         Scene scene;
         using (var sceneManager = new SceneManager())
         {
-            scene = new Scene(sceneManager);
+            scene = new Scene();
         }
 
         Assert.That(scene.Disposed);
@@ -26,7 +26,7 @@ public class SceneTest
     {
         using var sceneManager = new SceneManager();
         SceneObject obj;
-        using (var scene = new Scene(sceneManager))
+        using (var scene = new Scene())
         {
             obj = new Sprite(scene);
         }
@@ -40,7 +40,7 @@ public class SceneTest
         SceneObject obj;
         using (var sceneManager = new SceneManager())
         {
-            var scene = new Scene(sceneManager);
+            var scene = new Scene();
             obj = new Sprite(scene);
         }
 

@@ -3,6 +3,7 @@
 // // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
@@ -29,6 +30,7 @@ public sealed partial class Engine : IAsyncDisposable
     private Thread? _renderThread;
     private readonly EngineLifetime _lifetime = new();
     private readonly EngineHost _host;
+    private readonly ImmutableArray<IDisposable> _engineLifetimeDisposables;
 
     public IServiceProvider Services => _host.Services;
 
@@ -47,6 +49,10 @@ public sealed partial class Engine : IAsyncDisposable
         serviceCollection.AddSingleton(_eventManager);
         serviceCollection.AddSingleton<IHostApplicationLifetime>(_lifetime);
         _host = new EngineHost(serviceProviderFactory(serviceCollection), _lifetime);
+        _engineLifetimeDisposables =
+        [
+            .. Services.GetServices<IEngineContextLifetime>().Select(x => x.CreateLifetimeScope()),
+        ];
     }
 
     [MemberNotNull(nameof(_gameThread))]
@@ -183,9 +189,13 @@ public sealed partial class Engine : IAsyncDisposable
             return;
 
         _disposed = true;
-        _platformBackend.Dispose();
-        _eventManager.Dispose();
+        foreach (var disposable in _engineLifetimeDisposables)
+        {
+            disposable.Dispose();
+        }
         await _host.DisposeAsync();
+        _eventManager.Dispose();
+        _platformBackend.Dispose();
 
         CultureManager.Instance.Dispose();
         NativeDestroy(_nativeEngine);

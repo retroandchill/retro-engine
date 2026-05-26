@@ -55,6 +55,7 @@
     <PackageVersion Include="StaticViewLocator" Version="0.3.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.1" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.7" />
+    <PackageVersion Include="System.Reactive" Version="6.1.0" />
     <PackageVersion Include="System.Text.Json" Version="10.0.1" />
     <PackageVersion Include="Testably.Abstractions" Version="10.2.0" />
     <PackageVersion Include="Testably.Abstractions.FileSystem.Interface" Version="10.2.0" />

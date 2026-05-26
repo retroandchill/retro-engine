@@ -31,7 +31,7 @@ public sealed class TextureAssetActions(
         var scene = sceneFactory.CreateViewModel();
         scene.Width = texture.Width;
         scene.Height = texture.Height;
-        var viewport = new Viewport(viewportManager) { Scene = scene.Scene, CameraPivot = new Vector2F(0.5f, 0.5f) };
+        var viewport = new Viewport() { Scene = scene.Scene, CameraPivot = new Vector2F(0.5f, 0.5f) };
         _ = new Sprite(scene.Scene) { Texture = texture, Pivot = new Vector2F(0.5f, 0.5f) };
         renderManager.BindViewportToWindow(viewport, 0);
         scene.Host.OnWindowCreated += windowId =>

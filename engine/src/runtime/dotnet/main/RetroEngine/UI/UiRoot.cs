@@ -82,16 +82,11 @@ public sealed class UiRoot : IUiRoot, ITickable
         }
     }
 
-    internal UiRoot(
-        IUiManager uiManager,
-        TickManager tickManager,
-        SceneManager sceneManager,
-        ViewportManager viewportManager
-    )
+    internal UiRoot(IUiManager uiManager, TickManager tickManager)
     {
         _uiManager = uiManager;
-        Scene = new Scene(sceneManager);
-        _viewport = new Viewport(viewportManager) { Scene = Scene };
+        Scene = new Scene();
+        _viewport = new Viewport { Scene = Scene };
         _viewport.ScreenRectChanged += _ => InvalidateLayout();
         _tickHandle = new TickHandle(this, tickManager);
     }
