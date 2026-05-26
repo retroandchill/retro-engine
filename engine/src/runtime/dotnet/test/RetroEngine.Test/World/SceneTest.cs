@@ -12,8 +12,10 @@ public class SceneTest
     [Test]
     public void DisposingTheSceneManagerShouldDisposeAllScenes()
     {
+        using var sceneManager = new SceneManager();
+        var contextLifetime = new SceneContextLifetime(sceneManager);
         Scene scene;
-        using (var sceneManager = new SceneManager())
+        using (contextLifetime.CreateLifetimeScope())
         {
             scene = new Scene();
         }
@@ -25,6 +27,8 @@ public class SceneTest
     public void DisposingTheSceneDisposesObjects()
     {
         using var sceneManager = new SceneManager();
+        var contextLifetime = new SceneContextLifetime(sceneManager);
+        using var scope = contextLifetime.CreateLifetimeScope();
         SceneObject obj;
         using (var scene = new Scene())
         {
@@ -37,8 +41,10 @@ public class SceneTest
     [Test]
     public void DisposingTheSceneManagerDisposesObjects()
     {
+        using var sceneManager = new SceneManager();
+        var contextLifetime = new SceneContextLifetime(sceneManager);
         SceneObject obj;
-        using (var sceneManager = new SceneManager())
+        using (contextLifetime.CreateLifetimeScope())
         {
             var scene = new Scene();
             obj = new Sprite(scene);

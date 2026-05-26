@@ -14,8 +14,10 @@ public class ViewportTest
     public void DisposingTheViewportManagerShouldDisposeAllViewports()
     {
         using var eventManager = new EventManager();
+        using var viewportManager = new ViewportManager(eventManager);
+        var contextLifetime = new ViewportContextLifetime(viewportManager);
         Viewport viewport;
-        using (var viewportManager = new ViewportManager(eventManager))
+        using (contextLifetime.CreateLifetimeScope())
         {
             viewport = new Viewport();
         }
