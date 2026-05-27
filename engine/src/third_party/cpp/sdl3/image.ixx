@@ -1,0 +1,4685 @@
+module;
+
+#include <SDL3/SDL_image.h>
+
+export module sdl:image;
+
+import :error;
+import :gpu;
+import :mouse;
+import :render;
+import :surface;
+import :version;
+import :video;
+
+namespace SDL
+{
+
+    /**
+     * @defgroup CategorySDLImage Category SDLImage
+     *
+     * Header file for SDL_image library
+     *
+     * A simple library to load images of various formats as SDL surfaces
+     *
+     * @{
+     */
+
+    // Forward decl
+    struct AnimationBase;
+
+    // Forward decl
+    struct Animation;
+
+    /// Alias to raw representation for Animation.
+    using AnimationRaw = IMG_Animation *;
+
+    /// Alias to const raw representation for Animation.
+    using AnimationRawConst = const IMG_Animation *;
+
+    /**
+     * Reference for Animation.
+     *
+     * This does not take ownership!
+     */
+    using AnimationRef = ResourceRefT<AnimationBase>;
+
+    /// Safely wrap Animation for non owning const parameters
+    using AnimationConstRef = ResourceConstRef<AnimationRaw, AnimationRawConst>;
+
+    // Forward decl
+    struct AnimationEncoderBase;
+
+    // Forward decl
+    struct AnimationEncoder;
+
+    /// Alias to raw representation for AnimationEncoder.
+    using AnimationEncoderRaw = IMG_AnimationEncoder *;
+
+    /**
+     * Reference for AnimationEncoder.
+     *
+     * This does not take ownership!
+     */
+    using AnimationEncoderRef = ResourceRefT<AnimationEncoderBase>;
+
+    // Forward decl
+    struct AnimationDecoderBase;
+
+    // Forward decl
+    struct AnimationDecoder;
+
+    /// Alias to raw representation for AnimationDecoder.
+    using AnimationDecoderRaw = IMG_AnimationDecoder *;
+
+    /**
+     * Reference for AnimationDecoder.
+     *
+     * This does not take ownership!
+     */
+    using AnimationDecoderRef = ResourceRefT<AnimationDecoderBase>;
+
+    /// Printable format: "%d.%d.%d", MAJOR, MINOR, MICRO
+#define SDL_IMAGE_MAJOR_VERSION
+
+#define SDL_IMAGE_MINOR_VERSION
+
+#define SDL_IMAGE_MICRO_VERSION
+
+    /// This is the version number macro for the current SDL_image version.
+#define SDL_IMAGE_VERSION SDL_VERSIONNUM(SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION, SDL_IMAGE_MICRO_VERSION)
+
+    /// This macro will evaluate to true if compiled with SDL_image at least X.Y.Z.
+#define SDL_IMAGE_VERSION_ATLEAST(X, Y, Z)                                                                             \
+    ((SDL_IMAGE_MAJOR_VERSION >= X) && (SDL_IMAGE_MAJOR_VERSION > X || SDL_IMAGE_MINOR_VERSION >= Y) &&                \
+     (SDL_IMAGE_MAJOR_VERSION > X || SDL_IMAGE_MINOR_VERSION > Y || SDL_IMAGE_MICRO_VERSION >= Z))
+
+    namespace IMG
+    {
+
+        /**
+         * This function gets the version of the dynamically linked SDL_image library.
+         *
+         * @returns SDL_image version.
+         *
+         * @since This function is available since SDL_image 3.0.0.
+         */
+        inline int Version();
+
+    } // namespace IMG
+
+    inline int IMG::Version()
+    {
+        return SDL::Version();
+    }
+
+    /**
+     * Load an image from a filesystem path into a software surface.
+     *
+     * An Surface is a buffer of pixels in memory accessible by the CPU. Use this if
+     * you plan to hand the data to something else or manipulate it further in code.
+     *
+     * There are no guarantees about what format the new Surface data will be; in
+     * many cases, SDL_image will attempt to supply a surface that exactly matches
+     * the provided image, but in others it might have to convert (either because
+     * the image is in a format that SDL doesn't directly support or because it's
+     * compressed data that could reasonably uncompress to various formats and
+     * SDL_image had to pick one). You can inspect an Surface for its specifics, and
+     * use ConvertSurface to then migrate to any supported format.
+     *
+     * If the image format supports a transparent pixel, SDL will set the colorkey
+     * for the surface. You can enable RLE acceleration on the surface afterwards by
+     * calling: SetSurfaceColorKey(image, SDL_RLEACCEL, image->format->colorkey);
+     *
+     * There is a separate function to read files from an IOStream, if you need an
+     * i/o abstraction to provide data from anywhere instead of a simple filesystem
+     * read; that function is LoadSurface_IO().
+     *
+     * If you are using SDL's 2D rendering API, there is an equivalent call to load
+     * images directly into an Texture for use by the GPU without using a software
+     * surface: call LoadTexture() instead.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to [DestroySurface](https://wiki.libsdl.org/SDL3/DestroySurface) ().
+     *
+     * @param file a path on the filesystem to load an image from.
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadSurfaceTyped_IO
+     * @sa LoadSurface_IO
+     */
+    inline Surface LoadSurface(StringParam file)
+    {
+        return IMG_Load(file);
+    }
+
+    inline Surface::Surface(StringParam file) : Surface(IMG_Load(file))
+    {
+    }
+
+    inline Surface::Surface(IOStreamRef src, bool closeio) : Surface(IMG_Load_IO(src, closeio))
+    {
+    }
+
+    /**
+     * Load an image from an SDL data source into a software surface.
+     *
+     * An Surface is a buffer of pixels in memory accessible by the CPU. Use this if
+     * you plan to hand the data to something else or manipulate it further in code.
+     *
+     * There are no guarantees about what format the new Surface data will be; in
+     * many cases, SDL_image will attempt to supply a surface that exactly matches
+     * the provided image, but in others it might have to convert (either because
+     * the image is in a format that SDL doesn't directly support or because it's
+     * compressed data that could reasonably uncompress to various formats and
+     * SDL_image had to pick one). You can inspect an Surface for its specifics, and
+     * use ConvertSurface to then migrate to any supported format.
+     *
+     * If the image format supports a transparent pixel, SDL will set the colorkey
+     * for the surface. You can enable RLE acceleration on the surface afterwards by
+     * calling: SetSurfaceColorKey(image, SDL_RLEACCEL, image->format->colorkey);
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadSurface("filename.jpg")` will call this function and
+     * manage those details for you, determining the file type from the filename's
+     * extension.
+     *
+     * There is also LoadSurfaceTyped_IO(), which is equivalent to this function
+     * except a file extension (like "BMP", "JPG", etc) can be specified, in case
+     * SDL_image cannot autodetect the file format.
+     *
+     * If you are using SDL's 2D rendering API, there is an equivalent call to load
+     * images directly into an Texture for use by the GPU without using a software
+     * surface: call LoadTexture_IO() instead.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadSurface
+     * @sa LoadSurfaceTyped_IO
+     */
+    inline Surface LoadSurface_IO(IOStreamRef src, bool closeio = false)
+    {
+        return IMG_Load_IO(src, closeio);
+    }
+
+    /**
+     * Load an image from an SDL data source into a software surface.
+     *
+     * An Surface is a buffer of pixels in memory accessible by the CPU. Use this if
+     * you plan to hand the data to something else or manipulate it further in code.
+     *
+     * There are no guarantees about what format the new Surface data will be; in
+     * many cases, SDL_image will attempt to supply a surface that exactly matches
+     * the provided image, but in others it might have to convert (either because
+     * the image is in a format that SDL doesn't directly support or because it's
+     * compressed data that could reasonably uncompress to various formats and
+     * SDL_image had to pick one). You can inspect an Surface for its specifics, and
+     * use ConvertSurface to then migrate to any supported format.
+     *
+     * If the image format supports a transparent pixel, SDL will set the colorkey
+     * for the surface. You can enable RLE acceleration on the surface afterwards by
+     * calling: SetSurfaceColorKey(image, SDL_RLEACCEL, image->format->colorkey);
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * Even though this function accepts a file type, SDL_image may still try other
+     * decoders that are capable of detecting file type from the contents of the
+     * image data, but may rely on the caller-provided type string for formats that
+     * it cannot autodetect. If `type` is nullptr, SDL_image will rely solely on its
+     * ability to guess the format.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadSurface("filename.jpg")` will call this function and
+     * manage those details for you, determining the file type from the filename's
+     * extension.
+     *
+     * There is also LoadSurface_IO(), which is equivalent to this function except
+     * that it will rely on SDL_image to determine what type of data it is loading,
+     * much like passing a nullptr for type.
+     *
+     * If you are using SDL's 2D rendering API, there is an equivalent call to load
+     * images directly into an Texture for use by the GPU without using a software
+     * surface: call LoadTextureTyped_IO() instead.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("BMP", "GIF",
+     *             "PNG", etc).
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadSurface
+     * @sa LoadSurface_IO
+     */
+    inline Surface LoadSurfaceTyped_IO(IOStreamRef src, StringParam type, bool closeio = false)
+    {
+        return IMG_LoadTyped_IO(src, type, closeio);
+    }
+
+    /**
+     * Load an image from a filesystem path into a texture.
+     *
+     * An Texture represents an image in GPU memory, usable by SDL's 2D Render API.
+     * This can be significantly more efficient than using a CPU-bound Surface if
+     * you don't need to manipulate the image directly after loading it.
+     *
+     * If the loaded image has transparency or a colorkey, a texture with an alpha
+     * channel will be created. Otherwise, SDL_image will attempt to create an
+     * Texture in the most format that most reasonably represents the image data
+     * (but in many cases, this will just end up being 32-bit RGB or 32-bit RGBA).
+     *
+     * There is a separate function to read files from an IOStream, if you need an
+     * i/o abstraction to provide data from anywhere instead of a simple filesystem
+     * read; that function is LoadTexture_IO().
+     *
+     * If you would rather decode an image to an Surface (a buffer of pixels in CPU
+     * memory), call LoadSurface() instead.
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to DestroyTexture().
+     *
+     * @param renderer the Renderer to use to create the texture.
+     * @param file a path on the filesystem to load an image from.
+     * @returns a new texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadTextureTyped_IO
+     * @sa LoadTexture_IO
+     */
+    inline Texture LoadTexture(RendererRef renderer, StringParam file)
+    {
+        return IMG_LoadTexture(renderer, file);
+    }
+
+    inline Texture::Texture(RendererRef renderer, StringParam file) : Texture(IMG_LoadTexture(renderer, file))
+    {
+    }
+
+    inline Texture::Texture(RendererRef renderer, IOStreamRef src, bool closeio)
+        : Texture(IMG_LoadTexture_IO(renderer, src, closeio))
+    {
+    }
+
+    /**
+     * Load an image from an SDL data source into a texture.
+     *
+     * An Texture represents an image in GPU memory, usable by SDL's 2D Render API.
+     * This can be significantly more efficient than using a CPU-bound Surface if
+     * you don't need to manipulate the image directly after loading it.
+     *
+     * If the loaded image has transparency or a colorkey, a texture with an alpha
+     * channel will be created. Otherwise, SDL_image will attempt to create an
+     * Texture in the most format that most reasonably represents the image data
+     * (but in many cases, this will just end up being 32-bit RGB or 32-bit RGBA).
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadTexture(renderer, "filename.jpg")` will call this
+     * function and manage those details for you, determining the file type from the
+     * filename's extension.
+     *
+     * There is also LoadTextureTyped_IO(), which is equivalent to this function
+     * except a file extension (like "BMP", "JPG", etc) can be specified, in case
+     * SDL_image cannot autodetect the file format.
+     *
+     * If you would rather decode an image to an Surface (a buffer of pixels in CPU
+     * memory), call LoadSurface() instead.
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to DestroyTexture().
+     *
+     * @param renderer the Renderer to use to create the texture.
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @returns a new texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadTexture
+     * @sa LoadTextureTyped_IO
+     */
+    inline Texture LoadTexture_IO(RendererRef renderer, IOStreamRef src, bool closeio = false)
+    {
+        return IMG_LoadTexture_IO(renderer, src, closeio);
+    }
+
+    /**
+     * Load an image from an SDL data source into a texture.
+     *
+     * An Texture represents an image in GPU memory, usable by SDL's 2D Render API.
+     * This can be significantly more efficient than using a CPU-bound Surface if
+     * you don't need to manipulate the image directly after loading it.
+     *
+     * If the loaded image has transparency or a colorkey, a texture with an alpha
+     * channel will be created. Otherwise, SDL_image will attempt to create an
+     * Texture in the most format that most reasonably represents the image data
+     * (but in many cases, this will just end up being 32-bit RGB or 32-bit RGBA).
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * Even though this function accepts a file type, SDL_image may still try other
+     * decoders that are capable of detecting file type from the contents of the
+     * image data, but may rely on the caller-provided type string for formats that
+     * it cannot autodetect. If `type` is nullptr, SDL_image will rely solely on its
+     * ability to guess the format.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadTexture("filename.jpg")` will call this function and
+     * manage those details for you, determining the file type from the filename's
+     * extension.
+     *
+     * There is also LoadTexture_IO(), which is equivalent to this function except
+     * that it will rely on SDL_image to determine what type of data it is loading,
+     * much like passing a nullptr for type.
+     *
+     * If you would rather decode an image to an Surface (a buffer of pixels in CPU
+     * memory), call LoadSurfaceTyped_IO() instead.
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to DestroyTexture().
+     *
+     * @param renderer the Renderer to use to create the texture.
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("BMP", "GIF",
+     *             "PNG", etc).
+     * @returns a new texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadTexture
+     * @sa LoadTexture_IO
+     */
+    inline Texture LoadTextureTyped_IO(RendererRef renderer, IOStreamRef src, StringParam type, bool closeio = false)
+    {
+        return IMG_LoadTextureTyped_IO(renderer, src, type, closeio);
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Load an image from a filesystem path into a GPU texture.
+     *
+     * An GPUTexture represents an image in GPU memory, usable by SDL's GPU API.
+     * Regardless of the source format of the image, this function will create a GPU
+     * texture with the format GPU_TEXTUREFORMAT_R8G8B8A8_UNORM with no mip levels.
+     * It can be bound as a sampled texture from a graphics or compute pipeline and
+     * as a a readonly storage texture in a compute pipeline.
+     *
+     * There is a separate function to read files from an IOStream, if you need an
+     * i/o abstraction to provide data from anywhere instead of a simple filesystem
+     * read; that function is LoadGPUTexture_IO().
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to ReleaseGPUTexture().
+     *
+     * @param device the GPUDevice to use to create the GPU texture.
+     * @param copy_pass the GPUCopyPass to use to upload the loaded image to the GPU
+     *                  texture.
+     * @param file a path on the filesystem to load an image from.
+     * @param width a pointer filled in with the width of the GPU texture. may be
+     *              nullptr.
+     * @param height a pointer filled in with the width of the GPU texture. may be
+     *               nullptr.
+     * @returns a new GPU texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa LoadGPUTextureTyped_IO
+     * @sa LoadGPUTexture_IO
+     */
+    inline GPUTexture LoadGPUTexture(GPUDeviceRef device,
+                                     GPUCopyPass copy_pass,
+                                     StringParam file,
+                                     int *width = nullptr,
+                                     int *height = nullptr)
+    {
+        return IMG_LoadGPUTexture(device, copy_pass, file, width, height);
+    }
+
+    /**
+     * Load an image from an SDL data source into a GPU texture.
+     *
+     * An GPUTexture represents an image in GPU memory, usable by SDL's GPU API.
+     * Regardless of the source format of the image, this function will create a GPU
+     * texture with the format GPU_TEXTUREFORMAT_R8G8B8A8_UNORM with no mip levels.
+     * It can be bound as a sampled texture from a graphics or compute pipeline and
+     * as a a readonly storage texture in a compute pipeline.
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadGPUTexture(device, copy_pass, "filename.jpg", width,
+     * height) will call this function and manage those details for you, determining
+     * the file type from the filename's extension.
+     *
+     * There is also LoadGPUTextureTyped_IO(), which is equivalent to this function
+     * except a file extension (like "BMP", "JPG", etc) can be specified, in case
+     * SDL_image cannot autodetect the file format.
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to ReleaseGPUTexture().
+     *
+     * @param device the GPUDevice to use to create the GPU texture.
+     * @param copy_pass the GPUCopyPass to use to upload the loaded image to the GPU
+     *                  texture.
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param width a pointer filled in with the width of the GPU texture. may be
+     *              nullptr.
+     * @param height a pointer filled in with the width of the GPU texture. may be
+     *               nullptr.
+     * @returns a new GPU texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa LoadGPUTexture
+     * @sa LoadGPUTextureTyped_IO
+     */
+    inline GPUTexture LoadGPUTexture_IO(GPUDeviceRef device,
+                                        GPUCopyPass copy_pass,
+                                        IOStreamRef src,
+                                        bool closeio = false,
+                                        int *width = nullptr,
+                                        int *height = nullptr)
+    {
+        return IMG_LoadGPUTexture_IO(device, copy_pass, src, closeio, width, height);
+    }
+
+    /**
+     * Load an image from an SDL data source into a GPU texture.
+     *
+     * An GPUTexture represents an image in GPU memory, usable by SDL's GPU API.
+     * Regardless of the source format of the image, this function will create a GPU
+     * texture with the format GPU_TEXTUREFORMAT_R8G8B8A8_UNORM with no mip levels.
+     * It can be bound as a sampled texture from a graphics or compute pipeline and
+     * as a a readonly storage texture in a compute pipeline.
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * Even though this function accepts a file type, SDL_image may still try other
+     * decoders that are capable of detecting file type from the contents of the
+     * image data, but may rely on the caller-provided type string for formats that
+     * it cannot autodetect. If `type` is nullptr, SDL_image will rely solely on its
+     * ability to guess the format.
+     *
+     * There is a separate function to read files from disk without having to deal
+     * with IOStream: `LoadGPUTexture(device, copy_pass, "filename.jpg", width,
+     * height) will call this function and manage those details for you, determining
+     * the file type from the filename's extension.
+     *
+     * There is also LoadGPUTexture_IO(), which is equivalent to this function
+     * except that it will rely on SDL_image to determine what type of data it is
+     * loading, much like passing a nullptr for type.
+     *
+     * When done with the returned texture, the app should dispose of it with a call
+     * to ReleaseGPUTexture().
+     *
+     * @param device the GPUDevice to use to create the GPU texture.
+     * @param copy_pass the GPUCopyPass to use to upload the loaded image to the GPU
+     *                  texture.
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("BMP", "GIF",
+     *             "PNG", etc).
+     * @param width a pointer filled in with the width of the GPU texture. may be
+     *              nullptr.
+     * @param height a pointer filled in with the width of the GPU texture. may be
+     *               nullptr.
+     * @returns a new GPU texture, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa LoadGPUTexture
+     * @sa LoadGPUTexture_IO
+     */
+    inline GPUTexture LoadGPUTextureTyped_IO(GPUDeviceRef device,
+                                             GPUCopyPass copy_pass,
+                                             IOStreamRef src,
+                                             StringParam type,
+                                             bool closeio = false,
+                                             int *width = nullptr,
+                                             int *height = nullptr)
+    {
+        return IMG_LoadGPUTextureTyped_IO(device, copy_pass, src, type, closeio, width, height);
+    }
+
+    /**
+     * Get the image currently in the clipboard.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @returns a new SDL surface, or nullptr if no supported image is available.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     */
+    inline Surface GetClipboardImage()
+    {
+        return IMG_GetClipboardImage();
+    }
+
+    /**
+     * Detect ANI animated cursor data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is ANI animated cursor data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isANI(IOStreamRef src)
+    {
+        return IMG_isANI(src);
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Detect AVIF image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is AVIF data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isAVIF(IOStreamRef src)
+    {
+        return IMG_isAVIF(src);
+    }
+
+    /**
+     * Detect CUR image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is CUR data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isCUR(IOStreamRef src)
+    {
+        return IMG_isCUR(src);
+    }
+
+    /**
+     * Detect BMP image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is BMP data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isBMP(IOStreamRef src)
+    {
+        return IMG_isBMP(src);
+    }
+
+    /**
+     * Detect GIF image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is GIF data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isGIF(IOStreamRef src)
+    {
+        return IMG_isGIF(src);
+    }
+
+    /**
+     * Detect ICO image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is ICO data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isICO(IOStreamRef src)
+    {
+        return IMG_isICO(src);
+    }
+
+    /**
+     * Detect JPG image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is JPG data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isJPG(IOStreamRef src)
+    {
+        return IMG_isJPG(src);
+    }
+
+    /**
+     * Detect JXL image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is JXL data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isJXL(IOStreamRef src)
+    {
+        return IMG_isJXL(src);
+    }
+
+    /**
+     * Detect LBM image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is LBM data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isLBM(IOStreamRef src)
+    {
+        return IMG_isLBM(src);
+    }
+
+    /**
+     * Detect PCX image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is PCX data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isPCX(IOStreamRef src)
+    {
+        return IMG_isPCX(src);
+    }
+
+    /**
+     * Detect PNG image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is PNG data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isPNG(IOStreamRef src)
+    {
+        return IMG_isPNG(src);
+    }
+
+    /**
+     * Detect PNM image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is PNM data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isPNM(IOStreamRef src)
+    {
+        return IMG_isPNM(src);
+    }
+
+    /**
+     * Detect QOI image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is QOI data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isQOI(IOStreamRef src)
+    {
+        return IMG_isQOI(src);
+    }
+
+    /**
+     * Detect SVG image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is SVG data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isSVG(IOStreamRef src)
+    {
+        return IMG_isSVG(src);
+    }
+
+    /**
+     * Detect TIFF image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is TIFF data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isTIF(IOStreamRef src)
+    {
+        return IMG_isTIF(src);
+    }
+
+    /**
+     * Detect WEBP image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is WEBP data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isXCF
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isWEBP(IOStreamRef src)
+    {
+        return IMG_isWEBP(src);
+    }
+
+    /**
+     * Detect XCF image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is XCF data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXPM
+     * @sa isXV
+     */
+    inline bool isXCF(IOStreamRef src)
+    {
+        return IMG_isXCF(src);
+    }
+
+    /**
+     * Detect XPM image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is XPM data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXV
+     */
+    inline bool isXPM(IOStreamRef src)
+    {
+        return IMG_isXPM(src);
+    }
+
+    /**
+     * Detect XV image data on a readable/seekable IOStream.
+     *
+     * This function attempts to determine if a file is a given filetype, reading
+     * the least amount possible from the IOStream (usually a few bytes).
+     *
+     * There is no distinction made between "not the filetype in question" and basic
+     * i/o errors.
+     *
+     * This function will always attempt to seek `src` back to where it started when
+     * this function was called, but it will not report any errors in doing so, but
+     * assuming seeking works, this means you can immediately use this with a
+     * different IMG_isTYPE function, or load the image without further seeking.
+     *
+     * You do not need to call this function to load data; SDL_image can work to
+     * determine file type in many cases in its standard load functions.
+     *
+     * @param src a seekable/readable IOStream to provide image data.
+     * @returns true if this is XV data, false otherwise.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isANI
+     * @sa isAVIF
+     * @sa isBMP
+     * @sa isCUR
+     * @sa isGIF
+     * @sa isICO
+     * @sa isJPG
+     * @sa isJXL
+     * @sa isLBM
+     * @sa isPCX
+     * @sa isPNG
+     * @sa isPNM
+     * @sa isQOI
+     * @sa isSVG
+     * @sa isTIF
+     * @sa isWEBP
+     * @sa isXCF
+     * @sa isXPM
+     */
+    inline bool isXV(IOStreamRef src)
+    {
+        return IMG_isXV(src);
+    }
+
+    /**
+     * Load a AVIF image directly.
+     *
+     * If you know you definitely have a AVIF image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadAVIF_IO(IOStreamRef src)
+    {
+        return IMG_LoadAVIF_IO(src);
+    }
+
+    /**
+     * Load a BMP image directly.
+     *
+     * If you know you definitely have a BMP image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadBMP_IO(IOStreamRef src)
+    {
+        return IMG_LoadBMP_IO(src);
+    }
+
+    /**
+     * Load a CUR image directly.
+     *
+     * If you know you definitely have a CUR image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadCUR_IO(IOStreamRef src)
+    {
+        return IMG_LoadCUR_IO(src);
+    }
+
+    /**
+     * Load a GIF image directly.
+     *
+     * If you know you definitely have a GIF image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadGIF_IO(IOStreamRef src)
+    {
+        return IMG_LoadGIF_IO(src);
+    }
+
+    /**
+     * Load a ICO image directly.
+     *
+     * If you know you definitely have a ICO image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadICO_IO(IOStreamRef src)
+    {
+        return IMG_LoadICO_IO(src);
+    }
+
+    /**
+     * Load a JPG image directly.
+     *
+     * If you know you definitely have a JPG image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadJPG_IO(IOStreamRef src)
+    {
+        return IMG_LoadJPG_IO(src);
+    }
+
+    /**
+     * Load a JXL image directly.
+     *
+     * If you know you definitely have a JXL image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadJXL_IO(IOStreamRef src)
+    {
+        return IMG_LoadJXL_IO(src);
+    }
+
+    /**
+     * Load a LBM image directly.
+     *
+     * If you know you definitely have a LBM image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadLBM_IO(IOStreamRef src)
+    {
+        return IMG_LoadLBM_IO(src);
+    }
+
+    /**
+     * Load a PCX image directly.
+     *
+     * If you know you definitely have a PCX image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadPCX_IO(IOStreamRef src)
+    {
+        return IMG_LoadPCX_IO(src);
+    }
+
+    /**
+     * Load a PNG image directly.
+     *
+     * If you know you definitely have a PNG image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadPNG_IO(IOStreamRef src)
+    {
+        return IMG_LoadPNG_IO(src);
+    }
+
+    /**
+     * Load a PNG image directly.
+     *
+     * If you know you definitely have a PNG image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadPNG_IO(IOStreamRef src, bool closeio)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline Surface LoadPNG(StringParam file)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    /**
+     * Load a PNM image directly.
+     *
+     * If you know you definitely have a PNM image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadPNM_IO(IOStreamRef src)
+    {
+        return IMG_LoadPNM_IO(src);
+    }
+
+    /**
+     * Load a SVG image directly.
+     *
+     * If you know you definitely have a SVG image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSizedSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadSVG_IO(IOStreamRef src)
+    {
+        return IMG_LoadSVG_IO(src);
+    }
+
+    /**
+     * Load an SVG image, scaled to a specific size.
+     *
+     * Since SVG files are resolution-independent, you specify the size you would
+     * like the output image to be and it will be generated at those dimensions.
+     *
+     * Either width or height may be 0 and the image will be auto-sized to preserve
+     * aspect ratio.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @param src an IOStream to load SVG data from.
+     * @param width desired width of the generated surface, in pixels.
+     * @param height desired height of the generated surface, in pixels.
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadSVG_IO
+     */
+    inline Surface LoadSizedSVG_IO(IOStreamRef src, const PointRaw &size)
+    {
+        return IMG_LoadSizedSVG_IO(src, size);
+    }
+
+    /**
+     * Load a QOI image directly.
+     *
+     * If you know you definitely have a QOI image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadQOI_IO(IOStreamRef src)
+    {
+        return IMG_LoadQOI_IO(src);
+    }
+
+    /**
+     * Load a TGA image directly.
+     *
+     * If you know you definitely have a TGA image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadTGA_IO(IOStreamRef src)
+    {
+        return IMG_LoadTGA_IO(src);
+    }
+
+    /**
+     * Load a TIFF image directly.
+     *
+     * If you know you definitely have a TIFF image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadTIF_IO(IOStreamRef src)
+    {
+        return IMG_LoadTIF_IO(src);
+    }
+
+    /**
+     * Load a WEBP image directly.
+     *
+     * If you know you definitely have a WEBP image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadWEBP_IO(IOStreamRef src)
+    {
+        return IMG_LoadWEBP_IO(src);
+    }
+
+    /**
+     * Load a XCF image directly.
+     *
+     * If you know you definitely have a XCF image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXPM_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadXCF_IO(IOStreamRef src)
+    {
+        return IMG_LoadXCF_IO(src);
+    }
+
+    /**
+     * Load a XPM image directly.
+     *
+     * If you know you definitely have a XPM image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXV_IO
+     */
+    inline Surface LoadXPM_IO(IOStreamRef src)
+    {
+        return IMG_LoadXPM_IO(src);
+    }
+
+    /**
+     * Load a XV image directly.
+     *
+     * If you know you definitely have a XV image, you can call this function, which
+     * will skip SDL_image's file format detection routines. Generally it's better
+     * to use the abstract interfaces; also, there is only an IOStream interface
+     * available here.
+     *
+     * @param src an IOStream to load image data from.
+     * @returns SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAVIF_IO
+     * @sa LoadBMP_IO
+     * @sa LoadCUR_IO
+     * @sa LoadGIF_IO
+     * @sa LoadICO_IO
+     * @sa LoadJPG_IO
+     * @sa LoadJXL_IO
+     * @sa LoadLBM_IO
+     * @sa LoadPCX_IO
+     * @sa LoadPNG_IO
+     * @sa LoadPNM_IO
+     * @sa LoadQOI_IO
+     * @sa LoadSVG_IO
+     * @sa LoadTGA_IO
+     * @sa LoadTIF_IO
+     * @sa LoadWEBP_IO
+     * @sa LoadXCF_IO
+     * @sa LoadXPM_IO
+     */
+    inline Surface LoadXV_IO(IOStreamRef src)
+    {
+        return IMG_LoadXV_IO(src);
+    }
+
+    /**
+     * Load an XPM image from a memory array.
+     *
+     * The returned surface will be an 8bpp indexed surface, if possible, otherwise
+     * it will be 32bpp. If you always want 32-bit data, use
+     * ReadXPMFromArrayToRGB888() instead.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @param xpm a null-terminated array of strings that comprise XPM data.
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa ReadXPMFromArrayToRGB888
+     */
+    inline Surface ReadXPMFromArray(char **xpm)
+    {
+        return IMG_ReadXPMFromArray(xpm);
+    }
+
+    /**
+     * Load an XPM image from a memory array.
+     *
+     * The returned surface will always be a 32-bit RGB surface. If you want 8-bit
+     * indexed colors (and the XPM data allows it), use ReadXPMFromArray() instead.
+     *
+     * When done with the returned surface, the app should dispose of it with a call
+     * to DestroySurface().
+     *
+     * @param xpm a null-terminated array of strings that comprise XPM data.
+     * @returns a new SDL surface, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa ReadXPMFromArray
+     */
+    inline Surface ReadXPMFromArrayToRGB888(char **xpm)
+    {
+        return IMG_ReadXPMFromArrayToRGB888(xpm);
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an Surface into an image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * For formats that accept a quality, a default quality of 90 will be used.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveTyped_IO
+     * @sa SaveAVIF
+     * @sa SaveBMP
+     * @sa SaveCUR
+     * @sa SaveGIF
+     * @sa SaveICO
+     * @sa SaveJPG
+     * @sa SavePNG
+     * @sa SaveTGA
+     * @sa SaveWEBP
+     */
+    inline void Save(SurfaceConstRef surface, StringParam file)
+    {
+        CheckError(IMG_Save(surface, file));
+    }
+
+    inline void SurfaceBase::Save(StringParam filename) const
+    {
+        Save(get(), std::move(filename));
+    }
+
+    /**
+     * Save an Surface into formatted image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use Save() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * For formats that accept a quality, a default quality of 90 will be used.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("BMP", "GIF",
+     *             "PNG", etc).
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa Save
+     * @sa SaveAVIF_IO
+     * @sa SaveBMP_IO
+     * @sa SaveCUR_IO
+     * @sa SaveGIF_IO
+     * @sa SaveICO_IO
+     * @sa SaveJPG_IO
+     * @sa SavePNG_IO
+     * @sa SaveTGA_IO
+     * @sa SaveWEBP_IO
+     */
+    inline void SaveTyped_IO(SurfaceConstRef surface, IOStreamRef dst, StringParam type, bool closeio = false)
+    {
+        CheckError(IMG_SaveTyped_IO(surface, dst, type, closeio));
+    }
+
+    inline void SurfaceBase::SaveTyped_IO(IOStreamRef dst, StringParam type, bool closeio) const
+    {
+        SaveTyped_IO(get(), dst, std::move(type), closeio);
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an Surface into a AVIF image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @param quality the desired quality, ranging between 0 (lowest) and 100
+     *                (highest).
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SaveAVIF_IO
+     */
+    inline void SaveAVIF(SurfaceRef surface, StringParam file, int quality)
+    {
+        CheckError(IMG_SaveAVIF(surface, file, quality));
+    }
+
+    /**
+     * Save an Surface into AVIF image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveAVIF() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param quality the desired quality, ranging between 0 (lowest) and 100
+     *                (highest).
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SaveAVIF
+     */
+    inline void SaveAVIF_IO(SurfaceRef surface, IOStreamRef dst, int quality, bool closeio = false)
+    {
+        CheckError(IMG_SaveAVIF_IO(surface, dst, quality, closeio));
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an Surface into a BMP image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveBMP_IO
+     */
+    inline void SaveBMP(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SaveBMP(surface, file));
+    }
+
+    /**
+     * Save an Surface into BMP image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveBMP() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveBMP
+     */
+    inline void SaveBMP_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveBMP_IO(surface, dst, closeio));
+    }
+
+    /**
+     * Save an Surface into a CUR image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveCUR_IO
+     */
+    inline void SaveCUR(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SaveCUR(surface, file));
+    }
+
+    /**
+     * Save an Surface into CUR image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveCUR() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveCUR
+     */
+    inline void SaveCUR_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveCUR_IO(surface, dst, closeio));
+    }
+
+    /**
+     * Save an Surface into a GIF image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveGIF_IO
+     */
+    inline void SaveGIF(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SaveGIF(surface, file));
+    }
+
+    /**
+     * Save an Surface into GIF image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveGIF() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveGIF
+     */
+    inline void SaveGIF_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveGIF_IO(surface, dst, closeio));
+    }
+
+    /**
+     * Save an Surface into a ICO image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveICO_IO
+     */
+    inline void SaveICO(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SaveICO(surface, file));
+    }
+
+    /**
+     * Save an Surface into ICO image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveICO() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveICO
+     */
+    inline void SaveICO_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveICO_IO(surface, dst, closeio));
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an Surface into a JPEG image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @param quality [0; 33] is Lowest quality, [34; 66] is Middle quality, [67;
+     *                100] is Highest quality.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SaveJPG_IO
+     */
+    inline void SaveJPG(SurfaceRef surface, StringParam file, int quality)
+    {
+        CheckError(IMG_SaveJPG(surface, file, quality));
+    }
+
+    /**
+     * Save an Surface into JPEG image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveJPG() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param quality [0; 33] is Lowest quality, [34; 66] is Middle quality, [67;
+     *                100] is Highest quality.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SaveJPG
+     */
+    inline void SaveJPG_IO(SurfaceRef surface, IOStreamRef dst, int quality, bool closeio = false)
+    {
+        CheckError(IMG_SaveJPG_IO(surface, dst, quality, closeio));
+    }
+
+    /**
+     * Save an Surface into a PNG image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SavePNG_IO
+     */
+    inline void SavePNG(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SavePNG(surface, file));
+    }
+
+    /**
+     * Save an Surface into PNG image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SavePNG() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa SavePNG
+     */
+    inline void SavePNG_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SavePNG_IO(surface, dst, closeio));
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an Surface into a TGA image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write new file to.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveTGA_IO
+     */
+    inline void SaveTGA(SurfaceRef surface, StringParam file)
+    {
+        CheckError(IMG_SaveTGA(surface, file));
+    }
+
+    /**
+     * Save an Surface into TGA image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveTGA() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveTGA
+     */
+    inline void SaveTGA_IO(SurfaceRef surface, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveTGA_IO(surface, dst, closeio));
+    }
+
+    /**
+     * Save an Surface into a WEBP image file.
+     *
+     * If the file already exists, it will be overwritten.
+     *
+     * @param surface the SDL surface to save.
+     * @param file path on the filesystem to write the new file to.
+     * @param quality between 0 and 100. For lossy, 0 gives the smallest size and
+     *                100 the largest. For lossless, this parameter is the amount of
+     *                effort put into the compression: 0 is the fastest but gives
+     *                larger files compared to the slowest, but best, 100.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveWEBP_IO
+     */
+    inline void SaveWEBP(SurfaceRef surface, StringParam file, float quality)
+    {
+        CheckError(IMG_SaveWEBP(surface, file, quality));
+    }
+
+    /**
+     * Save an Surface into WEBP image data, via an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveWEBP() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param surface the SDL surface to save.
+     * @param dst the IOStream to save the image data to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param quality between 0 and 100. For lossy, 0 gives the smallest size and
+     *                100 the largest. For lossless, this parameter is the amount of
+     *                effort put into the compression: 0 is the fastest but gives
+     *                larger files compared to the slowest, but best, 100.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveWEBP
+     */
+    inline void SaveWEBP_IO(SurfaceRef surface, IOStreamRef dst, float quality, bool closeio = false)
+    {
+        CheckError(IMG_SaveWEBP_IO(surface, dst, quality, closeio));
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Base class to Animation.
+     *
+     * @see Animation
+     */
+    struct AnimationBase : ResourceBaseT<AnimationRaw, AnimationRawConst>
+    {
+        using ResourceBaseT::ResourceBaseT;
+
+        /// Converts to AnimationConstRef
+        constexpr operator AnimationConstRef() const noexcept
+        {
+            return get();
+        }
+
+        /**
+         * Dispose of an Animation and free its resources.
+         *
+         * The provided `anim` pointer is not valid once this call returns.
+         *
+         * @since This function is available since SDL_image 3.0.0.
+         *
+         * @sa LoadAnimation
+         * @sa LoadAnimation_IO
+         * @sa LoadAnimationTyped_IO
+         * @sa LoadANIAnimation_IO
+         * @sa LoadAPNGAnimation_IO
+         * @sa LoadAVIFAnimation_IO
+         * @sa LoadGIFAnimation_IO
+         * @sa LoadWEBPAnimation_IO
+         */
+        void Free();
+
+        int GetWidth() const;
+
+        int GetHeight() const;
+
+        Point GetSize() const;
+
+        int GetCount() const;
+
+        Surface GetFrame(int index) const;
+
+        int GetDelay(int index) const;
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+        /**
+         * Save an animation to a file.
+         *
+         * For formats that accept a quality, a default quality of 90 will be used.
+         *
+         * @param file path on the filesystem containing an animated image.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void Save(StringParam file);
+
+        /**
+         * Save an animation to an IOStream.
+         *
+         * If you just want to save to a filename, you can use SaveAnimation()
+         * instead.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * For formats that accept a quality, a default quality of 90 will be used.
+         *
+         * @param dst an IOStream that data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @param type a filename extension that represent this data ("GIF", etc).
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void SaveTyped_IO(IOStreamRef dst, StringParam type, bool closeio = false);
+
+        /**
+         * Save an animation in ANI format to an IOStream.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * @param dst an IOStream from which data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void SaveANI_IO(IOStreamRef dst, bool closeio = false);
+
+        /**
+         * Save an animation in APNG format to an IOStream.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * @param dst an IOStream from which data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void SaveAPNG_IO(IOStreamRef dst, bool closeio = false);
+
+        /**
+         * Save an animation in AVIF format to an IOStream.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * @param dst an IOStream from which data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @param quality the desired quality, ranging between 0 (lowest) and 100
+         *                (highest).
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void SaveAVIF_IO(IOStreamRef dst, int quality, bool closeio = false);
+
+        /**
+         * Save an animation in GIF format to an IOStream.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * @param dst an IOStream from which data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveWEBPAnimation_IO
+         */
+        void SaveGIF_IO(IOStreamRef dst, bool closeio = false);
+
+        /**
+         * Save an animation in WEBP format to an IOStream.
+         *
+         * If `closeio` is true, `dst` will be closed before returning, whether this
+         * function succeeds or not.
+         *
+         * @param dst an IOStream from which data will be written to.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @param quality between 0 and 100. For lossy, 0 gives the smallest size and
+         *                100 the largest. For lossless, this parameter is the amount
+         *                of effort put into the compression: 0 is the fastest but
+         *                gives larger files compared to the slowest, but best, 100.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa SaveAnimation
+         * @sa SaveAnimationTyped_IO
+         * @sa SaveANIAnimation_IO
+         * @sa SaveAPNGAnimation_IO
+         * @sa SaveAVIFAnimation_IO
+         * @sa SaveGIFAnimation_IO
+         */
+        void SaveWEBP_IO(IOStreamRef dst, int quality, bool closeio = false);
+
+        /**
+         * Create an animated cursor from an animation.
+         *
+         * @param hot_x the x position of the cursor hot spot.
+         * @param hot_y the y position of the cursor hot spot.
+         * @returns the new cursor on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa LoadAnimation
+         * @sa LoadAnimation_IO
+         * @sa LoadAnimationTyped_IO
+         */
+        Cursor CreateCursor(const PointRaw &hotspot);
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+    };
+
+    /**
+     * Animated image support
+     *
+     * @cat resource
+     */
+    struct Animation : AnimationBase
+    {
+        using AnimationBase::AnimationBase;
+
+        /**
+         * Constructs from raw Animation.
+         *
+         * @param resource a AnimationRaw to be wrapped.
+         *
+         * This assumes the ownership, call release() if you need to take back.
+         */
+        constexpr explicit Animation(AnimationRaw resource) noexcept : AnimationBase(resource)
+        {
+        }
+
+        /// Move constructor
+        constexpr Animation(Animation &&other) noexcept : Animation(other.release())
+        {
+        }
+
+        /**
+         * Load an animation from a file.
+         *
+         * When done with the returned animation, the app should dispose of it with a
+         * call to FreeAnimation().
+         *
+         * @param file path on the filesystem containing an animated image.
+         * @post a new Animation, or nullptr on error.
+         *
+         * @since This function is available since SDL_image 3.0.0.
+         *
+         * @sa CreateAnimatedCursor
+         * @sa LoadAnimation_IO
+         * @sa LoadAnimationTyped_IO
+         * @sa LoadANIAnimation_IO
+         * @sa LoadAPNGAnimation_IO
+         * @sa LoadAVIFAnimation_IO
+         * @sa LoadGIFAnimation_IO
+         * @sa LoadWEBPAnimation_IO
+         * @sa FreeAnimation
+         */
+        Animation(StringParam file);
+
+        /**
+         * Load an animation from an IOStream.
+         *
+         * If `closeio` is true, `src` will be closed before returning, whether this
+         * function succeeds or not. SDL_image reads everything it needs from `src`
+         * during this call in any case.
+         *
+         * When done with the returned animation, the app should dispose of it with a
+         * call to FreeAnimation().
+         *
+         * @param src an IOStream that data will be read from.
+         * @param closeio true to close/free the IOStream before returning, false to
+         *                leave it open.
+         * @post a new Animation, or nullptr on error.
+         *
+         * @since This function is available since SDL_image 3.0.0.
+         *
+         * @sa CreateAnimatedCursor
+         * @sa LoadAnimation
+         * @sa LoadAnimationTyped_IO
+         * @sa LoadANIAnimation_IO
+         * @sa LoadAPNGAnimation_IO
+         * @sa LoadAVIFAnimation_IO
+         * @sa LoadGIFAnimation_IO
+         * @sa LoadWEBPAnimation_IO
+         * @sa FreeAnimation
+         */
+        Animation(IOStreamRef src, bool closeio = false);
+
+        /// Destructor
+        ~Animation()
+        {
+            IMG_FreeAnimation(get());
+        }
+
+        /// Assignment operator.
+        constexpr Animation &operator=(Animation &&other) noexcept
+        {
+            swap(*this, other);
+            return *this;
+        }
+    };
+
+    inline int GetAnimationWidth(AnimationConstRef anim)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline int AnimationBase::GetWidth() const
+    {
+        return SDL::GetAnimationWidth(get());
+    }
+
+    inline int GetAnimationHeight(AnimationConstRef anim)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline int AnimationBase::GetHeight() const
+    {
+        return SDL::GetAnimationHeight(get());
+    }
+
+    inline Point GetAnimationSize(AnimationConstRef anim)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline Point AnimationBase::GetSize() const
+    {
+        return SDL::GetAnimationSize(get());
+    }
+
+    inline int GetAnimationCount(AnimationConstRef anim)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline int AnimationBase::GetCount() const
+    {
+        return SDL::GetAnimationCount(get());
+    }
+
+    inline Surface GetAnimationFrame(AnimationConstRef anim, int index)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline Surface AnimationBase::GetFrame(int index) const
+    {
+        return SDL::GetAnimationFrame(get(), index);
+    }
+
+    inline int GetAnimationDelay(AnimationConstRef anim, int index)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    inline int AnimationBase::GetDelay(int index) const
+    {
+        return SDL::GetAnimationDelay(get(), index);
+    }
+
+    /**
+     * Load an animation from a file.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param file path on the filesystem containing an animated image.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa CreateAnimatedCursor
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadAnimation(StringParam file)
+    {
+        return Animation(std::move(file));
+    }
+
+    inline Animation::Animation(StringParam file) : Animation(IMG_LoadAnimation(file))
+    {
+    }
+
+    inline Animation::Animation(IOStreamRef src, bool closeio) : Animation(IMG_LoadAnimation_IO(src, closeio))
+    {
+    }
+
+    /**
+     * Load an animation from an IOStream.
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa CreateAnimatedCursor
+     * @sa LoadAnimation
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadAnimation_IO(IOStreamRef src, bool closeio = false)
+    {
+        return Animation(src, closeio);
+    }
+
+    /**
+     * Load an animation from an IOStream.
+     *
+     * Even though this function accepts a file type, SDL_image may still try other
+     * decoders that are capable of detecting file type from the contents of the
+     * image data, but may rely on the caller-provided type string for formats that
+     * it cannot autodetect. If `type` is nullptr, SDL_image will rely solely on its
+     * ability to guess the format.
+     *
+     * If `closeio` is true, `src` will be closed before returning, whether this
+     * function succeeds or not. SDL_image reads everything it needs from `src`
+     * during this call in any case.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param src an IOStream that data will be read from.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("GIF", etc).
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa CreateAnimatedCursor
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadAnimationTyped_IO(IOStreamRef src, StringParam type, bool closeio = false)
+    {
+        return IMG_LoadAnimationTyped_IO(src, type, closeio);
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Load an ANI animation directly from an IOStream.
+     *
+     * If you know you definitely have an ANI image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally, it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param src an IOStream from which data will be read.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa isANI
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadANIAnimation_IO(IOStreamRef src)
+    {
+        return IMG_LoadANIAnimation_IO(src);
+    }
+
+    /**
+     * Load an APNG animation directly from an IOStream.
+     *
+     * If you know you definitely have an APNG image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally, it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param src an IOStream from which data will be read.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa isPNG
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadAPNGAnimation_IO(IOStreamRef src)
+    {
+        return IMG_LoadAPNGAnimation_IO(src);
+    }
+
+    /**
+     * Load an AVIF animation directly from an IOStream.
+     *
+     * If you know you definitely have an AVIF animation, you can call this
+     * function, which will skip SDL_image's file format detection routines.
+     * Generally it's better to use the abstract interfaces; also, there is only an
+     * IOStream interface available here.
+     *
+     * When done with the returned animation, the app should dispose of it with a
+     * call to FreeAnimation().
+     *
+     * @param src an IOStream that data will be read from.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa isAVIF
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadAVIFAnimation_IO(IOStreamRef src)
+    {
+        return IMG_LoadAVIFAnimation_IO(src);
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Load a GIF animation directly.
+     *
+     * If you know you definitely have a GIF image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream that data will be read from.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isGIF
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadGIFAnimation_IO(IOStreamRef src)
+    {
+        return IMG_LoadGIFAnimation_IO(src);
+    }
+
+    /**
+     * Load a WEBP animation directly.
+     *
+     * If you know you definitely have a WEBP image, you can call this function,
+     * which will skip SDL_image's file format detection routines. Generally it's
+     * better to use the abstract interfaces; also, there is only an IOStream
+     * interface available here.
+     *
+     * @param src an IOStream that data will be read from.
+     * @returns a new Animation, or nullptr on error.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa isWEBP
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa FreeAnimation
+     */
+    inline Animation LoadWEBPAnimation_IO(IOStreamRef src)
+    {
+        return IMG_LoadWEBPAnimation_IO(src);
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Save an animation to a file.
+     *
+     * For formats that accept a quality, a default quality of 90 will be used.
+     *
+     * @param anim the animation to save.
+     * @param file path on the filesystem containing an animated image.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveAnimation(AnimationRef anim, StringParam file)
+    {
+        CheckError(IMG_SaveAnimation(anim, file));
+    }
+
+    inline void AnimationBase::Save(StringParam file)
+    {
+        SDL::SaveAnimation(get(), std::move(file));
+    }
+
+    /**
+     * Save an animation to an IOStream.
+     *
+     * If you just want to save to a filename, you can use SaveAnimation() instead.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * For formats that accept a quality, a default quality of 90 will be used.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream that data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param type a filename extension that represent this data ("GIF", etc).
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveAnimationTyped_IO(AnimationRef anim, IOStreamRef dst, StringParam type, bool closeio = false)
+    {
+        CheckError(IMG_SaveAnimationTyped_IO(anim, dst, type, closeio));
+    }
+
+    inline void AnimationBase::SaveTyped_IO(IOStreamRef dst, StringParam type, bool closeio)
+    {
+        SDL::SaveAnimationTyped_IO(get(), dst, std::move(type), closeio);
+    }
+
+    /**
+     * Save an animation in ANI format to an IOStream.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream from which data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveANIAnimation_IO(AnimationRef anim, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveANIAnimation_IO(anim, dst, closeio));
+    }
+
+    inline void AnimationBase::SaveANI_IO(IOStreamRef dst, bool closeio)
+    {
+        SDL::SaveANIAnimation_IO(get(), dst, closeio);
+    }
+
+    /**
+     * Save an animation in APNG format to an IOStream.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream from which data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveAPNGAnimation_IO(AnimationRef anim, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveAPNGAnimation_IO(anim, dst, closeio));
+    }
+
+    inline void AnimationBase::SaveAPNG_IO(IOStreamRef dst, bool closeio)
+    {
+        SDL::SaveAPNGAnimation_IO(get(), dst, closeio);
+    }
+
+    /**
+     * Save an animation in AVIF format to an IOStream.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream from which data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param quality the desired quality, ranging between 0 (lowest) and 100
+     *                (highest).
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveAVIFAnimation_IO(AnimationRef anim, IOStreamRef dst, int quality, bool closeio = false)
+    {
+        CheckError(IMG_SaveAVIFAnimation_IO(anim, dst, quality, closeio));
+    }
+
+    inline void AnimationBase::SaveAVIF_IO(IOStreamRef dst, int quality, bool closeio)
+    {
+        SDL::SaveAVIFAnimation_IO(get(), dst, quality, closeio);
+    }
+
+    /**
+     * Save an animation in GIF format to an IOStream.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream from which data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveWEBPAnimation_IO
+     */
+    inline void SaveGIFAnimation_IO(AnimationRef anim, IOStreamRef dst, bool closeio = false)
+    {
+        CheckError(IMG_SaveGIFAnimation_IO(anim, dst, closeio));
+    }
+
+    inline void AnimationBase::SaveGIF_IO(IOStreamRef dst, bool closeio)
+    {
+        SDL::SaveGIFAnimation_IO(get(), dst, closeio);
+    }
+
+    /**
+     * Save an animation in WEBP format to an IOStream.
+     *
+     * If `closeio` is true, `dst` will be closed before returning, whether this
+     * function succeeds or not.
+     *
+     * @param anim the animation to save.
+     * @param dst an IOStream from which data will be written to.
+     * @param closeio true to close/free the IOStream before returning, false to
+     *                leave it open.
+     * @param quality between 0 and 100. For lossy, 0 gives the smallest size and
+     *                100 the largest. For lossless, this parameter is the amount of
+     *                effort put into the compression: 0 is the fastest but gives
+     *                larger files compared to the slowest, but best, 100.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa SaveAnimation
+     * @sa SaveAnimationTyped_IO
+     * @sa SaveANIAnimation_IO
+     * @sa SaveAPNGAnimation_IO
+     * @sa SaveAVIFAnimation_IO
+     * @sa SaveGIFAnimation_IO
+     */
+    inline void SaveWEBPAnimation_IO(AnimationRef anim, IOStreamRef dst, int quality, bool closeio = false)
+    {
+        CheckError(IMG_SaveWEBPAnimation_IO(anim, dst, quality, closeio));
+    }
+
+    inline void AnimationBase::SaveWEBP_IO(IOStreamRef dst, int quality, bool closeio)
+    {
+        SDL::SaveWEBPAnimation_IO(get(), dst, quality, closeio);
+    }
+
+    /**
+     * Create an animated cursor from an animation.
+     *
+     * @param anim an animation to use to create an animated cursor.
+     * @param hot_x the x position of the cursor hot spot.
+     * @param hot_y the y position of the cursor hot spot.
+     * @returns the new cursor on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     */
+    inline Cursor CreateAnimatedCursor(AnimationRef anim, const PointRaw &hotspot)
+    {
+        return CheckError(IMG_CreateAnimatedCursor(anim, hotspot));
+    }
+
+    inline Cursor AnimationBase::CreateCursor(const PointRaw &hotspot)
+    {
+        return SDL::CreateAnimatedCursor(get(), hotspot);
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Dispose of an Animation and free its resources.
+     *
+     * The provided `anim` pointer is not valid once this call returns.
+     *
+     * @param anim Animation to dispose of.
+     *
+     * @since This function is available since SDL_image 3.0.0.
+     *
+     * @sa LoadAnimation
+     * @sa LoadAnimation_IO
+     * @sa LoadAnimationTyped_IO
+     * @sa LoadANIAnimation_IO
+     * @sa LoadAPNGAnimation_IO
+     * @sa LoadAVIFAnimation_IO
+     * @sa LoadGIFAnimation_IO
+     * @sa LoadWEBPAnimation_IO
+     */
+    inline void FreeAnimation(AnimationRaw anim)
+    {
+        IMG_FreeAnimation(anim);
+    }
+
+    inline void AnimationBase::Free()
+    {
+        FreeAnimation(release());
+    }
+
+#if SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /**
+     * Base class to AnimationEncoder.
+     *
+     * @see AnimationEncoder
+     */
+    struct AnimationEncoderBase : ResourceBaseT<AnimationEncoderRaw>
+    {
+        using ResourceBaseT::ResourceBaseT;
+
+        /**
+         * Close an animation encoder, finishing any encoding.
+         *
+         * Calling this function frees the animation encoder, and returns the final
+         * status of the encoding process.
+         *
+         * @returns true on success or false on failure; call GetError() for more
+         *          information.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationEncoder
+         * @sa CreateAnimationEncoder_IO
+         * @sa CreateAnimationEncoderWithProperties
+         */
+        bool Close();
+
+        /**
+         * Add a frame to an animation encoder.
+         *
+         * @param surface the surface to add as the next frame in the animation.
+         * @param duration the duration of the frame, usually in milliseconds but can
+         *                 be other units if the
+         *                 `prop.AnimationEncoder.Create.TIMEBASE_DENOMINATOR_NUMBER`
+         *                 property is set when creating the encoder.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationEncoder
+         * @sa CreateAnimationEncoder_IO
+         * @sa CreateAnimationEncoderWithProperties
+         * @sa CloseAnimationEncoder
+         */
+        void AddFrame(SurfaceRef surface, Uint64 duration);
+    };
+
+    /**
+     * An object representing the encoder context.
+     *
+     * @cat resource
+     */
+    struct AnimationEncoder : AnimationEncoderBase
+    {
+        using AnimationEncoderBase::AnimationEncoderBase;
+
+        /**
+         * Constructs from raw AnimationEncoder.
+         *
+         * @param resource a AnimationEncoderRaw to be wrapped.
+         *
+         * This assumes the ownership, call release() if you need to take back.
+         */
+        constexpr explicit AnimationEncoder(AnimationEncoderRaw resource) noexcept : AnimationEncoderBase(resource)
+        {
+        }
+
+        /// Move constructor
+        constexpr AnimationEncoder(AnimationEncoder &&other) noexcept : AnimationEncoder(other.release())
+        {
+        }
+
+        /**
+         * Create an encoder to save a series of images to a file.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * The file type is determined from the file extension, e.g. "file.webp" will
+         * be encoded using WEBP.
+         *
+         * @param file the file where the animation will be saved.
+         * @post a new AnimationEncoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationEncoder_IO
+         * @sa CreateAnimationEncoderWithProperties
+         * @sa AddAnimationEncoderFrame
+         * @sa CloseAnimationEncoder
+         */
+        AnimationEncoder(StringParam file);
+
+        /**
+         * Create an encoder to save a series of images to an IOStream.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * If `closeio` is true, `dst` will be closed before returning if this
+         * function fails, or when the animation encoder is closed if this function
+         * succeeds.
+         *
+         * @param dst an IOStream that will be used to save the stream.
+         * @param closeio true to close the IOStream when done, false to leave it
+         *                open.
+         * @param type a filename extension that represent this data ("WEBP", etc).
+         * @post a new AnimationEncoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationEncoder
+         * @sa CreateAnimationEncoderWithProperties
+         * @sa AddAnimationEncoderFrame
+         * @sa CloseAnimationEncoder
+         */
+        AnimationEncoder(IOStreamRef dst, StringParam type, bool closeio = false);
+
+        /**
+         * Create an animation encoder with the specified properties.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * These are the supported properties:
+         *
+         * - `prop.AnimationEncoder.Create.FILENAME_STRING`: the file to save, if an
+         *   IOStream isn't being used. This is required if
+         *   `prop.AnimationEncoder.Create.IOSTREAM_POINTER` isn't set.
+         * - `prop.AnimationEncoder.Create.IOSTREAM_POINTER`: an IOStream that will be
+         *   used to save the stream. This should not be closed until the animation
+         *   encoder is closed. This is required if
+         *   `prop.AnimationEncoder.Create.FILENAME_STRING` isn't set.
+         * - `prop.AnimationEncoder.Create.IOSTREAM_AUTOCLOSE_BOOLEAN`: true if
+         *   closing the animation encoder should also close the associated IOStream.
+         * - `prop.AnimationEncoder.Create.TYPE_STRING`: the output file type, e.g.
+         *   "webp", defaults to the file extension if
+         *   `prop.AnimationEncoder.Create.FILENAME_STRING` is set.
+         * - `prop.AnimationEncoder.Create.QUALITY_NUMBER`: the compression quality,
+         *   in the range of 0 to 100. The higher the number, the higher the quality
+         *   and file size. This defaults to a balanced value for compression and
+         *   quality.
+         * - `prop.AnimationEncoder.Create.TIMEBASE_NUMERATOR_NUMBER`: the numerator
+         *   of the fraction used to multiply the pts to convert it to seconds. This
+         *   defaults to 1.
+         * - `prop.AnimationEncoder.Create.TIMEBASE_DENOMINATOR_NUMBER`: the
+         *   denominator of the fraction used to multiply the pts to convert it to
+         *   seconds. This defaults to 1000.
+         *
+         * @param props the properties of the animation encoder.
+         * @post a new AnimationEncoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationEncoder
+         * @sa CreateAnimationEncoder_IO
+         * @sa AddAnimationEncoderFrame
+         * @sa CloseAnimationEncoder
+         */
+        AnimationEncoder(PropertiesRef props);
+
+        /// Destructor
+        ~AnimationEncoder()
+        {
+            IMG_CloseAnimationEncoder(get());
+        }
+
+        /// Assignment operator.
+        constexpr AnimationEncoder &operator=(AnimationEncoder &&other) noexcept
+        {
+            swap(*this, other);
+            return *this;
+        }
+    };
+
+    /**
+     * Create an encoder to save a series of images to a file.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * The file type is determined from the file extension, e.g. "file.webp" will be
+     * encoded using WEBP.
+     *
+     * @param file the file where the animation will be saved.
+     * @returns a new AnimationEncoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationEncoder_IO
+     * @sa CreateAnimationEncoderWithProperties
+     * @sa AddAnimationEncoderFrame
+     * @sa CloseAnimationEncoder
+     */
+    inline AnimationEncoder CreateAnimationEncoder(StringParam file)
+    {
+        return AnimationEncoder(std::move(file));
+    }
+
+    inline AnimationEncoder::AnimationEncoder(StringParam file)
+        : AnimationEncoder(CheckError(IMG_CreateAnimationEncoder(file)))
+    {
+    }
+
+    inline AnimationEncoder::AnimationEncoder(IOStreamRef dst, StringParam type, bool closeio)
+        : AnimationEncoder(CheckError(IMG_CreateAnimationEncoder_IO(dst, type, closeio)))
+    {
+    }
+
+    inline AnimationEncoder::AnimationEncoder(PropertiesRef props)
+        : AnimationEncoder(CheckError(IMG_CreateAnimationEncoderWithProperties(props)))
+    {
+    }
+
+    /**
+     * Create an encoder to save a series of images to an IOStream.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * If `closeio` is true, `dst` will be closed before returning if this function
+     * fails, or when the animation encoder is closed if this function succeeds.
+     *
+     * @param dst an IOStream that will be used to save the stream.
+     * @param closeio true to close the IOStream when done, false to leave it open.
+     * @param type a filename extension that represent this data ("WEBP", etc).
+     * @returns a new AnimationEncoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationEncoder
+     * @sa CreateAnimationEncoderWithProperties
+     * @sa AddAnimationEncoderFrame
+     * @sa CloseAnimationEncoder
+     */
+    inline AnimationEncoder CreateAnimationEncoder_IO(IOStreamRef dst, StringParam type, bool closeio = false)
+    {
+        return AnimationEncoder(dst, std::move(type), closeio);
+    }
+
+    /**
+     * Create an animation encoder with the specified properties.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * These are the supported properties:
+     *
+     * - `prop.AnimationEncoder.Create.FILENAME_STRING`: the file to save, if an
+     *   IOStream isn't being used. This is required if
+     *   `prop.AnimationEncoder.Create.IOSTREAM_POINTER` isn't set.
+     * - `prop.AnimationEncoder.Create.IOSTREAM_POINTER`: an IOStream that will be
+     *   used to save the stream. This should not be closed until the animation
+     *   encoder is closed. This is required if
+     *   `prop.AnimationEncoder.Create.FILENAME_STRING` isn't set.
+     * - `prop.AnimationEncoder.Create.IOSTREAM_AUTOCLOSE_BOOLEAN`: true if closing
+     *   the animation encoder should also close the associated IOStream.
+     * - `prop.AnimationEncoder.Create.TYPE_STRING`: the output file type, e.g.
+     *   "webp", defaults to the file extension if
+     *   `prop.AnimationEncoder.Create.FILENAME_STRING` is set.
+     * - `prop.AnimationEncoder.Create.QUALITY_NUMBER`: the compression quality, in
+     *   the range of 0 to 100. The higher the number, the higher the quality and
+     *   file size. This defaults to a balanced value for compression and quality.
+     * - `prop.AnimationEncoder.Create.TIMEBASE_NUMERATOR_NUMBER`: the numerator of
+     *   the fraction used to multiply the pts to convert it to seconds. This
+     *   defaults to 1.
+     * - `prop.AnimationEncoder.Create.TIMEBASE_DENOMINATOR_NUMBER`: the denominator
+     *   of the fraction used to multiply the pts to convert it to seconds. This
+     *   defaults to 1000.
+     *
+     * @param props the properties of the animation encoder.
+     * @returns a new AnimationEncoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationEncoder
+     * @sa CreateAnimationEncoder_IO
+     * @sa AddAnimationEncoderFrame
+     * @sa CloseAnimationEncoder
+     */
+    inline AnimationEncoder CreateAnimationEncoderWithProperties(PropertiesRef props)
+    {
+        return AnimationEncoder(props);
+    }
+
+    namespace prop::AnimationEncoder::Create
+    {
+
+        constexpr auto FILENAME_STRING = IMG_PROP_ANIMATION_ENCODER_CREATE_FILENAME_STRING; ///< String for filename.
+
+        constexpr auto IOSTREAM_POINTER = IMG_PROP_ANIMATION_ENCODER_CREATE_IOSTREAM_POINTER; ///< Pointer to iostream.
+
+        constexpr auto IOSTREAM_AUTOCLOSE_BOOLEAN =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_IOSTREAM_AUTOCLOSE_BOOLEAN; ///< Enable iostream autoclose.
+
+        constexpr auto TYPE_STRING = IMG_PROP_ANIMATION_ENCODER_CREATE_TYPE_STRING; ///< String for type.
+
+        constexpr auto QUALITY_NUMBER = IMG_PROP_ANIMATION_ENCODER_CREATE_QUALITY_NUMBER; ///< Number for quality.
+
+        constexpr auto TIMEBASE_NUMERATOR_NUMBER =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_TIMEBASE_NUMERATOR_NUMBER; ///< Number for timebase numerator.
+
+        constexpr auto TIMEBASE_DENOMINATOR_NUMBER =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_TIMEBASE_DENOMINATOR_NUMBER; ///< Number for timebase denominator.
+
+        constexpr auto AVIF_MAX_THREADS_NUMBER =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_AVIF_MAX_THREADS_NUMBER; ///< Number for avif max threads.
+
+        constexpr auto AVIF_KEYFRAME_INTERVAL_NUMBER =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_AVIF_KEYFRAME_INTERVAL_NUMBER; ///< Number for avif keyframe interval.
+
+        constexpr auto GIF_USE_LUT_BOOLEAN =
+            IMG_PROP_ANIMATION_ENCODER_CREATE_GIF_USE_LUT_BOOLEAN; ///< Enable gif use lut.
+
+    } // namespace prop::AnimationEncoder::Create
+
+    /**
+     * Add a frame to an animation encoder.
+     *
+     * @param encoder the receiving images.
+     * @param surface the surface to add as the next frame in the animation.
+     * @param duration the duration of the frame, usually in milliseconds but can be
+     *                 other units if the
+     *                 `prop.AnimationEncoder.Create.TIMEBASE_DENOMINATOR_NUMBER`
+     *                 property is set when creating the encoder.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationEncoder
+     * @sa CreateAnimationEncoder_IO
+     * @sa CreateAnimationEncoderWithProperties
+     * @sa CloseAnimationEncoder
+     */
+    inline void AddAnimationEncoderFrame(AnimationEncoderRef encoder, SurfaceRef surface, Uint64 duration)
+    {
+        CheckError(IMG_AddAnimationEncoderFrame(encoder, surface, duration));
+    }
+
+    inline void AnimationEncoderBase::AddFrame(SurfaceRef surface, Uint64 duration)
+    {
+        SDL::AddAnimationEncoderFrame(get(), surface, duration);
+    }
+
+    /**
+     * Close an animation encoder, finishing any encoding.
+     *
+     * Calling this function frees the animation encoder, and returns the final
+     * status of the encoding process.
+     *
+     * @param encoder the encoder to close.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationEncoder
+     * @sa CreateAnimationEncoder_IO
+     * @sa CreateAnimationEncoderWithProperties
+     */
+    inline void CloseAnimationEncoder(AnimationEncoderRaw encoder)
+    {
+        CheckError(IMG_CloseAnimationEncoder(encoder));
+    }
+
+    inline bool AnimationEncoderBase::Close()
+    {
+        return CloseAnimationEncoder(release());
+    }
+
+    /**
+     * An enum representing the status of an animation decoder.
+     *
+     * @since This enum is available since SDL_image 3.4.0.
+     */
+    using AnimationDecoderStatus = IMG_AnimationDecoderStatus;
+
+    constexpr AnimationDecoderStatus DECODER_STATUS_INVALID = IMG_DECODER_STATUS_INVALID; ///< The decoder is invalid
+
+    constexpr AnimationDecoderStatus DECODER_STATUS_OK =
+        IMG_DECODER_STATUS_OK; ///< The decoder is ready to decode the next frame
+
+    /// The decoder failed to decode a frame, call GetError() for more information.
+    constexpr AnimationDecoderStatus DECODER_STATUS_FAILED = IMG_DECODER_STATUS_FAILED;
+
+    constexpr AnimationDecoderStatus DECODER_STATUS_COMPLETE =
+        IMG_DECODER_STATUS_COMPLETE; ///< No more frames available
+
+    /**
+     * Base class to AnimationDecoder.
+     *
+     * @see AnimationDecoder
+     */
+    struct AnimationDecoderBase : ResourceBaseT<AnimationDecoderRaw>
+    {
+        using ResourceBaseT::ResourceBaseT;
+
+        /**
+         * Close an animation decoder, finishing any decoding.
+         *
+         * Calling this function frees the animation decoder, and returns the final
+         * status of the decoding process.
+         *
+         * @returns true on success or false on failure; call GetError() for more
+         *          information.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoder_IO
+         * @sa CreateAnimationDecoderWithProperties
+         */
+        bool Close();
+
+        /**
+         * Get the properties of an animation decoder.
+         *
+         * This function returns the properties of the animation decoder, which holds
+         * information about the underlying image such as description, copyright text
+         * and loop count.
+         *
+         * `prop.AnimationDecoder.Metadata.LOOP_COUNT_NUMBER`, if present, specifies
+         * the number of times to play the animation, with 0 meaning loop
+         * continuously.
+         *
+         * @returns the properties ID of the animation decoder, or 0 if there are no
+         *          properties; call GetError() for more information.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoder_IO
+         * @sa CreateAnimationDecoderWithProperties
+         */
+        PropertiesRef GetProperties();
+
+        /**
+         * Get the next frame in an animation decoder.
+         *
+         * This function decodes the next frame in the animation decoder, returning it
+         * as an Surface. The returned surface should be freed with SDL_FreeSurface()
+         * when no longer needed.
+         *
+         * If the animation decoder has no more frames or an error occurred while
+         * decoding the frame, this function returns false. In that case, please call
+         * GetError() for more information. If GetError() returns an empty string,
+         * that means there are no more available frames. If GetError() returns a
+         * valid string, that means the decoding failed.
+         *
+         * @param frame a pointer filled in with the Surface for the next frame in the
+         *              animation.
+         * @param duration the duration of the frame, usually in milliseconds but can
+         *                 be other units if the
+         *                 `prop.AnimationDecoder.Create.TIMEBASE_DENOMINATOR_NUMBER`
+         *                 property is set when creating the decoder.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoder_IO
+         * @sa CreateAnimationDecoderWithProperties
+         * @sa GetAnimationDecoderStatus
+         * @sa ResetAnimationDecoder
+         * @sa CloseAnimationDecoder
+         */
+        Surface GetFrame(Uint64 *duration);
+
+        /**
+         * Get the decoder status indicating the current state of the decoder.
+         *
+         * @returns the status of the underlying decoder, or DECODER_STATUS_INVALID if
+         *          the given decoder is invalid.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa GetAnimationDecoderFrame
+         */
+        AnimationDecoderStatus GetStatus();
+
+        /**
+         * Reset an animation decoder.
+         *
+         * Calling this function resets the animation decoder, allowing it to start
+         * from the beginning again. This is useful if you want to decode the frame
+         * sequence again without creating a new decoder.
+         *
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoder_IO
+         * @sa CreateAnimationDecoderWithProperties
+         * @sa GetAnimationDecoderFrame
+         * @sa CloseAnimationDecoder
+         */
+        void Reset();
+    };
+
+    /**
+     * An object representing animation decoder.
+     *
+     * @cat resource
+     */
+    struct AnimationDecoder : AnimationDecoderBase
+    {
+        using AnimationDecoderBase::AnimationDecoderBase;
+
+        /**
+         * Constructs from raw AnimationDecoder.
+         *
+         * @param resource a AnimationDecoderRaw to be wrapped.
+         *
+         * This assumes the ownership, call release() if you need to take back.
+         */
+        constexpr explicit AnimationDecoder(AnimationDecoderRaw resource) noexcept : AnimationDecoderBase(resource)
+        {
+        }
+
+        /// Move constructor
+        constexpr AnimationDecoder(AnimationDecoder &&other) noexcept : AnimationDecoder(other.release())
+        {
+        }
+
+        /**
+         * Create a decoder to read a series of images from a file.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * The file type is determined from the file extension, e.g. "file.webp" will
+         * be decoded using WEBP.
+         *
+         * @param file the file containing a series of images.
+         * @post a new AnimationDecoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder_IO
+         * @sa CreateAnimationDecoderWithProperties
+         * @sa GetAnimationDecoderFrame
+         * @sa ResetAnimationDecoder
+         * @sa CloseAnimationDecoder
+         */
+        AnimationDecoder(StringParam file);
+
+        /**
+         * Create a decoder to read a series of images from an IOStream.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * If `closeio` is true, `src` will be closed before returning if this
+         * function fails, or when the animation decoder is closed if this function
+         * succeeds.
+         *
+         * @param src an IOStream containing a series of images.
+         * @param closeio true to close the IOStream when done, false to leave it
+         *                open.
+         * @param type a filename extension that represent this data ("WEBP", etc).
+         * @post a new AnimationDecoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoderWithProperties
+         * @sa GetAnimationDecoderFrame
+         * @sa ResetAnimationDecoder
+         * @sa CloseAnimationDecoder
+         */
+        AnimationDecoder(IOStreamRef src, StringParam type, bool closeio = false);
+
+        /**
+         * Create an animation decoder with the specified properties.
+         *
+         * These animation types are currently supported:
+         *
+         * - ANI
+         * - APNG
+         * - AVIFS
+         * - GIF
+         * - WEBP
+         *
+         * These are the supported properties:
+         *
+         * - `prop.AnimationDecoder.Create.FILENAME_STRING`: the file to load, if an
+         *   IOStream isn't being used. This is required if
+         *   `prop.AnimationDecoder.Create.IOSTREAM_POINTER` isn't set.
+         * - `prop.AnimationDecoder.Create.IOSTREAM_POINTER`: an IOStream containing a
+         *   series of images. This should not be closed until the animation decoder
+         *   is closed. This is required if
+         *   `prop.AnimationDecoder.Create.FILENAME_STRING` isn't set.
+         * - `prop.AnimationDecoder.Create.IOSTREAM_AUTOCLOSE_BOOLEAN`: true if
+         *   closing the animation decoder should also close the associated IOStream.
+         * - `prop.AnimationDecoder.Create.TYPE_STRING`: the input file type, e.g.
+         *   "webp", defaults to the file extension if
+         *   `prop.AnimationDecoder.Create.FILENAME_STRING` is set.
+         *
+         * @param props the properties of the animation decoder.
+         * @post a new AnimationDecoder on success.
+         * @throws Error on failure.
+         *
+         * @since This function is available since SDL_image 3.4.0.
+         *
+         * @sa CreateAnimationDecoder
+         * @sa CreateAnimationDecoder_IO
+         * @sa GetAnimationDecoderFrame
+         * @sa ResetAnimationDecoder
+         * @sa CloseAnimationDecoder
+         */
+        AnimationDecoder(PropertiesRef props);
+
+        /// Destructor
+        ~AnimationDecoder()
+        {
+            IMG_CloseAnimationDecoder(get());
+        }
+
+        /// Assignment operator.
+        constexpr AnimationDecoder &operator=(AnimationDecoder &&other) noexcept
+        {
+            swap(*this, other);
+            return *this;
+        }
+    };
+
+    /**
+     * Create a decoder to read a series of images from a file.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * The file type is determined from the file extension, e.g. "file.webp" will be
+     * decoded using WEBP.
+     *
+     * @param file the file containing a series of images.
+     * @returns a new AnimationDecoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder_IO
+     * @sa CreateAnimationDecoderWithProperties
+     * @sa GetAnimationDecoderFrame
+     * @sa ResetAnimationDecoder
+     * @sa CloseAnimationDecoder
+     */
+    inline AnimationDecoder CreateAnimationDecoder(StringParam file)
+    {
+        return AnimationDecoder(std::move(file));
+    }
+
+    inline AnimationDecoder::AnimationDecoder(StringParam file)
+        : AnimationDecoder(CheckError(IMG_CreateAnimationDecoder(file)))
+    {
+    }
+
+    inline AnimationDecoder::AnimationDecoder(IOStreamRef src, StringParam type, bool closeio)
+        : AnimationDecoder(CheckError(IMG_CreateAnimationDecoder_IO(src, type, closeio)))
+    {
+    }
+
+    inline AnimationDecoder::AnimationDecoder(PropertiesRef props)
+        : AnimationDecoder(CheckError(IMG_CreateAnimationDecoderWithProperties(props)))
+    {
+    }
+
+    /**
+     * Create a decoder to read a series of images from an IOStream.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * If `closeio` is true, `src` will be closed before returning if this function
+     * fails, or when the animation decoder is closed if this function succeeds.
+     *
+     * @param src an IOStream containing a series of images.
+     * @param closeio true to close the IOStream when done, false to leave it open.
+     * @param type a filename extension that represent this data ("WEBP", etc).
+     * @returns a new AnimationDecoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoderWithProperties
+     * @sa GetAnimationDecoderFrame
+     * @sa ResetAnimationDecoder
+     * @sa CloseAnimationDecoder
+     */
+    inline AnimationDecoder CreateAnimationDecoder_IO(IOStreamRef src, StringParam type, bool closeio = false)
+    {
+        return AnimationDecoder(src, std::move(type), closeio);
+    }
+
+    /**
+     * Create an animation decoder with the specified properties.
+     *
+     * These animation types are currently supported:
+     *
+     * - ANI
+     * - APNG
+     * - AVIFS
+     * - GIF
+     * - WEBP
+     *
+     * These are the supported properties:
+     *
+     * - `prop.AnimationDecoder.Create.FILENAME_STRING`: the file to load, if an
+     *   IOStream isn't being used. This is required if
+     *   `prop.AnimationDecoder.Create.IOSTREAM_POINTER` isn't set.
+     * - `prop.AnimationDecoder.Create.IOSTREAM_POINTER`: an IOStream containing a
+     *   series of images. This should not be closed until the animation decoder is
+     *   closed. This is required if `prop.AnimationDecoder.Create.FILENAME_STRING`
+     *   isn't set.
+     * - `prop.AnimationDecoder.Create.IOSTREAM_AUTOCLOSE_BOOLEAN`: true if closing
+     *   the animation decoder should also close the associated IOStream.
+     * - `prop.AnimationDecoder.Create.TYPE_STRING`: the input file type, e.g.
+     *   "webp", defaults to the file extension if
+     *   `prop.AnimationDecoder.Create.FILENAME_STRING` is set.
+     *
+     * @param props the properties of the animation decoder.
+     * @returns a new AnimationDecoder on success.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoder_IO
+     * @sa GetAnimationDecoderFrame
+     * @sa ResetAnimationDecoder
+     * @sa CloseAnimationDecoder
+     */
+    inline AnimationDecoder CreateAnimationDecoderWithProperties(PropertiesRef props)
+    {
+        return AnimationDecoder(props);
+    }
+
+    namespace prop::AnimationDecoder::Create
+    {
+
+        constexpr auto FILENAME_STRING = IMG_PROP_ANIMATION_DECODER_CREATE_FILENAME_STRING; ///< String for filename.
+
+        constexpr auto IOSTREAM_POINTER = IMG_PROP_ANIMATION_DECODER_CREATE_IOSTREAM_POINTER; ///< Pointer to iostream.
+
+        constexpr auto IOSTREAM_AUTOCLOSE_BOOLEAN =
+            IMG_PROP_ANIMATION_DECODER_CREATE_IOSTREAM_AUTOCLOSE_BOOLEAN; ///< Enable iostream autoclose.
+
+        constexpr auto TYPE_STRING = IMG_PROP_ANIMATION_DECODER_CREATE_TYPE_STRING; ///< String for type.
+
+        constexpr auto TIMEBASE_NUMERATOR_NUMBER =
+            IMG_PROP_ANIMATION_DECODER_CREATE_TIMEBASE_NUMERATOR_NUMBER; ///< Number for timebase numerator.
+
+        constexpr auto TIMEBASE_DENOMINATOR_NUMBER =
+            IMG_PROP_ANIMATION_DECODER_CREATE_TIMEBASE_DENOMINATOR_NUMBER; ///< Number for timebase denominator.
+
+        constexpr auto AVIF_MAX_THREADS_NUMBER =
+            IMG_PROP_ANIMATION_DECODER_CREATE_AVIF_MAX_THREADS_NUMBER; ///< Number for avif max threads.
+
+        constexpr auto AVIF_ALLOW_INCREMENTAL_BOOLEAN =
+            IMG_PROP_ANIMATION_DECODER_CREATE_AVIF_ALLOW_INCREMENTAL_BOOLEAN; ///< Enable avif allow incremental.
+
+        constexpr auto AVIF_ALLOW_PROGRESSIVE_BOOLEAN =
+            IMG_PROP_ANIMATION_DECODER_CREATE_AVIF_ALLOW_PROGRESSIVE_BOOLEAN; ///< Enable avif allow progressive.
+
+        constexpr auto GIF_TRANSPARENT_COLOR_INDEX_NUMBER =
+            IMG_PROP_ANIMATION_DECODER_CREATE_GIF_TRANSPARENT_COLOR_INDEX_NUMBER; ///< Number for gif transparent color
+                                                                                  ///< index.
+
+        constexpr auto GIF_NUM_COLORS_NUMBER =
+            IMG_PROP_ANIMATION_DECODER_CREATE_GIF_NUM_COLORS_NUMBER; ///< Number for gif num colors.
+
+    } // namespace prop::AnimationDecoder::Create
+
+    /**
+     * Get the properties of an animation decoder.
+     *
+     * This function returns the properties of the animation decoder, which holds
+     * information about the underlying image such as description, copyright text
+     * and loop count.
+     *
+     * `prop.AnimationDecoder.Metadata.LOOP_COUNT_NUMBER`, if present, specifies the
+     * number of times to play the animation, with 0 meaning loop continuously.
+     *
+     * @param decoder the animation decoder.
+     * @returns the properties ID of the animation decoder, or 0 if there are no
+     *          properties; call GetError() for more information.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoder_IO
+     * @sa CreateAnimationDecoderWithProperties
+     */
+    inline PropertiesRef GetAnimationDecoderProperties(AnimationDecoderRef decoder)
+    {
+        return IMG_GetAnimationDecoderProperties(decoder);
+    }
+
+    inline PropertiesRef AnimationDecoderBase::GetProperties()
+    {
+        return SDL::GetAnimationDecoderProperties(get());
+    }
+
+    namespace prop::AnimationDecoder::Metadata
+    {
+
+        constexpr auto IGNORE_PROPS_BOOLEAN = IMG_PROP_METADATA_IGNORE_PROPS_BOOLEAN; ///< Enable ignore props.
+
+        constexpr auto DESCRIPTION_STRING = IMG_PROP_METADATA_DESCRIPTION_STRING; ///< String for description.
+
+        constexpr auto COPYRIGHT_STRING = IMG_PROP_METADATA_COPYRIGHT_STRING; ///< String for copyright.
+
+        constexpr auto TITLE_STRING = IMG_PROP_METADATA_TITLE_STRING; ///< String for title.
+
+        constexpr auto AUTHOR_STRING = IMG_PROP_METADATA_AUTHOR_STRING; ///< String for author.
+
+        constexpr auto CREATION_TIME_STRING = IMG_PROP_METADATA_CREATION_TIME_STRING; ///< String for creation time.
+
+        constexpr auto FRAME_COUNT_NUMBER = IMG_PROP_METADATA_FRAME_COUNT_NUMBER; ///< Frame count.
+
+        constexpr auto LOOP_COUNT_NUMBER = IMG_PROP_METADATA_LOOP_COUNT_NUMBER; ///< Loop count.
+
+    } // namespace prop::AnimationDecoder::Metadata
+
+    /**
+     * Get the next frame in an animation decoder.
+     *
+     * This function decodes the next frame in the animation decoder, returning it
+     * as an Surface. The returned surface should be freed with SDL_FreeSurface()
+     * when no longer needed.
+     *
+     * If the animation decoder has no more frames or an error occurred while
+     * decoding the frame, this function returns false. In that case, please call
+     * GetError() for more information. If GetError() returns an empty string, that
+     * means there are no more available frames. If GetError() returns a valid
+     * string, that means the decoding failed.
+     *
+     * @param decoder the animation decoder.
+     * @param frame a pointer filled in with the Surface for the next frame in the
+     *              animation.
+     * @param duration the duration of the frame, usually in milliseconds but can be
+     *                 other units if the
+     *                 `prop.AnimationDecoder.Create.TIMEBASE_DENOMINATOR_NUMBER`
+     *                 property is set when creating the decoder.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoder_IO
+     * @sa CreateAnimationDecoderWithProperties
+     * @sa GetAnimationDecoderStatus
+     * @sa ResetAnimationDecoder
+     * @sa CloseAnimationDecoder
+     */
+    inline Surface GetAnimationDecoderFrame(AnimationDecoderRef decoder, Uint64 *duration)
+    {
+        return CheckError(IMG_GetAnimationDecoderFrame(decoder, duration));
+    }
+
+    inline Surface AnimationDecoderBase::GetFrame(Uint64 *duration)
+    {
+        return SDL::GetAnimationDecoderFrame(get(), duration);
+    }
+
+    /**
+     * Get the decoder status indicating the current state of the decoder.
+     *
+     * @param decoder the decoder to get the status of.
+     * @returns the status of the underlying decoder, or DECODER_STATUS_INVALID if
+     *          the given decoder is invalid.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa GetAnimationDecoderFrame
+     */
+    inline AnimationDecoderStatus GetAnimationDecoderStatus(AnimationDecoderRef decoder)
+    {
+        return IMG_GetAnimationDecoderStatus(decoder);
+    }
+
+    inline AnimationDecoderStatus AnimationDecoderBase::GetStatus()
+    {
+        return SDL::GetAnimationDecoderStatus(get());
+    }
+
+    /**
+     * Reset an animation decoder.
+     *
+     * Calling this function resets the animation decoder, allowing it to start from
+     * the beginning again. This is useful if you want to decode the frame sequence
+     * again without creating a new decoder.
+     *
+     * @param decoder the decoder to reset.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoder_IO
+     * @sa CreateAnimationDecoderWithProperties
+     * @sa GetAnimationDecoderFrame
+     * @sa CloseAnimationDecoder
+     */
+    inline void ResetAnimationDecoder(AnimationDecoderRef decoder)
+    {
+        CheckError(IMG_ResetAnimationDecoder(decoder));
+    }
+
+    inline void AnimationDecoderBase::Reset()
+    {
+        SDL::ResetAnimationDecoder(get());
+    }
+
+    /**
+     * Close an animation decoder, finishing any decoding.
+     *
+     * Calling this function frees the animation decoder, and returns the final
+     * status of the decoding process.
+     *
+     * @param decoder the decoder to close.
+     * @throws Error on failure.
+     *
+     * @since This function is available since SDL_image 3.4.0.
+     *
+     * @sa CreateAnimationDecoder
+     * @sa CreateAnimationDecoder_IO
+     * @sa CreateAnimationDecoderWithProperties
+     */
+    inline void CloseAnimationDecoder(AnimationDecoderRaw decoder)
+    {
+        CheckError(IMG_CloseAnimationDecoder(decoder));
+    }
+
+    inline bool AnimationDecoderBase::Close()
+    {
+        return CloseAnimationDecoder(release());
+    }
+
+#endif // SDL_IMAGE_VERSION_ATLEAST(3, 4, 0)
+
+    /// @}
+
+} // namespace SDL
+
+* /
