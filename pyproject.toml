@@ -22,4 +22,5 @@ dev = [
 members = [
     "engine/src/programs/python/autotile-converter",
     "engine/src/programs/python/shader-embedder",
+    "engine/src/programs/python/cpp-module-gen",
 ]
