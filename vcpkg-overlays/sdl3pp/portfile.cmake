@@ -2,7 +2,7 @@ vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO talesm/SDL3pp
         REF "${VERSION}"
-        SHA512 78631a6906fbfb19a68f674af74da1b3249947bcbb7fa208d76f1f1433ffee88ab3b482f2224a5e25bdf5e69a64bb51a760f9319dbb08db78b8bbc2ed976e56f
+        SHA512 c579e2a7d60e56bfb0ecdcccef7ed4c1fd584472ecf0deb9d4c2ca5958bdf0f462132b6c4fef26c3abdc015e4642068a67487a28227bacb69c4cbacc3af9972c
         HEAD_REF main
 )
 

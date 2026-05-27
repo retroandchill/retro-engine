@@ -65,6 +65,6 @@
   }, {
     "name" : "freetype",
     "version>=" : "2.14.3"
-  }, "msdfgen", "msdf-atlas-gen" ],
+  }, "msdfgen", "msdf-atlas-gen", "sdl3pp" ],
   "builtin-baseline" : "c3867e714dd3a51c272826eea77267876517ed99"
 }

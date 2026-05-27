@@ -1,6 +1,6 @@
 {
   "name": "sdl3pp",
-  "version": "0.4.1",
+  "version": "0.10.2",
   "description": "A slim C++ wrapper for SDL3",
   "homepage": "https://github.com/talesm/SDL3pp",
   "license": "MIT",
