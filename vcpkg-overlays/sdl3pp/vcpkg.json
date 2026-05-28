@@ -1,6 +1,6 @@
 {
   "name": "sdl3pp",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "description": "A slim C++ wrapper for SDL3",
   "homepage": "https://github.com/talesm/SDL3pp",
   "license": "MIT",
@@ -17,13 +17,26 @@
   ],
   "default-features": [
     "image",
-    "ttf"
+    "ttf",
+    "mixer"
   ],
   "features": {
     "image": {
       "description": "SDL3_image support",
       "dependencies": [
         "sdl3-image"
+      ]
+    },
+    "mixer": {
+      "description": "SDL3_mixer support",
+      "dependencies": [
+        "sdl3-mixer"
+      ]
+    },
+    "net": {
+      "description": "SDL3_net support",
+      "dependencies": [
+        "sdl3-net"
       ]
     },
     "ttf": {

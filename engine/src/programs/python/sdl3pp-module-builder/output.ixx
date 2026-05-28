@@ -2,7 +2,6 @@
 module;
 
 #include <SDL3pp/SDL3pp.h>
-#pragma warning(disable : 5304)
 
 export module sdl;
 
@@ -1236,7 +1235,7 @@ export namespace SDL
     using SDL::WaitForGPUSwapchain;
     using SDL::WindowSupportsGPUPresentMode;
     using SDL::WindowSupportsGPUSwapchainComposition;
-#if SDL_PLATFORM_GDK
+#ifdef SDL_PLATFORM_GDK
     using SDL::GDKResumeGPU;
     using SDL::GDKSuspendGPU;
 #endif
@@ -1716,7 +1715,6 @@ export namespace SDL
     using SDL::KEYCODE_EXCLAIM;
     using SDL::KEYCODE_EXECUTE;
     using SDL::KEYCODE_EXSEL;
-    using SDL::KEYCODE_EXTENDED_MASK;
     using SDL::KEYCODE_F;
     using SDL::KEYCODE_F1;
     using SDL::KEYCODE_F10;
@@ -1880,7 +1878,6 @@ export namespace SDL
     using SDL::KEYCODE_RMETA;
     using SDL::KEYCODE_RSHIFT;
     using SDL::KEYCODE_S;
-    using SDL::KEYCODE_SCANCODE_MASK;
     using SDL::KEYCODE_SCROLLLOCK;
     using SDL::KEYCODE_SELECT;
     using SDL::KEYCODE_SEMICOLON;
@@ -1930,6 +1927,8 @@ export namespace SDL
     using SDL::KMOD_SCROLL;
     using SDL::KMOD_SHIFT;
     using SDL::ScancodeToKeycode;
+    using SDL::SDLK_EXTENDED_MASK;
+    using SDL::SDLK_SCANCODE_MASK;
 
     // SDL3pp_loadso.h
     using SDL::LoadFunction;
@@ -2212,7 +2211,6 @@ export namespace SDL
     using SDL::CHROMA_LOCATION_NONE;
     using SDL::CHROMA_LOCATION_TOPLEFT;
     using SDL::ChromaLocation;
-    using SDL::Color;
     using SDL::COLOR_PRIMARIES_BT2020;
     using SDL::COLOR_PRIMARIES_BT470BG;
     using SDL::COLOR_PRIMARIES_BT470M;
@@ -2261,7 +2259,6 @@ export namespace SDL
     using SDL::DefineColorspace;
     using SDL::DefinePixelFormat;
     using SDL::DefinePixelFourCC;
-    using SDL::FColor;
     using SDL::FColorRaw;
     using SDL::IsColorspaceFullRange;
     using SDL::IsColorspaceLimitedRange;
@@ -2311,8 +2308,6 @@ export namespace SDL
     using SDL::PACKEDORDER_RGBX;
     using SDL::PACKEDORDER_XBGR;
     using SDL::PACKEDORDER_XRGB;
-    using SDL::Palette;
-    using SDL::PaletteBase;
     using SDL::PaletteConstRef;
     using SDL::PaletteRaw;
     using SDL::PaletteRawConst;
@@ -2552,13 +2547,9 @@ export namespace SDL
     using SDL::UnlockProperties;
 
     // SDL3pp_rect.h
-    using SDL::FPoint;
     using SDL::FPointRaw;
-    using SDL::FRect;
     using SDL::FRectRaw;
-    using SDL::Point;
     using SDL::PointRaw;
-    using SDL::Rect;
     using SDL::RectRaw;
     using SDL::operator==;
     using SDL::operator<=>;
@@ -2593,8 +2584,6 @@ export namespace SDL
     using SDL::GetNumRenderDrivers;
     using SDL::GetRenderDriver;
     using SDL::GPU_RENDERER;
-    using SDL::GPURenderState;
-    using SDL::GPURenderStateBase;
     using SDL::GPURenderStateCreateInfo;
     using SDL::GPURenderStateRaw;
     using SDL::GPURenderStateRef;
@@ -2853,7 +2842,6 @@ export namespace SDL
     using SDL::UpdateYUVTexture;
 
     // SDL3pp_scancode.h
-    using SDL::Keycode;
     using SDL::Scancode;
     using SDL::SCANCODE_0;
     using SDL::SCANCODE_1;
@@ -3139,56 +3127,11 @@ export namespace SDL
     using SDL::UpdateSensors;
 
     // SDL3pp_stdinc.h
-    using SDL::arraysize;
-    using SDL::Environment;
-    using SDL::EnvironmentBase;
-    using SDL::EnvironmentRaw;
-    using SDL::EnvironmentRef;
-    using SDL::FourCC;
-    using SDL::FromNS;
-    using SDL::FromSeconds;
-    using SDL::IConv;
-    using SDL::IConvBase;
-    using SDL::IConvRaw;
-    using SDL::IConvRef;
-    using SDL::MAX_SINT16;
-    using SDL::MAX_SINT32;
-    using SDL::MAX_SINT64;
-    using SDL::MAX_SINT8;
-    using SDL::MAX_TIME;
-    using SDL::MAX_UINT16;
-    using SDL::MAX_UINT32;
-    using SDL::MAX_UINT64;
-    using SDL::MAX_UINT8;
-    using SDL::Milliseconds;
-    using SDL::MIN_SINT16;
-    using SDL::MIN_SINT32;
-    using SDL::MIN_SINT64;
-    using SDL::MIN_SINT8;
-    using SDL::MIN_TIME;
-    using SDL::MIN_UINT16;
-    using SDL::MIN_UINT32;
-    using SDL::MIN_UINT64;
-    using SDL::MIN_UINT8;
-    using SDL::Nanoseconds;
-    using SDL::Seconds;
-    using SDL::Sint16;
-    using SDL::Sint32;
-    using SDL::Sint64;
-    using SDL::Sint8;
-    using SDL::Time;
-    using SDL::TimeRaw;
-    using SDL::ToNS;
-    using SDL::ToSeconds;
-    using SDL::Uint16;
-    using SDL::Uint32;
-    using SDL::Uint64;
-    using SDL::Uint8;
-    constexpr auto EPSILON = FLT_EPSILON;
     using SDL::abs;
     using SDL::acos;
     using SDL::aligned_alloc;
     using SDL::aligned_free;
+    using SDL::arraysize;
     using SDL::asin;
     using SDL::asprintf;
     using SDL::atan;
@@ -3213,11 +3156,17 @@ export namespace SDL
     using SDL::DestroyEnvironment;
     using SDL::Environment;
     using SDL::EnvironmentBase;
+    using SDL::EnvironmentRaw;
+    using SDL::EnvironmentRef;
     using SDL::exp;
     using SDL::floor;
+    using SDL::FLT_EPSILON;
     using SDL::fmod;
+    using SDL::FourCC;
     using SDL::free;
     using SDL::free_func;
+    using SDL::FromNS;
+    using SDL::FromSeconds;
     using SDL::FunctionPointer;
     using SDL::getenv;
     using SDL::getenv_unsafe;
@@ -3241,7 +3190,14 @@ export namespace SDL
     using SDL::iconv_utf8_ucs4;
     using SDL::iconv_wchar_utf8;
     using SDL::IConvBase;
+    using SDL::IConvRaw;
+    using SDL::IConvRef;
     using SDL::InitInterface;
+    using SDL::int16_t;
+    using SDL::int32_t;
+    using SDL::int64_t;
+    using SDL::int8_t;
+    using SDL::intptr_t;
     using SDL::INVALID_UNICODE_CODEPOINT;
     using SDL::isalnum;
     using SDL::isalpha;
@@ -3266,14 +3222,34 @@ export namespace SDL
     using SDL::malloc;
     using SDL::malloc_func;
     using SDL::max;
+    using SDL::MAX_SINT16;
+    using SDL::MAX_SINT32;
+    using SDL::MAX_SINT64;
+    using SDL::MAX_SINT8;
+    using SDL::MAX_TIME;
+    using SDL::MAX_UINT16;
+    using SDL::MAX_UINT32;
+    using SDL::MAX_UINT64;
+    using SDL::MAX_UINT8;
     using SDL::memcmp;
     using SDL::memcpy;
     using SDL::memmove;
     using SDL::memset;
     using SDL::memset4;
+    using SDL::Milliseconds;
     using SDL::min;
+    using SDL::MIN_SINT16;
+    using SDL::MIN_SINT32;
+    using SDL::MIN_SINT64;
+    using SDL::MIN_SINT8;
+    using SDL::MIN_TIME;
+    using SDL::MIN_UINT16;
+    using SDL::MIN_UINT32;
+    using SDL::MIN_UINT64;
+    using SDL::MIN_UINT8;
     using SDL::modf;
     using SDL::murmur3_32;
+    using SDL::Nanoseconds;
     using SDL::PI_D;
     using SDL::PI_F;
     using SDL::pow;
@@ -3287,10 +3263,15 @@ export namespace SDL
     using SDL::realloc_func;
     using SDL::round;
     using SDL::scalbn;
+    using SDL::Seconds;
     using SDL::setenv_unsafe;
     using SDL::SetEnvironmentVariable;
     using SDL::SetMemoryFunctions;
     using SDL::sin;
+    using SDL::Sint16;
+    using SDL::Sint32;
+    using SDL::Sint64;
+    using SDL::Sint8;
     using SDL::size_add_check_overflow;
     using SDL::size_mul_check_overflow;
     using SDL::snprintf;
@@ -3326,10 +3307,23 @@ export namespace SDL
     using SDL::strupr;
     using SDL::swprintf;
     using SDL::tan;
+    using SDL::Time;
+    using SDL::TimeRaw;
     using SDL::tolower;
+    using SDL::ToNS;
+    using SDL::ToSeconds;
     using SDL::toupper;
     using SDL::trunc;
     using SDL::UCS4ToUTF8;
+    using SDL::Uint16;
+    using SDL::uint16_t;
+    using SDL::Uint32;
+    using SDL::uint32_t;
+    using SDL::Uint64;
+    using SDL::uint64_t;
+    using SDL::Uint8;
+    using SDL::uint8_t;
+    using SDL::uintptr_t;
     using SDL::uitoa;
     using SDL::ulltoa;
     using SDL::ultoa;
@@ -3495,28 +3489,6 @@ export namespace SDL
     using SDL::WriteSurfacePixelFloat;
 
     // SDL3pp_system.h
-#ifdef SDL_PLATFORM_WINDOWS
-    using SDL::MSG;
-    using SDL::SetWindowsMessageHook;
-    using SDL::WindowsMessageHook;
-#endif
-#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
-    using SDL::GetDirect3D9AdapterIndex;
-    using SDL::GetDXGIOutputInfo;
-    using SDL::SetX11EventHook;
-    using SDL::X11EventHook;
-    using SDL::XEvent;
-#endif
-#ifdef SDL_PLATFORM_LINUX
-    using SDL::SetLinuxThreadPriority;
-    using SDL::SetLinuxThreadPriorityAndPolicy;
-#endif
-#ifdef SDL_PLATFORM_IOS
-    using SDL::iOSAnimationCallback;
-    using SDL::SetiOSAnimationCallback;
-    using SDL::SetiOSEventPump;
-#endif
-#ifdef SDL_PLATFORM_ANDROID
     using SDL::ANDROID_EXTERNAL_STORAGE_READ;
     using SDL::ANDROID_EXTERNAL_STORAGE_WRITE;
     using SDL::GetAndroidActivity;
@@ -3526,39 +3498,47 @@ export namespace SDL
     using SDL::GetAndroidInternalStoragePath;
     using SDL::GetAndroidJNIEnv;
     using SDL::GetAndroidSDKVersion;
+    using SDL::GetDirect3D9AdapterIndex;
+    using SDL::GetDXGIOutputInfo;
+    using SDL::GetGDKDefaultUser;
+    using SDL::GetGDKTaskQueue;
+    using SDL::GetSandbox;
+    using SDL::iOSAnimationCallback;
     using SDL::IsChromebook;
     using SDL::IsDeXMode;
-    using SDL::RequestAndroidPermission;
-    using SDL::RequestAndroidPermissionCallback;
-    using SDL::RequestAndroidPermissionCB;
-    using SDL::SendAndroidBackButton;
-    using SDL::SendAndroidMessage;
-    using SDL::ShowAndroidToast;
-#endif
-    using SDL::GetSandbox;
     using SDL::IsTablet;
     using SDL::IsTV;
+    using SDL::MSG;
+    using SDL::OnApplicationDidChangeStatusBarOrientation;
     using SDL::OnApplicationDidEnterBackground;
     using SDL::OnApplicationDidEnterForeground;
     using SDL::OnApplicationDidReceiveMemoryWarning;
     using SDL::OnApplicationWillEnterBackground;
     using SDL::OnApplicationWillEnterForeground;
     using SDL::OnApplicationWillTerminate;
+    using SDL::RequestAndroidPermission;
+    using SDL::RequestAndroidPermissionCallback;
+    using SDL::RequestAndroidPermissionCB;
     using SDL::Sandbox;
     using SDL::SANDBOX_FLATPAK;
     using SDL::SANDBOX_MACOS;
     using SDL::SANDBOX_NONE;
     using SDL::SANDBOX_SNAP;
     using SDL::SANDBOX_UNKNOWN_CONTAINER;
-#ifdef SDL_PLATFORM_IOS
-    using SDL::OnApplicationDidChangeStatusBarOrientation;
-#endif
-#ifdef SDL_PLATFORM_GDK
-    using SDL::GetGDKDefaultUser;
-    using SDL::GetGDKTaskQueue;
+    using SDL::SendAndroidBackButton;
+    using SDL::SendAndroidMessage;
+    using SDL::SetiOSAnimationCallback;
+    using SDL::SetiOSEventPump;
+    using SDL::SetLinuxThreadPriority;
+    using SDL::SetLinuxThreadPriorityAndPolicy;
+    using SDL::SetWindowsMessageHook;
+    using SDL::SetX11EventHook;
+    using SDL::ShowAndroidToast;
+    using SDL::WindowsMessageHook;
+    using SDL::X11EventHook;
+    using SDL::XEvent;
     using SDL::XTaskQueueHandle;
     using SDL::XUserHandle;
-#endif
 
     // SDL3pp_time.h
     using SDL::DATE_FORMAT_DDMMYYYY;
@@ -3703,19 +3683,14 @@ export namespace SDL
     using SDL::DisplayID;
     using SDL::DisplayMode;
     using SDL::DisplayOrientation;
-    using SDL::GLContext;
     using SDL::GLContextRaw;
     using SDL::GLContextRef;
-    using SDL::GLContextScoped;
     using SDL::ORIENTATION_LANDSCAPE;
     using SDL::ORIENTATION_LANDSCAPE_FLIPPED;
     using SDL::ORIENTATION_PORTRAIT;
     using SDL::ORIENTATION_PORTRAIT_FLIPPED;
     using SDL::ORIENTATION_UNKNOWN;
-    using SDL::RendererBase;
     using SDL::RendererRef;
-    using SDL::Window;
-    using SDL::WindowBase;
     using SDL::WindowID;
     using SDL::WindowRaw;
     using SDL::WindowRef;
@@ -4049,17 +4024,19 @@ export namespace SDL
     using SDL::WINDOW_SURFACE_VSYNC_DISABLED;
     using SDL::WindowHasSurface;
 
+    // SDL3pp_vulkan.h
+    using SDL::Vulkan_CreateSurface;
+    using SDL::Vulkan_DestroySurface;
+    using SDL::Vulkan_GetInstanceExtensions;
+    using SDL::Vulkan_GetPresentationSupport;
+    using SDL::Vulkan_GetVkGetInstanceProcAddr;
+    using SDL::Vulkan_LoadLibrary;
+    using SDL::Vulkan_UnloadLibrary;
+
     // SDL3pp_image.h
-#ifdef SDL3PP_ENABLE_IMAGE
-    using SDL::Animation;
-    using SDL::AnimationBase;
     using SDL::AnimationConstRef;
-    using SDL::AnimationDecoder;
-    using SDL::AnimationDecoderBase;
     using SDL::AnimationDecoderRaw;
     using SDL::AnimationDecoderRef;
-    using SDL::AnimationEncoder;
-    using SDL::AnimationEncoderBase;
     using SDL::AnimationEncoderRaw;
     using SDL::AnimationEncoderRef;
     using SDL::AnimationRaw;
@@ -4226,14 +4203,10 @@ export namespace SDL
     using SDL::GetAnimationDecoderFrame;
     using SDL::GetAnimationDecoderStatus;
     using SDL::ResetAnimationDecoder;
-#endif
 
     // SDL3pp_mixer.h
-#ifdef SDL3PP_ENABLE_MIXER
     using SDL::Audio;
     using SDL::AudioBase;
-    using SDL::AudioDecoder;
-    using SDL::AudioDecoderBase;
     using SDL::AudioDecoderRaw;
     using SDL::AudioDecoderRef;
     using SDL::AudioRaw;
@@ -4344,14 +4317,6 @@ export namespace SDL
     using SDL::UntagTrack;
     namespace prop::Play
     {
-        using prop::Play::LOOPS_NUMBER;
-        using prop::Play::MAX_FRAME_NUMBER;
-        using prop::Play::MAX_MILLISECONDS_NUMBER;
-        using prop::Play::START_FRAME_NUMBER;
-        using prop::Play::START_MILLISECOND_NUMBER;
-#if SDL_MIXER_VERSION_ATLEAST(3, 2, 2)
-        using prop::Play::START_ORDER_NUMBER;
-#endif
         using prop::Play::APPEND_SILENCE_FRAMES_NUMBER;
         using prop::Play::APPEND_SILENCE_MILLISECONDS_NUMBER;
         using prop::Play::FADE_IN_FRAMES_NUMBER;
@@ -4360,6 +4325,12 @@ export namespace SDL
         using prop::Play::HALT_WHEN_EXHAUSTED_BOOLEAN;
         using prop::Play::LOOP_START_FRAME_NUMBER;
         using prop::Play::LOOP_START_MILLISECOND_NUMBER;
+        using prop::Play::LOOPS_NUMBER;
+        using prop::Play::MAX_FRAME_NUMBER;
+        using prop::Play::MAX_MILLISECONDS_NUMBER;
+        using prop::Play::START_FRAME_NUMBER;
+        using prop::Play::START_MILLISECOND_NUMBER;
+        using prop::Play::START_ORDER_NUMBER;
     } // namespace prop::Play
     using SDL::AudioDecoder;
     using SDL::AudioDecoderBase;
@@ -4406,30 +4377,18 @@ export namespace SDL
     using SDL::StopTrack;
     using SDL::TrackPaused;
     using SDL::TrackPlaying;
-#endif
 
     // SDL3pp_net.h
-#ifdef SDL3PP_ENABLE_NET
-    using SDL::Address;
-    using SDL::AddressBase;
     using SDL::AddressRaw;
     using SDL::AddressRef;
-    using SDL::Datagram;
-    using SDL::DatagramBase;
     using SDL::DatagramConstRef;
     using SDL::DatagramRaw;
     using SDL::DatagramRawConst;
     using SDL::DatagramRef;
-    using SDL::DatagramSocket;
-    using SDL::DatagramSocketBase;
     using SDL::DatagramSocketRaw;
     using SDL::DatagramSocketRef;
-    using SDL::Server;
-    using SDL::ServerBase;
     using SDL::ServerRaw;
     using SDL::ServerRef;
-    using SDL::StreamSocket;
-    using SDL::StreamSocketBase;
     using SDL::StreamSocketRaw;
     using SDL::StreamSocketRef;
     namespace NET
@@ -4493,18 +4452,11 @@ export namespace SDL
     using SDL::SendDatagram;
     using SDL::SimulateDatagramPacketLoss;
     using SDL::WaitUntilInputAvailable;
-#endif
 
     // SDL3pp_ttf.h
-#ifdef SDL3PP_ENABLE_TTF
-    using SDL::Font;
-    using SDL::FontBase;
     using SDL::FontRaw;
     using SDL::FontRef;
-    using SDL::Text;
-    using SDL::TextBase;
     using SDL::TextConstRef;
-    using SDL::TextEngine;
     using SDL::TextEngineRaw;
     using SDL::TextEngineRef;
     using SDL::TextRaw;
@@ -4717,6 +4669,5 @@ export namespace SDL
     using SDL::SetTextWrapWidth;
     using SDL::TextWrapWhitespaceVisible;
     using SDL::UpdateText;
-#endif
 
 } // namespace SDL
