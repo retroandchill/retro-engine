@@ -137,7 +137,7 @@ extern "C"
         const auto success = try_execute(
             [&]
             {
-                return manager->create_new_window(WindowDesc{
+                id = manager->create_new_window(WindowDesc{
                     .width = width,
                     .height = height,
                     .title = retro::convert_string<char>(
@@ -145,9 +145,6 @@ extern "C"
                     .flags = flags,
                 });
             },
-            [](const PlatformError &e)
-            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
-            id,
             *error);
 
         if (!success)
@@ -167,20 +164,18 @@ extern "C"
                                                             const WindowCreatedCallback created_callback,
                                                             const OnErrorCallback error_callback)
     {
-        try_execute_async(
-            [manager,
-             desc =
-                 WindowDesc{
-                     .width = width,
-                     .height = height,
-                     .title = retro::convert_string<char>(
-                         std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
-                     .flags = flags,
-                 }] mutable { return manager->create_new_window_async(std::move(desc)); },
-            [](const PlatformError &e)
-            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
-            [user_data, created_callback](std::uint64_t window_id) { created_callback(user_data, window_id); },
-            [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
+        try_execute_async([manager,
+                           desc =
+                               WindowDesc{
+                                   .width = width,
+                                   .height = height,
+                                   .title = retro::convert_string<char>(
+                                       std::u16string_view{window_title, static_cast<std::size_t>(window_tile_length)}),
+                                   .flags = flags,
+                               }] mutable { return manager->create_new_window_async(std::move(desc)); },
+                          [user_data, created_callback](std::uint64_t window_id)
+                          { created_callback(user_data, window_id); },
+                          [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
     }
 
     RETRO_API std::uint64_t retro_render_create_window_from_handle(RenderManager *manager,
@@ -188,12 +183,7 @@ extern "C"
                                                                    InteropError *error)
     {
         std::uint64_t id = 0;
-        const auto success = try_execute(
-            [&] { return manager->create_new_window(handle); },
-            [](const PlatformError &e)
-            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
-            id,
-            *error);
+        const auto success = try_execute([&] { id = manager->create_new_window(handle); }, *error);
 
         if (!success)
         {
@@ -223,12 +213,10 @@ extern "C"
                                                                         const WindowCreatedCallback created_callback,
                                                                         const OnErrorCallback error_callback)
     {
-        try_execute_async(
-            [manager, handle] { return manager->create_new_window_async(handle); },
-            [](const PlatformError &e)
-            { return InteropError{.error_code = InteropErrorCode::platform_error, .message = e.message.data()}; },
-            [user_data, created_callback](const std::uint64_t window_id) { created_callback(user_data, window_id); },
-            [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
+        try_execute_async([manager, handle] { return manager->create_new_window_async(handle); },
+                          [user_data, created_callback](const std::uint64_t window_id)
+                          { created_callback(user_data, window_id); },
+                          [user_data, error_callback](const InteropError &error) { error_callback(user_data, error); });
     }
 
     RETRO_API void retro_render_manager_set_viewport_window(const RenderManager *engine,

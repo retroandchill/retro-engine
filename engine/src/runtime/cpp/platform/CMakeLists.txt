@@ -42,9 +42,8 @@ target_sources(retro_platform PRIVATE
         FILES
         ${RETRO_PLATFORM_PRIVATE_MODULES})
 
-find_package(SDL3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS dll)
-target_link_libraries(retro_platform PUBLIC retro_core Boost::dll SDL3::SDL3)
+target_link_libraries(retro_platform PUBLIC retro_core Boost::dll SDL3::Cpp)
 
 set_target_properties(retro_platform PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

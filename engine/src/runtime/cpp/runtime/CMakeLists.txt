@@ -102,8 +102,6 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/objects/text_block.ixx
         public/modules/rendering/layout/uvs.ixx
         public/modules/rendering/text/async_atlas_generator.ixx
-        public/modules/rendering/text/font_dependencies.ixx
-        public/modules/rendering/text/freetype.ixx
         public/modules/rendering/text/async_dynamic_atlas.ixx
         public/modules/event_manager.ixx
         public/modules/ecs/entity.ixx
@@ -140,15 +138,10 @@ target_sources(retro_runtime PRIVATE
         FILES ${RETRO_RUNTIME_PRIVATE_MODULES} ${RETRO_RUNTIME_GENERATED_MODULES}
 )
 
-find_package(Freetype CONFIG REQUIRED)
-find_package(msdfgen CONFIG REQUIRED)
-find_package(msdf-atlas-gen CONFIG REQUIRED)
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform
                                     PRIVATE
-                                        Freetype::Freetype
-                                        msdfgen::msdfgen
-                                        msdfgen::msdfgen-ext
-                                        msdf-atlas-gen::msdf-atlas-gen)
+                                        msdfgen::cppm
+                                        msdf-atlas-gen::cppm)
 
 find_package(Stb REQUIRED)
 target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})

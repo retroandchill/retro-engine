@@ -4,18 +4,19 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.runtime.rendering.text.font:async_dynamic_atlas;
+export module retro.runtime.rendering.text.async_dynamic_atlas;
 
 import retro.core.util.enum_class_flags;
 
-import :dependencies;
 import std;
+import msdfgen;
+import msdf_atlas;
 import retro.core.async.task;
 
 namespace retro
 {
 
-    enum class AtlasChangeFlag
+    export enum class AtlasChangeFlag
     {
         no_change = 0,
         resized = 1 << 0,
@@ -44,7 +45,7 @@ namespace retro
             } -> Awaitable;
         };
 
-    template <ValidAtlasGenerator AtlasGenerator>
+    export template <ValidAtlasGenerator AtlasGenerator>
     class AsyncDynamicAtlas
     {
       public:

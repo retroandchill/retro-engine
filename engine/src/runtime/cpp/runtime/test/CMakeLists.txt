@@ -24,10 +24,8 @@ target_sources(retro_runtime_tests PUBLIC
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(retro_runtime_tests PRIVATE
         retro_runtime
-        Freetype::Freetype
-        msdfgen::msdfgen
-        msdfgen::msdfgen-ext
-        msdf-atlas-gen::msdf-atlas-gen
+        msdfgen::cppm
+        msdf-atlas-gen::cppm
         GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
 )
 

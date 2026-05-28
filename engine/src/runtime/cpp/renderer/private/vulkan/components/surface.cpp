@@ -4,13 +4,12 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include <SDL3/SDL_vulkan.h>
-
 module retro.renderer.vulkan.components.surface;
 
 import retro.core.util.exceptions;
+
+import sdl;
+import sdl.vulkan;
 
 namespace retro
 {
@@ -21,10 +20,7 @@ namespace retro
             case WindowBackend::sdl3:
                 {
                     vk::SurfaceKHR::CType surface;
-                    if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window *>(handle), instance, nullptr, &surface))
-                    {
-                        throw GraphicsException{SDL_GetError()};
-                    }
+                    SDL::Vulkan_CreateSurface(static_cast<SDL::WindowRaw>(handle), instance, nullptr, &surface);
 
                     return vk::UniqueSurfaceKHR{surface, instance};
                 }

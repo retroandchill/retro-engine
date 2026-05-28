@@ -68,23 +68,22 @@ namespace retro
             return WindowBackend::headless;
         }
 
-        PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) override
+        std::shared_ptr<Window> create_window(const WindowDesc &desc) override
         {
             return std::make_shared<HeadlessWindow>(desc);
         }
 
-        Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(const WindowDesc desc) override
+        Task<std::shared_ptr<Window>> create_window_async(const WindowDesc desc) override
         {
             return create_task_from_result(create_window(desc));
         }
 
-        PlatformResult<std::shared_ptr<Window>> create_window_from_native(NativeWindowHandle handle) override
+        std::shared_ptr<Window> create_window_from_native(NativeWindowHandle handle) override
         {
             return std::make_shared<HeadlessWindow>(handle);
         }
 
-        Task<PlatformResult<std::shared_ptr<Window>>> create_window_from_native_async(
-            NativeWindowHandle handle) override
+        Task<std::shared_ptr<Window>> create_window_from_native_async(NativeWindowHandle handle) override
         {
             return create_task_from_result(create_window_from_native(handle));
         }
@@ -104,9 +103,8 @@ namespace retro
             return std::nullopt;
         }
 
-        PlatformResult<void> push_event(PlatformEvent event) override
+        void push_event(PlatformEvent event) override
         {
-            return {};
         }
     };
 } // namespace retro

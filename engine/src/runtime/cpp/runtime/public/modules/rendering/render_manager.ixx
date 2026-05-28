@@ -40,13 +40,13 @@ namespace retro
             return primary_renderer_;
         }
 
-        PlatformResult<std::uint64_t> create_new_window(WindowDesc window_desc);
+        std::uint64_t create_new_window(WindowDesc window_desc);
 
-        PlatformResult<std::uint64_t> create_new_window(NativeWindowHandle handle);
+        std::uint64_t create_new_window(NativeWindowHandle handle);
 
-        Task<PlatformResult<std::uint64_t>> create_new_window_async(WindowDesc window_desc);
+        Task<std::uint64_t> create_new_window_async(WindowDesc window_desc);
 
-        Task<PlatformResult<std::uint64_t>> create_new_window_async(NativeWindowHandle handle);
+        Task<std::uint64_t> create_new_window_async(NativeWindowHandle handle);
 
         Optional<Window &> get_window(std::uint64_t window_id) const;
 

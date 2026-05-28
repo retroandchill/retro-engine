@@ -77,14 +77,13 @@ namespace retro
 
         [[nodiscard]] virtual WindowBackend window_backend() const noexcept = 0;
 
-        virtual PlatformResult<std::shared_ptr<Window>> create_window(const WindowDesc &desc) = 0;
+        virtual std::shared_ptr<Window> create_window(const WindowDesc &desc) = 0;
 
-        virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_async(WindowDesc desc) = 0;
+        virtual Task<std::shared_ptr<Window>> create_window_async(WindowDesc desc) = 0;
 
-        virtual PlatformResult<std::shared_ptr<Window>> create_window_from_native(NativeWindowHandle handle) = 0;
+        virtual std::shared_ptr<Window> create_window_from_native(NativeWindowHandle handle) = 0;
 
-        virtual Task<PlatformResult<std::shared_ptr<Window>>> create_window_from_native_async(
-            NativeWindowHandle handle) = 0;
+        virtual Task<std::shared_ptr<Window>> create_window_from_native_async(NativeWindowHandle handle) = 0;
 
         virtual Optional<PlatformEvent> poll_event() = 0;
 
@@ -92,6 +91,6 @@ namespace retro
 
         virtual Optional<PlatformEvent> wait_for_event(std::chrono::milliseconds timeout) = 0;
 
-        virtual PlatformResult<void> push_event(PlatformEvent event) = 0;
+        virtual void push_event(PlatformEvent event) = 0;
     };
 } // namespace retro

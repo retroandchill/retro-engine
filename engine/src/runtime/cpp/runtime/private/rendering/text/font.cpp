@@ -6,8 +6,11 @@
  */
 module retro.runtime.rendering.text.font;
 
+import retro.core.util.enum_class_flags;
 import retro.core.util.exceptions;
-import :async_atlas_generator;
+import retro.runtime.rendering.text.async_atlas_generator;
+
+import sdl;
 
 namespace retro
 {
@@ -202,9 +205,16 @@ namespace retro
         return result;
     }
 
-    FontFace::FontFace(FreeTypeLibrary library, std::vector<std::byte> bytes, FreeTypeFace face) noexcept
-        : bytes_{std::move(bytes)}, library_{std::move(library)}, face_{std::move(face)},
-          handle_{create_font_handle(face_.get())}, family_name_{face_->family_name}, style_name_{face_->style_name}
+    FontFace::FontFace(std::shared_ptr<msdfgen::FreetypeHandle> library,
+                       std::vector<std::byte> bytes,
+                       std::string family_name,
+                       std::string style_name) noexcept
+        : bytes_{std::move(bytes)}, library_{std::move(library)},
+          handle_{msdfgen::loadFontData(library_.get(),
+                                        reinterpret_cast<const msdfgen::byte *>(bytes_.data()),
+                                        static_cast<std::int32_t>(bytes_.size()))},
+          family_name_{std::move(family_name)}, style_name_{std::move(style_name)}
+
     {
     }
 
@@ -222,13 +232,16 @@ namespace retro
         return primary_atlas_.add_glyphs_async(render_backend_, *face_.handle_, codepoints);
     }
 
-    FontService::FontService(RenderBackend &render_backend) : render_backend_{render_backend}
+    FontService::FontService(RenderBackend &render_backend)
+        : render_backend_{render_backend}, library_{msdfgen::initializeFreetype(), msdfgen::deinitializeFreetype}
     {
     }
 
     Task<RefCountPtr<Font>> FontService::load_font(std::vector<std::byte> bytes) const
     {
-        FontFace font_face{library_, std::move(bytes), library_.load_face(bytes)};
+        const auto bytes_span = SDL::IOFromConstMem(bytes);
+        const SDL::Font font{bytes_span, 16};
+        FontFace font_face{library_, std::move(bytes), font.GetFamilyName(), font.GetStyleName()};
 
         constexpr FontMsdfAtlasConfig atlas_config{.pixel_size = 24, .distance_range = 2.0f};
 

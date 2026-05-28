@@ -4,10 +4,11 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-export module retro.runtime.rendering.text.font:async_atlas_generator;
+export module retro.runtime.rendering.text.async_atlas_generator;
 
 import std;
-import :dependencies;
+import msdfgen;
+import msdf_atlas;
 import retro.core.async.task;
 import retro.core.async.workload;
 
@@ -29,10 +30,10 @@ namespace retro
             };
         };
 
-    template <typename T,
-              std::int32_t N,
-              msdf_atlas::GeneratorFunction<T, N> Generator,
-              ValidAtlasStorage<T, N> AtlasStorage>
+    export template <typename T,
+                     std::int32_t N,
+                     msdf_atlas::GeneratorFunction<T, N> Generator,
+                     ValidAtlasStorage<T, N> AtlasStorage>
     class AsyncAtlasGenerator
     {
       public:

@@ -18,9 +18,12 @@ import retro.runtime.rendering.render_backend;
 import retro.core.containers.optional;
 import retro.runtime.rendering.layout.uvs;
 import retro.core.async.task;
-import :freetype;
-import :async_atlas_generator;
-import :async_dynamic_atlas;
+import msdfgen;
+import msdfgen;
+import msdf_atlas;
+import sdl;
+import retro.runtime.rendering.text.async_atlas_generator;
+import retro.runtime.rendering.text.async_dynamic_atlas;
 import retro.core.async.semaphore;
 
 namespace retro
@@ -37,11 +40,6 @@ namespace retro
     };
 
     using FontHandlePtr = std::unique_ptr<msdfgen::FontHandle, FontHandleDeleter>;
-
-    FontHandlePtr create_font_handle(FT_Face face)
-    {
-        return FontHandlePtr{msdfgen::adoptFreetypeFont(face)};
-    }
 
     export struct FontMsdfAtlasConfig
     {
@@ -144,18 +142,20 @@ namespace retro
     class FontFace
     {
       public:
-        FontFace(FreeTypeLibrary library, std::vector<std::byte> bytes, FreeTypeFace face) noexcept;
+        FontFace(std::shared_ptr<msdfgen::FreetypeHandle> library,
+                 std::vector<std::byte> bytes,
+                 std::string family_name,
+                 std::string style_name) noexcept;
 
       private:
         friend FontService;
         friend Font;
 
         std::vector<std::byte> bytes_;
-        FreeTypeLibrary library_;
-        FreeTypeFace face_;
+        std::shared_ptr<msdfgen::FreetypeHandle> library_;
         FontHandlePtr handle_{};
-        std::string_view family_name_;
-        std::string_view style_name_;
+        std::string family_name_;
+        std::string style_name_;
     };
 
     class Font final : public IntrusiveRefCounted
@@ -190,6 +190,25 @@ namespace retro
         FontAtlas primary_atlas_;
     };
 
+    struct SdlTffScope final
+    {
+        inline SdlTffScope()
+        {
+            SDL::TTF::Init();
+        }
+
+        SdlTffScope(const SdlTffScope &) = delete;
+        SdlTffScope(SdlTffScope &&) = delete;
+
+        inline ~SdlTffScope()
+        {
+            SDL::TTF::Quit();
+        }
+
+        SdlTffScope &operator=(const SdlTffScope &) = delete;
+        SdlTffScope &operator=(SdlTffScope &&) = delete;
+    };
+
     class RETRO_API FontService : NonCopyable
     {
       public:
@@ -200,7 +219,8 @@ namespace retro
       private:
         Task<FontAtlas> generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
 
+        SdlTffScope ttf_scope_;
         RenderBackend &render_backend_;
-        FreeTypeLibrary library_{};
+        std::shared_ptr<msdfgen::FreetypeHandle> library_;
     };
 } // namespace retro

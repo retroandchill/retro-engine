@@ -4,3 +4,5 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 add_subdirectory(vulkan)
 add_subdirectory(sdl3)
+add_subdirectory(msdfgen)
+add_subdirectory(msdf-atlas-gen)

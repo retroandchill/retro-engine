@@ -2,7 +2,6 @@
 module;
 
 #include <SDL3pp/SDL3pp.h>
-#pragma warning(disable : 5304)
 
 export module sdl;
 

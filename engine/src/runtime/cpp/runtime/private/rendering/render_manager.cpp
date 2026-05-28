@@ -37,30 +37,30 @@ namespace retro
             });
     }
 
-    PlatformResult<std::uint64_t> RenderManager::create_new_window(WindowDesc window_desc)
+    std::uint64_t RenderManager::create_new_window(WindowDesc window_desc)
     {
-        EXPECT_ASSIGN(const auto window, platform_backend_.create_window(std::move(window_desc)));
+        const auto window = platform_backend_.create_window(std::move(window_desc));
         add_window(*window);
         return window->id();
     }
 
-    PlatformResult<std::uint64_t> RenderManager::create_new_window(NativeWindowHandle handle)
+    std::uint64_t RenderManager::create_new_window(NativeWindowHandle handle)
     {
-        EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native(handle));
+        const auto window = platform_backend_.create_window_from_native(handle);
         add_window(*window);
         return window->id();
     }
 
-    Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(WindowDesc window_desc)
+    Task<std::uint64_t> RenderManager::create_new_window_async(WindowDesc window_desc)
     {
-        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_async(std::move(window_desc)));
+        const auto window = co_await platform_backend_.create_window_async(std::move(window_desc));
         add_window(*window);
         co_return window->id();
     }
 
-    Task<PlatformResult<std::uint64_t>> RenderManager::create_new_window_async(NativeWindowHandle handle)
+    Task<std::uint64_t> RenderManager::create_new_window_async(NativeWindowHandle handle)
     {
-        AWAIT_EXPECT_ASSIGN(const auto window, platform_backend_.create_window_from_native_async(std::move(handle)));
+        const auto window = co_await platform_backend_.create_window_from_native_async(std::move(handle));
         add_window(*window);
         co_return window->id();
     }
