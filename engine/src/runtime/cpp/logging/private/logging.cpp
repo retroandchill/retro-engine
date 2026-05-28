@@ -11,6 +11,8 @@ module;
 
 module retro.logging;
 
+import spdlog;
+
 namespace retro
 {
     void init_logger()
