@@ -6,7 +6,6 @@
  */
 module;
 
-#include <boost/thread/condition_variable.hpp>
 #include <cassert>
 
 export module retro.core.async.task;
@@ -18,70 +17,21 @@ import retro.core.util.deferred;
 import retro.core.containers.optional;
 import retro.core.functional.overload;
 import retro.core.util.exceptions;
+import retro.core.async.concepts;
 
 namespace retro
 {
     template <typename T>
-    concept Awaiter = requires(T &x) {
-        {
-            x.await_ready()
-        } -> std::convertible_to<bool>;
-        x.await_resume();
-    };
+    concept ValidTaskResult = !std::same_as<T, std::monostate> && !std::same_as<T, std::exception_ptr>;
 
-    template <typename T>
-    concept MemberCoAwait = requires(T &&x) {
-        {
-            std::forward<T>(x).operator co_await()
-        } -> Awaiter;
-    };
-
-    template <typename T>
-    concept FreeCoAwait = requires(T &&x) {
-        {
-            operator co_await(std::forward<T>(x))
-        } -> Awaiter;
-    };
-
-    export template <typename T>
-    concept Awaitable = MemberCoAwait<T> || FreeCoAwait<T> || Awaiter<T>;
-
-    template <MemberCoAwait T>
-    decltype(auto) get_awaiter(T &&x) noexcept(noexcept(std::forward<T>(x).operator co_await()))
-    {
-        return std::forward<T>(x).operator co_await();
-    }
-
-    template <FreeCoAwait T>
-    decltype(auto) get_awaiter(T &&x) noexcept(noexcept(operator co_await(std::forward<T>(x))))
-    {
-        return operator co_await(std::forward<T>(x));
-    }
-
-    template <Awaiter T>
-        requires(!MemberCoAwait<T> && !FreeCoAwait<T>)
-    T &&get_awaiter(T &&x) noexcept
-    {
-        return std::forward<T>(x);
-    }
-
-    template <Awaitable T>
-    using AwaiterType = decltype(get_awaiter(std::declval<T>()));
-
-    export template <Awaitable T>
-    using AwaitResult = decltype(std::declval<AwaiterType<T>>().await_resume());
-
-    export template <typename T = void>
+    export template <ValidTaskResult T = void>
     class Task;
 
     template <typename T>
     concept PromiseLike = requires(T &promise) {
         {
-            promise.scheduler
-        } -> std::convertible_to<Optional<TaskScheduler &>>;
-        {
-            promise.continuation
-        } -> std::convertible_to<std::coroutine_handle<>>;
+            promise.perform_continuation()
+        };
     };
 
     template <PromiseLike Promise>
@@ -95,12 +45,7 @@ namespace retro
         std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> handle) noexcept
         {
             auto &promise = handle.promise();
-            const auto continuation = promise.continuation;
-            if (!continuation)
-                return std::noop_coroutine();
-
-            auto &scheduler = promise.scheduler.has_value() ? *promise.scheduler : TaskScheduler::default_scheduler();
-            scheduler.enqueue(continuation);
+            promise.perform_continuation();
             return std::noop_coroutine();
         }
 
@@ -110,37 +55,215 @@ namespace retro
         }
     };
 
-    template <typename T, typename Result = T>
-    struct TaskPromiseBase
+    struct Empty
     {
-        static constexpr std::size_t success_state = 1;
-        static constexpr std::size_t exception_state = 2;
+    };
 
-        Optional<TaskScheduler &> captured_context = TaskScheduler::current();
-        Optional<TaskScheduler &> scheduler = captured_context;
+    template <ValidTaskResult T>
+    class TaskCompletion
+    {
+      public:
+        explicit TaskCompletion(const bool auto_continue = false) noexcept : auto_continue_(auto_continue)
+        {
+        }
 
-        std::coroutine_handle<> continuation{};
-        std::variant<std::monostate, T, std::exception_ptr> result{};
-        SimpleMulticastDelegate on_complete;
-        mutable std::mutex result_mutex;
+        bool is_complete() const noexcept
+        {
+            std::scoped_lock lock{mutex_};
+            return !std::holds_alternative<std::monostate>(result_);
+        }
 
-        template <typename Self>
-        decltype(auto) get_result(this Self &&self)
+        template <std::convertible_to<T> U>
+        void set_result(U &&result)
+            requires(!std::is_void_v<T>)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                throw InvalidStateException{"Task is already complete"};
+            result_ = std::forward<U>(result);
+            notify_task_complete();
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        void emplace_result(Args &&...args)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                throw InvalidStateException{"Task is already complete"};
+            result_.template emplace<T>(std::forward<Args>(args)...);
+            notify_task_complete();
+        }
+
+        void set_result()
+            requires(std::is_void_v<T>)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                throw InvalidStateException{"Task is already complete"};
+            result_ = Empty{};
+            notify_task_complete();
+        }
+
+        void set_exception(std::exception_ptr ex)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                throw InvalidStateException{"Task is already complete"};
+            result_ = std::move(ex);
+            notify_task_complete();
+        }
+
+        template <std::convertible_to<T> U>
+        bool try_set_result(U &&result)
+            requires(!std::is_void_v<T>)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+            result_ = std::forward<U>(result);
+            notify_task_complete();
+            return true;
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        bool try_emplace_result(Args &&...args)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+            result_.template emplace<T>(std::forward<Args>(args)...);
+            notify_task_complete();
+            return true;
+        }
+
+        bool try_set_result() noexcept
+            requires(std::is_void_v<T>)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+            result_ = Empty{};
+            notify_task_complete();
+            return true;
+        }
+
+        bool try_set_exception(std::exception_ptr ex)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+            result_ = std::move(ex);
+            notify_task_complete();
+            return true;
+        }
+
+        T get_result()
             requires !std::is_void_v<T>
         {
-            std::scoped_lock lock{self.result_mutex};
-            if (self.result.index() == exception_state)
+            std::scoped_lock lock{mutex_};
+            return get_internal();
+        }
+
+        void wait() const
+        {
+            std::unique_lock lock{mutex_};
+            wait_internal(lock);
+        }
+
+        T wait_and_get()
+        {
+            std::unique_lock lock{mutex_};
+            wait_internal(lock);
+            return get_internal();
+        }
+
+        void set_use_captured_context(bool use_captured_context)
+        {
+            std::scoped_lock lock{mutex_};
+            use_captured_context_ = use_captured_context;
+        }
+
+        void perform_continuation() const
+        {
+            std::scoped_lock lock{mutex_};
+            perform_continuation_internal();
+        }
+
+        bool try_suspend(std::coroutine_handle<> continuation)
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+
+            continuation_ = continuation;
+            captured_context_ = TaskScheduler::current();
+            return true;
+        }
+
+      private:
+        void wait_internal(std::unique_lock<std::mutex> &lock) const
+        {
+            task_complete_.wait(lock, [this] { return !std::holds_alternative<std::monostate>(result_); });
+        }
+
+        T get_internal()
+        {
+            return std::visit(Overload{[](std::monostate) -> T { throw InvalidStateException{"Task is empty"}; },
+                                       [](T &&success) -> T { return std::move(success); },
+                                       [](const std::exception_ptr &ex) -> T
+                                       {
+                                           std::rethrow_exception(ex);
+                                       }},
+                              std::move(result_));
+        }
+
+        void notify_task_complete() const
+        {
+            task_complete_.notify_all();
+            if (auto_continue_)
             {
-                std::rethrow_exception(std::get<std::exception_ptr>(self.result));
+                perform_continuation_internal();
             }
+        }
 
-            assert(self.result.index() == success_state);
+        void perform_continuation_internal() const
+        {
+            if (!continuation_)
+                return;
 
-            return std::get<success_state>(std::forward<Self>(self).result);
+            auto &scheduler = use_captured_context_ && captured_context_.has_value()
+                                  ? *captured_context_
+                                  : TaskScheduler::default_scheduler();
+            scheduler.enqueue(continuation_);
+        }
+
+        using SuccessValue = std::conditional_t<std::is_void_v<T>, Empty, T>;
+        using ResultValue = std::variant<std::monostate, SuccessValue, std::exception_ptr>;
+
+        mutable std::mutex mutex_;
+        ResultValue result_{};
+        std::coroutine_handle<> continuation_;
+        Optional<TaskScheduler &> captured_context_ = TaskScheduler::current();
+        mutable std::condition_variable task_complete_;
+        bool use_captured_context_ = true;
+        bool auto_continue_ = false;
+    };
+
+    template <ValidTaskResult T>
+    class TaskPromiseBase
+    {
+      public:
+        template <typename Self>
+        T get_result(this Self &&self)
+            requires !std::is_void_v<T>
+        {
+            return self.result().get_result();
         }
 
         template <typename Self>
-        Task<Result> get_return_object(this Self &) noexcept;
+        Task<T> get_return_object(this Self &) noexcept;
 
         static std::suspend_never initial_suspend() noexcept
         {
@@ -155,49 +278,80 @@ namespace retro
 
         void unhandled_exception() noexcept
         {
-            std::scoped_lock lock{result_mutex};
-            {
-                result.template emplace<exception_state>(std::current_exception());
-            }
-            on_complete.broadcast();
+            result_.set_exception(std::current_exception());
         }
+
+        void wait() const
+        {
+            result().wait();
+        }
+
+        T wait_and_get()
+        {
+            return result().wait_and_get();
+        }
+
+        void set_use_captured_context(bool use_captured_context)
+        {
+            result_.set_use_captured_context(use_captured_context);
+        }
+
+        void perform_continuation() const
+        {
+            result_.perform_continuation();
+        }
+
+        bool try_suspend(std::coroutine_handle<> continuation)
+        {
+            return result_.try_suspend(continuation);
+        }
+
+      protected:
+        TaskCompletion<T> &result() noexcept
+        {
+            return result_;
+        }
+
+        const TaskCompletion<T> &result() const noexcept
+        {
+            return result_;
+        }
+
+      private:
+        TaskCompletion<T> result_{};
     };
 
     template <typename T>
-    struct TaskPromise : TaskPromiseBase<T>
+    class TaskPromise : public TaskPromiseBase<T>
     {
+      public:
         template <std::convertible_to<T> U>
         void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
-            std::scoped_lock lock{this->result_mutex};
-            {
-                this->result.template emplace<TaskPromiseBase<T>::success_state>(std::forward<U>(value));
-            }
-            this->on_complete.broadcast();
+            this->result().emplace_result(std::forward<U>(value));
         }
-    };
 
-    struct Empty
-    {
+      private:
+        friend Task<T>;
     };
 
     template <>
-    struct TaskPromise<void> : TaskPromiseBase<Empty, void>
+    class TaskPromise<void> : public TaskPromiseBase<void>
     {
+      public:
         inline void return_void() noexcept
         {
-            std::scoped_lock lock{result_mutex};
-            {
-                result.emplace<success_state>();
-            }
-            on_complete.broadcast();
+            result().set_result();
         }
+
+      private:
+        friend Task<>;
     };
 
-    template <typename T>
+    template <ValidTaskResult T>
     struct ImmediateState
     {
-        using ResultType = std::variant<std::monostate, T, std::exception_ptr>;
+        using ResultType = std::variant<T, std::exception_ptr>;
         ResultType result{};
 
         template <typename... Args>
@@ -206,8 +360,15 @@ namespace retro
         {
         }
 
-        static constexpr std::size_t success_state = 1;
-        static constexpr std::size_t exception_state = 2;
+        T get_result()
+        {
+            return std::visit(Overload{[](T &&success) -> T { return std::move(success); },
+                                       [](const std::exception_ptr &ex) -> T
+                                       {
+                                           std::rethrow_exception(ex);
+                                       }},
+                              std::move(result));
+        }
     };
 
     template <>
@@ -222,138 +383,89 @@ namespace retro
         {
         }
 
-        // monostate => success for void
-        static constexpr std::size_t success_state = 0;
-        static constexpr std::size_t exception_state = 1;
+        inline void get_result() const
+        {
+            return std::visit(Overload{[](std::monostate) {},
+                                       [](const std::exception_ptr &ex)
+                                       {
+                                           std::rethrow_exception(ex);
+                                       }},
+                              result);
+        }
     };
 
-    template <typename T>
+    export template <ValidTaskResult T>
+    class TaskCompletionSource;
+
+    template <ValidTaskResult T>
     class [[nodiscard("Tasks represent an async unit of work")]] Task
     {
         using Handle = std::coroutine_handle<TaskPromise<T>>;
-        using State = std::variant<std::monostate, Handle, ImmediateState<T>>;
+        using State = std::variant<std::monostate, Handle, ImmediateState<T>, std::shared_ptr<TaskCompletion<T>>>;
 
-        struct RefAwaiter
+        struct Awaiter
         {
-            static constexpr auto success_state = TaskPromise<T>::success_state;
-            static constexpr auto exception_state = TaskPromise<T>::exception_state;
-
-            std::reference_wrapper<State> state{};
-
-            bool await_ready() noexcept
-            {
-                if (std::holds_alternative<ImmediateState<T>>(state.get()))
-                    return true;
-
-                if (auto *h = std::get_if<Handle>(&state.get()))
-                    return !*h || h->done();
-
-                return true;
-            }
-
-            void await_suspend(std::coroutine_handle<> handle) noexcept
-            {
-                auto *h = std::get_if<Handle>(&state.get());
-                if (!h || !*h)
-                    return;
-
-                h->promise().continuation = handle;
-            }
-
-            T await_resume()
-            {
-                if (auto *imm = std::get_if<ImmediateState<T>>(&state.get()))
-                {
-                    if (imm->result.index() == ImmediateState<T>::exception_state)
-                        std::rethrow_exception(std::get<ImmediateState<T>::exception_state>(imm->result));
-
-                    assert(imm->result.index() == ImmediateState<T>::success_state);
-
-                    if constexpr (!std::is_void_v<T>)
-                        return std::get<ImmediateState<T>::success_state>(imm->result);
-                    else
-                        return;
-                }
-
-                auto &coro = std::get<Handle>(state.get());
-                auto &promise = coro.promise();
-                std::scoped_lock lock{promise.result_mutex};
-
-                if (promise.result.index() == exception_state)
-                    std::rethrow_exception(std::get<exception_state>(promise.result));
-
-                assert(promise.result.index() == success_state);
-
-                if constexpr (!std::is_void_v<T>)
-                {
-                    return std::get<success_state>(promise.result);
-                }
-                else
-                {
-                    return;
-                }
-            }
-        };
-
-        struct MoveAwaiter
-        {
-            static constexpr auto success_state = TaskPromise<T>::success_state;
-            static constexpr auto exception_state = TaskPromise<T>::exception_state;
 
             State state{};
 
             bool await_ready() noexcept
             {
-                if (std::holds_alternative<ImmediateState<T>>(state))
-                    return true;
-
-                if (auto *h = std::get_if<Handle>(&state))
-                    return !*h || h->done();
-
-                return true;
+                return std::visit(Overload{[](std::monostate) -> bool { throw InvalidStateException{"Task is empty"}; },
+                                           [](const Handle &handle) -> bool { return handle.done(); },
+                                           [](const ImmediateState<T> &) -> bool { return true; },
+                                           [](const std::shared_ptr<TaskCompletion<T>> &completion) -> bool
+                                           {
+                                               return completion->is_complete();
+                                           }},
+                                  state);
             }
 
-            void await_suspend(std::coroutine_handle<> handle) noexcept
+            bool await_suspend(std::coroutine_handle<> handle) noexcept
             {
-                auto *h = std::get_if<Handle>(&state);
-                if (!h || !*h)
-                    return;
+                return std::visit(Overload{[](std::monostate) -> bool { throw InvalidStateException{"Task is empty"}; },
+                                           [&handle](const Handle h)
+                                           {
+                                               if (h.done())
+                                                   return false;
 
-                h->promise().continuation = handle;
+                                               return h.promise().try_suspend(handle);
+                                           },
+                                           [](const ImmediateState<T> &) { return false; },
+                                           [&handle](const std::shared_ptr<TaskCompletion<T>> &completion) -> bool
+                                           {
+                                               return completion->try_suspend(handle);
+                                           }},
+                                  state);
             }
 
             T await_resume()
             {
-                if (auto *imm = std::get_if<ImmediateState<T>>(&state))
-                {
-                    if (imm->result.index() == ImmediateState<T>::exception_state)
-                        std::rethrow_exception(std::get<ImmediateState<T>::exception_state>(imm->result));
-
-                    assert(imm->result.index() == ImmediateState<T>::success_state);
-
-                    if constexpr (!std::is_void_v<T>)
-                        return std::get<ImmediateState<T>::success_state>(std::move(imm->result));
-                    else
-                        return;
-                }
-
-                auto &coro = std::get<Handle>(state);
-                auto &promise = coro.promise();
-                std::scoped_lock lock{promise.result_mutex};
-
-                if (promise.result.index() == exception_state)
-                    std::rethrow_exception(std::get<exception_state>(coro.promise().result));
-
-                assert(promise.result.index() == success_state);
-
-                if constexpr (!std::is_void_v<T>)
-                {
-                    return std::get<success_state>(std::move(promise.result));
-                }
-                else
-                {
-                    return;
-                }
+                return std::visit(Overload{[](std::monostate) -> T { throw InvalidStateException{"Task is empty"}; },
+                                           [](const Handle &handle) -> T
+                                           {
+                                               assert(handle.done());
+                                               if constexpr (!std::is_void_v<T>)
+                                               {
+                                                   return handle.promise().get_result();
+                                               }
+                                               else
+                                               {
+                                                   return;
+                                               }
+                                           },
+                                           [](ImmediateState<T> &&state) -> T { return state.get_result(); },
+                                           [](const std::shared_ptr<TaskCompletion<T>> &completion) -> T
+                                           {
+                                               if constexpr (!std::is_void_v<T>)
+                                               {
+                                                   return completion->get_result();
+                                               }
+                                               else
+                                               {
+                                                   return;
+                                               }
+                                           }},
+                                  std::move(state));
             }
         };
 
@@ -365,6 +477,10 @@ namespace retro
         {
         }
 
+        explicit Task(std::shared_ptr<TaskCompletion<T>> completion) noexcept : state_(std::move(completion))
+        {
+        }
+
       public:
         using promise_type = TaskPromise<T>;
 
@@ -372,8 +488,7 @@ namespace retro
             requires(!std::is_void_v<T>)
         [[nodiscard]] static Task from_result(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
-            return Task{
-                ImmediateState<T>{std::in_place_index<ImmediateState<T>::success_state>, std::forward<U>(value)}};
+            return Task{ImmediateState<T>{std::in_place_type<T>, std::forward<U>(value)}};
         }
 
         [[nodiscard]] static Task completed() noexcept
@@ -387,98 +502,159 @@ namespace retro
             return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::exception_state>, std::move(ex)}};
         }
 
-        template <typename Self>
-        [[nodiscard]] decltype(auto) get(this Self &&self)
+        [[nodiscard]] T get() &&
             requires !std::is_void_v<T>
         {
-            if (holds_alternative<std::monostate>(self.state_))
-                throw InvalidStateException{"Task is empty"};
+            return std::visit(Overload{[](std::monostate) -> T { throw InvalidStateException{"Task is empty"}; },
+                                       [](ImmediateState<T> &&state) -> T { return state.get_result(); },
+                                       [](const Handle &handle) -> T
+                                       {
+                                           if (handle.done())
+                                               return std::move(handle.promise().get_result());
 
-            if (holds_alternative<ImmediateState<T>>(self.state_))
-            {
-                auto result = std::get<ImmediateState<T>>(self.state_).result;
-                if (holds_alternative<std::exception_ptr>(result))
-                {
-                    std::rethrow_exception(std::get<std::exception_ptr>(result));
-                }
-
-                return std::forward_like<Self>(std::get<T>(result));
-            }
-
-            auto handle = std::get<Handle>(self.state_);
-            if (!handle)
-                throw InvalidStateException{"Task is empty"};
-
-            auto &promise = handle.promise();
-            if (handle.done())
-            {
-                return std::forward_like<Self>(promise).get_result();
-            }
-
-            {
-                std::unique_lock lock{promise.result_mutex};
-                std::condition_variable task_complete;
-                promise.on_complete.add([&task_complete] { task_complete.notify_one(); });
-                task_complete.wait(lock, [&promise, handle] { return handle.done() || promise.result.index() != 0; });
-            }
-            return std::forward_like<Self>(promise).get_result();
+                                           auto &promise = handle.promise();
+                                           return promise.wait_and_get();
+                                       },
+                                       [](const std::shared_ptr<TaskCompletion<T>> &completion) -> T
+                                       {
+                                           return completion->wait_and_get();
+                                       }},
+                              std::move(state_));
         }
 
         void wait() const
         {
-            if (holds_alternative<std::monostate>(state_))
-                throw InvalidStateException{"Task is empty"};
+            std::visit(Overload{[](std::monostate) { throw InvalidStateException{"Task is empty"}; },
+                                [](const ImmediateState<T> &)
+                                {
+                                    // Do nothing
+                                },
+                                [](const Handle &handle)
+                                {
+                                    if (handle.done())
+                                        return;
 
-            if (holds_alternative<ImmediateState<T>>(state_))
-                return;
-
-            auto handle = std::get<Handle>(state_);
-            if (!handle)
-                throw InvalidStateException{"Task is empty"};
-
-            auto &promise = handle.promise();
-            if (handle.done())
-                return;
-
-            std::unique_lock lock{promise.result_mutex};
-            std::condition_variable task_complete;
-            promise.on_complete.add([&task_complete] { task_complete.notify_one(); });
-            task_complete.wait(lock, [&promise, handle] { return handle.done() || promise.result.index() != 0; });
+                                    auto &promise = handle.promise();
+                                    promise.wait();
+                                },
+                                [](const std::shared_ptr<TaskCompletion<T>> &completion)
+                                {
+                                    completion->wait();
+                                }},
+                       state_);
         }
 
-        RefAwaiter operator co_await() &
+        Awaiter operator co_await() &&
         {
-            return RefAwaiter{std::ref(state_)};
-        }
-
-        MoveAwaiter operator co_await() &&
-        {
-            return MoveAwaiter{std::move(state_)};
+            return Awaiter{std::exchange(state_, std::monostate{})};
         }
 
         template <typename Self>
         [[nodiscard]] decltype(auto) configure_await(this Self &&self, const bool continue_on_captured_context)
         {
-            if (std::holds_alternative<Handle>(self.state_))
-            {
-                Handle &handle = std::get<Handle>(self.state_);
-                promise_type &promise = handle.promise();
-
-                if (continue_on_captured_context)
-                    promise.scheduler = promise.captured_context;
-                else
-                    promise.scheduler.reset();
-            }
+            std::visit(
+                Overload{
+                    [](std::monostate) { throw InvalidStateException{"Task is empty"}; },
+                    [](const ImmediateState<T> &)
+                    {
+                        // Do nothing
+                    },
+                    [continue_on_captured_context](const Handle &handle)
+                    {
+                        auto &promise = handle.promise();
+                        promise.set_use_captured_context(continue_on_captured_context);
+                    },
+                    [continue_on_captured_context](const std::shared_ptr<TaskCompletion<T>> &completion)
+                    { completion->set_use_captured_context(continue_on_captured_context); },
+                },
+                self.state_);
 
             return std::forward<Self>(self);
         }
 
       private:
-        template <typename U, typename Result>
-        friend struct TaskPromiseBase;
+        template <ValidTaskResult U>
+        friend class TaskPromiseBase;
         friend class TaskPromise<T>;
+        friend class TaskCompletionSource<T>;
 
         State state_{};
+    };
+
+    template <ValidTaskResult T>
+    class TaskCompletionSource<T>
+    {
+      public:
+        TaskCompletionSource() = default;
+        TaskCompletionSource(const TaskCompletionSource &) = delete;
+        TaskCompletionSource(TaskCompletionSource &&) = default;
+        ~TaskCompletionSource() = default;
+        TaskCompletionSource &operator=(const TaskCompletionSource &) = delete;
+        TaskCompletionSource &operator=(TaskCompletionSource &&) = default;
+
+        template <std::convertible_to<T> U>
+        void set_result(U &&result)
+            requires(!std::is_void_v<T>)
+        {
+            completion_->set_result(std::forward<U>(result));
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        void emplace_result(Args &&...args)
+        {
+            completion_->emplace_result(std::forward<Args>(args)...);
+        }
+
+        void set_result()
+            requires(std::is_void_v<T>)
+        {
+            completion_->set_result();
+        }
+
+        void set_exception(std::exception_ptr ex)
+        {
+            completion_->set_exception(std::move(ex));
+        }
+
+        template <std::convertible_to<T> U>
+        bool try_set_result(U &&result)
+            requires(!std::is_void_v<T>)
+        {
+            return completion_->try_set_result(std::forward<U>(result));
+        }
+
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        bool try_emplace_result(Args &&...args)
+        {
+            return completion_->try_emplace_result(std::forward<Args>(args)...);
+        }
+
+        bool try_set_result() noexcept
+            requires(std::is_void_v<T>)
+        {
+            return completion_->try_set_result();
+        }
+
+        bool try_set_exception(std::exception_ptr ex)
+        {
+            return completion_->try_set_exception(std::move(ex));
+        }
+
+        Task<T> get_task()
+        {
+            if (converted_to_task_.exchange(true))
+            {
+                throw InvalidStateException{"TaskCompletionSource has already been converted to a Task"};
+            }
+
+            return Task<T>{completion_};
+        }
+
+      private:
+        std::shared_ptr<TaskCompletion<T>> completion_ = std::make_shared<TaskCompletion<T>>(true);
+        std::atomic<bool> converted_to_task_;
     };
 
     export template <typename T>
@@ -488,10 +664,11 @@ namespace retro
         return Task<std::remove_cvref_t<T>>::from_result(std::forward<T>(result));
     }
 
-    template <typename T, typename Result>
+    template <ValidTaskResult T>
     template <typename Self>
-    Task<Result> TaskPromiseBase<T, Result>::get_return_object(this Self &self) noexcept
+    Task<T> TaskPromiseBase<T>::get_return_object(this Self &self) noexcept
     {
-        return Task<Result>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(self)};
+        return Task<T>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(self)};
     }
+
 } // namespace retro

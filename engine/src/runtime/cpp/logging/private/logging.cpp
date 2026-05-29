@@ -6,9 +6,6 @@
  */
 module;
 
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-
 module retro.logging;
 
 import spdlog;

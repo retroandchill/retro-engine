@@ -13,9 +13,9 @@ module;
 export module retro.core.strings.name;
 
 import std;
+import fmt;
 import retro.core.type_traits.basic;
 import retro.core.algorithm.hashing;
-import retro.core.strings.format;
 import retro.core.strings.encoding;
 import retro.core.memory.arena_allocator;
 
@@ -307,7 +307,7 @@ namespace retro
             }
 
             std::basic_string<CharType, std::char_traits<CharType>, Allocator> result{std::move(allocator)};
-            format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
+            fmt::format_to(std::back_inserter(result), "{}_{}", baseString, name_internal_to_external(number_));
             return result;
         }
 

@@ -12,6 +12,7 @@ export module retro.core.interop.interop_error;
 
 import std;
 import retro.core.util.exceptions;
+import retro.core.async.concepts;
 import retro.core.async.task;
 
 namespace retro

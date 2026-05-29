@@ -62,14 +62,12 @@ namespace retro
                 throw GraphicsException{"VulkanRenderer2D: unsupported texture format"};
         }
 
-        auto result = std::make_shared<TextureUploadPayload>(TextureUploadPayload{
-            .staging_buffer = device_.create_staging_buffer(image_size),
-            .width = width,
-            .height = height,
-            .format = format,
-            .filtering = filtering,
-            .image_format = image_format,
-        });
+        auto result = std::make_shared<TextureUploadPayload>(device_.create_staging_buffer(image_size),
+                                                             width,
+                                                             height,
+                                                             format,
+                                                             filtering,
+                                                             image_format);
         result->staging_buffer.read_from_buffer(bytes);
 
         vk::ImageCreateInfo image_info{
@@ -92,7 +90,7 @@ namespace retro
             pending_texture_uploads_.push_back(result);
             transfer_thread_cv_.notify_one();
         }
-        co_return co_await result->promise.get_future();
+        co_return co_await result->promise.get_task().configure_await(false);
     }
 
     void VulkanRenderBackend::run_transfer_thread()
@@ -112,7 +110,7 @@ namespace retro
                 pending_texture_uploads_.pop_front();
             }
 
-            payload->promise.set_value(upload_texture_impl(*payload));
+            payload->promise.set_result(upload_texture_impl(*payload));
         }
     }
 

@@ -8,7 +8,6 @@ export module retro.platform.backend:sdl;
 
 import sdl;
 import std;
-import retro.core.async.future;
 import retro.core.containers.optional;
 import retro.core.functional.overload;
 import retro.core.math.vector;
@@ -281,13 +280,14 @@ namespace retro
                 return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
             }
 
-            Promise<std::shared_ptr<Window>> promise;
+            TaskCompletionSource<std::shared_ptr<Window>> promise;
             push_event(CallbackEvent{.callback = [&promise, &args...]
                                      {
-                                         promise.emplace(std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
+                                         promise.emplace_result(
+                                             std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
                                      }});
 
-            return promise.get_future().get();
+            return promise.get_task().get();
         }
 
         template <typename... Args>
@@ -299,13 +299,14 @@ namespace retro
                 co_return std::make_shared<Sdl3Window>(std::forward<Args>(args)...);
             }
 
-            auto promise = std::make_shared<Promise<std::shared_ptr<Window>>>();
-            push_event(CallbackEvent{.callback = [promise, ... args = std::forward<Args>(args)] mutable
+            TaskCompletionSource<std::shared_ptr<Window>> promise;
+            push_event(CallbackEvent{.callback = [&promise, ... args = std::forward<Args>(args)] mutable
                                      {
-                                         promise->emplace(std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
+                                         promise.emplace_result(
+                                             std::make_shared<Sdl3Window>(std::forward<Args>(args)...));
                                      }});
 
-            co_return co_await promise->get_future();
+            co_return co_await promise.get_task();
         }
 
         SDL::Event from_event(PlatformEvent &&event)

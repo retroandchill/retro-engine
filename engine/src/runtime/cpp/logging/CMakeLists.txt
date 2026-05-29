@@ -22,8 +22,7 @@ target_sources(retro_logging PUBLIC
 
 target_include_directories(retro_logging PUBLIC public/include)
 
-find_package(spdlog REQUIRED)
-target_link_libraries(retro_logging PUBLIC retro_core spdlog::spdlog)
+target_link_libraries(retro_logging PUBLIC retro_core spdlog::cppm)
 
 set_target_properties(retro_logging PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

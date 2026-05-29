@@ -6,11 +6,10 @@
  */
 #include "retro/core/exports.h"
 
-#include <boost/pool/pool_alloc.hpp>
-
 import std;
 import retro.core.strings.name;
 import retro.core.interop.interop_error;
+import boost.pool;
 
 namespace
 {

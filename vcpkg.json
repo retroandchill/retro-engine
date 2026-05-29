@@ -17,30 +17,12 @@
     "name" : "vulkan-sdk-components",
     "version>=" : "1.4.335.0"
   }, {
-    "name" : "boost-dll",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-uuid",
-    "version>=" : "1.90.0"
-  }, {
     "name" : "spdlog",
     "version>=" : "1.16.0#1",
     "default-features" : false
   }, {
-    "name" : "boost-optional",
-    "version>=" : "1.90.0"
-  }, {
     "name" : "uni-algo",
     "version>=" : "1.2.0"
-  }, {
-    "name" : "boost-unordered",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-pool",
-    "version>=" : "1.90.0"
-  }, {
-    "name" : "boost-asio",
-    "version>=" : "1.90.0#1"
   }, {
     "name" : "gcem",
     "version>=" : "1.18.0"
@@ -51,20 +33,17 @@
     "name" : "gtest",
     "version>=" : "1.17.0#2"
   }, {
-    "name" : "boost-crc",
-    "version>=" : "1.90.0#1"
-  }, {
     "name" : "icu",
     "version>=" : "78.2"
   }, {
-    "name" : "boost-algorithm",
-    "version>=" : "1.90.0#1"
-  }, {
-    "name" : "boost-thread",
-    "version>=" : "1.90.0#1"
-  }, {
     "name" : "freetype",
     "version>=" : "2.14.3"
-  }, "msdfgen", "msdf-atlas-gen", "sdl3pp" ],
+  }, "msdfgen", "msdf-atlas-gen", "sdl3pp", {
+    "name" : "boost-pool",
+    "version>=" : "1.90.0#1"
+  }, {
+    "name" : "boost-unordered",
+    "version>=" : "1.90.0#1"
+  } ],
   "builtin-baseline" : "c3867e714dd3a51c272826eea77267876517ed99"
 }

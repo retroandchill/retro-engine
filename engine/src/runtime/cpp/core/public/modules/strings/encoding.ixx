@@ -8,7 +8,7 @@ export module retro.core.strings.encoding;
 
 import std;
 import retro.core.type_traits.basic;
-import :uni_algo;
+import uni_algo;
 
 namespace retro
 {

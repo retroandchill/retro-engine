@@ -16,7 +16,6 @@ import retro.renderer.vulkan.components.device;
 import retro.renderer.vulkan.components.buffer_manager;
 import retro.platform.backend;
 import retro.runtime.rendering.texture;
-import retro.core.async.future;
 import retro.core.async.task;
 
 namespace retro
@@ -55,7 +54,18 @@ namespace retro
             TextureFormat format{};
             TextureFilter filtering{};
             vk::Format image_format{};
-            Promise<RefCountPtr<Texture>> promise;
+            TaskCompletionSource<RefCountPtr<Texture>> promise;
+
+            TextureUploadPayload(VulkanStagingBuffer staging_buffer,
+                                 std::int32_t width,
+                                 std::int32_t height,
+                                 TextureFormat format,
+                                 TextureFilter filtering,
+                                 vk::Format image_format) noexcept
+                : staging_buffer(std::move(staging_buffer)), width(width), height(height), format(format),
+                  filtering(filtering), image_format(image_format)
+            {
+            }
         };
 
         void run_transfer_thread();

@@ -8,13 +8,12 @@ module;
 
 #include "retro/core/exports.h"
 
-#include <spdlog/spdlog.h>
-
 export module retro.logging;
 
 import retro.core.strings.cstring_view;
 import retro.core.strings.encoding;
 import retro.core.type_traits.basic;
+import spdlog;
 import std;
 
 namespace retro

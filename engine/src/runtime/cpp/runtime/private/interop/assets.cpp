@@ -6,8 +6,6 @@
  */
 #include "retro/core/exports.h"
 
-#include <boost/pool/pool_alloc.hpp>
-
 import retro.runtime.engine;
 import retro.core.strings.name;
 import retro.core.math.vector;

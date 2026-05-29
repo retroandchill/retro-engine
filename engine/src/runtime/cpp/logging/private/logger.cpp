@@ -6,11 +6,10 @@
  */
 #include "retro/core/exports.h"
 
-#include <boost/pool/pool_alloc.hpp>
-
 import std;
 import retro.logging;
 import retro.core.strings.encoding;
+import boost.pool;
 
 extern "C"
 {

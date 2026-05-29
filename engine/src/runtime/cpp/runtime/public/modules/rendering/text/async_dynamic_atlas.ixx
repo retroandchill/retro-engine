@@ -12,6 +12,7 @@ import std;
 import msdfgen;
 import msdf_atlas;
 import retro.core.async.task;
+import retro.core.async.concepts;
 
 namespace retro
 {

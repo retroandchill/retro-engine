@@ -2,17 +2,19 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-add_library(retro_boost STATIC)
+add_library(fmt_cppm STATIC)
 
-target_sources(retro_boost PUBLIC
+target_sources(fmt_cppm PUBLIC
         FILE_SET CXX_MODULES FILES
-        boost.ixx)
+        fmt.ixx)
 
 
-find_package(Boost REQUIRED COMPONENTS asio pool unordered dll uuid optional intrusive)
-target_link_libraries(retro_boost PUBLIC Boost::asio Boost::pool Boost::unordered Boost::dll Boost::uuid Boost::optional Boost::intrusive)
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(fmt_cppm PUBLIC fmt::fmt)
 
-set_target_properties(retro_boost PROPERTIES
+add_library(fmt::cppm ALIAS fmt_cppm)
+
+set_target_properties(fmt_cppm PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")

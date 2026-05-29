@@ -33,7 +33,6 @@ set(RETRO_CORE_PRIVATE_MODULES
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
-        public/modules/strings/format.ixx
         public/modules/strings/name.ixx
         public/modules/memory/buffers.ixx
         public/modules/memory/ref_counted_ptr.ixx
@@ -63,14 +62,12 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/manual_task_scheduler.ixx
         public/modules/strings/cstring_view.ixx
         public/modules/strings/encoding.ixx
-        public/modules/strings/deps/uni_algo.ixx
         public/modules/math/rect.ixx
         public/modules/util/deferred.ixx
         public/modules/memory/small_unique_ptr.ixx
         public/modules/util/enum_class_flags.ixx
         public/modules/functional/function_ref.ixx
         public/modules/functional/interop_function.ixx
-        public/modules/async/future.ixx
         public/modules/containers/spsc_circular_queue.ixx
         public/modules/interop/interop_error.ixx
         public/modules/async/thread_pool.ixx
@@ -78,6 +75,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/task_actions.ixx
         public/modules/async/workload.ixx
         public/modules/async/semaphore.ixx
+        public/modules/async/concepts.ixx
 )
 
 add_library(retro_core
@@ -101,16 +99,10 @@ target_sources(retro_core PRIVATE
         ${RETRO_CORE_PRIVATE_MODULES})
 
 find_package(ICU COMPONENTS uc i18n REQUIRED)
-find_package(Boost REQUIRED COMPONENTS algorithm asio thread crc pool unordered uuid)
-find_package(fmt CONFIG REQUIRED)
-find_package(uni-algo CONFIG REQUIRED)
 find_package(gcem CONFIG REQUIRED)
-target_link_libraries(retro_core PUBLIC Boost::asio Boost::algorithm Boost::unordered Boost::pool
-                                        Boost::thread
-                                        Boost::crc
-                                        Boost::uuid
-                                        uni-algo::uni-algo
-                                        fmt::fmt
+target_link_libraries(retro_core PUBLIC uni-algo::cppm
+                                        fmt::cppm
+                                        Boost::cppm
                                         gcem
                                 PRIVATE
                                         ICU::uc

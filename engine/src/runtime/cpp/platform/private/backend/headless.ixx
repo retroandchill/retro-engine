@@ -7,7 +7,6 @@
 export module retro.platform.backend:headless;
 
 import std;
-import retro.core.async.future;
 import retro.core.containers.optional;
 import retro.core.functional.overload;
 import retro.core.math.vector;

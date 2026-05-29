@@ -14,7 +14,6 @@ set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx
         private/backend/headless.ixx)
 
 set(RETRO_PLATFORM_PUBLIC_MODULES
-        public/modules/dll.ixx
         public/modules/window.ixx
         public/modules/event.ixx
         public/modules/backend.ixx
@@ -42,8 +41,7 @@ target_sources(retro_platform PRIVATE
         FILES
         ${RETRO_PLATFORM_PRIVATE_MODULES})
 
-find_package(Boost REQUIRED COMPONENTS dll)
-target_link_libraries(retro_platform PUBLIC retro_core Boost::dll SDL3::Cpp)
+target_link_libraries(retro_platform PUBLIC retro_core SDL3::Cpp)
 
 set_target_properties(retro_platform PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -4,10 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include <boost/crc.hpp>
-
 export module retro.core.algorithm.hashing;
 
 import std;
@@ -39,14 +35,5 @@ namespace retro
         (combine_one(values), ...);
 
         return seed;
-    }
-
-    export template <Char CharType>
-        requires(sizeof(CharType) <= 4)
-    [[nodiscard]] constexpr std::uint32_t crc32(std::basic_string_view<CharType> data, const std::uint32_t crc = 0)
-    {
-        boost::crc_32_type hasher{crc};
-        hasher.process_bytes(data.data(), data.size());
-        return hasher.checksum();
     }
 } // namespace retro
