@@ -28,7 +28,7 @@ namespace retro
         }
 
         void enqueue(std::coroutine_handle<> coroutine) override;
-        void enqueue(SimpleDelegate delegate) override;
+        void enqueue(SimpleDelegate delegate, std::stop_token stop_token) override;
 
       private:
         ThreadPool thread_pool_;

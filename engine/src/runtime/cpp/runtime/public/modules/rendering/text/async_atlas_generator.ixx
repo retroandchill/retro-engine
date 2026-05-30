@@ -56,12 +56,14 @@ namespace retro
             generate_async(glyphs).wait();
         }
 
-        Task<> generate_async(const msdf_atlas::GlyphGeometry *glyphs, const std::int32_t glyph_count)
+        Task<> generate_async(const msdf_atlas::GlyphGeometry *glyphs,
+                              const std::int32_t glyph_count,
+                              std::stop_token stop_token = {})
         {
-            return generate_async(std::span{glyphs, static_cast<std::size_t>(glyph_count)});
+            return generate_async(std::span{glyphs, static_cast<std::size_t>(glyph_count)}, std::move(stop_token));
         }
 
-        Task<> generate_async(const std::span<const msdf_atlas::GlyphGeometry> glyphs)
+        Task<> generate_async(const std::span<const msdf_atlas::GlyphGeometry> glyphs, std::stop_token stop_token = {})
         {
             std::int32_t max_box_area = 0;
             for (const msdf_atlas::GlyphBox box : glyphs)
@@ -104,7 +106,7 @@ namespace retro
                     return true;
                 },
                 glyphs.size()}
-                .finish_async(thread_count_);
+                .finish_async(thread_count_, stop_token);
         }
 
         void rearrange(std::int32_t width, std::int32_t height, const msdf_atlas::Remap *remapping, std::int32_t count)

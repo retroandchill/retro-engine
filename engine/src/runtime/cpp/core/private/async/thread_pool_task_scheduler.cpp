@@ -19,8 +19,9 @@ namespace retro
             });
     }
 
-    void ThreadPoolTaskScheduler::enqueue(SimpleDelegate delegate)
+    void ThreadPoolTaskScheduler::enqueue(SimpleDelegate delegate, std::stop_token stop_token)
     {
-        thread_pool_.post([delegate = std::move(delegate)] { std::ignore = delegate.execute_if_bound(); });
+        thread_pool_.post([delegate = std::move(delegate)] { std::ignore = delegate.execute_if_bound(); },
+                          std::move(stop_token));
     }
 } // namespace retro

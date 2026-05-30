@@ -13,6 +13,7 @@ import retro.core.functional.delegate;
 import retro.core.containers.optional;
 import retro.core.functional.overload;
 import retro.core.util.exceptions;
+import retro.core.async.concepts;
 
 namespace retro
 {
@@ -98,25 +99,32 @@ namespace retro
         std::variant<std::monostate, CompleteState, std::exception_ptr> result_;
     };
 
+    template <typename Functor, typename... Args>
+    struct InvocableOnAllButLast;
+
     export template <typename Functor, typename... Args>
-        requires std::invocable<Functor, Args...>
-    Task<std::invoke_result_t<Functor, Args...>> run_async(Functor &&functor, Args &&...args)
+        requires InvocableWithOptionalStopToken<Functor, Args...>
+    Task<InvocableWithOptionalStopTokenResult<Functor, Args...>> run_async(Functor &&functor, Args &&...args)
     {
-        AsyncRunState<std::invoke_result_t<Functor, Args...>> promise;
-        TaskScheduler::default_scheduler().enqueue(SimpleDelegate::create(
-            [callback = std::forward<Functor>(functor), &promise, ... args = std::forward<Args>(args)]
-            {
-                if constexpr (std::is_void_v<std::invoke_result_t<Functor, Args...>>)
+        AsyncRunState<InvocableWithOptionalStopTokenResult<Functor, Args...>> promise;
+        auto stop_token = extract_stop_token(std::forward<Args>(args)...);
+        TaskScheduler::default_scheduler().enqueue(
+            SimpleDelegate::create(
+                [callback = std::forward<Functor>(functor), &promise, ... args = std::forward<Args>(args)]
                 {
-                    std::invoke(std::forward_like<Functor>(callback), std::forward_like<Args>(args)...);
-                    promise.set_value();
-                }
-                else
-                {
-                    promise.set_value(
-                        std::invoke(std::forward_like<Functor>(callback), std::forward_like<Args>(args)...));
-                }
-            }));
+                    if constexpr (std::is_void_v<InvocableWithOptionalStopTokenResult<Functor, Args...>>)
+                    {
+                        invoke_with_optional_stop_token(std::forward_like<Functor>(callback),
+                                                        std::forward_like<Args>(args)...);
+                        promise.set_value();
+                    }
+                    else
+                    {
+                        promise.set_value(invoke_with_optional_stop_token(std::forward_like<Functor>(callback),
+                                                                          std::forward_like<Args>(args)...));
+                    }
+                }),
+            std::move(stop_token));
         co_return co_await promise;
     }
 } // namespace retro

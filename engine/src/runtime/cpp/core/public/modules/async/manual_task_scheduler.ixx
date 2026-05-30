@@ -20,13 +20,16 @@ namespace retro
     {
       public:
         void enqueue(std::coroutine_handle<> coroutine) override;
-        void enqueue(SimpleDelegate delegate) override;
+        void enqueue(SimpleDelegate delegate, std::stop_token stop_token) override;
 
         std::size_t pump(std::size_t max = std::dynamic_extent);
 
       private:
+        using DelegateCallback = std::pair<SimpleDelegate, std::stop_token>;
+        using QueuedWork = std::variant<DelegateCallback, std::coroutine_handle<>>;
+
         std::mutex mutex_;
-        std::deque<SimpleDelegate> queue_;
-        std::deque<SimpleDelegate> pumping_;
+        std::deque<QueuedWork> queue_;
+        std::deque<QueuedWork> pumping_;
     };
 } // namespace retro

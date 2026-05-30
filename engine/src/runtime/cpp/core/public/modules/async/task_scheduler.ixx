@@ -22,7 +22,13 @@ namespace retro
         virtual ~TaskScheduler() = default;
 
         virtual void enqueue(std::coroutine_handle<> coroutine) = 0;
-        virtual void enqueue(SimpleDelegate delegate) = 0;
+
+        inline void enqueue(SimpleDelegate delegate)
+        {
+            enqueue(std::move(delegate), {});
+        }
+
+        virtual void enqueue(SimpleDelegate delegate, std::stop_token stop_token) = 0;
 
         static void set_current(Optional<TaskScheduler &> scheduler) noexcept;
         static Optional<TaskScheduler &> current() noexcept;

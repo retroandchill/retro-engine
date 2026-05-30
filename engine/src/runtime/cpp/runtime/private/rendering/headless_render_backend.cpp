@@ -40,7 +40,8 @@ namespace retro
                                                                      std::int32_t width,
                                                                      std::int32_t height,
                                                                      TextureFormat format,
-                                                                     TextureFilter filtering)
+                                                                     TextureFilter filtering,
+                                                                     std::stop_token stop_token)
     {
         return Task<RefCountPtr<Texture>>::from_result(
             make_ref_counted<HeadlessTexture>(bytes | std::ranges::to<std::vector>(),

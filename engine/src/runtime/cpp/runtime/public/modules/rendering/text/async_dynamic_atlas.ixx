@@ -37,12 +37,15 @@ namespace retro
             {
                 generator.resize(side, side)
             };
-        } && requires(AtlasGenerator &generator, std::span<msdf_atlas::GlyphGeometry> geometries) {
+        } &&
+        requires(AtlasGenerator &generator,
+                 std::span<msdf_atlas::GlyphGeometry> geometries,
+                 std::stop_token stop_token) {
             {
                 generator.generate(geometries)
             };
             {
-                generator.generate_async(geometries)
+                generator.generate_async(geometries, stop_token)
             } -> Awaitable;
         };
 
@@ -70,10 +73,17 @@ namespace retro
             return change_flag;
         }
 
-        Task<AtlasChangeFlag> add_async(std::span<msdf_atlas::GlyphGeometry> glyphs, const bool allow_rearrange = false)
+        Task<AtlasChangeFlag> add_async(std::span<msdf_atlas::GlyphGeometry> glyphs, std::stop_token stop_token = {})
+        {
+            return add_async(glyphs, false, std::move(stop_token));
+        }
+
+        Task<AtlasChangeFlag> add_async(std::span<msdf_atlas::GlyphGeometry> glyphs,
+                                        const bool allow_rearrange,
+                                        std::stop_token stop_token = {})
         {
             auto change_flag = adjust_atlas_if_needed(glyphs, allow_rearrange);
-            co_await generator_.generate_async(glyphs);
+            co_await generator_.generate_async(glyphs, stop_token);
             co_return change_flag;
         }
 

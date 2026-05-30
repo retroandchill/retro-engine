@@ -27,12 +27,12 @@ namespace retro
         ThreadPool &operator=(const ThreadPool &) = delete;
         ThreadPool &operator=(ThreadPool &&) = delete;
 
-        void post(std::packaged_task<void()> task);
+        void post(std::packaged_task<void()> task, std::stop_token stop_token = std::stop_token{});
 
         template <std::invocable Functor>
-        void post(Functor &&functor)
+        void post(Functor &&functor, std::stop_token stop_token = std::stop_token{})
         {
-            post(std::packaged_task<void()>{std::forward<Functor>(functor)});
+            post(std::packaged_task<void()>{std::forward<Functor>(functor)}, std::move(stop_token));
         }
 
       private:
@@ -42,6 +42,6 @@ namespace retro
         std::vector<std::jthread> threads_;
         std::condition_variable cv_;
         std::mutex guard_;
-        std::deque<std::packaged_task<void()>> pending_jobs_;
+        std::deque<std::pair<std::packaged_task<void()>, std::stop_token>> pending_jobs_;
     };
 } // namespace retro

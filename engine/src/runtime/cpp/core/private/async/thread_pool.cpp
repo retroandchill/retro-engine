@@ -24,10 +24,10 @@ namespace retro
         cv_.notify_all();
     }
 
-    void ThreadPool::post(std::packaged_task<void()> task)
+    void ThreadPool::post(std::packaged_task<void()> task, std::stop_token stop_token)
     {
         std::unique_lock lock{guard_};
-        pending_jobs_.emplace_back(std::move(task));
+        pending_jobs_.emplace_back(std::move(task), std::move(stop_token));
         cv_.notify_one();
     }
 
@@ -35,7 +35,7 @@ namespace retro
     {
         while (is_active_)
         {
-            thread_local std::packaged_task<void()> job;
+            thread_local std::pair<std::packaged_task<void()>, std::stop_token> job;
             {
                 std::unique_lock lock{guard_};
                 cv_.wait(lock, [&] { return !pending_jobs_.empty() || !is_active_; });
@@ -43,8 +43,10 @@ namespace retro
                     break;
                 job.swap(pending_jobs_.front());
                 pending_jobs_.pop_front();
+                if (job.second.stop_requested())
+                    continue;
             }
-            job();
+            job.first();
         }
     }
 } // namespace retro

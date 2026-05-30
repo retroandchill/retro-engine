@@ -22,7 +22,8 @@ import retro.core.async.concepts;
 namespace retro
 {
     template <typename T>
-    concept ValidTaskResult = !std::same_as<T, std::monostate> && !std::same_as<T, std::exception_ptr>;
+    concept ValidTaskResult =
+        !std::same_as<T, std::monostate> && !std::same_as<T, std::exception_ptr> && !std::same_as<T, std::stop_token>;
 
     export template <ValidTaskResult T = void>
     class Task;
@@ -114,6 +115,15 @@ namespace retro
             notify_task_complete();
         }
 
+        void set_cancelled(std::stop_token stop_token = {})
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                throw InvalidStateException{"Task is already complete"};
+            result_ = std::move(stop_token);
+            notify_task_complete();
+        }
+
         template <std::convertible_to<T> U>
         bool try_set_result(U &&result)
             requires(!std::is_void_v<T>)
@@ -155,6 +165,16 @@ namespace retro
             if (!std::holds_alternative<std::monostate>(result_))
                 return false;
             result_ = std::move(ex);
+            notify_task_complete();
+            return true;
+        }
+
+        bool try_set_cancelled(std::stop_token stop_token = {})
+        {
+            std::scoped_lock lock{mutex_};
+            if (!std::holds_alternative<std::monostate>(result_))
+                return false;
+            result_ = std::move(stop_token);
             notify_task_complete();
             return true;
         }
@@ -212,9 +232,10 @@ namespace retro
         {
             return std::visit(Overload{[](std::monostate) -> T { throw InvalidStateException{"Task is empty"}; },
                                        [](T &&success) -> T { return std::move(success); },
-                                       [](const std::exception_ptr &ex) -> T
+                                       [](const std::exception_ptr &ex) -> T { std::rethrow_exception(ex); },
+                                       [](std::stop_token &&stop_token) -> T
                                        {
-                                           std::rethrow_exception(ex);
+                                           throw OperationCancelledException{std::move(stop_token)};
                                        }},
                               std::move(result_));
         }
@@ -240,7 +261,7 @@ namespace retro
         }
 
         using SuccessValue = std::conditional_t<std::is_void_v<T>, Empty, T>;
-        using ResultValue = std::variant<std::monostate, SuccessValue, std::exception_ptr>;
+        using ResultValue = std::variant<std::monostate, SuccessValue, std::exception_ptr, std::stop_token>;
 
         mutable std::mutex mutex_;
         ResultValue result_{};
@@ -255,6 +276,17 @@ namespace retro
     class TaskPromiseBase
     {
       public:
+        template <typename... Args>
+        explicit TaskPromiseBase(Args &&...args) : stop_token_{extract_stop_token(std::forward<Args>(args)...)}
+        {
+        }
+
+        TaskPromiseBase(const TaskPromiseBase &) = delete;
+        TaskPromiseBase(TaskPromiseBase &&) noexcept = delete;
+        ~TaskPromiseBase() = default;
+        TaskPromiseBase &operator=(const TaskPromiseBase &) = delete;
+        TaskPromiseBase &operator=(TaskPromiseBase &&) noexcept = delete;
+
         template <typename Self>
         T get_result(this Self &&self)
             requires !std::is_void_v<T>
@@ -278,7 +310,25 @@ namespace retro
 
         void unhandled_exception() noexcept
         {
-            result_.set_exception(std::current_exception());
+            try
+            {
+                std::rethrow_exception(std::current_exception());
+            }
+            catch (const OperationCancelledException &ex)
+            {
+                if (ex.stop_token().stop_possible() && ex.stop_token() == stop_token_)
+                {
+                    result().set_cancelled(ex.stop_token());
+                }
+                else
+                {
+                    result().set_exception(std::current_exception());
+                }
+            }
+            catch (...)
+            {
+                result_.set_exception(std::current_exception());
+            }
         }
 
         void wait() const
@@ -306,6 +356,11 @@ namespace retro
             return result_.try_suspend(continuation);
         }
 
+        [[nodiscard]] const std::stop_token &stop_token() const noexcept
+        {
+            return stop_token_;
+        }
+
       protected:
         TaskCompletion<T> &result() noexcept
         {
@@ -319,12 +374,15 @@ namespace retro
 
       private:
         TaskCompletion<T> result_{};
+        std::stop_token stop_token_;
     };
 
     template <typename T>
     class TaskPromise : public TaskPromiseBase<T>
     {
       public:
+        using TaskPromiseBase<T>::TaskPromiseBase;
+
         template <std::convertible_to<T> U>
         void return_value(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
         {
@@ -339,6 +397,8 @@ namespace retro
     class TaskPromise<void> : public TaskPromiseBase<void>
     {
       public:
+        using TaskPromiseBase::TaskPromiseBase;
+
         inline void return_void() noexcept
         {
             result().set_result();
@@ -351,7 +411,7 @@ namespace retro
     template <ValidTaskResult T>
     struct ImmediateState
     {
-        using ResultType = std::variant<T, std::exception_ptr>;
+        using ResultType = std::variant<T, std::exception_ptr, std::stop_token>;
         ResultType result{};
 
         template <typename... Args>
@@ -363,9 +423,10 @@ namespace retro
         T get_result()
         {
             return std::visit(Overload{[](T &&success) -> T { return std::move(success); },
-                                       [](const std::exception_ptr &ex) -> T
+                                       [](const std::exception_ptr &ex) -> T { std::rethrow_exception(ex); },
+                                       [](std::stop_token &&stop_token) -> T
                                        {
-                                           std::rethrow_exception(ex);
+                                           throw OperationCancelledException{std::move(stop_token)};
                                        }},
                               std::move(result));
         }
@@ -374,7 +435,7 @@ namespace retro
     template <>
     struct ImmediateState<void>
     {
-        using ResultType = std::variant<std::monostate, std::exception_ptr>;
+        using ResultType = std::variant<std::monostate, std::exception_ptr, std::stop_token>;
         ResultType result{};
 
         template <typename... Args>
@@ -383,14 +444,15 @@ namespace retro
         {
         }
 
-        inline void get_result() const
+        inline void get_result()
         {
-            return std::visit(Overload{[](std::monostate) {},
-                                       [](const std::exception_ptr &ex)
-                                       {
-                                           std::rethrow_exception(ex);
-                                       }},
-                              result);
+            std::visit(Overload{[](std::monostate) {},
+                                [](std::exception_ptr &&ex) { std::rethrow_exception(std::move(ex)); },
+                                [](std::stop_token &&stop_token)
+                                {
+                                    throw OperationCancelledException{std::move(stop_token)};
+                                }},
+                       std::move(result));
         }
     };
 
@@ -469,7 +531,8 @@ namespace retro
             }
         };
 
-        explicit Task(Handle coro) noexcept : state_(coro)
+        explicit Task(Handle coro, std::stop_token stop_token) noexcept
+            : state_(coro), stop_token_(std::move(stop_token))
         {
         }
 
@@ -482,6 +545,24 @@ namespace retro
         }
 
       public:
+        Task(const Task &) = delete;
+        Task(Task &&other) noexcept : state_{std::exchange(other.state_, {})}, stop_token_{std::move(other.stop_token_)}
+        {
+        }
+
+        ~Task() = default;
+
+        Task &operator=(const Task &) = delete;
+        Task &operator=(Task &&other) noexcept
+        {
+            if (this != &other)
+            {
+                state_ = std::exchange(other.state_, {});
+                stop_token_ = std::move(other.stop_token_);
+            }
+            return *this;
+        }
+
         using promise_type = TaskPromise<T>;
 
         template <std::convertible_to<T> U>
@@ -499,7 +580,12 @@ namespace retro
 
         [[nodiscard]] static Task from_exception(std::exception_ptr ex) noexcept
         {
-            return Task{ImmediateState<T>{std::in_place_index<ImmediateState<T>::exception_state>, std::move(ex)}};
+            return Task{ImmediateState<T>{std::in_place_type<std::exception_ptr>, std::move(ex)}};
+        }
+
+        [[nodiscard]] static Task cancelled(std::stop_token stop_token = {}) noexcept
+        {
+            return Task{ImmediateState<T>{std::in_place_type<std::stop_token>, std::move(stop_token)}};
         }
 
         [[nodiscard]] T get() &&
@@ -579,6 +665,7 @@ namespace retro
         friend class TaskCompletionSource<T>;
 
         State state_{};
+        std::stop_token stop_token_;
     };
 
     template <ValidTaskResult T>
@@ -617,6 +704,11 @@ namespace retro
             completion_->set_exception(std::move(ex));
         }
 
+        void set_cancelled(std::stop_token stop_token = {})
+        {
+            completion_->set_cancelled(std::move(stop_token));
+        }
+
         template <std::convertible_to<T> U>
         bool try_set_result(U &&result)
             requires(!std::is_void_v<T>)
@@ -640,6 +732,11 @@ namespace retro
         bool try_set_exception(std::exception_ptr ex)
         {
             return completion_->try_set_exception(std::move(ex));
+        }
+
+        bool try_set_cancelled(std::stop_token stop_token = {})
+        {
+            return completion_->try_set_cancelled(std::move(stop_token));
         }
 
         Task<T> get_task()
@@ -668,7 +765,7 @@ namespace retro
     template <typename Self>
     Task<T> TaskPromiseBase<T>::get_return_object(this Self &self) noexcept
     {
-        return Task<T>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(self)};
+        return Task<T>{std::coroutine_handle<std::remove_const_t<Self>>::from_promise(self), self.stop_token()};
     }
 
 } // namespace retro

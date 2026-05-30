@@ -27,6 +27,7 @@ namespace retro
                                                   std::int32_t width,
                                                   std::int32_t height,
                                                   TextureFormat format,
-                                                  TextureFilter filtering) override;
+                                                  TextureFilter filtering,
+                                                  std::stop_token stop_token) override;
     };
 } // namespace retro

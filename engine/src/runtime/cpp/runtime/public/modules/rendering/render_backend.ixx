@@ -27,14 +27,25 @@ namespace retro
                                                           std::int32_t width,
                                                           std::int32_t height,
                                                           TextureFormat format,
-                                                          TextureFilter filtering) = 0;
+                                                          TextureFilter filtering,
+                                                          std::stop_token stop_token) = 0;
 
         inline Task<RefCountPtr<Texture>> upload_texture(const std::span<const std::byte> bytes,
                                                          const std::int32_t width,
                                                          const std::int32_t height,
-                                                         const TextureFormat format)
+                                                         const TextureFormat format,
+                                                         const TextureFilter filtering)
         {
-            return upload_texture(bytes, width, height, format, TextureFilter::nearest);
+            return upload_texture(bytes, width, height, format, filtering, std::stop_token{});
+        }
+
+        inline Task<RefCountPtr<Texture>> upload_texture(const std::span<const std::byte> bytes,
+                                                         const std::int32_t width,
+                                                         const std::int32_t height,
+                                                         const TextureFormat format,
+                                                         std::stop_token stop_token = {})
+        {
+            return upload_texture(bytes, width, height, format, TextureFilter::nearest, std::move(stop_token));
         }
 
         inline Task<RefCountPtr<Texture>> upload_texture(const ImageData &image)

@@ -49,7 +49,7 @@ TEST(FontService, LoadFontFace)
     auto bytes = read_test_font();
     ASSERT_FALSE(bytes.empty());
 
-    const auto font = service.load_font(std::move(bytes)).get();
+    const auto font = service.load_font(std::move(bytes), TODO).get();
 
     EXPECT_FALSE(font->family_name().empty());
     EXPECT_FALSE(font->style_name().empty());

@@ -114,7 +114,8 @@ namespace retro
 
     Task<> FontAtlas::add_glyphs_async(RefCountPtr<RenderBackend> render_backend,
                                        msdfgen::FontHandle &handle,
-                                       std::u32string_view codepoints)
+                                       std::u32string_view codepoints,
+                                       std::stop_token stop_token)
     {
         auto guard = co_await atlas_semaphore_.enter_scope_async();
         auto new_chars = get_new_chars(codepoints);
@@ -160,10 +161,14 @@ namespace retro
         std::span pixels{reinterpret_cast<const std::byte *>(storage.pixels),
                          static_cast<std::size_t>(storage.width * storage.height * 4)};
 
-        auto new_texture =
-            co_await render_backend
-                ->upload_texture(pixels, storage.width, storage.height, TextureFormat::unorm, TextureFilter::linear)
-                .configure_await(false);
+        auto new_texture = co_await render_backend
+                               ->upload_texture(pixels,
+                                                storage.width,
+                                                storage.height,
+                                                TextureFormat::unorm,
+                                                TextureFilter::linear,
+                                                stop_token)
+                               .configure_await(false);
 
         std::unique_lock write_lock{mutex_};
         for (const auto &glyph : glyphs)
@@ -237,7 +242,7 @@ namespace retro
     {
     }
 
-    Task<RefCountPtr<Font>> FontService::load_font(std::vector<std::byte> bytes) const
+    Task<RefCountPtr<Font>> FontService::load_font(std::vector<std::byte> bytes, const std::stop_token stop_token) const
     {
         const auto bytes_span = SDL::IOFromConstMem(bytes);
         const SDL::Font font{bytes_span, 16};
@@ -245,13 +250,15 @@ namespace retro
 
         constexpr FontMsdfAtlasConfig atlas_config{.pixel_size = 24, .distance_range = 2.0f};
 
-        auto atlas = co_await generate_font_atlas(font_face, atlas_config);
+        auto atlas = co_await generate_font_atlas(font_face, atlas_config, stop_token);
 
         co_return RefCountPtr<Font>::ref(
             new Font{render_backend_.shared_from_this(), std::move(font_face), std::move(atlas)});
     }
 
-    Task<FontAtlas> FontService::generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const
+    Task<FontAtlas> FontService::generate_font_atlas(FontFace &face,
+                                                     const FontMsdfAtlasConfig &atlas_config,
+                                                     const std::stop_token stop_token) const
     {
         FontAtlas output{};
         std::vector<msdf_atlas::GlyphGeometry> glyphs;
@@ -280,7 +287,7 @@ namespace retro
         msdf_atlas::GeneratorAttributes attributes;
         generator.set_attributes(attributes);
         generator.set_thread_count(4);
-        co_await output.atlas_.add_async(glyphs);
+        co_await output.atlas_.add_async(glyphs, stop_token).configure_await(false);
 
         msdfgen::BitmapConstRef<msdfgen::byte, 4> storage = output.atlas_.atlas_generator().atlas_storage();
         auto width = storage.width;
@@ -317,10 +324,14 @@ namespace retro
                          static_cast<std::size_t>(section.width * section.height * 4)};
 
         output.source_pixel_size_ = static_cast<float>(packer.getScale());
-        output.texture_ =
-            co_await render_backend_
-                .upload_texture(pixels, section.width, section.height, TextureFormat::unorm, TextureFilter::linear)
-                .configure_await(false);
+        output.texture_ = co_await render_backend_
+                              .upload_texture(pixels,
+                                              section.width,
+                                              section.height,
+                                              TextureFormat::unorm,
+                                              TextureFilter::linear,
+                                              stop_token)
+                              .configure_await(false);
 
         co_return output;
     }

@@ -43,7 +43,8 @@ namespace retro
                                                                    const std::int32_t width,
                                                                    const std::int32_t height,
                                                                    const TextureFormat format,
-                                                                   TextureFilter filtering)
+                                                                   TextureFilter filtering,
+                                                                   std::stop_token stop_token)
     {
         auto image_size = bytes.size();
         auto image_format = vk::Format::eUndefined;
@@ -67,7 +68,8 @@ namespace retro
                                                              height,
                                                              format,
                                                              filtering,
-                                                             image_format);
+                                                             image_format,
+                                                             stop_token);
         result->staging_buffer.read_from_buffer(bytes);
 
         vk::ImageCreateInfo image_info{
@@ -108,6 +110,12 @@ namespace retro
 
                 std::swap(payload, pending_texture_uploads_.front());
                 pending_texture_uploads_.pop_front();
+
+                if (payload->stop_token.stop_requested())
+                {
+                    payload->promise.set_cancelled(payload->stop_token);
+                    continue;
+                }
             }
 
             payload->promise.set_result(upload_texture_impl(*payload));

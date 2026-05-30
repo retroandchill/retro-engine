@@ -8,6 +8,8 @@ module;
 
 #include "retro/core/exports.h"
 
+#include <msdf-atlas-gen/AtlasGenerator.h>
+
 export module retro.runtime.rendering.text.font;
 
 import std;
@@ -124,7 +126,8 @@ namespace retro
 
         Task<> add_glyphs_async(RefCountPtr<RenderBackend> render_backend,
                                 msdfgen::FontHandle &handle,
-                                std::u32string_view codepoints);
+                                std::u32string_view codepoints,
+                                std::stop_token stop_token = {});
 
         [[nodiscard]] msdf_atlas::Charset get_new_chars(std::u32string_view codepoints) const;
 
@@ -214,10 +217,13 @@ namespace retro
       public:
         explicit FontService(RenderBackend &render_backend);
 
-        [[nodiscard]] Task<RefCountPtr<Font>> load_font(std::vector<std::byte> bytes) const;
+        [[nodiscard]] Task<RefCountPtr<Font>> load_font(std::vector<std::byte> bytes,
+                                                        std::stop_token stop_token = {}) const;
 
       private:
-        Task<FontAtlas> generate_font_atlas(FontFace &face, const FontMsdfAtlasConfig &atlas_config) const;
+        Task<FontAtlas> generate_font_atlas(FontFace &face,
+                                            const FontMsdfAtlasConfig &atlas_config,
+                                            std::stop_token stop_token) const;
 
         SdlTffScope ttf_scope_;
         RenderBackend &render_backend_;

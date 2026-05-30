@@ -41,7 +41,8 @@ namespace retro
                                                   std::int32_t width,
                                                   std::int32_t height,
                                                   TextureFormat format,
-                                                  TextureFilter filtering) override;
+                                                  TextureFilter filtering,
+                                                  std::stop_token stop_token) override;
 
       private:
         struct TextureUploadPayload
@@ -55,15 +56,17 @@ namespace retro
             TextureFilter filtering{};
             vk::Format image_format{};
             TaskCompletionSource<RefCountPtr<Texture>> promise;
+            std::stop_token stop_token;
 
             TextureUploadPayload(VulkanStagingBuffer staging_buffer,
                                  std::int32_t width,
                                  std::int32_t height,
                                  TextureFormat format,
                                  TextureFilter filtering,
-                                 vk::Format image_format) noexcept
+                                 vk::Format image_format,
+                                 std::stop_token stop_token) noexcept
                 : staging_buffer(std::move(staging_buffer)), width(width), height(height), format(format),
-                  filtering(filtering), image_format(image_format)
+                  filtering(filtering), image_format(image_format), stop_token{std::move(stop_token)}
             {
             }
         };

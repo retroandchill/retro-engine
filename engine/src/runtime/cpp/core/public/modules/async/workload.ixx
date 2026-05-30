@@ -27,11 +27,11 @@ namespace retro
 
         [[nodiscard]] bool finish(std::int32_t thread_count) const;
 
-        [[nodiscard]] Task<bool> finish_async(std::int32_t thread_count) const;
+        [[nodiscard]] Task<bool> finish_async(std::int32_t thread_count, std::stop_token stop_token) const;
 
       private:
         [[nodiscard]] bool finish_sequential() const;
-        [[nodiscard]] Task<bool> finish_parallel(std::int32_t thread_count) const;
+        [[nodiscard]] Task<bool> finish_parallel(std::int32_t thread_count, std::stop_token stop_token = {}) const;
 
         std::function<bool(std::size_t, std::size_t)> worker_function_;
         std::size_t chunks_{0};

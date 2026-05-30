@@ -75,6 +75,7 @@ set(RETRO_CORE_PUBLIC_MODULES
         public/modules/async/workload.ixx
         public/modules/async/semaphore.ixx
         public/modules/async/concepts.ixx
+        public/modules/type_traits/arguments.ixx
 )
 
 add_library(retro_core
