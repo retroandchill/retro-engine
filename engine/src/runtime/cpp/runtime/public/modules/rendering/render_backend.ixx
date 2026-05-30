@@ -11,8 +11,8 @@ import retro.core.memory.ref_counted_ptr;
 import retro.runtime.rendering.renderer2d;
 import retro.platform.window;
 import retro.runtime.rendering.texture;
-import retro.runtime.rendering.image_data;
 import retro.core.async.task;
+import stb.image;
 
 namespace retro
 {
@@ -46,11 +46,6 @@ namespace retro
                                                          std::stop_token stop_token = {})
         {
             return upload_texture(bytes, width, height, format, TextureFilter::nearest, std::move(stop_token));
-        }
-
-        inline Task<RefCountPtr<Texture>> upload_texture(const ImageData &image)
-        {
-            return upload_texture(image.bytes(), image.width(), image.height(), image.format());
         }
     };
 } // namespace retro

@@ -6,6 +6,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using Microsoft.Extensions.Options;
+using RetroEngine.Async;
 using RetroEngine.Config;
 using RetroEngine.Interop;
 using RetroEngine.Platform;
@@ -37,7 +38,7 @@ public sealed partial class RenderBackend : IDisposable
     internal Task<Texture> UploadTextureAsync(ReadOnlySpan<byte> data, CancellationToken cancellationToken = default)
     {
         var tsc = new TaskCompletionSource<Texture>();
-        cancellationToken.Register(() => tsc.TrySetCanceled());
+        using var nativeSource = NativeCancellationSource.FromCancellationToken(cancellationToken);
 
         var gcHandle = GCHandle.Alloc(tsc);
         tsc.Task.ContinueWith(_ => gcHandle.Free(), TaskContinuationOptions.ExecuteSynchronously);
@@ -49,7 +50,9 @@ public sealed partial class RenderBackend : IDisposable
                 data.Length,
                 &OnTextureCreated,
                 &OnTextureUploadFailed,
-                GCHandle.ToIntPtr(gcHandle)
+                &OnTextureUploadCancelled,
+                GCHandle.ToIntPtr(gcHandle),
+                nativeSource
             );
         }
         return tsc.Task;
@@ -76,6 +79,13 @@ public sealed partial class RenderBackend : IDisposable
             InteropErrorMarshaller.ConvertToManaged(nativeError).ToException()
                 ?? new InvalidOperationException("Unknown error")
         );
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnTextureUploadCancelled(IntPtr userData)
+    {
+        var tsc = (TaskCompletionSource<Texture>)GCHandle.FromIntPtr(userData).Target!;
+        tsc.TrySetCanceled();
     }
 
     public void Dispose()
@@ -105,7 +115,9 @@ public sealed partial class RenderBackend : IDisposable
         int length,
         delegate* unmanaged<IntPtr, IntPtr, int, int, TextureFormat, void> onCreated,
         delegate* unmanaged<IntPtr, NativeInteropError, void> onError,
-        IntPtr userData
+        delegate* unmanaged<IntPtr, void> onCancelled,
+        IntPtr userData,
+        NativeCancellationSource? cancellationSource
     );
 }
 

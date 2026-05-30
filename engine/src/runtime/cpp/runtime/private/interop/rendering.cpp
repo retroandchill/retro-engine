@@ -7,6 +7,7 @@
 #include "retro/core/exports.h"
 
 import std;
+import stb.image;
 import retro.runtime.rendering.render_backend;
 import retro.core.interop.interop_error;
 import retro.platform.backend;
@@ -22,7 +23,6 @@ import retro.core.strings.encoding;
 import retro.core.async.task;
 import retro.core.functional.interop_function;
 import retro.runtime.rendering.texture;
-import retro.runtime.rendering.image_data;
 import retro.core.memory.ref_counted_ptr;
 
 using namespace retro;
@@ -50,6 +50,7 @@ namespace
 
     using WindowCreatedCallback = void (*)(void *, std::uint64_t);
     using OnErrorCallback = void (*)(void *, InteropError);
+    using OnCancelledCallback = void (*)(void *);
 
     using TextureCreatedCallback = void (*)(void *, Texture *, std::int32_t, std::int32_t, TextureFormat);
 } // namespace
@@ -61,13 +62,19 @@ extern "C"
                                                        const std::int32_t length,
                                                        TextureCreatedCallback on_created,
                                                        OnErrorCallback on_error,
-                                                       void *user_data)
+                                                       OnCancelledCallback on_cancelled,
+                                                       void *user_data,
+                                                       const std::stop_source *stop_source)
     {
+        const auto stop_token = stop_source != nullptr ? stop_source->get_token() : std::stop_token{};
         try_execute_async(
-            [backend, bytes, length]
+            [backend, bytes, length, stop_token]
             {
-                const auto image = ImageData::create_from_memory(std::span{bytes, static_cast<std::size_t>(length)});
-                return backend->upload_texture(image).configure_await(false);
+                const auto image = stb::image::Image::load(std::span{bytes, static_cast<std::size_t>(length)},
+                                                           stb::image::Channels::rgb_alpha);
+                return backend
+                    ->upload_texture(image.bytes(), image.width(), image.height(), TextureFormat::rgba8, stop_token)
+                    .configure_await(false);
             },
             [on_created, user_data](RefCountPtr<Texture> texture)
             {
@@ -76,7 +83,9 @@ extern "C"
                 const auto format = texture->format();
                 on_created(user_data, texture.release(), width, height, format);
             },
-            [on_error, user_data](const InteropError &error) { on_error(user_data, error); });
+            [on_error, user_data](const InteropError &error) { on_error(user_data, error); },
+            [user_data, on_cancelled] { on_cancelled(user_data); },
+            stop_token);
     }
 
     RETRO_API void retro_render_pipeline_destroy(const RenderPipeline *pipeline)

@@ -5,6 +5,7 @@
 
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using RetroEngine.Async;
 using RetroEngine.Interop;
 
 namespace RetroEngine.Rendering.Text;
@@ -35,13 +36,22 @@ public sealed partial class FontService : IDisposable
     {
         ThrowIfDisposed();
         var tcs = new TaskCompletionSource<Font>();
-        cancellationToken.Register(() => tcs.TrySetCanceled());
+        using var nativeSource = NativeCancellationSource.FromCancellationToken(cancellationToken);
 
         var gcHandle = GCHandle.Alloc(tcs);
         tcs.Task.ContinueWith(_ => gcHandle.Free(), TaskContinuationOptions.ExecuteSynchronously);
         unsafe
         {
-            NativeLoadFont(this, bytes, bytes.Length, &OnLoaded, &OnError, GCHandle.ToIntPtr(gcHandle));
+            NativeLoadFont(
+                this,
+                bytes,
+                bytes.Length,
+                &OnLoaded,
+                &OnError,
+                &OnCancelled,
+                GCHandle.ToIntPtr(gcHandle),
+                nativeSource
+            );
         }
         return tcs.Task;
     }
@@ -61,6 +71,13 @@ public sealed partial class FontService : IDisposable
             InteropErrorMarshaller.ConvertToManaged(error).ToException()
                 ?? new InvalidOperationException("Unknown error")
         );
+    }
+
+    [UnmanagedCallersOnly]
+    private static void OnCancelled(IntPtr userData)
+    {
+        var tcs = (TaskCompletionSource<Font>)GCHandle.FromIntPtr(userData).Target!;
+        tcs.TrySetCanceled();
     }
 
     private void ThrowIfDisposed()
@@ -91,7 +108,9 @@ public sealed partial class FontService : IDisposable
         int length,
         delegate* unmanaged<IntPtr, IntPtr, void> onLoaded,
         delegate* unmanaged<IntPtr, NativeInteropError, void> onError,
-        IntPtr userData
+        delegate* unmanaged<IntPtr, void> onCancelled,
+        IntPtr userData,
+        NativeCancellationSource? cancellationSource
     );
 }
 

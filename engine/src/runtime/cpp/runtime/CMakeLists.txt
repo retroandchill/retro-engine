@@ -60,7 +60,6 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/world/viewport.cpp
         private/rendering/render_manager.cpp
         private/rendering/headless_render_backend.cpp
-        private/rendering/image_data.cpp
         private/interop/engine.cpp
         private/interop/scene.cpp
         private/interop/assets.cpp
@@ -97,7 +96,6 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/rendering/headless_render_backend.ixx
         public/modules/rendering/headless_renderer2d.ixx
         public/modules/rendering/texture.ixx
-        public/modules/rendering/image_data.ixx
         public/modules/rendering/text/font.ixx
         public/modules/rendering/objects/text_block.ixx
         public/modules/rendering/layout/uvs.ixx

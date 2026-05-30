@@ -41,4 +41,19 @@ extern "C"
     {
         try_execute([&] { scheduler->pump(static_cast<std::size_t>(max)); }, *error);
     }
+
+    RETRO_API std::stop_source *retro_stop_source_create()
+    {
+        return new std::stop_source{};
+    }
+
+    RETRO_API void retro_stop_source_destroy(const std::stop_source *source)
+    {
+        delete source;
+    }
+
+    RETRO_API void retro_stop_source_request_stop(std::stop_source *source)
+    {
+        source->request_stop();
+    }
 }

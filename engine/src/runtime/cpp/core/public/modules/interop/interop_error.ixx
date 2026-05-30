@@ -286,6 +286,73 @@ namespace retro
         }(std::forward<Functor>(functor), std::forward<OnSuccess>(on_success), std::forward<OnError>(on_error));
     }
 
+    export template <AwaitableFunctor Functor,
+                     typename OnSuccess,
+                     std::invocable<InteropError> OnError,
+                     std::invocable OnCancellation>
+        requires(std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>> && std::invocable<OnSuccess>) ||
+                (!std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>> &&
+                 std::invocable<OnSuccess, AwaitResult<std::invoke_result_t<Functor>>>)
+    void try_execute_async(Functor &&functor,
+                           OnSuccess &&on_success,
+                           OnError &&on_error,
+                           OnCancellation &&on_cancellation,
+                           std::stop_token stop_token)
+    {
+        std::ignore = [](auto local_functor,
+                         auto local_on_success,
+                         auto local_on_error,
+                         auto local_on_cancellation,
+                         std::stop_token local_stop_token) -> Task<>
+        {
+            try
+            {
+                if constexpr (std::is_void_v<AwaitResult<std::invoke_result_t<Functor>>>)
+                {
+                    co_await std::invoke(std::forward<Functor>(local_functor));
+                    std::invoke(std::forward<OnSuccess>(local_on_success));
+                }
+                else
+                {
+                    std::invoke(std::forward<OnSuccess>(local_on_success),
+                                co_await std::invoke(std::forward<Functor>(local_functor)));
+                }
+            }
+            catch (OperationCancelledException &e)
+            {
+                if (local_stop_token.stop_possible() && local_stop_token == e.stop_token())
+                {
+                    std::invoke(std::forward<OnCancellation>(local_on_cancellation));
+                }
+                else
+                {
+                    auto &type_id = typeid(e);
+                    std::invoke(std::forward<OnError>(local_on_error),
+                                InteropError{.error_code = get_error_code(e),
+                                             .native_exception_type = type_id.name(),
+                                             .message = e.what()});
+                }
+            }
+            catch (std::exception &e)
+            {
+                auto &type_id = typeid(e);
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = get_error_code(e),
+                                         .native_exception_type = type_id.name(),
+                                         .message = e.what()});
+            }
+            catch (...)
+            {
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"});
+            }
+        }(std::forward<Functor>(functor),
+          std::forward<OnSuccess>(on_success),
+          std::forward<OnError>(on_error),
+          std::forward<OnCancellation>(on_cancellation),
+          std::move(stop_token));
+    }
+
     export template <AwaitableExpectedFunctor Functor,
                      std::invocable<AwaitedExpectedInteropError<Functor>> ErrorHandler,
                      std::invocable<AwaitedExpectedInteropResult<Functor>> OnSuccess,
@@ -326,5 +393,75 @@ namespace retro
           std::forward<ErrorHandler>(error_handle),
           std::forward<OnSuccess>(on_success),
           std::forward<OnError>(on_error));
+    }
+
+    export template <AwaitableExpectedFunctor Functor,
+                     std::invocable<AwaitedExpectedInteropError<Functor>> ErrorHandler,
+                     std::invocable<AwaitedExpectedInteropResult<Functor>> OnSuccess,
+                     std::invocable<InteropError> OnError,
+                     std::invocable OnCancellation>
+        requires std::convertible_to<std::invoke_result_t<ErrorHandler, AwaitedExpectedInteropError<Functor>>,
+                                     InteropError>
+    void try_execute_async(Functor &&functor,
+                           ErrorHandler &&error_handle,
+                           OnSuccess &&on_success,
+                           OnError &&on_error,
+                           OnCancellation &&on_cancellation,
+                           std::stop_token stop_token)
+    {
+        std::ignore = [](auto local_functor,
+                         auto local_error_handle,
+                         auto local_on_success,
+                         auto local_on_error,
+                         auto local_on_cancellation,
+                         std::stop_token local_stop_token) -> Task<>
+        {
+            try
+            {
+                auto result = co_await std::invoke(std::forward<Functor>(local_functor));
+                if (!result.has_value())
+                {
+                    std::invoke(std::forward<OnError>(local_on_error),
+                                std::invoke(std::forward<ErrorHandler>(local_error_handle), std::move(result).error()));
+                    co_return;
+                }
+
+                std::invoke(std::forward<OnSuccess>(local_on_success), *std::move(result));
+            }
+
+            catch (OperationCancelledException &e)
+            {
+                if (local_stop_token.stop_possible() && local_stop_token == e.stop_token())
+                {
+                    std::invoke(std::forward<OnCancellation>(local_on_cancellation));
+                }
+                else
+                {
+                    auto &type_id = typeid(e);
+                    std::invoke(std::forward<OnError>(local_on_error),
+                                InteropError{.error_code = get_error_code(e),
+                                             .native_exception_type = type_id.name(),
+                                             .message = e.what()});
+                }
+            }
+            catch (std::exception &e)
+            {
+                auto &type_id = typeid(e);
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = get_error_code(e),
+                                         .native_exception_type = type_id.name(),
+                                         .message = e.what()});
+            }
+            catch (...)
+            {
+                std::invoke(std::forward<OnError>(local_on_error),
+                            InteropError{.error_code = InteropErrorCode::unknown, .message = "Unknown error"});
+            }
+        }(std::forward<Functor>(functor),
+          std::forward<ErrorHandler>(error_handle),
+          std::forward<OnSuccess>(on_success),
+          std::forward<OnError>(on_error),
+          std::forward<OnCancellation>(on_cancellation),
+          std::move(stop_token));
     }
 } // namespace retro

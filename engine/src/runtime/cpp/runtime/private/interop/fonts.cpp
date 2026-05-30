@@ -18,6 +18,7 @@ namespace
 {
     using OnFontLoaded = void (*)(void *, Font *);
     using OnFontLoadFailed = void (*)(void *, InteropError);
+    using OnFontLoadCancelled = void (*)(void *);
 } // namespace
 
 extern "C"
@@ -37,17 +38,22 @@ extern "C"
                                                 const std::int32_t size,
                                                 OnFontLoaded on_loaded,
                                                 OnFontLoadFailed on_failed,
-                                                void *user_data)
+                                                OnFontLoadCancelled on_cancelled,
+                                                void *user_data,
+                                                const std::stop_source *stop_source)
     {
+        const auto stop_token = stop_source != nullptr ? stop_source->get_token() : std::stop_token{};
         try_execute_async(
             [=]
             {
                 auto input_span = std::span{bytes, static_cast<std::size_t>(size)};
                 std::vector buffer(input_span.begin(), input_span.end());
-                return service->load_font(std::move(buffer)).configure_await(false);
+                return service->load_font(std::move(buffer), stop_token).configure_await(false);
             },
             [on_loaded, user_data](RefCountPtr<Font> font) { on_loaded(user_data, font.release()); },
-            [on_failed, user_data](const InteropError &error) { on_failed(user_data, error); });
+            [on_failed, user_data](const InteropError &error) { on_failed(user_data, error); },
+            [on_cancelled, user_data] { on_cancelled(user_data); },
+            stop_token);
     }
 
     RETRO_API void retro_font_destroy(const Font *font)
