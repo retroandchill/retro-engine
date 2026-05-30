@@ -3,6 +3,8 @@
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
+
 namespace AutoViewModel.SourceGenerator.Utils;
 
 using System.Reflection;
@@ -10,22 +12,23 @@ using System.Reflection;
 public static class TemplateLoader
 {
     private const string TemplateNamespace = "AutoViewModel.SourceGenerator.Templates";
-    private static readonly Dictionary<string, string> Templates = new();
+    private static readonly ConcurrentDictionary<string, string> Templates = new();
 
     public static string LoadTemplate(string name)
     {
         var resourceName = $"{TemplateNamespace}.{name}.mustache";
-        if (Templates.TryGetValue(resourceName, out var template))
-            return template;
+        return Templates.GetOrAdd(
+            resourceName,
+            key =>
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                using var stream =
+                    asm.GetManifestResourceStream(key)
+                    ?? throw new InvalidOperationException($"Missing resource: {key}");
 
-        var asm = Assembly.GetExecutingAssembly();
-        using var stream =
-            asm.GetManifestResourceStream(resourceName)
-            ?? throw new InvalidOperationException($"Missing resource: {resourceName}");
-
-        using var reader = new StreamReader(stream);
-        var templateText = reader.ReadToEnd();
-        Templates.Add(resourceName, templateText);
-        return templateText;
+                using var reader = new StreamReader(stream);
+                return reader.ReadToEnd();
+            }
+        );
     }
 }
