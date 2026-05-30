@@ -9,7 +9,7 @@
 #include <unicode/urename.h>
 
 import std;
-import retro.core.localization.icu;
+import icu;
 import retro.core.localization.buffers;
 
 extern "C"
@@ -18,7 +18,7 @@ extern "C"
     {
         UErrorCode status{};
         u_init(&status);
-        if (retro::is_failure(status))
+        if (icu::is_failure(status))
         {
             *error_message = u_errorName(status);
             return false;

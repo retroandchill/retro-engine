@@ -141,10 +141,8 @@ target_sources(retro_runtime PRIVATE
 target_link_libraries(retro_runtime PUBLIC retro_core retro_logging retro_platform
                                     PRIVATE
                                         msdfgen::cppm
-                                        msdf-atlas-gen::cppm)
-
-find_package(Stb REQUIRED)
-target_include_directories(retro_runtime PRIVATE ${Stb_INCLUDE_DIR})
+                                        msdf-atlas-gen::cppm
+                                        Stb::Cpp)
 add_dependencies(retro_runtime renderer_shaders)
 
 set_target_properties(retro_runtime PROPERTIES

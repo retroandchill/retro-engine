@@ -7,7 +7,7 @@
 #include "retro/core/exports.h"
 
 import std;
-import retro.core.localization.icu;
+import icu;
 
 extern "C"
 {

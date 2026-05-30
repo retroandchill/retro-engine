@@ -29,7 +29,6 @@ set(RETRO_CORE_HEADERS public/include/retro/core/exports.h
 
 set(RETRO_CORE_PRIVATE_MODULES
         private/localization/buffers.ixx
-        private/localization/icu.ixx
 )
 
 set(RETRO_CORE_PUBLIC_MODULES
@@ -98,15 +97,13 @@ target_sources(retro_core PRIVATE
         TYPE CXX_MODULES FILES
         ${RETRO_CORE_PRIVATE_MODULES})
 
-find_package(ICU COMPONENTS uc i18n REQUIRED)
-find_package(gcem CONFIG REQUIRED)
+
 target_link_libraries(retro_core PUBLIC uni-algo::cppm
                                         fmt::cppm
                                         Boost::cppm
-                                        gcem
+                                        gcem::cppm
                                 PRIVATE
-                                        ICU::uc
-                                        ICU::i18n)
+                                        ICU::Cppm)
 
 set_target_properties(retro_core PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"

@@ -11,7 +11,6 @@ module;
 module retro.core.strings.name;
 
 import std;
-import boost.unordered;
 import retro.core.containers.optional;
 
 namespace retro
@@ -39,13 +38,21 @@ namespace retro
         std::uint32_t length{};
 
         friend bool operator==(NameHash lhs, NameHash rhs) = default;
+        friend std::strong_ordering operator<=>(NameHash lhs, NameHash rhs) = default;
     };
+} // namespace retro
 
-    constexpr std::size_t hash_value(const NameHash &name) noexcept
+template <>
+struct std::hash<retro::NameHash>
+{
+    std::size_t operator()(const retro::NameHash &name) const noexcept
     {
-        return hash_combine(name.hash, name.length);
+        return retro::hash_combine(name.hash, name.length);
     }
+};
 
+namespace retro
+{
     template <NameCase CaseSensitivity>
         requires(CaseSensitivity == NameCase::case_sensitive || CaseSensitivity == NameCase::ignore_case)
     struct NameEntryComparer
@@ -113,7 +120,7 @@ namespace retro
         }
 
       private:
-        boost::unordered_flat_map<NameHash, NameEntryId> entry_indexes_;
+        std::flat_map<NameHash, NameEntryId> entry_indexes_;
     };
 
     class NameAllocator

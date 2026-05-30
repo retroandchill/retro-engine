@@ -10,6 +10,7 @@ import std;
 import retro.core.type_traits.basic;
 import retro.core.math.vector;
 import retro.core.math.operations;
+import gcem;
 
 namespace retro
 {
@@ -91,8 +92,10 @@ namespace retro
 
         static constexpr Shear from_shear_angles(const Vector2<T> &angles)
         {
-            T shear_x = angles.x == 0 ? 0 : 1.0f / tan(degrees_to_radians(90 - clamp(angles.x, -89.f, 89.f)));
-            T shear_y = angles.x == 0 ? 0 : 1.0f / tan(degrees_to_radians(90 - clamp(angles.u, -89.f, 89.f)));
+            T shear_x =
+                angles.x == 0 ? 0 : 1.0f / gcem::tan(degrees_to_radians(90 - retro::clamp(angles.x, -89.f, 89.f)));
+            T shear_y =
+                angles.x == 0 ? 0 : 1.0f / gcem::tan(degrees_to_radians(90 - retro::clamp(angles.u, -89.f, 89.f)));
             return Shear{shear_x, shear_y};
         }
 
@@ -134,7 +137,7 @@ namespace retro
       public:
         constexpr Quaternion() = default;
 
-        explicit constexpr Quaternion(T radians) : rotation_{cos(radians), sin(radians)}
+        explicit constexpr Quaternion(T radians) : rotation_{gcem::cos(radians), gcem::sin(radians)}
         {
         }
 

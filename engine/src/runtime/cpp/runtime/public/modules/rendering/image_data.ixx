@@ -11,42 +11,33 @@ module;
 export module retro.runtime.rendering.image_data;
 
 import std;
+import stb.image;
 import retro.runtime.rendering.texture;
 
 namespace retro
 {
-
-    struct ImageDataDeleter
-    {
-        RETRO_API void operator()(std::byte *bytes) const;
-    };
-
-    using ImageDataPtr = std::unique_ptr<std::byte[], ImageDataDeleter>;
-
     export class ImageData
     {
-        ImageData() = default;
+        inline ImageData(stb::image::Image image) : image_{std::move(image)}
+        {
+        }
 
       public:
         RETRO_API static ImageData create_from_memory(std::span<const std::byte> bytes) noexcept;
 
         [[nodiscard]] inline std::span<const std::byte> bytes() const noexcept
         {
-            const auto num_channels = texture_format_to_channels(format_);
-            if (num_channels == 0)
-                return {};
-
-            return std::span{image_data_.get(), width_ * height_ * num_channels};
+            return image_.bytes();
         }
 
         [[nodiscard]] inline std::int32_t width() const noexcept
         {
-            return width_;
+            return image_.width();
         }
 
         [[nodiscard]] inline std::int32_t height() const noexcept
         {
-            return height_;
+            return image_.height();
         }
 
         [[nodiscard]] inline TextureFormat format() const noexcept
@@ -60,9 +51,8 @@ namespace retro
             switch (format)
             {
                 case TextureFormat::rgba8:
-                    return 4;
                 case TextureFormat::unorm:
-                    return 3;
+                    return 4;
                 case TextureFormat::rgba16f:
                     return 8;
                 default:
@@ -70,9 +60,7 @@ namespace retro
             }
         }
 
-        ImageDataPtr image_data_{};
-        std::int32_t width_ = 0;
-        std::int32_t height_ = 0;
+        stb::image::Image image_;
         TextureFormat format_ = TextureFormat::rgba8;
     };
 } // namespace retro

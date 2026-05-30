@@ -6,7 +6,7 @@
  */
 export module retro.core.localization.buffers;
 
-import retro.core.localization.icu;
+import icu;
 import std;
 
 namespace retro

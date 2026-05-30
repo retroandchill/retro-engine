@@ -8,9 +8,6 @@
     "features" : [ "vulkan" ],
     "version>=" : "3.4.2"
   }, {
-    "name" : "nethost",
-    "version>=" : "8.0.3"
-  }, {
     "name" : "fmt",
     "version>=" : "12.1.0"
   }, {
@@ -35,14 +32,8 @@
   }, {
     "name" : "icu",
     "version>=" : "78.2"
-  }, {
-    "name" : "freetype",
-    "version>=" : "2.14.3"
   }, "msdfgen", "msdf-atlas-gen", "sdl3pp", {
     "name" : "boost-pool",
-    "version>=" : "1.90.0#1"
-  }, {
-    "name" : "boost-unordered",
     "version>=" : "1.90.0#1"
   } ],
   "builtin-baseline" : "c3867e714dd3a51c272826eea77267876517ed99"

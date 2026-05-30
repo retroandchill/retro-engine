@@ -17,7 +17,7 @@ module;
 #include <unicode/udata.h>
 #include <unicode/utypes.h>
 
-export module retro.core.localization.icu;
+export module icu;
 
 export using ::UErrorCode;
 export using ::UPluralType;
@@ -32,6 +32,11 @@ export namespace U_ICU_NAMESPACE
 {
     constexpr std::uint32_t version_major = U_ICU_VERSION_MAJOR_NUM;
 
+    bool is_failure(const UErrorCode status)
+    {
+        return U_FAILURE(status);
+    }
+
     using icu::Collator;
     using icu::DateFormat;
     using icu::DecimalFormat;
@@ -45,11 +50,3 @@ export namespace U_ICU_NAMESPACE
 } // namespace U_ICU_NAMESPACE
 
 export namespace icu = U_ICU_NAMESPACE;
-
-namespace retro
-{
-    export bool is_failure(const UErrorCode status)
-    {
-        return U_FAILURE(status);
-    }
-} // namespace retro

@@ -6,11 +6,10 @@
  */
 module;
 
-#include <gcem.hpp>
-
 export module retro.core.math.operations;
 
 import std;
+import gcem;
 import retro.core.type_traits.basic;
 
 namespace retro
@@ -21,19 +20,13 @@ namespace retro
     export template <Numeric T>
     constexpr T clamp(T value, T min, T max) noexcept
     {
-        return std::min(std::max(value, min), max);
-    }
-
-    export template <Numeric T>
-    constexpr T abs(T value) noexcept
-    {
-        return gcem::abs(value);
+        return gcem::min(gcem::max(value, min), max);
     }
 
     export template <std::floating_point T>
     constexpr bool nearly_equal(T lhs, T rhs, T tolerance = small_number) noexcept
     {
-        return abs(lhs - rhs) <= tolerance;
+        return gcem::abs(lhs - rhs) <= tolerance;
     }
 
     export template <std::floating_point T>
@@ -46,24 +39,6 @@ namespace retro
     constexpr T degrees_to_radians(const T degrees) noexcept
     {
         return degrees * std::numbers::pi_v<T> / 180.f;
-    }
-
-    export template <std::floating_point T>
-    constexpr T sin(const T value) noexcept
-    {
-        return gcem::sin(value);
-    }
-
-    export template <std::floating_point T>
-    constexpr T cos(const T value) noexcept
-    {
-        return gcem::cos(value);
-    }
-
-    export template <std::floating_point T>
-    constexpr T tan(const T value) noexcept
-    {
-        return gcem::tan(value);
     }
 
     export template <std::integral T>

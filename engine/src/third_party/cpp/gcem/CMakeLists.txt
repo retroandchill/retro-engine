@@ -1,23 +1,20 @@
-# @file CMakeLists.txt
+﻿# @file CMakeLists.txt
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(BOOST_CPPM_MODULES pool.ixx)
+add_library(gcem_cppm STATIC)
 
-add_library(boot_cppm STATIC
-        ${BOOST_CPPM_MODULES})
-
-target_sources(boot_cppm PUBLIC
+target_sources(gcem_cppm PUBLIC
         FILE_SET CXX_MODULES FILES
-        ${BOOST_CPPM_MODULES})
+        gcem.ixx)
 
 
-find_package(Boost REQUIRED COMPONENTS pool)
-target_link_libraries(boot_cppm PUBLIC Boost::pool)
+find_package(gcem CONFIG REQUIRED)
+target_link_libraries(gcem_cppm PUBLIC gcem)
 
-add_library(Boost::cppm ALIAS boot_cppm)
+add_library(gcem::cppm ALIAS gcem_cppm)
 
-set_target_properties(boot_cppm PROPERTIES
+set_target_properties(gcem_cppm PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")

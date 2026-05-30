@@ -2,22 +2,19 @@
 #
 # @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
-set(BOOST_CPPM_MODULES pool.ixx)
+add_library(icu_cppm STATIC)
 
-add_library(boot_cppm STATIC
-        ${BOOST_CPPM_MODULES})
-
-target_sources(boot_cppm PUBLIC
+target_sources(icu_cppm PUBLIC
         FILE_SET CXX_MODULES FILES
-        ${BOOST_CPPM_MODULES})
+        icu.ixx)
 
 
-find_package(Boost REQUIRED COMPONENTS pool)
-target_link_libraries(boot_cppm PUBLIC Boost::pool)
+find_package(ICU COMPONENTS uc i18n REQUIRED)
+target_link_libraries(icu_cppm PUBLIC ICU::uc ICU::i18n)
 
-add_library(Boost::cppm ALIAS boot_cppm)
+add_library(ICU::Cppm ALIAS icu_cppm)
 
-set_target_properties(boot_cppm PROPERTIES
+set_target_properties(icu_cppm PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${RETRO_BIN_DIR}"
         ARCHIVE_OUTPUT_DIRECTORY "${RETRO_LIB_DIR}")
