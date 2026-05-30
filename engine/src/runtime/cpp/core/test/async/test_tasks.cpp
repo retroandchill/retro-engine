@@ -12,6 +12,9 @@ import retro.core.async.manual_task_scheduler;
 import retro.core.async.task;
 import std;
 import retro.core.containers.optional;
+import retro.core.util.exceptions;
+
+using namespace retro;
 
 namespace
 {
@@ -19,7 +22,7 @@ namespace
     // This simulates "resume me later on the game thread".
     struct YieldToScheduler
     {
-        retro::Optional<retro::TaskScheduler &> scheduler = std::nullopt;
+        Optional<TaskScheduler &> scheduler = std::nullopt;
 
         bool await_ready() const noexcept
         {
@@ -37,28 +40,52 @@ namespace
         }
     };
 
-    retro::Task<int> make_ready_value(int v)
+    Task<int> make_ready_value(int v)
     {
-        return retro::Task<int>::from_result(v);
+        return Task<int>::from_result(v);
     }
 
-    retro::Task<> yield_once_then_set(int &step)
+    Task<> yield_once_then_set(int &step)
     {
         step = 1;
-        co_await YieldToScheduler{retro::TaskScheduler::current()};
+        co_await YieldToScheduler{TaskScheduler::current()};
         step = 2;
         co_return;
+    }
+
+    Task<int> cancellable_value(std::stop_token stop_token, int &step)
+    {
+        step = 1;
+        throw_if_stop_requested(stop_token);
+
+        co_await YieldToScheduler{TaskScheduler::current()};
+
+        step = 2;
+        throw_if_stop_requested(stop_token);
+
+        co_return 42;
+    }
+
+    Task<> cancellable_void(int &step, std::stop_token stop_token)
+    {
+        step = 1;
+        throw_if_stop_requested(stop_token);
+
+        co_await YieldToScheduler{TaskScheduler::current()};
+
+        step = 2;
+        throw_if_stop_requested(stop_token);
     }
 } // namespace
 
 TEST(Task, AwaitingAlreadyCompletedTaskContinuesInlineNoSuspension)
 {
-    retro::ManualTaskScheduler scheduler;
-    retro::TaskScheduler::Scope scope{&scheduler};
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
 
     int step = 0;
 
-    std::ignore = [&]() -> retro::Task<>
+    std::ignore = [&]() -> Task<>
     {
         step = 1;
 
@@ -79,8 +106,8 @@ TEST(Task, AwaitingAlreadyCompletedTaskContinuesInlineNoSuspension)
 
 TEST(Task, YieldingToSchedulerSuspendsAndRequiresPumpToResume)
 {
-    retro::ManualTaskScheduler scheduler;
-    retro::TaskScheduler::Scope scope{&scheduler};
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
 
     int step = 0;
 
@@ -100,20 +127,20 @@ TEST(Task, YieldingToSchedulerSuspendsAndRequiresPumpToResume)
 
 TEST(Task, ChildCompletionResumesParentContinuation)
 {
-    retro::ManualTaskScheduler scheduler;
-    retro::TaskScheduler::Scope scope{&scheduler};
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
 
     int step = 0;
 
-    auto child = [&]() -> retro::Task<>
+    auto child = [&]() -> Task<>
     {
         step = 1;
-        co_await YieldToScheduler{retro::TaskScheduler::current()};
+        co_await YieldToScheduler{TaskScheduler::current()};
         step = 2;
         co_return;
     };
 
-    std::ignore = [&]() -> retro::Task<>
+    std::ignore = [&]() -> Task<>
     {
         step = 10;
         co_await child();
@@ -140,4 +167,113 @@ TEST(Task, ChildCompletionResumesParentContinuation)
         (void)scheduler.pump();
         EXPECT_EQ(step, 20);
     }
+}
+
+TEST(Task, StopRequestedBeforeStartCancelsCooperatively)
+{
+    retro::ManualTaskScheduler scheduler;
+    retro::TaskScheduler::Scope scope{&scheduler};
+
+    std::stop_source stop_source;
+    stop_source.request_stop();
+
+    int step = 0;
+    auto task = cancellable_value(stop_source.get_token(), step);
+
+    EXPECT_EQ(step, 1);
+    EXPECT_EQ(scheduler.pump(), 0);
+
+    EXPECT_THROW(std::move(task).get(), retro::OperationCancelledException);
+}
+
+TEST(Task, StopRequestedWhileSuspendedCancelsOnResume)
+{
+    retro::ManualTaskScheduler scheduler;
+    retro::TaskScheduler::Scope scope{&scheduler};
+
+    std::stop_source stop_source;
+
+    int step = 0;
+    auto task = cancellable_value(stop_source.get_token(), step);
+
+    EXPECT_EQ(step, 1);
+
+    stop_source.request_stop();
+
+    EXPECT_EQ(scheduler.pump(), 1);
+    EXPECT_EQ(step, 2);
+
+    EXPECT_THROW(std::move(task).get(), retro::OperationCancelledException);
+}
+
+TEST(Task, UnrelatedCancellationExceptionIsObservedAsException)
+{
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
+
+    std::stop_source task_stop_source;
+    std::stop_source unrelated_stop_source;
+    unrelated_stop_source.request_stop();
+
+    auto task = [](std::stop_token task_stop_token, std::stop_token unrelated_stop_token) -> Task<>
+    {
+        EXPECT_FALSE(task_stop_token.stop_requested());
+        throw OperationCancelledException{unrelated_stop_token};
+        co_return;
+    }(task_stop_source.get_token(), unrelated_stop_source.get_token());
+
+    EXPECT_THROW(std::move(task).wait(), retro::OperationCancelledException);
+}
+
+TEST(Task, AwaitingCancelledChildPropagatesCancellationToParent)
+{
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
+
+    std::stop_source stop_source;
+
+    int step = 0;
+
+    auto parent = [&](std::stop_token stop_token) -> Task<int>
+    {
+        co_await cancellable_void(step, stop_token);
+        co_return 42;
+    }(stop_source.get_token());
+
+    EXPECT_EQ(step, 1);
+
+    stop_source.request_stop();
+
+    EXPECT_EQ(scheduler.pump(), 1);
+    EXPECT_EQ(step, 2);
+
+    EXPECT_EQ(scheduler.pump(), 1);
+
+    EXPECT_THROW(std::move(parent).get(), retro::OperationCancelledException);
+}
+
+TEST(Task, CooperativeCancellationDoesNotRunPastCancellationPoint)
+{
+    ManualTaskScheduler scheduler;
+    TaskScheduler::Scope scope{&scheduler};
+
+    std::stop_source stop_source;
+
+    bool ran_after_cancellation = false;
+
+    auto task = [&](std::stop_token stop_token) -> Task<>
+    {
+        co_await YieldToScheduler{TaskScheduler::current()};
+
+        throw_if_stop_requested(stop_token);
+
+        ran_after_cancellation = true;
+        co_return;
+    }(stop_source.get_token());
+
+    stop_source.request_stop();
+
+    EXPECT_EQ(scheduler.pump(), 1);
+    EXPECT_FALSE(ran_after_cancellation);
+    EXPECT_THROW(std::move(task).wait(), retro::OperationCancelledException);
 }

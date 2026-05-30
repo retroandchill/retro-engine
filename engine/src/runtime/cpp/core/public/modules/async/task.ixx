@@ -186,6 +186,20 @@ namespace retro
             return get_internal();
         }
 
+        void throw_if_exception()
+        {
+            std::scoped_lock lock{mutex_};
+            if (auto *ex = std::get_if<std::exception_ptr>(&result_); ex != nullptr)
+            {
+                std::rethrow_exception(*ex);
+            }
+
+            if (auto *stop_token = std::get_if<std::stop_token>(&result_); stop_token != nullptr)
+            {
+                throw OperationCancelledException{std::move(*stop_token)};
+            }
+        }
+
         void wait() const
         {
             std::unique_lock lock{mutex_};
@@ -226,6 +240,15 @@ namespace retro
         void wait_internal(std::unique_lock<std::mutex> &lock) const
         {
             task_complete_.wait(lock, [this] { return !std::holds_alternative<std::monostate>(result_); });
+            if (auto *ex = std::get_if<std::exception_ptr>(&result_); ex != nullptr)
+            {
+                std::rethrow_exception(*ex);
+            }
+
+            if (auto *stop_token = std::get_if<std::stop_token>(&result_); stop_token != nullptr)
+            {
+                throw OperationCancelledException{std::move(*stop_token)};
+            }
         }
 
         T get_internal()
@@ -292,6 +315,11 @@ namespace retro
             requires !std::is_void_v<T>
         {
             return self.result().get_result();
+        }
+
+        void throw_if_exception()
+        {
+            result().throw_if_exception();
         }
 
         template <typename Self>
@@ -512,6 +540,7 @@ namespace retro
                                                }
                                                else
                                                {
+                                                   handle.promise().throw_if_exception();
                                                    return;
                                                }
                                            },
@@ -608,18 +637,12 @@ namespace retro
                               std::move(state_));
         }
 
-        void wait() const
+        void wait() &&
         {
             std::visit(Overload{[](std::monostate) { throw InvalidStateException{"Task is empty"}; },
-                                [](const ImmediateState<T> &)
-                                {
-                                    // Do nothing
-                                },
+                                [](ImmediateState<T> &state) { (void)state.get_result(); },
                                 [](const Handle &handle)
                                 {
-                                    if (handle.done())
-                                        return;
-
                                     auto &promise = handle.promise();
                                     promise.wait();
                                 },
