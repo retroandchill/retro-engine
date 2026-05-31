@@ -19,6 +19,7 @@ namespace retro
             .mouse_position = mouse_position_,
             .mouse_delta = mouse_delta_,
             .mouse_wheel_delta = mouse_wheel_delta_,
+            .gamepads = gamepads_,
         };
     }
 
@@ -60,5 +61,25 @@ namespace retro
     {
         mouse_wheel_delta_.x += x;
         mouse_wheel_delta_.y += y;
+    }
+
+    void InputState::enable_gamepad(const std::size_t index, const std::uint32_t platform_id)
+    {
+        gamepads_[index].emplace(platform_id);
+    }
+
+    void InputState::disable_gamepad(const std::size_t index)
+    {
+        gamepads_[index].reset();
+    }
+
+    void InputState::set_gamepad_button_down(const std::size_t index, GamepadButton button, const bool is_down)
+    {
+        gamepads_[index]->buttons.set(static_cast<std::size_t>(button), is_down);
+    }
+
+    void InputState::set_gamepad_axis(const std::size_t index, GamepadAxis axis, const float value)
+    {
+        gamepads_[index]->axes[static_cast<std::size_t>(axis)] = value;
     }
 } // namespace retro

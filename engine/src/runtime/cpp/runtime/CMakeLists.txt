@@ -111,6 +111,7 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/ecs/component_view.ixx
         public/modules/input/input_state.ixx
         public/modules/input/input_manager.ixx
+        public/modules/input/input_query.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

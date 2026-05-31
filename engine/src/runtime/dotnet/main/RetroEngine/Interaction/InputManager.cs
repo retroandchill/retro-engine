@@ -99,29 +99,13 @@ public sealed partial class InputManager : IDisposable
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_poll_events")]
     private static partial void NativePollEvents(IntPtr handle, ulong frameCount);
 
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_logical_key_down")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_down")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeIsDown(IntPtr handle, LogicalKey key);
+    private static partial bool NativeIsDown(IntPtr handle, ButtonInput key);
 
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_physical_key_down")]
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeIsDown(IntPtr handle, PhysicalKey key);
-
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_mouse_button_down")]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeIsDown(IntPtr handle, MouseButton button);
-
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_logical_key_pressed")]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWasPressed(IntPtr handle, LogicalKey key);
-
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_physical_key_pressed")]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWasPressed(IntPtr handle, PhysicalKey key);
-
-    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_mouse_button_pressed")]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWasPressed(IntPtr handle, MouseButton button);
+    private static partial bool NativeWasPressed(IntPtr handle, ButtonInput key);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_get_mouse_position")]
     private static partial void NativeGetMousePosition(

@@ -13,14 +13,43 @@ export module retro.runtime.input.input_state;
 import std;
 import retro.core.math.vector;
 import retro.platform.input;
+import retro.core.containers.optional;
 
 namespace retro
 {
+    export struct GamepadSnapshot
+    {
+        using ButtonStorage = std::bitset<gamepad_button_max>;
+        using AxisStorage = std::array<float, gamepad_axis_max>;
+
+        std::uint32_t platform_id = 0;
+        ButtonStorage buttons{};
+        AxisStorage axes{};
+
+        [[nodiscard]] constexpr bool is_down(GamepadButton button) const
+        {
+            return buttons.test(static_cast<std::size_t>(button));
+        }
+
+        [[nodiscard]] constexpr float axis(GamepadAxis axis) const
+        {
+            return axes[static_cast<std::size_t>(axis)];
+        }
+
+        [[nodiscard]] constexpr bool was_pressed(const GamepadButton button, const GamepadSnapshot &previous) const
+        {
+            return is_down(button) && !previous.is_down(button);
+        }
+    };
+
+    export constexpr inline std::size_t max_gamepads = 8;
+
     export struct InputSnapshot
     {
         using LogicalKeyStorage = std::bitset<logical_key_max>;
         using PhysicalKeyStorage = std::bitset<physical_key_max>;
         using MouseButtonStorage = std::bitset<mouse_button_max>;
+        using GamepadStorage = std::array<Optional<GamepadSnapshot>, max_gamepads>;
 
         std::uint64_t frame_index{};
         LogicalKeyStorage logical_keys{};
@@ -29,6 +58,7 @@ namespace retro
         Vector2f mouse_position{};
         Vector2f mouse_delta{};
         Vector2f mouse_wheel_delta{};
+        GamepadStorage gamepads{};
 
         [[nodiscard]] constexpr bool is_down(LogicalKey key) const
         {
@@ -45,6 +75,18 @@ namespace retro
             return mouse_buttons.test(static_cast<std::size_t>(button));
         }
 
+        [[nodiscard]] constexpr bool is_down(const std::uint8_t gamepad_id, const GamepadButton button) const
+        {
+            auto &gamepad = gamepads[gamepad_id];
+            return gamepad.has_value() && gamepad->is_down(button);
+        }
+
+        [[nodiscard]] constexpr bool is_down_on_any(const GamepadButton button) const
+        {
+            return std::ranges::any_of(gamepads | std::views::join,
+                                       [button](const GamepadSnapshot &snapshot) { return snapshot.is_down(button); });
+        }
+
         [[nodiscard]] constexpr bool was_pressed(const LogicalKey key, const InputSnapshot &previous) const
         {
             return is_down(key) && !previous.is_down(key);
@@ -58,6 +100,18 @@ namespace retro
         [[nodiscard]] constexpr bool was_pressed(const MouseButton button, const InputSnapshot &previous) const
         {
             return is_down(button) && !previous.is_down(button);
+        }
+
+        [[nodiscard]] constexpr bool was_pressed(const std::uint8_t gamepad_id,
+                                                 const GamepadButton button,
+                                                 const InputSnapshot &previous) const
+        {
+            return is_down(gamepad_id, button) && !previous.is_down(gamepad_id, button);
+        }
+
+        [[nodiscard]] constexpr bool was_pressed_on_any(const GamepadButton button, const InputSnapshot &previous) const
+        {
+            return is_down_on_any(button) && !previous.is_down_on_any(button);
         }
     };
 
@@ -80,6 +134,14 @@ namespace retro
 
         void add_mouse_wheel_delta(float x, float y);
 
+        void enable_gamepad(std::size_t index, std::uint32_t platform_id);
+
+        void disable_gamepad(std::size_t index);
+
+        void set_gamepad_button_down(std::size_t index, GamepadButton button, bool is_down);
+
+        void set_gamepad_axis(std::size_t index, GamepadAxis axis, float value);
+
       private:
         InputSnapshot::LogicalKeyStorage logical_keys_{};
         InputSnapshot::PhysicalKeyStorage physical_keys_{};
@@ -87,5 +149,6 @@ namespace retro
         Vector2f mouse_position_{};
         Vector2f mouse_delta_{};
         Vector2f mouse_wheel_delta_{};
+        InputSnapshot::GamepadStorage gamepads_{};
     };
 } // namespace retro
