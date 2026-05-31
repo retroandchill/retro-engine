@@ -5,13 +5,20 @@
 set(RETRO_PLATFORM_SOURCES
         private/backend.cpp
         private/platform.cpp
+        private/sdl/window.cpp
+        private/sdl/backend.cpp
+        private/headless/window.cpp
+        private/headless/backend.cpp
 )
 
 set(RETRO_PLATFORM_HEADERS
 )
 
-set (RETRO_PLATFORM_PRIVATE_MODULES private/backend/sdl.ixx
-        private/backend/headless.ixx)
+set (RETRO_PLATFORM_PRIVATE_MODULES
+        private/sdl/window.ixx
+        private/sdl/backend.ixx
+        private/headless/window.ixx
+        private/headless/backend.ixx)
 
 set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/window.ixx

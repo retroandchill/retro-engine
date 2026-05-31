@@ -6,8 +6,9 @@
  */
 module retro.platform.backend;
 
-import :sdl;
-import :headless;
+import retro.platform.sdl.backend;
+import retro.core.util.exceptions;
+import retro.platform.headless.backend;
 
 namespace retro
 {
