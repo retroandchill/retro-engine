@@ -40,40 +40,52 @@ public sealed partial class InputManager : IDisposable
         MouseScrollDelta = new Vector2F(scrollDeltaX, scrollDeltaY);
     }
 
-    public bool IsDown(LogicalKey key)
-    {
-        ThrowIfDisposed();
-        return NativeIsDown(NativeHandle, key);
-    }
-
-    public bool IsDown(PhysicalKey key)
-    {
-        ThrowIfDisposed();
-        return NativeIsDown(NativeHandle, key);
-    }
-
-    public bool IsDown(MouseButton button)
+    public bool IsDown(ButtonInput button)
     {
         ThrowIfDisposed();
         return NativeIsDown(NativeHandle, button);
     }
 
-    public bool WasPressed(LogicalKey key)
+    public bool IsAnyDown(params ReadOnlySpan<ButtonInput> buttons)
     {
         ThrowIfDisposed();
-        return NativeWasPressed(NativeHandle, key);
+        return NativeIsAnyDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool WasPressed(PhysicalKey key)
+    public bool AllAreDown(params ReadOnlySpan<ButtonInput> buttons)
     {
         ThrowIfDisposed();
-        return NativeWasPressed(NativeHandle, key);
+        return NativeAreAllDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool WasPressed(MouseButton button)
+    public bool AreNoneDown(params ReadOnlySpan<ButtonInput> buttons)
+    {
+        ThrowIfDisposed();
+        return NativeAreNoneDown(NativeHandle, buttons, buttons.Length);
+    }
+
+    public bool WasPressed(ButtonInput button)
     {
         ThrowIfDisposed();
         return NativeWasPressed(NativeHandle, button);
+    }
+
+    public bool WasAnyPressed(params ReadOnlySpan<ButtonInput> buttons)
+    {
+        ThrowIfDisposed();
+        return NativeWasAnyPressed(NativeHandle, buttons, buttons.Length);
+    }
+
+    public bool WereAllPressed(params ReadOnlySpan<ButtonInput> buttons)
+    {
+        ThrowIfDisposed();
+        return NativeWereAllPressed(NativeHandle, buttons, buttons.Length);
+    }
+
+    public bool WereNonePressed(params ReadOnlySpan<ButtonInput> buttons)
+    {
+        ThrowIfDisposed();
+        return NativeWereNonePressed(NativeHandle, buttons, buttons.Length);
     }
 
     private void ThrowIfDisposed()
@@ -103,9 +115,33 @@ public sealed partial class InputManager : IDisposable
     [return: MarshalAs(UnmanagedType.I1)]
     private static partial bool NativeIsDown(IntPtr handle, ButtonInput key);
 
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_any_down")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeIsAnyDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_are_all_down")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeAreAllDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_are_none_down")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeAreNoneDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
     private static partial bool NativeWasPressed(IntPtr handle, ButtonInput key);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_any_pressed")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeWasAnyPressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_were_all_pressed")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeWereAllPressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_were_none_pressed")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static partial bool NativeWereNonePressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_get_mouse_position")]
     private static partial void NativeGetMousePosition(

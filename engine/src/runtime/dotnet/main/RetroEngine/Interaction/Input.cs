@@ -21,15 +21,7 @@ public static class Input
 
     public static Vector2F MouseScrollDelta => Manager.MouseScrollDelta;
 
-    public static bool IsDown(LogicalKey key) => Manager.IsDown(key);
+    public static bool IsDown(ButtonInput button) => Manager.IsDown(button);
 
-    public static bool IsDown(PhysicalKey key) => Manager.IsDown(key);
-
-    public static bool IsDown(MouseButton button) => Manager.IsDown(button);
-
-    public static bool WasPressed(LogicalKey key) => Manager.WasPressed(key);
-
-    public static bool WasPressed(PhysicalKey key) => Manager.WasPressed(key);
-
-    public static bool WasPressed(MouseButton button) => Manager.WasPressed(button);
+    public static bool WasPressed(ButtonInput button) => Manager.WasPressed(button);
 }

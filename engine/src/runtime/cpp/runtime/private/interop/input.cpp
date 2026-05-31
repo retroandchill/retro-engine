@@ -75,15 +75,56 @@ extern "C"
         manager->poll_events(frame_number);
     }
 
-    RETRO_API bool retro_input_manager_is_logical_key_down(const InputManager *manager, const InteropButtonInput input)
+    RETRO_API bool retro_input_manager_is_down(const InputManager *manager, const InteropButtonInput input)
     {
         return manager->is_down(input);
     }
 
-    RETRO_API bool retro_input_manager_was_logical_key_pressed(const InputManager *manager,
-                                                               const InteropButtonInput input)
+    RETRO_API bool retro_input_manager_is_any_down(const InputManager *manager,
+                                                   const InteropButtonInput *inputs,
+                                                   const std::int32_t length)
+    {
+        return manager->is_any_down(std::span{inputs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API bool retro_input_manager_are_all_down(const InputManager *manager,
+                                                    const InteropButtonInput *inputs,
+                                                    const std::int32_t length)
+    {
+        return manager->are_all_down(std::span{inputs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API bool retro_input_manager_are_none_down(const InputManager *manager,
+                                                     const InteropButtonInput *inputs,
+                                                     const std::int32_t length)
+    {
+        return manager->are_none_down(std::span{inputs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API bool retro_input_manager_was_pressed(const InputManager *manager, const InteropButtonInput input)
     {
         return manager->was_pressed(input);
+    }
+
+    RETRO_API bool retro_input_manager_was_any_pressed(const InputManager *manager,
+                                                       const InteropButtonInput *inputs,
+                                                       const std::int32_t length)
+    {
+        return manager->was_any_pressed(std::span{inputs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API bool retro_input_manager_were_all_pressed(const InputManager *manager,
+                                                        const InteropButtonInput *inputs,
+                                                        const std::int32_t length)
+    {
+        return manager->were_all_pressed(std::span{inputs, static_cast<std::size_t>(length)});
+    }
+
+    RETRO_API bool retro_input_manager_wre_none_pressed(const InputManager *manager,
+                                                        const InteropButtonInput *inputs,
+                                                        const std::int32_t length)
+    {
+        return manager->were_none_pressed(std::span{inputs, static_cast<std::size_t>(length)});
     }
 
     RETRO_API void retro_input_manager_get_mouse_position(const InputManager *manager,
