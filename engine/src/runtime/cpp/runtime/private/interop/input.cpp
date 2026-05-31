@@ -44,6 +44,54 @@ extern "C"
         return manager->is_down(button);
     }
 
+    RETRO_API bool retro_input_manager_is_any_down(const InputManager *manager,
+                                                   const LogicalKey *logical_keys,
+                                                   const std::int32_t logical_key_count,
+                                                   const PhysicalKey *physical_keys,
+                                                   const std::int32_t physical_key_count,
+                                                   const MouseButton *mouse_buttons,
+                                                   const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->is_any_down(logical_key_span) || manager->is_any_down(physical_key_span) ||
+               manager->is_any_down(mouse_button_span);
+    }
+
+    RETRO_API bool retro_input_manager_are_all_down(const InputManager *manager,
+                                                    const LogicalKey *logical_keys,
+                                                    const std::int32_t logical_key_count,
+                                                    const PhysicalKey *physical_keys,
+                                                    const std::int32_t physical_key_count,
+                                                    const MouseButton *mouse_buttons,
+                                                    const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->are_all_down(logical_key_span) || manager->are_all_down(physical_key_span) ||
+               manager->are_all_down(mouse_button_span);
+    }
+
+    RETRO_API bool retro_input_manager_are_none_down(const InputManager *manager,
+                                                     const LogicalKey *logical_keys,
+                                                     const std::int32_t logical_key_count,
+                                                     const PhysicalKey *physical_keys,
+                                                     const std::int32_t physical_key_count,
+                                                     const MouseButton *mouse_buttons,
+                                                     const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->are_none_down(logical_key_span) || manager->are_none_down(physical_key_span) ||
+               manager->are_none_down(mouse_button_span);
+    }
+
     RETRO_API bool retro_input_manager_was_logical_key_pressed(const InputManager *manager, const LogicalKey key)
     {
         return manager->was_pressed(key);
@@ -57,6 +105,54 @@ extern "C"
     RETRO_API bool retro_input_manager_was_mouse_button_pressed(const InputManager *manager, const MouseButton button)
     {
         return manager->was_pressed(button);
+    }
+
+    RETRO_API bool retro_input_manager_were_any_pressed(const InputManager *manager,
+                                                        const LogicalKey *logical_keys,
+                                                        const std::int32_t logical_key_count,
+                                                        const PhysicalKey *physical_keys,
+                                                        const std::int32_t physical_key_count,
+                                                        const MouseButton *mouse_buttons,
+                                                        const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->was_any_pressed(logical_key_span) || manager->was_any_pressed(physical_key_span) ||
+               manager->was_any_pressed(mouse_button_span);
+    }
+
+    RETRO_API bool retro_input_manager_were_all_pressed(const InputManager *manager,
+                                                        const LogicalKey *logical_keys,
+                                                        const std::int32_t logical_key_count,
+                                                        const PhysicalKey *physical_keys,
+                                                        const std::int32_t physical_key_count,
+                                                        const MouseButton *mouse_buttons,
+                                                        const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->were_all_pressed(logical_key_span) || manager->were_all_pressed(physical_key_span) ||
+               manager->were_all_pressed(mouse_button_span);
+    }
+
+    RETRO_API bool retro_input_manager_were_none_pressed(const InputManager *manager,
+                                                         const LogicalKey *logical_keys,
+                                                         const std::int32_t logical_key_count,
+                                                         const PhysicalKey *physical_keys,
+                                                         const std::int32_t physical_key_count,
+                                                         const MouseButton *mouse_buttons,
+                                                         const std::int32_t mouse_button_count)
+    {
+        std::span logical_key_span{logical_keys, static_cast<std::size_t>(logical_key_count)};
+        std::span physical_key_span{physical_keys, static_cast<std::size_t>(physical_key_count)};
+        std::span mouse_button_span{mouse_buttons, static_cast<std::size_t>(mouse_button_count)};
+
+        return manager->were_none_pressed(logical_key_span) || manager->were_none_pressed(physical_key_span) ||
+               manager->were_none_pressed(mouse_button_span);
     }
 
     RETRO_API void retro_input_manager_get_mouse_position(const InputManager *manager,

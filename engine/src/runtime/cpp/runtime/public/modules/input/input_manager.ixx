@@ -20,6 +20,10 @@ namespace retro
 {
     export using InputEvent = std::variant<MouseMovedEvent, MouseButtonEvent, MouseWheelEvent, KeyEvent>;
 
+    template <typename T>
+    concept ValidButtonInput = std::convertible_to<T, LogicalKey> || std::convertible_to<T, PhysicalKey> ||
+                               std::convertible_to<T, MouseButton>;
+
     export class RETRO_API InputManager
     {
       public:
@@ -42,6 +46,52 @@ namespace retro
             return current_.is_down(button);
         }
 
+        [[nodiscard]] constexpr bool is_any_down() const
+        {
+            return current_.logical_keys.any() || current_.physical_keys.any() || current_.mouse_buttons.any();
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool is_any_down(Range &&keys) const
+        {
+            return std::ranges::any_of(std::forward<Range>(keys), [&](auto key) { return is_down(key); });
+        }
+
+        [[nodiscard]] constexpr bool is_any_logical_key_down() const
+        {
+            return current_.logical_keys.any();
+        }
+
+        [[nodiscard]] constexpr bool is_any_physical_key_down() const
+        {
+            return current_.physical_keys.any();
+        }
+
+        [[nodiscard]] constexpr bool is_any_mouse_button_down() const
+        {
+            return current_.mouse_buttons.any();
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool are_all_down(Range &&range) const
+        {
+            return std::ranges::all_of(std::forward<Range>(range), [&](auto key) { return is_down(key); });
+        }
+
+        [[nodiscard]] constexpr bool are_none_down() const
+        {
+            return current_.logical_keys.none() && current_.physical_keys.none() && current_.mouse_buttons.none();
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool are_none_down(Range &&range) const
+        {
+            return std::ranges::none_of(std::forward<Range>(range), [&](auto key) { return is_down(key); });
+        }
+
         [[nodiscard]] constexpr bool was_pressed(const LogicalKey key) const
         {
             return current_.was_pressed(key, previous_);
@@ -55,6 +105,27 @@ namespace retro
         [[nodiscard]] constexpr bool was_pressed(const MouseButton button) const
         {
             return current_.was_pressed(button, previous_);
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool was_any_pressed(Range &&keys) const
+        {
+            return std::ranges::any_of(std::forward<Range>(keys), [&](auto key) { return was_pressed(key); });
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool were_all_pressed(Range &&range) const
+        {
+            return std::ranges::all_of(std::forward<Range>(range), [&](auto key) { return was_pressed(key); });
+        }
+
+        template <std::ranges::input_range Range>
+            requires ValidButtonInput<std::ranges::range_value_t<Range>>
+        [[nodiscard]] constexpr bool were_none_pressed(Range &&range) const
+        {
+            return std::ranges::none_of(std::forward<Range>(range), [&](auto key) { return was_pressed(key); });
         }
 
         [[nodiscard]] constexpr Vector2f mouse_position() const
