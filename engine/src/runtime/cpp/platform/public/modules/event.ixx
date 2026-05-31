@@ -8,6 +8,7 @@ export module retro.platform.event;
 
 import retro.core.containers.optional;
 import std;
+import retro.platform.input;
 
 namespace retro
 {
@@ -25,16 +26,6 @@ namespace retro
         std::uint32_t window_id = 0;
         std::int32_t width = 0;
         std::int32_t height = 0;
-    };
-
-    export enum class MouseButton : std::uint8_t
-    {
-        left,
-        middle,
-        right,
-        x1,
-        x2,
-        unknown,
     };
 
     export struct MouseMovedEvent
@@ -55,13 +46,45 @@ namespace retro
         float y = 0.0f;
     };
 
+    export struct MouseWheelEvent
+    {
+        std::uint32_t window_id = 0;
+        float x = 0.0f;
+        float y = 0.0f;
+        MouseWheelDirection direction = MouseWheelDirection::normal;
+        float mouse_x = 0.0f;
+        float mouse_y = 0.0f;
+        std::int32_t mouse_ticks_x = 0;
+        std::int32_t mouse_ticks_y = 0;
+    };
+
     export struct KeyEvent
     {
         std::uint32_t window_id = 0;
-        std::int32_t keycode = 0;
-        std::int32_t scancode = 0;
+        LogicalKey logical_key = LogicalKey::unknown;
+        PhysicalKey physical_key = PhysicalKey::unknown;
         bool down = false;
         bool repeat = false;
+    };
+
+    export struct GamepadDeviceEvent
+    {
+        GamepadChangeType change_type = GamepadChangeType::connected;
+        std::uint32_t gamepad_id = 0;
+    };
+
+    export struct GamepadButtonEvent
+    {
+        std::uint32_t gamepad_id = 0;
+        GamepadButton button = GamepadButton::unknown;
+        bool down = false;
+    };
+
+    export struct GamepadAxisEvent
+    {
+        std::uint32_t gamepad_id = 0;
+        GamepadAxis axis = GamepadAxis::unknown;
+        float value = 0.0f;
     };
 
     export struct CallbackEvent
@@ -74,6 +97,10 @@ namespace retro
                                               WindowResizedEvent,
                                               MouseMovedEvent,
                                               MouseButtonEvent,
+                                              MouseWheelEvent,
                                               KeyEvent,
+                                              GamepadDeviceEvent,
+                                              GamepadButtonEvent,
+                                              GamepadAxisEvent,
                                               CallbackEvent>;
 } // namespace retro

@@ -102,6 +102,9 @@
       <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/INDENT_SIZE/@EntryValue" value="4" type="int" />
       <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/CONTINUOUS_LINE_INDENT/@EntryValue" value="Double" type="string" />
       <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/TAB_WIDTH/@EntryValue" value="4" type="int" />
+      <option name="/Default/CodeStyle/Naming/CppNamingOptions/Abbreviations/=1D/@EntryIndexedValue" value="1D" type="string" />
+      <option name="/Default/CodeStyle/Naming/CppNamingOptions/Abbreviations/=2D/@EntryIndexedValue" value="2D" type="string" />
+      <option name="/Default/CodeStyle/Naming/CppNamingOptions/Abbreviations/=3D/@EntryIndexedValue" value="3D" type="string" />
     </RiderCodeStyleSettings>
     <clangFormatSettings>
       <option name="ENABLED" value="true" />

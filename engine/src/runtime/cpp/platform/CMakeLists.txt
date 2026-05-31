@@ -18,12 +18,14 @@ set (RETRO_PLATFORM_PRIVATE_MODULES
         private/sdl/window.ixx
         private/sdl/backend.ixx
         private/headless/window.ixx
-        private/headless/backend.ixx)
+        private/headless/backend.ixx
+        private/sdl/input.ixx)
 
 set(RETRO_PLATFORM_PUBLIC_MODULES
         public/modules/window.ixx
         public/modules/event.ixx
         public/modules/backend.ixx
+        public/modules/input.ixx
 )
 
 add_library(retro_platform
