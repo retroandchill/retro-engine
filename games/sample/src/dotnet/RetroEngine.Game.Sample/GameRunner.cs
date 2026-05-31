@@ -9,9 +9,11 @@ using RetroEngine.Assets;
 using RetroEngine.Async;
 using RetroEngine.Core.Drawing;
 using RetroEngine.Core.Math;
+using RetroEngine.Interaction;
 using RetroEngine.Platform;
 using RetroEngine.Rendering;
 using RetroEngine.Rendering.Text;
+using RetroEngine.Tickables;
 using RetroEngine.UI;
 using RetroEngine.UI.Containers;
 using RetroEngine.UI.Display;
@@ -119,6 +121,9 @@ public sealed class GameRunner(
                 Right = 14,
             },
         };
+
+        await Task.WaitUntil(() => Input.IsDown(PhysicalKey.Space), cancellationToken);
+        Log.Information("Space pressed.");
 
         await Task.Delay(Timeout.Infinite, cancellationToken);
         return 0;

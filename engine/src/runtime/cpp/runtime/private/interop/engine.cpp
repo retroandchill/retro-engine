@@ -20,6 +20,7 @@ import retro.runtime.rendering.objects.sprite;
 import retro.core.interop.interop_error;
 import retro.runtime.rendering.pipeline_manager.render_manager;
 import retro.runtime.event_manager;
+import retro.runtime.input.input_manager;
 
 using namespace retro;
 
@@ -32,9 +33,11 @@ namespace
 
 extern "C"
 {
-    RETRO_API Engine *retro_create_engine(PlatformBackend *backend, EventManager *event_manager)
+    RETRO_API Engine *retro_create_engine(PlatformBackend *backend,
+                                          EventManager *event_manager,
+                                          InputManager *input_manager)
     {
-        return new Engine(*backend, *event_manager);
+        return new Engine(*backend, *event_manager, *input_manager);
     }
 
     RETRO_API void retro_destroy_engine(const Engine *engine)

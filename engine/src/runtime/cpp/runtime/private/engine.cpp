@@ -4,10 +4,6 @@
  * @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for full license information.
  */
-module;
-
-#include "retro/core/macros.hpp"
-
 module retro.runtime.engine;
 
 import retro.logging;
@@ -21,12 +17,13 @@ import retro.core.math.vector;
 import retro.platform.event;
 import retro.core.memory.small_unique_ptr;
 import retro.runtime.rendering.draw_command;
+import retro.core.type_traits.variant;
 
 namespace retro
 {
 
-    Engine::Engine(PlatformBackend &platform_backend, EventManager &event_manager)
-        : platform_backend_{platform_backend}, event_manager_{event_manager}
+    Engine::Engine(PlatformBackend &platform_backend, EventManager &event_manager, InputManager &input_manager)
+        : platform_backend_{platform_backend}, event_manager_{event_manager}, input_manager_{input_manager}
     {
     }
 
@@ -67,6 +64,10 @@ namespace retro
                 else if constexpr (std::is_same_v<T, WindowCloseRequestedEvent>)
                 {
                     on_window_close_requested_(evt.window_id);
+                }
+                else if constexpr (VariantMember<T, InputEvent>)
+                {
+                    input_manager_.push_event(evt);
                 }
                 else if constexpr (std::is_same_v<T, CallbackEvent>)
                 {

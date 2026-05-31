@@ -1,34 +1,33 @@
-﻿// @file TickAwait.cs
+// @file TickPredicate.cs
 //
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 namespace RetroEngine.Tickables;
 
-internal sealed class TickAwait : ITickable
+internal sealed class TickPredicate : ITickable
 {
     private readonly TaskCompletionSource _tcs = new();
-    private readonly ulong _startedOn;
-    private readonly ulong _duration;
+    private readonly Func<bool> _predicate;
     private readonly CancellationToken _cancellationToken;
 
-    public TickAwait(ulong duration, CancellationToken cancellationToken = default)
-    {
-        _startedOn = TickManager.Instance.FrameCount;
-        _duration = duration;
-        _cancellationToken = cancellationToken;
-        _cancellationToken.Register(() => _tcs.TrySetCanceled(_cancellationToken));
-    }
-
     public TickGroup TickGroup => TickGroup.Simulation;
-
     public bool TickEnabled => !_cancellationToken.IsCancellationRequested && !_tcs.Task.IsCompleted;
 
     public Task Task => _tcs.Task;
 
+    public TickPredicate(Func<bool> predicate, CancellationToken cancellationToken = default)
+    {
+        _predicate = predicate;
+        _cancellationToken = cancellationToken;
+        _cancellationToken.Register(() => _tcs.TrySetCanceled(_cancellationToken));
+    }
+
     public void Tick(float deltaTime)
     {
-        if (TickManager.Instance.FrameCount - _startedOn >= _duration)
-            _tcs.SetResult();
+        if (_predicate())
+        {
+            _tcs.TrySetResult();
+        }
     }
 }

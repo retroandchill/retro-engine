@@ -1,30 +1,30 @@
-// @file TickContextLifetime.cs
+// @file InputContextLifetime.cs
 //
 // @copyright Copyright (c) 2026 Retro & Chill. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-namespace RetroEngine.Tickables;
+namespace RetroEngine.Interaction;
 
 [RegisterSingleton(Duplicate = DuplicateStrategy.Append)]
-internal sealed class TickContextLifetime(TickManager tickManager) : IEngineContextLifetime
+internal sealed class InputContextLifetime(InputManager manager) : IEngineContextLifetime
 {
     public bool Initialized { get; private set; }
 
     public void Initialize()
     {
         if (Initialized)
-            throw new InvalidOperationException("TickContextLifetime is already initialized.");
+            throw new InvalidOperationException("InputContextLifetime is already initialized.");
 
-        TickManager.Instance = tickManager;
         Initialized = true;
+        Input.Manager = manager;
     }
 
     public void Shutdown()
     {
         if (!Initialized)
-            throw new InvalidOperationException("TickContextLifetime is not initialized.");
+            throw new InvalidOperationException("InputContextLifetime is not initialized.");
 
-        TickManager.Instance = null!;
+        Input.Manager = null!;
         Initialized = false;
     }
 }

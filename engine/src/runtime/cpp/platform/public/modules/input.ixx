@@ -147,6 +147,8 @@ namespace retro
         f12
     };
 
+    export constexpr inline std::size_t logical_key_max = static_cast<std::size_t>(LogicalKey::f12) + 1;
+
     export enum class PhysicalKey : std::uint16_t
     {
         unknown,
@@ -262,6 +264,8 @@ namespace retro
         f12
     };
 
+    export constexpr inline std::size_t physical_key_max = static_cast<std::size_t>(PhysicalKey::f12) + 1;
+
     export enum class MouseButton : std::uint8_t
     {
         left,
@@ -271,6 +275,8 @@ namespace retro
         x2,
         unknown,
     };
+
+    export constexpr inline std::size_t mouse_button_max = static_cast<std::size_t>(MouseButton::x2) + 1;
 
     export enum class MouseWheelDirection : std::uint8_t
     {
@@ -322,6 +328,8 @@ namespace retro
         misc6,
     };
 
+    export constexpr inline std::size_t gamepad_button_max = static_cast<std::size_t>(GamepadButton::misc6) + 1;
+
     export enum class GamepadAxis : std::uint8_t
     {
         unknown,
@@ -334,4 +342,6 @@ namespace retro
         left_trigger,
         right_trigger,
     };
+
+    export constexpr inline std::size_t gamepad_axis_max = static_cast<std::size_t>(GamepadAxis::right_trigger) + 1;
 } // namespace retro

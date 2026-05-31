@@ -70,6 +70,9 @@ set(RETRO_RUNTIME_SOURCES private/engine.cpp
         private/event_manager.cpp
         private/interop/event_manager.cpp
         private/ecs/entity_manager.cpp
+        private/input/input_state.cpp
+        private/input/input_manager.cpp
+        private/interop/input.cpp
 )
 
 set(RETRO_RUNTIME_HEADERS
@@ -106,6 +109,8 @@ set(RETRO_RUNTIME_PUBLIC_MODULES
         public/modules/ecs/entity_manager.ixx
         public/modules/ecs/component_pool.ixx
         public/modules/ecs/component_view.ixx
+        public/modules/input/input_state.ixx
+        public/modules/input/input_manager.ixx
 )
 
 set(RETRO_RUNTIME_GENERATED_MODULES

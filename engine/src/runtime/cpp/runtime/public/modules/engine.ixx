@@ -27,6 +27,7 @@ import retro.core.functional.function_ref;
 import retro.core.type_traits.range;
 import retro.runtime.event_manager;
 import retro.core.util.noncopyable;
+import retro.runtime.input.input_manager;
 
 namespace retro
 {
@@ -36,7 +37,7 @@ namespace retro
     export class RETRO_API Engine : NonCopyable
     {
       public:
-        explicit Engine(PlatformBackend &platform_backend, EventManager &event_manager);
+        explicit Engine(PlatformBackend &platform_backend, EventManager &event_manager, InputManager &input_manager);
 
         void wait_platform_event(std::chrono::milliseconds timeout);
 
@@ -57,6 +58,7 @@ namespace retro
 
         PlatformBackend &platform_backend_;
         EventManager &event_manager_;
+        InputManager &input_manager_;
         OnWindowCloseRequested on_window_close_requested_;
         OnShutdownRequested on_shutdown_requested_;
     };

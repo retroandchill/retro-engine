@@ -24,13 +24,13 @@ namespace retro
     concept VariantMember = IsVariantMember<T, Variant>::value;
 
     template <typename>
-    constexpr bool IS_VARIANT_IMPLEMENTATION = false;
+    constexpr bool is_variant_implementation = false;
 
     template <typename... T>
-    constexpr bool IS_VARIANT_IMPLEMENTATION<std::variant<T...>> = true;
+    constexpr bool is_variant_implementation<std::variant<T...>> = true;
 
     export template <typename Variant>
-    concept VariantSpecialization = IS_VARIANT_IMPLEMENTATION<std::remove_cvref_t<Variant>>;
+    concept VariantSpecialization = is_variant_implementation<std::remove_cvref_t<Variant>>;
 
     export template <typename Functor, typename Variant>
     concept CanVisitVariant = requires(Variant &variant, Functor functor) {

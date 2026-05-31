@@ -6,6 +6,7 @@
 using System.Runtime.CompilerServices;
 using RetroEngine.Async;
 using RetroEngine.Events;
+using RetroEngine.Interaction;
 using RetroEngine.Utilities.Async;
 using Serilog;
 using ZLinq;
@@ -15,9 +16,14 @@ namespace RetroEngine.Tickables;
 [RegisterSingleton]
 public sealed class TickManager : IDisposable
 {
-    internal static TickManager? Instance { get; set; }
+    internal static TickManager Instance
+    {
+        get => field ?? throw new InvalidOperationException("TickManager not initialized.");
+        set;
+    }
 
     private readonly EventManager _eventManager;
+    private readonly InputManager _inputManager;
 
     private readonly Dictionary<TickGroup, HashSet<ITickable>> _tickables = new()
     {
@@ -35,9 +41,10 @@ public sealed class TickManager : IDisposable
     public IThreadSync ThreadSync => _synchronizationContext;
     public ulong FrameCount { get; private set; }
 
-    public TickManager(EventManager eventManager)
+    public TickManager(EventManager eventManager, InputManager inputManager)
     {
         _eventManager = eventManager;
+        _inputManager = inputManager;
         _synchronizationContext.UnhandledException += OnUnhandledException;
     }
 
@@ -64,8 +71,9 @@ public sealed class TickManager : IDisposable
 
     internal void Tick(float deltaTime)
     {
-        _eventManager.PollEvents();
+        _inputManager.PollEvents(FrameCount);
         Tick(TickGroup.Input, deltaTime);
+        _eventManager.PollEvents();
         Tick(TickGroup.PreSimulation, deltaTime);
         _nativeTaskScheduler.PumpTasks();
         Tick(TickGroup.Simulation, deltaTime);
