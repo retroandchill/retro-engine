@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SampleGame" type="CLionNativeAppRunConfigurationType" folderName="Native Debug" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="retro_engine" TARGET_NAME="retro_renderer" CONFIG_NAME="debug - debug" version="1" RUN_PATH="$PROJECT_DIR$/games/sample/src/dotnet/RetroEngine.Game.Sample/bin/Debug/RetroEngine.Game.Sample.exe">
+    <envs>
+      <env name="VK_LAYER_PATH" value="$PROJECT_DIR$/engine/build/debug/vcpkg_installed/x64-windows/bin" />
+      <env name="RETRO_ENGINE_BINARY_PATH" value="$PROJECT_DIR$/engine/bin/debug" />
+    </envs>
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>

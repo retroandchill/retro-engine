@@ -76,8 +76,8 @@ namespace retro
         for (auto &task : tasks)
         {
             co_await std::move(task).configure_await(false);
-
-            co_return result;
         }
+
+        co_return result;
     }
 } // namespace retro
