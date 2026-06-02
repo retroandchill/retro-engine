@@ -40,52 +40,64 @@ public sealed partial class InputManager : IDisposable
         MouseScrollDelta = new Vector2F(scrollDeltaX, scrollDeltaY);
     }
 
-    public bool IsDown(ButtonInput button)
+    public bool IsDown(DigitalInput input)
     {
         ThrowIfDisposed();
-        return NativeIsDown(NativeHandle, button);
+        return NativeIsDown(NativeHandle, input);
     }
 
-    public bool IsAnyDown(params ReadOnlySpan<ButtonInput> buttons)
+    public bool IsAnyDown(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeIsAnyDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool AllAreDown(params ReadOnlySpan<ButtonInput> buttons)
+    public bool AllAreDown(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeAreAllDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool AreNoneDown(params ReadOnlySpan<ButtonInput> buttons)
+    public bool AreNoneDown(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeAreNoneDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool WasPressed(ButtonInput button)
+    public bool WasPressed(DigitalInput input)
     {
         ThrowIfDisposed();
-        return NativeWasPressed(NativeHandle, button);
+        return NativeWasPressed(NativeHandle, input);
     }
 
-    public bool WasAnyPressed(params ReadOnlySpan<ButtonInput> buttons)
+    public bool WasAnyPressed(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeWasAnyPressed(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool WereAllPressed(params ReadOnlySpan<ButtonInput> buttons)
+    public bool WereAllPressed(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeWereAllPressed(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool WereNonePressed(params ReadOnlySpan<ButtonInput> buttons)
+    public bool WereNonePressed(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeWereNonePressed(NativeHandle, buttons, buttons.Length);
+    }
+
+    public float GetAnalogueValue(AnalogueInput input)
+    {
+        ThrowIfDisposed();
+        return NativeGetAnalogueValue(NativeHandle, input);
+    }
+
+    public float GetAnalogueValues(params ReadOnlySpan<AnalogueInput> inputs)
+    {
+        ThrowIfDisposed();
+        return NativeGetAnalogueValues(NativeHandle, inputs, inputs.Length);
     }
 
     private void ThrowIfDisposed()
@@ -113,35 +125,35 @@ public sealed partial class InputManager : IDisposable
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_down")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeIsDown(IntPtr handle, ButtonInput key);
+    private static partial bool NativeIsDown(IntPtr handle, DigitalInput key);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_is_any_down")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeIsAnyDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeIsAnyDown(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_are_all_down")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeAreAllDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeAreAllDown(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_are_none_down")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeAreNoneDown(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeAreNoneDown(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWasPressed(IntPtr handle, ButtonInput key);
+    private static partial bool NativeWasPressed(IntPtr handle, DigitalInput key);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_was_any_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWasAnyPressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeWasAnyPressed(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_were_all_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWereAllPressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeWereAllPressed(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_were_none_pressed")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static partial bool NativeWereNonePressed(IntPtr handle, ReadOnlySpan<ButtonInput> keys, int length);
+    private static partial bool NativeWereNonePressed(IntPtr handle, ReadOnlySpan<DigitalInput> keys, int length);
 
     [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_get_mouse_position")]
     private static partial void NativeGetMousePosition(
@@ -153,6 +165,12 @@ public sealed partial class InputManager : IDisposable
         out float scrollDeltaX,
         out float scrollDeltaY
     );
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_get_analogue_value")]
+    private static partial float NativeGetAnalogueValue(IntPtr handle, AnalogueInput input);
+
+    [LibraryImport(NativeLibraries.RetroRuntime, EntryPoint = "retro_input_manager_get_analogue_values")]
+    private static partial float NativeGetAnalogueValues(IntPtr handle, ReadOnlySpan<AnalogueInput> inputs, int length);
 }
 
 [CustomMarshaller(typeof(InputManager), MarshalMode.ManagedToUnmanagedIn, typeof(InputManagerMarshaller))]

@@ -22,6 +22,76 @@ namespace retro
         GamepadButton button = GamepadButton::unknown;
     };
 
-    export using ButtonInput =
-        std::variant<LogicalKey, PhysicalKey, MouseButton, GamepadButtonInput, AnyGamepadButtonInput>;
+    export struct GamepadAxisThreshold
+    {
+        std::uint8_t gamepad_index = 0;
+        GamepadAxis axis = GamepadAxis::unknown;
+        float threshold = 0.0f;
+    };
+
+    export struct AnyGamepadAxisThreshold
+    {
+        GamepadAxis axis = GamepadAxis::unknown;
+        float threshold = 0.0f;
+    };
+
+    export using DigitalInput = std::variant<LogicalKey,
+                                             PhysicalKey,
+                                             MouseButton,
+                                             GamepadButtonInput,
+                                             AnyGamepadButtonInput,
+                                             GamepadAxisThreshold,
+                                             AnyGamepadAxisThreshold>;
+
+    export struct LogicalKeyAnalogueInput
+    {
+        LogicalKey logical_key = LogicalKey::unknown;
+        float axis_value = 0.0f;
+    };
+
+    export struct PhysicalKeyAnalogueInput
+    {
+        PhysicalKey physical_key = PhysicalKey::unknown;
+        float axis_value = 0.0f;
+    };
+
+    export struct MouseButtonAnalogueInput
+    {
+        MouseButton mouse_button = MouseButton::unknown;
+        float axis_value = 0.0f;
+    };
+
+    export struct GamepadButtonAnalogueInput
+    {
+        std::uint8_t gamepad_index = 0;
+        GamepadButton gamepad_button = GamepadButton::unknown;
+        float axis_value = 0.0f;
+    };
+
+    export struct AnyGamepadButtonAnalogueInput
+    {
+        GamepadButton gamepad_button = GamepadButton::unknown;
+        float axis_value = 0.0f;
+    };
+
+    export struct GamepadAxisInput
+    {
+        std::uint8_t gamepad_index = 0;
+        GamepadAxis axis = GamepadAxis::unknown;
+        bool invert = false;
+    };
+
+    export struct AnyGamepadAxisInput
+    {
+        GamepadAxis axis = GamepadAxis::unknown;
+        bool invert = false;
+    };
+
+    export using AnalogueInput = std::variant<LogicalKeyAnalogueInput,
+                                              PhysicalKeyAnalogueInput,
+                                              MouseButtonAnalogueInput,
+                                              GamepadButtonAnalogueInput,
+                                              AnyGamepadButtonAnalogueInput,
+                                              GamepadAxisInput,
+                                              AnyGamepadAxisInput>;
 } // namespace retro

@@ -31,14 +31,14 @@ namespace retro
             return buttons.test(static_cast<std::size_t>(button));
         }
 
-        [[nodiscard]] constexpr float axis(GamepadAxis axis) const
-        {
-            return axes[static_cast<std::size_t>(axis)];
-        }
-
         [[nodiscard]] constexpr bool was_pressed(const GamepadButton button, const GamepadSnapshot &previous) const
         {
             return is_down(button) && !previous.is_down(button);
+        }
+
+        [[nodiscard]] constexpr float axis(const GamepadAxis axis) const
+        {
+            return axes[static_cast<std::size_t>(axis)];
         }
     };
 
@@ -112,6 +112,49 @@ namespace retro
         [[nodiscard]] constexpr bool was_pressed_on_any(const GamepadButton button, const InputSnapshot &previous) const
         {
             return is_down_on_any(button) && !previous.is_down_on_any(button);
+        }
+
+        [[nodiscard]] constexpr float axis(const std::uint8_t gamepad_id, const GamepadAxis axis) const
+        {
+            auto &gamepad = gamepads[gamepad_id];
+            return gamepad.has_value() ? gamepad->axis(axis) : 0.0f;
+        }
+
+        [[nodiscard]] constexpr bool axis_over_threshold(const std::uint8_t gamepad_id,
+                                                         const GamepadAxis axis,
+                                                         const float threshold) const
+        {
+            return threshold > 0.0f ? this->axis(gamepad_id, axis) >= threshold
+                                    : this->axis(gamepad_id, axis) <= threshold;
+        }
+
+        [[nodiscard]] constexpr bool axis_just_passed_threshold(const std::uint8_t gamepad_id,
+                                                                const GamepadAxis axis,
+                                                                const float threshold,
+                                                                const InputSnapshot &previous) const
+        {
+            return axis_over_threshold(gamepad_id, axis, threshold) &&
+                   !previous.axis_over_threshold(gamepad_id, axis, threshold);
+        }
+
+        [[nodiscard]] constexpr float axis_on_any(const GamepadAxis axis) const
+        {
+            return std::ranges::fold_left(gamepads | std::views::join |
+                                              std::views::transform([axis](const auto &s) { return s.axis(axis); }),
+                                          0.0f,
+                                          std::plus<float>{});
+        }
+
+        [[nodiscard]] constexpr bool axis_over_threshold_on_any(const GamepadAxis axis, const float threshold) const
+        {
+            return threshold > 0.0f ? axis_on_any(axis) >= threshold : axis_on_any(axis) <= threshold;
+        }
+
+        [[nodiscard]] constexpr bool axis_just_passed_threshold_on_any(const GamepadAxis axis,
+                                                                       const float threshold,
+                                                                       const InputSnapshot &previous) const
+        {
+            return axis_over_threshold_on_any(axis, threshold) && !previous.axis_over_threshold_on_any(axis, threshold);
         }
     };
 
