@@ -52,7 +52,7 @@ public sealed partial class InputManager : IDisposable
         return NativeIsAnyDown(NativeHandle, buttons, buttons.Length);
     }
 
-    public bool AllAreDown(params ReadOnlySpan<DigitalInput> buttons)
+    public bool AreAllDown(params ReadOnlySpan<DigitalInput> buttons)
     {
         ThrowIfDisposed();
         return NativeAreAllDown(NativeHandle, buttons, buttons.Length);
