@@ -9,7 +9,7 @@
     <PackageVersion Include="bodong.Avalonia.PropertyGrid" Version="12.0.0" />
     <PackageVersion Include="CaseConverter" Version="2.0.1" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="Dock.Avalonia.Diagnostics" Version="12.0.0.2" />
     <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="12.0.0.2" />
@@ -28,23 +28,23 @@
     <PackageVersion Include="LinkDotNet.StringBuilder" Version="3.4.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.3.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Namotion.Reflection" Version="3.5.1" />
-    <PackageVersion Include="NUnit" Version="4.6.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.13.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="ObservableCollections" Version="3.3.4" />
-    <PackageVersion Include="PolySharp" Version="1.15.0" />
+    <PackageVersion Include="PolySharp" Version="1.16.0" />
     <PackageVersion Include="PropertyGenerator.Avalonia" Version="1.3.1" />
     <PackageVersion Include="Retro.SourceGeneratorUtilities" Version="0.1.5" />
     <PackageVersion Include="RhoMicro.CodeAnalysis.UtilityGenerators" Version="24.1.1" />
@@ -54,7 +54,7 @@
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="StaticViewLocator" Version="0.3.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.1" />
-    <PackageVersion Include="System.IO.Hashing" Version="10.0.8" />
+    <PackageVersion Include="System.IO.Hashing" Version="10.0.9" />
     <PackageVersion Include="System.Reactive" Version="6.1.0" />
     <PackageVersion Include="System.Text.Json" Version="10.0.1" />
     <PackageVersion Include="Testably.Abstractions" Version="10.2.0" />
@@ -64,7 +64,7 @@
     <PackageVersion Include="TreeDataGrid.Avalonia" Version="12.0.0" />
     <PackageVersion Include="Utf8StreamReader" Version="1.3.2" />
     <PackageVersion Include="VYaml" Version="1.3.0" />
-    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.0.0" />
+    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.0.0.1" />
     <PackageVersion Include="ZLinq" Version="1.5.6" />
     <PackageVersion Include="Avalonia" Version="12.0.4" />
     <PackageVersion Include="Avalonia.Desktop" Version="12.0.4" />
